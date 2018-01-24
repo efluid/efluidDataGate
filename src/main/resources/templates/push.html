@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Maquette Gestion Paramètrage Efluid</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="./css/core.css" media="screen" />
+    
+</head>
+<body>
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+            <a class="navbar-brand" href="./index.html">Gestion du paramètrage Efluid</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="divider-horizontal"></div>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">       
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Dictionnaire
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="./dictionary.html">Modification du dictionnaire</a>
+                            <a class="dropdown-item" href="./domains.html">Configuration des domaines fonctionnels</a>
+                            <a class="dropdown-item" href="./share.html">Export / Import de dictionnaire</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Lot de modification
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="./commits.html">Liste des lots présents</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="./prepare.html">Préparer un lot</a>
+                            <a class="dropdown-item" href="./pull.html">Importer un lot</a>
+                            <a class="dropdown-item active" href="./push.html">Exporter un lot</a>
+                        </div>
+                    </li>
+                </ul>
+                <form class="form-inline">
+                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
+                </form>
+            </div>
+        </nav>
+        <div class="row"><div class="col-1">&nbsp;</div></div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-8">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th scope="col" width="70%">Lots de modifications</th>
+                            <th scope="col" width="10%">Créé par</th>
+                            <th scope="col" width="10%">Le</th>
+                            <th scope="col" width="10%"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Préchargement configuration</td><td>System</td><td>01/11/2017</td>
+                            <td><button class="btn btn-outline-secondary btn-sm float-right" type="button">Sélectionner</button></td>
+                        </tr>
+                        <tr>
+                            <td>Paramètrage matériel - v1</td><td>P. Nom</td><td>23/11/2017</td>
+                            <td><button class="btn btn-outline-secondary btn-sm float-right" type="button">Sélectionner</button></td>
+                        </tr>
+                        <tr>
+                            <td>Paramètrage matériel - ajout Compteurs Elec Legrand</td><td>G. Dupont</td><td>27/12/2017</td>
+                            <td><button class="btn btn-outline-secondary btn-sm float-right" type="button">Sélectionner</button></td>
+                        </tr>
+                        <tr>
+                            <td>Paramètrage matériel - ajout Compteurs Eau Itron</td><td>P. Dupuis</td><td>05/01/2018</td>
+                            <td><button class="btn btn-secondary btn-sm float-right" type="button">Sélectionner</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><button class="btn btn-primary float-right" type="button">Exporter le(s) lot(s) sélectionné(s)</button></p>
+            </div>
+        </div>
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Commentaire sur la maquette</h4>
+            <p>Ici on a l'équivalent du <strong>push</strong>. On peut générer une archive pour un ou plusieurs commit. 
+                A priori même en sélectionnant plusieus lots (~ "commits") on obtient toujours un seul backlog, zippé en un seul fichier. </p>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

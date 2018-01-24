@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Maquette Gestion Paramètrage Efluid</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="./css/core.css" media="screen" />
+    
+</head>
+<body>
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+            <a class="navbar-brand" href="./index.html">Gestion du paramètrage Efluid</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="divider-horizontal"></div>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">       
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Dictionnaire
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item active" href="./dictionary.html">Modification du dictionnaire</a>
+                            <a class="dropdown-item" href="./domains.html">Configuration des domaines fonctionnels</a>
+                            <a class="dropdown-item" href="./share.html">Export / Import de dictionnaire</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Lot de modification
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="./commits.html">Liste des lots présents</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="./prepare.html">Préparer un lot</a>
+                            <a class="dropdown-item" href="./pull.html">Importer un lot</a>
+                            <a class="dropdown-item" href="./push.html">Exporter un lot</a>
+                        </div>
+                    </li>
+                </ul>
+                <form class="form-inline">
+                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
+                </form>
+            </div>
+        </nav>
+        <div class="row"><div class="col-1">&nbsp;</div></div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div><form class="form-inline">
+                    <table class="table table-sm">
+                            <thead>
+                              <tr>
+                                <th scope="col">Domaine</th>
+                                <th scope="col">Nom</th>
+                                <th scope="col" width="40%">Lien</th>
+                                <th scope="col"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>Gestion du matériel</td>
+                                <td>Catégorie de matériel</td>
+                                <td>Table TCATEGORYMATERIEL where 1=1</td>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Editer</button>
+                                    <button class="btn btn-outline-secondary btn-sm" type="button" title="Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent" disabled>Supprimer</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Type de matériel</td>
+                                <td>Catégorie de matériel</td>
+                                <td>Table TTYPEMATERIEL where 1=1</td>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Editer</button>
+                                    <button class="btn btn-outline-secondary btn-sm" type="button" title="Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent" disabled>Supprimer</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Gestion du matériel</td>
+                                <td>Modèle de compteur</td>
+                                <td>Table TMODELECOMPTEUR where 1=1</td>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Editer</button>
+                                    <button class="btn btn-outline-secondary btn-sm" type="button" title="Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent" disabled>Supprimer</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                    <select class="form-control" disabled>
+                                    <option selected>Gestion du matériel</option>
+                                    <option>Matrice des prix</option>
+                                    <option>Processus utilisateurs</option>
+                                    <option>Editions</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" class="form-control mx-sm-1" value="Programmation" size="15"/></td>
+                                <td>Table <input type="text" class="form-control mx-sm-1" value="TPROGRAMMATION" disabled size="13"/> where <input type="text" class="form-control mx-sm-1" value="1=1" size="10" disabled/>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Confirmer</button>
+                                    <button class="btn btn-secondary btn-sm" type="button">Annuler</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Matrice des prix</td>
+                                <td>Prix énergie</td>
+                                <td>Table TPRIX where COL=1234</td>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Editer</button>
+                                    <button class="btn btn-secondary btn-sm" type="button">Supprimer</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Processus utilisateurs</td>
+                                <td>Autre exemple 1</td>
+                                <td>Table TEXEMPLE1 where 1=1</td>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Editer</button>
+                                    <button class="btn btn-secondary btn-sm" type="button">Supprimer</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Processus utilisateurs</td>
+                                <td>Autre exemple 2</td>
+                                <td>Table TEXEMPLE2 where 1=1</td>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Editer</button>
+                                    <button class="btn btn-secondary btn-sm" type="button">Supprimer</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Processus utilisateurs</td>
+                                <td>Autre exemple 3</td>
+                                <td>Table TEXEMPLE3 where 1=1</td>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Editer</button>
+                                    <button class="btn btn-secondary btn-sm" type="button">Supprimer</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>Matrice des prix</td>
+                                <td>Autre paramètre</td>
+                                <td>Table TPARAM where COL=1234</td>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-primary btn-sm" type="button">Editer</button>
+                                    <button class="btn btn-secondary btn-sm" type="button">Supprimer</button>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                    <select class="form-control" id="exampleFormControlSelect1">
+                                    <option>Gestion du matériel</option>
+                                    <option>Matrice des prix</option>
+                                    <option>Processus utilisateurs</option>
+                                    <option>Editions</option>
+                                    </select>
+                                </td>
+                                <td><input type="text" class="form-control mx-sm-1" placeholder="Nom" size="15"/></td>
+                                <td>Table <input type="text" class="form-control mx-sm-1" size="13"/> where <input type="text" class="form-control mx-sm-1" size="10" placeholder="1=1"/>
+                                <td>
+                                    <button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
+                                    <button class="btn btn-success btn-sm" type="button">Ajouter le domaine</button>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table></form>
+            </div>
+        </div>        
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Commentaire sur la maquette</h4>
+            <p>Ici l'édition du dictionnaire : à voir si le "where" est vraiment nécessaire. L'édition des dépendences et FK se fait dans une popin : sélection de/des table(s) dont on considère dépendre, traçage des FK</p>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+---
+## PARAMETER MANAGER CONFIG
+param-efluid:
+
+   details:
+       version: 1.1.1
+
+## TECH FEATURES CUSTOM
+spring:
+    profiles:
+        active: demo
+
+    thymeleaf:
+        cache: false
+
+    datasource:
+        url: jdbc:h2:~\h2;DB_CLOSE_ON_EXIT=FALSE
+        username: sa
+        password: i'sE2rtPiUKtT
+        driver-class-name: org.h2.Driver
+
+    jpa:
+        show-sql: false
+
+## WEB SERVER CONFIG
+server:
+    contextPath:
+    port: 8080

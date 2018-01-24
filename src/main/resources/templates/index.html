@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Maquette Gestion Paramètrage Efluid</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous"/>
+    <link rel="stylesheet" href="./css/core.css" media="screen"/>
+    
+</head>
+<body>
+    <div class="container-fluid">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand" href="./index.html">Gestion du paramètrage Efluid</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="divider-horizontal"></div>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Dictionnaire
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="./dictionary.html">Modification du dictionnaire</a>
+                            <a class="dropdown-item" href="./domains.html">Configuration des domaines fonctionnels</a>
+                            <a class="dropdown-item" href="./share.html">Export / Import de dictionnaire</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Lot de modification
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="./commits.html">Liste des lots présents</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="./prepare.html">Préparer un lot</a>
+                            <a class="dropdown-item" href="./pull.html">Importer un lot</a>
+                            <a class="dropdown-item" href="./push.html">Exporter un lot</a>
+                        </div>
+                    </li>
+                </ul>
+                <form class="form-inline">
+                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
+                </form>
+            </div>
+        </nav>
+        <div class="row"><div class="col-1">&nbsp;</div></div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-6">
+                <h5>Détails techniques</h5>
+                <ul>
+                    <li>Base de données source : <span th:text="${details.dbUrl}">ORACLE_DB_SERVER_123, schéma ABCDEF</span></li>
+                    <li>Lots de paramètrage gérés : <span th:text="${details.commitsCount}">12</span></li>
+                    <li>Nombre de domaines fonctionnels : <span th:text="${details.domainsCount}">15</span></li>
+                    <li>Dernier import : Lot ABCDEF le 12/01/2018</li>
+                </ul>
+            </div>
+        </div>
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Commentaire sur la maquette</h4>
+            <p>Ici landing page avec synthèses infos techniques. Les fonctions sont accessibles à l'aide du menu haut. L'accès nécessite une authentification (profil user simple pour le POC)</p>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</body>
+</html>
