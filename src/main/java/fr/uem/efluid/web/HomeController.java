@@ -7,6 +7,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import fr.uem.efluid.services.ApplicationDetailsService;
 
+/**
+ * @author elecomte
+ * @since v0.0.1
+ * @version 1
+ */
 @Controller
 public class HomeController {
 

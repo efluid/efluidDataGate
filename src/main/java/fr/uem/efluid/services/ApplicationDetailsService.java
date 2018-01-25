@@ -3,7 +3,9 @@ package fr.uem.efluid.services;
 import org.springframework.stereotype.Service;
 
 /**
- *
+ * @author elecomte
+ * @since v0.0.1
+ * @version 1
  */
 @Service
 public class ApplicationDetailsService {
@@ -20,7 +22,7 @@ public class ApplicationDetailsService {
         details.setCommitsCount(15);
         details.setDbUrl("ORACLE_DB_SERVER_123/ABCDEF");
         details.setDomainsCount(25);
-
+        
         return details;
     }
 
