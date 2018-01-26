@@ -62,7 +62,7 @@ public class DemoDataLoader {
 	@PostConstruct
 	public void initValues() {
 
-		LOGGER.info("Init some demo values for testing");
+		LOGGER.info("[DEMO] Init some demo values for testing");
 		User dupont = this.users.save(user("dupont"));
 		User testeur = this.users.save(user("testeur"));
 
@@ -104,7 +104,7 @@ public class DemoDataLoader {
 		this.index.save(update("11", ADD, "Name=something, Detail=something, value=222", tdij, com2));
 		this.index.save(update("234", UPDATE, "Name=something, Detail=something, value=12345", tdij, com2));
 
-		LOGGER.info("Demo values init done");
+		LOGGER.info("[DEMO] Demo values init done");
 	}
 
 	private static User user(String login) {

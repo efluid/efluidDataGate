@@ -1,8 +1,7 @@
 package fr.uem.efluid.utils;
 
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * @author elecomte
@@ -14,10 +13,10 @@ public final class DatasourceUtils {
 	public static final String MANAGED_TRANSACTION_MANAGER = "managedTransactionManager";
 
 	/**
-	 * @return transaction manager for access to custom parameters
+	 * @return JdbcTemplate for managed database access
 	 */
-	public static PlatformTransactionManager createTransactionManager(CustomDataSourceParameters params) {
-		return new DataSourceTransactionManager(
+	public static JdbcTemplate createJdbcTemplate(CustomDataSourceParameters params) {
+		return new JdbcTemplate(
 				DataSourceBuilder.create()
 						.url(params.getUrl())
 						.driverClassName(params.getDriverClassName())

@@ -1,0 +1,160 @@
+package fr.uem.efluid.model.repositories;
+
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Types;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.stereotype.Repository;
+
+import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexAction;
+import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.utils.ManagedDiffUtils;
+import fr.uem.efluid.utils.ManagedQueriesUtils;
+
+/**
+ * <p>
+ * Access to raw data of parameters : can read from Parameter source table or regenerate
+ * from existing index
+ * </p>
+ * 
+ * @author elecomte
+ * @since v0.0.1
+ * @version 1
+ */
+@Repository
+public class ManagedParametersRepository {
+
+	@Autowired
+	private JdbcTemplate managedSource;
+
+	@Autowired
+	private IndexRepository coreIndex;
+
+	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry) {
+
+		// Get columns for all table
+		return this.managedSource.query(ManagedQueriesUtils.consolidateSelectClause(parameterEntry), new InternalExtractor(parameterEntry));
+	}
+
+	/**
+	 * Produces the knew content for specified table, from recorded index
+	 * 
+	 * @param parameterEntry
+	 * @return
+	 */
+	@Cacheable
+	public Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry) {
+
+		// Will process backlog by its natural order
+		List<IndexEntry> existingBacklog = this.coreIndex.findByDictionaryEntryOrderByTimestamp(parameterEntry);
+
+		// Content for playing back the backlog
+		Map<String, String> lines = new HashMap<>(1000);
+
+		for (IndexEntry line : existingBacklog) {
+
+			// Addition : add / update directly
+			if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {
+				lines.put(line.getKeyValue(), line.getPayload());
+			}
+
+			else {
+				lines.remove(line.getKeyValue());
+			}
+		}
+
+		return lines;
+	}
+
+	/**
+	 * <p>
+	 * Extractor of a Managed parameter table : extract ALL content, for DIFF check
+	 * elsewhere
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.1
+	 * @version 1
+	 */
+	private static class InternalExtractor implements ResultSetExtractor<Map<String, String>> {
+
+		private final DictionaryEntry parameterEntry;
+
+		/**
+		 * @param parameterEntry
+		 */
+		public InternalExtractor(DictionaryEntry parameterEntry) {
+			super();
+			this.parameterEntry = parameterEntry;
+		}
+
+		/**
+		 * @param rs
+		 * @return
+		 * @throws SQLException
+		 * @throws DataAccessException
+		 * @see org.springframework.jdbc.core.ResultSetExtractor#extractData(java.sql.ResultSet)
+		 */
+		@Override
+		public Map<String, String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+			Map<String, String> extraction = new HashMap<>();
+
+			final String keyName = this.parameterEntry.getKeyName().toUpperCase();
+			ResultSetMetaData meta = rs.getMetaData();
+
+			// Prepare data definition from meta
+			final int count = meta.getColumnCount();
+			String[] columnNames = new String[count];
+			boolean[] columnStrings = new boolean[count];
+			int keyPos = 0;
+
+			// Identify columns
+			for (int i = 0; i < count; i++) {
+				String colname = meta.getColumnName(i).toUpperCase();
+				if (colname.equals(keyName)) {
+					keyPos = i;
+				}
+				columnNames[i] = colname;
+				columnStrings[i] = isTypeProtected(meta.getColumnType(i));
+			}
+
+			// Process content
+			while (rs.next()) {
+				StringBuilder payload = new StringBuilder();
+				String keyValue = null;
+				for (int i = 0; i < count; i++) {
+					if (i != keyPos) {
+						ManagedDiffUtils.appendExtractedValue(payload, columnNames[i], rs.getBytes(i), columnStrings[i], i < count);
+					} else {
+						keyValue = rs.getString(i);
+					}
+				}
+
+				extraction.put(keyValue, payload.toString());
+			}
+
+			return extraction;
+		}
+
+		/**
+		 * @param type
+		 * @return
+		 */
+		private static boolean isTypeProtected(int type) {
+			return (type == Types.VARCHAR || type == Types.CLOB || type == Types.NVARCHAR);
+		}
+
+	}
+
+}

@@ -3,6 +3,7 @@ package fr.uem.efluid.model.entities;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
@@ -10,6 +11,13 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 /**
+ * <p>
+ * Define one line in the index/backlog. Associated to one dictionaryEntry (defining the
+ * managed table), with one type of action, and indentified for one commit. Payload
+ * content describe "one full line of managed table", in one value line. Column names and
+ * type protection are "natural", values are always BASE64 encoded.
+ * </p>
+ * 
  * @author elecomte
  * @since v0.0.1
  * @version 1
@@ -22,7 +30,7 @@ public class IndexEntry {
 	@GeneratedValue
 	private Long id;
 
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	private DictionaryEntry dictionaryEntry;
 
 	@NotNull
@@ -37,6 +45,8 @@ public class IndexEntry {
 
 	private String keyValue;
 
+	private long timestamp;
+	
 	/**
 	 * 
 	 */
@@ -132,6 +142,20 @@ public class IndexEntry {
 	 */
 	public void setKeyValue(String keyValue) {
 		this.keyValue = keyValue;
+	}
+
+	/**
+	 * @return the timestamp
+	 */
+	public long getTimestamp() {
+		return this.timestamp;
+	}
+
+	/**
+	 * @param timestamp the timestamp to set
+	 */
+	public void setTimestamp(long timestamp) {
+		this.timestamp = timestamp;
 	}
 
 	/**

@@ -1,0 +1,167 @@
+package fr.uem.efluid.services;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.model.repositories.TemporaryDiffIndexRepository;
+import fr.uem.efluid.services.types.PilotedCommitPreparation;
+import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.utils.TechnicalException;
+
+/**
+ * <p>
+ * Service for Commit preparation, using a "ticket" system for heavy load assynchronous
+ * system
+ * </p>
+ * 
+ * @author elecomte
+ * @since v0.0.1
+ * @version 1
+ */
+@Service
+public class PilotableCommitPreparationService {
+
+	@Autowired
+	private DataDiffService diffService;
+
+	@Autowired
+	private DictionaryRepository dictionary;
+
+	@Autowired
+	private TemporaryDiffIndexRepository temp;
+
+	// TODO : use cfg entry.
+	private ExecutorService executor = Executors.newFixedThreadPool(4);
+
+	// One active only
+	private PilotedCommitPreparation current;
+
+	/**
+	 * Start async diff analysis before commit
+	 */
+	public void startCommitPreparation() {
+
+		if (this.current != null) {
+			// TODO : Restart or error ?
+		}
+
+		this.current = new PilotedCommitPreparation();
+
+		CompletableFuture.runAsync(this::processAllDiff);
+	}
+
+	/**
+	 * @return
+	 */
+	public PilotedCommitPreparation getCurrentCommitPreparation() {
+		return this.current;
+	}
+
+	/**
+	 * 
+	 */
+	public void completeCommitPreparation() {
+		this.current = null;
+	}
+
+	/**
+	 * <p>
+	 * Asynchronous task which is itself a process of asynchronous execution of managed
+	 * table diffs (one task for each managed table)
+	 * </p>
+	 */
+	private void processAllDiff() {
+
+		try {
+			Map<UUID, List<IndexEntry>> fullDiff = this.executor
+					.invokeAll(this.dictionary.findAll().stream().map(this::callDiff).collect(Collectors.toList())).stream()
+					.map(this::gatherResult)
+					.collect(Collectors.toMap(DiffCallResult::getDictUuid, DiffCallResult::getDiff));
+
+			// Keep in shared temp for commit build
+			this.temp.keepTemporaryDiffIndex(this.current.getIdentifier(), fullDiff);
+
+			// Mark preparation as completed
+			this.current.setEnd(LocalDateTime.now());
+			this.current.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+
+		} catch (InterruptedException e) {
+			this.current.setErrorDuringPreparation(e);
+		}
+	}
+
+	/**
+	 * @param future
+	 * @return
+	 */
+	private DiffCallResult gatherResult(Future<DiffCallResult> future) {
+		try {
+			return future.get();
+		} catch (InterruptedException | ExecutionException e) {
+			this.current.setErrorDuringPreparation(e);
+			throw new TechnicalException("Aborted on exception ", e);
+		}
+	}
+
+	/**
+	 * @param dict
+	 * @return
+	 */
+	private Callable<DiffCallResult> callDiff(DictionaryEntry dict) {
+
+		return () -> {
+			return new DiffCallResult(dict.getUuid(), this.diffService.processDiff(dict.getUuid()));
+		};
+	}
+
+	/**
+	 * @author elecomte
+	 * @since v0.0.1
+	 * @version 1
+	 */
+	private static final class DiffCallResult {
+
+		private final UUID dictUuid;
+		private final List<IndexEntry> diff;
+
+		/**
+		 * @param dictUuid
+		 * @param diff
+		 */
+		public DiffCallResult(UUID dictUuid, List<IndexEntry> diff) {
+			super();
+			this.dictUuid = dictUuid;
+			this.diff = diff;
+		}
+
+		/**
+		 * @return the dictUuid
+		 */
+		public UUID getDictUuid() {
+			return this.dictUuid;
+		}
+
+		/**
+		 * @return the diff
+		 */
+		public List<IndexEntry> getDiff() {
+			return this.diff;
+		}
+
+	}
+}

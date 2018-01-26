@@ -1,12 +1,31 @@
 package fr.uem.efluid.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import fr.uem.efluid.utils.DatasourceUtils;
+import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
+
 /**
  * @author elecomte
  * @since v0.0.1
  * @version 1
  */
-public class ManagedDatasourceConfig {
+@Configuration
+@Order(10)
+@ConfigurationProperties(prefix = "param-efluid.managed-datasource")
+public class ManagedDatasourceConfig extends CustomDataSourceParameters {
 
-	// TODO : add managed database Datasource init with
-	// fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters
+	private static final Logger LOGGER = LoggerFactory.getLogger(ManagedDatasourceConfig.class);
+
+	@Bean
+	public JdbcTemplate managedDatabaseJdbcTemplate() {
+		LOGGER.info("[MANAGED DB] Init access to managed DB {}", this.getUrl());
+		return DatasourceUtils.createJdbcTemplate(this);
+	}
 }
