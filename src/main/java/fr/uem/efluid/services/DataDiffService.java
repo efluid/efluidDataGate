@@ -41,8 +41,8 @@ public class DataDiffService {
 	 */
 	public List<IndexEntry> processDiff(UUID dictionaryEntryUuid) {
 
-		// Here the main complexity : diff check using JDBC. Backlog construction +
-		// restoration
+		// Here the main complexity : diff check using JDBC, for one table. Backlog
+		// construction + restoration then diff.
 
 		DictionaryEntry entry = this.dictionary.findOne(dictionaryEntryUuid);
 

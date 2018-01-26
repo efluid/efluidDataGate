@@ -25,8 +25,8 @@ import fr.uem.efluid.utils.TechnicalException;
 
 /**
  * <p>
- * Service for Commit preparation, using a "ticket" system for heavy load assynchronous
- * system
+ * Service for Commit preparation, using async execution. <b>Only one execution can be
+ * launched.</b>
  * </p>
  * 
  * @author elecomte
@@ -82,7 +82,11 @@ public class PilotableCommitPreparationService {
 	/**
 	 * <p>
 	 * Asynchronous task which is itself a process of asynchronous execution of managed
-	 * table diffs (one task for each managed table)
+	 * table diffs (one task for each managed table). Similar to a "git status"
+	 * </p>
+	 * <p>
+	 * Use parallele processes, but not asyncronous by itself : can be launched as a
+	 * CompletableFuture in call processes
 	 * </p>
 	 */
 	private void processAllDiff() {
@@ -106,30 +110,44 @@ public class PilotableCommitPreparationService {
 	}
 
 	/**
+	 * <p>
+	 * Join future execution and gather exception if any
+	 * </p>
+	 * 
 	 * @param future
 	 * @return
 	 */
 	private DiffCallResult gatherResult(Future<DiffCallResult> future) {
 		try {
 			return future.get();
-		} catch (InterruptedException | ExecutionException e) {
+		}
+
+		// TODO : better error identification
+		catch (InterruptedException | ExecutionException e) {
 			this.current.setErrorDuringPreparation(e);
 			throw new TechnicalException("Aborted on exception ", e);
 		}
 	}
 
 	/**
+	 * <p>
+	 * Execution for one table, as a <ttCallable</tt>
+	 * </p>
+	 * 
 	 * @param dict
 	 * @return
 	 */
 	private Callable<DiffCallResult> callDiff(DictionaryEntry dict) {
-
 		return () -> {
 			return new DiffCallResult(dict.getUuid(), this.diffService.processDiff(dict.getUuid()));
 		};
 	}
 
 	/**
+	 * <p>
+	 * Combined result for easier mapping from Future execution
+	 * </p>
+	 * 
 	 * @author elecomte
 	 * @since v0.0.1
 	 * @version 1
@@ -162,6 +180,5 @@ public class PilotableCommitPreparationService {
 		public List<IndexEntry> getDiff() {
 			return this.diff;
 		}
-
 	}
 }

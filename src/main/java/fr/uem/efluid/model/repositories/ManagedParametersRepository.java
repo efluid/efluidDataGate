@@ -43,7 +43,9 @@ public class ManagedParametersRepository {
 	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry) {
 
 		// Get columns for all table
-		return this.managedSource.query(ManagedQueriesUtils.consolidateSelectClause(parameterEntry), new InternalExtractor(parameterEntry));
+		return this.managedSource.query(
+				ManagedQueriesUtils.consolidateSelectClause(parameterEntry),
+				new InternalExtractor(parameterEntry));
 	}
 
 	/**
@@ -154,7 +156,5 @@ public class ManagedParametersRepository {
 		private static boolean isTypeProtected(int type) {
 			return (type == Types.VARCHAR || type == Types.CLOB || type == Types.NVARCHAR);
 		}
-
 	}
-
 }

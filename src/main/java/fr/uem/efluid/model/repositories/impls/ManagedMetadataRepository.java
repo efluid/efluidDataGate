@@ -31,6 +31,7 @@ import fr.uem.efluid.utils.TechnicalException;
 public class ManagedMetadataRepository implements ManagedDatabaseDescriptionRepository {
 
 	private static final String[] TABLES_TYPES = { "TABLE", "VIEW" };
+	
 	@Autowired
 	private JdbcTemplate managedSource;
 
