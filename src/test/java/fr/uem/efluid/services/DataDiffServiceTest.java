@@ -7,9 +7,9 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import fr.uem.efluid.TestUtils;
-import fr.uem.efluid.model.Value;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.utils.ManagedDiffUtils;
 
 /**

@@ -1,4 +1,4 @@
-package fr.uem.efluid.model;
+package fr.uem.efluid.services.types;
 
 import java.nio.charset.Charset;
 import java.util.LinkedHashMap;

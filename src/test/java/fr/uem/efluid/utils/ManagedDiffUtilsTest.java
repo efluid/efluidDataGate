@@ -6,7 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import fr.uem.efluid.TestUtils;
-import fr.uem.efluid.model.Value;
+import fr.uem.efluid.services.types.Value;
 
 /**
  * @author elecomte

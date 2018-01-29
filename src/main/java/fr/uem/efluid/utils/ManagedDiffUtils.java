@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import fr.uem.efluid.model.Value;
+import fr.uem.efluid.services.types.Value;
 
 /**
  * <p>
@@ -107,7 +107,7 @@ public class ManagedDiffUtils {
 	 */
 	public static List<Value> expandInternalValue(String internalExtracted) {
 
-		// TODO : Need to define if type need to be kept or not
+		// TODO : Need to define if we have to keep type or not
 		return StringSplitter.split(internalExtracted, SEPARATOR).stream()
 				.map(ExpandedValue::new)
 				.collect(Collectors.toList());
