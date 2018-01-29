@@ -1,6 +1,6 @@
 package fr.uem.efluid.model.repositories;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 
@@ -24,13 +24,13 @@ public interface TemporaryDiffIndexRepository {
 	 * @param temp
 	 *            Temp index mapped by DictionaryEntry UUID
 	 */
-	void keepTemporaryDiffIndex(UUID identifier, Map<UUID, List<IndexEntry>> temp);
+	void keepTemporaryDiffIndex(UUID identifier, Map<UUID, Collection<IndexEntry>> temp);
 
 	/**
 	 * @param identifier
 	 * @return Temp index mapped by DictionaryEntry UUID
 	 */
-	Map<UUID, List<IndexEntry>> getTemporaryDiffIndex(UUID identifier);
+	Map<UUID, Collection<IndexEntry>> getTemporaryDiffIndex(UUID identifier);
 
 	/**
 	 * @param identifier

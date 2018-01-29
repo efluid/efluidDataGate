@@ -1,15 +1,19 @@
 package fr.uem.efluid.services;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedParametersRepository;
@@ -27,6 +31,8 @@ import fr.uem.efluid.model.repositories.ManagedParametersRepository;
 @Transactional
 public class DataDiffService {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(DataDiffService.class);
+
 	// TODO : rename this service
 
 	@Autowired
@@ -39,7 +45,7 @@ public class DataDiffService {
 	 * @param dictionaryEntryUuid
 	 * @return
 	 */
-	public List<IndexEntry> processDiff(UUID dictionaryEntryUuid) {
+	public Collection<IndexEntry> processDiff(UUID dictionaryEntryUuid) {
 
 		// Here the main complexity : diff check using JDBC, for one table. Backlog
 		// construction + restoration then diff.
@@ -53,13 +59,86 @@ public class DataDiffService {
 	}
 
 	/**
+	 * <p>
+	 * Process the map compare to provide new <tt>IndexEntry</tt> describing the diffences
+	 * as additions, removals or updates.
+	 * </p>
+	 * <p>
+	 * Their is no need for natural order process, so use parallel processes whenever it's
+	 * possible.
+	 * </p>
+	 * 
 	 * @param knewContent
 	 * @param actualContent
 	 * @return
 	 */
-	private static List<IndexEntry> generateDiffIndex(Map<String, String> knewContent, Map<String, String> actualContent) {
+	static Collection<IndexEntry> generateDiffIndex(
+			Map<String, String> knewContent,
+			Map<String, String> actualContent) {
 
-		// TODO : add tested diff, regarding various strategy
-		return new ArrayList<>();
+		final Set<IndexEntry> diff = ConcurrentHashMap.newKeySet();
+
+		// Todo : add also atomic counters for summary of updates
+		final boolean debug = LOGGER.isDebugEnabled();
+
+		// Use parallel process for higher distribution of verification
+		actualContent.entrySet().parallelStream().forEach(actualOne -> {
+
+			// Found : for delete identification immediately remove from found ones
+			String knewPayload = knewContent.remove(actualOne.getKey());
+
+			// Exist already
+			if (knewPayload != null) {
+
+				// TODO : add independency over column model
+
+				// Content is different : it's an Update
+				if (!actualOne.getValue().equals(knewPayload)) {
+					if (debug) {
+						LOGGER.debug("New endex entry for {} : UPDATED from \"{}\" to \"{}\"", actualOne.getKey(), knewPayload,
+								actualOne.getValue());
+					}
+					diff.add(indexEntry(IndexAction.UPDATE, actualOne.getKey(), actualOne.getValue()));
+				}
+			}
+
+			// Doesn't exist already : it's an addition
+			else {
+				if (debug) {
+					LOGGER.debug("New endex entry for {} : ADD with \"{}\" to \"{}\"", actualOne.getKey(), actualOne.getValue());
+				}
+				diff.add(indexEntry(IndexAction.ADD, actualOne.getKey(), actualOne.getValue()));
+			}
+		});
+
+		// Remaining in knewContent are deleted ones
+		knewContent.entrySet().parallelStream().forEach(e -> {
+			if (debug) {
+				LOGGER.debug("New endex entry for {} : REMOVE from \"{}\"", e.getKey(), e.getValue());
+			}
+			diff.add(indexEntry(IndexAction.REMOVE, e.getKey(), null));
+		});
+
+		return diff;
+	}
+
+	/**
+	 * @param action
+	 * @param key
+	 * @param payload
+	 * @return
+	 */
+	private static IndexEntry indexEntry(IndexAction action, String key, String payload) {
+		IndexEntry entry = new IndexEntry();
+
+		entry.setAction(action);
+		entry.setKeyValue(key);
+
+		// No need for from / to payload : from is always already in index table !
+		entry.setPayload(payload);
+
+		// TODO : other source of timestamp ?
+		entry.setTimestamp(System.currentTimeMillis());
+		return entry;
 	}
 }

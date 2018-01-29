@@ -1,7 +1,7 @@
 package fr.uem.efluid.services;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -92,7 +92,7 @@ public class PilotableCommitPreparationService {
 	private void processAllDiff() {
 
 		try {
-			Map<UUID, List<IndexEntry>> fullDiff = this.executor
+			Map<UUID, Collection<IndexEntry>> fullDiff = this.executor
 					.invokeAll(this.dictionary.findAll().stream().map(this::callDiff).collect(Collectors.toList())).stream()
 					.map(this::gatherResult)
 					.collect(Collectors.toMap(DiffCallResult::getDictUuid, DiffCallResult::getDiff));
@@ -155,13 +155,13 @@ public class PilotableCommitPreparationService {
 	private static final class DiffCallResult {
 
 		private final UUID dictUuid;
-		private final List<IndexEntry> diff;
+		private final Collection<IndexEntry> diff;
 
 		/**
 		 * @param dictUuid
 		 * @param diff
 		 */
-		public DiffCallResult(UUID dictUuid, List<IndexEntry> diff) {
+		public DiffCallResult(UUID dictUuid, Collection<IndexEntry> diff) {
 			super();
 			this.dictUuid = dictUuid;
 			this.diff = diff;
@@ -177,7 +177,7 @@ public class PilotableCommitPreparationService {
 		/**
 		 * @return the diff
 		 */
-		public List<IndexEntry> getDiff() {
+		public Collection<IndexEntry> getDiff() {
 			return this.diff;
 		}
 	}
