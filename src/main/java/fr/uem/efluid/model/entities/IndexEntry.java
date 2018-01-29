@@ -166,7 +166,9 @@ public class IndexEntry {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((this.dictionaryEntry == null) ? 0 : this.dictionaryEntry.hashCode());
 		result = prime * result + ((this.id == null) ? 0 : this.id.hashCode());
+		result = prime * result + ((this.keyValue == null) ? 0 : this.keyValue.hashCode());
 		return result;
 	}
 
@@ -184,10 +186,20 @@ public class IndexEntry {
 		if (getClass() != obj.getClass())
 			return false;
 		IndexEntry other = (IndexEntry) obj;
+		if (this.dictionaryEntry == null) {
+			if (other.dictionaryEntry != null)
+				return false;
+		} else if (!this.dictionaryEntry.equals(other.dictionaryEntry))
+			return false;
 		if (this.id == null) {
 			if (other.id != null)
 				return false;
 		} else if (!this.id.equals(other.id))
+			return false;
+		if (this.keyValue == null) {
+			if (other.keyValue != null)
+				return false;
+		} else if (!this.keyValue.equals(other.keyValue))
 			return false;
 		return true;
 	}

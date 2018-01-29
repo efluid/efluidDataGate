@@ -7,6 +7,7 @@ import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -61,7 +62,7 @@ public class ManagedParametersRepository {
 		List<IndexEntry> existingBacklog = this.coreIndex.findByDictionaryEntryOrderByTimestamp(parameterEntry);
 
 		// Content for playing back the backlog
-		Map<String, String> lines = new HashMap<>(1000);
+		Map<String, String> lines = new ConcurrentHashMap<>(1000);
 
 		for (IndexEntry line : existingBacklog) {
 

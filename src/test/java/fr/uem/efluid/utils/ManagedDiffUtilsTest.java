@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import fr.uem.efluid.TestUtils;
+import fr.uem.efluid.model.Value;
 
 /**
  * @author elecomte
@@ -15,21 +16,21 @@ import fr.uem.efluid.TestUtils;
 public class ManagedDiffUtilsTest {
 
 	@Test
-	public void testAppendExtractedValueWithDataSet(){
-		Map<String,String> dataset = TestUtils.readDataset("diff1/actual.csv");
-		
-		Assert.assertEquals(dataset.size(),11 );
-		Assert.assertEquals("Value=S/[B@65e579dc,Preset=S/[B@61baa894,Something=S/[B@b065c63", dataset.get("1"));
+	public void testAppendExtractedValueWithDataSet() {
+		Map<String, String> dataset = TestUtils.readDataset("diff1/actual.csv");
+
+		Assert.assertEquals(dataset.size(), 11);
+		Assert.assertEquals("Value=S/U29tZXRoaW5n,Preset=S/T3RoZXI=,Something=S/MTIzNDAw", dataset.get("1"));
 	}
-	
 
 	@Test
-	public void testExplodeInternalValueWithDataSet(){
-		Map<String,String> dataset = TestUtils.readDataset("diff1/actual.csv");
-		
-		Assert.assertEquals(dataset.size(),11 );
-		Assert.assertEquals("Something", ManagedDiffUtils.explodeInternalValue(dataset.get("1")).get("Value"));
-		Assert.assertEquals("Other", ManagedDiffUtils.explodeInternalValue(dataset.get("1")).get("Preset"));
-		Assert.assertEquals("123400", ManagedDiffUtils.explodeInternalValue(dataset.get("1")).get("Something"));
+	public void testExplodeInternalValueWithDataSet() {
+		Map<String, String> dataset = TestUtils.readDataset("diff1/actual.csv");
+		Map<String, Value> values = Value.mapped(ManagedDiffUtils.expandInternalValue(dataset.get("1")));
+
+		Assert.assertEquals(dataset.size(), 11);
+		Assert.assertEquals("Something", values.get("Value").getValueAsString());
+		Assert.assertEquals("Other", values.get("Preset").getValueAsString());
+		Assert.assertEquals("123400", values.get("Something").getValueAsString());
 	}
 }

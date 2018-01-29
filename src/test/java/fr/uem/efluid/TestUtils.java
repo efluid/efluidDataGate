@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
@@ -53,15 +54,16 @@ public class TestUtils {
 	 */
 	private static String simulateInternalValue(String[] headers, String[] csvLine) {
 
-		StringBuilder oneLine = new StringBuilder();
+		// Keep insertion order
+		LinkedHashMap<String, Object> lineContent = new LinkedHashMap<>();
 
 		// All except key
 		for (int i = 1; i < headers.length; i++) {
 			boolean isString = !headers[i].endsWith(NOT_STRING_IDENTIFIER);
 			String header = isString ? headers[i] : headers[i].substring(0, headers[i].length() - NOT_STRING_IDENTIFIER.length());
-			ManagedDiffUtils.appendExtractedValue(oneLine, header, csvLine[0].getBytes(), isString, i == headers.length - 1);
+			lineContent.put(header, isString ? csvLine[i] : Long.decode(csvLine[i]));
 		}
 
-		return oneLine.toString();
+		return ManagedDiffUtils.convertToExtractedValue(lineContent);
 	}
 }

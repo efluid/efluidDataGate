@@ -73,8 +73,8 @@ public class DataDiffService {
 	 * @return
 	 */
 	static Collection<IndexEntry> generateDiffIndex(
-			Map<String, String> knewContent,
-			Map<String, String> actualContent) {
+			final Map<String, String> knewContent,
+			final Map<String, String> actualContent) {
 
 		final Set<IndexEntry> diff = ConcurrentHashMap.newKeySet();
 
@@ -82,34 +82,7 @@ public class DataDiffService {
 		final boolean debug = LOGGER.isDebugEnabled();
 
 		// Use parallel process for higher distribution of verification
-		actualContent.entrySet().parallelStream().forEach(actualOne -> {
-
-			// Found : for delete identification immediately remove from found ones
-			String knewPayload = knewContent.remove(actualOne.getKey());
-
-			// Exist already
-			if (knewPayload != null) {
-
-				// TODO : add independency over column model
-
-				// Content is different : it's an Update
-				if (!actualOne.getValue().equals(knewPayload)) {
-					if (debug) {
-						LOGGER.debug("New endex entry for {} : UPDATED from \"{}\" to \"{}\"", actualOne.getKey(), knewPayload,
-								actualOne.getValue());
-					}
-					diff.add(indexEntry(IndexAction.UPDATE, actualOne.getKey(), actualOne.getValue()));
-				}
-			}
-
-			// Doesn't exist already : it's an addition
-			else {
-				if (debug) {
-					LOGGER.debug("New endex entry for {} : ADD with \"{}\" to \"{}\"", actualOne.getKey(), actualOne.getValue());
-				}
-				diff.add(indexEntry(IndexAction.ADD, actualOne.getKey(), actualOne.getValue()));
-			}
-		});
+		actualContent.entrySet().parallelStream().forEach(actualOne -> searchDiff(actualOne, knewContent, diff, debug));
 
 		// Remaining in knewContent are deleted ones
 		knewContent.entrySet().parallelStream().forEach(e -> {
@@ -120,6 +93,49 @@ public class DataDiffService {
 		});
 
 		return diff;
+	}
+
+	/**
+	 * <p>
+	 * Atomic search for update / addition on one actual item
+	 * </p>
+	 * 
+	 * @param actualOne
+	 * @param knewContent
+	 * @param diff
+	 * @param debug
+	 */
+	private static void searchDiff(
+			final Map.Entry<String, String> actualOne,
+			final Map<String, String> knewContent,
+			final Set<IndexEntry> diff,
+			final boolean debug) {
+
+		// Found : for delete identification immediately remove from found ones
+		String knewPayload = knewContent.remove(actualOne.getKey());
+
+		// Exist already
+		if (knewPayload != null) {
+
+			// TODO : add independency over column model
+
+			// Content is different : it's an Update
+			if (!actualOne.getValue().equals(knewPayload)) {
+				if (debug) {
+					LOGGER.debug("New endex entry for {} : UPDATED from \"{}\" to \"{}\"", actualOne.getKey(), knewPayload,
+							actualOne.getValue());
+				}
+				diff.add(indexEntry(IndexAction.UPDATE, actualOne.getKey(), actualOne.getValue()));
+			}
+		}
+
+		// Doesn't exist already : it's an addition
+		else {
+			if (debug) {
+				LOGGER.debug("New endex entry for {} : ADD with \"{}\" to \"{}\"", actualOne.getKey(), actualOne.getValue());
+			}
+			diff.add(indexEntry(IndexAction.ADD, actualOne.getKey(), actualOne.getValue()));
+		}
 	}
 
 	/**

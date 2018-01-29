@@ -3,14 +3,17 @@ package fr.uem.efluid.utils;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import fr.uem.efluid.model.Value;
 
 /**
- * Tools for query build used in Managed database access. For backlog identification
+ * <p>
+ * Tools for query build used in Managed database access. For backlog identification.
+ * </p>
  * 
  * @author elecomte
  * @since v0.0.1
@@ -27,13 +30,21 @@ public class ManagedDiffUtils {
 	private final static Encoder B64_ENCODER = Base64.getEncoder();
 
 	/**
-	 * Using internal templating desc, prepare one value for extraction
+	 * <p>
+	 * Using internal templating desc, prepare one value for extraction when processing
+	 * content cell after cell, from a resultSet
+	 * </p>
 	 * 
 	 * @param builder
+	 *            current line builder. One builder for each content line
 	 * @param colName
+	 *            name of the cell
 	 * @param value
+	 *            raw content of the cell
 	 * @param stringCol
+	 *            true if value is a string
 	 * @param last
+	 *            true if it's the last cell
 	 */
 	public static void appendExtractedValue(
 			final StringBuilder builder,
@@ -45,14 +56,44 @@ public class ManagedDiffUtils {
 		builder.append(colName).append(AFFECT);
 
 		if (stringCol) {
-			builder.append(TYPE_STRING).append(TYPE_IDENT).append(B64_ENCODER.encode(value));
+			builder.append(TYPE_STRING).append(TYPE_IDENT).append(new String(B64_ENCODER.encode(value), Value.CONTENT_ENCODING));
 		} else {
-			builder.append(TYPE_OTHER).append(TYPE_IDENT).append(B64_ENCODER.encode(value));
+			builder.append(TYPE_OTHER).append(TYPE_IDENT).append(new String(B64_ENCODER.encode(value), Value.CONTENT_ENCODING));
 		}
 
 		if (!last) {
 			builder.append(SEPARATOR);
 		}
+	}
+
+	/**
+	 * <p>
+	 * To produce the exact same extracted value format than with "normal RS-based
+	 * operation", but from a raw map of values (useful for testing). Provides directly
+	 * the string result.
+	 * </p>
+	 * 
+	 * @param lineContent
+	 *            content in a LinkedHashMap (to keep insertion order)
+	 * @return
+	 */
+	public static String convertToExtractedValue(final LinkedHashMap<String, Object> lineContent) {
+
+		StringBuilder oneLine = new StringBuilder();
+
+		int remaining = lineContent.size() - 1;
+
+		for (Map.Entry<String, Object> value : lineContent.entrySet()) {
+			appendExtractedValue(
+					oneLine,
+					value.getKey(),
+					value.getValue().toString().getBytes(Value.CONTENT_ENCODING),
+					value.getValue() instanceof String,
+					remaining == 0);
+			remaining--;
+		}
+
+		return oneLine.toString();
 	}
 
 	/**
@@ -64,65 +105,78 @@ public class ManagedDiffUtils {
 	 * @param internalExtracted
 	 * @return
 	 */
-	public static Map<String, Object> explodeInternalValue(String internalExtracted) {
+	public static List<Value> expandInternalValue(String internalExtracted) {
 
 		// TODO : Need to define if type need to be kept or not
-		return Stream.iterate(internalExtracted, str -> {
-			int pos = str.lastIndexOf(SEPARATOR);
-			return pos == -1 ? "" : str.substring(0, pos);
-		}).map(DecodedValueAffect::new).collect(Collectors.toMap(DecodedValueAffect::getName, DecodedValueAffect::asValue));
+		return StringSplitter.split(internalExtracted, SEPARATOR).stream()
+				.map(ExpandedValue::new)
+				.collect(Collectors.toList());
 	}
 
 	/**
-	 * For decoding of an internaly indexed value
+	 * <p>
+	 * For decoding of an internaly indexed value, with access to a convening
+	 * <tt>Value</tt>.
+	 * </p>
 	 * 
 	 * @author elecomte
 	 * @since v0.0.1
 	 * @version 1
 	 */
-	private static final class DecodedValueAffect {
+	private static final class ExpandedValue implements Value {
 
 		private final String name;
-		final byte[] value;
-		final boolean string;
+		private final byte[] value;
+		private final boolean string;
 
 		private final static Decoder B64_DECODER = Base64.getDecoder();
 
 		/**
+		 * <p>
+		 * Do the real decoding process
+		 * </p>
+		 * 
 		 * @param raw
 		 */
-		DecodedValueAffect(String raw) {
+		ExpandedValue(String raw) {
 			// Basic revert of what's done in appendExtractedValue
-			int pos = raw.lastIndexOf(AFFECT);
-			this.name = raw.substring(0, pos);
-			this.value = B64_DECODER.decode(raw.substring(pos + 2));
+			int pos = raw.indexOf(AFFECT);
+			this.name = raw.substring(0, pos).intern();
+			this.value = B64_DECODER.decode(raw.substring(pos + 3));
 			this.string = (raw.charAt(pos + 1) == TYPE_STRING);
 		}
 
 		/**
-		 * @return the name
+		 * @return
 		 */
+		@Override
+		public byte[] getValue() {
+			return this.value;
+		}
+
+		/**
+		 * @return
+		 */
+		@Override
+		public boolean isString() {
+			return this.string;
+		}
+
+		/**
+		 * @return
+		 */
+		@Override
 		public String getName() {
 			return this.name;
 		}
 
 		/**
-		 * @return the value
+		 * @return
+		 * @see java.lang.Object#toString()
 		 */
-		public Value asValue() {
-			return new Value() {
-
-				@Override
-				public byte[] getValue() {
-					return DecodedValueAffect.this.value;
-				}
-
-				@Override
-				public boolean isString() {
-					return DecodedValueAffect.this.string;
-				}
-
-			};
+		@Override
+		public String toString() {
+			return this.name + "=" + (this.isString() ? "\"" : "") + getValueAsString() + (this.isString() ? "\"" : "");
 		}
 	}
 }
