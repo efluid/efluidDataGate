@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,8 @@ public class DataDiffService {
 	@Autowired
 	private ManagedParametersRepository rawParameters;
 
+	private boolean useParallelDiff = false;
+
 	/**
 	 * @param dictionaryEntryUuid
 	 * @return
@@ -72,7 +75,7 @@ public class DataDiffService {
 	 * @param actualContent
 	 * @return
 	 */
-	static Collection<IndexEntry> generateDiffIndex(
+	protected Collection<IndexEntry> generateDiffIndex(
 			final Map<String, String> knewContent,
 			final Map<String, String> actualContent) {
 
@@ -82,10 +85,10 @@ public class DataDiffService {
 		final boolean debug = LOGGER.isDebugEnabled();
 
 		// Use parallel process for higher distribution of verification
-		actualContent.entrySet().parallelStream().forEach(actualOne -> searchDiff(actualOne, knewContent, diff, debug));
+		switchedStream(actualContent).forEach(actualOne -> searchDiff(actualOne, knewContent, diff, debug));
 
 		// Remaining in knewContent are deleted ones
-		knewContent.entrySet().parallelStream().forEach(e -> {
+		switchedStream(knewContent).forEach(e -> {
 			if (debug) {
 				LOGGER.debug("New endex entry for {} : REMOVE from \"{}\"", e.getKey(), e.getValue());
 			}
@@ -93,6 +96,26 @@ public class DataDiffService {
 		});
 
 		return diff;
+	}
+
+	/**
+	 * @param parallel
+	 */
+	void applyParallelMode(boolean parallel) {
+		this.useParallelDiff = parallel;
+	}
+
+	/**
+	 * @param source
+	 * @return
+	 */
+	private Stream<Map.Entry<String, String>> switchedStream(Map<String, String> source) {
+
+		if (this.useParallelDiff) {
+			return source.entrySet().parallelStream();
+		}
+
+		return source.entrySet().stream();
 	}
 
 	/**

@@ -5,10 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import fr.uem.efluid.utils.ManagedDiffUtils;
@@ -45,6 +47,35 @@ public class TestUtils {
 
 		return list.stream().skip(1).map(l -> l.split(CSV_SEP))
 				.collect(Collectors.toMap(t -> t[0], t -> simulateInternalValue(headers, t)));
+	}
+
+	/**
+	 * @param model
+	 * @param factor
+	 * @return
+	 */
+	public static Map<String, String> multiplyDataset(Map<String, String> model, int factor) {
+
+		Map<String, String> multi = new HashMap<>();
+
+		// Assumes key is a Long stored as string
+		long max = model.keySet().stream().mapToLong(Long::decode).max().getAsLong();
+
+		for (int i = 0; i < max * factor; i++) {
+			multi.put(String.valueOf(i), getAny(model));
+		}
+
+		return multi;
+	}
+
+	public static <V> V getAny(Map<String, V> model) {
+		V val = model.get(Long.toString(ThreadLocalRandom.current().nextInt(1, model.entrySet().size())));
+
+		// If none at this key, try again ...
+		if (val == null) {
+			return getAny(model);
+		}
+		return val;
 	}
 
 	/**

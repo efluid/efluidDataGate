@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 26/01/2018*
+*Mise à jour au 29/01/2018*
 
 **Maquette statique**
 * Dernière version : 24/01/2018
@@ -14,7 +14,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Modèle core : en place, avec repos
 * Utilisation BDD managed : Avec JDBCTemplate. Dev fait sur lecture données bruts (non testé)
 * Preparation au diff : "regénération" des données préues à partir de l'index en place (non testé)
-* Gestion du diff : service en place, diff technique (par comparaison de liste) reste à mettre en place. Nombreux tests et optims à prévoir
+* Gestion du diff : diff de base en place, testé, benchmarké
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
 * Build : maven OK. Tests faits pour avoir un CI dédié (drone.io)
 
