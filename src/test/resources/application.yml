@@ -26,7 +26,7 @@ spring:
        driver-class-name: org.h2.Driver
 
     jpa:
-        show-sql: true
+        show-sql: false
         hibernate:
            ddl-auto: create
 

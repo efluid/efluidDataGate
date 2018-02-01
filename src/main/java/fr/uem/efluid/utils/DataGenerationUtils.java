@@ -47,18 +47,13 @@ public class DataGenerationUtils {
 	/**
 	 * @param name
 	 * @param domain
+	 * @param select
 	 * @param table
 	 * @param where
+	 * @param keyName
 	 * @return
 	 */
-	/**
-	 * @param name
-	 * @param domain
-	 * @param table
-	 * @param where
-	 * @return
-	 */
-	public static DictionaryEntry entry(String name, FunctionalDomain domain, String table, String where, String keyName) {
+	public static DictionaryEntry entry(String name, FunctionalDomain domain, String select, String table, String where, String keyName) {
 
 		DictionaryEntry entry = new DictionaryEntry();
 
@@ -66,6 +61,7 @@ public class DataGenerationUtils {
 		entry.setUuid(UUID.randomUUID());
 		entry.setParameterName(name);
 		entry.setDomain(domain);
+		entry.setSelectClause(select);
 		entry.setTableName(table);
 		entry.setWhereClause(where);
 		entry.setKeyName(keyName);
@@ -110,5 +106,5 @@ public class DataGenerationUtils {
 		commit.setUser(user);
 		return commit;
 	}
-	
+
 }

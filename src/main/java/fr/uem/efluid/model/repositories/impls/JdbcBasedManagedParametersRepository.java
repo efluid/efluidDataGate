@@ -127,6 +127,7 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 
 			// Prepare data definition from meta
 			final int count = meta.getColumnCount();
+			final int last = count - 1;
 			String[] columnNames = new String[count];
 			boolean[] columnStrings = new boolean[count];
 			int keyPos = 1;
@@ -147,7 +148,7 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 				String keyValue = null;
 				for (int i = 0; i < count; i++) {
 					if (i != keyPos) {
-						ManagedDiffUtils.appendExtractedValue(payload, columnNames[i], rs.getString(i+1), columnStrings[i], i < count);
+						ManagedDiffUtils.appendExtractedValue(payload, columnNames[i], rs.getString(i+1), columnStrings[i], i == last);
 					} else {
 						keyValue = rs.getString(i+1);
 					}

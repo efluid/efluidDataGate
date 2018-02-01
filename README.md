@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 29/01/2018*
+*Mise à jour au 01/02/2018*
 
 **Maquette statique**
 * Dernière version : 24/01/2018
@@ -13,8 +13,9 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Mise en place général : projet actif, stacks en place. BDD Postgres core fonctionnelle
 * Modèle core : en place, avec repos
 * Utilisation BDD managed : Avec JDBCTemplate. Dev fait sur lecture données bruts (non testé)
-* Preparation au diff : "regénération" des données préues à partir de l'index en place (non testé)
-* Gestion du diff : diff de base en place, testé, benchmarké
+* Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
+* Gestion du diff : diff de base en place, testé
+* Un benchmark synthétique des fonctions principale est en cours de construction
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
 * Build : maven OK. Tests faits pour avoir un CI dédié (drone.io)
 
@@ -35,10 +36,14 @@ Le prototype est basé sur Spring-boot. Il n'y a rien à installer pour l'exécu
 Le fichier de configuration technique de l'application est *src/main/resources/application.yml*
 
 ### Quickstart
-Pour démarrer sans rien installer, juste à partir du projet cloné, utiliser : 
+Pour démarrer sans rien installer, juste à partir du projet cloné, en ayant maven sur son poste, utiliser : 
 
-    mvn spring-boot:run
+    ## Attention, des dépendances qui ne sont pas présentes dans l'Artifactory Efluid peuvent être nécessaires. 
+    ## Idéalement, exécuter la commande en désactivant l'utilisation du repository Efluid dans le fichier 
+    ## ~/.m2/settings.xml (en ajoutant un profile dédié pour cela par exemple)
     
+    mvn spring-boot:run
+
 L'application démarre après build. Le service est accessible à l'adresse [http://localhost:8080](http://localhost:8080)
 
 ### Démarrage depuis un IDE
@@ -158,4 +163,15 @@ Le fichier est au format YAML.
             username: user
             password: user
             driver-class-name: org.postgresql.Driver
+
+## Aide au développement / maintenance
+
+### Utilisation des tests automatisés
+Le comportement des fonctions clés de l'application est validé par différents tests automatisés, de types tests unitaires et tests d'intégration.
+Ces tests sont exécutés automatiquement lors du build avec Maven. Ils peuvent être démarrés manuellement depuis l'IDE directement également
+
+A noter : les tests d'intégrations utilisent une BDD embarquée H2, droppée après chaque exécution (et rollbackée après chaque cas de test). Une console web est accessible pour consulter les données de la BDD H2 utilisée : il suffit d'ajouter un point d'arrêt sur un test dont on souhaite suivre le comportement au niveau BDD, puis d'accéder à la console à l'adresse [http://localhost:8082](http://localhost:8082). Dans l'interface de connexion, utiliser les paramètres de connexion suivants : 
+* **url**: jdbc:h2:~\h2;
+* **username**: sa
+* **password**: *-- laisser vide --*
 

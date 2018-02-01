@@ -67,17 +67,17 @@ public class DemoDataLoader {
 		FunctionalDomain dom3 = this.domains.save(domain("Processus utilisateurs"));
 		this.domains.save(domain("Editions"));
 
-		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, "TCATEGORYMATERIEL", "1=1", "id"));
-		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, "TTYPEMATERIEL", "1=1", "id"));
-		DictionaryEntry tdij = this.dictionary.save(entry("Type de disjoncteur", dom1, "TDISJONCTEURTYPE", "1=1", "id"));
-		this.dictionary.save(entry("Modèle de compteur", dom1, "TMODELE", "mod='test'", "id"));
-		this.dictionary.save(entry("Programmation", dom1, "TPROGRAMMATION", "1=1", "id"));
-		this.dictionary.save(entry("Modèle type", dom1, "TMODTYPE", "1=1", "id"));
-		this.dictionary.save(entry("Couleur", dom1, "TCOULEUR", "vol='12'", "id"));
-		this.dictionary.save(entry("Prix énergie", dom2, "TABLE1", "1=1", "id"));
-		this.dictionary.save(entry("Autre exemple 1", dom2, "TABLE2", "1=1", "id"));
-		this.dictionary.save(entry("Autre exemple 2", dom2, "TABLE3", "1=1", "id"));
-		this.dictionary.save(entry("Autre exemple 3", dom3, "TABLE4", "1=1", "id"));
+		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, null, "TCATEGORYMATERIEL", "1=1", "id"));
+		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, null, "TTYPEMATERIEL", "1=1", "id"));
+		DictionaryEntry tdij = this.dictionary.save(entry("Type de disjoncteur", dom1, null, "TDISJONCTEURTYPE", "1=1", "id"));
+		this.dictionary.save(entry("Modèle de compteur", dom1, null, "TMODELE", "mod='test'", "id"));
+		this.dictionary.save(entry("Programmation", dom1, null, "TPROGRAMMATION", "1=1", "id"));
+		this.dictionary.save(entry("Modèle type", dom1, null, "TMODTYPE", "1=1", "id"));
+		this.dictionary.save(entry("Couleur", dom1, null, "TCOULEUR", "vol='12'", "id"));
+		this.dictionary.save(entry("Prix énergie", dom2, null, "TABLE1", "1=1", "id"));
+		this.dictionary.save(entry("Autre exemple 1", dom2, null, "TABLE2", "1=1", "id"));
+		this.dictionary.save(entry("Autre exemple 2", dom2, null, "TABLE3", "1=1", "id"));
+		this.dictionary.save(entry("Autre exemple 3", dom3, null, "TABLE4", "1=1", "id"));
 
 		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont, 5));
 		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur, 3));

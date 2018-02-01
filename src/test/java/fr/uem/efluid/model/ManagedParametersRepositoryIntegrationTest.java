@@ -3,7 +3,6 @@ package fr.uem.efluid.model;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,26 +39,36 @@ public class ManagedParametersRepositoryIntegrationTest {
 
 	private UUID dictionaryEntryUuid;
 
-	@Before
 	@Transactional
-	public void setupDatabase() {
-
-		this.dictionaryEntryUuid = this.loader.setupDatabaseForDiff("diff7", 1);
+	public void setupDatabase(String diff) {
+		this.dictionaryEntryUuid = this.loader.setupDatabaseForDiff(diff);
 	}
 
 	@Test
 	public void testExtractCurrentContentLow() {
-
+		setupDatabase("diff7");
 		Map<String, String> raw = this.managed.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
-
 		TestUtils.assertDatasetEquals(raw, "diff7/actual.csv");
 	}
 
 	@Test
 	public void testRegenerateKnewContentLow() {
-
+		setupDatabase("diff7");
 		Map<String, String> raw = this.managed.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
-
 		TestUtils.assertDatasetEquals(raw, "diff7/knew.csv");
+	}
+
+	@Test
+	public void testExtractCurrentContentHeavy() {
+		setupDatabase("diff8");
+		Map<String, String> raw = this.managed.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+		TestUtils.assertDatasetEquals(raw, "diff8/actual.csv");
+	}
+
+	@Test
+	public void testRegenerateKnewContentHeavy() {
+		setupDatabase("diff8");
+		Map<String, String> raw = this.managed.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+		TestUtils.assertDatasetEquals(raw, "diff8/knew.csv");
 	}
 }

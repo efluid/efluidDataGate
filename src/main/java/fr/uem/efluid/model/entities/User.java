@@ -25,6 +25,7 @@ public class User {
 	@NotBlank
 	private String email;
 
+	// TODO : add password encryption (using spring security pwd encoder)
 	@NotBlank
 	private String password;
 

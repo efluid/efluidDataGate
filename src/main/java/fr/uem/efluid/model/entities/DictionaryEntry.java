@@ -12,6 +12,13 @@ import javax.validation.constraints.NotNull;
 import fr.uem.efluid.model.Shared;
 
 /**
+ * <p>
+ * Definition of a parameter table, in a "big central dictionary of all parameters".
+ * Mostly a link between some business related datas which are used for a more user
+ * friendly rendering, and some technical datas used to select the right parameters value
+ * from managed database.
+ * </p>
+ * 
  * @author elecomte
  * @since v0.0.1
  * @version 1
@@ -25,6 +32,8 @@ public class DictionaryEntry implements Shared {
 
 	@NotNull
 	private String parameterName;
+
+	// TODO : add protection against SQL Injection
 
 	@NotNull
 	private String tableName;

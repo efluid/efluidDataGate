@@ -104,9 +104,9 @@ public class TestUtils {
 		Map<String, String> values = ManagedDiffUtils.expandInternalValue(datasetEntry.getValue()).stream()
 				.collect(Collectors.toMap(Value::getName, Value::getValueAsString));
 
-		source.setValue(values.get("Value"));
-		source.setPreset(values.get("Preset"));
-		source.setSomething(values.get("Something"));
+		source.setValue(values.get("VALUE"));
+		source.setPreset(values.get("PRESET"));
+		source.setSomething(values.get("SOMETHING"));
 		return source;
 	}
 
@@ -116,7 +116,18 @@ public class TestUtils {
 	 */
 	public static void assertDatasetEquals(Map<String, String> datasToCompare, String dataset) {
 		Map<String, String> expecteds = readDataset(dataset);
-		Assert.assertEquals("Number of elements in dataset is different than expected", expecteds.size(), datasToCompare.size());
+
+		// Not expected size : display global diff
+		if (datasToCompare.size() != expecteds.size()) {
+			int realSize = datasToCompare.size();
+			List<String> missing = expecteds.keySet().stream()
+					.filter(e -> datasToCompare.remove(e) == null)
+					.collect(Collectors.toList());
+			List<String> added = datasToCompare.keySet().stream().collect(Collectors.toList());
+			throw new AssertionError("Dataset is not of the expected size. " + realSize + " items are present will " + expecteds.size()
+					+ " items are expected. New ones are with keys " + added + ", removed ones are with keys " + missing);
+		}
+
 		for (Map.Entry<String, String> expected : expecteds.entrySet()) {
 			String data = datasToCompare.get(expected.getKey());
 			Assert.assertNotNull("The expected key \"" + expected.getKey() + "\" is not found in data", data);
