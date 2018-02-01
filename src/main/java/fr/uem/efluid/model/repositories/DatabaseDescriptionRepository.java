@@ -15,7 +15,7 @@ import fr.uem.efluid.utils.TechnicalException;
  * @since v0.0.1
  * @version 1
  */
-public interface ManagedDatabaseDescriptionRepository {
+public interface DatabaseDescriptionRepository {
 
 	/**
 	 * @return completed TableDescription for the managed database.

@@ -13,6 +13,10 @@ import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+import org.junit.Assert;
+
+import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.stubs.SimulatedSource;
 import fr.uem.efluid.utils.ManagedDiffUtils;
 
 /**
@@ -22,6 +26,7 @@ import fr.uem.efluid.utils.ManagedDiffUtils;
  */
 public class TestUtils {
 
+	public static final String SOURCE_TABLE_NAME = "TTESTSOURCE";
 	private static final String CSV_SEP = ";";
 	private static final String NOT_STRING_IDENTIFIER = "(not string)";
 
@@ -56,6 +61,11 @@ public class TestUtils {
 	 */
 	public static Map<String, String> multiplyDataset(Map<String, String> model, int factor) {
 
+		// Ignore multiply
+		if (factor <= 1) {
+			return model;
+		}
+
 		Map<String, String> multi = new HashMap<>();
 
 		// Assumes key is a Long stored as string
@@ -68,6 +78,10 @@ public class TestUtils {
 		return multi;
 	}
 
+	/**
+	 * @param model
+	 * @return
+	 */
 	public static <V> V getAny(Map<String, V> model) {
 		V val = model.get(Long.toString(ThreadLocalRandom.current().nextInt(1, model.entrySet().size())));
 
@@ -76,6 +90,38 @@ public class TestUtils {
 			return getAny(model);
 		}
 		return val;
+	}
+
+	/**
+	 * @param datasetEntry
+	 * @return
+	 */
+	public static SimulatedSource entryToSource(Map.Entry<String, String> datasetEntry) {
+		// Key;Value;Preset;Something
+		SimulatedSource source = new SimulatedSource();
+		source.setKey(Long.decode(datasetEntry.getKey()));
+
+		Map<String, String> values = ManagedDiffUtils.expandInternalValue(datasetEntry.getValue()).stream()
+				.collect(Collectors.toMap(Value::getName, Value::getValueAsString));
+
+		source.setValue(values.get("Value"));
+		source.setPreset(values.get("Preset"));
+		source.setSomething(values.get("Something"));
+		return source;
+	}
+
+	/**
+	 * @param datasToCompare
+	 * @param dataset
+	 */
+	public static void assertDatasetEquals(Map<String, String> datasToCompare, String dataset) {
+		Map<String, String> expecteds = readDataset(dataset);
+		Assert.assertEquals("Number of elements in dataset is different than expected", expecteds.size(), datasToCompare.size());
+		for (Map.Entry<String, String> expected : expecteds.entrySet()) {
+			String data = datasToCompare.get(expected.getKey());
+			Assert.assertNotNull("The expected key \"" + expected.getKey() + "\" is not found in data", data);
+			Assert.assertEquals("For the key \"" + expected.getKey() + "\", values are different", expected.getValue(), data);
+		}
 	}
 
 	/**

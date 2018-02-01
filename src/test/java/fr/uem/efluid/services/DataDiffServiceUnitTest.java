@@ -17,7 +17,7 @@ import fr.uem.efluid.utils.ManagedDiffUtils;
  * @since v0.0.1
  * @version 1
  */
-public class DataDiffServiceTest {
+public class DataDiffServiceUnitTest {
 
 	// No spring load here, for simple diff needs
 	private DataDiffService service = new DataDiffService();

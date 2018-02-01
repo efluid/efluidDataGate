@@ -1,7 +1,11 @@
 package fr.uem.efluid.services.types;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
+
+import fr.uem.efluid.model.entities.IndexEntry;
 
 /**
  * <p>
@@ -24,6 +28,8 @@ public final class PilotedCommitPreparation {
 	private PilotedCommitStatus status;
 
 	private Throwable errorDuringPreparation;
+
+	private Map<UUID, Collection<IndexEntry>> preparedDiff;
 
 	/**
 	 * 
@@ -83,6 +89,21 @@ public final class PilotedCommitPreparation {
 	 */
 	public LocalDateTime getEnd() {
 		return this.end;
+	}
+
+	/**
+	 * @return the preparedDiff
+	 */
+	public Map<UUID, Collection<IndexEntry>> getPreparedDiff() {
+		return this.preparedDiff;
+	}
+
+	/**
+	 * @param preparedDiff
+	 *            the preparedDiff to set
+	 */
+	public void setPreparedDiff(Map<UUID, Collection<IndexEntry>> preparedDiff) {
+		this.preparedDiff = preparedDiff;
 	}
 
 	/**

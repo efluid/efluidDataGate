@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.model.repositories.TemporaryDiffIndexRepository;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
 import fr.uem.efluid.utils.TechnicalException;
@@ -41,9 +40,6 @@ public class PilotableCommitPreparationService {
 
 	@Autowired
 	private DictionaryRepository dictionary;
-
-	@Autowired
-	private TemporaryDiffIndexRepository temp;
 
 	// TODO : use cfg entry.
 	private ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -97,8 +93,8 @@ public class PilotableCommitPreparationService {
 					.map(this::gatherResult)
 					.collect(Collectors.toMap(DiffCallResult::getDictUuid, DiffCallResult::getDiff));
 
-			// Keep in shared temp for commit build
-			this.temp.keepTemporaryDiffIndex(this.current.getIdentifier(), fullDiff);
+			// Keep in preparation for commit build
+			this.current.setPreparedDiff(fullDiff);
 
 			// Mark preparation as completed
 			this.current.setEnd(LocalDateTime.now());

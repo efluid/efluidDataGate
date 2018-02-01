@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
-import fr.uem.efluid.model.repositories.ManagedDatabaseDescriptionRepository;
+import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 
 /**
  * Force-load the metadata for Managed database
@@ -19,7 +19,7 @@ import fr.uem.efluid.model.repositories.ManagedDatabaseDescriptionRepository;
 public class ManagedMetadataPreloader {
 
 	@Autowired
-	private ManagedDatabaseDescriptionRepository metas;
+	private DatabaseDescriptionRepository metas;
 	
 	@PostConstruct
 	public void preload(){

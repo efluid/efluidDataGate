@@ -3,9 +3,7 @@ package fr.uem.efluid.config;
 import static fr.uem.efluid.model.entities.IndexAction.ADD;
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static fr.uem.efluid.model.entities.IndexAction.UPDATE;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import static fr.uem.efluid.utils.DataGenerationUtils.*;
 
 import javax.annotation.PostConstruct;
 
@@ -19,8 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
@@ -71,22 +67,22 @@ public class DemoDataLoader {
 		FunctionalDomain dom3 = this.domains.save(domain("Processus utilisateurs"));
 		this.domains.save(domain("Editions"));
 
-		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, "TCATEGORYMATERIEL", "1=1"));
-		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, "TTYPEMATERIEL", "1=1"));
-		DictionaryEntry tdij = this.dictionary.save(entry("Type de disjoncteur", dom1, "TDISJONCTEURTYPE", "1=1"));
-		this.dictionary.save(entry("Modèle de compteur", dom1, "TMODELE", "mod='test'"));
-		this.dictionary.save(entry("Programmation", dom1, "TPROGRAMMATION", "1=1"));
-		this.dictionary.save(entry("Modèle type", dom1, "TMODTYPE", "1=1"));
-		this.dictionary.save(entry("Couleur", dom1, "TCOULEUR", "vol='12'"));
-		this.dictionary.save(entry("Prix énergie", dom2, "TABLE1", "1=1"));
-		this.dictionary.save(entry("Autre exemple 1", dom2, "TABLE2", "1=1"));
-		this.dictionary.save(entry("Autre exemple 2", dom2, "TABLE3", "1=1"));
-		this.dictionary.save(entry("Autre exemple 3", dom3, "TABLE4", "1=1"));
+		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, "TCATEGORYMATERIEL", "1=1", "id"));
+		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, "TTYPEMATERIEL", "1=1", "id"));
+		DictionaryEntry tdij = this.dictionary.save(entry("Type de disjoncteur", dom1, "TDISJONCTEURTYPE", "1=1", "id"));
+		this.dictionary.save(entry("Modèle de compteur", dom1, "TMODELE", "mod='test'", "id"));
+		this.dictionary.save(entry("Programmation", dom1, "TPROGRAMMATION", "1=1", "id"));
+		this.dictionary.save(entry("Modèle type", dom1, "TMODTYPE", "1=1", "id"));
+		this.dictionary.save(entry("Couleur", dom1, "TCOULEUR", "vol='12'", "id"));
+		this.dictionary.save(entry("Prix énergie", dom2, "TABLE1", "1=1", "id"));
+		this.dictionary.save(entry("Autre exemple 1", dom2, "TABLE2", "1=1", "id"));
+		this.dictionary.save(entry("Autre exemple 2", dom2, "TABLE3", "1=1", "id"));
+		this.dictionary.save(entry("Autre exemple 3", dom3, "TABLE4", "1=1", "id"));
 
-		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont));
-		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur));
-		Commit com3 = this.commits.save(commit("Correction sur les types de matériel", testeur));
-		
+		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont, 5));
+		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur, 3));
+		Commit com3 = this.commits.save(commit("Correction sur les types de matériel", testeur, 1));
+
 		this.index.save(update("2349", ADD, "Name=something, Detail=something, value=12345", cmat, com1));
 		this.index.save(update("2388", ADD, "Name=something, Detail=something, value=12345", cmat, com1));
 		this.index.save(update("34", REMOVE, "Name=something, Detail=something, value=12345", cmat, com1));
@@ -107,68 +103,4 @@ public class DemoDataLoader {
 		LOGGER.info("[DEMO] Demo values init done");
 	}
 
-	private static User user(String login) {
-
-		User user = new User(login);
-		user.setEmail(login + "@efluid.fr");
-		user.setPassword("FPQSFIKQPSFIQSF[ENCRYPTED]");
-
-		return user;
-	}
-
-	private static FunctionalDomain domain(String name) {
-		FunctionalDomain domain = new FunctionalDomain();
-
-		domain.setCreatedTime(LocalDateTime.now().minusDays(name.length()));
-		domain.setUuid(UUID.randomUUID());
-		domain.setName(name);
-
-		return domain;
-	}
-
-	/**
-	 * @param name
-	 * @param domain
-	 * @param table
-	 * @param where
-	 * @return
-	 */
-	private static DictionaryEntry entry(String name, FunctionalDomain domain, String table, String where) {
-
-		DictionaryEntry entry = new DictionaryEntry();
-
-		entry.setCreatedTime(LocalDateTime.now().minusDays(name.length()));
-		entry.setUuid(UUID.randomUUID());
-		entry.setParameterName(name);
-		entry.setDomain(domain);
-		entry.setTableName(table);
-		entry.setWhereClause(where);
-
-		return entry;
-	}
-
-	private static IndexEntry update(String key, IndexAction action, String payload, DictionaryEntry de, Commit com) {
-
-		IndexEntry entry = new IndexEntry();
-
-		entry.setKeyValue(key);
-		entry.setAction(action);
-		entry.setDictionaryEntry(de);
-		entry.setPayload(payload);
-		entry.setCommit(com);
-
-		return entry;
-	}
-
-	private static Commit commit(String detail, User user) {
-		Commit commit = new Commit();
-		commit.setUuid(UUID.randomUUID());
-		commit.setComment(detail);
-		commit.setHash(detail);
-		commit.setCreatedTime(LocalDateTime.now().minusDays(detail.length()));
-		commit.setImported(false);
-		commit.setOriginalUserEmail(user.getEmail());
-		commit.setUser(user);
-		return commit;
-	}
 }

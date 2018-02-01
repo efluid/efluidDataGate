@@ -13,7 +13,7 @@ import fr.uem.efluid.services.types.Value;
  * @since v0.0.1
  * @version 1
  */
-public class ManagedDiffUtilsTest {
+public class ManagedDiffUtilsUnitTest {
 
 	@Test
 	public void testAppendExtractedValueWithDataSet() {

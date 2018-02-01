@@ -22,9 +22,9 @@ import nz.net.ultraq.thymeleaf.LayoutDialect;
  */
 @EnableAutoConfiguration
 @EnableTransactionManagement
-@EnableJpaRepositories(JPA_REPOSITORIES)
-@EntityScan(JPA_ENTITIES)
-@ComponentScan({ CONFIG, SERVICES, WEB })
+@EnableJpaRepositories(REPOSITORIES)
+@EntityScan(ENTITIES)
+@ComponentScan({ CONFIG, SERVICES, WEB, REPOSITORIES_IMPLS })
 @Configuration
 public class Application {
 
@@ -45,8 +45,9 @@ public class Application {
 	 */
 	interface Packages {
 		String ROOT = "fr.uem.efluid";
-		String JPA_REPOSITORIES = ROOT + ".model.repositories";
-		String JPA_ENTITIES = ROOT + ".model.entities";
+		String REPOSITORIES = ROOT + ".model.repositories";
+		String REPOSITORIES_IMPLS = REPOSITORIES + ".impls";
+		String ENTITIES = ROOT + ".model.entities";
 		String SERVICES = ROOT + ".services";
 		String WEB = ROOT + ".web";
 		String CONFIG = ROOT + ".config";

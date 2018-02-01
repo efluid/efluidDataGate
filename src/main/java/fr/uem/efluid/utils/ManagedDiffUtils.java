@@ -49,16 +49,16 @@ public class ManagedDiffUtils {
 	public static void appendExtractedValue(
 			final StringBuilder builder,
 			final String colName,
-			final byte[] value,
+			final String value,
 			final boolean stringCol,
 			final boolean last) {
 
 		builder.append(colName).append(AFFECT);
 
 		if (stringCol) {
-			builder.append(TYPE_STRING).append(TYPE_IDENT).append(new String(B64_ENCODER.encode(value), Value.CONTENT_ENCODING));
+			appendStringValue(builder, value);
 		} else {
-			builder.append(TYPE_OTHER).append(TYPE_IDENT).append(new String(B64_ENCODER.encode(value), Value.CONTENT_ENCODING));
+			appendOtherValue(builder, value);
 		}
 
 		if (!last) {
@@ -87,7 +87,7 @@ public class ManagedDiffUtils {
 			appendExtractedValue(
 					oneLine,
 					value.getKey(),
-					value.getValue().toString().getBytes(Value.CONTENT_ENCODING),
+					value.getValue().toString(),
 					value.getValue() instanceof String,
 					remaining == 0);
 			remaining--;
@@ -111,6 +111,28 @@ public class ManagedDiffUtils {
 		return StringSplitter.split(internalExtracted, SEPARATOR).stream()
 				.map(ExpandedValue::new)
 				.collect(Collectors.toList());
+	}
+
+	/*
+	 * ###################################################################################
+	 * ########## VALUE PROTECTOR APPENDERS. ONE METHOD FOR EACH SUPPORTED TYPE ##########
+	 * ###################################################################################
+	 */
+
+	/**
+	 * @param builder
+	 * @param value
+	 */
+	private static void appendStringValue(final StringBuilder builder, final String value) {
+		builder.append(TYPE_STRING).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
+	}
+
+	/**
+	 * @param builder
+	 * @param value
+	 */
+	private static void appendOtherValue(final StringBuilder builder, final String value) {
+		builder.append(TYPE_OTHER).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
 	}
 
 	/**

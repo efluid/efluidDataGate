@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.TableDescription;
-import fr.uem.efluid.model.repositories.ManagedDatabaseDescriptionRepository;
+import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.utils.TechnicalException;
 
 /**
@@ -28,7 +28,7 @@ import fr.uem.efluid.utils.TechnicalException;
  * @version 1
  */
 @Repository
-public class ManagedMetadataRepository implements ManagedDatabaseDescriptionRepository {
+public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescriptionRepository {
 
 	private static final String[] TABLES_TYPES = { "TABLE", "VIEW" };
 	
