@@ -7,13 +7,15 @@
         <div class="row"><div class="col-1">&nbsp;</div></div>
         <div class="row">
             <div class="col-1"></div>
-            <div><form class="form-inline">
+            <div class="col-9">
+            	<h5>Edition du dictionnaire</h5>
+                <span class="help">Le dictionnaire représente les tables de l'application gérée à prendre en compte comme étant du paramètrage.</span>
 				<table class="table table-sm">
 					<thead>
 						<tr>
 							<th scope="col">Domaine</th>
 							<th scope="col">Nom</th>
-							<th scope="col" width="40%">Lien</th>
+							<th scope="col">Requête de sélection</th>
 							<th scope="col"></th>
 						</tr>
 					</thead>
@@ -21,43 +23,18 @@
 						<tr th:each="entry : ${dictionary}" th:id="${entry.uuid}">
 							<td th:text="${entry.domainName}">Gestion du matériel</td>
                             <td th:text="${entry.name}">Catégorie de matériel</td>
-                            <td th:text="'Table ' + ${entry.table} + ' where ' + ${entry.where} + (${entry.select}!=null?', select '+${entry.select}:'')">Table TCATEGORYMATERIEL where 1=1</td>
-							<td>
-								<button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
-								<button class="btn btn-primary btn-sm" type="button">Editer</button>
+                            <td><span class="query-display" th:text="${entry.query}">SELECT COLKEY, COLA, COLB, COLC FROM TCATEGORYMATERIEL WHERE 1=1 ORDER BY COLKEY</span></td>
+							<td><span class="float-right">
+								<a th:href="@{|/dictionary/edit/${entry.uuid}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm" type="button">Editer</a>
 								<button class="btn btn-outline-secondary btn-sm" type="button" title="Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent" disabled="disabled">Supprimer</button>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								 <select class="form-control" disabled="disabled">
-              						<option th:each="domain : ${domains}" th:value="${domain.uuid}" th:text="${domain.name}">Gestion du matériel</option>
-            					</select>
-							</td>
-							<td><input type="text" class="form-control mx-sm-1" value="Programmation" size="15"/></td>
-							<td>Table <input type="text" class="form-control mx-sm-1" value="TPROGRAMMATION" disabled="disabled" size="13"/> where <input type="text" class="form-control mx-sm-1" value="1=1" size="10" disabled="disabled"/></td>
-							<td>
-								<button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
-								<button class="btn btn-primary btn-sm" type="button">Confirmer</button>
-								<button class="btn btn-secondary btn-sm" type="button">Annuler</button>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								<select class="form-control" id="exampleFormControlSelect1">
-              						<option th:each="domain : ${domains}" th:value="${domain.uuid}" th:text="${domain.name}">Gestion du matériel</option>
-            					</select>
-							</td>
-							<td><input type="text" class="form-control mx-sm-1" placeholder="Nom" size="15"/></td>
-							<td>Table <input type="text" class="form-control mx-sm-1" size="13"/> where <input type="text" class="form-control mx-sm-1" size="10" placeholder="1=1"/></td>
-							<td>
-								<button class="btn btn-dark btn-sm" type="button">Dép. et FK</button>
-								<button class="btn btn-success btn-sm" type="button">Ajouter l'entrée</button>
-							</td>
+							</span></td>
 						</tr>
 					</tbody>
 				</table>
-			</form></div>
+				<p>
+					<a th:href="@{/dictionary/new}" href="./dictionary_123.html" class="btn btn-primary float-right" type="button">Ajouter une nouvelle table de paramètrage</a><br/><br/>
+				</p>
+			</div>
 		</div>
 	</span>
     <script layout:fragment="script">
@@ -71,28 +48,10 @@
 				$("#" + uuid).remove();
 			});
 		};
-
-		// Add row button
-		const addButtonAction = () => {
-			hideDisplays();
-			var inputName = $("#domainName");
-			var name = inputName.val();
-			if(name == null || name === ''){
-				setInvalid("#domainName","Le nom du domaine fonctionnel est obligatoire");
-			}
-			$.post("domains/add/" + inputName.val(), null, (data, status) => {
-				showSuccess("Domaine fonctionnel ajouté avec succès");
-		        var newDomainRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td><button class="delete-button btn btn-secondary btn-sm" type="button">Supprimer</button></td></tr>';
-				$("#domainListInjectBefore").before(newDomainRow);
-				inputName.val("");
-				$("#" + data.uuid + " td button").click(deleteButtonAction);
-		    });
-		};
-    
+		
     	// Init actions
     	$(document).ready(() => {
 			$("button.delete-button").click(deleteButtonAction);
-			$("#addButton").click(addButtonAction);
 		}); 
     </script>
 </body>

@@ -8,7 +8,7 @@ import fr.uem.efluid.utils.TechnicalException;
 /**
  * <p>
  * Provider of all table descriptions for Managed database. Implements can use various
- * stategy to get access to table descriptions
+ * stategy to get access to table descriptions, and use a cache.
  * </p>
  * 
  * @author elecomte
@@ -22,4 +22,9 @@ public interface DatabaseDescriptionRepository {
 	 * @throws TechnicalException
 	 */
 	public Collection<TableDescription> getTables() throws TechnicalException;
+
+	/**
+	 * Force refresh on cached data if any
+	 */
+	public void refreshAll();
 }

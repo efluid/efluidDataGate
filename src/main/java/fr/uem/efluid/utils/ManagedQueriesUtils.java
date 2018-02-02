@@ -1,5 +1,10 @@
 package fr.uem.efluid.utils;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+
 import fr.uem.efluid.model.entities.DictionaryEntry;
 
 /**
@@ -10,6 +15,8 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
  * @version 1
  */
 public class ManagedQueriesUtils {
+
+	public static final String DEFAULT_WHERE_CLAUSE = "1=1";
 
 	private static final String SELECT_CLAUSE_SEP = ", ";
 
@@ -30,7 +37,6 @@ public class ManagedQueriesUtils {
 		}
 
 		return parameterEntry.getSelectClause();
-
 	}
 
 	/**
@@ -47,5 +53,20 @@ public class ManagedQueriesUtils {
 				parameterEntry.getTableName(),
 				parameterEntry.getWhereClause(),
 				parameterEntry.getKeyName());
+	}
+
+	/**
+	 * @return
+	 */
+	public static Collector<CharSequence, ?, String> collectToSelectClause() {
+		return Collectors.joining(SELECT_CLAUSE_SEP);
+	}
+
+	/**
+	 * @param selectClause
+	 * @return
+	 */
+	public static Collection<String> splitSelectClause(String selectClause) {
+		return Arrays.asList(selectClause.split(SELECT_CLAUSE_SEP));
 	}
 }

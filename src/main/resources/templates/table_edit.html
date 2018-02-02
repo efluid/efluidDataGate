@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html layout:decorator="layout">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+        <div class="row"><div class="col-1">&nbsp;</div></div>
+        <div class="row">
+                <div class="col-1"></div>
+                <div class="col-9">
+                    <form>
+                        <h5>Edition d'une table de paramètrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
+                        <span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramètrage.
+                        La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel</span>
+                        <div class="form-group">
+                            <label for="name">Nom du paramètrage correspondant</label>
+                            <input id="name" type="text" class="form-control" th:field="${entry.name}" value="Programmation" size="50"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="functionaDomain">Domaine fonctionnel</label>
+							<select class="form-control" th:field="${entry.domainUuid}" th:disabled="${entry.uuid}">
+              					<option th:each="domain : ${domains}" th:value="${domain.uuid}" th:text="${domain.name}">Gestion du matériel</option>
+            				</select>
+                            <small class="form-text text-muted">Le domaine fonctionnel ne pourra pas être modifié une fois la table de paramètrage créée</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="whereCriteria">Critère de filtrage des données</label>
+                            <input id="whereCriteria" type="text" class="form-control" th:field="${entry.where}" value="1=1" size="50"/>
+                            <small class="form-text text-muted">Le critère de filtrage est appliqué par défaut lors de chaque récupération de paramètre. Sa valeur est libre</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="exampleInputPassword1">Requête de selection obtenue</label>
+                            <span class="query-display" id="currentQuery">SELECT COLKEY, COLA, COLB, COLC FROM TPROGRAMMATION WHERE 1=1 ORDER BY COLKEY</span>
+                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Colonne</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Dépendance vers</th>
+                                    <th scope="col">
+                                        <div class="btn-group float-right" role="group">
+                                            <button type="button" class="btn btn-outline-primary btn-sm">Tout utiliser</button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+								<tr th:each="column : ${entry.columns}">
+                                    <td><span th:class="${column.primaryKey}?'table-key'" class="table-key" th:title="${column.primaryKey}?'clé primaire'" th:text="${column.name}">COLKEY</span></td>
+                                    <td th:text="${column.type}">Number</td>
+                                    <td>
+                                        <select class="form-control" th:value="${column.foreignKeyTable}">
+                                        	<option value=""></option>
+              								<option th:each="table : ${tables}" th:value="${table.tableName}" th:text="${table.tableName}">Gestion du matériel</option>
+            							</select>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group float-right" role="group">
+                                            <button type="button" class="btn btn-primary btn-sm">Utiliser</button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm">Ignorer</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+						<p>
+							<div class="float-right">
+								<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary" type="button">Annuler</a>
+								<button class="btn btn-primary" type="button">Sauvegarder</button><br/><br/>
+							</div>
+						</p>
+                    </form></div>
+            </div>
+        </span>
+    <script layout:fragment="script">
+    
+		// Delete buttons
+		const deleteButtonAction = (e) => {
+			hideDisplays();
+			var uuid = e.target.parentElement.parentElement.id;
+			$.post("domains/remove/" + uuid, null, (data, status) => {
+				showSuccess("Domaine fonctionnel retiré avec succès");
+				$("#" + uuid).remove();
+			});
+		};
+		
+    	// Init actions
+    	$(document).ready(() => {
+			$("button.delete-button").click(deleteButtonAction);
+		}); 
+    </script>
+</body>
+</html>

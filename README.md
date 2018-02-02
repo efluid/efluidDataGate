@@ -4,26 +4,26 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 01/02/2018*
+*Mise à jour au 03/02/2018*
 
 **Maquette statique**
-* Dernière version : 24/01/2018
+* Dernière version : 03/02/2018. Modification de la gestion des entrées dans le dictionnaire : se fait sur un autre écran de saisie à partir de la liste
 
 **Points techniques**
 * Mise en place général : projet actif, stacks en place. BDD Postgres core fonctionnelle
 * Modèle core : en place, avec repos
-* Utilisation BDD managed : Avec JDBCTemplate. Dev fait sur lecture données bruts (non testé)
+* Utilisation BDD managed : Avec JDBCTemplate. Dev fait sur lecture données bruts. Partiellement testé (metadata globalement OK mais infos PK pas encore correctement remontées)
 * Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
 * Gestion du diff : diff de base en place, testé
-* Un benchmark synthétique des fonctions principale est en cours de construction
+* Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
-* Build : maven OK. Tests faits pour avoir un CI dédié (drone.io)
+* Build : maven OK. Tests faits pour avoir un CI dédié (drone.io?)
 
 **Intégration maquette**
 * Mise en place d'un layout pour simpifier les templates Thymeleaf
 * index ("/") : page dynamique mais données en dur. Menu et authentification pas géré. 
 * édition des domaines fonctionnels ("/domains"): globalement implémenté. 
-* édition du dictionnaire ("/dictionary"): implémentation en cours. Liste dyn, édition pas en place
+* édition du dictionnaire ("/dictionary"): implémentation en cours. Liste dyn, édition en cours de mise en place sur 2 écrans cette fois. La partie "selection de la table" est en place.
 * autres écrans : pas dynamisés / intégrés avec thymeleaf
 
 ## Utilisation
@@ -106,6 +106,8 @@ Pour intiliser l'instance demo : Elle est utilisée pour représenter une applic
      ALTER TABLE "TTYPEMATERIEL"
          OWNER to "user";
          
+Ce script sera complété avec un modèle plus complexe plus tard. Des scripts d'initialisation de données seront également fournis.
+
 ## Conception / Principes
 CF support de présentation.
 
@@ -174,4 +176,15 @@ A noter : les tests d'intégrations utilisent une BDD embarquée H2, droppée ap
 * **url**: jdbc:h2:~\h2;
 * **username**: sa
 * **password**: *-- laisser vide --*
+
+### Organisation technique de l'application
+Organisation en couche simple. 
+
+**Utilisation des terminologies standards suivantes** :
+* xRepository => DAO. Archetype Spring
+* xService => Service business. Archetype Spring
+* xController => Contrôleur dans le cadre d'un traitement MVC (Spring-MVC est un framework de traitement par action). Archetype Spring
+* contenus du package "modele" => Modèle de données business, associé à des entités gérés (en BDD ou en mémoire)
+* contenus du package "services.types" => TO utilisés par les services business
+* contenus du package "config" => Bean de configuration spring. Remplace les anciens fichiers "bean.xml" du temps de spring < v3. Archetype Spring
 

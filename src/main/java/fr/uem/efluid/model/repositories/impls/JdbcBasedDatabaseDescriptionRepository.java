@@ -8,7 +8,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -30,13 +33,15 @@ import fr.uem.efluid.utils.TechnicalException;
 @Repository
 public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescriptionRepository {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedDatabaseDescriptionRepository.class);
+
 	private static final String[] TABLES_TYPES = { "TABLE", "VIEW" };
-	
+
 	@Autowired
 	private JdbcTemplate managedSource;
 
 	@Override
-	@Cacheable
+	@Cacheable("metadatas")
 	public Collection<TableDescription> getTables() throws TechnicalException {
 
 		try {
@@ -49,10 +54,22 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 			completeTablesPrimaryKeys(md, tables);
 			completeTablesForeignKeys(md, tables);
 
+			LOGGER.info("Metadata extracted from managed database. Found {} tables", Integer.valueOf(tables.size()));
+
 			return tables.values();
 		} catch (SQLException e) {
 			throw new TechnicalException("Cannot extract metadata", e);
 		}
+	}
+
+	/**
+	 * 
+	 * @see fr.uem.efluid.model.repositories.DatabaseDescriptionRepository#refreshAll()
+	 */
+	@Override
+	@CacheEvict("metadatas")
+	public void refreshAll() {
+		LOGGER.info("Metadata cache droped. Will extract fresh data on next call");
 	}
 
 	/**

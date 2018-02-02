@@ -3,7 +3,7 @@ package fr.uem.efluid.services.types;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.FunctionalDomain;
+import fr.uem.efluid.utils.ManagedQueriesUtils;
 
 /**
  * @author elecomte
@@ -12,27 +12,33 @@ import fr.uem.efluid.model.entities.FunctionalDomain;
  */
 public final class DictionaryEntrySummary {
 
-	private UUID uuid;
+	private final UUID uuid;
 
-	private UUID domainUuid;
-	
-	private String domainName;
+	private final UUID domainUuid;
 
-	private String name;
+	private final String domainName;
 
-	private String table;
+	private final String name;
 
-	private String where;
-
-	private String select;
+	private final String query;
 
 	private boolean canDelete;
 
 	/**
-	 * 
+	 * @param uuid
+	 * @param domainUuid
+	 * @param domainName
+	 * @param name
+	 * @param query
+	 * @param canDelete
 	 */
-	public DictionaryEntrySummary() {
+	public DictionaryEntrySummary(UUID uuid, UUID domainUuid, String domainName, String name, String query) {
 		super();
+		this.uuid = uuid;
+		this.domainUuid = domainUuid;
+		this.domainName = domainName;
+		this.name = name;
+		this.query = query;
 	}
 
 	/**
@@ -43,26 +49,10 @@ public final class DictionaryEntrySummary {
 	}
 
 	/**
-	 * @param uuid
-	 *            the uuid to set
-	 */
-	public void setUuid(UUID uuid) {
-		this.uuid = uuid;
-	}
-
-	/**
 	 * @return the domainUuid
 	 */
 	public UUID getDomainUuid() {
 		return this.domainUuid;
-	}
-
-	/**
-	 * @param domainId
-	 *            the domainUuid to set
-	 */
-	public void setDomainUuid(UUID domainUuid) {
-		this.domainUuid = domainUuid;
 	}
 
 	/**
@@ -73,56 +63,10 @@ public final class DictionaryEntrySummary {
 	}
 
 	/**
-	 * @param name
-	 *            the name to set
+	 * @return the query
 	 */
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	/**
-	 * @return the table
-	 */
-	public String getTable() {
-		return this.table;
-	}
-
-	/**
-	 * @param table
-	 *            the table to set
-	 */
-	public void setTable(String table) {
-		this.table = table;
-	}
-
-	/**
-	 * @return the where
-	 */
-	public String getWhere() {
-		return this.where;
-	}
-
-	/**
-	 * @param where
-	 *            the where to set
-	 */
-	public void setWhere(String where) {
-		this.where = where;
-	}
-
-	/**
-	 * @return the select
-	 */
-	public String getSelect() {
-		return this.select;
-	}
-
-	/**
-	 * @param select
-	 *            the select to set
-	 */
-	public void setSelect(String select) {
-		this.select = select;
+	public String getQuery() {
+		return this.query;
 	}
 
 	/**
@@ -130,13 +74,6 @@ public final class DictionaryEntrySummary {
 	 */
 	public String getDomainName() {
 		return this.domainName;
-	}
-
-	/**
-	 * @param domainName the domainName to set
-	 */
-	public void setDomainName(String domainName) {
-		this.domainName = domainName;
 	}
 
 	/**
@@ -155,34 +92,15 @@ public final class DictionaryEntrySummary {
 	}
 
 	/**
-	 * @param data
-	 * @return
-	 */
-	public static DictionaryEntry toEntity(DictionaryEntrySummary data) {
-		DictionaryEntry entity = new DictionaryEntry();
-		entity.setUuid(data.getUuid());
-		entity.setDomain(new FunctionalDomain(data.getDomainUuid()));
-		entity.setParameterName(data.getName());
-		entity.setSelectClause(data.getSelect());
-		entity.setTableName(data.getTable());
-		entity.setWhereClause(data.getWhere());
-
-		return entity;
-	}
-
-	/**
 	 * @param entity
 	 * @return
 	 */
 	public static DictionaryEntrySummary fromEntity(DictionaryEntry entity) {
-		DictionaryEntrySummary data = new DictionaryEntrySummary();
-		data.setUuid(entity.getUuid());
-		data.setDomainUuid(entity.getDomain().getUuid());
-		data.setDomainName(entity.getDomain().getName());
-		data.setName(entity.getParameterName());
-		data.setSelect(entity.getSelectClause());
-		data.setTable(entity.getTableName());
-		data.setWhere(entity.getWhereClause());
-		return data;
+		return new DictionaryEntrySummary(
+				entity.getUuid(),
+				entity.getDomain().getUuid(),
+				entity.getDomain().getName(),
+				entity.getParameterName(),
+				ManagedQueriesUtils.producesSelectParameterQuery(entity));
 	}
 }

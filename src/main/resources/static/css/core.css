@@ -1,0 +1,55 @@
+.add {
+    color:green;
+    font-weight: bold;
+}
+
+.remove {
+    color:red;
+    font-weight: bold;
+}
+
+.update {
+    color:blue;
+    font-weight: bold;
+}
+
+.conflict {
+    background-color: rgb(226, 185, 170);
+}
+
+.query-display {
+    display: block;
+    padding: 3px;
+    background-color: #FAFAFA;
+    border: 1px #EEE solid;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.table-key {
+    font-weight: bold;
+    color: brown;
+}
+
+.table-used {
+    font-size: 13px;
+    background-color: rgb(255, 230, 230);
+	line-height: 30px;
+}
+
+.table-name {
+	font-weight: bold;
+	line-height: 30px;
+}
+
+.table-used .table-name {
+    font-size: 16px;
+	font-weight: bold;
+	color:brown;
+}
+
+.help {
+	display: block;
+    font-size: 14px;
+    padding: 5px 1px 15px 1px;
+}

@@ -1,6 +1,18 @@
 package fr.uem.efluid.services;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+
+import fr.uem.efluid.model.repositories.CommitRepository;
+import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
+import fr.uem.efluid.model.repositories.IndexRepository;
+import fr.uem.efluid.services.types.ApplicationDetails;
 
 /**
  * @author elecomte
@@ -10,53 +22,49 @@ import org.springframework.stereotype.Service;
 @Service
 public class ApplicationDetailsService {
 
-    /**
-     *
-     * @return
-     */
-    public ApplicationDetails getCurrentDetails(){
+	private static final long INDEX_ENTRY_ESTIMATED_SIZE = 1024;
 
-        ApplicationDetails details = new ApplicationDetails();
+	@Autowired
+	private CommitRepository commits;
 
-        // TODO : replace hard codded
-        details.setCommitsCount(15);
-        details.setDbUrl("ORACLE_DB_SERVER_123/ABCDEF");
-        details.setDomainsCount(25);
-        
-        return details;
-    }
+	@Autowired
+	private IndexRepository index;
 
-    /**
-     *
-     */
-    public static class ApplicationDetails {
+	@Autowired
+	private FunctionalDomainRepository domains;
 
-        private String dbUrl;
-        private int domainsCount;
-        private int commitsCount;
+	@Autowired
+	private DictionaryRepository dictionary;
 
-        public String getDbUrl() {
-            return this.dbUrl;
-        }
+	@Value("${param-efluid.managed-datasource.url}")
+	private String managedDbUrl;
 
-        public void setDbUrl(String dbUrl) {
-            this.dbUrl = dbUrl;
-        }
+	/**
+	 *
+	 * @return
+	 */
+	@Cacheable("details")
+	public ApplicationDetails getCurrentDetails() {
 
-        public int getDomainsCount() {
-            return this.domainsCount;
-        }
+		ApplicationDetails details = new ApplicationDetails();
 
-        public void setDomainsCount(int domainsCount) {
-            this.domainsCount = domainsCount;
-        }
+		details.setCommitsCount(this.commits.count());
+		details.setDbUrl(this.managedDbUrl);
+		details.setDomainsCount(this.domains.count());
+		details.setDictionaryCount(this.dictionary.count());
+		details.setIndexSize(getEstimatedIndexSize());
 
-        public int getCommitsCount() {
-            return this.commitsCount;
-        }
+		return details;
+	}
 
-        public void setCommitsCount(int commitsCount) {
-            this.commitsCount = commitsCount;
-        }
-    }
+	/**
+	 * @return
+	 */
+	private String getEstimatedIndexSize() {
+		long size = this.index.count() * INDEX_ENTRY_ESTIMATED_SIZE;
+		BigDecimal estim = new BigDecimal(size / (1024 * 1024));
+		estim.setScale(1, RoundingMode.HALF_UP);
+
+		return estim.toPlainString() + " Mb";
+	}
 }

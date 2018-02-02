@@ -67,13 +67,13 @@ public class DemoDataLoader {
 		FunctionalDomain dom3 = this.domains.save(domain("Processus utilisateurs"));
 		this.domains.save(domain("Editions"));
 
-		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, null, "TCATEGORYMATERIEL", "1=1", "id"));
-		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, null, "TTYPEMATERIEL", "1=1", "id"));
-		DictionaryEntry tdij = this.dictionary.save(entry("Type de disjoncteur", dom1, null, "TDISJONCTEURTYPE", "1=1", "id"));
+		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, null, "TCATEGORYMATERIEL_FAKE", "1=1", "id"));
+		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, null, "TTYPEMATERIEL_FAKE", "1=1", "id"));
+		DictionaryEntry tdij = this.dictionary.save(entry("Type de disjoncteur", dom1, null, "TDISJONCTEURTYPE_FAKE", "1=1", "id"));
 		this.dictionary.save(entry("Modèle de compteur", dom1, null, "TMODELE", "mod='test'", "id"));
-		this.dictionary.save(entry("Programmation", dom1, null, "TPROGRAMMATION", "1=1", "id"));
-		this.dictionary.save(entry("Modèle type", dom1, null, "TMODTYPE", "1=1", "id"));
-		this.dictionary.save(entry("Couleur", dom1, null, "TCOULEUR", "vol='12'", "id"));
+		this.dictionary.save(entry("Programmation", dom1, null, "TPROGRAMMATION_FAKE", "1=1", "id"));
+		this.dictionary.save(entry("Modèle type", dom1, null, "TMODTYPE_FAKE", "1=1", "id"));
+		this.dictionary.save(entry("Couleur", dom1, null, "TCOULEUR_FAKE", "vol='12'", "id"));
 		this.dictionary.save(entry("Prix énergie", dom2, null, "TABLE1", "1=1", "id"));
 		this.dictionary.save(entry("Autre exemple 1", dom2, null, "TABLE2", "1=1", "id"));
 		this.dictionary.save(entry("Autre exemple 2", dom2, null, "TABLE3", "1=1", "id"));

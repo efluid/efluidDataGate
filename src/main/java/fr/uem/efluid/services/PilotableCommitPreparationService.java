@@ -50,7 +50,7 @@ public class PilotableCommitPreparationService {
 	/**
 	 * Start async diff analysis before commit
 	 */
-	public void startCommitPreparation() {
+	public PilotedCommitPreparation startCommitPreparation() {
 
 		if (this.current != null) {
 			// TODO : Restart or error ?
@@ -59,6 +59,8 @@ public class PilotableCommitPreparationService {
 		this.current = new PilotedCommitPreparation();
 
 		CompletableFuture.runAsync(this::processAllDiff);
+		
+		return this.current;
 	}
 
 	/**

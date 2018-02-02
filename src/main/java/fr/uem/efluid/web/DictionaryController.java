@@ -33,15 +33,54 @@ public class DictionaryController {
 
 		return "domains";
 	}
-	
 
 	@RequestMapping("/dictionary")
 	public String dictionaryPage(Model model) {
 
 		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
-		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 
 		return "dictionary";
+	}
+
+	/**
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping("/dictionary/new")
+	public String dictionaryAddNew(Model model) {
+
+		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
+
+		return "table_init";
+	}
+
+	/**
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping("/dictionary/refresh")
+	public String dictionaryAddNewWithRefresh(Model model) {
+
+		this.dictionaryManagementService.refreshCachedMetadata();
+
+		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
+
+		return "table_init";
+	}
+
+	/**
+	 * @param model
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping("/dictionary/new/{name}")
+	public String dictionaryAddNewForTable(Model model, @PathVariable("name") String name) {
+
+		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
+		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
+		model.addAttribute("entry", this.dictionaryManagementService.prepareNewEditableDictionaryEntry(name));
+
+		return "table_edit";
 	}
 
 	/**
@@ -64,7 +103,7 @@ public class DictionaryController {
 	 */
 	@RequestMapping(value = "/domains/remove/{uuid}", method = POST)
 	@ResponseBody
-	public void addFunctionalDomainData(@PathVariable("uuid") UUID uuid) {
+	public void removeFunctionalDomainData(@PathVariable("uuid") UUID uuid) {
 		this.dictionaryManagementService.deleteFunctionalDomain(uuid);
 	}
 }

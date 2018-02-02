@@ -5,7 +5,7 @@ package fr.uem.efluid.model.metas;
  * @since v0.0.1
  * @version 1
  */
-public class ColumnDescription {
+public class ColumnDescription implements Comparable<ColumnDescription> {
 
 	private String name;
 	private boolean binary;
@@ -72,4 +72,13 @@ public class ColumnDescription {
 		this.foreignKeyTable = foreignKeyTable;
 	}
 
+	/**
+	 * @param o
+	 * @return
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
+	public int compareTo(ColumnDescription o) {
+		return this.name.compareTo(o.getName());
+	}
 }
