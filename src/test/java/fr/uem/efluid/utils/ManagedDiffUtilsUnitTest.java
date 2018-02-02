@@ -20,7 +20,7 @@ public class ManagedDiffUtilsUnitTest {
 		Map<String, String> dataset = TestUtils.readDataset("diff1/actual.csv");
 
 		Assert.assertEquals(dataset.size(), 11);
-		Assert.assertEquals("Value=S/U29tZXRoaW5n,Preset=S/T3RoZXI=,Something=S/MTIzNDAw", dataset.get("1"));
+		Assert.assertEquals("VALUE=S/U29tZXRoaW5n,PRESET=S/T3RoZXI=,SOMETHING=S/MTIzNDAw", dataset.get("1"));
 	}
 
 	@Test
@@ -29,8 +29,8 @@ public class ManagedDiffUtilsUnitTest {
 		Map<String, Value> values = Value.mapped(ManagedDiffUtils.expandInternalValue(dataset.get("1")));
 
 		Assert.assertEquals(dataset.size(), 11);
-		Assert.assertEquals("Something", values.get("Value").getValueAsString());
-		Assert.assertEquals("Other", values.get("Preset").getValueAsString());
-		Assert.assertEquals("123400", values.get("Something").getValueAsString());
+		Assert.assertEquals("Something", values.get("VALUE").getValueAsString());
+		Assert.assertEquals("Other", values.get("PRESET").getValueAsString());
+		Assert.assertEquals("123400", values.get("SOMETHING").getValueAsString());
 	}
 }

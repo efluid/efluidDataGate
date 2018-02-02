@@ -34,7 +34,7 @@ public class DataDiffServiceUnitTest {
 		Assert.assertEquals(2, index.size());
 		Assert.assertTrue(index.stream().allMatch(i -> i.getAction() == IndexAction.ADD));
 		Assert.assertTrue(index.stream()
-				.allMatch(i -> Value.mapped(ManagedDiffUtils.expandInternalValue(i.getPayload())).get("Value").getValueAsString()
+				.allMatch(i -> Value.mapped(ManagedDiffUtils.expandInternalValue(i.getPayload())).get("VALUE").getValueAsString()
 						.equals("Different")));
 	}
 
@@ -54,7 +54,7 @@ public class DataDiffServiceUnitTest {
 		Assert.assertTrue(index.stream().anyMatch(i -> i.getKeyValue().equals("5")));
 		Assert.assertTrue(index.stream().anyMatch(i -> i.getKeyValue().equals("8")));
 		Assert.assertTrue(index.stream()
-				.allMatch(i -> Value.mapped(ManagedDiffUtils.expandInternalValue(i.getPayload())).get("Value").getValueAsString()
+				.allMatch(i -> Value.mapped(ManagedDiffUtils.expandInternalValue(i.getPayload())).get("VALUE").getValueAsString()
 						.equals("Modified")));
 	}
 
