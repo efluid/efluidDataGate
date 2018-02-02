@@ -43,14 +43,128 @@ public class DataDiffServiceBenchTest {
 	private UUID dictionaryEntryUuid;
 
 	@Transactional
-	public void setupDatabase(String name) {
+	public void setupSourceOnly(String name) {
+		this.loader.setupSourceDatabase(name);
+		this.dictionaryEntryUuid = this.loader.setupDictionnary().getUuid();
+	}
+
+	@Transactional
+	public void setupIndexOnly(String name) {
+		this.dictionaryEntryUuid = this.loader.setupIndexDatabase(name).getUuid();
+	}
+
+	@Transactional
+	public void setupFullDatabase(String name) {
 		this.dictionaryEntryUuid = this.loader.setupDatabaseForDiff(name);
 	}
 
-	// TODO : add combined benchmarks for full diff, with database
-
+	/**
+	 * 
+	 */
 	@Test
-	public void testGenerateDiffBench() {
+	public void runBenchmarks() {
+
+		System.out.println("#### BENCHMARKING OF DIFF SERVICE AND ASSOCIATED FEATURES ####");
+		runExtractBenchmark();
+		runRegenerateBenchmark();
+		runRandomStaticDiffBenchmark();
+		runFullDiffBenchmark();
+	}
+
+	/**
+	 * 
+	 */
+	private void runFullDiffBenchmark() {
+
+		final int play = 25;
+
+		long totalDuration = 0;
+		long minDuration = 0;
+		long maxDuration = 0;
+
+		for (int i = 0; i < play; i++) {
+			setupFullDatabase("diff8");
+			long start = System.currentTimeMillis();
+			this.service.processDiff(this.dictionaryEntryUuid);
+			long delay = System.currentTimeMillis() - start;
+			totalDuration += delay;
+			if (minDuration == 0 || minDuration > delay) {
+				minDuration = delay;
+			}
+			if (maxDuration < delay) {
+				maxDuration = delay;
+			}
+		}
+
+		System.out.println(" * FULL DIFF => AVG Duration = "
+				+ Double.valueOf(totalDuration / play).intValue() + "ms (min = " + minDuration + "/ max = "
+				+ maxDuration + ")");
+	}
+
+	/**
+	 * 
+	 */
+	private void runRegenerateBenchmark() {
+
+		final int play = 25;
+
+		long totalDuration = 0;
+		long minDuration = 0;
+		long maxDuration = 0;
+
+		for (int i = 0; i < play; i++) {
+			setupIndexOnly("diff8");
+			long start = System.currentTimeMillis();
+			this.managed.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+			long delay = System.currentTimeMillis() - start;
+			totalDuration += delay;
+			if (minDuration == 0 || minDuration > delay) {
+				minDuration = delay;
+			}
+			if (maxDuration < delay) {
+				maxDuration = delay;
+			}
+		}
+
+		System.out.println(" * REGENERATE KNEW CONTENT => AVG Duration = "
+				+ Double.valueOf(totalDuration / play).intValue() + "ms (min = " + minDuration + "/ max = "
+				+ maxDuration + ")");
+	}
+
+	/**
+	 * 
+	 */
+	private void runExtractBenchmark() {
+
+		final int play = 25;
+
+		long totalDuration = 0;
+		long minDuration = 0;
+		long maxDuration = 0;
+
+		for (int i = 0; i < play; i++) {
+			setupSourceOnly("diff8");
+			long start = System.currentTimeMillis();
+			this.managed.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+			long delay = System.currentTimeMillis() - start;
+			totalDuration += delay;
+			if (minDuration == 0 || minDuration > delay) {
+				minDuration = delay;
+			}
+			if (maxDuration < delay) {
+				maxDuration = delay;
+			}
+		}
+
+		System.out.println(" * SOURCE EXTRACT => AVG Duration = "
+				+ Double.valueOf(totalDuration / play).intValue() + "ms (min = " + minDuration + "/ max = "
+				+ maxDuration + ")");
+	}
+
+	/**
+	 * 
+	 */
+	private void runRandomStaticDiffBenchmark() {
 
 		final int play = 25;
 
@@ -103,13 +217,14 @@ public class DataDiffServiceBenchTest {
 			}
 		}
 
-		System.out.println("Processed large bench. For AVG " + totalLargeActual / play + " actual, over " + totalLargeKnew / play
-				+ " knew lines, found "
-				+ totalIndex / (2 * play) + " index entries. AVG Duration in parallel mode = "
-				+ Double.valueOf(totalDurationParallel / play).intValue() + "ms (min = " + minDurationParallel + "/ max = "
-				+ maxDurationParallel + "), in not parallel mode = "
-				+ Double.valueOf(totalDurationNotParallel / play).intValue() + "ms (min = " + minDurationNotParallel + "/ max = "
-				+ maxDurationNotParallel + ")");
+		System.out.println(
+				" * STATIC DIFF WITH RANDOM VALUES =>  For AVG " + totalLargeActual / play + " actual, over " + totalLargeKnew / play
+						+ " knew lines, found "
+						+ totalIndex / (2 * play) + " index entries. AVG Duration in parallel mode = "
+						+ Double.valueOf(totalDurationParallel / play).intValue() + "ms (min = " + minDurationParallel + "/ max = "
+						+ maxDurationParallel + "), in not parallel mode = "
+						+ Double.valueOf(totalDurationNotParallel / play).intValue() + "ms (min = " + minDurationNotParallel + "/ max = "
+						+ maxDurationNotParallel + ")");
 	}
 
 }

@@ -1,11 +1,10 @@
 package fr.uem.efluid.stubs;
 
-import static fr.uem.efluid.model.entities.IndexAction.ADD;
-import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
-import static fr.uem.efluid.model.entities.IndexAction.UPDATE;
 import static fr.uem.efluid.utils.DataGenerationUtils.*;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,12 +16,15 @@ import fr.uem.efluid.TestUtils;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
+import fr.uem.efluid.model.entities.IndexAction;
+import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.utils.DataGenerationUtils;
 
 /**
  * @author elecomte
@@ -53,54 +55,88 @@ public class TestDataLoader {
 	private CommitRepository commits;
 
 	/**
+	 * @param diffName
+	 */
+	public void setupSourceDatabase(String diffName) {
+		this.sources.deleteAll();
+		this.sources.initFromDataset(TestUtils.readDataset(diffName + "/actual.csv"));
+		this.sources.flush();
+	}
+
+	/**
+	 * @return
+	 */
+	public DictionaryEntry setupDictionnary() {
+		this.dictionary.deleteAll();
+		this.domains.deleteAll();
+
+		FunctionalDomain dom1 = this.domains.save(domain("Source exemple"));
+		DictionaryEntry cmat = this.dictionary
+				.save(entry("Sources de données", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY"));
+
+		this.domains.flush();
+		this.dictionary.flush();
+		return cmat;
+	}
+
+	/**
+	 * @param diffName
+	 * @return
+	 */
+	public DictionaryEntry setupIndexDatabase(String diffName) {
+
+		// Reset database
+		this.index.deleteAll();
+		this.commits.deleteAll();
+		this.users.deleteAll();
+
+		// Prepare data - core items
+		User dupont = this.users.save(user("dupont"));
+		DictionaryEntry cmat = setupDictionnary();
+
+		// Prepare existing commits
+		Commit com1 = this.commits.save(commit("Commit initial de création", dupont, 15));
+		Commit com2 = this.commits.save(commit("Commit de mise à jour", dupont, 7));
+
+		// Prepare index entries for batch init
+		List<IndexEntry> indexes = TestUtils.readDataset(diffName + "/knew-add.csv")
+				.entrySet().stream()
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.ADD, d.getValue(), cmat, com1))
+				.collect(Collectors.toList());
+		indexes.addAll(TestUtils.readDataset(diffName + "/knew-remove.csv")
+				.entrySet().stream()
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.REMOVE, d.getValue(), cmat, com2))
+				.collect(Collectors.toList()));
+		indexes.addAll(TestUtils.readDataset(diffName + "/knew-update.csv")
+				.entrySet().stream()
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.UPDATE, d.getValue(), cmat, com2))
+				.collect(Collectors.toList()));
+
+		// Batch init of data
+		this.index.save(indexes);
+
+		// // Force set updates
+		this.users.flush();
+		this.commits.flush();
+		this.index.flush();
+
+		return cmat;
+	}
+
+	/**
 	 * For database init in test
 	 * 
-	 * @param multiply
+	 * @param diffName
+	 * @return
 	 */
 	public UUID setupDatabaseForDiff(String diffName) {
 
 		LOGGER.debug("Start to restore database for diff test");
 
-		// Reset database
-		this.sources.deleteAll();
-		this.index.deleteAll();
-		this.commits.deleteAll();
-		this.dictionary.deleteAll();
-		this.domains.deleteAll();
-		this.users.deleteAll();
+		setupSourceDatabase(diffName);
+		DictionaryEntry cmat = setupIndexDatabase(diffName);
 
-		// Prepare data - sources = parameter source
-		this.sources.initFromDataset(TestUtils.readDataset(diffName + "/actual.csv"));
-
-		// Prepare data - core items
-		User dupont = this.users.save(user("dupont"));
-		FunctionalDomain dom1 = this.domains.save(domain("Source exemple"));
-		DictionaryEntry cmat = this.dictionary
-				.save(entry("Sources de données", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY"));
-
-		// Prepare existing commit 1
-		Commit com1 = this.commits.save(commit("Commit initial de création", dupont, 15));
-		TestUtils.readDataset(diffName + "/knew-add.csv").entrySet()
-				.forEach(d -> this.index.save(update(d.getKey(), ADD, d.getValue(), cmat, com1)));
-
-		this.index.flush();
-		// Prepare existing commit 2
-		Commit com2 = this.commits.save(commit("Commit de mise à jour", dupont, 7));
-		TestUtils.readDataset(diffName + "/knew-remove.csv").entrySet()
-				.forEach(d -> this.index.save(update(d.getKey(), REMOVE, d.getValue(), cmat, com2)));
-		this.index.flush();
-		TestUtils.readDataset(diffName + "/knew-update.csv").entrySet()
-				.forEach(d -> this.index.save(update(d.getKey(), UPDATE, d.getValue(), cmat, com2)));
-
-		// // Force set updates
-		this.sources.flush();
-		this.users.flush();
-		this.domains.flush();
-		this.dictionary.flush();
-		this.commits.flush();
-		this.index.flush();
-
-		LOGGER.info("Database setup with dataset {} for a new diff test", diffName);
+		LOGGER.debug("Database setup with dataset {} for a new diff test", diffName);
 
 		return cmat.getUuid();
 	}
