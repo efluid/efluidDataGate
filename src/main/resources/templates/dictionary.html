@@ -52,14 +52,10 @@
     	// Init actions
     	$(document).ready(() => {
 			$("button.delete-button").click(deleteButtonAction);
+			var fromType = /*[[${from}?${from}:'']]*/ 'success_edit';
+			if(fromType === 'success_edit') showSuccess("Table de paramètrage ajoutée avec succès au dictionnaire");
 		}); 
 		
-    </script>
-    <script th:if="${from}" th:inline="javascript">
-    	$(document).ready(() => {
-    		var type = /*[[${from}]]*/ 'success_edit';
-			if(type === 'success_edit') showSuccess("Table de paramètrage ajoutée avec succès au dictionnaire");
-		}); 
     </script>
 </body>
 </html>

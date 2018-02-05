@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html layout:decorator="layout">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+        <div class="row"><div class="col-1">&nbsp;</div></div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-9">
+                <p>
+                    <h5>Préparation d'un lot
+                    <button class="btn btn-outline-dark btn-sm float-right" type="button" disabled="disabled">Rafraichir les modifications</button></h5>
+                </p>
+                <div>Chargement en cours<span class="spinning-cog"></span></div>
+                <p>&nbsp;<br/><br/><br/><br/></p>
+            </div>
+        </div>        
+	</span>
+    <script layout:fragment="script" th:inline="javascript">
+    
+    	// Repeated check on status using basic rest service
+		const checkProgress = () => {
+			console.info("start a new check");
+			$.get("/prepare/progress", (data, status) => {
+				console.info("Check with data" + data);
+				if(data === 'DIFF_RUNNING'){
+					// Add new timeout 
+					setTimeout(checkProgress, 3000);
+				} else {
+					// Reload page for valid data
+					window.location.replace("/prepare");
+				}
+			});
+		};
+		
+    	// Start loading
+    	$(document).ready(() => {
+			checkProgress();
+		}); 
+		
+    </script>
+</body>
+</html>

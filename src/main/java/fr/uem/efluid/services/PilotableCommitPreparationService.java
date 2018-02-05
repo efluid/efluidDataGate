@@ -12,6 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +37,8 @@ import fr.uem.efluid.utils.TechnicalException;
 @Service
 public class PilotableCommitPreparationService {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(PilotableCommitPreparationService.class);
+
 	@Autowired
 	private DataDiffService diffService;
 
@@ -53,13 +57,18 @@ public class PilotableCommitPreparationService {
 	public PilotedCommitPreparation startCommitPreparation() {
 
 		if (this.current != null) {
-			// TODO : Restart or error ?
+			LOGGER.info("Request for a new commit preparation - preparation already running / available, so use existing {}",
+					this.current.getIdentifier());
+
+			return getCurrentCommitPreparation();
 		}
+
+		LOGGER.info("Request for a new commit preparation - start a new one");
 
 		this.current = new PilotedCommitPreparation();
 
 		CompletableFuture.runAsync(this::processAllDiff);
-		
+
 		return this.current;
 	}
 
@@ -89,6 +98,9 @@ public class PilotableCommitPreparationService {
 	 */
 	private void processAllDiff() {
 
+		LOGGER.info("Begin diff process on commit preparation {}", this.current.getIdentifier());
+		long startTimeout = System.currentTimeMillis();
+
 		try {
 			Map<UUID, Collection<IndexEntry>> fullDiff = this.executor
 					.invokeAll(this.dictionary.findAll().stream().map(this::callDiff).collect(Collectors.toList())).stream()
@@ -102,7 +114,14 @@ public class PilotableCommitPreparationService {
 			this.current.setEnd(LocalDateTime.now());
 			this.current.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
+			// TODO : remove : here test for forced wait
+			Thread.sleep(10000);
+
+			LOGGER.info("Diff process completed on commit preparation {}. Total process duration was {} ms", this.current.getIdentifier(),
+					Long.valueOf(System.currentTimeMillis() - startTimeout));
+
 		} catch (InterruptedException e) {
+			LOGGER.error("Error will processing diff",e);
 			this.current.setErrorDuringPreparation(e);
 		}
 	}
@@ -122,6 +141,7 @@ public class PilotableCommitPreparationService {
 
 		// TODO : better error identification
 		catch (InterruptedException | ExecutionException e) {
+			LOGGER.error("Error will processing diff",e);
 			this.current.setErrorDuringPreparation(e);
 			throw new TechnicalException("Aborted on exception ", e);
 		}

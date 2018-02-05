@@ -27,7 +27,7 @@ public class ManagedQueriesUtils {
 
 	private static final String DEFAULT_SELECT_CLAUSE = "*";
 
-	private static final String SELECT_QUERY_MODEL = "SELECT %s FROM %s WHERE %s ORDER BY %s";
+	private static final String SELECT_QUERY_MODEL = "SELECT %s FROM \"%s\" WHERE %s ORDER BY \"%s\"";
 
 	/**
 	 * @param parameterEntry

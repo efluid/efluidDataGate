@@ -2,8 +2,6 @@ package fr.uem.efluid.model.repositories;
 
 import java.util.Map;
 
-import org.springframework.cache.annotation.Cacheable;
-
 import fr.uem.efluid.model.entities.DictionaryEntry;
 
 /**
@@ -35,7 +33,6 @@ public interface ManagedParametersRepository {
 	 * @param parameterEntry
 	 * @return
 	 */
-	@Cacheable
 	Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry);
 
 }

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,8 @@ import fr.uem.efluid.utils.ManagedQueriesUtils;
 @Transactional
 public class DictionaryManagementService {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryManagementService.class);
+
 	@Autowired
 	private FunctionalDomainRepository domains;
 
@@ -46,6 +50,8 @@ public class DictionaryManagementService {
 	 * @return
 	 */
 	public List<FunctionalDomainData> getAvailableFunctionalDomains() {
+
+		LOGGER.debug("Listing functional Domains");
 
 		// TODO : keep this in cache, or precalculated (once used, cannot be "unused")
 		List<UUID> usedIds = this.domains.findUsedIds();
@@ -61,6 +67,8 @@ public class DictionaryManagementService {
 	 */
 	public void deleteFunctionalDomain(UUID uuid) {
 
+		LOGGER.info("Process delete on functional domain {}", uuid);
+
 		assertDomainCanBeRemoved(uuid);
 
 		this.domains.delete(uuid);
@@ -70,6 +78,8 @@ public class DictionaryManagementService {
 	 * @return
 	 */
 	public List<SelectableTable> getSelectableTables() {
+
+		LOGGER.debug("Listing selectable tables for a new dictionary entry");
 
 		// Existing data
 		List<DictionaryEntry> entries = this.dictionary.findAll();
@@ -96,6 +106,8 @@ public class DictionaryManagementService {
 	 */
 	public List<DictionaryEntrySummary> getDictionnaryEntrySummaries() {
 
+		LOGGER.debug("Listing dictionary content");
+
 		// TODO : keep this in cache, or precalculated (once used, cannot be "unused")
 		List<UUID> usedIds = this.dictionary.findUsedIds();
 
@@ -112,6 +124,8 @@ public class DictionaryManagementService {
 	 * @return
 	 */
 	public DictionaryEntryEditData editEditableDictionaryEntry(UUID entryUuid) {
+
+		LOGGER.info("Open editable content for dictionary entry {}", entryUuid);
 
 		// Open existing one
 		DictionaryEntry entry = this.dictionary.findOne(entryUuid);
@@ -139,7 +153,7 @@ public class DictionaryManagementService {
 					.sorted()
 					.collect(Collectors.toList()));
 		}
-		
+
 		return edit;
 	}
 
@@ -150,6 +164,8 @@ public class DictionaryManagementService {
 	 * @return
 	 */
 	public DictionaryEntryEditData prepareNewEditableDictionaryEntry(String tableName) {
+
+		LOGGER.info("Init new content of dictionary entry for table {}", tableName);
 
 		DictionaryEntryEditData edit = new DictionaryEntryEditData();
 
@@ -174,6 +190,8 @@ public class DictionaryManagementService {
 	 * @param editData
 	 */
 	public void saveDictionaryEntry(DictionaryEntryEditData editData) {
+
+		LOGGER.info("Process saving on dictionary Entry on table {} (current id : {})", editData.getTable(), editData.getUuid());
 
 		DictionaryEntry entry;
 
@@ -207,6 +225,8 @@ public class DictionaryManagementService {
 	 */
 	public FunctionalDomainData createNewFunctionalDomain(String name) {
 
+		LOGGER.info("Process add of a new functional domain with name {}", name);
+
 		FunctionalDomain domain = new FunctionalDomain();
 
 		domain.setUuid(UUID.randomUUID());
@@ -222,6 +242,9 @@ public class DictionaryManagementService {
 	 * 
 	 */
 	public void refreshCachedMetadata() {
+
+		LOGGER.debug("Forced refresh on cache for metadata");
+
 		this.metadatas.refreshAll();
 	}
 

@@ -4,10 +4,14 @@ param-efluid:
 
    managed-datasource:
        driverClassName: org.postgresql.Driver
-       url: jdbc:postgresql://localhost/demo
+       url: jdbc:postgresql://localhost/demo?searchpath=public
        username: user
        password: user
 
+   extractor:
+       protectTableNames: true
+       protectColumnNames: true
+       
    details:
        version: 1.1.1
 

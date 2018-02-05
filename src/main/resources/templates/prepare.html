@@ -1,61 +1,19 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html layout:decorator="layout">
 <head>
-    <title>Maquette Gestion Paramètrage Efluid</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" href="./css/core.css" media="screen" />
-    
 </head>
 <body>
-    <div class="container-fluid">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
-            <a class="navbar-brand" href="./index.html">Gestion du paramètrage Efluid</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="divider-horizontal"></div>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">       
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Dictionnaire
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./dictionary.html">Modification du dictionnaire</a>
-                            <a class="dropdown-item" href="./domains.html">Configuration des domaines fonctionnels</a>
-                            <a class="dropdown-item" href="./share.html">Export / Import de dictionnaire</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Lot de modification
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./commits.html">Liste des lots présents</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item active" href="./prepare.html">Préparer un lot</a>
-                            <a class="dropdown-item" href="./pull.html">Importer un lot</a>
-                            <a class="dropdown-item" href="./push.html">Exporter un lot</a>
-                        </div>
-                    </li>
-                </ul>
-                <form class="form-inline">
-                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
-                </form>
-            </div>
-        </nav>
+    <span layout:fragment="content">
         <div class="row"><div class="col-1">&nbsp;</div></div>
         <div class="row">
             <div class="col-1"></div>
-            <div class="col-8">
+            <div class="col-9">
                 <p>
                     <h5>Préparation d'un lot
                     <button class="btn btn-dark btn-sm float-right" type="button">Rafraichir les modifications</button></h5>
                     <form class="form-inline">
                         <select class="form-control">
-                        <option selected>Tous</option>
+                        <option>Tous</option>
                         <option>Gestion du matériel</option>
                         <option>Matrice des prix</option>
                         <option>Processus utilisateurs</option>
@@ -207,14 +165,34 @@
                 <p>&nbsp;<br/><br/><br/><br/></p>
             </div>
         </div>        
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Commentaire sur la maquette</h4>
-            <p>Ici on a l'équivalent de <strong>l'add index</strong> : sélection / confirmation des <strong>chunks</strong> (qui sont en gros les modifications de lignes dans des tables).
-                 Le reverte est du coup chunk par chunk : à voir si on peut reverte "autrement", pour un lot (donc un commit) entier. Dans cette maquette le bouton de confirmation est fonctionnel (il renvoie vers le push). Il faut s'attendre à un délai certain au chargement de cette page car c'est ici qu'est fait le diff. Il y aura plutôt un spinloader pour faire patienter. Il peut être nécessaire de raffraichir le diff local en arrivant. Le bouton refresh permet de relancer cela au besoin.</p>
-        </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+	</span>
+    <script layout:fragment="script" th:inline="javascript">
+    
+		var preparationState = /*[[${preparation.status.name()}]]*/ 'NOT_LAUNCHED';
+		
+		const checkProgress = () => {
+			$.get("/prepare/progress", (data, status) => {
+				if(data === 'DIFF_RUNNING'){
+					setTimeout(checkProgress, 3000);
+				} else {
+					// Reload page for valid data
+					window.location.replace("/prepare");
+				}
+			});
+		};
+		
+		// Delete buttons
+		const startPreparationProgress = (e) => {
+			if(preparationState
+		};
+		
+    	// Init actions
+    	$(document).ready(() => {
+			$("button.delete-button").click(deleteButtonAction);
+			var fromType = /*[[${from}?${from}:'']]*/ 'success_edit';
+			if(fromType === 'success_edit') showSuccess("Table de paramètrage ajoutée avec succès au dictionnaire");
+		}); 
+		
+    </script>
 </body>
 </html>

@@ -70,7 +70,7 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 	 * @return
 	 */
 	@Override
-	@Cacheable
+	@Cacheable("regenerated")
 	public Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry) {
 
 		LOGGER.debug("Regenerating values from local index for managed table {}", parameterEntry.getTableName());

@@ -23,15 +23,16 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Mise en place d'un layout pour simpifier les templates Thymeleaf
 * index ("/") : page dynamique mais données en dur. Menu et authentification pas géré. 
 * édition des domaines fonctionnels ("/domains"): globalement implémenté. 
-* édition du dictionnaire ("/dictionary"): implémentation en cours. Liste dyn, édition en cours de mise en place sur 2 écrans cette fois. La partie "selection de la table" est en place.
-* autres écrans : pas dynamisés / intégrés avec thymeleaf
+* édition du dictionnaire ("/dictionary"): globalement implémenté. Quelques bugs, seront traités plus tard
+* préparation du diff ("/prepare"): logique de lancement asynchrone du diff en place, OK à ce stade. Pas beaucoup plus loin pour l'instant
+* autres écrans : pas dynamisés / pas intégrés avec thymeleaf
 
 ## Utilisation
 
 Le prototype est basé sur Spring-boot. Il n'y a rien à installer pour l'exécuter _par défaut_ :
 * Il démarre dans un mode "demo" par défaut
 * Il utilise alors une BDD embarquée H2 auto-générée. Attention elle est dropée au moment du stop
-* Plus loin dans ce README sont donnés des infos pour utiliser des BDD Postgres pour aller plus loin en terme de validation du comportement.
+* Plus loin dans ce README sont donnés des infos pour utiliser des BDD Postgres pour aller plus loin en terme de validation du comportement. 
 
 Le fichier de configuration technique de l'application est *src/main/resources/application.yml*
 
@@ -64,88 +65,11 @@ Démarrage avec docker
 
 Puis création de 2 databases : manager et demo. Création d'un user "user"/"user" owner de ces DB
 
-#### Schéma demo
-Pour intiliser l'instance demo : Elle est utilisée pour représenter une application dont la gestion du paramètrage serait pilotée avec l'application.
+#### Instance demo
+Pour intiliser l'instance demo : Elle est utilisée pour représenter une application "managed" dont la gestion du paramètrage serait pilotée avec l'application. 
 
-     -- DROP TABLE "TTYPEMATERIEL";
-     -- DROP TABLE "TCATEGORYMATERIEL";
-     -- DROP TABLE "TTABLEOTHER";
-     -- DROP TABLE "TTABLEOTHERTEST2";
-     
-     CREATE TABLE "TCATEGORYMATERIEL"
-     (
-         "ID" bigint NOT NULL,
-         "NOM" character varying(256)[] COLLATE pg_catalog."default" NOT NULL,
-         "DETAIL" character varying(256)[] COLLATE pg_catalog."default" NOT NULL,
-         CONSTRAINT "TCATEGORYMATERIEL_pkey" PRIMARY KEY ("ID")
-     )
-     WITH (
-         OIDS = FALSE
-     )
-     TABLESPACE pg_default;
-     
-     ALTER TABLE "TCATEGORYMATERIEL" OWNER to "user";
-     
-     
-     CREATE TABLE "TTYPEMATERIEL"
-     (
-         "ID" bigint NOT NULL,
-         "TYPE" character varying(256)[] COLLATE pg_catalog."default" NOT NULL,
-         "SERIE" character varying(256)[] COLLATE pg_catalog."default",
-         "CATID" bigint NOT NULL,
-         CONSTRAINT "TTYPEMATERIEL_pkey" PRIMARY KEY ("ID"),
-         CONSTRAINT "CAT_TYPE" FOREIGN KEY ("CATID")
-             REFERENCES "TCATEGORYMATERIEL" ("ID") MATCH SIMPLE
-             ON UPDATE NO ACTION
-             ON DELETE NO ACTION
-     )
-     WITH (
-         OIDS = FALSE
-     )
-     TABLESPACE pg_default;
-     
-     ALTER TABLE "TTYPEMATERIEL" OWNER to "user";
-     
-     
-     CREATE TABLE "TTABLEOTHER"
-     (
-         "ID" bigint NOT NULL,
-         "VALUE" character varying(256)[] COLLATE pg_catalog."default" NOT NULL,
-         "COUNT" bigint,
-         "WHEN" timestamp,
-         "TYPEID" bigint NOT NULL,
-         CONSTRAINT "TTABLEOTHER_pkey" PRIMARY KEY ("ID"),
-         CONSTRAINT "TYPE_OTHE" FOREIGN KEY ("TYPEID")
-             REFERENCES "TTYPEMATERIEL" ("ID") MATCH SIMPLE
-             ON UPDATE NO ACTION
-             ON DELETE NO ACTION
-     )
-     WITH (
-         OIDS = FALSE
-     )
-     TABLESPACE pg_default;
-     
-     ALTER TABLE "TTABLEOTHER" OWNER to "user";
-     
-     
-     CREATE TABLE "TTABLEOTHERTEST2"
-     (
-         "ID" bigint NOT NULL,
-         "VALUE1" character varying(256)[] COLLATE pg_catalog."default" NOT NULL,
-         "VALUE2" character varying(2048)[] COLLATE pg_catalog."default" NOT NULL,
-         "VALUE3" character varying(1024)[] COLLATE pg_catalog."default" NOT NULL,
-         "WEIGHT" float,
-         "LAST_UPDATED" timestamp,
-         CONSTRAINT "TTABLEOTHERTEST2_pkey" PRIMARY KEY ("ID")
-     )
-     WITH (
-         OIDS = FALSE
-     )
-     TABLESPACE pg_default;
-     
-     ALTER TABLE "TTABLEOTHERTEST2" OWNER to "user";
-         
-Ce script sera complété avec un modèle plus complexe plus tard. Des scripts d'initialisation de données seront également fournis.
+    -- Le script d'initialisation est à la racine du projet :
+    model_demo_init.sql
 
 ## Conception / Principes
 CF support de présentation.

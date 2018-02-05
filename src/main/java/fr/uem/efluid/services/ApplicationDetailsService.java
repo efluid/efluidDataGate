@@ -3,6 +3,8 @@ package fr.uem.efluid.services;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -23,6 +25,8 @@ import fr.uem.efluid.services.types.ApplicationDetails;
 public class ApplicationDetailsService {
 
 	private static final long INDEX_ENTRY_ESTIMATED_SIZE = 1024;
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationDetailsService.class);
 
 	@Autowired
 	private CommitRepository commits;
@@ -46,6 +50,8 @@ public class ApplicationDetailsService {
 	@Cacheable("details")
 	public ApplicationDetails getCurrentDetails() {
 
+		LOGGER.debug("Loading new details");
+
 		ApplicationDetails details = new ApplicationDetails();
 
 		details.setCommitsCount(this.commits.count());
@@ -64,6 +70,8 @@ public class ApplicationDetailsService {
 		long size = this.index.count() * INDEX_ENTRY_ESTIMATED_SIZE;
 		BigDecimal estim = new BigDecimal(size / (1024 * 1024));
 		estim.setScale(1, RoundingMode.HALF_UP);
+
+		LOGGER.debug("Checking estimated index size. Found {} items, for a an estimated total size of {} Mb", Long.valueOf(size), estim);
 
 		return estim.toPlainString() + " Mb";
 	}
