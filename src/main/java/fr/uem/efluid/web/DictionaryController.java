@@ -7,11 +7,13 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import fr.uem.efluid.services.DictionaryManagementService;
+import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 
 /**
@@ -73,6 +75,21 @@ public class DictionaryController {
 	 * @param name
 	 * @return
 	 */
+	@RequestMapping("/dictionary/edit/{uuid}")
+	public String dictionaryEdit(Model model, @PathVariable("uuid") UUID uuid) {
+
+		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
+		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
+		model.addAttribute("entry", this.dictionaryManagementService.editEditableDictionaryEntry(uuid));
+
+		return "table_edit";
+	}
+
+	/**
+	 * @param model
+	 * @param name
+	 * @return
+	 */
 	@RequestMapping("/dictionary/new/{name}")
 	public String dictionaryAddNewForTable(Model model, @PathVariable("name") String name) {
 
@@ -81,6 +98,22 @@ public class DictionaryController {
 		model.addAttribute("entry", this.dictionaryManagementService.prepareNewEditableDictionaryEntry(name));
 
 		return "table_edit";
+	}
+
+	/**
+	 * @param model
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping(path = "/dictionary/save", method = POST)
+	public String dictionarySave(Model model, @ModelAttribute DictionaryEntryEditData editData) {
+
+		this.dictionaryManagementService.saveDictionaryEntry(editData);
+
+		// For success save message
+		model.addAttribute("from", "success_edit");
+
+		return dictionaryPage(model);
 	}
 
 	/**

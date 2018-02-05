@@ -1,6 +1,10 @@
 package fr.uem.efluid.model.metas;
 
 /**
+ * <p>
+ * Metadata model for a column : details on name, pk, fk and type
+ * </p>
+ * 
  * @author elecomte
  * @since v0.0.1
  * @version 1
@@ -8,7 +12,7 @@ package fr.uem.efluid.model.metas;
 public class ColumnDescription implements Comparable<ColumnDescription> {
 
 	private String name;
-	private boolean binary;
+	private ColumnType type;
 	private boolean primaryKey;
 	private String foreignKeyTable;
 
@@ -28,18 +32,18 @@ public class ColumnDescription implements Comparable<ColumnDescription> {
 	}
 
 	/**
-	 * @return the binary
+	 * @return the type
 	 */
-	public boolean isBinary() {
-		return this.binary;
+	public ColumnType getType() {
+		return this.type;
 	}
 
 	/**
-	 * @param binary
-	 *            the binary to set
+	 * @param type
+	 *            the type to set
 	 */
-	public void setBinary(boolean binary) {
-		this.binary = binary;
+	public void setType(ColumnType type) {
+		this.type = type;
 	}
 
 	/**

@@ -26,25 +26,25 @@
                             <td><span class="query-display" th:text="${entry.query}">SELECT COLKEY, COLA, COLB, COLC FROM TCATEGORYMATERIEL WHERE 1=1 ORDER BY COLKEY</span></td>
 							<td><span class="float-right">
 								<a th:href="@{|/dictionary/edit/${entry.uuid}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm" type="button">Editer</a>
-								<button class="btn btn-outline-secondary btn-sm" type="button" title="Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent" disabled="disabled">Supprimer</button>
+								<button class="btn btn-secondary btn-sm" type="button" th:title="!${entry.canDelete}?'Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent'"  th:disabled="!${entry.canDelete}">Supprimer</button>
 							</span></td>
 						</tr>
 					</tbody>
 				</table>
 				<p>
-					<a th:href="@{/dictionary/new}" href="./dictionary_123.html" class="btn btn-primary float-right" type="button">Ajouter une nouvelle table de paramètrage</a><br/><br/>
+					<a th:href="@{/dictionary/new}" href="./dictionary_123.html" class="btn btn-success btn-sm float-right" type="button">Ajouter une nouvelle table de paramètrage</a><br/><br/>
 				</p>
 			</div>
 		</div>
 	</span>
-    <script layout:fragment="script">
+    <script layout:fragment="script" th:inline="javascript">
     
 		// Delete buttons
 		const deleteButtonAction = (e) => {
 			hideDisplays();
 			var uuid = e.target.parentElement.parentElement.id;
-			$.post("domains/remove/" + uuid, null, (data, status) => {
-				showSuccess("Domaine fonctionnel retiré avec succès");
+			$.post("dictionary/remove/" + uuid, null, (data, status) => {
+				showSuccess("Table de paramètrage retiré avec succès");
 				$("#" + uuid).remove();
 			});
 		};
@@ -52,6 +52,13 @@
     	// Init actions
     	$(document).ready(() => {
 			$("button.delete-button").click(deleteButtonAction);
+		}); 
+		
+    </script>
+    <script th:if="${from}" th:inline="javascript">
+    	$(document).ready(() => {
+    		var type = /*[[${from}]]*/ 'success_edit';
+			if(type === 'success_edit') showSuccess("Table de paramètrage ajoutée avec succès au dictionnaire");
 		}); 
     </script>
 </body>

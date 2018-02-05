@@ -4,6 +4,8 @@ import java.nio.charset.Charset;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import fr.uem.efluid.model.metas.ColumnType;
+
 /**
  * <p>
  * Generic holder for one parameter value, associated to its parameter name
@@ -36,7 +38,7 @@ public interface Value {
 	 * @return true if value is a natural string representation (depends on database
 	 *         column type)
 	 */
-	boolean isString();
+	ColumnType getType();
 
 	/**
 	 * The managed value as a String

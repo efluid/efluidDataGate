@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.services.types.Value;
 
 /**
@@ -23,8 +24,6 @@ public class ManagedDiffUtils {
 
 	private final static char AFFECT = '=';
 	private final static char SEPARATOR = ',';
-	private final static char TYPE_STRING = 'S';
-	private final static char TYPE_OTHER = 'O'; // TODO : other types ?
 	private final static char TYPE_IDENT = '/';
 
 	private final static Encoder B64_ENCODER = Base64.getEncoder();
@@ -41,8 +40,8 @@ public class ManagedDiffUtils {
 	 *            name of the cell
 	 * @param value
 	 *            raw content of the cell
-	 * @param stringCol
-	 *            true if value is a string
+	 * @param type
+	 *            type of supported value, as specified in <tt>ColumnType</tt>
 	 * @param last
 	 *            true if it's the last cell
 	 */
@@ -50,16 +49,12 @@ public class ManagedDiffUtils {
 			final StringBuilder builder,
 			final String colName,
 			final String value,
-			final boolean stringCol,
+			final ColumnType type,
 			final boolean last) {
 
 		builder.append(colName).append(AFFECT);
 
-		if (stringCol) {
-			appendStringValue(builder, value);
-		} else {
-			appendOtherValue(builder, value);
-		}
+		builder.append(type.getRepresent()).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
 
 		if (!last) {
 			builder.append(SEPARATOR);
@@ -88,7 +83,7 @@ public class ManagedDiffUtils {
 					oneLine,
 					value.getKey(),
 					value.getValue().toString(),
-					value.getValue() instanceof String,
+					ColumnType.forObject(value.getValue()),
 					remaining == 0);
 			remaining--;
 		}
@@ -120,22 +115,6 @@ public class ManagedDiffUtils {
 	 */
 
 	/**
-	 * @param builder
-	 * @param value
-	 */
-	private static void appendStringValue(final StringBuilder builder, final String value) {
-		builder.append(TYPE_STRING).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
-	}
-
-	/**
-	 * @param builder
-	 * @param value
-	 */
-	private static void appendOtherValue(final StringBuilder builder, final String value) {
-		builder.append(TYPE_OTHER).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
-	}
-
-	/**
 	 * <p>
 	 * For decoding of an internaly indexed value, with access to a convening
 	 * <tt>Value</tt>.
@@ -149,7 +128,7 @@ public class ManagedDiffUtils {
 
 		private final String name;
 		private final byte[] value;
-		private final boolean string;
+		private final ColumnType type;
 
 		private final static Decoder B64_DECODER = Base64.getDecoder();
 
@@ -165,7 +144,7 @@ public class ManagedDiffUtils {
 			int pos = raw.indexOf(AFFECT);
 			this.name = raw.substring(0, pos).intern();
 			this.value = B64_DECODER.decode(raw.substring(pos + 3));
-			this.string = (raw.charAt(pos + 1) == TYPE_STRING);
+			this.type = ColumnType.forRepresent(raw.charAt(pos + 1));
 		}
 
 		/**
@@ -180,16 +159,16 @@ public class ManagedDiffUtils {
 		 * @return
 		 */
 		@Override
-		public boolean isString() {
-			return this.string;
+		public String getName() {
+			return this.name;
 		}
 
 		/**
-		 * @return
+		 * @return the type
 		 */
 		@Override
-		public String getName() {
-			return this.name;
+		public ColumnType getType() {
+			return this.type;
 		}
 
 		/**
@@ -198,7 +177,8 @@ public class ManagedDiffUtils {
 		 */
 		@Override
 		public String toString() {
-			return this.name + "=" + (this.isString() ? "\"" : "") + getValueAsString() + (this.isString() ? "\"" : "");
+			return this.name + "=" + (this.type == ColumnType.STRING ? "\"" : "") + getValueAsString()
+					+ (this.type == ColumnType.STRING ? "\"" : "");
 		}
 	}
 }

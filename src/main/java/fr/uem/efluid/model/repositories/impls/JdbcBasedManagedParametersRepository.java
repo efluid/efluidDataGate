@@ -3,12 +3,13 @@ package fr.uem.efluid.model.repositories.impls;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Repository;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ManagedParametersRepository;
 import fr.uem.efluid.utils.ManagedDiffUtils;
@@ -37,6 +39,8 @@ import fr.uem.efluid.utils.ManagedQueriesUtils;
 @Repository
 public class JdbcBasedManagedParametersRepository implements ManagedParametersRepository {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedDatabaseDescriptionRepository.class);
+
 	@Autowired
 	private JdbcTemplate managedSource;
 
@@ -50,6 +54,8 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 	 */
 	@Override
 	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry) {
+
+		LOGGER.debug("Extracting values from managed table {}", parameterEntry.getTableName());
 
 		// Get columns for all table
 		return this.managedSource.query(
@@ -66,6 +72,8 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 	@Override
 	@Cacheable
 	public Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry) {
+
+		LOGGER.debug("Regenerating values from local index for managed table {}", parameterEntry.getTableName());
 
 		// Will process backlog by its natural order
 		List<IndexEntry> existingBacklog = this.coreIndex.findByDictionaryEntryOrderByTimestamp(parameterEntry);
@@ -129,17 +137,17 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 			final int count = meta.getColumnCount();
 			final int last = count - 1;
 			String[] columnNames = new String[count];
-			boolean[] columnStrings = new boolean[count];
+			ColumnType[] columnType = new ColumnType[count];
 			int keyPos = 1;
 
 			// Identify columns
 			for (int i = 0; i < count; i++) {
-				String colname = meta.getColumnName(i+1).toUpperCase();
+				String colname = meta.getColumnName(i + 1).toUpperCase();
 				if (colname.equals(keyName)) {
 					keyPos = i;
 				}
 				columnNames[i] = colname;
-				columnStrings[i] = isTypeProtected(meta.getColumnType(i+1));
+				columnType[i] = ColumnType.forJdbcType(meta.getColumnType(i + 1));
 			}
 
 			// Process content
@@ -148,9 +156,9 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 				String keyValue = null;
 				for (int i = 0; i < count; i++) {
 					if (i != keyPos) {
-						ManagedDiffUtils.appendExtractedValue(payload, columnNames[i], rs.getString(i+1), columnStrings[i], i == last);
+						ManagedDiffUtils.appendExtractedValue(payload, columnNames[i], rs.getString(i + 1), columnType[i], i == last);
 					} else {
-						keyValue = rs.getString(i+1);
+						keyValue = rs.getString(i + 1);
 					}
 				}
 
@@ -160,12 +168,5 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 			return extraction;
 		}
 
-		/**
-		 * @param type
-		 * @return
-		 */
-		private static boolean isTypeProtected(int type) {
-			return (type == Types.VARCHAR || type == Types.CLOB || type == Types.NVARCHAR);
-		}
 	}
 }

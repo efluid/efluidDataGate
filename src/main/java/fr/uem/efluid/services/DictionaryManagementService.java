@@ -23,7 +23,6 @@ import fr.uem.efluid.services.types.DictionaryEntrySummary;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 import fr.uem.efluid.services.types.SelectableTable;
 import fr.uem.efluid.utils.ManagedQueriesUtils;
-import fr.uem.efluid.utils.TechnicalException;
 
 /**
  * @author elecomte
@@ -121,14 +120,26 @@ public class DictionaryManagementService {
 		DictionaryEntryEditData edit = DictionaryEntryEditData.fromEntity(entry);
 
 		// Need select clause as a list
-		Collection<String> selecteds = ManagedQueriesUtils.splitSelectClause(entry.getSelectClause());
+		Collection<String> selecteds = entry.getSelectClause() != null ? ManagedQueriesUtils.splitSelectClause(entry.getSelectClause())
+				: Collections.emptyList();
 
-		// Add metadata to use for edit
-		edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
-				.map(c -> ColumnEditData.fromColumnDescription(c, selecteds))
-				.sorted()
-				.collect(Collectors.toList()));
+		TableDescription desc = getTableDescription(edit.getTable());
 
+		// Dedicated case : missing table, pure simulated content
+		if (desc == TableDescription.MISSING) {
+			edit.setMissingTable(true);
+			edit.setColumns(selecteds.stream()
+					.map(c -> ColumnEditData.fromSelecteds(c, entry.getTableName()))
+					.sorted()
+					.collect(Collectors.toList()));
+		} else {
+			// Add metadata to use for edit
+			edit.setColumns(desc.getColumns().stream()
+					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds))
+					.sorted()
+					.collect(Collectors.toList()));
+		}
+		
 		return edit;
 	}
 
@@ -150,6 +161,7 @@ public class DictionaryManagementService {
 		// Add metadata to use for edit
 		edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
 				.map(c -> ColumnEditData.fromColumnDescription(c, null))
+				.peek(c -> c.setSelected(true)) // Default : select all
 				.sorted()
 				.collect(Collectors.toList()));
 
@@ -222,7 +234,7 @@ public class DictionaryManagementService {
 		return this.metadatas.getTables().stream()
 				.filter(t -> t.getName().equals(tableName))
 				.findFirst()
-				.orElseThrow(() -> new TechnicalException("Table " + tableName + " doesn't exist"));
+				.orElseGet(() -> TableDescription.MISSING);
 	}
 
 	/**
@@ -240,7 +252,8 @@ public class DictionaryManagementService {
 	 * @return
 	 */
 	private static String columnsAsSelectClause(List<ColumnEditData> columns) {
-		return columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName)
-				.collect(ManagedQueriesUtils.collectToSelectClause());
+		return ManagedQueriesUtils.mergeSelectClause(
+				columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName),
+				columns.size());
 	}
 }

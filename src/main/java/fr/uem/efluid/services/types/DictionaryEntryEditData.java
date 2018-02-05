@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.metas.ColumnDescription;
+import fr.uem.efluid.model.metas.ColumnType;
 
 /**
  * <p>
@@ -29,6 +30,8 @@ public class DictionaryEntryEditData {
 	private String where;
 
 	private List<ColumnEditData> columns;
+
+	private boolean missingTable;
 
 	/**
 	 * @return the uuid
@@ -121,6 +124,21 @@ public class DictionaryEntryEditData {
 	}
 
 	/**
+	 * @return the missingTable
+	 */
+	public boolean isMissingTable() {
+		return this.missingTable;
+	}
+
+	/**
+	 * @param missingTable
+	 *            the missingTable to set
+	 */
+	public void setMissingTable(boolean missingTable) {
+		this.missingTable = missingTable;
+	}
+
+	/**
 	 * @param entity
 	 * @return
 	 */
@@ -149,7 +167,7 @@ public class DictionaryEntryEditData {
 	public static final class ColumnEditData implements Comparable<ColumnEditData> {
 
 		private String name;
-		private String type;
+		private ColumnType type;
 		private boolean primaryKey;
 		private String foreignKeyTable;
 		private boolean selected;
@@ -194,7 +212,7 @@ public class DictionaryEntryEditData {
 		/**
 		 * @return the type
 		 */
-		public String getType() {
+		public ColumnType getType() {
 			return this.type;
 		}
 
@@ -202,7 +220,7 @@ public class DictionaryEntryEditData {
 		 * @param type
 		 *            the type to set
 		 */
-		public void setType(String type) {
+		public void setType(ColumnType type) {
 			this.type = type;
 		}
 
@@ -243,22 +261,56 @@ public class DictionaryEntryEditData {
 		 */
 		@Override
 		public int compareTo(ColumnEditData o) {
+
+			// Priority on PK
+
+			if (this.primaryKey && !o.primaryKey) {
+				return -1;
+			}
+
+			if (!this.primaryKey && o.primaryKey) {
+				return 1;
+			}
+
 			return this.name.compareTo(o.getName());
 		}
 
 		/**
+		 * <p>
+		 * Standard edit : full content
+		 * </p>
+		 * 
 		 * @param col
+		 * @param selecteds
 		 * @return
 		 */
 		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds) {
 			ColumnEditData editData = new ColumnEditData();
 			editData.setForeignKeyTable(col.getForeignKeyTable());
 			editData.setName(col.getName());
-			editData.setType(col.isBinary() ? "binary" : "atomic");
+			editData.setType(col.getType());
 			editData.setPrimaryKey(col.isPrimaryKey());
 			if (selecteds != null) {
 				editData.setSelected(selecteds.contains(col.getName()));
 			}
+			return editData;
+		}
+
+		/**
+		 * <p>
+		 * Edit on missing / not created yet table (possible situation when importing
+		 * external dictionary), simply simulate column from selected values.
+		 * </p>
+		 * 
+		 * @param selected
+		 * @param keyname
+		 * @return
+		 */
+		public static ColumnEditData fromSelecteds(String selected, String keyname) {
+			ColumnEditData editData = new ColumnEditData();
+			editData.setName(selected);
+			editData.setPrimaryKey(selected.equals(keyname));
+			editData.setSelected(true);
 			return editData;
 		}
 	}

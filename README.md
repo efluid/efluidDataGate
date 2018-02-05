@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 03/02/2018*
+*Mise à jour au 05/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Modification de la gestion des entrées dans le dictionnaire : se fait sur un autre écran de saisie à partir de la liste
@@ -17,7 +17,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Gestion du diff : diff de base en place, testé
 * Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
-* Build : maven OK. Tests faits pour avoir un CI dédié (drone.io?)
+* Build : maven OK. Tests faits pour avoir un CI dédié. Utilisation du circle.ci Zenika possible. Pour déployer une instance de test, une instance de déploiement privée pourra être utilisée.
 
 **Intégration maquette**
 * Mise en place d'un layout pour simpifier les templates Thymeleaf
@@ -69,6 +69,8 @@ Pour intiliser l'instance demo : Elle est utilisée pour représenter une applic
 
      -- DROP TABLE "TTYPEMATERIEL";
      -- DROP TABLE "TCATEGORYMATERIEL";
+     -- DROP TABLE "TTABLEOTHER";
+     -- DROP TABLE "TTABLEOTHERTEST2";
      
      CREATE TABLE "TCATEGORYMATERIEL"
      (
@@ -82,8 +84,7 @@ Pour intiliser l'instance demo : Elle est utilisée pour représenter une applic
      )
      TABLESPACE pg_default;
      
-     ALTER TABLE "TCATEGORYMATERIEL"
-         OWNER to "user";
+     ALTER TABLE "TCATEGORYMATERIEL" OWNER to "user";
      
      
      CREATE TABLE "TTYPEMATERIEL"
@@ -103,8 +104,46 @@ Pour intiliser l'instance demo : Elle est utilisée pour représenter une applic
      )
      TABLESPACE pg_default;
      
-     ALTER TABLE "TTYPEMATERIEL"
-         OWNER to "user";
+     ALTER TABLE "TTYPEMATERIEL" OWNER to "user";
+     
+     
+     CREATE TABLE "TTABLEOTHER"
+     (
+         "ID" bigint NOT NULL,
+         "VALUE" character varying(256)[] COLLATE pg_catalog."default" NOT NULL,
+         "COUNT" bigint,
+         "WHEN" timestamp,
+         "TYPEID" bigint NOT NULL,
+         CONSTRAINT "TTABLEOTHER_pkey" PRIMARY KEY ("ID"),
+         CONSTRAINT "TYPE_OTHE" FOREIGN KEY ("TYPEID")
+             REFERENCES "TTYPEMATERIEL" ("ID") MATCH SIMPLE
+             ON UPDATE NO ACTION
+             ON DELETE NO ACTION
+     )
+     WITH (
+         OIDS = FALSE
+     )
+     TABLESPACE pg_default;
+     
+     ALTER TABLE "TTABLEOTHER" OWNER to "user";
+     
+     
+     CREATE TABLE "TTABLEOTHERTEST2"
+     (
+         "ID" bigint NOT NULL,
+         "VALUE1" character varying(256)[] COLLATE pg_catalog."default" NOT NULL,
+         "VALUE2" character varying(2048)[] COLLATE pg_catalog."default" NOT NULL,
+         "VALUE3" character varying(1024)[] COLLATE pg_catalog."default" NOT NULL,
+         "WEIGHT" float,
+         "LAST_UPDATED" timestamp,
+         CONSTRAINT "TTABLEOTHERTEST2_pkey" PRIMARY KEY ("ID")
+     )
+     WITH (
+         OIDS = FALSE
+     )
+     TABLESPACE pg_default;
+     
+     ALTER TABLE "TTABLEOTHERTEST2" OWNER to "user";
          
 Ce script sera complété avec un modèle plus complexe plus tard. Des scripts d'initialisation de données seront également fournis.
 
@@ -188,3 +227,34 @@ Organisation en couche simple.
 * contenus du package "services.types" => TO utilisés par les services business
 * contenus du package "config" => Bean de configuration spring. Remplace les anciens fichiers "bean.xml" du temps de spring < v3. Archetype Spring
 
+### Focus techniques
+
+#### Types de données gérés en interne
+La grand règle pour l'extraction des données et la préparation pour l'index est d'utiliser uniquement du string. Les données sont simplement "inlinées" sous la forme suivante : 
+
+    COLUMN_NAME=T/B64_ENCODED_VALUE,autres colonnes...
+
+Avec T le type "simplifié" parmi S/O/B. Toutes les valeurs sont inlinés en une seule chaine unique, séparées par une virgule, avec le nom de la colonne en majuscule repris pour chaque valeur. Les colonnes sont ordonnées par leur ordre naturel. Les valeurs sont systématiquement converties en BASE64. Le traitement est globalement traité par les méthodes utilitaires de **fr.uem.efluid.utils.ManagedDiffUtils**
+
+**Pourquoi ce formalisme ?** 
+En effet on peut observer que ce n'est par exemple pas le plus compact. Mais il y a des avantages : 
+* Le BASE64 implique par exemple environ +25% de taille de données. Mais tel qu'il est défini ici, il permet de simplifier l'opération de comparaison d'une valeur à l'autre, en traitant tous les changements dans la table (valeurs et définition). Le poids n'est pas critique au vu de l'usage attendu (on est sur des données qui font au grand maximum 2Gb en tout, et plutôt des 10Mb en usage courant). Hasher ces valeurs est très simple. La compression (utile pour l'export / import) est optimale). Seuls des caractères ANSI sont utilisés, on peut coder cette chaine sur des charactères de 8bit.
+* Si les noms de colonnes sont repris systématiquement et alourdissent ces données, retourner cette valeur pour obtenir un SQL d'application de mise à jour est aisé (on a immédiatement les colonnes et B64 est reversible). De plus le résultat inline reste limité aux caractères ANSI et est hautement compressable pour les exports / imports
+* La comparaison peut être faite directement par string. Au vu du volume de données attendu, la comparaison par Hash n'aurait pas d'impact positif, mais c'est à tester.
+
+**Pourquoi cette limitation à trois types S/O/B ?**
+Dans les faits, on a 2 types de transpositions à gérer pour chaque données indéxées :
+* Lors de l'extraction, on veut obtenir les données dans un format gérable dans l'index. Pour cela, TOUT EST CONVERTI EN STRING. 
+* Lors de la réapplication des données, c'est le cas d'usage lié à la génération du SQL de sorti des données qui rentre en compte. Et en SQL il y a en générale 3 possibilités : les chaines de caractères et assimilés, de même que les dates / timestamp (tant que le format est embarqué) sont données avec des caractères "d'identification de début et de fin", soit "'". Les nombres, binaires et booléen sont donnée sans ces caractères, et les CLOB et BLOB sont injectés autrement (suivant les BDD). Les types S/O/B représentent ces trois cas, et sont portés par l'enum **fr.uem.efluid.model.metas.ColumnType**
+  
+**Pour donner un exemple plus concret de données inlinées, soit une table avec comme colonnes :**
+* KEY : PK bigint
+* VALUE : Varchar(x)
+* VALUE_OTHER : Varchar(x) 
+* Something : bigint
+* when : timestamp
+
+**L'inline donne le résultat suivant :**
+
+    VALUE=S/QSFQOI42144,VALUE_OTHER=S/JR19RJ19021RK=,SOMETHING=O/14201FIOI==,WHEN=O/090FJZ0F0FI0KF
+    

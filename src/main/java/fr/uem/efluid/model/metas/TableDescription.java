@@ -15,6 +15,18 @@ import java.util.Set;
  */
 public class TableDescription {
 
+	/**
+	 * <p>
+	 * Can be used as reference on identified missing table
+	 * </p>
+	 */
+	public static final TableDescription MISSING = new TableDescription() {
+		@Override
+		public String getName() {
+			return "nMn";
+		}
+	};
+
 	private String name;
 	private Set<ColumnDescription> columns = new HashSet<>();
 	private boolean view;

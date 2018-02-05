@@ -3,7 +3,6 @@ package fr.uem.efluid.model.repositories.impls;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import fr.uem.efluid.model.metas.ColumnDescription;
+import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.utils.TechnicalException;
@@ -135,8 +135,7 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 					ColumnDescription col = new ColumnDescription();
 					String colName = rs.getString(4);
 					col.setName(colName);
-					// TODO : improve BLOB / CLOB / Binary identifier
-					col.setBinary(rs.getInt(5) == Types.BLOB);
+					col.setType(ColumnType.forJdbcType(rs.getInt(5)));
 					desc.getColumns().add(col);
 				}
 			}
@@ -146,7 +145,8 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 
 	/**
 	 * <p>
-	 * Use a merged query for all tables to gather table keys. JDBC metadata acces spec :
+	 * <b>Heavy-load</b> : Use a dedicated query for each tables to gather table keys.
+	 * JDBC metadata acces spec :
 	 * 
 	 * <pre>
 	 * Each primary key column description has the following columns: 
@@ -164,15 +164,11 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 */
 	private static void completeTablesPrimaryKeys(DatabaseMetaData md, Map<String, TableDescription> descs) {
 		try {
-			// Get pk for all table
-			try (ResultSet rs = md.getPrimaryKeys(null, null, "%")) {
-				while (rs.next()) {
-					String tableName = rs.getString(3);
+			// Get pk for each tables ...
+			for (TableDescription desc : descs.values()) {
 
-					TableDescription desc = descs.get(tableName);
-
-					// Excludes system table columns, unused columns ...
-					if (desc != null) {
+				try (ResultSet rs = md.getPrimaryKeys(null, null, desc.getName())) {
+					while (rs.next()) {
 						String columnName = rs.getString(4);
 						desc.getColumns().stream()
 								.filter(c -> c.getName().equals(columnName))
@@ -181,6 +177,7 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 					}
 				}
 			}
+
 		} catch (SQLException e) {
 			throw new TechnicalException("Cannot extract metadata", e);
 		}
@@ -188,24 +185,25 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 
 	/**
 	 * <p>
-	 * Use a merged query for all tables to gather table FK. JDBC metadata acces spec :
+	 * <b>Heavy-load</b> : Use a dedicated query for each tables to gather table FK. JDBC
+	 * metadata acces spec :
 	 * 
 	 * <pre>
-	 * Each foreign key column description has the following columns: 
-	 * 1.PKTABLE_CAT String => parent key table catalog (may be null) 
-	 * 2.PKTABLE_SCHEM String => parent key table schema (may be null) 
-	 * 3.PKTABLE_NAME String => parent key table name 
-	 * 4.PKCOLUMN_NAME String => parent key column name 
-	 * 5.FKTABLE_CAT String => foreign key table catalog (may be null) being exported (may be null) 
-	 * 6.FKTABLE_SCHEM String => foreign key table schema (may be null) being exported (may be null) 
-	 * 7.FKTABLE_NAME String => foreign key table name being exported 
-	 * 8.FKCOLUMN_NAME String => foreign key column name being exported 
-	 * 9.KEY_SEQ short => sequence number within foreign key( a value of 1 represents the first column of the foreign key, a value of 2 would represent the second column within the foreign key). 
-	 * 10.UPDATE_RULE short => What happens to foreign key when parent key is updated: 
-	 * 11.DELETE_RULE short => What happens to the foreign key when parent key is deleted
+	 * Each primary key column description has the following columns: 
+	 * 1.PKTABLE_CAT String => primary key table catalog being imported (may be null) 
+	 * 2.PKTABLE_SCHEM String => primary key table schema being imported (may be null) 
+	 * 3.PKTABLE_NAME String => primary key table name being imported 
+	 * 4.PKCOLUMN_NAME String => primary key column name being imported 
+	 * 5.FKTABLE_CAT String => foreign key table catalog (may be null) 
+	 * 6.FKTABLE_SCHEM String => foreign key table schema (may be null) 
+	 * 7.FKTABLE_NAME String => foreign key table name 
+	 * 8.FKCOLUMN_NAME String => foreign key column name 
+	 * 9.KEY_SEQ short => sequence number within a foreign key( a value of 1 represents the first column of the foreign key, a value of 2 would represent the second column within the foreign key). 
+	 * 10.UPDATE_RULE short => What happens to a foreign key when the primary key is updated: ◦ importedNoAction - do not allow update of primary key if it has been imported 
+	 * 11.DELETE_RULE short => What happens to the foreign key when primary is deleted. ◦ importedKeyNoAction - do not allow delete of primary key if it has been imported 
 	 * 12.FK_NAME String => foreign key name (may be null) 
-	 * 13.PK_NAME String => parent key name (may be null) 
-	 * 14.DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit
+	 * 13.PK_NAME String => primary key name (may be null) 
+	 * 14.DEFERRABILITY short => can the evaluation of foreign key constraints be deferred until commit ◦ importedKeyInitiallyDeferred - see SQL92 for definition
 	 * </pre>
 	 * </p>
 	 * 
@@ -214,15 +212,10 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 */
 	private static void completeTablesForeignKeys(DatabaseMetaData md, Map<String, TableDescription> descs) {
 		try {
-			// Get pk for all table
-			try (ResultSet rs = md.getCrossReference(null, null, "%", null, null, "%")) {
-				while (rs.next()) {
-					String tableName = rs.getString(7);
-
-					TableDescription desc = descs.get(tableName);
-
-					// Excludes system table columns, unused columns ...
-					if (desc != null) {
+			// Get fk for each tables ...
+			for (TableDescription desc : descs.values()) {
+				try (ResultSet rs = md.getImportedKeys(null, null, desc.getName());) {
+					while (rs.next()) {
 						String columnName = rs.getString(8);
 						String destTable = rs.getString(3);
 						desc.getColumns().stream()
@@ -256,8 +249,10 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 * </pre>
 	 * </p>
 	 * 
-	 * @param rs
-	 * @return
+	 * @param md
+	 *            JDBC metadata holder, as a <tt>DatabaseMetaData</tt>
+	 * @return map of initialized table identifications as <tt>TableDescription</tt>,
+	 *         mapped to their table name
 	 * @throws SQLException
 	 */
 	private static Map<String, TableDescription> loadCompliantTables(DatabaseMetaData md) throws SQLException {

@@ -61,10 +61,10 @@ public class DataGenerationUtils {
 		entry.setUuid(UUID.randomUUID());
 		entry.setParameterName(name);
 		entry.setDomain(domain);
-		entry.setSelectClause(select);
+		entry.setSelectClause(select != null ? select.toUpperCase() : select);
 		entry.setTableName(table);
 		entry.setWhereClause(where);
-		entry.setKeyName(keyName);
+		entry.setKeyName(keyName != null ? keyName.toUpperCase() : keyName);
 
 		return entry;
 	}
