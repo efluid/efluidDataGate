@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 05/02/2018*
+*Mise à jour au 06/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Modification de la gestion des entrées dans le dictionnaire : se fait sur un autre écran de saisie à partir de la liste
@@ -16,6 +16,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
 * Gestion du diff : diff de base en place, testé
 * Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
+* Les composants de génération "fine" de requêtes SQL ou d'inline de données sont désormais des beans springs extensibles
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
 * Build : maven OK. Tests faits pour avoir un CI dédié. Utilisation du circle.ci Zenika possible. Pour déployer une instance de test, une instance de déploiement privée pourra être utilisée.
 
@@ -65,11 +66,30 @@ Démarrage avec docker
 
 Puis création de 2 databases : manager et demo. Création d'un user "user"/"user" owner de ces DB
 
+#### Instance Oracle 
+Oracle XE peut être utilisé pour représenter l'application demo. 
+Démarrage avec docker
+
+    docker run --name oracle -d -p 49161:1521 -e ORACLE_ALLOW_REMOTE=true wnameless/oracle-xe-11g
+
+Se connecter ensuite à l'instance avec SQL Developer avec les paramètres : 
+* hostname: ...suivant installation...
+* port: 49161
+* sid: xe
+* username: system
+* password: oracle (par defaut)
+
+Puis créer un user "demo"/"demo" avec des droits suffisant pour créer des données
+
 #### Instance demo
 Pour intiliser l'instance demo : Elle est utilisée pour représenter une application "managed" dont la gestion du paramètrage serait pilotée avec l'application. 
 
-    -- Le script d'initialisation est à la racine du projet :
-    model_demo_init.sql
+    -- Le script d'initialisation pour postgres :
+    /src/database/model_demo_init_pgsql.sql
+    -- ou, pour oracle
+    /src/database/model_demo_init_oracle.sql
+    
+Ce sont les mêmes modèles, les mêmes données pour les 2 scripts
 
 ## Conception / Principes
 CF support de présentation.
