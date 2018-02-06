@@ -4,8 +4,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import fr.uem.efluid.TestUtils;
-
 /**
  * @author elecomte
  * @since v0.0.1

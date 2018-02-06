@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html layout:decorator="layout">
 <head>
+    <link rel="stylesheet" href="/css/spinning.css" media="screen"/>
 </head>
 <body>
     <span layout:fragment="content">
@@ -12,7 +13,20 @@
                     <h5>Préparation d'un lot
                     <button class="btn btn-outline-dark btn-sm float-right" type="button" disabled="disabled">Rafraichir les modifications</button></h5>
                 </p>
-                <div>Chargement en cours<span class="spinning-cog"></span></div>
+                <div class="alert alert-secondary" role="alert">
+  					<strong>Chargement en cours, merci de patienter</strong>. Le traitement d'analyse des différences entre la base de données gérée et 
+  					l'index des paramètrages connus peut prendre un certain temps. Il n'est pas possible d'arrêter un traitement en cours.
+  					<div id="floatingCirclesG">
+						<div class="f_circleG" id="frotateG_01"></div>
+						<div class="f_circleG" id="frotateG_02"></div>
+						<div class="f_circleG" id="frotateG_03"></div>
+						<div class="f_circleG" id="frotateG_04"></div>
+						<div class="f_circleG" id="frotateG_05"></div>
+						<div class="f_circleG" id="frotateG_06"></div>
+						<div class="f_circleG" id="frotateG_07"></div>
+						<div class="f_circleG" id="frotateG_08"></div>
+					</div>
+				</div>
                 <p>&nbsp;<br/><br/><br/><br/></p>
             </div>
         </div>        

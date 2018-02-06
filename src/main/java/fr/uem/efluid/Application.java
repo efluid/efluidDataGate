@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @EnableJpaRepositories(REPOSITORIES)
 @EntityScan(ENTITIES)
-@ComponentScan({ CONFIG, SERVICES, WEB, REPOSITORIES_IMPLS })
+@ComponentScan({ CONFIG, SERVICES, WEB, REPOSITORIES_IMPLS, TOOLS })
 @EnableCaching
 @Configuration
 public class Application {
@@ -45,5 +45,6 @@ public class Application {
 		String SERVICES = ROOT + ".services";
 		String WEB = ROOT + ".web";
 		String CONFIG = ROOT + ".config";
+		String TOOLS = ROOT + ".tools";
 	}
 }

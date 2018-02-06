@@ -3,7 +3,7 @@ package fr.uem.efluid.services.types;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.utils.ManagedQueriesUtils;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
 
 /**
  * @author elecomte
@@ -95,12 +95,12 @@ public final class DictionaryEntrySummary {
 	 * @param entity
 	 * @return
 	 */
-	public static DictionaryEntrySummary fromEntity(DictionaryEntry entity) {
+	public static DictionaryEntrySummary fromEntity(DictionaryEntry entity, ManagedQueriesGenerator generator) {
 		return new DictionaryEntrySummary(
 				entity.getUuid(),
 				entity.getDomain().getUuid(),
 				entity.getDomain().getName(),
 				entity.getParameterName(),
-				ManagedQueriesUtils.producesSelectParameterQuery(entity));
+				generator.producesSelectParameterQuery(entity));
 	}
 }

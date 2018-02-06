@@ -13,10 +13,12 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.TestUtils;
+import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedParametersRepository;
 import fr.uem.efluid.stubs.TestDataLoader;
+import fr.uem.efluid.stubs.TestUtils;
+import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
  * @author elecomte
@@ -85,7 +87,7 @@ public class DataDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupFullDatabase("diff8");
 			long start = System.currentTimeMillis();
-			this.service.processDiff(this.dictionaryEntryUuid);
+			this.service.processDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {
@@ -167,6 +169,8 @@ public class DataDiffServiceBenchTest {
 	private void runRandomStaticDiffBenchmark() {
 
 		final int play = 25;
+		final DictionaryEntry dic = this.dictionary.findOne(this.dictionaryEntryUuid);
+		final ManagedValueConverter converter = new ManagedValueConverter();
 
 		int totalLargeKnew = 0;
 		int totalLargeActual = 0;
@@ -181,11 +185,11 @@ public class DataDiffServiceBenchTest {
 		// Repeated run
 		for (int i = 0; i < play; i++) {
 			// Prepare large sources (~100k lines each, 10% differences)
-			Map<String, String> largeActual = TestUtils.multiplyDataset(TestUtils.readDataset("diff6/actual.csv"), 1000);
+			Map<String, String> largeActual = TestUtils.multiplyDataset(this.loader.readDataset("diff6/actual.csv"), 1000);
 
 			// Knews are modified during diff : use duplicates for double test
-			Map<String, String> largeKnew1 = TestUtils.multiplyDataset(TestUtils.readDataset("diff6/knew.csv"), 1000);
-			Map<String, String> largeKnew2 = TestUtils.multiplyDataset(TestUtils.readDataset("diff6/knew.csv"), 1000);
+			Map<String, String> largeKnew1 = TestUtils.multiplyDataset(this.loader.readDataset("diff6/knew.csv"), 1000);
+			Map<String, String> largeKnew2 = TestUtils.multiplyDataset(this.loader.readDataset("diff6/knew.csv"), 1000);
 
 			totalLargeActual += largeActual.size();
 			totalLargeKnew += largeKnew1.size();
@@ -193,7 +197,7 @@ public class DataDiffServiceBenchTest {
 			// Not Parallel
 			this.service.applyParallelMode(false);
 			long start = System.currentTimeMillis();
-			totalIndex += this.service.generateDiffIndex(largeKnew1, largeActual).size();
+			totalIndex += this.service.generateDiffIndex(largeKnew1, largeActual, dic, converter).size();
 			long delay = System.currentTimeMillis() - start;
 			totalDurationNotParallel += delay;
 			if (minDurationNotParallel == 0 || minDurationNotParallel > delay) {
@@ -206,7 +210,7 @@ public class DataDiffServiceBenchTest {
 			// parallel
 			this.service.applyParallelMode(false);
 			start = System.currentTimeMillis();
-			totalIndex += this.service.generateDiffIndex(largeKnew2, largeActual).size();
+			totalIndex += this.service.generateDiffIndex(largeKnew2, largeActual, dic, converter).size();
 			delay = System.currentTimeMillis() - start;
 			totalDurationParallel += delay;
 			if (minDurationParallel == 0 || minDurationParallel > delay) {

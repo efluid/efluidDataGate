@@ -21,10 +21,10 @@ import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 import fr.uem.efluid.services.types.SelectableTable;
-import fr.uem.efluid.utils.ManagedQueriesUtils;
 
 /**
  * @author elecomte
@@ -45,6 +45,9 @@ public class DictionaryManagementService {
 
 	@Autowired
 	private DatabaseDescriptionRepository metadatas;
+
+	@Autowired
+	private ManagedQueriesGenerator queryGenerator;
 
 	/**
 	 * @return
@@ -112,7 +115,7 @@ public class DictionaryManagementService {
 		List<UUID> usedIds = this.dictionary.findUsedIds();
 
 		return this.dictionary.findAll().stream()
-				.map(DictionaryEntrySummary::fromEntity)
+				.map(e -> DictionaryEntrySummary.fromEntity(e, this.queryGenerator))
 				.peek(d -> d.setCanDelete(!usedIds.contains(d.getUuid())))
 				.collect(Collectors.toList());
 	}
@@ -134,7 +137,7 @@ public class DictionaryManagementService {
 		DictionaryEntryEditData edit = DictionaryEntryEditData.fromEntity(entry);
 
 		// Need select clause as a list
-		Collection<String> selecteds = entry.getSelectClause() != null ? ManagedQueriesUtils.splitSelectClause(entry.getSelectClause())
+		Collection<String> selecteds = entry.getSelectClause() != null ? this.queryGenerator.splitSelectClause(entry.getSelectClause())
 				: Collections.emptyList();
 
 		TableDescription desc = getTableDescription(edit.getTable());
@@ -172,7 +175,7 @@ public class DictionaryManagementService {
 		// Prepare minimal values
 		edit.setTable(tableName);
 		edit.setName(tableName);
-		edit.setWhere(ManagedQueriesUtils.DEFAULT_WHERE_CLAUSE);
+		edit.setWhere(ManagedQueriesGenerator.DEFAULT_WHERE_CLAUSE);
 
 		// Add metadata to use for edit
 		edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
@@ -274,8 +277,8 @@ public class DictionaryManagementService {
 	 * @param columns
 	 * @return
 	 */
-	private static String columnsAsSelectClause(List<ColumnEditData> columns) {
-		return ManagedQueriesUtils.mergeSelectClause(
+	private String columnsAsSelectClause(List<ColumnEditData> columns) {
+		return this.queryGenerator.mergeSelectClause(
 				columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName),
 				columns.size());
 	}

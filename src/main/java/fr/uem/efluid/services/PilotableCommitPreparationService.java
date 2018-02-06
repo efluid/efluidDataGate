@@ -2,7 +2,8 @@ package fr.uem.efluid.services;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Map;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -11,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.utils.TechnicalException;
 
 /**
@@ -54,13 +56,32 @@ public class PilotableCommitPreparationService {
 	/**
 	 * Start async diff analysis before commit
 	 */
-	public PilotedCommitPreparation startCommitPreparation() {
+	public PilotedCommitPreparation startCommitPreparation(boolean force) {
 
+		// On existing preparation
 		if (this.current != null) {
-			LOGGER.info("Request for a new commit preparation - preparation already running / available, so use existing {}",
-					this.current.getIdentifier());
 
-			return getCurrentCommitPreparation();
+			// Forced restart asked : close current, start a new one
+			if (force) {
+				LOGGER.info("Request for a new commit preparation - preparation exist already, and "
+						+ "force restart asked, so will drop current preparation {}", this.current.getIdentifier());
+
+				// Cancel for any existing reference ...
+				this.current.setStatus(PilotedCommitStatus.CANCEL);
+
+				// ... but droping should be enough
+				this.current = null;
+			}
+
+			// Keep current else
+			else {
+
+				LOGGER.info("Request for a new commit preparation - preparation already running / "
+						+ "available, so use existing {}", this.current.getIdentifier());
+
+				// Default will provides existing if still running
+				return getCurrentCommitPreparation();
+			}
 		}
 
 		LOGGER.info("Request for a new commit preparation - start a new one");
@@ -102,10 +123,12 @@ public class PilotableCommitPreparationService {
 		long startTimeout = System.currentTimeMillis();
 
 		try {
-			Map<UUID, Collection<IndexEntry>> fullDiff = this.executor
+			List<PreparedIndexEntry> fullDiff = this.executor
 					.invokeAll(this.dictionary.findAll().stream().map(this::callDiff).collect(Collectors.toList())).stream()
 					.map(this::gatherResult)
-					.collect(Collectors.toMap(DiffCallResult::getDictUuid, DiffCallResult::getDiff));
+					.flatMap(DiffCallResult::getDiff)
+					.sorted(indexSorter())
+					.collect(Collectors.toList());
 
 			// Keep in preparation for commit build
 			this.current.setPreparedDiff(fullDiff);
@@ -114,14 +137,11 @@ public class PilotableCommitPreparationService {
 			this.current.setEnd(LocalDateTime.now());
 			this.current.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
-			// TODO : remove : here test for forced wait
-			Thread.sleep(10000);
-
 			LOGGER.info("Diff process completed on commit preparation {}. Total process duration was {} ms", this.current.getIdentifier(),
 					Long.valueOf(System.currentTimeMillis() - startTimeout));
 
 		} catch (InterruptedException e) {
-			LOGGER.error("Error will processing diff",e);
+			LOGGER.error("Error will processing diff", e);
 			this.current.setErrorDuringPreparation(e);
 		}
 	}
@@ -141,7 +161,7 @@ public class PilotableCommitPreparationService {
 
 		// TODO : better error identification
 		catch (InterruptedException | ExecutionException e) {
-			LOGGER.error("Error will processing diff",e);
+			LOGGER.error("Error will processing diff", e);
 			this.current.setErrorDuringPreparation(e);
 			throw new TechnicalException("Aborted on exception ", e);
 		}
@@ -157,7 +177,34 @@ public class PilotableCommitPreparationService {
 	 */
 	private Callable<DiffCallResult> callDiff(DictionaryEntry dict) {
 		return () -> {
-			return new DiffCallResult(dict.getUuid(), this.diffService.processDiff(dict.getUuid()));
+			return new DiffCallResult(dict.getUuid(), this.diffService.processDiff(dict));
+		};
+	}
+
+	/**
+	 * <p>
+	 * Comparator for IndexEntry : by domain name, then dictionnary name, then by
+	 * timestamp
+	 * </p>
+	 * 
+	 * @return
+	 */
+	private static Comparator<PreparedIndexEntry> indexSorter() {
+
+		return (a, b) -> {
+			int dom = a.getDomainName().compareTo(b.getDomainName());
+
+			if (dom != 0) {
+				return dom;
+			}
+
+			int dic = a.getDictionaryEntryName().compareTo(b.getDictionaryEntryName());
+
+			if (dic != 0) {
+				return dic;
+			}
+
+			return (int) (a.getTimestamp() - b.getTimestamp());
 		};
 	}
 
@@ -170,16 +217,17 @@ public class PilotableCommitPreparationService {
 	 * @since v0.0.1
 	 * @version 1
 	 */
+	@SuppressWarnings("unused")
 	private static final class DiffCallResult {
 
 		private final UUID dictUuid;
-		private final Collection<IndexEntry> diff;
+		private final Collection<PreparedIndexEntry> diff;
 
 		/**
 		 * @param dictUuid
 		 * @param diff
 		 */
-		public DiffCallResult(UUID dictUuid, Collection<IndexEntry> diff) {
+		public DiffCallResult(UUID dictUuid, Collection<PreparedIndexEntry> diff) {
 			super();
 			this.dictUuid = dictUuid;
 			this.diff = diff;
@@ -195,8 +243,8 @@ public class PilotableCommitPreparationService {
 		/**
 		 * @return the diff
 		 */
-		public Collection<IndexEntry> getDiff() {
-			return this.diff;
+		public Stream<PreparedIndexEntry> getDiff() {
+			return this.diff.stream();
 		}
 	}
 }

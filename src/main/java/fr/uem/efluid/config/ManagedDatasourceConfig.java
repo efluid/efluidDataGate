@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
 
@@ -27,5 +28,14 @@ public class ManagedDatasourceConfig extends CustomDataSourceParameters {
 	public JdbcTemplate managedDatabaseJdbcTemplate() {
 		LOGGER.info("[MANAGED DB] Init access to managed DB {}", this.getUrl());
 		return DatasourceUtils.createJdbcTemplate(this);
+	}
+
+	@Bean
+	public QueryGenerationRules managedQueryGenerationRules() {
+		// Use local query config directly
+		QueryGenerationRules rules = this.getQuery();
+		LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
+				Boolean.valueOf(rules.isColumnNamesProtected()), Boolean.valueOf(rules.isTableNamesProtected()));
+		return rules;
 	}
 }

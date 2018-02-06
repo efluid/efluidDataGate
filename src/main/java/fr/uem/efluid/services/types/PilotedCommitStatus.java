@@ -9,6 +9,7 @@ public enum PilotedCommitStatus {
 
 	NOT_LAUNCHED,
 	DIFF_RUNNING,
+	CANCEL,
 	COMMIT_CAN_PREPARE,
 	COMMIT_PREPARED;
 }

@@ -7,34 +7,33 @@ param-efluid:
        url: jdbc:postgresql://localhost/demo?searchpath=public
        username: user
        password: user
-
-   extractor:
-       protectTableNames: true
-       protectColumnNames: true
+       query: 
+           tableNamesProtected: true
+           columnNamesProtected: true
        
    details:
        version: 1.1.1
 
 ## TECH FEATURES CUSTOM
 spring:
-    profiles:
-        active: demo
+   profiles:
+       active: demo
 
-    thymeleaf:
-        cache: false
+   thymeleaf:
+       cache: false
 
-    datasource:
-        url: jdbc:postgresql://localhost/manager
-        username: user
-        password: user
-        driver-class-name: org.postgresql.Driver
+   datasource:
+       url: jdbc:postgresql://localhost/manager
+       username: user
+       password: user
+       driver-class-name: org.postgresql.Driver
 
-    jpa:
-        show-sql: false
-        hibernate:
+   jpa:
+       show-sql: false
+       hibernate:
            ddl-auto: create
 
 ## WEB SERVER CONFIG
 server:
-    contextPath:
-    port: 8080
+   contextPath:
+   port: 8080

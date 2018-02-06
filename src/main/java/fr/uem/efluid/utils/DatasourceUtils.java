@@ -3,6 +3,8 @@ package fr.uem.efluid.utils;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
+
 /**
  * @author elecomte
  * @since v0.0.1
@@ -41,6 +43,7 @@ public final class DatasourceUtils {
 		private String url;
 		private String username;
 		private String password;
+		private CustomQueryGenerationRules query;
 
 		/**
 		 * 
@@ -109,5 +112,74 @@ public final class DatasourceUtils {
 			this.password = password;
 		}
 
+		/**
+		 * @return the query
+		 */
+		public CustomQueryGenerationRules getQuery() {
+			return this.query;
+		}
+
+		/**
+		 * @param query the query to set
+		 */
+		public void setQuery(CustomQueryGenerationRules query) {
+			this.query = query;
+		}
+
+	}
+
+	/**
+	 * <p>
+	 * Config sub-bean for query generation rules regarding the managed DB
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.1
+	 * @version 1
+	 */
+	public static class CustomQueryGenerationRules implements QueryGenerationRules {
+
+		private boolean columnNamesProtected;
+
+		private boolean tableNamesProtected;
+
+		/**
+		 * 
+		 */
+		public CustomQueryGenerationRules() {
+			super();
+		}
+
+		/**
+		 * @return the columnNamesProtected
+		 */
+		@Override
+		public boolean isColumnNamesProtected() {
+			return this.columnNamesProtected;
+		}
+
+		/**
+		 * @param columnNamesProtected
+		 *            the columnNamesProtected to set
+		 */
+		public void setColumnNamesProtected(boolean columnNamesProtected) {
+			this.columnNamesProtected = columnNamesProtected;
+		}
+
+		/**
+		 * @return the tableNamesProtected
+		 */
+		@Override
+		public boolean isTableNamesProtected() {
+			return this.tableNamesProtected;
+		}
+
+		/**
+		 * @param tableNamesProtected
+		 *            the tableNamesProtected to set
+		 */
+		public void setTableNamesProtected(boolean tableNamesProtected) {
+			this.tableNamesProtected = tableNamesProtected;
+		}
 	}
 }

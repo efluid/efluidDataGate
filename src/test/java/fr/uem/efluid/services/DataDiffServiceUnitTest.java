@@ -6,11 +6,12 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import fr.uem.efluid.TestUtils;
 import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
-import fr.uem.efluid.utils.ManagedDiffUtils;
+import fr.uem.efluid.stubs.TestUtils;
+import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.utils.DataGenerationUtils;
 
 /**
  * @author elecomte
@@ -22,25 +23,28 @@ public class DataDiffServiceUnitTest {
 	// No spring load here, for simple diff needs
 	private DataDiffService service = new DataDiffService();
 
+	// No spring here neither
+	private ManagedValueConverter converter = new ManagedValueConverter();
+
 	@Test
 	public void testGenerateDiffIndexDiffNotChanged() {
-		Collection<IndexEntry> index = getDiff("diff1");
+		Collection<PreparedIndexEntry> index = getDiff("diff1");
 		Assert.assertEquals(0, index.size());
 	}
 
 	@Test
 	public void testGenerateDiffIndexAddedTwo() {
-		Collection<IndexEntry> index = getDiff("diff2");
+		Collection<PreparedIndexEntry> index = getDiff("diff2");
 		Assert.assertEquals(2, index.size());
 		Assert.assertTrue(index.stream().allMatch(i -> i.getAction() == IndexAction.ADD));
 		Assert.assertTrue(index.stream()
-				.allMatch(i -> Value.mapped(ManagedDiffUtils.expandInternalValue(i.getPayload())).get("VALUE").getValueAsString()
+				.allMatch(i -> Value.mapped(this.converter.expandInternalValue(i.getPayload())).get("VALUE").getValueAsString()
 						.equals("Different")));
 	}
 
 	@Test
 	public void testGenerateDiffIndexRemovedTwo() {
-		Collection<IndexEntry> index = getDiff("diff3");
+		Collection<PreparedIndexEntry> index = getDiff("diff3");
 		Assert.assertEquals(2, index.size());
 		Assert.assertTrue(index.stream().allMatch(i -> i.getAction() == IndexAction.REMOVE));
 		Assert.assertTrue(index.stream().allMatch(i -> i.getPayload() == null));
@@ -48,19 +52,19 @@ public class DataDiffServiceUnitTest {
 
 	@Test
 	public void testGenerateDiffIndexModifiedTwo() {
-		Collection<IndexEntry> index = getDiff("diff4");
+		Collection<PreparedIndexEntry> index = getDiff("diff4");
 		Assert.assertEquals(2, index.size());
 		Assert.assertTrue(index.stream().allMatch(i -> i.getAction() == IndexAction.UPDATE));
 		Assert.assertTrue(index.stream().anyMatch(i -> i.getKeyValue().equals("5")));
 		Assert.assertTrue(index.stream().anyMatch(i -> i.getKeyValue().equals("8")));
 		Assert.assertTrue(index.stream()
-				.allMatch(i -> Value.mapped(ManagedDiffUtils.expandInternalValue(i.getPayload())).get("VALUE").getValueAsString()
+				.allMatch(i -> Value.mapped(this.converter.expandInternalValue(i.getPayload())).get("VALUE").getValueAsString()
 						.equals("Modified")));
 	}
 
 	@Test
 	public void testGenerateDiffIndexAddedTwoRemovedTwoModifiedTwo() {
-		Collection<IndexEntry> index = getDiff("diff5");
+		Collection<PreparedIndexEntry> index = getDiff("diff5");
 		Assert.assertEquals(6, index.size());
 		Assert.assertTrue(index.stream().filter(i -> i.getAction() == IndexAction.UPDATE).anyMatch(i -> i.getKeyValue().equals("5")));
 		Assert.assertTrue(index.stream().filter(i -> i.getAction() == IndexAction.UPDATE).anyMatch(i -> i.getKeyValue().equals("8")));
@@ -72,7 +76,7 @@ public class DataDiffServiceUnitTest {
 
 	@Test
 	public void testGenerateDiffIndexAddedFourRemovedThreeModifiedFour() {
-		Collection<IndexEntry> index = getDiff("diff6");
+		Collection<PreparedIndexEntry> index = getDiff("diff6");
 		Assert.assertEquals(11, index.size());
 		Assert.assertEquals(4, index.stream().filter(i -> i.getAction() == IndexAction.UPDATE).count());
 		Assert.assertEquals(3, index.stream().filter(i -> i.getAction() == IndexAction.REMOVE).count());
@@ -83,12 +87,13 @@ public class DataDiffServiceUnitTest {
 	 * @param diffName
 	 * @return
 	 */
-	private Collection<IndexEntry> getDiff(String diffName) {
-		Map<String, String> diff1Actual = TestUtils.readDataset(diffName + "/actual.csv");
-		Map<String, String> diff1Knew = TestUtils.readDataset(diffName + "/knew.csv");
+	private Collection<PreparedIndexEntry> getDiff(String diffName) {
+		Map<String, String> diff1Actual = TestUtils.readDataset(diffName + "/actual.csv", this.converter);
+		Map<String, String> diff1Knew = TestUtils.readDataset(diffName + "/knew.csv", this.converter);
 
 		// Static internal
-		return this.service.generateDiffIndex(diff1Knew, diff1Actual);
+		return this.service.generateDiffIndex(diff1Knew, diff1Actual,
+				DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock"), "s*", "table", "1=1", "key"), this.converter);
 
 	}
 }

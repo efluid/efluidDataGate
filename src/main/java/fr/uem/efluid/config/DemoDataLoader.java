@@ -70,9 +70,9 @@ public class DemoDataLoader {
 		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, null, "TCATEGORYMATERIEL", "1=1", "id"));
 		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, null, "TTYPEMATERIEL", "1=1", "id"));
 		DictionaryEntry mode = this.dictionary.save(entry("Modèle de compteur", dom1, null, "TMODELE", "\"ACTIF\"=true", "id"));
-		DictionaryEntry oth1 = this.dictionary.save(entry("Test sur le type de compteur", dom1, null, "TTABLEOTHER", "1=1", "id"));
+		DictionaryEntry oth1 = this.dictionary.save(entry("Test sur le type de compteur", dom1, "\"VALUE\",\"COUNT\",\"TYPEID\"", "TTABLEOTHER", "1=1", "id"));
 		DictionaryEntry oth2 = this.dictionary.save(entry("Autre table pour voir", dom2, null, "TTABLEOTHERTEST2", "1=1", "id"));
-
+		
 		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont, 5));
 		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur, 3));
 		Commit com3 = this.commits.save(commit("Ajout du reste", testeur, 1));

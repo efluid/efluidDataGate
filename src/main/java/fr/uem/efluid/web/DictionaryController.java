@@ -17,6 +17,15 @@ import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 
 /**
+ * <p>
+ * Routing and model init for everything related to dictionary management : Functional
+ * domain management, dictionary listing / edit, processing of associated import / export.
+ * Templating is managed with Thymeleaf.
+ * </p>
+ * <p>
+ * Can be seen as the "provider of all 'DICTIONARY' features for the parameter management"
+ * </p>
+ * 
  * @author elecomte
  * @since v0.0.1
  * @version 1

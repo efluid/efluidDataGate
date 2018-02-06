@@ -17,7 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.stubs.TestDataLoader;
 
 /**
@@ -36,6 +37,9 @@ public class DataDiffServiceIntegrationTest {
 	@Autowired
 	private TestDataLoader loader;
 
+	@Autowired
+	private DictionaryRepository dictionary;
+
 	private UUID dictionaryEntryUuid;
 
 	@Transactional
@@ -47,7 +51,7 @@ public class DataDiffServiceIntegrationTest {
 	public void testProcessDiffNoIndex() {
 
 		setupDatabase("diff7");
-		Collection<IndexEntry> index = this.service.processDiff(this.dictionaryEntryUuid);
+		Collection<PreparedIndexEntry> index = this.service.processDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
 		Assert.assertEquals(0, index.size());
 	}
 
@@ -55,11 +59,11 @@ public class DataDiffServiceIntegrationTest {
 	public void testProcessDiffLargeIndex() {
 
 		setupDatabase("diff8");
-		Collection<IndexEntry> index = this.service.processDiff(this.dictionaryEntryUuid);
+		Collection<PreparedIndexEntry> index = this.service.processDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
 		Assert.assertEquals(80 + 100 + 85, index.size());
-		List<IndexEntry> adds = index.stream().filter(i -> i.getAction() == IndexAction.ADD).collect(Collectors.toList());
-		List<IndexEntry> removes = index.stream().filter(i -> i.getAction() == IndexAction.REMOVE).collect(Collectors.toList());
-		List<IndexEntry> updates = index.stream().filter(i -> i.getAction() == IndexAction.UPDATE).collect(Collectors.toList());
+		List<PreparedIndexEntry> adds = index.stream().filter(i -> i.getAction() == IndexAction.ADD).collect(Collectors.toList());
+		List<PreparedIndexEntry> removes = index.stream().filter(i -> i.getAction() == IndexAction.REMOVE).collect(Collectors.toList());
+		List<PreparedIndexEntry> updates = index.stream().filter(i -> i.getAction() == IndexAction.UPDATE).collect(Collectors.toList());
 		Assert.assertEquals(85, adds.size());
 		Assert.assertEquals(100, removes.size());
 		Assert.assertEquals(80, updates.size());

@@ -1,4 +1,4 @@
-package fr.uem.efluid.utils;
+package fr.uem.efluid.tools;
 
 import java.util.Base64;
 import java.util.Base64.Decoder;
@@ -8,8 +8,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Component;
+
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.utils.StringSplitter;
 
 /**
  * <p>
@@ -20,11 +23,19 @@ import fr.uem.efluid.services.types.Value;
  * @since v0.0.1
  * @version 1
  */
-public class ManagedDiffUtils {
+@Component
+public class ManagedValueConverter {
 
+	// For internal content
 	private final static char AFFECT = '=';
 	private final static char SEPARATOR = ',';
 	private final static char TYPE_IDENT = '/';
+
+	// For content rendering
+	private final static char RENDERING_STRING_PROTECT = '"';
+	private final static String RENDERING_AFFECT = ":";
+	private final static String RENDERING_SEPARATOR = ", ";
+	private final static String RENDERING_CHANGED = "=>";
 
 	private final static Encoder B64_ENCODER = Base64.getEncoder();
 
@@ -45,7 +56,7 @@ public class ManagedDiffUtils {
 	 * @param last
 	 *            true if it's the last cell
 	 */
-	public static void appendExtractedValue(
+	public void appendExtractedValue(
 			final StringBuilder builder,
 			final String colName,
 			final String value,
@@ -72,7 +83,7 @@ public class ManagedDiffUtils {
 	 *            content in a LinkedHashMap (to keep insertion order)
 	 * @return
 	 */
-	public static String convertToExtractedValue(final LinkedHashMap<String, Object> lineContent) {
+	public String convertToExtractedValue(final LinkedHashMap<String, Object> lineContent) {
 
 		StringBuilder oneLine = new StringBuilder();
 
@@ -93,6 +104,18 @@ public class ManagedDiffUtils {
 
 	/**
 	 * <p>
+	 * HR rendering of extracted values
+	 * </p>
+	 * 
+	 * @param values
+	 * @return
+	 */
+	public String displayInternalValue(List<Value> values) {
+		return values.stream().map(v -> v.getName() + RENDERING_AFFECT + typedValue(v)).collect(Collectors.joining(RENDERING_SEPARATOR));
+	}
+
+	/**
+	 * <p>
 	 * For user display or for commit apply / rollback, we need to be able to revert the
 	 * internal model of value in a more convenient form
 	 * </p>
@@ -100,12 +123,103 @@ public class ManagedDiffUtils {
 	 * @param internalExtracted
 	 * @return
 	 */
-	public static List<Value> expandInternalValue(String internalExtracted) {
+	public List<Value> expandInternalValue(String internalExtracted) {
 
 		// TODO : Need to define if we have to keep type or not
 		return StringSplitter.split(internalExtracted, SEPARATOR).stream()
 				.map(ExpandedValue::new)
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>
+	 * Produces a "human readable" payload, combining extracted data from current index
+	 * entry payload and previous payload. The details of value is parsed and converted to
+	 * an easy to read rendering, using the format
+	 * <code>column_name:"value",column2:1234...</code> (similar to extracted value). It
+	 * combines also a diff rendering, where one of the values provided can be empty : it
+	 * is processed as a "diff result", like this :
+	 * <ul>
+	 * If activePayload is empty and existing is not, it is seen as a deletion. The
+	 * rendering will be just the existing payload content.</li>
+	 * <li>If activePayload is not empty and existing is, it is seen as an addition : the
+	 * active payload is displayed.</li>
+	 * <li>If both are present, it is seen as a modification. It will detect then the
+	 * modified values and display them this way <code>column:"old"=>"new"</code>, only on
+	 * modified columns.</li>
+	 * </ul>
+	 * </p>
+	 * <p>
+	 * It's an expensive method, so use it only on limited rendering (summary of index
+	 * content, or one a limited set of existing index)
+	 * </p>
+	 * 
+	 * @param activePayload
+	 * @param existingPayload
+	 * @return
+	 */
+	public String convertToHrPayload(String activePayload, String existingPayload) {
+
+		if (activePayload == null) {
+			if (existingPayload == null) {
+				return null;
+			}
+			return displayInternalValue(expandInternalValue(existingPayload));
+		}
+
+		if (existingPayload == null) {
+			return displayInternalValue(expandInternalValue(activePayload));
+		}
+
+		return displayModificationRendering(expandInternalValue(activePayload), expandInternalValue(existingPayload));
+	}
+
+	/**
+	 * <p>
+	 * For 2 provided payloads, build a human readable change set
+	 * </p>
+	 * 
+	 * @param newOnes
+	 * @param existings
+	 * @return
+	 */
+	private static String displayModificationRendering(List<Value> newOnes, List<Value> existings) {
+
+		final Map<String, Value> existingsMapped = existings.stream().collect(Collectors.toMap(Value::getName, v -> v));
+
+		return newOnes.stream()
+				.filter(n -> !existingsMapped.get(n.getName()).getValue().equals(n.getValue()))
+				.map(v -> "" + changedValue(existingsMapped.get(v.getName()), v))
+				.collect(Collectors.joining(RENDERING_SEPARATOR));
+	}
+
+	/**
+	 * <p>
+	 * Build rendering <code>col:"old"=>"new"</code> for modification rendering
+	 * </p>
+	 * 
+	 * @param oldOne
+	 * @param newOne
+	 * @return
+	 */
+	private static String changedValue(Value oldOne, Value newOne) {
+		return new StringBuilder(newOne.getName())
+				.append(RENDERING_AFFECT)
+				.append(typedValue(oldOne))
+				.append(RENDERING_CHANGED)
+				.append(typedValue(newOne))
+				.toString();
+	}
+
+	/**
+	 * @param val
+	 * @return
+	 */
+	private static String typedValue(Value val) {
+		if (val.getType() == ColumnType.STRING) {
+			return RENDERING_STRING_PROTECT + val.getValueAsString() + RENDERING_STRING_PROTECT;
+		}
+		return val.getValueAsString();
 	}
 
 	/*

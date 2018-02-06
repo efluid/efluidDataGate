@@ -3,6 +3,7 @@ package fr.uem.efluid.stubs;
 import static fr.uem.efluid.utils.DataGenerationUtils.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.TestUtils;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
@@ -24,6 +24,7 @@ import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
 
 /**
@@ -54,12 +55,23 @@ public class TestDataLoader {
 	@Autowired
 	private CommitRepository commits;
 
+	@Autowired
+	private ManagedValueConverter converter;
+
+	/**
+	 * @param path
+	 * @return
+	 */
+	public Map<String, String> readDataset(String path) {
+		return TestUtils.readDataset(path, this.converter);
+	}
+
 	/**
 	 * @param diffName
 	 */
 	public void setupSourceDatabase(String diffName) {
 		this.sources.deleteAll();
-		this.sources.initFromDataset(TestUtils.readDataset(diffName + "/actual.csv"));
+		this.sources.initFromDataset(readDataset(diffName + "/actual.csv"), this.converter);
 		this.sources.flush();
 	}
 
@@ -99,15 +111,15 @@ public class TestDataLoader {
 		Commit com2 = this.commits.save(commit("Commit de mise à jour", dupont, 7));
 
 		// Prepare index entries for batch init
-		List<IndexEntry> indexes = TestUtils.readDataset(diffName + "/knew-add.csv")
+		List<IndexEntry> indexes = readDataset(diffName + "/knew-add.csv")
 				.entrySet().stream()
 				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.ADD, d.getValue(), cmat, com1))
 				.collect(Collectors.toList());
-		indexes.addAll(TestUtils.readDataset(diffName + "/knew-remove.csv")
+		indexes.addAll(readDataset(diffName + "/knew-remove.csv")
 				.entrySet().stream()
 				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.REMOVE, d.getValue(), cmat, com2))
 				.collect(Collectors.toList()));
-		indexes.addAll(TestUtils.readDataset(diffName + "/knew-update.csv")
+		indexes.addAll(readDataset(diffName + "/knew-update.csv")
 				.entrySet().stream()
 				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.UPDATE, d.getValue(), cmat, com2))
 				.collect(Collectors.toList()));
@@ -140,4 +152,13 @@ public class TestDataLoader {
 
 		return cmat.getUuid();
 	}
+
+	/**
+	 * @param datasToCompare
+	 * @param dataset
+	 */
+	public void assertDatasetEqualsRegardingConverter(Map<String, String> datasToCompare, String dataset) {
+		TestUtils.assertDatasetEquals(datasToCompare, dataset, this.converter);
+	}
+
 }

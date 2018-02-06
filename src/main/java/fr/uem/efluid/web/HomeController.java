@@ -8,6 +8,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import fr.uem.efluid.services.ApplicationDetailsService;
 
 /**
+ * <p>
+ * Routing and model init home page and associated login / logout features. Templating is
+ * managed with Thymeleaf.
+ * </p>
+ * <p>
+ * Can be seen as the "provider of everything not related to core features for the
+ * parameter management"
+ * </p>
+ * 
  * @author elecomte
  * @since v0.0.1
  * @version 1
@@ -15,15 +24,15 @@ import fr.uem.efluid.services.ApplicationDetailsService;
 @Controller
 public class HomeController {
 
-    @Autowired
-    private ApplicationDetailsService applicationDetailsService;
+	@Autowired
+	private ApplicationDetailsService applicationDetailsService;
 
-    @RequestMapping("/")
-    String index(Model model){
+	@RequestMapping("/")
+	public String index(Model model) {
 
-        model.addAttribute("details", this.applicationDetailsService.getCurrentDetails());
+		model.addAttribute("details", this.applicationDetailsService.getCurrentDetails());
 
-        return "index";
-    }
+		return "index";
+	}
 
 }

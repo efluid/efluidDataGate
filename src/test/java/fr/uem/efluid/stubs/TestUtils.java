@@ -1,4 +1,4 @@
-package fr.uem.efluid;
+package fr.uem.efluid.stubs;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -16,8 +16,7 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 
 import fr.uem.efluid.services.types.Value;
-import fr.uem.efluid.stubs.SimulatedSource;
-import fr.uem.efluid.utils.ManagedDiffUtils;
+import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
  * @author elecomte
@@ -34,7 +33,7 @@ public class TestUtils {
 	 * @param path
 	 * @return
 	 */
-	public static Map<String, String> readDataset(String path) {
+	public static Map<String, String> readDataset(String path, final ManagedValueConverter converter) {
 		List<String> list = new ArrayList<>();
 
 		try (InputStream is = new FileInputStream(new File("src/test/resources/datasets/" + path))) {
@@ -51,7 +50,7 @@ public class TestUtils {
 		String[] headers = list.get(0).split(CSV_SEP);
 
 		return list.stream().skip(1).map(l -> l.split(CSV_SEP))
-				.collect(Collectors.toMap(t -> t[0], t -> simulateInternalValue(headers, t)));
+				.collect(Collectors.toMap(t -> t[0], t -> simulateInternalValue(headers, t, converter)));
 	}
 
 	/**
@@ -96,12 +95,12 @@ public class TestUtils {
 	 * @param datasetEntry
 	 * @return
 	 */
-	public static SimulatedSource entryToSource(Map.Entry<String, String> datasetEntry) {
+	public static SimulatedSource entryToSource(Map.Entry<String, String> datasetEntry, final ManagedValueConverter converter) {
 		// Key;Value;Preset;Something
 		SimulatedSource source = new SimulatedSource();
 		source.setKey(Long.decode(datasetEntry.getKey()));
 
-		Map<String, String> values = ManagedDiffUtils.expandInternalValue(datasetEntry.getValue()).stream()
+		Map<String, String> values = converter.expandInternalValue(datasetEntry.getValue()).stream()
 				.collect(Collectors.toMap(Value::getName, Value::getValueAsString));
 
 		source.setValue(values.get("VALUE"));
@@ -114,8 +113,8 @@ public class TestUtils {
 	 * @param datasToCompare
 	 * @param dataset
 	 */
-	public static void assertDatasetEquals(Map<String, String> datasToCompare, String dataset) {
-		Map<String, String> expecteds = readDataset(dataset);
+	public static void assertDatasetEquals(Map<String, String> datasToCompare, String dataset, final ManagedValueConverter converter) {
+		Map<String, String> expecteds = readDataset(dataset, converter);
 
 		// Not expected size : display global diff
 		if (datasToCompare.size() != expecteds.size()) {
@@ -140,7 +139,7 @@ public class TestUtils {
 	 * @param csvLine
 	 * @return
 	 */
-	private static String simulateInternalValue(String[] headers, String[] csvLine) {
+	private static String simulateInternalValue(String[] headers, String[] csvLine, final ManagedValueConverter converter) {
 
 		// Keep insertion order
 		LinkedHashMap<String, Object> lineContent = new LinkedHashMap<>();
@@ -152,6 +151,6 @@ public class TestUtils {
 			lineContent.put(header, isString ? csvLine[i] : Long.decode(csvLine[i]));
 		}
 
-		return ManagedDiffUtils.convertToExtractedValue(lineContent);
+		return converter.convertToExtractedValue(lineContent);
 	}
 }

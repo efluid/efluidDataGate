@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import fr.uem.efluid.TestUtils;
+import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
  * For test value init
@@ -19,7 +19,7 @@ public interface SimulatedSourceRepository extends JpaRepository<SimulatedSource
 	/**
 	 * @param dataset
 	 */
-	default void initFromDataset(Map<String, String> dataset) {
-		save(dataset.entrySet().stream().map(TestUtils::entryToSource).collect(Collectors.toSet()));
+	default void initFromDataset(Map<String, String> dataset, ManagedValueConverter converter) {
+		save(dataset.entrySet().stream().map(e -> TestUtils.entryToSource(e, converter)).collect(Collectors.toSet()));
 	}
 }

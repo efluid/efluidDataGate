@@ -23,8 +23,8 @@ import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ManagedParametersRepository;
-import fr.uem.efluid.utils.ManagedDiffUtils;
-import fr.uem.efluid.utils.ManagedQueriesUtils;
+import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
 
 /**
  * <p>
@@ -47,6 +47,12 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 	@Autowired
 	private IndexRepository coreIndex;
 
+	@Autowired
+	private ManagedValueConverter valueConverter;
+	
+	@Autowired
+	private ManagedQueriesGenerator queryGenerator;
+	
 	/**
 	 * @param parameterEntry
 	 * @return
@@ -59,8 +65,8 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 
 		// Get columns for all table
 		return this.managedSource.query(
-				ManagedQueriesUtils.producesSelectParameterQuery(parameterEntry),
-				new InternalExtractor(parameterEntry));
+				this.queryGenerator.producesSelectParameterQuery(parameterEntry),
+				new InternalExtractor(parameterEntry, this.valueConverter));
 	}
 
 	/**
@@ -109,13 +115,15 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 	private static class InternalExtractor implements ResultSetExtractor<Map<String, String>> {
 
 		private final DictionaryEntry parameterEntry;
-
+		private final ManagedValueConverter valueConverter;
+		
 		/**
 		 * @param parameterEntry
 		 */
-		public InternalExtractor(DictionaryEntry parameterEntry) {
+		public InternalExtractor(DictionaryEntry parameterEntry,ManagedValueConverter valueConverter) {
 			super();
 			this.parameterEntry = parameterEntry;
+			this.valueConverter = valueConverter;
 		}
 
 		/**
@@ -156,7 +164,7 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 				String keyValue = null;
 				for (int i = 0; i < count; i++) {
 					if (i != keyPos) {
-						ManagedDiffUtils.appendExtractedValue(payload, columnNames[i], rs.getString(i + 1), columnType[i], i == last);
+						this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getString(i + 1), columnType[i], i == last);
 					} else {
 						keyValue = rs.getString(i + 1);
 					}

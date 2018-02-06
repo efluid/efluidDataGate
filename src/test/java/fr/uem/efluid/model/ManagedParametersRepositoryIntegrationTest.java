@@ -13,7 +13,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.TestUtils;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedParametersRepository;
 import fr.uem.efluid.stubs.TestDataLoader;
@@ -48,27 +47,27 @@ public class ManagedParametersRepositoryIntegrationTest {
 	public void testExtractCurrentContentLow() {
 		setupDatabase("diff7");
 		Map<String, String> raw = this.managed.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
-		TestUtils.assertDatasetEquals(raw, "diff7/actual.csv");
+		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff7/actual.csv");
 	}
 
 	@Test
 	public void testRegenerateKnewContentLow() {
 		setupDatabase("diff7");
 		Map<String, String> raw = this.managed.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
-		TestUtils.assertDatasetEquals(raw, "diff7/knew.csv");
+		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff7/knew.csv");
 	}
 
 	@Test
 	public void testExtractCurrentContentHeavy() {
 		setupDatabase("diff8");
 		Map<String, String> raw = this.managed.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
-		TestUtils.assertDatasetEquals(raw, "diff8/actual.csv");
+		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff8/actual.csv");
 	}
 
 	@Test
 	public void testRegenerateKnewContentHeavy() {
 		setupDatabase("diff8");
 		Map<String, String> raw = this.managed.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
-		TestUtils.assertDatasetEquals(raw, "diff8/knew.csv");
+		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff8/knew.csv");
 	}
 }
