@@ -4,7 +4,9 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 06/02/2018*
+*Mise à jour au 07/02/2018*
+
+    ATTENTION : Dev majeur en cours, impacts variés, appli probablement non démarrable dans cette version
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Modification de la gestion des entrées dans le dictionnaire : se fait sur un autre écran de saisie à partir de la liste
@@ -14,7 +16,9 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Modèle core : en place, avec repos
 * Utilisation BDD managed : Avec JDBCTemplate. Dev fait sur lecture données bruts. Partiellement testé (metadata globalement OK mais infos PK pas encore correctement remontées)
 * Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
-* Gestion du diff : diff de base en place, testé
+* Application / rollback de paramètres : en cours
+* Export / import : en cours
+* Traitement des dépendances : en cours
 * Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
 * Les composants de génération "fine" de requêtes SQL ou d'inline de données sont désormais des beans springs extensibles
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
@@ -62,7 +66,7 @@ Pour tester l'application avec une instance de BDD réelle, et non pas la BDD em
 #### Instance PG 
 Démarrage avec docker
 
-    docker run --name test-postgres -e POSTGRES_PASSWORD=test -p 5432:5432 -d postgres
+    docker run --name test-postgres -e POSTGRES_PASSWORD=test -p 5432:5432 -v /opt/server/postgresql/data:/var/lib/postgresql/data -d postgres
 
 Puis création de 2 databases : manager et demo. Création d'un user "user"/"user" owner de ces DB
 

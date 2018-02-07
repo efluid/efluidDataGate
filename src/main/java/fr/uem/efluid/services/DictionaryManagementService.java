@@ -1,9 +1,11 @@
 package fr.uem.efluid.services;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -15,16 +17,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
+import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
+import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
-import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 import fr.uem.efluid.services.types.SelectableTable;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.utils.TechnicalException;
 
 /**
  * @author elecomte
@@ -45,6 +50,9 @@ public class DictionaryManagementService {
 
 	@Autowired
 	private DatabaseDescriptionRepository metadatas;
+
+	@Autowired
+	private TableLinkRepository links;
 
 	@Autowired
 	private ManagedQueriesGenerator queryGenerator;
@@ -142,17 +150,21 @@ public class DictionaryManagementService {
 
 		TableDescription desc = getTableDescription(edit.getTable());
 
+		// Keep links
+		Map<String, String> mappedLinks = this.links.findByDictionaryEntry(entry).stream()
+				.collect(Collectors.toMap(TableLink::getColumnFrom, TableLink::getTableTo));
+
 		// Dedicated case : missing table, pure simulated content
 		if (desc == TableDescription.MISSING) {
 			edit.setMissingTable(true);
 			edit.setColumns(selecteds.stream()
-					.map(c -> ColumnEditData.fromSelecteds(c, entry.getTableName()))
+					.map(c -> ColumnEditData.fromSelecteds(c, entry.getTableName(), mappedLinks.get(c)))
 					.sorted()
 					.collect(Collectors.toList()));
 		} else {
 			// Add metadata to use for edit
 			edit.setColumns(desc.getColumns().stream()
-					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds))
+					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, mappedLinks.get(c.getName())))
 					.sorted()
 					.collect(Collectors.toList()));
 		}
@@ -179,7 +191,7 @@ public class DictionaryManagementService {
 
 		// Add metadata to use for edit
 		edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
-				.map(c -> ColumnEditData.fromColumnDescription(c, null))
+				.map(c -> ColumnEditData.fromColumnDescription(c, null, null))
 				.peek(c -> c.setSelected(true)) // Default : select all
 				.sorted()
 				.collect(Collectors.toList()));
@@ -211,15 +223,21 @@ public class DictionaryManagementService {
 			entry.setCreatedTime(LocalDateTime.now());
 		}
 
-		// Common edited properties
+		// Specify key from columns
+		ColumnEditData key = editData.getColumns().stream().filter(ColumnEditData::isPrimaryKey).findFirst()
+				.orElseThrow(() -> new TechnicalException("The key is mandatory"));
+		entry.setKeyName(key.getName());
+		entry.setKeyType(key.getType());
+
+		// Other common edited properties
 		entry.setDomain(new FunctionalDomain(editData.getDomainUuid()));
-		entry.setKeyName(
-				editData.getColumns().stream().filter(ColumnEditData::isPrimaryKey).map(ColumnEditData::getName).findFirst().orElse(null));
 		entry.setParameterName(editData.getName());
 		entry.setSelectClause(columnsAsSelectClause(editData.getColumns()));
 		entry.setWhereClause(editData.getWhere());
 
 		this.dictionary.save(entry);
+
+		updateLinks(entry, editData.getColumns());
 	}
 
 	/**
@@ -249,6 +267,66 @@ public class DictionaryManagementService {
 		LOGGER.debug("Forced refresh on cache for metadata");
 
 		this.metadatas.refreshAll();
+	}
+
+	/**
+	 * Update / Create / delete tablelink regarding specified FK in columnEditDatas
+	 * 
+	 * @param entry
+	 * @param cols
+	 */
+	private void updateLinks(DictionaryEntry entry, List<ColumnEditData> cols) {
+
+		// For final save
+		Collection<TableLink> updatedLinks = new ArrayList<>();
+		Collection<TableLink> createdLinks = new ArrayList<>();
+
+		// Produces links from col foreign key
+		List<TableLink> editedLinks = cols.stream().filter(c -> c.getForeignKeyTable() != null).map(c -> {
+			TableLink link = new TableLink();
+			link.setColumnFrom(c.getName());
+			link.setTableTo(c.getForeignKeyTable());
+			link.setEntry(entry);
+			return link;
+		}).collect(Collectors.toList());
+
+		// Get existing to update / removoe
+		Map<String, TableLink> existingLinks = this.links.findByDictionaryEntry(entry).stream()
+				.collect(Collectors.toMap(TableLink::getColumnFrom, l -> l));
+
+		// And prepare 3 sets of links
+		for (TableLink link : editedLinks) {
+
+			TableLink existing = existingLinks.remove(link.getTableTo());
+
+			// Update
+			if (existing != null) {
+				existing.setTableTo(link.getTableTo());
+				updatedLinks.add(existing);
+			}
+
+			// New one
+			else {
+				link.setCreatedTime(LocalDateTime.now());
+				link.setEntry(entry);
+				link.setUuid(UUID.randomUUID());
+				createdLinks.add(link);
+			}
+		}
+
+		// Remaining are deleted
+		Collection<TableLink> deletedLinks = existingLinks.values();
+
+		LOGGER.info("Links updated for dictionary Entry {}. {} links added, {} links updated and {} deleted", entry.getUuid(),
+				Integer.valueOf(createdLinks.size()), Integer.valueOf(updatedLinks.size()), Integer.valueOf(deletedLinks.size()));
+
+		// Process DB updates
+		if (createdLinks.size() > 0)
+			this.links.save(createdLinks);
+		if (updatedLinks.size() > 0)
+			this.links.save(updatedLinks);
+		if (deletedLinks.size() > 0)
+			this.links.delete(deletedLinks);
 	}
 
 	/**

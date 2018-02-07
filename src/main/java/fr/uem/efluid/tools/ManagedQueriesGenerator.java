@@ -1,7 +1,9 @@
 package fr.uem.efluid.tools;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -9,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.metas.ColumnType;
+import fr.uem.efluid.services.types.Value;
 
 /**
  * <p>
@@ -41,9 +45,14 @@ public class ManagedQueriesGenerator {
 
 	private static final String DEFAULT_SELECT_CLAUSE = "*";
 
+	private static final String AFFECT = "=";
+
 	private final boolean protectColumns;
 
 	private final String selectQueryModel;
+	private final String insertQueryModel;
+	private final String updateQueryModel;
+	private final String deleteQueryModel;
 
 	/**
 	 * Prepare generator regarding the specified rules
@@ -53,6 +62,9 @@ public class ManagedQueriesGenerator {
 	public ManagedQueriesGenerator(@Autowired QueryGenerationRules rules) {
 		this.protectColumns = rules.isColumnNamesProtected();
 		this.selectQueryModel = generateSelectQueryTemplate(rules);
+		this.insertQueryModel = generateInsertQueryTemplate(rules);
+		this.updateQueryModel = generateUpdateQueryTemplate(rules);
+		this.deleteQueryModel = generateDeleteQueryTemplate(rules);
 	}
 
 	/**
@@ -132,6 +144,81 @@ public class ManagedQueriesGenerator {
 	}
 
 	/**
+	 * @param parameterEntry
+	 * @param keyValue
+	 * @param values
+	 * @return
+	 */
+	public String producesApplyAddQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values) {
+		// INSERT INTO %s (%) VALUES (%)
+		List<Value> combined = new ArrayList<>();
+		combined.add(new KeyValue(parameterEntry, keyValue));
+		combined.addAll(values);
+		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined), allValues(combined));
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @param keyValue
+	 * @return
+	 */
+	public String producesApplyRemoveQuery(DictionaryEntry parameterEntry, String keyValue) {
+		// DELETE FROM %s WHERE %s
+		return String.format(this.deleteQueryModel, parameterEntry.getTableName(), valueAffect(new KeyValue(parameterEntry, keyValue)));
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @param keyValue
+	 * @param values
+	 * @return
+	 */
+	public String producesApplyUpdateQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values) {
+		// UPDATE %s SET %s WHERE %s
+		return String.format(this.updateQueryModel, parameterEntry.getTableName(), allValuesAffect(values),
+				valueAffect(new KeyValue(parameterEntry, keyValue)));
+	}
+
+	/**
+	 * @param value
+	 * @return
+	 */
+	private String valueAffect(Value value) {
+		if (this.protectColumns) {
+			return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped();
+		}
+		return value.getName() + AFFECT + value.getTyped();
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
+	private String allNames(List<Value> values) {
+		Stream<String> names = values.stream().map(Value::getName);
+		if (this.protectColumns) {
+			return ITEM_PROTECT + names.collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT)) + ITEM_PROTECT;
+		}
+		return names.collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
+	private String allValuesAffect(List<Value> values) {
+		return values.stream().map(v -> valueAffect(v)).collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
+	private static String allValues(List<Value> values) {
+		return values.stream().map(Value::getTyped).collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+	}
+
+	/**
 	 * Generate the template regarding the rules on protect / not protected
 	 * 
 	 * @param rules
@@ -140,6 +227,104 @@ public class ManagedQueriesGenerator {
 	private static final String generateSelectQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("SELECT %s FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s ORDER BY ")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
+	}
+
+	/**
+	 * Generate the template regarding the rules on protect / not protected
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateUpdateQueryTemplate(QueryGenerationRules rules) {
+		return new StringBuilder("UPDATE ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" SET %s WHERE %s").toString();
+	}
+
+	/**
+	 * Generate the template regarding the rules on protect / not protected
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateDeleteQueryTemplate(QueryGenerationRules rules) {
+		return new StringBuilder("DELETE FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s ").toString();
+	}
+
+	/**
+	 * Generate the template regarding the rules on protect / not protected
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateInsertQueryTemplate(QueryGenerationRules rules) {
+		return new StringBuilder("INSERT INTO ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
+				.append(" (%) VALUES (%)").toString();
+	}
+
+	/**
+	 * <p>
+	 * Specific model for key : allows to easily specify chained values when the key need
+	 * to be added
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.1
+	 * @version 1
+	 */
+	private static class KeyValue implements Value {
+		private final String keyName;
+		private final String keyValue;
+		private final ColumnType keyType;
+
+		/**
+		 * Key definition is from dict, key value is associated to currently applied
+		 * values
+		 * 
+		 * @param parameterEntry
+		 * @param keyValue
+		 */
+		KeyValue(DictionaryEntry parameterEntry, String keyValue) {
+			this.keyName = parameterEntry.getKeyName();
+			this.keyType = parameterEntry.getKeyType();
+			this.keyValue = keyValue;
+		}
+
+		/**
+		 * @return
+		 * @see fr.uem.efluid.services.types.Value#getName()
+		 */
+		@Override
+		public String getName() {
+			return this.keyName;
+		}
+
+		/**
+		 * @return
+		 * @see fr.uem.efluid.services.types.Value#getValue()
+		 */
+		@Override
+		public byte[] getValue() {
+			// Not used here.
+			return null;
+		}
+
+		/**
+		 * @return
+		 * @see fr.uem.efluid.services.types.Value#getType()
+		 */
+		@Override
+		public ColumnType getType() {
+			return this.keyType;
+		}
+
+		/**
+		 * @return
+		 * @see fr.uem.efluid.services.types.Value#getValueAsString()
+		 */
+		@Override
+		public String getValueAsString() {
+			return this.keyValue;
+		}
+
 	}
 
 	/**

@@ -1,6 +1,7 @@
 package fr.uem.efluid.utils;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.Commit;
@@ -9,6 +10,7 @@ import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
  * @author elecomte
@@ -105,6 +107,22 @@ public class DataGenerationUtils {
 		commit.setOriginalUserEmail(user.getEmail());
 		commit.setUser(user);
 		return commit;
+	}
+
+	/**
+	 * Support string / integer only
+	 * 
+	 * @param raw
+	 * @return
+	 */
+	public static String content(String raw, ManagedValueConverter converter) {
+		LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+		String[] parts = raw.split(",");
+		for (String part : parts) {
+			String[] item = part.split("=");
+			result.put(item[0], item[1].charAt(0) == '"' ? item[1].substring(1, item[1].length() - 1) : Integer.decode(item[1]));
+		}
+		return converter.convertToExtractedValue(result);
 	}
 
 }

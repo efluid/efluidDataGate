@@ -17,6 +17,8 @@ import fr.uem.efluid.model.metas.ColumnType;
  */
 public interface Value {
 
+	char TYPED_STRING_PROTECT = '\'';
+
 	/** Fixed format */
 	// TODO : can depends on database encoding ???
 	Charset CONTENT_ENCODING = Charset.forName("utf-8");
@@ -47,6 +49,18 @@ public interface Value {
 	 */
 	default String getValueAsString() {
 		return new String(getValue(), CONTENT_ENCODING);
+	}
+
+	/**
+	 * @param val
+	 * @return
+	 */
+	default String getTyped() {
+
+		if (getType() == ColumnType.STRING) {
+			return TYPED_STRING_PROTECT + getValueAsString() + TYPED_STRING_PROTECT;
+		}
+		return getValueAsString();
 	}
 
 	/**

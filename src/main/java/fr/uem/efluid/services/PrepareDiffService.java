@@ -29,9 +29,9 @@ import fr.uem.efluid.tools.ManagedValueConverter;
  */
 @Service
 @Transactional
-public class DataDiffService {
+public class PrepareDiffService {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(DataDiffService.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(PrepareDiffService.class);
 
 	@Autowired
 	private ManagedParametersRepository rawParameters;
@@ -45,7 +45,7 @@ public class DataDiffService {
 	 * @param dictionaryEntryUuid
 	 * @return
 	 */
-	public Collection<PreparedIndexEntry> processDiff(DictionaryEntry entry) {
+	public Collection<PreparedIndexEntry> initDiff(DictionaryEntry entry) {
 
 		// Here the main complexity : diff check using JDBC, for one table. Backlog
 		// construction + restoration then diff.

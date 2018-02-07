@@ -10,6 +10,7 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * @author elecomte
@@ -159,6 +160,39 @@ public class TableLink implements Shared {
 	 */
 	public void setEntry(DictionaryEntry entry) {
 		this.entry = entry;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.model.Shared#serialize()
+	 */
+	@Override
+	public String serialize() {
+
+		return SharedOutputInputUtils.newJson()
+				.with("uid", getUuid())
+				.with("cre", getCreatedTime())
+				.with("cfr", getColumnFrom())
+				.with("cto", getColumnTo())
+				.with("tto", getTableTo())
+				.with("dic", getEntry().getUuid())
+				.toString();
+	}
+
+	/**
+	 * @param raw
+	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
+	 */
+	@Override
+	public void deserialize(String raw) {
+
+		SharedOutputInputUtils.fromJson(raw)
+				.apply("uid", UUID.class, v -> setUuid(v))
+				.apply("cre", LocalDateTime.class, v -> setCreatedTime(v))
+				.apply("cfr", String.class, v -> setColumnFrom(v))
+				.apply("cto", String.class, v -> setColumnTo(v))
+				.apply("tto", String.class, v -> setTableTo(v))
+				.apply("dic", UUID.class, v -> setEntry(new DictionaryEntry(v)));
 	}
 
 	/**

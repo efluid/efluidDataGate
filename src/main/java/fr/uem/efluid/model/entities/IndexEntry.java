@@ -1,5 +1,7 @@
 package fr.uem.efluid.model.entities;
 
+import java.util.UUID;
+
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -9,6 +11,9 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
+
+import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * <p>
@@ -24,7 +29,7 @@ import javax.validation.constraints.NotNull;
  */
 @Entity
 @Table(name = "index")
-public class IndexEntry {
+public class IndexEntry implements DiffLine {
 
 	@Id
 	@GeneratedValue
@@ -46,7 +51,7 @@ public class IndexEntry {
 	private String keyValue;
 
 	private long timestamp;
-	
+
 	/**
 	 * 
 	 */
@@ -87,6 +92,7 @@ public class IndexEntry {
 	/**
 	 * @return the action
 	 */
+	@Override
 	public IndexAction getAction() {
 		return this.action;
 	}
@@ -117,6 +123,7 @@ public class IndexEntry {
 	/**
 	 * @return the payload
 	 */
+	@Override
 	public String getPayload() {
 		return this.payload;
 	}
@@ -132,6 +139,7 @@ public class IndexEntry {
 	/**
 	 * @return the keyValue
 	 */
+	@Override
 	public String getKeyValue() {
 		return this.keyValue;
 	}
@@ -152,10 +160,50 @@ public class IndexEntry {
 	}
 
 	/**
-	 * @param timestamp the timestamp to set
+	 * @param timestamp
+	 *            the timestamp to set
 	 */
 	public void setTimestamp(long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.model.DiffLine#getDictionaryUuid()
+	 */
+	@Override
+	public UUID getDictionaryEntryUuid() {
+		return this.dictionaryEntry.getUuid();
+	}
+
+	/**
+	 * For commit serialize
+	 * 
+	 * @return
+	 */
+	String serialize() {
+
+		return SharedOutputInputUtils.newJson()
+				.with("dic", getDictionaryEntryUuid())
+				.with("act", getAction())
+				.with("key", getKeyValue())
+				.with("pay", getPayload())
+				.with("tim", Long.valueOf(getTimestamp()))
+				.toString();
+	}
+
+	/**
+	 * For commit deserialize
+	 * 
+	 * @param raw
+	 */
+	void deserialize(String raw) {
+		SharedOutputInputUtils.fromJson(raw)
+				.apply("dic", UUID.class, u -> setDictionaryEntry(new DictionaryEntry(u)))
+				.apply("act", IndexAction.class, a -> setAction(a))
+				.apply("key", String.class, k -> setKeyValue(k))
+				.apply("pay", String.class, p -> setPayload(p))
+				.apply("tim", Long.class, t -> setTimestamp(t.longValue()));
 	}
 
 	/**

@@ -34,7 +34,7 @@ public class DataDiffServiceBenchTest {
 	private ManagedParametersRepository managed;
 
 	@Autowired
-	private DataDiffService service;
+	private PrepareDiffService service;
 
 	@Autowired
 	private TestDataLoader loader;
@@ -87,7 +87,7 @@ public class DataDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupFullDatabase("diff8");
 			long start = System.currentTimeMillis();
-			this.service.processDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
+			this.service.initDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {

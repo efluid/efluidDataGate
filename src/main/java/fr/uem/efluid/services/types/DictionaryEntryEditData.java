@@ -282,11 +282,17 @@ public class DictionaryEntryEditData {
 		 * 
 		 * @param col
 		 * @param selecteds
+		 * @param linkedTable
+		 *            from existing link has priority over col foreignKeyTable
 		 * @return
 		 */
-		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds) {
+		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds, String linkedTable) {
 			ColumnEditData editData = new ColumnEditData();
-			editData.setForeignKeyTable(col.getForeignKeyTable());
+			if (linkedTable == null) {
+				editData.setForeignKeyTable(col.getForeignKeyTable());
+			} else {
+				editData.setForeignKeyTable(linkedTable);
+			}
 			editData.setName(col.getName());
 			editData.setType(col.getType());
 			editData.setPrimaryKey(col.isPrimaryKey());
@@ -304,12 +310,15 @@ public class DictionaryEntryEditData {
 		 * 
 		 * @param selected
 		 * @param keyname
+		 * @param linkedTable
+		 *            from existing link
 		 * @return
 		 */
-		public static ColumnEditData fromSelecteds(String selected, String keyname) {
+		public static ColumnEditData fromSelecteds(String selected, String keyname, String linkedTable) {
 			ColumnEditData editData = new ColumnEditData();
 			editData.setName(selected);
 			editData.setPrimaryKey(selected.equals(keyname));
+			editData.setForeignKeyTable(linkedTable);
 			editData.setSelected(true);
 			return editData;
 		}

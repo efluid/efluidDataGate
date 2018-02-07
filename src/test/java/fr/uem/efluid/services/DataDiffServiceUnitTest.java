@@ -21,7 +21,7 @@ import fr.uem.efluid.utils.DataGenerationUtils;
 public class DataDiffServiceUnitTest {
 
 	// No spring load here, for simple diff needs
-	private DataDiffService service = new DataDiffService();
+	private PrepareDiffService service = new PrepareDiffService();
 
 	// No spring here neither
 	private ManagedValueConverter converter = new ManagedValueConverter();

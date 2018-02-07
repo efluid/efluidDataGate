@@ -42,7 +42,7 @@ public class PilotableCommitPreparationService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PilotableCommitPreparationService.class);
 
 	@Autowired
-	private DataDiffService diffService;
+	private PrepareDiffService diffService;
 
 	@Autowired
 	private DictionaryRepository dictionary;
@@ -137,7 +137,9 @@ public class PilotableCommitPreparationService {
 			this.current.setEnd(LocalDateTime.now());
 			this.current.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
-			LOGGER.info("Diff process completed on commit preparation {}. Total process duration was {} ms", this.current.getIdentifier(),
+			LOGGER.info("Diff process completed on commit preparation {}. Found {} index entries. Total process duration was {} ms",
+					this.current.getIdentifier(),
+					Integer.valueOf(this.current.getPreparedDiff().size()),
 					Long.valueOf(System.currentTimeMillis() - startTimeout));
 
 		} catch (InterruptedException e) {
@@ -177,7 +179,7 @@ public class PilotableCommitPreparationService {
 	 */
 	private Callable<DiffCallResult> callDiff(DictionaryEntry dict) {
 		return () -> {
-			return new DiffCallResult(dict.getUuid(), this.diffService.processDiff(dict));
+			return new DiffCallResult(dict.getUuid(), this.diffService.initDiff(dict));
 		};
 	}
 

@@ -8,189 +8,69 @@
         <div class="row">
             <div class="col-1"></div>
             <div class="col-9">
-                <p>
-                    <h5>Préparation d'un lot
-                    <a th:href="@{/prepare/restart}" href="#" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les modifications</a></h5>
-                    <form class="form-inline">
-                        <select class="form-control">
-                        <option>Tous</option>
-                        <option>Gestion du matériel</option>
-                        <option>Matrice des prix</option>
-                        <option>Processus utilisateurs</option>
-                        <option>Editions</option>
-                        </select>&nbsp;
-                        <button class="btn btn-primary" type="button">Filtrer par domaine fonctionnel</button>
-                    </form>
-                </p>
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col" width="20%">Domaine</th>
-                            <th scope="col" width="20%">Paramètre</th>
-                            <th scope="col" width="50%">Modification</th>
-                            <th scope="col">
-                                    <div class="btn-group float-right" role="group">
-                                        <button type="button" class="btn btn-outline-primary btn-sm">Tout garder</button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm">Tout annuler</button>
-                                    </div></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Catégorie de matériel</td>
-                            <td><span class="add">Ajout</span> "Compteur d'eau" / "abc" / "FS"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Catégorie de matériel</td>
-                            <td><span class="update">Modification</span> "Balon distributton" > "Balon distribution"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Catégorie de matériel</td>
-                            <td><span class="add">Ajout</span> "Relai panneau solaire" / "ddc" / "FS"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Type de matériel</td>
-                            <td><span class="add">Ajout</span> "Compteur électrique Legrand bleu"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Type de matériel</td>
-                            <td><span class="add">Ajout</span> "Compteur électrique Legrand jaune"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Type de matériel</td>
-                            <td><span class="add">Ajout</span> "Compteur électrique Siemens bleu"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Type de matériel</td>
-                            <td><span class="add">Ajout</span> "Compteur électrique Siemens jaune"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Type de matériel</td>
-                            <td><span class="remove">Suppression</span> "Compteur électrique Dupont jaune"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Type de matériel</td>
-                            <td><span class="remove">Suppression</span> "Compteur électrique Dupont bleu"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-outline-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Modèle de compteur</td>
-                            <td><span class="add">Ajout</span> "Siemens ABC1235"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Modèle de compteur</td>
-                            <td><span class="add">Ajout</span> "Siemens 11-B12"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-outline-primary btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-secondary btn-sm">Annuler</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p>
-                    <a href="./commit.html" class="btn btn-primary float-right" type="button">Confirmer les opérations</a>
-                </p>
-                <p>&nbsp;<br/><br/><br/><br/></p>
+                <form action="/commit.html" th:action="@{/prepare/save}" method="post">
+	                <p>
+	                    <h5>Préparation d'un lot
+	                    <a th:href="@{/prepare/restart}" href="#" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les modifications</a></h5>
+	                    <form class="form-inline">
+	                        <select class="form-control">
+	                        <option>Tous</option>
+	                        <option>Gestion du matériel</option>
+	                        <option>Matrice des prix</option>
+	                        <option>Processus utilisateurs</option>
+	                        <option>Editions</option>
+	                        </select>&nbsp;
+	                        <button class="btn btn-primary" type="button">Filtrer par domaine fonctionnel</button>
+	                    </form>
+	                </p>
+	                <table class="table table-sm">
+	                    <thead>
+	                        <tr>
+	                            <th scope="col" width="20%">Domaine</th>
+	                            <th scope="col" width="20%">Paramètre</th>
+	                            <th scope="col" width="50%">Modification</th>
+	                            <th scope="col">
+									<div class="btn-group float-right" role="group">
+										<button type="button" class="btn btn-outline-primary btn-sm">Tout garder</button>
+										<button type="button" class="btn btn-outline-secondary btn-sm">Tout annuler</button>
+									</div>
+								</th>
+	                        </tr>
+	                    </thead>
+	                    <tbody>
+							<tr th:each="entry, stat : ${preparation.preparedDiff}" th:id="|${entry.dictionaryEntryUuid}_${entry.keyValue}|">
+								<td th:text="${entry.domainName}">Gestion du matériel</td>
+	                            <td th:text="${entry.dictionaryEntryName}">Catégorie de matériel</td>
+	                            <td>
+	                            	<input type="hidden" th:field="${preparation.preparedDiff[__${stat.index}__].name}"/>
+	                            	<input type="hidden" th:field="${preparation.preparedDiff[__${stat.index}__].name}"/>
+	                            	<span class="change-display">
+	                            		<span th:class="${#strings.toLowerCase(entry.action.name())}" class="add" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span> "Compteur d'eau" / "abc" / "FS"
+	                            	</span>
+	                            </td>
+		                        <td>
+									<div class="btn-group float-right" role="group">
+										<button type="button" th:class="${preparation.preparedDiff[__${stat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Garder</button>
+										<button type="button" th:class="!${preparation.preparedDiff[__${stat.index}__].selected}?'btn btn-secondary btn-sm unselect-button':'btn btn-outline-secondary btn-sm unselect-button'" class="btn btn-secondary btn-sm unselect-button">Annuler</button>
+									</div>
+								</td>
+							</tr>
+	                    </tbody>
+	                </table>
+					<p>
+						<div class="float-right">
+							<input type="submit" class="btn btn-success btn-sm" value="Confirmer les opérations"/><br/><br/>
+						</div>
+					</p>
+				</form>
             </div>
         </div>        
 	</span>
-    <script layout:fragment="script" th:inline="javascript">
-    
-		var preparationState = /*[[${preparation.status.name()}]]*/ 'NOT_LAUNCHED';
-		
-		const checkProgress = () => {
-			$.get("/prepare/progress", (data, status) => {
-				if(data === 'DIFF_RUNNING'){
-					setTimeout(checkProgress, 3000);
-				} else {
-					// Reload page for valid data
-					window.location.replace("/prepare");
-				}
-			});
-		};
-		
-		// Delete buttons
-		const startPreparationProgress = (e) => {
-			if(preparationState
-		};
+    <script layout:fragment="script">
 		
     	// Init actions
     	$(document).ready(() => {
-			$("button.delete-button").click(deleteButtonAction);
-			var fromType = /*[[${from}?${from}:'']]*/ 'success_edit';
-			if(fromType === 'success_edit') showSuccess("Table de paramètrage ajoutée avec succès au dictionnaire");
+
 		}); 
 		
     </script>

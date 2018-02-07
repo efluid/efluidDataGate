@@ -2,6 +2,7 @@ package fr.uem.efluid.services.types;
 
 import java.util.UUID;
 
+import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
@@ -11,7 +12,7 @@ import fr.uem.efluid.model.entities.IndexEntry;
  * @since v0.0.1
  * @version 1
  */
-public class PreparedIndexEntry {
+public class PreparedIndexEntry implements DiffLine {
 
 	private Long id;
 
@@ -32,6 +33,8 @@ public class PreparedIndexEntry {
 	private String hrPayload;
 
 	private long timestamp;
+
+	private boolean selected;
 
 	/**
 	 * 
@@ -103,6 +106,7 @@ public class PreparedIndexEntry {
 	/**
 	 * @return the dictionaryEntryUuid
 	 */
+	@Override
 	public UUID getDictionaryEntryUuid() {
 		return this.dictionaryEntryUuid;
 	}
@@ -133,6 +137,7 @@ public class PreparedIndexEntry {
 	/**
 	 * @return the action
 	 */
+	@Override
 	public IndexAction getAction() {
 		return this.action;
 	}
@@ -148,6 +153,7 @@ public class PreparedIndexEntry {
 	/**
 	 * @return the keyValue
 	 */
+	@Override
 	public String getKeyValue() {
 		return this.keyValue;
 	}
@@ -163,6 +169,7 @@ public class PreparedIndexEntry {
 	/**
 	 * @return the payload
 	 */
+	@Override
 	public String getPayload() {
 		return this.payload;
 	}
@@ -188,6 +195,21 @@ public class PreparedIndexEntry {
 	 */
 	public void setHrPayload(String hrPayload) {
 		this.hrPayload = hrPayload;
+	}
+
+	/**
+	 * @return the selected
+	 */
+	public boolean isSelected() {
+		return this.selected;
+	}
+
+	/**
+	 * @param selected
+	 *            the selected to set
+	 */
+	public void setSelected(boolean selected) {
+		this.selected = selected;
 	}
 
 	/**
@@ -230,4 +252,5 @@ public class PreparedIndexEntry {
 
 		return data;
 	}
+
 }

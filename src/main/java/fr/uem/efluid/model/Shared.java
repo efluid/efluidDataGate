@@ -23,4 +23,14 @@ public interface Shared {
 	 * @return
 	 */
 	LocalDateTime getImportedTime();
+	
+	/**
+	 * @return
+	 */
+	String serialize();
+	
+	/**
+	 * @param raw
+	 */
+	void deserialize(String raw);
 }

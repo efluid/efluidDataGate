@@ -1,5 +1,6 @@
 package fr.uem.efluid.tools;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -18,6 +19,10 @@ import fr.uem.efluid.utils.StringSplitter;
  * <p>
  * Tools for query build used in Managed database access. For backlog identification.
  * </p>
+ * <p>
+ * <b><font color="red">Warning : This version doesn't ignore column diff
+ * differences</font></b>
+ * </p>
  * 
  * @author elecomte
  * @since v0.0.1
@@ -32,10 +37,10 @@ public class ManagedValueConverter {
 	private final static char TYPE_IDENT = '/';
 
 	// For content rendering
-	private final static char RENDERING_STRING_PROTECT = '"';
 	private final static String RENDERING_AFFECT = ":";
 	private final static String RENDERING_SEPARATOR = ", ";
 	private final static String RENDERING_CHANGED = "=>";
+	private final static String MISSING_VALUE = "n/a";
 
 	private final static Encoder B64_ENCODER = Base64.getEncoder();
 
@@ -111,7 +116,7 @@ public class ManagedValueConverter {
 	 * @return
 	 */
 	public String displayInternalValue(List<Value> values) {
-		return values.stream().map(v -> v.getName() + RENDERING_AFFECT + typedValue(v)).collect(Collectors.joining(RENDERING_SEPARATOR));
+		return values.stream().map(v -> v.getName() + RENDERING_AFFECT + v.getTyped()).collect(Collectors.joining(RENDERING_SEPARATOR));
 	}
 
 	/**
@@ -176,7 +181,8 @@ public class ManagedValueConverter {
 
 	/**
 	 * <p>
-	 * For 2 provided payloads, build a human readable change set
+	 * For 2 provided payloads, build a human readable change set. Some values can be
+	 * missing, manage it as a "precise diff".
 	 * </p>
 	 * 
 	 * @param newOnes
@@ -186,11 +192,22 @@ public class ManagedValueConverter {
 	private static String displayModificationRendering(List<Value> newOnes, List<Value> existings) {
 
 		final Map<String, Value> existingsMapped = existings.stream().collect(Collectors.toMap(Value::getName, v -> v));
+		final List<String> result = new ArrayList<>();
 
-		return newOnes.stream()
-				.filter(n -> !existingsMapped.get(n.getName()).getValue().equals(n.getValue()))
-				.map(v -> "" + changedValue(existingsMapped.get(v.getName()), v))
-				.collect(Collectors.joining(RENDERING_SEPARATOR));
+		// Some can be missing
+		for (Value newOne : newOnes) {
+			Value oldOne = existingsMapped.remove(newOne.getName());
+			if (oldOne == null || !oldOne.getValue().equals(newOne.getValue())) {
+				result.add(changedValue(oldOne, newOne));
+			}
+		}
+
+		// Process also remaining old ones, which are removed columns
+		for (Value oldOne : existingsMapped.values()) {
+			result.add(changedValue(oldOne, null));
+		}
+
+		return result.stream().collect(Collectors.joining(RENDERING_SEPARATOR));
 	}
 
 	/**
@@ -203,23 +220,13 @@ public class ManagedValueConverter {
 	 * @return
 	 */
 	private static String changedValue(Value oldOne, Value newOne) {
-		return new StringBuilder(newOne.getName())
+		String name = oldOne != null ? oldOne.getName() : newOne.getName();
+		return new StringBuilder(name)
 				.append(RENDERING_AFFECT)
-				.append(typedValue(oldOne))
+				.append(oldOne != null ? oldOne.getTyped() : MISSING_VALUE)
 				.append(RENDERING_CHANGED)
-				.append(typedValue(newOne))
+				.append(newOne != null ? newOne.getTyped() : MISSING_VALUE)
 				.toString();
-	}
-
-	/**
-	 * @param val
-	 * @return
-	 */
-	private static String typedValue(Value val) {
-		if (val.getType() == ColumnType.STRING) {
-			return RENDERING_STRING_PROTECT + val.getValueAsString() + RENDERING_STRING_PROTECT;
-		}
-		return val.getValueAsString();
 	}
 
 	/*

@@ -23,6 +23,7 @@ import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
  * <p>
@@ -55,6 +56,9 @@ public class DemoDataLoader {
 	@Autowired
 	private CommitRepository commits;
 
+	@Autowired
+	private ManagedValueConverter converter;
+
 	@PostConstruct
 	public void initValues() {
 
@@ -70,29 +74,31 @@ public class DemoDataLoader {
 		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, null, "TCATEGORYMATERIEL", "1=1", "id"));
 		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, null, "TTYPEMATERIEL", "1=1", "id"));
 		DictionaryEntry mode = this.dictionary.save(entry("Modèle de compteur", dom1, null, "TMODELE", "\"ACTIF\"=true", "id"));
-		DictionaryEntry oth1 = this.dictionary.save(entry("Test sur le type de compteur", dom1, "\"VALUE\",\"COUNT\",\"TYPEID\"", "TTABLEOTHER", "1=1", "id"));
+		DictionaryEntry oth1 = this.dictionary
+				.save(entry("Test sur le type de compteur", dom1, "\"VALUE\",\"COUNT\",\"TYPEID\"", "TTABLEOTHER", "1=1", "id"));
 		DictionaryEntry oth2 = this.dictionary.save(entry("Autre table pour voir", dom2, null, "TTABLEOTHERTEST2", "1=1", "id"));
-		
+
 		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont, 5));
 		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur, 3));
 		Commit com3 = this.commits.save(commit("Ajout du reste", testeur, 1));
 
-		this.index.save(update("1", ADD, "Name=something, Detail=something, value=12345", cmat, com1));
-		this.index.save(update("1", ADD, "Name=something, Detail=something, value=12345", tmat, com2));
-		this.index.save(update("1", REMOVE, "Name=something, Detail=something, value=12345", tmat, com2));
-		this.index.save(update("1", ADD, "Name=something, Detail=something, value=12345", mode, com2));
-		this.index.save(update("2355", ADD, "Name=something, Detail=other, value=12345", oth1, com2));
+		this.index.save(update("1", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), cmat, com1));
+		this.index.save(update("1", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), tmat, com2));
+		this.index.save(update("1", REMOVE, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), tmat, com2));
+		this.index.save(update("1", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), mode, com2));
+		this.index.save(update("2355", ADD, content("Name=\"something\", Detail=\"other\", value=12345", this.converter), oth1, com2));
 
-		this.index.save(update("234", ADD, "Name=other, Detail=something, value=12345", oth2, com2));
-		this.index.save(update("236", ADD, "Name=something, Detail=something, value=12345", oth2, com2));
-		this.index.save(update("234", UPDATE, "Name=other, Detail=something, value=12345", oth2, com2));
-		this.index.save(update("235", ADD, "Name=something, Detail=something, value=12345", oth2, com2));
-		this.index.save(update("235", REMOVE, "Name=something, Detail=something, value=12345", oth2, com3));
-		this.index.save(update("4", ADD, "Name=something, Detail=other, value=33", oth2, com3));
-		this.index.save(update("234", UPDATE, "Name=second, Detail=something, value=12345", oth2, com3));
-		this.index.save(update("7", ADD, "Name=something, Detail=something, value=12345", oth2, com3));
-		this.index.save(update("11", ADD, "Name=something, Detail=something, value=222", oth2, com3));
-		this.index.save(update("236", ADD, "Name=something, Detail=something, value=222", oth2, com3));
+		this.index.save(update("234", ADD, content("Name=\"other\", Detail=\"something\", value=12345", this.converter), oth2, com2));
+		this.index.save(update("236", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), oth2, com2));
+		this.index.save(update("234", UPDATE, content("Name=\"other\", Detail=\"something\", value=12345", this.converter), oth2, com2));
+		this.index.save(update("235", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), oth2, com2));
+		this.index
+				.save(update("235", REMOVE, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), oth2, com3));
+		this.index.save(update("4", ADD, content("Name=\"something\", Detail=\"other\", value=33", this.converter), oth2, com3));
+		this.index.save(update("234", UPDATE, content("Name=\"second\", Detail=\"something\", value=12345", this.converter), oth2, com3));
+		this.index.save(update("7", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), oth2, com3));
+		this.index.save(update("11", ADD, content("Name=\"something\", Detail=\"something\", value=222", this.converter), oth2, com3));
+		this.index.save(update("236", ADD, content("Name=\"something\", Detail=\"something\", value=222", this.converter), oth2, com3));
 
 		LOGGER.info("[DEMO] Demo values init done");
 	}

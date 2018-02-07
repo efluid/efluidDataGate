@@ -9,6 +9,7 @@ import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * @author elecomte
@@ -109,6 +110,33 @@ public class FunctionalDomain implements Shared {
 
 	/**
 	 * @return
+	 * @see fr.uem.efluid.model.Shared#serialize()
+	 */
+	@Override
+	public String serialize() {
+
+		return SharedOutputInputUtils.newJson()
+				.with("uid", getUuid())
+				.with("cre", getCreatedTime())
+				.with("nam", getName())
+				.toString();
+	}
+
+	/**
+	 * @param raw
+	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
+	 */
+	@Override
+	public void deserialize(String raw) {
+
+		SharedOutputInputUtils.fromJson(raw)
+				.apply("uid", UUID.class, v -> setUuid(v))
+				.apply("cre", LocalDateTime.class, v -> setCreatedTime(v))
+				.apply("nam", String.class, v -> setName(v));
+	}
+
+	/**
+	 * @return
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -140,4 +168,5 @@ public class FunctionalDomain implements Shared {
 			return false;
 		return true;
 	}
+
 }
