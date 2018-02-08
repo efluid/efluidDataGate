@@ -48,7 +48,7 @@ public class ApplyDiffServiceIntegrationTest {
 	public void testApplyDiffSimpleAdd() {
 
 		setupDatabase("update1");
-		
+
 		// 4 items each
 		this.loader.assertSourceSize(4);
 		this.loader.assertSourceChildSize(4);
@@ -66,7 +66,5 @@ public class ApplyDiffServiceIntegrationTest {
 		// Added items
 		this.loader.assertSourceSize(8);
 		this.loader.assertSourceChildSize(6);
-
 	}
-
 }
