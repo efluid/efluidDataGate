@@ -286,7 +286,7 @@ public class DictionaryManagementService {
 			TableLink link = new TableLink();
 			link.setColumnFrom(c.getName());
 			link.setTableTo(c.getForeignKeyTable());
-			link.setEntry(entry);
+			link.setDictionaryEntry(entry);
 			return link;
 		}).collect(Collectors.toList());
 
@@ -308,7 +308,7 @@ public class DictionaryManagementService {
 			// New one
 			else {
 				link.setCreatedTime(LocalDateTime.now());
-				link.setEntry(entry);
+				link.setDictionaryEntry(entry);
 				link.setUuid(UUID.randomUUID());
 				createdLinks.add(link);
 			}

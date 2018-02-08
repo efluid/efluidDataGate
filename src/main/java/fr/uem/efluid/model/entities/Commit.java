@@ -275,4 +275,14 @@ public class Commit implements Shared {
 		return true;
 	}
 
+	/**
+	 * @return
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Commit [<" + this.uuid + ">\"" + this.comment + "\", by:" + this.originalUserEmail + ", create:" + this.createdTime
+				+ ", imported:" + this.importedTime + "]";
+	}
+
 }

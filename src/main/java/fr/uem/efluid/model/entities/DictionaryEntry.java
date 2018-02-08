@@ -299,4 +299,14 @@ public class DictionaryEntry implements Shared {
 		return true;
 	}
 
+	/**
+	 * @return
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "DicEntry [<" + this.uuid + "> table:" + this.tableName
+				+ ", where:" + this.whereClause + ", select:" + this.selectClause + ", key:" + this.keyName + "]";
+	}
+
 }

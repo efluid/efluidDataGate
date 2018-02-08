@@ -28,7 +28,7 @@ import fr.uem.efluid.tools.ManagedValueConverter;
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
-public class DataDiffServiceBenchTest {
+public class PrepareDiffServiceBenchTest {
 
 	@Autowired
 	private ManagedParametersRepository managed;
@@ -46,13 +46,13 @@ public class DataDiffServiceBenchTest {
 
 	@Transactional
 	public void setupSourceOnly(String name) {
-		this.loader.setupSourceDatabase(name);
-		this.dictionaryEntryUuid = this.loader.setupDictionnary().getUuid();
+		this.loader.setupSourceDatabaseForDiff(name);
+		this.dictionaryEntryUuid = this.loader.setupDictionnaryForDiff().getUuid();
 	}
 
 	@Transactional
 	public void setupIndexOnly(String name) {
-		this.dictionaryEntryUuid = this.loader.setupIndexDatabase(name).getUuid();
+		this.dictionaryEntryUuid = this.loader.setupIndexDatabaseForDiff(name).getUuid();
 	}
 
 	@Transactional

@@ -257,7 +257,7 @@ public class ManagedQueriesGenerator {
 	 */
 	private static final String generateInsertQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("INSERT INTO ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
-				.append(" (%) VALUES (%)").toString();
+				.append(" (%s) VALUES (%s)").toString();
 	}
 
 	/**

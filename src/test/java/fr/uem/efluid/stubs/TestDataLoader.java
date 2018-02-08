@@ -5,8 +5,10 @@ import static fr.uem.efluid.utils.DataGenerationUtils.*;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +25,7 @@ import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
+import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -41,6 +44,9 @@ public class TestDataLoader {
 	private SimulatedSourceRepository sources;
 
 	@Autowired
+	private SimulatedSourceChildRepository sourceChilds;
+
+	@Autowired
 	private FunctionalDomainRepository domains;
 
 	@Autowired
@@ -56,6 +62,9 @@ public class TestDataLoader {
 	private CommitRepository commits;
 
 	@Autowired
+	private TableLinkRepository links;
+
+	@Autowired
 	private ManagedValueConverter converter;
 
 	/**
@@ -69,16 +78,51 @@ public class TestDataLoader {
 	/**
 	 * @param diffName
 	 */
-	public void setupSourceDatabase(String diffName) {
+	public void setupSourceDatabaseForDiff(String diffName) {
 		this.sources.deleteAll();
 		this.sources.initFromDataset(readDataset(diffName + "/actual.csv"), this.converter);
 		this.sources.flush();
 	}
 
 	/**
+	 * @param diffName
+	 */
+	public void setupSourceDatabaseForUpdate(String updateName) {
+		this.sources.deleteAll();
+		this.sources.initFromDataset(readDataset(updateName + "/actual-parent.csv"), this.converter);
+		this.sources.flush();
+
+		this.sourceChilds.deleteAll();
+		this.sourceChilds.initFromDataset(readDataset(updateName + "/actual-child.csv"), this.converter);
+		this.sourceChilds.flush();
+	}
+
+	/**
 	 * @return
 	 */
-	public DictionaryEntry setupDictionnary() {
+	public void setupDictionnaryForUpdate() {
+
+		this.links.deleteAll();
+		this.dictionary.deleteAll();
+		this.domains.deleteAll();
+
+		FunctionalDomain dom1 = this.domains.save(domain("Source exemple"));
+		this.dictionary
+				.save(entry("Sources de données parent", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY"));
+		DictionaryEntry child = this.dictionary
+				.save(entry("Sources de données parent", dom1, "VALUE, PARENT", TestUtils.SOURCE_CHILD_TABLE_NAME, "1=1", "KEY"));
+
+		this.links.save(link(child, "PARENT", TestUtils.SOURCE_TABLE_NAME));
+
+		this.domains.flush();
+		this.dictionary.flush();
+		this.links.flush();
+	}
+
+	/**
+	 * @return
+	 */
+	public DictionaryEntry setupDictionnaryForDiff() {
 		this.dictionary.deleteAll();
 		this.domains.deleteAll();
 
@@ -92,10 +136,25 @@ public class TestDataLoader {
 	}
 
 	/**
+	 * Prepare one unsaved compliant IndexEntry
+	 * 
+	 * @param tableName
+	 * @param key
+	 * @param action
+	 * @param rawPayload
+	 * @return
+	 */
+	public IndexEntry initIndexEntry(String tableName, String key, IndexAction action, String rawPayload) {
+
+		DictionaryEntry dict = this.dictionary.findByTableName(tableName);
+		return DataGenerationUtils.update(key, action, DataGenerationUtils.content(rawPayload, this.converter), dict, null);
+	}
+
+	/**
 	 * @param diffName
 	 * @return
 	 */
-	public DictionaryEntry setupIndexDatabase(String diffName) {
+	public DictionaryEntry setupIndexDatabaseForDiff(String diffName) {
 
 		// Reset database
 		this.index.deleteAll();
@@ -104,7 +163,7 @@ public class TestDataLoader {
 
 		// Prepare data - core items
 		User dupont = this.users.save(user("dupont"));
-		DictionaryEntry cmat = setupDictionnary();
+		DictionaryEntry cmat = setupDictionnaryForDiff();
 
 		// Prepare existing commits
 		Commit com1 = this.commits.save(commit("Commit initial de création", dupont, 15));
@@ -145,8 +204,8 @@ public class TestDataLoader {
 
 		LOGGER.debug("Start to restore database for diff test");
 
-		setupSourceDatabase(diffName);
-		DictionaryEntry cmat = setupIndexDatabase(diffName);
+		setupSourceDatabaseForDiff(diffName);
+		DictionaryEntry cmat = setupIndexDatabaseForDiff(diffName);
 
 		LOGGER.debug("Database setup with dataset {} for a new diff test", diffName);
 
@@ -161,4 +220,31 @@ public class TestDataLoader {
 		TestUtils.assertDatasetEquals(datasToCompare, dataset, this.converter);
 	}
 
+	/**
+	 * @param size
+	 */
+	public void assertSourceSize(long size) {
+		Assert.assertEquals(size, this.sources.count());
+	}
+
+	/**
+	 * @param size
+	 */
+	public void assertSourceChildSize(long size) {
+		Assert.assertEquals(size, this.sourceChilds.count());
+	}
+
+	/**
+	 * @param predicate
+	 */
+	public void assertSourceContentValidate(Predicate<List<SimulatedSource>> predicate) {
+		Assert.assertTrue(predicate.test(this.sources.findAll()));
+	}
+
+	/**
+	 * @param predicate
+	 */
+	public void assertSourceChildContentValidate(Predicate<List<SimulatedSourceChild>> predicate) {
+		Assert.assertTrue(predicate.test(this.sourceChilds.findAll()));
+	}
 }

@@ -9,6 +9,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
@@ -26,6 +27,7 @@ public class DataGenerationUtils {
 	public static User user(String login) {
 
 		User user = new User(login);
+
 		user.setEmail(login + "@efluid.fr");
 		user.setPassword("FPQSFIKQPSFIQSF[ENCRYPTED]");
 
@@ -37,6 +39,7 @@ public class DataGenerationUtils {
 	 * @return
 	 */
 	public static FunctionalDomain domain(String name) {
+
 		FunctionalDomain domain = new FunctionalDomain();
 
 		domain.setCreatedTime(LocalDateTime.now().minusDays(name.length()));
@@ -98,7 +101,9 @@ public class DataGenerationUtils {
 	 * @return
 	 */
 	public static Commit commit(String detail, User user, int daysOld) {
+
 		Commit commit = new Commit();
+
 		commit.setUuid(UUID.randomUUID());
 		commit.setComment(detail);
 		commit.setHash(detail);
@@ -106,7 +111,31 @@ public class DataGenerationUtils {
 		commit.setImported(false);
 		commit.setOriginalUserEmail(user.getEmail());
 		commit.setUser(user);
+
 		return commit;
+	}
+
+	/**
+	 * @return
+	 */
+	/**
+	 * @param entry
+	 * @param col
+	 * @param table
+	 * @return
+	 */
+	public static TableLink link(DictionaryEntry entry, String col, String table) {
+
+		TableLink link = new TableLink();
+
+		link.setUuid(UUID.randomUUID());
+		link.setColumnFrom(col);
+		link.setColumnTo("KEY");
+		link.setTableTo(table);
+		link.setCreatedTime(LocalDateTime.now());
+		link.setDictionaryEntry(entry);
+
+		return link;
 	}
 
 	/**
@@ -116,12 +145,17 @@ public class DataGenerationUtils {
 	 * @return
 	 */
 	public static String content(String raw, ManagedValueConverter converter) {
+
 		LinkedHashMap<String, Object> result = new LinkedHashMap<>();
+
 		String[] parts = raw.split(",");
+
 		for (String part : parts) {
-			String[] item = part.split("=");
-			result.put(item[0], item[1].charAt(0) == '"' ? item[1].substring(1, item[1].length() - 1) : Integer.decode(item[1]));
+			String[] item = part.trim().split("=");
+			String val = item[1].trim();
+			result.put(item[0].trim(), val.charAt(0) == '"' ? val.substring(1, val.length() - 1) : Integer.decode(val));
 		}
+
 		return converter.convertToExtractedValue(result);
 	}
 

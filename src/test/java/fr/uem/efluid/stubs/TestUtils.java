@@ -26,6 +26,7 @@ import fr.uem.efluid.tools.ManagedValueConverter;
 public class TestUtils {
 
 	public static final String SOURCE_TABLE_NAME = "TTESTSOURCE";
+	public static final String SOURCE_CHILD_TABLE_NAME = "TTESTSOURCE_CHILD";
 	private static final String CSV_SEP = ";";
 	private static final String NOT_STRING_IDENTIFIER = "(not string)";
 
@@ -107,6 +108,23 @@ public class TestUtils {
 		source.setPreset(values.get("PRESET"));
 		source.setSomething(values.get("SOMETHING"));
 		return source;
+	}
+
+	/**
+	 * @param datasetEntry
+	 * @return
+	 */
+	public static SimulatedSourceChild entryToSourceChild(Map.Entry<String, String> datasetEntry, final ManagedValueConverter converter) {
+		// Key;Value;Parent
+		SimulatedSourceChild child = new SimulatedSourceChild();
+		child.setKey(Long.decode(datasetEntry.getKey()));
+
+		Map<String, String> values = converter.expandInternalValue(datasetEntry.getValue()).stream()
+				.collect(Collectors.toMap(Value::getName, Value::getValueAsString));
+
+		child.setValue(values.get("VALUE"));
+		child.setParent(new SimulatedSource(Long.decode(values.get("PARENT"))));
+		return child;
 	}
 
 	/**

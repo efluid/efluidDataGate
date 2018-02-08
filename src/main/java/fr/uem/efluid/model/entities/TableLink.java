@@ -37,7 +37,7 @@ public class TableLink implements Shared {
 	private LocalDateTime importedTime;
 
 	@ManyToOne(optional = false)
-	private DictionaryEntry entry;
+	private DictionaryEntry dictionaryEntry;
 
 	/**
 	 * @param uuid
@@ -148,18 +148,17 @@ public class TableLink implements Shared {
 	}
 
 	/**
-	 * @return the entry
+	 * @return the dictionaryEntry
 	 */
-	public DictionaryEntry getEntry() {
-		return this.entry;
+	public DictionaryEntry getDictionaryEntry() {
+		return this.dictionaryEntry;
 	}
 
 	/**
-	 * @param entry
-	 *            the entry to set
+	 * @param dictionaryEntry the dictionaryEntry to set
 	 */
-	public void setEntry(DictionaryEntry entry) {
-		this.entry = entry;
+	public void setDictionaryEntry(DictionaryEntry dictionaryEntry) {
+		this.dictionaryEntry = dictionaryEntry;
 	}
 
 	/**
@@ -175,7 +174,7 @@ public class TableLink implements Shared {
 				.with("cfr", getColumnFrom())
 				.with("cto", getColumnTo())
 				.with("tto", getTableTo())
-				.with("dic", getEntry().getUuid())
+				.with("dic", getDictionaryEntry().getUuid())
 				.toString();
 	}
 
@@ -192,7 +191,7 @@ public class TableLink implements Shared {
 				.apply("cfr", String.class, v -> setColumnFrom(v))
 				.apply("cto", String.class, v -> setColumnTo(v))
 				.apply("tto", String.class, v -> setTableTo(v))
-				.apply("dic", UUID.class, v -> setEntry(new DictionaryEntry(v)));
+				.apply("dic", UUID.class, v -> setDictionaryEntry(new DictionaryEntry(v)));
 	}
 
 	/**

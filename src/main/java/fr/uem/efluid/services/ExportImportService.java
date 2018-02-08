@@ -30,8 +30,11 @@ public class ExportImportService {
 	private static final String PACKAGE_START = "[pack|%s|%s|%s]\n";
 
 	private static final String PACKAGE_END = "[/pack]\n";
+	
+	private static final String ITEM_START = "[item]";
 
-	private static final String ITEM_JOIN = "\n";
+	private static final String ITEM_END = "[/item]\n";
+
 
 	private static final String RESOURCE_NAME = "/content.pckg";
 
@@ -53,7 +56,7 @@ public class ExportImportService {
 					// Package content
 					pckg.serialize().forEach(s -> {
 						try {
-							writer.write(s + ITEM_JOIN);
+							writer.write(ITEM_START + s + ITEM_END);
 						} catch (IOException e) {
 							throw new TechnicalException("Cannot write " + s, e);
 						}

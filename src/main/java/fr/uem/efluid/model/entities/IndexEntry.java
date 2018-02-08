@@ -252,4 +252,14 @@ public class IndexEntry implements DiffLine {
 		return true;
 	}
 
+	/**
+	 * @return
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "IdxEntry [<" + this.id + ">, dict:" + getDictionaryEntryUuid() + ", time:" + this.timestamp + ", chg:" + this.action + "@"
+				+ this.keyValue + "|" + this.payload + "]";
+	}
+
 }

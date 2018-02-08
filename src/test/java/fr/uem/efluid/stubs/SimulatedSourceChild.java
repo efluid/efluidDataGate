@@ -1,7 +1,11 @@
 package fr.uem.efluid.stubs;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
@@ -10,31 +14,23 @@ import javax.persistence.Table;
  * @version 1
  */
 @Entity
-@Table(name = TestUtils.SOURCE_TABLE_NAME)
-public class SimulatedSource {
+@Table(name = TestUtils.SOURCE_CHILD_TABLE_NAME)
+public class SimulatedSourceChild {
 
 	@Id
 	private Long key;
 
 	private String value;
 
-	private String preset;
-
-	private String something;
-
-	/**
-	 * 
-	 */
-	public SimulatedSource() {
-		super();
-	}
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = "PARENT")
+	private SimulatedSource parent;
 
 	/**
 	 * 
 	 */
-	public SimulatedSource(Long key) {
+	public SimulatedSourceChild() {
 		super();
-		this.key = key;
 	}
 
 	/**
@@ -68,33 +64,18 @@ public class SimulatedSource {
 	}
 
 	/**
-	 * @return the preset
+	 * @return the parent
 	 */
-	public String getPreset() {
-		return this.preset;
+	public SimulatedSource getParent() {
+		return this.parent;
 	}
 
 	/**
-	 * @param preset
-	 *            the preset to set
+	 * @param parent
+	 *            the parent to set
 	 */
-	public void setPreset(String preset) {
-		this.preset = preset;
-	}
-
-	/**
-	 * @return the something
-	 */
-	public String getSomething() {
-		return this.something;
-	}
-
-	/**
-	 * @param something
-	 *            the something to set
-	 */
-	public void setSomething(String something) {
-		this.something = something;
+	public void setParent(SimulatedSource parent) {
+		this.parent = parent;
 	}
 
 	/**
@@ -122,7 +103,7 @@ public class SimulatedSource {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SimulatedSource other = (SimulatedSource) obj;
+		SimulatedSourceChild other = (SimulatedSourceChild) obj;
 		if (this.key == null) {
 			if (other.key != null)
 				return false;

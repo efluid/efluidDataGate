@@ -29,7 +29,7 @@ import fr.uem.efluid.stubs.TestDataLoader;
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
-public class DataDiffServiceIntegrationTest {
+public class PrepareDiffServiceIntegrationTest {
 
 	@Autowired
 	private PrepareDiffService service;

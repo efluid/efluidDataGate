@@ -18,7 +18,7 @@ import fr.uem.efluid.utils.DataGenerationUtils;
  * @since v0.0.1
  * @version 1
  */
-public class DataDiffServiceUnitTest {
+public class PrepareDiffServiceUnitTest {
 
 	// No spring load here, for simple diff needs
 	private PrepareDiffService service = new PrepareDiffService();

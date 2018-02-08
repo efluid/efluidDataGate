@@ -15,6 +15,15 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
  */
 public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUID> {
 
+	/**
+	 * @return
+	 */
 	@Query("SELECT DISTINCT dic.uuid FROM IndexEntry ind INNER JOIN ind.dictionaryEntry dic GROUP BY dic.uuid")
 	List<UUID> findUsedIds();
+
+	/**
+	 * @param tableName
+	 * @return
+	 */
+	DictionaryEntry findByTableName(String tableName);
 }
