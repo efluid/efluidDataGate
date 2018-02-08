@@ -35,6 +35,9 @@
 
 			</plugins>
 		</pluginManagement>
+		
+		<finalName>${project.artifactId}</finalName>
+		
 	</build>
 
 	<dependencies>
