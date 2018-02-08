@@ -35,9 +35,26 @@
 
 			</plugins>
 		</pluginManagement>
-		
+
+		<plugins>
+			<!-- Setup spring boot plugin fat-jar as standard -->
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>fr.uem.efluid.Application</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
 		<finalName>${project.artifactId}</finalName>
-		
+
 	</build>
 
 	<dependencies>
@@ -72,12 +89,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-cache</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.hazelcast</groupId>
 			<artifactId>hazelcast</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
