@@ -21,7 +21,7 @@ public class SimulatedSourceChild {
 
 	private String value;
 
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.EAGER)
 	@JoinColumn(name = "PARENT")
 	private SimulatedSource parent;
 

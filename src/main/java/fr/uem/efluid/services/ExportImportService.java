@@ -1,29 +1,30 @@
 package fr.uem.efluid.services;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.utils.TechnicalException;
+import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.util.Zip4jConstants;
 
 /**
  * <p>
@@ -38,6 +39,8 @@ import fr.uem.efluid.utils.TechnicalException;
 @SuppressWarnings("synthetic-access")
 public class ExportImportService {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExportImportService.class);
+
 	private static final String PACKAGE_START = "[pack|%s|%s|%s|%s]\n";
 
 	private static final String PACKAGE_END = "[/pack]\n";
@@ -48,7 +51,20 @@ public class ExportImportService {
 
 	private static final Charset CHARSET = Charset.forName("utf8");
 
-	private static final String RESOURCE_NAME = "/content.pckg";
+	private static final String FILE_PCKG_EXT = ".packs";
+
+	private static final String FILE_ZIP_EXT = "par";
+
+	private static final String FILE_ID = "export-package";
+
+	private static final String SYSTEM_DEFAULT_TMP_DIR = System.getProperty("java.io.tmpdir");
+
+	private final static ZipParameters ZIP_PARAMS = new ZipParameters();
+
+	static {
+		ZIP_PARAMS.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
+		ZIP_PARAMS.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+	}
 
 	/**
 	 * @param packages
@@ -56,39 +72,35 @@ public class ExportImportService {
 	 */
 	ExportImportFile exportPackages(List<ExportImportPackage<?>> packages) {
 
+		LOGGER.info("packaging {} items", Integer.valueOf(packages.size()));
+
 		try {
-			File tmp = File.createTempFile("export-package", "packs");
-			try (FileWriter writer = new FileWriter(tmp)) {
 
-				for (ExportImportPackage<?> pckg : packages) {
+			Path workFolder = prepareTmpFolder();
+			List<Path> packFiles = new ArrayList<>();
 
-					// Start of package
-					writer.write(String.format(PACKAGE_START, pckg.getClass(), pckg.getName(), pckg.getExportDate(), pckg.getVersion()));
+			for (ExportImportPackage<?> pckg : packages) {
 
-					// Package content
-					pckg.serialize().forEach(s -> {
-						try {
-							writer.write(ITEM_START + s + ITEM_END);
-						} catch (IOException e) {
-							throw new TechnicalException("Cannot write " + s, e);
-						}
-					});
+				Path pckgFile = Files.createFile(workFolder.resolve(pckg.getName() + FILE_PCKG_EXT));
 
-					// End of package
-					writer.write(PACKAGE_END);
-				}
+				// Identifier at start of package
+				append(pckgFile, String.format(PACKAGE_START, pckg.getClass(), pckg.getName(), pckg.getExportDate(), pckg.getVersion()));
 
-				writer.flush();
-				writer.close();
+				// Package content
+				pckg.serialize().forEach(s -> append(pckgFile, ITEM_START + s + ITEM_END));
 
-				// TODO : define CType
-				return new ExportImportFile(compress(tmp), "PCKG");
+				// End of package
+				append(pckgFile, PACKAGE_END);
+
+				packFiles.add(pckgFile);
 			}
+
+			// TODO : define CType
+			return new ExportImportFile(compress(packFiles), "PCKG");
 
 		} catch (IOException e) {
 			throw new TechnicalException("Cannot process export on " + packages.size() + " packages", e);
 		}
-
 	}
 
 	/**
@@ -97,16 +109,29 @@ public class ExportImportService {
 	 */
 	List<ExportImportPackage<?>> importPackages(ExportImportFile file) {
 
-		String whole = new String(file.getData(), CHARSET);
+		try {
+			Path path = tmp(FILE_ZIP_EXT);
+			Files.write(path, file.getData());
 
-		return Stream.of(whole.split(PACKAGE_END)).map(this::readPackage).collect(Collectors.toList());
+			return unCompress(path).stream()
+					.map(ExportImportService::readFile)
+					.map(ExportImportService::readPackage)
+					.collect(Collectors.toList());
+
+		} catch (IOException e) {
+			throw new TechnicalException("Cannot process import on package " + file.getFilename(), e);
+		}
 	}
 
 	/**
 	 * @param pack
 	 * @return
 	 */
-	private ExportImportPackage<?> readPackage(String pack) {
+	private static ExportImportPackage<?> readPackage(String pack) {
+
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("Reading package content : \n{}", pack);
+		}
 
 		try {
 			String[] items = pack.split(ITEM_START);
@@ -116,6 +141,9 @@ public class ExportImportService {
 			// Class, name, date, version
 			String[] packParams = items[0].substring(6, items[0].length() - 2).split("\\|");
 			Class<?> type = Class.forName(packParams[0]);
+			String version = packParams[3];
+			LocalDateTime date = LocalDateTime.parse(packParams[2]);
+			String name = packParams[1];
 
 			// Check type is valid
 			if (!ExportImportPackage.class.isAssignableFrom(type)) {
@@ -124,19 +152,21 @@ public class ExportImportService {
 
 			// Init instance
 			ExportImportPackage<?> instance = (ExportImportPackage<?>) type.getConstructor(String.class, LocalDateTime.class)
-					.newInstance(packParams[1], LocalDateTime.parse(packParams[2]));
+					.newInstance(name, date);
 
 			// Must have same version
-			if (!instance.getVersion().equals(packParams[3])) {
-				throw new TechnicalException("Processing of package type load is invalid. Version " + packParams[3]
-						+ " is not supported (current version is " + instance.getVersion() + ")");
+			if (!instance.getVersion().equals(version)) {
+				throw new TechnicalException("Processing of package type load is invalid. Version " + version
+						+ " is not supported for \"" + name + "\" (current version is " + instance.getVersion() + ")");
 			}
 
 			List<String> itemSerialized = new ArrayList<>();
 
 			// Get items
 			for (int i = 1; i < items.length; i++) {
-				itemSerialized.add(items[i].substring(0, items[i].length() - ITEM_END.length()));
+				String itemContent = items[i].substring(0, items[i].length() - ITEM_END.length());
+				LOGGER.debug("Identified serialized item in package \"{}\". Content : {}", name, itemContent);
+				itemSerialized.add(itemContent);
 			}
 
 			// Deserialize => prepare content
@@ -158,22 +188,107 @@ public class ExportImportService {
 	 * @return
 	 * @throws IOException
 	 */
-	private static File compress(File tmp) throws IOException {
-		File zip = File.createTempFile("export-package", "zip");
-		Map<String, String> env = new HashMap<>();
-		env.put("create", "true");
+	private static Path compress(List<Path> unzipped) throws IOException {
 
-		URI uri = tmp.toURI();
-
-		try (FileSystem zipfs = FileSystems.newFileSystem(uri, env)) {
-			Path pathInZipfile = zipfs.getPath(RESOURCE_NAME);
-			// copy a file into the zip file
-			Files.copy(zip.toPath(), pathInZipfile, StandardCopyOption.REPLACE_EXISTING);
+		try {
+			LOGGER.debug("Will compress {} unzipped package files", Integer.valueOf(unzipped.size()));
+			Path zip = tmp(FILE_ZIP_EXT);
+			ZipFile zipFile = new ZipFile(zip.toString());
+			unzipped.forEach(p -> {
+				try {
+					LOGGER.debug("Adding file \"{}\" to zip destination \"{}\"", p, zip);
+					zipFile.createZipFile(p.toFile(), ZIP_PARAMS);
+				} catch (ZipException e) {
+					throw new TechnicalException("Cannot zip " + p,e);
+				}
+			});
+			return zip;
+		} catch (ZipException e) {
+			throw new TechnicalException("Cannot zip files " + unzipped);
 		}
-		return zip;
 	}
 
-	public abstract class ExportImportPackage<T extends Shared> {
+	/**
+	 * @param tmp
+	 * @return
+	 * @throws IOException
+	 */
+	private static List<Path> unCompress(Path zipped) throws IOException {
+
+		try {
+			Path unzipFolder = prepareTmpFolder();
+			ZipFile zipFile = new ZipFile(zipped.toString());
+			zipFile.extractAll(unzipFolder.toString());
+			return Files.walk(unzipFolder)
+					.filter(Files::isRegularFile)
+					.collect(Collectors.toList());
+		} catch (ZipException e) {
+			throw new TechnicalException("Cannot unzip " + zipped);
+		}
+	}
+
+	/**
+	 * @param extension
+	 * @return
+	 * @throws IOException
+	 */
+	private static Path tmp(String extension) {
+		try {
+			return File.createTempFile(FILE_ID, extension).toPath();
+		} catch (IOException e) {
+			throw new TechnicalException("Cannot create tmp file with extension " + extension, e);
+		}
+	}
+
+	/**
+	 * @param path
+	 * @param value
+	 * @throws IOException
+	 */
+	private static void append(Path path, String value) {
+		try {
+			if (LOGGER.isDebugEnabled()) {
+				LOGGER.debug("Appending to file \"{}\" content : \n{}", path, value);
+			}
+			Files.write(path, value.getBytes(CHARSET), StandardOpenOption.APPEND);
+		} catch (IOException e) {
+			throw new TechnicalException("Cannot append to file " + path, e);
+		}
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 */
+	private static String readFile(Path path) {
+		try {
+			return new String(Files.readAllBytes(path), CHARSET);
+		} catch (IOException e) {
+			throw new TechnicalException("Cannot read file " + path, e);
+		}
+	}
+
+	/**
+	 * @param zipped
+	 * @return
+	 */
+	private static Path prepareTmpFolder() {
+
+		File unzipFolder = new File(SYSTEM_DEFAULT_TMP_DIR + "/" + UUID.randomUUID().toString() + "-work");
+		if (!unzipFolder.exists()) {
+			unzipFolder.mkdirs();
+		}
+
+		return unzipFolder.toPath();
+	}
+
+	/**
+	 * @author elecomte
+	 * @since v0.0.1
+	 * @version 1
+	 * @param <T>
+	 */
+	public abstract static class ExportImportPackage<T extends Shared> {
 
 		private final String name;
 		private final LocalDateTime exportDate;
@@ -184,7 +299,7 @@ public class ExportImportService {
 		 * @param name
 		 * @param exportDate
 		 */
-		public ExportImportPackage(String name, LocalDateTime exportDate) {
+		protected ExportImportPackage(String name, LocalDateTime exportDate) {
 			super();
 			this.name = name;
 			this.exportDate = exportDate;
@@ -205,10 +320,21 @@ public class ExportImportService {
 		}
 
 		/**
+		 * Init content when creating a new package. Simple inline setter
+		 * 
+		 * @param lcontents
+		 * @return
+		 */
+		public ExportImportPackage<T> initWithContent(List<T> lcontents) {
+			this.contents = lcontents;
+			return this;
+		}
+
+		/**
 		 * @return the content
 		 */
-		public List<T> getContent() {
-			return this.contents;
+		public Stream<T> streamContent() {
+			return this.contents.stream();
 		}
 
 		/**

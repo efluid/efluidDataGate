@@ -2,6 +2,7 @@ package fr.uem.efluid.services;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -23,11 +24,16 @@ import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
+import fr.uem.efluid.services.ExportImportService.ExportImportPackage;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
+import fr.uem.efluid.services.types.DictionaryPackage;
+import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.FunctionalDomainData;
+import fr.uem.efluid.services.types.FunctionalDomainPackage;
 import fr.uem.efluid.services.types.SelectableTable;
+import fr.uem.efluid.services.types.TableLinkPackage;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.utils.TechnicalException;
 
@@ -56,6 +62,9 @@ public class DictionaryManagementService {
 
 	@Autowired
 	private ManagedQueriesGenerator queryGenerator;
+
+	@Autowired
+	private ExportImportService ioService;
 
 	/**
 	 * @return
@@ -267,6 +276,147 @@ public class DictionaryManagementService {
 		LOGGER.debug("Forced refresh on cache for metadata");
 
 		this.metadatas.refreshAll();
+	}
+
+	/**
+	 * @return
+	 */
+	public ExportImportFile exportAll() {
+
+		LOGGER.info("Process export of complete dictionary related entities");
+
+		// Easy : just take all
+		return this.ioService.exportPackages(Arrays.asList(
+				new DictionaryPackage("full-dictionary", LocalDateTime.now()).initWithContent(this.dictionary.findAll()),
+				new FunctionalDomainPackage("full-domains", LocalDateTime.now()).initWithContent(this.domains.findAll()),
+				new TableLinkPackage("full-links", LocalDateTime.now()).initWithContent(this.links.findAll())));
+	}
+
+	/**
+	 * @param file
+	 */
+	public void importAll(ExportImportFile file) {
+
+		LOGGER.info("Process import of complete dictionary related entities");
+
+		// Less easy : need to complete and identify if value is new or not
+		List<ExportImportPackage<?>> packages = this.ioService.importPackages(file);
+
+		// Process on each, with right order :
+
+		// #1st The functional domains (used by other)
+		List<FunctionalDomain> importedDomains = packages.stream().filter(p -> p.getClass() == FunctionalDomainPackage.class)
+				.flatMap(p -> ((FunctionalDomainPackage) p).streamContent()).map(this::importDomain).collect(Collectors.toList());
+
+		// #2nd The dictionary (referencing domains)
+		List<DictionaryEntry> importedDicts = packages.stream().filter(p -> p.getClass() == DictionaryPackage.class)
+				.flatMap(p -> ((DictionaryPackage) p).streamContent()).map(this::importDictionaryEntry).collect(Collectors.toList());
+
+		// #3rd The links (referencing dictionary entries)
+		List<TableLink> importedLinks = packages.stream().filter(p -> p.getClass() == TableLinkPackage.class)
+				.flatMap(p -> ((TableLinkPackage) p).streamContent()).map(this::importTableLink).collect(Collectors.toList());
+
+		// Batched save on all imported
+		this.domains.save(importedDomains);
+		this.dictionary.save(importedDicts);
+		this.links.save(importedLinks);
+
+		LOGGER.info("Import completed of {} domains, {} dictionary entry and {} table links",
+				Integer.valueOf(importedDomains.size()), Integer.valueOf(importedDicts.size()), Integer.valueOf(importedLinks.size()));
+	}
+
+	/**
+	 * Process one FunctionalDomain
+	 * @param imported
+	 * @return
+	 */
+	private FunctionalDomain importDomain(FunctionalDomain imported) {
+
+		FunctionalDomain local = this.domains.findOne(imported.getUuid());
+
+		// Exists already : it's an update
+		if (local != null) {
+			LOGGER.debug("Import existing domain {} : will update currently owned", imported.getUuid());
+		}
+
+		// Creating a new one locally
+		else {
+			LOGGER.debug("Import new domain {} : will create currently owned", imported.getUuid());
+			local = new FunctionalDomain(imported.getUuid());
+		}
+
+		// Common attrs
+		local.setCreatedTime(imported.getCreatedTime());
+		local.setName(imported.getName());
+		
+		local.setImportedTime(LocalDateTime.now());
+
+		return local;
+	}
+
+	/**
+	 * Process one DictionaryEntry
+	 * @param imported
+	 * @return
+	 */
+	private DictionaryEntry importDictionaryEntry(DictionaryEntry imported) {
+
+		DictionaryEntry local = this.dictionary.findOne(imported.getUuid());
+
+		// Exists already : it's an update
+		if (local != null) {
+			LOGGER.debug("Import existing dictionary entry {} : will update currently owned", imported.getUuid());
+		}
+
+		// Creating a new one locally
+		else {
+			LOGGER.debug("Import new dictionary entry {} : will create currently owned", imported.getUuid());
+			local = new DictionaryEntry(imported.getUuid());
+		}
+
+		// Common attrs
+		local.setCreatedTime(imported.getCreatedTime());
+		local.setDomain(new FunctionalDomain(imported.getDomain().getUuid()));
+		local.setKeyType(imported.getKeyType());
+		local.setParameterName(imported.getParameterName());
+		local.setTableName(imported.getTableName());
+		local.setSelectClause(imported.getSelectClause());
+		local.setWhereClause(imported.getWhereClause());
+		
+		local.setImportedTime(LocalDateTime.now());
+
+		return local;
+	}
+
+	/**Process one TableLink
+	 * @param imported
+	 * @return
+	 */
+	private TableLink importTableLink(TableLink imported) {
+
+		TableLink local = this.links.findOne(imported.getUuid());
+
+		// Exists already : it's an update
+		if (local != null) {
+			LOGGER.debug("Import existing TableLink {} : will update currently owned", imported.getUuid());
+		}
+
+		// Creating a new one locally
+		else {
+			LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
+			local = new TableLink(imported.getUuid());
+		}
+
+		// Common attrs
+		local.setCreatedTime(imported.getCreatedTime());
+		local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
+		local.setColumnFrom(imported.getColumnFrom());
+		local.setColumnTo(imported.getColumnTo());
+		local.setTableTo(imported.getTableTo());
+		
+		local.setImportedTime(LocalDateTime.now());
+
+		return local;
 	}
 
 	/**

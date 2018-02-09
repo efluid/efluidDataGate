@@ -180,6 +180,17 @@ public class ManagedQueriesGenerator {
 	}
 
 	/**
+	 * @param parameterEntry
+	 * @param keyValue
+	 * @return
+	 */
+	public String producesGetOneQuery(DictionaryEntry parameterEntry, String keyValue) {
+		// SELECT %s FROM %s WHERE %s ORDER BY %s (reused query)
+		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), valueAffect(new KeyValue(parameterEntry, keyValue)),
+				parameterEntry.getKeyName());
+	}
+
+	/**
 	 * @param value
 	 * @return
 	 */

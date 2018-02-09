@@ -2,8 +2,8 @@ package fr.uem.efluid.services.types;
 
 import java.time.LocalDateTime;
 
-import fr.uem.efluid.model.ExportImportPackage;
 import fr.uem.efluid.model.entities.TableLink;
+import fr.uem.efluid.services.ExportImportService.ExportImportPackage;
 
 /**
  * @author elecomte

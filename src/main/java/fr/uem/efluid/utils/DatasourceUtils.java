@@ -14,6 +14,8 @@ public final class DatasourceUtils {
 
 	public static final String MANAGED_TRANSACTION_MANAGER = "managedTransactionManager";
 
+	public static final java.lang.String DEFAULT_TRANSACTION_MANAGER = "transactionManager";
+
 	/**
 	 * @return JdbcTemplate for managed database access
 	 */
@@ -120,7 +122,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param query the query to set
+		 * @param query
+		 *            the query to set
 		 */
 		public void setQuery(CustomQueryGenerationRules query) {
 			this.query = query;

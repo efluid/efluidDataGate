@@ -10,6 +10,10 @@ param-efluid:
        query: 
            tableNamesProtected: true
            columnNamesProtected: true
+   
+   managed-updates:
+       check-update-missing-ids: true
+       check-delete-missing-ids: true
 
    details:
        version: TEST

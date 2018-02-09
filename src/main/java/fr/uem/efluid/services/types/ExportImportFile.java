@@ -1,12 +1,10 @@
 package fr.uem.efluid.services.types;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import org.springframework.web.multipart.MultipartFile;
-
-import fr.uem.efluid.utils.TechnicalException;
 
 /**
  * <p>
@@ -28,16 +26,14 @@ public class ExportImportFile {
 	 * 
 	 * @param file
 	 * @param contentType
+	 * @throws IOException
 	 */
-	public ExportImportFile(MultipartFile file, String contentType) {
+	public ExportImportFile(MultipartFile file, String contentType) throws IOException {
 		super();
-		try {
-			this.fileData = file.getBytes();
-			this.filename = file.getOriginalFilename();
-			this.contentType = contentType;
-		} catch (IOException e) {
-			throw new TechnicalException("Cannot process the imported multipart file", e);
-		}
+
+		this.fileData = file.getBytes();
+		this.filename = file.getOriginalFilename();
+		this.contentType = contentType;
 	}
 
 	/**
@@ -45,22 +41,14 @@ public class ExportImportFile {
 	 * 
 	 * @param tmpFileExported
 	 * @param contentType
+	 * @throws IOException
 	 */
-	public ExportImportFile(File tmpFileExported, String contentType) {
+	public ExportImportFile(Path tmpFileExported, String contentType) throws IOException {
 		super();
-		// Readonly access to exported file
-		try (RandomAccessFile f = new RandomAccessFile(tmpFileExported, "r")) {
 
-			final int length = (int) f.length();
-			final byte[] b = new byte[length];
-			f.read(b);
-
-			this.fileData = b;
-			this.filename = tmpFileExported.getName();
-			this.contentType = contentType;
-		} catch (IOException e) {
-			throw new TechnicalException("Cannot process the exported temp file", e);
-		}
+		this.fileData = Files.readAllBytes(tmpFileExported);
+		this.filename = tmpFileExported.getFileName().toString();
+		this.contentType = contentType;
 	}
 
 	/**

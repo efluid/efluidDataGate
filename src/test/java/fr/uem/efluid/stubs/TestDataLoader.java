@@ -36,6 +36,7 @@ import fr.uem.efluid.utils.DataGenerationUtils;
  * @version 1
  */
 @Component
+@SuppressWarnings("boxing")
 public class TestDataLoader {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(IntegrationTestConfig.class);
@@ -85,15 +86,24 @@ public class TestDataLoader {
 	}
 
 	/**
+	 * @param updateName
+	 */
+	public void setupDatabaseForUpdate(String updateName) {
+		setupSourceDatabaseForUpdate(updateName);
+		setupDictionnaryForUpdate();
+	}
+
+	/**
 	 * @param diffName
 	 */
 	public void setupSourceDatabaseForUpdate(String updateName) {
-		this.sources.deleteAll();
-		this.sources.initFromDataset(readDataset(updateName + "/actual-parent.csv"), this.converter);
-		this.sources.flush();
-
 		this.sourceChilds.deleteAll();
+		this.sources.deleteAll();
+
+		this.sources.initFromDataset(readDataset(updateName + "/actual-parent.csv"), this.converter);
 		this.sourceChilds.initFromDataset(readDataset(updateName + "/actual-child.csv"), this.converter);
+
+		this.sources.flush();
 		this.sourceChilds.flush();
 	}
 
@@ -110,13 +120,28 @@ public class TestDataLoader {
 		this.dictionary
 				.save(entry("Sources de données parent", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY"));
 		DictionaryEntry child = this.dictionary
-				.save(entry("Sources de données parent", dom1, "VALUE, PARENT", TestUtils.SOURCE_CHILD_TABLE_NAME, "1=1", "KEY"));
+				.save(entry("Sources de données enfant", dom1, "VALUE, PARENT", TestUtils.SOURCE_CHILD_TABLE_NAME, "1=1", "KEY"));
 
 		this.links.save(link(child, "PARENT", TestUtils.SOURCE_TABLE_NAME));
 
 		this.domains.flush();
 		this.dictionary.flush();
 		this.links.flush();
+	}
+
+	/**
+	 * For testing
+	 * 
+	 * @param domain
+	 * @param tableName
+	 * @return
+	 */
+	public DictionaryEntry addDictionaryWithTrinome(String domain, String tableName) {
+
+		FunctionalDomain dom1 = this.domains.save(domain(domain));
+		DictionaryEntry dict = this.dictionary.save(entry(tableName, dom1, "VALUE, PRESET, SOMETHING", tableName, "1=1", "KEY"));
+		this.links.save(link(dict, "PARENT", tableName + "_dest"));
+		return dict;
 	}
 
 	/**
@@ -147,7 +172,8 @@ public class TestDataLoader {
 	public IndexEntry initIndexEntry(String tableName, String key, IndexAction action, String rawPayload) {
 
 		DictionaryEntry dict = this.dictionary.findByTableName(tableName);
-		return DataGenerationUtils.update(key, action, DataGenerationUtils.content(rawPayload, this.converter), dict, null);
+		return DataGenerationUtils.update(key, action, rawPayload != null ? DataGenerationUtils.content(rawPayload, this.converter) : null,
+				dict, null);
 	}
 
 	/**
@@ -237,14 +263,28 @@ public class TestDataLoader {
 	/**
 	 * @param predicate
 	 */
-	public void assertSourceContentValidate(Predicate<List<SimulatedSource>> predicate) {
+	public void assertSourceContentAllValidate(Predicate<List<SimulatedSource>> predicate) {
 		Assert.assertTrue(predicate.test(this.sources.findAll()));
 	}
 
 	/**
 	 * @param predicate
 	 */
-	public void assertSourceChildContentValidate(Predicate<List<SimulatedSourceChild>> predicate) {
+	public void assertSourceChildContentAllValidate(Predicate<List<SimulatedSourceChild>> predicate) {
 		Assert.assertTrue(predicate.test(this.sourceChilds.findAll()));
+	}
+
+	/**
+	 * @param predicate
+	 */
+	public void assertSourceContentValidate(long id, Predicate<SimulatedSource> predicate) {
+		Assert.assertTrue(predicate.test(this.sources.findOne(id)));
+	}
+
+	/**
+	 * @param predicate
+	 */
+	public void assertSourceChildContentValidate(long id, Predicate<SimulatedSourceChild> predicate) {
+		Assert.assertTrue(predicate.test(this.sourceChilds.findOne(id)));
 	}
 }

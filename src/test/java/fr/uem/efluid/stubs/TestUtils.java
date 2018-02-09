@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -15,6 +18,7 @@ import java.util.stream.Collectors;
 
 import org.junit.Assert;
 
+import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
@@ -108,6 +112,20 @@ public class TestUtils {
 		source.setPreset(values.get("PRESET"));
 		source.setSomething(values.get("SOMETHING"));
 		return source;
+	}
+
+	/**
+	 * @param file
+	 * @param name
+	 */
+	public static void writeExportFile(ExportImportFile file, String name) {
+
+		try {
+			Path path = new File("target/" + name).toPath();
+			Files.write(path, file.getData());
+		} catch (IOException e) {
+			Assert.fail("Cannot export to " + name);
+		}
 	}
 
 	/**
