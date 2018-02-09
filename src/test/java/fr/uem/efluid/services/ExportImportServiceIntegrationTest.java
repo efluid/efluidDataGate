@@ -1,6 +1,7 @@
 package fr.uem.efluid.services;
 
-import java.util.UUID;
+import java.io.File;
+import java.io.IOException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,9 +13,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
-import fr.uem.efluid.model.repositories.TableLinkRepository;
+import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.stubs.TestDataLoader;
 import fr.uem.efluid.stubs.TestUtils;
 
@@ -39,21 +38,10 @@ public class ExportImportServiceIntegrationTest {
 	@Autowired
 	private TestDataLoader loader;
 
-	@Autowired
-	private DictionaryRepository dict;
-
-	@Autowired
-	private FunctionalDomainRepository functs;
-
-	@Autowired
-	private TableLinkRepository links;
-
-	private UUID dictionaryEntryUuid;
-
 	@Transactional
 	public void setupDatabase() {
-		this.loader.setupDictionnaryForUpdate();
-		this.dictionaryEntryUuid = this.loader.addDictionaryWithTrinome(D, T).getUuid();
+		this.loader.setupDictionaryForUpdate();
+		this.loader.addDictionaryWithTrinome(D, T).getUuid();
 	}
 
 	@Test
@@ -61,5 +49,43 @@ public class ExportImportServiceIntegrationTest {
 		setupDatabase();
 
 		TestUtils.writeExportFile(this.dictService.exportAll(), VALID_FILE);
+	}
+
+	@Test
+	public void testImportFullDictionary() throws IOException {
+
+		// No initial DB
+
+		ExportImportFile importFile = new ExportImportFile(new File("src/test/resources/" + VALID_FILE).toPath(), "");
+
+		this.dictService.importAll(importFile);
+
+		this.loader.assertDictionarySize(3);
+		this.loader.assertDictionaryContentValidate("effd3aaa-ed84-4386-a68b-9e62374f462d", d -> d.getTableName().equals("TTESTSOURCE"));
+		this.loader.assertDictionaryContentValidate("8402ea6b-da3c-445e-9b20-3ccb15e2eb22",
+				d -> d.getTableName().equals(T) && d.getParameterName().equals(T));
+		this.loader.assertDomainsSize(2);
+		this.loader.assertLinksSize(2);
+	}
+
+	@Test
+	public void testExportImportFullDictionary() throws IOException {
+		setupDatabase();
+
+		TestUtils.writeExportFile(this.dictService.exportAll(), "2" + VALID_FILE);
+
+		// Reset db after export, to reimport it
+		this.loader.dropAllDictionary();
+
+		ExportImportFile importFile = new ExportImportFile(new File("src/test/resources/" + VALID_FILE).toPath(), "");
+
+		this.dictService.importAll(importFile);
+
+		this.loader.assertDictionarySize(3);
+		this.loader.assertDictionaryContentValidate("effd3aaa-ed84-4386-a68b-9e62374f462d", d -> d.getTableName().equals("TTESTSOURCE"));
+		this.loader.assertDictionaryContentValidate("8402ea6b-da3c-445e-9b20-3ccb15e2eb22",
+				d -> d.getTableName().equals(T) && d.getParameterName().equals(T));
+		this.loader.assertDomainsSize(2);
+		this.loader.assertLinksSize(2);
 	}
 }

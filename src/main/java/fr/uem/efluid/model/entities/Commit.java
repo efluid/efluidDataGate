@@ -229,12 +229,12 @@ public class Commit implements Shared {
 	public void deserialize(String raw) {
 
 		SharedOutputInputUtils.fromJson(raw)
-				.apply("uid", UUID.class, u -> setUuid(u))
-				.apply("com", String.class, c -> setComment(c))
-				.apply("cre", LocalDateTime.class, c -> setCreatedTime(c))
-				.apply("has", String.class, h -> setHash(h))
-				.apply("ema", String.class, e -> setOriginalUserEmail(e))
-				.apply("idx", String.class, i -> setIndex(Stream.of(i.split("\n")).map(s -> {
+				.applyUUID("uid", u -> setUuid(u))
+				.applyString("com", c -> setComment(c))
+				.applyLdt("cre", c -> setCreatedTime(c))
+				.applyString("has", h -> setHash(h))
+				.applyString("ema", e -> setOriginalUserEmail(e))
+				.applyString("idx", i -> setIndex(Stream.of(i.split("\n")).map(s -> {
 					IndexEntry ent = new IndexEntry();
 					ent.deserialize(s);
 					return ent;

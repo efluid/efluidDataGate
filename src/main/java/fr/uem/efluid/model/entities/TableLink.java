@@ -155,7 +155,8 @@ public class TableLink implements Shared {
 	}
 
 	/**
-	 * @param dictionaryEntry the dictionaryEntry to set
+	 * @param dictionaryEntry
+	 *            the dictionaryEntry to set
 	 */
 	public void setDictionaryEntry(DictionaryEntry dictionaryEntry) {
 		this.dictionaryEntry = dictionaryEntry;
@@ -186,12 +187,12 @@ public class TableLink implements Shared {
 	public void deserialize(String raw) {
 
 		SharedOutputInputUtils.fromJson(raw)
-				.apply("uid", UUID.class, v -> setUuid(v))
-				.apply("cre", LocalDateTime.class, v -> setCreatedTime(v))
-				.apply("cfr", String.class, v -> setColumnFrom(v))
-				.apply("cto", String.class, v -> setColumnTo(v))
-				.apply("tto", String.class, v -> setTableTo(v))
-				.apply("dic", UUID.class, v -> setDictionaryEntry(new DictionaryEntry(v)));
+				.applyUUID("uid", v -> setUuid(v))
+				.applyLdt("cre", v -> setCreatedTime(v))
+				.applyString("cfr", v -> setColumnFrom(v))
+				.applyString("cto", v -> setColumnTo(v))
+				.applyString("tto", v -> setTableTo(v))
+				.applyUUID("dic", v -> setDictionaryEntry(new DictionaryEntry(v)));
 	}
 
 	/**

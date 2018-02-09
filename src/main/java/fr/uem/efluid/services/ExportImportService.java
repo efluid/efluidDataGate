@@ -1,6 +1,5 @@
 package fr.uem.efluid.services;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
@@ -10,7 +9,6 @@ import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.services.types.ExportImportFile;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 import fr.uem.efluid.utils.TechnicalException;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
@@ -46,6 +45,7 @@ public class ExportImportService {
 	private static final String PACKAGE_END = "[/pack]\n";
 
 	private static final String ITEM_START = "[item]";
+	private static final String ITEM_START_SEARCH = "\\[item\\]";
 
 	private static final String ITEM_END = "[/item]\n";
 
@@ -53,11 +53,9 @@ public class ExportImportService {
 
 	private static final String FILE_PCKG_EXT = ".packs";
 
-	private static final String FILE_ZIP_EXT = "par";
+	private static final String FILE_ZIP_EXT = ".par";
 
 	private static final String FILE_ID = "export-package";
-
-	private static final String SYSTEM_DEFAULT_TMP_DIR = System.getProperty("java.io.tmpdir");
 
 	private final static ZipParameters ZIP_PARAMS = new ZipParameters();
 
@@ -76,7 +74,7 @@ public class ExportImportService {
 
 		try {
 
-			Path workFolder = prepareTmpFolder();
+			Path workFolder = SharedOutputInputUtils.initTmpFolder();
 			List<Path> packFiles = new ArrayList<>();
 
 			for (ExportImportPackage<?> pckg : packages) {
@@ -84,7 +82,7 @@ public class ExportImportService {
 				Path pckgFile = Files.createFile(workFolder.resolve(pckg.getName() + FILE_PCKG_EXT));
 
 				// Identifier at start of package
-				append(pckgFile, String.format(PACKAGE_START, pckg.getClass(), pckg.getName(), pckg.getExportDate(), pckg.getVersion()));
+				append(pckgFile, String.format(PACKAGE_START, pckg.getClass().getName(), pckg.getName(), pckg.getExportDate(), pckg.getVersion()));
 
 				// Package content
 				pckg.serialize().forEach(s -> append(pckgFile, ITEM_START + s + ITEM_END));
@@ -110,7 +108,7 @@ public class ExportImportService {
 	List<ExportImportPackage<?>> importPackages(ExportImportFile file) {
 
 		try {
-			Path path = tmp(FILE_ZIP_EXT);
+			Path path = SharedOutputInputUtils.initTmpFile(FILE_ID, FILE_ZIP_EXT, true);
 			Files.write(path, file.getData());
 
 			return unCompress(path).stream()
@@ -134,7 +132,7 @@ public class ExportImportService {
 		}
 
 		try {
-			String[] items = pack.split(ITEM_START);
+			String[] items = pack.split(ITEM_START_SEARCH);
 
 			// Pack def is first item
 			// [pack|%s|%s|%s|%s]\n
@@ -192,14 +190,14 @@ public class ExportImportService {
 
 		try {
 			LOGGER.debug("Will compress {} unzipped package files", Integer.valueOf(unzipped.size()));
-			Path zip = tmp(FILE_ZIP_EXT);
+			Path zip = SharedOutputInputUtils.initTmpFile(FILE_ID, FILE_ZIP_EXT, false);
 			ZipFile zipFile = new ZipFile(zip.toString());
 			unzipped.forEach(p -> {
 				try {
 					LOGGER.debug("Adding file \"{}\" to zip destination \"{}\"", p, zip);
-					zipFile.createZipFile(p.toFile(), ZIP_PARAMS);
+					zipFile.addFile(p.toFile(), ZIP_PARAMS);
 				} catch (ZipException e) {
-					throw new TechnicalException("Cannot zip " + p,e);
+					throw new TechnicalException("Cannot zip " + p, e);
 				}
 			});
 			return zip;
@@ -216,7 +214,7 @@ public class ExportImportService {
 	private static List<Path> unCompress(Path zipped) throws IOException {
 
 		try {
-			Path unzipFolder = prepareTmpFolder();
+			Path unzipFolder = SharedOutputInputUtils.initTmpFolder();
 			ZipFile zipFile = new ZipFile(zipped.toString());
 			zipFile.extractAll(unzipFolder.toString());
 			return Files.walk(unzipFolder)
@@ -224,19 +222,6 @@ public class ExportImportService {
 					.collect(Collectors.toList());
 		} catch (ZipException e) {
 			throw new TechnicalException("Cannot unzip " + zipped);
-		}
-	}
-
-	/**
-	 * @param extension
-	 * @return
-	 * @throws IOException
-	 */
-	private static Path tmp(String extension) {
-		try {
-			return File.createTempFile(FILE_ID, extension).toPath();
-		} catch (IOException e) {
-			throw new TechnicalException("Cannot create tmp file with extension " + extension, e);
 		}
 	}
 
@@ -266,20 +251,6 @@ public class ExportImportService {
 		} catch (IOException e) {
 			throw new TechnicalException("Cannot read file " + path, e);
 		}
-	}
-
-	/**
-	 * @param zipped
-	 * @return
-	 */
-	private static Path prepareTmpFolder() {
-
-		File unzipFolder = new File(SYSTEM_DEFAULT_TMP_DIR + "/" + UUID.randomUUID().toString() + "-work");
-		if (!unzipFolder.exists()) {
-			unzipFolder.mkdirs();
-		}
-
-		return unzipFolder.toPath();
 	}
 
 	/**

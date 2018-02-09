@@ -254,15 +254,15 @@ public class DictionaryEntry implements Shared {
 	public void deserialize(String raw) {
 
 		SharedOutputInputUtils.fromJson(raw)
-				.apply("uid", UUID.class, v -> setUuid(v))
-				.apply("cre", LocalDateTime.class, v -> setCreatedTime(v))
-				.apply("dom", UUID.class, v -> setDomain(new FunctionalDomain(v)))
-				.apply("kna", String.class, v -> setKeyName(v))
-				.apply("kty", ColumnType.class, v -> setKeyType(v))
-				.apply("nam", String.class, v -> setParameterName(v))
-				.apply("sel", String.class, v -> setSelectClause(v))
-				.apply("tab", String.class, v -> setTableName(v))
-				.apply("whe", String.class, v -> setWhereClause(v));
+				.applyUUID("uid", v -> setUuid(v))
+				.applyLdt("cre", v -> setCreatedTime(v))
+				.applyUUID("dom", v -> setDomain(new FunctionalDomain(v)))
+				.applyString("kna", v -> setKeyName(v))
+				.applyString("kty", v -> setKeyType(ColumnType.valueOf(v)))
+				.applyString("nam", v -> setParameterName(v))
+				.applyString("sel", v -> setSelectClause(v))
+				.applyString("tab", v -> setTableName(v))
+				.applyString("whe", v -> setWhereClause(v));
 	}
 
 	/**

@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 08/02/2018*
+*Mise à jour au 09/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Modification de la gestion des entrées dans le dictionnaire : se fait sur un autre écran de saisie à partir de la liste
@@ -12,11 +12,11 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 **Points techniques**
 * Mise en place général : projet actif, stacks en place. BDD Postgres core fonctionnelle
 * Modèle core : en place, avec repos
-* Utilisation BDD managed : Avec JDBCTemplate. Dev fait sur lecture données bruts. Partiellement testé (metadata globalement OK mais infos PK pas encore correctement remontées)
+* Utilisation BDD managed : Avec JDBCTemplate. Metadata OK avec PGSQL, a tester sur Oracle
 * Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
-* Application / rollback de paramètres : en cours de test. Apply ADD OK (cas le plus simple)
-* Export / import : en cours (composants communs), à tester. Manque "spécifique" pour chaque type de package (peu de specif, 4 packages)
-* Traitement des dépendances : en cours. Tests lancés, OK pour 1er lot 
+* Application / rollback de paramètres : en place, Application testé OK.
+* Export / import : en cours (composants communs) : Core + dictionary en place, testé. Reste specif pour import / export index
+* Traitement des dépendances : En place, testé OK
 * Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
 * Les composants de génération "fine" de requêtes SQL ou d'inline de données sont désormais des beans springs extensibles
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage

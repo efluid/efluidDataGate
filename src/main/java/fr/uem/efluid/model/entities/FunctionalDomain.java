@@ -130,9 +130,9 @@ public class FunctionalDomain implements Shared {
 	public void deserialize(String raw) {
 
 		SharedOutputInputUtils.fromJson(raw)
-				.apply("uid", UUID.class, v -> setUuid(v))
-				.apply("cre", LocalDateTime.class, v -> setCreatedTime(v))
-				.apply("nam", String.class, v -> setName(v));
+				.applyUUID("uid", v -> setUuid(v))
+				.applyLdt("cre", v -> setCreatedTime(v))
+				.applyString("nam", v -> setName(v));
 	}
 
 	/**

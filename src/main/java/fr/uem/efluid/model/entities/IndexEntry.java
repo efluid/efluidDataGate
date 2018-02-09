@@ -199,11 +199,11 @@ public class IndexEntry implements DiffLine {
 	 */
 	void deserialize(String raw) {
 		SharedOutputInputUtils.fromJson(raw)
-				.apply("dic", UUID.class, u -> setDictionaryEntry(new DictionaryEntry(u)))
-				.apply("act", IndexAction.class, a -> setAction(a))
-				.apply("key", String.class, k -> setKeyValue(k))
-				.apply("pay", String.class, p -> setPayload(p))
-				.apply("tim", Long.class, t -> setTimestamp(t.longValue()));
+				.applyUUID("dic", u -> setDictionaryEntry(new DictionaryEntry(u)))
+				.applyString("act", a -> setAction(IndexAction.valueOf(a)))
+				.applyString("key", k -> setKeyValue(k))
+				.applyString("pay", p -> setPayload(p))
+				.applyString("tim", t -> setTimestamp(Long.parseLong(t)));
 	}
 
 	/**

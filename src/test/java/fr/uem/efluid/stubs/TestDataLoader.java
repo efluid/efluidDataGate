@@ -90,7 +90,7 @@ public class TestDataLoader {
 	 */
 	public void setupDatabaseForUpdate(String updateName) {
 		setupSourceDatabaseForUpdate(updateName);
-		setupDictionnaryForUpdate();
+		setupDictionaryForUpdate();
 	}
 
 	/**
@@ -110,7 +110,7 @@ public class TestDataLoader {
 	/**
 	 * @return
 	 */
-	public void setupDictionnaryForUpdate() {
+	public void setupDictionaryForUpdate() {
 
 		this.links.deleteAll();
 		this.dictionary.deleteAll();
@@ -127,6 +127,21 @@ public class TestDataLoader {
 		this.domains.flush();
 		this.dictionary.flush();
 		this.links.flush();
+	}
+
+	/**
+	 * @return
+	 */
+	public void dropAllDictionary() {
+
+		this.links.deleteAll();
+		this.dictionary.deleteAll();
+		this.domains.deleteAll();
+
+		this.domains.flush();
+		this.dictionary.flush();
+		this.links.flush();
+
 	}
 
 	/**
@@ -249,6 +264,27 @@ public class TestDataLoader {
 	/**
 	 * @param size
 	 */
+	public void assertDictionarySize(long size) {
+		Assert.assertEquals(size, this.dictionary.count());
+	}
+
+	/**
+	 * @param size
+	 */
+	public void assertDomainsSize(long size) {
+		Assert.assertEquals(size, this.domains.count());
+	}
+
+	/**
+	 * @param size
+	 */
+	public void assertLinksSize(long size) {
+		Assert.assertEquals(size, this.links.count());
+	}
+
+	/**
+	 * @param size
+	 */
 	public void assertSourceSize(long size) {
 		Assert.assertEquals(size, this.sources.count());
 	}
@@ -287,4 +323,19 @@ public class TestDataLoader {
 	public void assertSourceChildContentValidate(long id, Predicate<SimulatedSourceChild> predicate) {
 		Assert.assertTrue(predicate.test(this.sourceChilds.findOne(id)));
 	}
+
+	/**
+	 * @param predicate
+	 */
+	public void assertDictionaryContentAllValidate(Predicate<List<DictionaryEntry>> predicate) {
+		Assert.assertTrue(predicate.test(this.dictionary.findAll()));
+	}
+
+	/**
+	 * @param predicate
+	 */
+	public void assertDictionaryContentValidate(String uuid, Predicate<DictionaryEntry> predicate) {
+		Assert.assertTrue(predicate.test(this.dictionary.findOne(UUID.fromString(uuid))));
+	}
+
 }

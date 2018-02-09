@@ -13,7 +13,7 @@ docker run -it --rm \
     -v /opt/server/build:/root/.m2 \
     -v $1:/usr/src/mymaven \
     -w /usr/src/mymaven maven:3.3-jdk-8 /bin/bash \
-    -c "mvn --batch-mode install -D skipTests; cp /usr/src/mymaven/src/docker/* /usr/src/mymaven/target"
+    -c "mvn --batch-mode install; cp /usr/src/mymaven/src/docker/* /usr/src/mymaven/target"
 
 ## Docker build
 docker build -t param-gest:latest ./target
