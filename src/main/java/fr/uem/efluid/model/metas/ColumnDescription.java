@@ -13,7 +13,6 @@ public class ColumnDescription implements Comparable<ColumnDescription> {
 
 	private String name;
 	private ColumnType type;
-	private boolean primaryKey;
 	private String foreignKeyTable;
 
 	/**
@@ -44,21 +43,6 @@ public class ColumnDescription implements Comparable<ColumnDescription> {
 	 */
 	public void setType(ColumnType type) {
 		this.type = type;
-	}
-
-	/**
-	 * @return the primaryKey
-	 */
-	public boolean isPrimaryKey() {
-		return this.primaryKey;
-	}
-
-	/**
-	 * @param primaryKey
-	 *            the primaryKey to set
-	 */
-	public void setPrimaryKey(boolean primaryKey) {
-		this.primaryKey = primaryKey;
 	}
 
 	/**

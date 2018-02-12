@@ -35,11 +35,11 @@ public class PreparedIndexEntry implements DiffLine {
 	private long timestamp;
 
 	private boolean selected;
-	
+
 	private boolean rollbacked;
 
 	private UUID commitUuid;
-	
+
 	/**
 	 * 
 	 */
@@ -224,7 +224,8 @@ public class PreparedIndexEntry implements DiffLine {
 	}
 
 	/**
-	 * @param rollbacked the rollbacked to set
+	 * @param rollbacked
+	 *            the rollbacked to set
 	 */
 	public void setRollbacked(boolean rollbacked) {
 		this.rollbacked = rollbacked;
@@ -238,7 +239,8 @@ public class PreparedIndexEntry implements DiffLine {
 	}
 
 	/**
-	 * @param commitUuid the commitUuid to set
+	 * @param commitUuid
+	 *            the commitUuid to set
 	 */
 	public void setCommitUuid(UUID commitUuid) {
 		this.commitUuid = commitUuid;
@@ -258,8 +260,39 @@ public class PreparedIndexEntry implements DiffLine {
 		entry.setDictionaryEntry(new DictionaryEntry(data.getDictionaryEntryUuid()));
 		entry.setKeyValue(data.getKeyValue());
 		entry.setPayload(data.getPayload());
+		entry.setTimestamp(data.getTimestamp()); // Can have one ?
 
 		return entry;
+	}
+
+	/**
+	 * <p>
+	 * For combining process : need to recreate a combined DiffLine as a complete
+	 * PreparedIndexEntry for clean rendering and further saving process
+	 * </p>
+	 * 
+	 * @param combined
+	 * @param dict
+	 * @param keyValue
+	 * @param timestamp
+	 * @return
+	 */
+	public static PreparedIndexEntry fromCombined(DiffLine combined, DictionaryEntry dict, String keyValue, long timestamp) {
+
+		PreparedIndexEntry data = new PreparedIndexEntry();
+
+		data.setAction(combined.getAction());
+
+		data.setDictionaryEntryName(dict.getParameterName());
+		data.setDictionaryEntryUuid(dict.getUuid());
+		data.setDomainName(dict.getDomain().getName());
+		data.setDomainUuid(dict.getDomain().getUuid());
+
+		data.setPayload(combined.getPayload());
+		data.setKeyValue(keyValue);
+		data.setTimestamp(timestamp);
+
+		return data;
 	}
 
 	/**
@@ -274,16 +307,23 @@ public class PreparedIndexEntry implements DiffLine {
 		PreparedIndexEntry data = new PreparedIndexEntry();
 
 		data.setAction(existing.getAction());
-		data.setDictionaryEntryName(existing.getDictionaryEntry().getParameterName());
-		data.setDictionaryEntryUuid(existing.getDictionaryEntry().getUuid());
-		data.setDomainName(existing.getDictionaryEntry().getDomain().getName());
-		data.setDomainUuid(existing.getDictionaryEntry().getDomain().getUuid());
+
+		if (existing.getDictionaryEntry() != null) {
+			data.setDictionaryEntryName(existing.getDictionaryEntry().getParameterName());
+			data.setDictionaryEntryUuid(existing.getDictionaryEntry().getUuid());
+
+			if (existing.getDictionaryEntry().getDomain() != null) {
+				data.setDomainName(existing.getDictionaryEntry().getDomain().getName());
+				data.setDomainUuid(existing.getDictionaryEntry().getDomain().getUuid());
+			}
+		}
+
 		data.setPayload(existing.getPayload());
 		data.setId(existing.getId());
 		data.setKeyValue(existing.getKeyValue());
 		data.setCommitUuid(existing.getCommit() != null ? existing.getCommit().getUuid() : null);
+		data.setTimestamp(existing.getTimestamp());
 
 		return data;
 	}
-
 }

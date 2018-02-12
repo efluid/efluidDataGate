@@ -173,7 +173,7 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 						desc.getColumns().stream()
 								.filter(c -> c.getName().equals(columnName))
 								.findFirst()
-								.ifPresent(c -> c.setPrimaryKey(true));
+								.ifPresent(c -> c.setType(ColumnType.PK));
 					}
 				}
 			}

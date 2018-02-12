@@ -10,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Repository;
 
+import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 
@@ -57,12 +57,14 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
 	 *      java.util.List)
 	 */
 	@Override
-	public Map<String, String> regenerateKnewContent(List<IndexEntry> specifiedIndex) {
+	public Map<String, String> regenerateKnewContent(List<? extends DiffLine> specifiedIndex) {
+
+		LOGGER.debug("Regenerating values from specified index with {} items", Integer.valueOf(specifiedIndex.size()));
 
 		// Content for playing back the backlog
 		Map<String, String> lines = new ConcurrentHashMap<>(1000);
 
-		for (IndexEntry line : specifiedIndex) {
+		for (DiffLine line : specifiedIndex) {
 
 			// Addition : add / update directly
 			if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {

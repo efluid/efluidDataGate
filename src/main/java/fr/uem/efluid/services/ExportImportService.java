@@ -311,6 +311,13 @@ public class ExportImportService {
 		}
 
 		/**
+		 * @return the content
+		 */
+		public List<T> getContent() {
+			return this.contents;
+		}
+
+		/**
 		 * <p>
 		 * Available only once content is initialized (directly or with deserialize)
 		 * </p>

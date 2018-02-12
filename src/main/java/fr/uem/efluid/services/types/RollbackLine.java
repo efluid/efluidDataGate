@@ -1,7 +1,5 @@
 package fr.uem.efluid.services.types;
 
-import java.util.UUID;
-
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.IndexAction;
 
@@ -61,7 +59,7 @@ public class RollbackLine {
 
 		// Rollback on delete => became an add
 		if ((this.current == null || this.current.getPayload() == null) && this.previous != null && this.previous.getPayload() != null) {
-			return new CombinedDiffLine(
+			return DiffLine.combined(
 					this.previous.getDictionaryEntryUuid(),
 					this.previous.getKeyValue(),
 					this.previous.getPayload(),
@@ -70,7 +68,7 @@ public class RollbackLine {
 
 		// Rollback on add => became an delete
 		if ((this.previous == null || this.previous.getPayload() == null) && this.current != null && this.current.getPayload() != null) {
-			return new CombinedDiffLine(
+			return DiffLine.combined(
 					this.current.getDictionaryEntryUuid(),
 					this.current.getKeyValue(),
 					this.current.getPayload(),
@@ -78,81 +76,11 @@ public class RollbackLine {
 		}
 
 		// Other case are update current => previous
-		return new CombinedDiffLine(
+		return DiffLine.combined(
 				this.current.getDictionaryEntryUuid(),
 				this.current.getKeyValue(),
 				this.previous.getPayload(),
 				IndexAction.UPDATE);
 	}
 
-	/**
-	 * @author elecomte
-	 * @since v0.0.1
-	 * @version 1
-	 */
-	private static class CombinedDiffLine implements DiffLine {
-
-		private final UUID dictionaryEntryUuid;
-
-		private final String keyValue;
-
-		private final String payload;
-
-		private final IndexAction action;
-
-		/**
-		 * @param dictionaryEntryUuid
-		 * @param keyValue
-		 * @param payload
-		 * @param action
-		 */
-		CombinedDiffLine(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action) {
-			super();
-			this.dictionaryEntryUuid = dictionaryEntryUuid;
-			this.keyValue = keyValue;
-			this.payload = payload;
-			this.action = action;
-		}
-
-		/**
-		 * @return the dictionaryEntryUuid
-		 */
-		@Override
-		public UUID getDictionaryEntryUuid() {
-			return this.dictionaryEntryUuid;
-		}
-
-		/**
-		 * @return the keyValue
-		 */
-		@Override
-		public String getKeyValue() {
-			return this.keyValue;
-		}
-
-		/**
-		 * @return the payload
-		 */
-		@Override
-		public String getPayload() {
-			return this.payload;
-		}
-
-		/**
-		 * @return the action
-		 */
-		@Override
-		public IndexAction getAction() {
-			return this.action;
-		}
-
-		/**
-		 * @return
-		 * @see java.lang.Object#toString()
-		 */
-		@Override
-		public String toString() {
-			return "Rollback [dict:" + getDictionaryEntryUuid() + ", chg:" + this.action + "@" + this.keyValue + "|" + this.payload + "]";
-		}
-	}
 }

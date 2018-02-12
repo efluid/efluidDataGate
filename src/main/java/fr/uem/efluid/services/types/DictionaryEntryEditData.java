@@ -168,7 +168,7 @@ public class DictionaryEntryEditData {
 
 		private String name;
 		private ColumnType type;
-		private boolean primaryKey;
+		private boolean key;
 		private String foreignKeyTable;
 		private boolean selected;
 
@@ -225,18 +225,18 @@ public class DictionaryEntryEditData {
 		}
 
 		/**
-		 * @return the primaryKey
+		 * @return the key
 		 */
-		public boolean isPrimaryKey() {
-			return this.primaryKey;
+		public boolean isKey() {
+			return this.key;
 		}
 
+
 		/**
-		 * @param primaryKey
-		 *            the primaryKey to set
+		 * @param key the key to set
 		 */
-		public void setPrimaryKey(boolean primaryKey) {
-			this.primaryKey = primaryKey;
+		public void setKey(boolean key) {
+			this.key = key;
 		}
 
 		/**
@@ -262,13 +262,13 @@ public class DictionaryEntryEditData {
 		@Override
 		public int compareTo(ColumnEditData o) {
 
-			// Priority on PK
+			// Priority on columns of type generated
 
-			if (this.primaryKey && !o.primaryKey) {
+			if (this.getType() == ColumnType.PK && o.getType() != ColumnType.PK) {
 				return -1;
 			}
 
-			if (!this.primaryKey && o.primaryKey) {
+			if (this.getType() != ColumnType.PK && o.getType() == ColumnType.PK) {
 				return 1;
 			}
 
@@ -295,7 +295,6 @@ public class DictionaryEntryEditData {
 			}
 			editData.setName(col.getName());
 			editData.setType(col.getType());
-			editData.setPrimaryKey(col.isPrimaryKey());
 			if (selecteds != null) {
 				editData.setSelected(selecteds.contains(col.getName()));
 			}
@@ -317,7 +316,7 @@ public class DictionaryEntryEditData {
 		public static ColumnEditData fromSelecteds(String selected, String keyname, String linkedTable) {
 			ColumnEditData editData = new ColumnEditData();
 			editData.setName(selected);
-			editData.setPrimaryKey(selected.equals(keyname));
+			editData.setKey(selected.equals(keyname));
 			editData.setForeignKeyTable(linkedTable);
 			editData.setSelected(true);
 			return editData;

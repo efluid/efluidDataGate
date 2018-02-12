@@ -48,7 +48,7 @@ public class ExportImportServiceIntegrationTest {
 	public void testExportFullDictionary() {
 		setupDatabase();
 
-		TestUtils.writeExportFile(this.dictService.exportAll(), VALID_FILE);
+		TestUtils.writeExportFile(this.dictService.exportAll().getResult(), VALID_FILE);
 	}
 
 	@Test
@@ -72,7 +72,7 @@ public class ExportImportServiceIntegrationTest {
 	public void testExportImportFullDictionary() throws IOException {
 		setupDatabase();
 
-		TestUtils.writeExportFile(this.dictService.exportAll(), "2" + VALID_FILE);
+		TestUtils.writeExportFile(this.dictService.exportAll().getResult(), "2" + VALID_FILE);
 
 		// Reset db after export, to reimport it
 		this.loader.dropAllDictionary();

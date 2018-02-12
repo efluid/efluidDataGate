@@ -27,4 +27,11 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 	 * @return
 	 */
 	List<IndexEntry> findByDictionaryEntryOrderByTimestamp(DictionaryEntry dictionaryEntry);
+
+	/**
+	 * @param dictionaryEntry
+	 * @param timestamp
+	 * @return
+	 */
+	List<IndexEntry> findByDictionaryEntryAndTimestampGreaterThanEqualOrderByTimestamp(DictionaryEntry dictionaryEntry, long timestamp);
 }

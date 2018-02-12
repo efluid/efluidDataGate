@@ -51,7 +51,7 @@ public class PrepareDiffServiceIntegrationTest {
 	public void testProcessDiffNoIndex() {
 
 		setupDatabase("diff7");
-		Collection<PreparedIndexEntry> index = this.service.initDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
+		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
 		Assert.assertEquals(0, index.size());
 	}
 
@@ -59,7 +59,7 @@ public class PrepareDiffServiceIntegrationTest {
 	public void testProcessDiffLargeIndex() {
 
 		setupDatabase("diff8");
-		Collection<PreparedIndexEntry> index = this.service.initDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
+		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
 		Assert.assertEquals(80 + 100 + 85, index.size());
 		List<PreparedIndexEntry> adds = index.stream().filter(i -> i.getAction() == IndexAction.ADD).collect(Collectors.toList());
 		List<PreparedIndexEntry> removes = index.stream().filter(i -> i.getAction() == IndexAction.REMOVE).collect(Collectors.toList());

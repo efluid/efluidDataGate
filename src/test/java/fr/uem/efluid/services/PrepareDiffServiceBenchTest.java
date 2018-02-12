@@ -17,9 +17,9 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
+import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.stubs.TestDataLoader;
 import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
  * @author elecomte
@@ -91,7 +91,7 @@ public class PrepareDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupFullDatabase("diff8");
 			long start = System.currentTimeMillis();
-			this.service.initDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
+			this.service.currentContentDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {
@@ -174,7 +174,6 @@ public class PrepareDiffServiceBenchTest {
 
 		final int play = 25;
 		final DictionaryEntry dic = this.dictionary.findOne(this.dictionaryEntryUuid);
-		final ManagedValueConverter converter = new ManagedValueConverter();
 
 		int totalLargeKnew = 0;
 		int totalLargeActual = 0;
@@ -201,7 +200,7 @@ public class PrepareDiffServiceBenchTest {
 			// Not Parallel
 			this.service.applyParallelMode(false);
 			long start = System.currentTimeMillis();
-			totalIndex += this.service.generateDiffIndex(largeKnew1, largeActual, dic, converter).size();
+			totalIndex += this.service.generateDiffIndexFromContent(PreparedIndexEntry::new, largeKnew1, largeActual, dic).size();
 			long delay = System.currentTimeMillis() - start;
 			totalDurationNotParallel += delay;
 			if (minDurationNotParallel == 0 || minDurationNotParallel > delay) {
@@ -214,7 +213,7 @@ public class PrepareDiffServiceBenchTest {
 			// parallel
 			this.service.applyParallelMode(false);
 			start = System.currentTimeMillis();
-			totalIndex += this.service.generateDiffIndex(largeKnew2, largeActual, dic, converter).size();
+			totalIndex += this.service.generateDiffIndexFromContent(PreparedIndexEntry::new, largeKnew2, largeActual, dic).size();
 			delay = System.currentTimeMillis() - start;
 			totalDurationParallel += delay;
 			if (minDurationParallel == 0 || minDurationParallel > delay) {

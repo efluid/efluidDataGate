@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.TableLink;
+import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
@@ -239,10 +240,16 @@ public class DictionaryManagementService {
 		}
 
 		// Specify key from columns
-		ColumnEditData key = editData.getColumns().stream().filter(ColumnEditData::isPrimaryKey).findFirst()
+		ColumnEditData key = editData.getColumns().stream().filter(ColumnEditData::isKey).findFirst()
 				.orElseThrow(() -> new TechnicalException("The key is mandatory"));
 		entry.setKeyName(key.getName());
 		entry.setKeyType(key.getType());
+
+		// Shouldn't use PK as parameter key
+		if (key.getType() == ColumnType.PK) {
+			LOGGER.warn("Using the PK \"{}\" as parameter key on table \"{}\" : it may cause wrong conflict if"
+					+ " the id is not a real valid business identifier for the parameter table !!!", key.getName(), editData.getTable());
+		}
 
 		// Other common edited properties
 		entry.setDomain(new FunctionalDomain(editData.getDomainUuid()));

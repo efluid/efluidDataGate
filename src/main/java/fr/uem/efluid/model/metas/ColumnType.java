@@ -18,6 +18,7 @@ import java.sql.Types;
  * <li>{@link #BINARY} means <i>"something we need to manage with a special process in a
  * SQL query as it is not a scalare value inlined in a query"</i>. Used for BLOB (and CLOB
  * ??)</li>
+ * <li>{@link #PK} means <i>"something with a generated value I shouldn't share with other database instances"</i>. Used to identify the </li>
  * </ul>
  * </p>
  * 
@@ -30,7 +31,8 @@ public enum ColumnType {
 	// TODO : If CLOB and BLOC cannot be managed the same way, use a dedicated type "TEXT"
 	BINARY('B'),
 	ATOMIC('O'),
-	STRING('S');
+	STRING('S'),
+	PK('!');
 
 	private final char represent;
 

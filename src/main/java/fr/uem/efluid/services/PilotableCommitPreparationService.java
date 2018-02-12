@@ -1,9 +1,10 @@
 package fr.uem.efluid.services;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -12,7 +13,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,9 +23,12 @@ import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.services.types.CommitEditData;
+import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.ExportImportFile;
+import fr.uem.efluid.services.types.ExportImportResult;
+import fr.uem.efluid.services.types.LocalPreparedDiff;
+import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
-import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.utils.TechnicalException;
 
 /**
@@ -56,6 +59,9 @@ public class PilotableCommitPreparationService {
 
 	@Autowired
 	private DictionaryRepository dictionary;
+
+	@Autowired
+	private CommitService commitService;
 
 	// TODO : use cfg entry.
 	private ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -97,7 +103,7 @@ public class PilotableCommitPreparationService {
 		LOGGER.info("Request for a new commit preparation - start a new one");
 
 		// For CommitState LOCAL => Use PreparedIndexEntry
-		PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
+		PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
 
 		// Specify as active one
 		this.current = preparation;
@@ -106,58 +112,43 @@ public class PilotableCommitPreparationService {
 
 		return getCurrentCommitPreparation();
 	}
-	
 
 	/**
 	 * Start async diff analysis before commit
 	 */
-	public PilotedCommitPreparation<?> startMergeCommitPreparation(ExportImportFile file) {
+	public ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> startMergeCommitPreparation(ExportImportFile file) {
 
 		// On existing preparation
 		if (this.current != null) {
 
-			// Forced restart asked : close current, start a new one
-			if (force) {
-				LOGGER.info("Request for a new commit preparation - preparation exist already, and "
-						+ "force restart asked, so will drop current preparation {}", this.current.getIdentifier());
-
-				// Cancel for any existing reference ...
-				this.current.setStatus(PilotedCommitStatus.CANCEL);
-
-				// ... but droping should be enough
-				this.current = null;
-			}
-
-			// Keep current else
-			else {
-
-				LOGGER.info("Request for a new commit preparation - preparation already running / "
-						+ "available, so use existing {}", this.current.getIdentifier());
-
-				// Default will provides existing if still running
-				return getCurrentCommitPreparation();
-			}
+			// Impossible situation
+			LOGGER.error("Cannot proced to import entry point for processing merge commit will a preparation is still running.");
+			throw new TechnicalException("Cannot proced to import entry point for processing merge commit will a "
+					+ "preparation is still running.");
 		}
 
-		LOGGER.info("Request for a new commit preparation - start a new one");
+		LOGGER.info("Request for a new merge commit preparation from an import - start a new one");
 
-		// For CommitState LOCAL => Use PreparedIndexEntry
-		PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
+		// For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
+		PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
+
+		// First step is NOT async : load the package and identify the appliable index
+		ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> importResult = this.commitService.importCommits(file,
+				preparation);
 
 		// Specify as active one
 		this.current = preparation;
 
-		CompletableFuture.runAsync(() -> processAllDiff(preparation));
+		CompletableFuture.runAsync(() -> processAllMergeDiff(preparation));
 
-		return getCurrentCommitPreparation();
+		return importResult;
 	}
 
 	/**
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public PilotedCommitPreparation<?> getCurrentCommitPreparation() {
-		return  this.current;
+		return this.current;
 	}
 
 	/**
@@ -177,20 +168,67 @@ public class PilotableCommitPreparationService {
 	 * CompletableFuture in call processes
 	 * </p>
 	 */
-	private void processAllDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation) {
+	private void processAllDiff(PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
 		LOGGER.info("Begin diff process on commit preparation {}", this.current.getIdentifier());
 		long startTimeout = System.currentTimeMillis();
 
 		try {
-			List<PreparedIndexEntry> fullDiff = this.executor
+			List<LocalPreparedDiff> fullDiff = this.executor
 					.invokeAll(this.dictionary.findAll().stream().map(this::callDiff).collect(Collectors.toList())).stream()
 					.map(this::gatherResult)
-					.flatMap(DiffCallResult::getDiff)
-					.sorted(indexSorter())
+					.sorted()
 					.collect(Collectors.toList());
 
 			// Keep in preparation for commit build
+			preparation.setPreparedContent(fullDiff);
+
+			// Mark preparation as completed
+			preparation.setEnd(LocalDateTime.now());
+			preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+
+			LOGGER.info("Diff process completed on commit preparation {}. Found {} index entries. Total process duration was {} ms",
+					this.current.getIdentifier(),
+					Integer.valueOf(fullDiff.size()),
+					Long.valueOf(System.currentTimeMillis() - startTimeout));
+
+		} catch (InterruptedException e) {
+			LOGGER.error("Error will processing diff", e);
+			preparation.setErrorDuringPreparation(e);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Asynchronous task which is itself a process of asynchronous execution of managed
+	 * table diffs (one task for each managed table). Similar to a "git status"
+	 * </p>
+	 * <p>
+	 * Use parallele processes, but not asyncronous by itself : can be launched as a
+	 * CompletableFuture in call processes
+	 * </p>
+	 */
+	private void processAllMergeDiff(PilotedCommitPreparation<MergePreparedDiff> preparation) {
+
+		LOGGER.info("Begin diff process on merge-commit preparation {}", this.current.getIdentifier());
+		long startTimeout = System.currentTimeMillis();
+
+		Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAll().stream()
+				.collect(Collectors.toMap(DictionaryEntry::getUuid, d -> d));
+
+		long searchTimestamp = preparation.getCommitData().getCreatedTime().atZone(ZoneId.systemDefault()).toEpochSecond();
+
+		try {
+			List<MergePreparedDiff> fullDiff = this.executor
+					.invokeAll(preparation.getPreparedContent().stream()
+							.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p))
+							.collect(Collectors.toList()))
+					.stream()
+					.map(this::gatherResult)
+					.sorted()
+					.collect(Collectors.toList());
+
+			// Keep in preparation for commit build, once completed
 			preparation.setPreparedContent(fullDiff);
 
 			// Mark preparation as completed
@@ -216,7 +254,7 @@ public class PilotableCommitPreparationService {
 	 * @param future
 	 * @return
 	 */
-	private DiffCallResult gatherResult(Future<DiffCallResult> future) {
+	private <T> T gatherResult(Future<T> future) {
 		try {
 			return future.get();
 		}
@@ -231,49 +269,61 @@ public class PilotableCommitPreparationService {
 
 	/**
 	 * <p>
-	 * Execution for one table, as a <ttCallable</tt>
+	 * Execution for one table, as a <tt>Callable</tt>, for a basic local diff.
 	 * </p>
 	 * 
 	 * @param dict
 	 * @return
 	 */
-	private Callable<DiffCallResult> callDiff(DictionaryEntry dict) {
+	private Callable<LocalPreparedDiff> callDiff(DictionaryEntry dict) {
+
 		return () -> {
-			return new DiffCallResult(dict.getUuid(), this.diffService.initDiff(dict));
+			LocalPreparedDiff tableDiff = LocalPreparedDiff.initFromDictionaryEntry(dict);
+			tableDiff.setDiff(this.diffService.currentContentDiff(dict).stream()
+					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+			return tableDiff;
 		};
 	}
 
 	/**
 	 * <p>
-	 * Comparator for IndexEntry : by domain name, then dictionnary name, then by
-	 * timestamp
-	 * </p>
+	 * Execution for one table, as a <tt>Callable</tt>, for a merge process diff. The list
+	 * of diff in <tt>MergePreparedDiff</tt> is regenerated, and DictionaryEntry data are
+	 * completed.
 	 * 
+	 * @param dict
+	 * @param lastLocalCommitTimestamp
+	 * @param correspondingDiff
 	 * @return
 	 */
-	private static Comparator<PreparedIndexEntry> indexSorter() {
+	private Callable<MergePreparedDiff> callMergeDiff(
+			DictionaryEntry dict,
+			long lastLocalCommitTimestamp,
+			MergePreparedDiff correspondingDiff) {
 
-		return (a, b) -> {
-			int dom = a.getDomainName().compareTo(b.getDomainName());
+		return () -> {
+			// Complete dictionary entry
+			correspondingDiff.completeFromEntity(dict);
 
-			if (dom != 0) {
-				return dom;
-			}
+			// Then run one merge action for dictionaryEntry
+			correspondingDiff.setDiff(this.diffService.mergeIndexDiff(dict, lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
+					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
-			int dic = a.getDictionaryEntryName().compareTo(b.getDictionaryEntryName());
-
-			if (dic != 0) {
-				return dic;
-			}
-
-			return (int) (a.getTimestamp() - b.getTimestamp());
+			// For chained process
+			return correspondingDiff;
 		};
 	}
 
+	/**
+	 * @author elecomte
+	 * @since v0.0.1
+	 * @version 1
+	 */
 	public static enum PilotedCommitStatus {
 
 		NOT_LAUNCHED,
 		DIFF_RUNNING,
+		CANNOT_PREPARE,
 		CANCEL,
 		COMMIT_CAN_PREPARE,
 		COMMIT_PREPARED;
@@ -307,7 +357,7 @@ public class PilotableCommitPreparationService {
 	 * @version 1
 	 * @param <T>
 	 */
-	public static final class PilotedCommitPreparation<T> {
+	public static final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 
 		private final UUID identifier;
 
@@ -318,6 +368,8 @@ public class PilotableCommitPreparationService {
 		private LocalDateTime end;
 
 		private PilotedCommitStatus status;
+
+		private String errorKey;
 
 		private Throwable errorDuringPreparation;
 
@@ -387,6 +439,21 @@ public class PilotableCommitPreparationService {
 		}
 
 		/**
+		 * @return the errorKey
+		 */
+		public String getErrorKey() {
+			return this.errorKey;
+		}
+
+		/**
+		 * @param errorKey
+		 *            the errorKey to set
+		 */
+		public void setErrorKey(String errorKey) {
+			this.errorKey = errorKey;
+		}
+
+		/**
 		 * @return the preparedContent
 		 */
 		public List<T> getPreparedContent() {
@@ -431,45 +498,5 @@ public class PilotableCommitPreparationService {
 			return this.preparingState;
 		}
 
-	}
-
-	/**
-	 * <p>
-	 * Combined result for easier mapping from Future execution
-	 * </p>
-	 * 
-	 * @author elecomte
-	 * @since v0.0.1
-	 * @version 1
-	 */
-	@SuppressWarnings("unused")
-	private static final class DiffCallResult {
-
-		private final UUID dictUuid;
-		private final Collection<PreparedIndexEntry> diff;
-
-		/**
-		 * @param dictUuid
-		 * @param diff
-		 */
-		public DiffCallResult(UUID dictUuid, Collection<PreparedIndexEntry> diff) {
-			super();
-			this.dictUuid = dictUuid;
-			this.diff = diff;
-		}
-
-		/**
-		 * @return the dictUuid
-		 */
-		public UUID getDictUuid() {
-			return this.dictUuid;
-		}
-
-		/**
-		 * @return the diff
-		 */
-		public Stream<PreparedIndexEntry> getDiff() {
-			return this.diff.stream();
-		}
 	}
 }

@@ -20,11 +20,22 @@ import fr.uem.efluid.utils.DataGenerationUtils;
  */
 public class PrepareDiffServiceUnitTest {
 
-	// No spring load here, for simple diff needs
-	private PrepareDiffService service = new PrepareDiffService();
-
 	// No spring here neither
-	private ManagedValueConverter converter = new ManagedValueConverter();
+	final ManagedValueConverter converter = new ManagedValueConverter();
+
+	// No spring load here, for simple diff needs
+	private PrepareDiffService service = new PrepareDiffService() {
+
+		/**
+		 * @return
+		 * @see fr.uem.efluid.services.PrepareDiffService#getConverter()
+		 */
+		@Override
+		protected ManagedValueConverter getConverter() {
+			return PrepareDiffServiceUnitTest.this.converter;
+		}
+
+	};
 
 	@Test
 	public void testGenerateDiffIndexDiffNotChanged() {
@@ -92,8 +103,8 @@ public class PrepareDiffServiceUnitTest {
 		Map<String, String> diff1Knew = TestUtils.readDataset(diffName + "/knew.csv", this.converter);
 
 		// Static internal
-		return this.service.generateDiffIndex(diff1Knew, diff1Actual,
-				DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock"), "s*", "table", "1=1", "key"), this.converter);
+		return this.service.generateDiffIndexFromContent(PreparedIndexEntry::new, diff1Knew, diff1Actual,
+				DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock"), "s*", "table", "1=1", "key"));
 
 	}
 }

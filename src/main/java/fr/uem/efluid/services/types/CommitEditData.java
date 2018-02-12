@@ -31,6 +31,8 @@ public class CommitEditData {
 
 	private List<UUID> mergeSources;
 
+	private LocalDateTime rangeStartTime;
+
 	/**
 	 * 
 	 */
@@ -141,6 +143,21 @@ public class CommitEditData {
 	 */
 	public void setMergeSources(List<UUID> mergeSources) {
 		this.mergeSources = mergeSources;
+	}
+
+	/**
+	 * @return the rangeStartTime
+	 */
+	public LocalDateTime getRangeStartTime() {
+		return this.rangeStartTime;
+	}
+
+	/**
+	 * @param rangeStartTime
+	 *            the rangeStartTime to set
+	 */
+	public void setRangeStartTime(LocalDateTime rangeStartTime) {
+		this.rangeStartTime = rangeStartTime;
 	}
 
 	/**

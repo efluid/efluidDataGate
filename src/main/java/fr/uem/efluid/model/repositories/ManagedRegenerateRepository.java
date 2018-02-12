@@ -3,8 +3,8 @@ package fr.uem.efluid.model.repositories;
 import java.util.List;
 import java.util.Map;
 
+import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.IndexEntry;
 
 /**
  * <p>
@@ -19,7 +19,9 @@ import fr.uem.efluid.model.entities.IndexEntry;
 public interface ManagedRegenerateRepository {
 
 	/**
+	 * <p>
 	 * Produces the knew content for specified table, from recorded index
+	 * </p>
 	 * 
 	 * @param parameterEntry
 	 * @return
@@ -27,12 +29,16 @@ public interface ManagedRegenerateRepository {
 	Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry);
 
 	/**
-	 * Produces the knew content for specified table, from recorded index
+	 * <p>
+	 * Produces the knew content for specified table, from recorded index on parameter
+	 * until specified ldt, then with specified index (adapted for merge process)
+	 * </p>
 	 * 
 	 * @param parameterEntry
+	 * @param endOfParameterIndexProcessTimestamp
 	 * @param specifiedIndex
 	 * @return
 	 */
-	Map<String, String> regenerateKnewContent(List<IndexEntry> specifiedIndex);
+	Map<String, String> regenerateKnewContent(List<? extends DiffLine> specifiedIndex);
 
 }
