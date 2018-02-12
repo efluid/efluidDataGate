@@ -35,7 +35,11 @@ public class PreparedIndexEntry implements DiffLine {
 	private long timestamp;
 
 	private boolean selected;
+	
+	private boolean rollbacked;
 
+	private UUID commitUuid;
+	
 	/**
 	 * 
 	 */
@@ -213,6 +217,34 @@ public class PreparedIndexEntry implements DiffLine {
 	}
 
 	/**
+	 * @return the rollbacked
+	 */
+	public boolean isRollbacked() {
+		return this.rollbacked;
+	}
+
+	/**
+	 * @param rollbacked the rollbacked to set
+	 */
+	public void setRollbacked(boolean rollbacked) {
+		this.rollbacked = rollbacked;
+	}
+
+	/**
+	 * @return the commitUuid
+	 */
+	public UUID getCommitUuid() {
+		return this.commitUuid;
+	}
+
+	/**
+	 * @param commitUuid the commitUuid to set
+	 */
+	public void setCommitUuid(UUID commitUuid) {
+		this.commitUuid = commitUuid;
+	}
+
+	/**
 	 * Used only when creating a new one as index are immutable
 	 * 
 	 * @param data
@@ -249,6 +281,7 @@ public class PreparedIndexEntry implements DiffLine {
 		data.setPayload(existing.getPayload());
 		data.setId(existing.getId());
 		data.setKeyValue(existing.getKeyValue());
+		data.setCommitUuid(existing.getCommit() != null ? existing.getCommit().getUuid() : null);
 
 		return data;
 	}

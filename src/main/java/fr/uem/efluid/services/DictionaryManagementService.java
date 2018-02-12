@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
 import fr.uem.efluid.services.types.DictionaryPackage;
 import fr.uem.efluid.services.types.ExportImportFile;
+import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 import fr.uem.efluid.services.types.FunctionalDomainPackage;
 import fr.uem.efluid.services.types.SelectableTable;
@@ -45,6 +47,10 @@ import fr.uem.efluid.utils.TechnicalException;
 @Service
 @Transactional
 public class DictionaryManagementService {
+
+	private static final String DICT_EXPORT = "full-dictionary";
+	private static final String DOMAINS_EXPORT = "full-domains";
+	private static final String LINKS_EXPORT = "full-links";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryManagementService.class);
 
@@ -281,40 +287,56 @@ public class DictionaryManagementService {
 	/**
 	 * @return
 	 */
-	public ExportImportFile exportAll() {
+	public ExportImportResult<ExportImportFile> exportAll() {
 
 		LOGGER.info("Process export of complete dictionary related entities");
 
+		DictionaryPackage dict = new DictionaryPackage(DICT_EXPORT, LocalDateTime.now()).initWithContent(this.dictionary.findAll());
+		FunctionalDomainPackage doms = new FunctionalDomainPackage(DOMAINS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.domains.findAll());
+		TableLinkPackage tl = new TableLinkPackage(LINKS_EXPORT, LocalDateTime.now()).initWithContent(this.links.findAll());
+
 		// Easy : just take all
-		return this.ioService.exportPackages(Arrays.asList(
-				new DictionaryPackage("full-dictionary", LocalDateTime.now()).initWithContent(this.dictionary.findAll()),
-				new FunctionalDomainPackage("full-domains", LocalDateTime.now()).initWithContent(this.domains.findAll()),
-				new TableLinkPackage("full-links", LocalDateTime.now()).initWithContent(this.links.findAll())));
+		ExportImportFile file = this.ioService.exportPackages(Arrays.asList(dict, doms, tl));
+
+		ExportImportResult<ExportImportFile> result = new ExportImportResult<>(file);
+
+		result.addCount(DICT_EXPORT, dict.getContentSize(), 0, 0);
+		result.addCount(DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
+		result.addCount(LINKS_EXPORT, tl.getContentSize(), 0, 0);
+
+		return result;
 	}
 
 	/**
 	 * @param file
 	 */
-	public void importAll(ExportImportFile file) {
+	public ExportImportResult<Void> importAll(ExportImportFile file) {
 
 		LOGGER.info("Process import of complete dictionary related entities");
 
 		// Less easy : need to complete and identify if value is new or not
 		List<ExportImportPackage<?>> packages = this.ioService.importPackages(file);
+		AtomicInteger newDomainsCount = new AtomicInteger(0);
+		AtomicInteger newDictCount = new AtomicInteger(0);
+		AtomicInteger newLinksCount = new AtomicInteger(0);
 
 		// Process on each, with right order :
 
 		// #1st The functional domains (used by other)
 		List<FunctionalDomain> importedDomains = packages.stream().filter(p -> p.getClass() == FunctionalDomainPackage.class)
-				.flatMap(p -> ((FunctionalDomainPackage) p).streamContent()).map(this::importDomain).collect(Collectors.toList());
+				.flatMap(p -> ((FunctionalDomainPackage) p).streamContent()).map(d -> importDomain(d, newDomainsCount))
+				.collect(Collectors.toList());
 
 		// #2nd The dictionary (referencing domains)
 		List<DictionaryEntry> importedDicts = packages.stream().filter(p -> p.getClass() == DictionaryPackage.class)
-				.flatMap(p -> ((DictionaryPackage) p).streamContent()).map(this::importDictionaryEntry).collect(Collectors.toList());
+				.flatMap(p -> ((DictionaryPackage) p).streamContent()).map(d -> importDictionaryEntry(d, newDictCount))
+				.collect(Collectors.toList());
 
 		// #3rd The links (referencing dictionary entries)
 		List<TableLink> importedLinks = packages.stream().filter(p -> p.getClass() == TableLinkPackage.class)
-				.flatMap(p -> ((TableLinkPackage) p).streamContent()).map(this::importTableLink).collect(Collectors.toList());
+				.flatMap(p -> ((TableLinkPackage) p).streamContent()).map(d -> importTableLink(d, newLinksCount))
+				.collect(Collectors.toList());
 
 		// Batched save on all imported
 		this.domains.save(importedDomains);
@@ -323,14 +345,24 @@ public class DictionaryManagementService {
 
 		LOGGER.info("Import completed of {} domains, {} dictionary entry and {} table links",
 				Integer.valueOf(importedDomains.size()), Integer.valueOf(importedDicts.size()), Integer.valueOf(importedLinks.size()));
+
+		ExportImportResult<Void> result = ExportImportResult.newVoid();
+
+		// Details on imported counts (add vs updated items)
+		result.addCount(DICT_EXPORT, importedDicts.size() - newDictCount.get(), newDictCount.get(), 0);
+		result.addCount(DOMAINS_EXPORT, importedDomains.size() - newDomainsCount.get(), newDomainsCount.get(), 0);
+		result.addCount(LINKS_EXPORT, importedLinks.size() - newLinksCount.get(), newLinksCount.get(), 0);
+
+		return result;
 	}
 
 	/**
 	 * Process one FunctionalDomain
+	 * 
 	 * @param imported
 	 * @return
 	 */
-	private FunctionalDomain importDomain(FunctionalDomain imported) {
+	private FunctionalDomain importDomain(FunctionalDomain imported, AtomicInteger newCounts) {
 
 		FunctionalDomain local = this.domains.findOne(imported.getUuid());
 
@@ -343,12 +375,13 @@ public class DictionaryManagementService {
 		else {
 			LOGGER.debug("Import new domain {} : will create currently owned", imported.getUuid());
 			local = new FunctionalDomain(imported.getUuid());
+			newCounts.incrementAndGet();
 		}
 
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
 		local.setName(imported.getName());
-		
+
 		local.setImportedTime(LocalDateTime.now());
 
 		return local;
@@ -356,10 +389,11 @@ public class DictionaryManagementService {
 
 	/**
 	 * Process one DictionaryEntry
+	 * 
 	 * @param imported
 	 * @return
 	 */
-	private DictionaryEntry importDictionaryEntry(DictionaryEntry imported) {
+	private DictionaryEntry importDictionaryEntry(DictionaryEntry imported, AtomicInteger newCounts) {
 
 		DictionaryEntry local = this.dictionary.findOne(imported.getUuid());
 
@@ -372,6 +406,7 @@ public class DictionaryManagementService {
 		else {
 			LOGGER.debug("Import new dictionary entry {} : will create currently owned", imported.getUuid());
 			local = new DictionaryEntry(imported.getUuid());
+			newCounts.incrementAndGet();
 		}
 
 		// Common attrs
@@ -382,17 +417,19 @@ public class DictionaryManagementService {
 		local.setTableName(imported.getTableName());
 		local.setSelectClause(imported.getSelectClause());
 		local.setWhereClause(imported.getWhereClause());
-		
+
 		local.setImportedTime(LocalDateTime.now());
 
 		return local;
 	}
 
-	/**Process one TableLink
+	/**
+	 * Process one TableLink
+	 * 
 	 * @param imported
 	 * @return
 	 */
-	private TableLink importTableLink(TableLink imported) {
+	private TableLink importTableLink(TableLink imported, AtomicInteger newCounts) {
 
 		TableLink local = this.links.findOne(imported.getUuid());
 
@@ -405,6 +442,7 @@ public class DictionaryManagementService {
 		else {
 			LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
 			local = new TableLink(imported.getUuid());
+			newCounts.incrementAndGet();
 		}
 
 		// Common attrs
@@ -413,7 +451,7 @@ public class DictionaryManagementService {
 		local.setColumnFrom(imported.getColumnFrom());
 		local.setColumnTo(imported.getColumnTo());
 		local.setTableTo(imported.getTableTo());
-		
+
 		local.setImportedTime(LocalDateTime.now());
 
 		return local;

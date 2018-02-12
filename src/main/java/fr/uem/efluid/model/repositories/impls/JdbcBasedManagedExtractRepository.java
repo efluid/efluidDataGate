@@ -4,32 +4,25 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Repository;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.metas.ColumnType;
-import fr.uem.efluid.model.repositories.IndexRepository;
-import fr.uem.efluid.model.repositories.ManagedParametersRepository;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
  * <p>
- * Access to raw data of parameters : can read from Parameter source table or regenerate
- * from existing index
+ * Access to raw data of parameters : can read from Parameter source table using JDBC call
  * </p>
  * 
  * @author elecomte
@@ -37,26 +30,23 @@ import fr.uem.efluid.tools.ManagedQueriesGenerator;
  * @version 1
  */
 @Repository
-public class JdbcBasedManagedParametersRepository implements ManagedParametersRepository {
+public class JdbcBasedManagedExtractRepository implements ManagedExtractRepository {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedDatabaseDescriptionRepository.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedExtractRepository.class);
 
 	@Autowired
 	private JdbcTemplate managedSource;
 
 	@Autowired
-	private IndexRepository coreIndex;
+	private ManagedValueConverter valueConverter;
 
 	@Autowired
-	private ManagedValueConverter valueConverter;
-	
-	@Autowired
 	private ManagedQueriesGenerator queryGenerator;
-	
+
 	/**
 	 * @param parameterEntry
 	 * @return
-	 * @see fr.uem.efluid.model.repositories.ManagedParametersRepository#extractCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry)
+	 * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#extractCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry)
 	 */
 	@Override
 	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry) {
@@ -67,39 +57,6 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 		return this.managedSource.query(
 				this.queryGenerator.producesSelectParameterQuery(parameterEntry),
 				new InternalExtractor(parameterEntry, this.valueConverter));
-	}
-
-	/**
-	 * Produces the knew content for specified table, from recorded index
-	 * 
-	 * @param parameterEntry
-	 * @return
-	 */
-	@Override
-	@Cacheable("regenerated")
-	public Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry) {
-
-		LOGGER.debug("Regenerating values from local index for managed table {}", parameterEntry.getTableName());
-
-		// Will process backlog by its natural order
-		List<IndexEntry> existingBacklog = this.coreIndex.findByDictionaryEntryOrderByTimestamp(parameterEntry);
-
-		// Content for playing back the backlog
-		Map<String, String> lines = new ConcurrentHashMap<>(1000);
-
-		for (IndexEntry line : existingBacklog) {
-
-			// Addition : add / update directly
-			if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {
-				lines.put(line.getKeyValue(), line.getPayload());
-			}
-
-			else {
-				lines.remove(line.getKeyValue());
-			}
-		}
-
-		return lines;
 	}
 
 	/**
@@ -116,11 +73,11 @@ public class JdbcBasedManagedParametersRepository implements ManagedParametersRe
 
 		private final DictionaryEntry parameterEntry;
 		private final ManagedValueConverter valueConverter;
-		
+
 		/**
 		 * @param parameterEntry
 		 */
-		public InternalExtractor(DictionaryEntry parameterEntry,ManagedValueConverter valueConverter) {
+		public InternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter) {
 			super();
 			this.parameterEntry = parameterEntry;
 			this.valueConverter = valueConverter;

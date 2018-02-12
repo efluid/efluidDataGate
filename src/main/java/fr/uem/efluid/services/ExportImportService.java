@@ -82,7 +82,8 @@ public class ExportImportService {
 				Path pckgFile = Files.createFile(workFolder.resolve(pckg.getName() + FILE_PCKG_EXT));
 
 				// Identifier at start of package
-				append(pckgFile, String.format(PACKAGE_START, pckg.getClass().getName(), pckg.getName(), pckg.getExportDate(), pckg.getVersion()));
+				append(pckgFile,
+						String.format(PACKAGE_START, pckg.getClass().getName(), pckg.getName(), pckg.getExportDate(), pckg.getVersion()));
 
 				// Package content
 				pckg.serialize().forEach(s -> append(pckgFile, ITEM_START + s + ITEM_END));
@@ -296,9 +297,10 @@ public class ExportImportService {
 		 * @param lcontents
 		 * @return
 		 */
-		public ExportImportPackage<T> initWithContent(List<T> lcontents) {
+		@SuppressWarnings("unchecked")
+		public <K extends ExportImportPackage<T>> K initWithContent(List<T> lcontents) {
 			this.contents = lcontents;
-			return this;
+			return (K) this;
 		}
 
 		/**
@@ -306,6 +308,17 @@ public class ExportImportService {
 		 */
 		public Stream<T> streamContent() {
 			return this.contents.stream();
+		}
+
+		/**
+		 * <p>
+		 * Available only once content is initialized (directly or with deserialize)
+		 * </p>
+		 * 
+		 * @return
+		 */
+		public int getContentSize() {
+			return this.contents != null ? this.contents.size() : 0;
 		}
 
 		/**

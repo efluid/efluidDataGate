@@ -19,17 +19,27 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.services.types.PilotedCommitPreparation;
-import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.CommitEditData;
+import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
+import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.utils.TechnicalException;
 
 /**
  * <p>
  * Service for Commit preparation, using async execution. <b>Only one execution can be
- * launched.</b>
+ * launched (defined as a <tt>PilotedCommitPreparation</tt>)</b>. Commit prepared this way
+ * can be of different type (for "local commit" or for "merge commit" after import when a
+ * diff exists).
+ * </p>
+ * <p>
+ * Everything associated to commit preparation implies very heavy and very memory
+ * consuming processes : that's why this service can only manage ONE preparation at the
+ * time (whatever is the kind of the preparation). All preparation are asynchronous : its
+ * holder entity <tt>PilotableCommitPreparation</tt> gives details on the status of it.
  * </p>
  * 
  * @author elecomte
@@ -51,12 +61,12 @@ public class PilotableCommitPreparationService {
 	private ExecutorService executor = Executors.newFixedThreadPool(4);
 
 	// One active only
-	private PilotedCommitPreparation current;
+	private PilotedCommitPreparation<?> current;
 
 	/**
 	 * Start async diff analysis before commit
 	 */
-	public PilotedCommitPreparation startCommitPreparation(boolean force) {
+	public PilotedCommitPreparation<?> startLocalCommitPreparation(boolean force) {
 
 		// On existing preparation
 		if (this.current != null) {
@@ -86,18 +96,68 @@ public class PilotableCommitPreparationService {
 
 		LOGGER.info("Request for a new commit preparation - start a new one");
 
-		this.current = new PilotedCommitPreparation();
+		// For CommitState LOCAL => Use PreparedIndexEntry
+		PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
 
-		CompletableFuture.runAsync(this::processAllDiff);
+		// Specify as active one
+		this.current = preparation;
 
-		return this.current;
+		CompletableFuture.runAsync(() -> processAllDiff(preparation));
+
+		return getCurrentCommitPreparation();
+	}
+	
+
+	/**
+	 * Start async diff analysis before commit
+	 */
+	public PilotedCommitPreparation<?> startMergeCommitPreparation(ExportImportFile file) {
+
+		// On existing preparation
+		if (this.current != null) {
+
+			// Forced restart asked : close current, start a new one
+			if (force) {
+				LOGGER.info("Request for a new commit preparation - preparation exist already, and "
+						+ "force restart asked, so will drop current preparation {}", this.current.getIdentifier());
+
+				// Cancel for any existing reference ...
+				this.current.setStatus(PilotedCommitStatus.CANCEL);
+
+				// ... but droping should be enough
+				this.current = null;
+			}
+
+			// Keep current else
+			else {
+
+				LOGGER.info("Request for a new commit preparation - preparation already running / "
+						+ "available, so use existing {}", this.current.getIdentifier());
+
+				// Default will provides existing if still running
+				return getCurrentCommitPreparation();
+			}
+		}
+
+		LOGGER.info("Request for a new commit preparation - start a new one");
+
+		// For CommitState LOCAL => Use PreparedIndexEntry
+		PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
+
+		// Specify as active one
+		this.current = preparation;
+
+		CompletableFuture.runAsync(() -> processAllDiff(preparation));
+
+		return getCurrentCommitPreparation();
 	}
 
 	/**
 	 * @return
 	 */
-	public PilotedCommitPreparation getCurrentCommitPreparation() {
-		return this.current;
+	@SuppressWarnings("unchecked")
+	public PilotedCommitPreparation<?> getCurrentCommitPreparation() {
+		return  this.current;
 	}
 
 	/**
@@ -117,7 +177,7 @@ public class PilotableCommitPreparationService {
 	 * CompletableFuture in call processes
 	 * </p>
 	 */
-	private void processAllDiff() {
+	private void processAllDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation) {
 
 		LOGGER.info("Begin diff process on commit preparation {}", this.current.getIdentifier());
 		long startTimeout = System.currentTimeMillis();
@@ -131,20 +191,20 @@ public class PilotableCommitPreparationService {
 					.collect(Collectors.toList());
 
 			// Keep in preparation for commit build
-			this.current.setPreparedDiff(fullDiff);
+			preparation.setPreparedContent(fullDiff);
 
 			// Mark preparation as completed
-			this.current.setEnd(LocalDateTime.now());
-			this.current.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+			preparation.setEnd(LocalDateTime.now());
+			preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
 			LOGGER.info("Diff process completed on commit preparation {}. Found {} index entries. Total process duration was {} ms",
 					this.current.getIdentifier(),
-					Integer.valueOf(this.current.getPreparedDiff().size()),
+					Integer.valueOf(fullDiff.size()),
 					Long.valueOf(System.currentTimeMillis() - startTimeout));
 
 		} catch (InterruptedException e) {
 			LOGGER.error("Error will processing diff", e);
-			this.current.setErrorDuringPreparation(e);
+			preparation.setErrorDuringPreparation(e);
 		}
 	}
 
@@ -208,6 +268,169 @@ public class PilotableCommitPreparationService {
 
 			return (int) (a.getTimestamp() - b.getTimestamp());
 		};
+	}
+
+	public static enum PilotedCommitStatus {
+
+		NOT_LAUNCHED,
+		DIFF_RUNNING,
+		CANCEL,
+		COMMIT_CAN_PREPARE,
+		COMMIT_PREPARED;
+
+	}
+
+	/**
+	 * <p>
+	 * A <tt>PilotedCommitPreparation</tt> is a major load event associated to a
+	 * preparation of index or index related data. Their is only ONE preparation of any
+	 * kind which is available in the application, due to memory use and data extraction
+	 * heavy load. But this preparation can be of various type.
+	 * </p>
+	 * <p>
+	 * Common rules for a preparation :
+	 * <ul>
+	 * <li>Used to prepare a commit of a fixed {@link CommitState}</li>
+	 * <li>Identified by uuid, but not exported. (currently not realy used)</li>
+	 * <li>Identified with start and end time of preparation</li>
+	 * <li>Associated to an evolving status : defines how far we are in the preparation.
+	 * Can evolve to include a full "% remaining" process</li>
+	 * <li>Holds a content, the "result" of the preparation. Supposed to be related to
+	 * <tt>DiffLine</tt> (but type is free in this vearsion)</li>
+	 * <li>Associated to a commit definition which will embbed the result of the
+	 * preparation once completed and validated.</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.1
+	 * @version 1
+	 * @param <T>
+	 */
+	public static final class PilotedCommitPreparation<T> {
+
+		private final UUID identifier;
+
+		private final LocalDateTime start;
+
+		private final CommitState preparingState;
+
+		private LocalDateTime end;
+
+		private PilotedCommitStatus status;
+
+		private Throwable errorDuringPreparation;
+
+		private List<T> preparedContent;
+
+		private CommitEditData commitData;
+
+		/**
+		 * 
+		 */
+		protected PilotedCommitPreparation(CommitState preparingState) {
+			this.identifier = UUID.randomUUID();
+			this.status = PilotedCommitStatus.DIFF_RUNNING;
+			this.start = LocalDateTime.now();
+			this.preparingState = preparingState;
+		}
+
+		/**
+		 * @return the errorDuringPreparation
+		 */
+		public Throwable getErrorDuringPreparation() {
+			return this.errorDuringPreparation;
+		}
+
+		/**
+		 * @param errorDuringPreparation
+		 *            the errorDuringPreparation to set
+		 */
+		public void setErrorDuringPreparation(Throwable errorDuringPreparation) {
+			this.errorDuringPreparation = errorDuringPreparation;
+		}
+
+		/**
+		 * @return the status
+		 */
+		public PilotedCommitStatus getStatus() {
+			return this.status;
+		}
+
+		/**
+		 * @param status
+		 *            the status to set
+		 */
+		public void setStatus(PilotedCommitStatus status) {
+			this.status = status;
+		}
+
+		/**
+		 * @return the identifier
+		 */
+		public UUID getIdentifier() {
+			return this.identifier;
+		}
+
+		/**
+		 * @return the start
+		 */
+		public LocalDateTime getStart() {
+			return this.start;
+		}
+
+		/**
+		 * @return the end
+		 */
+		public LocalDateTime getEnd() {
+			return this.end;
+		}
+
+		/**
+		 * @return the preparedContent
+		 */
+		public List<T> getPreparedContent() {
+			return this.preparedContent;
+		}
+
+		/**
+		 * @param preparedContent
+		 *            the preparedContent to set
+		 */
+		public void setPreparedContent(List<T> preparedContent) {
+			this.preparedContent = preparedContent;
+		}
+
+		/**
+		 * @return the commitData
+		 */
+		public CommitEditData getCommitData() {
+			return this.commitData;
+		}
+
+		/**
+		 * @param commitData
+		 *            the commitData to set
+		 */
+		public void setCommitData(CommitEditData commitData) {
+			this.commitData = commitData;
+		}
+
+		/**
+		 * @param end
+		 *            the end to set
+		 */
+		public void setEnd(LocalDateTime end) {
+			this.end = end;
+		}
+
+		/**
+		 * @return the preparingState
+		 */
+		public CommitState getPreparingState() {
+			return this.preparingState;
+		}
+
 	}
 
 	/**

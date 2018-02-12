@@ -14,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.model.repositories.ManagedParametersRepository;
+import fr.uem.efluid.model.repositories.ManagedExtractRepository;
+import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 import fr.uem.efluid.stubs.TestDataLoader;
 
 /**
@@ -28,7 +29,10 @@ import fr.uem.efluid.stubs.TestDataLoader;
 public class ManagedParametersRepositoryIntegrationTest {
 
 	@Autowired
-	private ManagedParametersRepository managed;
+	private ManagedExtractRepository extracted;
+	
+	@Autowired
+	private ManagedRegenerateRepository regenerated;
 
 	@Autowired
 	private TestDataLoader loader;
@@ -46,28 +50,28 @@ public class ManagedParametersRepositoryIntegrationTest {
 	@Test
 	public void testExtractCurrentContentLow() {
 		setupDatabase("diff7");
-		Map<String, String> raw = this.managed.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
 		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff7/actual.csv");
 	}
 
 	@Test
 	public void testRegenerateKnewContentLow() {
 		setupDatabase("diff7");
-		Map<String, String> raw = this.managed.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+		Map<String, String> raw = this.regenerated.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
 		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff7/knew.csv");
 	}
 
 	@Test
 	public void testExtractCurrentContentHeavy() {
 		setupDatabase("diff8");
-		Map<String, String> raw = this.managed.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
 		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff8/actual.csv");
 	}
 
 	@Test
 	public void testRegenerateKnewContentHeavy() {
 		setupDatabase("diff8");
-		Map<String, String> raw = this.managed.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+		Map<String, String> raw = this.regenerated.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
 		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff8/knew.csv");
 	}
 }

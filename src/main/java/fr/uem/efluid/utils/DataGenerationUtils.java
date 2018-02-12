@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.IndexAction;
@@ -108,7 +109,7 @@ public class DataGenerationUtils {
 		commit.setComment(detail);
 		commit.setHash(detail);
 		commit.setCreatedTime(LocalDateTime.now().minusDays(daysOld));
-		commit.setImported(false);
+		commit.setState(CommitState.LOCAL);
 		commit.setOriginalUserEmail(user.getEmail());
 		commit.setUser(user);
 

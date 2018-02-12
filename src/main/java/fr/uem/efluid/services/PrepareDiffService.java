@@ -14,7 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.repositories.ManagedParametersRepository;
+import fr.uem.efluid.model.repositories.ManagedExtractRepository;
+import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
@@ -34,7 +35,10 @@ public class PrepareDiffService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PrepareDiffService.class);
 
 	@Autowired
-	private ManagedParametersRepository rawParameters;
+	private ManagedExtractRepository rawParameters;
+
+	@Autowired
+	private ManagedRegenerateRepository regeneratedParamaters;
 
 	@Autowired
 	private ManagedValueConverter valueConverter;
@@ -50,7 +54,7 @@ public class PrepareDiffService {
 		// Here the main complexity : diff check using JDBC, for one table. Backlog
 		// construction + restoration then diff.
 
-		Map<String, String> knewContent = this.rawParameters.regenerateKnewContent(entry);
+		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(entry);
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry);
 
 		return generateDiffIndex(knewContent, actualContent, entry, this.valueConverter);

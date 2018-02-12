@@ -14,7 +14,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
  * @since v0.0.1
  * @version 1
  */
-public interface ManagedParametersRepository {
+public interface ManagedExtractRepository {
 
 	/**
 	 * <p>
@@ -26,13 +26,5 @@ public interface ManagedParametersRepository {
 	 * @return
 	 */
 	Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry);
-
-	/**
-	 * Produces the knew content for specified table, from recorded index
-	 * 
-	 * @param parameterEntry
-	 * @return
-	 */
-	Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry);
 
 }

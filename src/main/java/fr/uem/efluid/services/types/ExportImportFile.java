@@ -71,4 +71,11 @@ public class ExportImportFile {
 	public String getContentType() {
 		return this.contentType;
 	}
+
+	/**
+	 * @return
+	 */
+	public int getSize() {
+		return this.fileData.length;
+	}
 }

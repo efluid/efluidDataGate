@@ -7,7 +7,7 @@ services:
         ports:
         - 8080:8080
         volumes:
-        - ~/.instances/gest/application.yml:/cfg/application.yml:ro
-        - ~/.instances/gest/logs:/tmp
-        - ~/.instances/gest/tmp:/logs
+        - /instance/application.yml:/cfg/application.yml:ro
+        - /instance/logs:/tmp
+        - /instance/tmp:/logs
         container_name: param-gest-struff

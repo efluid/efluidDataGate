@@ -3,16 +3,21 @@ package fr.uem.efluid.model.entities;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.persistence.CascadeType;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.validator.constraints.NotBlank;
@@ -44,13 +49,20 @@ public class Commit implements Shared {
 
 	private LocalDateTime importedTime;
 
-	private boolean imported;
+	@Enumerated(EnumType.STRING)
+	private CommitState state;
 
 	@ManyToOne(optional = false)
 	private User user;
 
 	@OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
 	private Collection<IndexEntry> index = new ArrayList<>();
+
+	@ElementCollection(fetch = FetchType.EAGER)
+	private List<UUID> mergeSources = new ArrayList<>();
+
+	@Transient
+	private transient boolean refOnly = false;
 
 	/**
 	 * @param uuid
@@ -175,21 +187,6 @@ public class Commit implements Shared {
 	}
 
 	/**
-	 * @return the imported
-	 */
-	public boolean isImported() {
-		return this.imported;
-	}
-
-	/**
-	 * @param imported
-	 *            the imported to set
-	 */
-	public void setImported(boolean imported) {
-		this.imported = imported;
-	}
-
-	/**
 	 * @return the index
 	 */
 	public Collection<IndexEntry> getIndex() {
@@ -205,12 +202,68 @@ public class Commit implements Shared {
 	}
 
 	/**
+	 * @return the state
+	 */
+	public CommitState getState() {
+		return this.state;
+	}
+
+	/**
+	 * @param state
+	 *            the state to set
+	 */
+	public void setState(CommitState state) {
+		this.state = state;
+	}
+
+	/**
+	 * @return the mergeSources
+	 */
+	public List<UUID> getMergeSources() {
+		return this.mergeSources;
+	}
+
+	/**
+	 * @param mergeSources
+	 *            the mergeSources to set
+	 */
+	public void setMergeSources(List<UUID> mergeSources) {
+		this.mergeSources = mergeSources;
+	}
+
+	/**
+	 * @return the refOnly
+	 */
+	public boolean isRefOnly() {
+		return this.refOnly;
+	}
+
+	/**
+	 * @param refOnly
+	 *            the refOnly to set
+	 */
+	public void setAsRefOnly() {
+		this.refOnly = true;
+	}
+
+	/**
 	 * @return
 	 * @see fr.uem.efluid.model.Shared#serialize()
 	 */
 	@Override
 	public String serialize() {
 
+		// For reference only, doesn't includes index content
+		if (this.refOnly) {
+			return SharedOutputInputUtils.newJson()
+					.with("uid", getUuid())
+					.with("cre", getCreatedTime())
+					.with("has", getHash())
+					.with("ema", getOriginalUserEmail())
+					.toString();
+		}
+
+		// Else, includes all commit index as sub item
 		return SharedOutputInputUtils.newJson()
 				.with("uid", getUuid())
 				.with("com", getComment())
@@ -234,11 +287,17 @@ public class Commit implements Shared {
 				.applyLdt("cre", c -> setCreatedTime(c))
 				.applyString("has", h -> setHash(h))
 				.applyString("ema", e -> setOriginalUserEmail(e))
-				.applyString("idx", i -> setIndex(Stream.of(i.split("\n")).map(s -> {
-					IndexEntry ent = new IndexEntry();
-					ent.deserialize(s);
-					return ent;
-				}).collect(Collectors.toList())));
+				.applyString("idx", i -> {
+					if (i == null) {
+						setAsRefOnly();
+					} else {
+						setIndex(Stream.of(i.split("\n")).map(s -> {
+							IndexEntry ent = new IndexEntry();
+							ent.deserialize(s);
+							return ent;
+						}).collect(Collectors.toList()));
+					}
+				});
 	}
 
 	/**

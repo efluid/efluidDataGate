@@ -15,7 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.model.repositories.ManagedParametersRepository;
+import fr.uem.efluid.model.repositories.ManagedExtractRepository;
+import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 import fr.uem.efluid.stubs.TestDataLoader;
 import fr.uem.efluid.stubs.TestUtils;
 import fr.uem.efluid.tools.ManagedValueConverter;
@@ -31,7 +32,10 @@ import fr.uem.efluid.tools.ManagedValueConverter;
 public class PrepareDiffServiceBenchTest {
 
 	@Autowired
-	private ManagedParametersRepository managed;
+	private ManagedRegenerateRepository regenerate;
+
+	@Autowired
+	private ManagedExtractRepository extract;
 
 	@Autowired
 	private PrepareDiffService service;
@@ -117,7 +121,7 @@ public class PrepareDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupIndexOnly("diff8");
 			long start = System.currentTimeMillis();
-			this.managed.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+			this.regenerate.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {
@@ -147,7 +151,7 @@ public class PrepareDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupSourceOnly("diff8");
 			long start = System.currentTimeMillis();
-			this.managed.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+			this.extract.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {

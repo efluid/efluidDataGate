@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
-import fr.uem.efluid.services.types.PilotedCommitPreparation;
-import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
+import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitStatus;
+import fr.uem.efluid.services.types.PreparedIndexEntry;
 
 /**
  * <p>
@@ -36,7 +37,7 @@ public class BacklogController {
 
 	@Autowired
 	private DictionaryManagementService dictionaryManagementService;
-	
+
 	/**
 	 * <p>
 	 * For default prepare page
@@ -83,7 +84,7 @@ public class BacklogController {
 	 * @return
 	 */
 	private String startPreparationAndRouteRegardingStatus(Model model, boolean forced) {
-		PilotedCommitPreparation prepare = this.commitService.startCommitPreparation(forced);
+		PilotedCommitPreparation<?> prepare = this.commitService.startLocalCommitPreparation(forced);
 
 		// Diff already in progress : dedicated waiting page
 		if (prepare.getStatus() == PilotedCommitStatus.DIFF_RUNNING) {
@@ -92,7 +93,7 @@ public class BacklogController {
 
 		// Completed / available, basic prepare page
 		model.addAttribute("preparation", prepare);
-		
+
 		// Need dictionary and domains for filtering
 		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
