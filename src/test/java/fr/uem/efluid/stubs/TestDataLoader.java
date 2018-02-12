@@ -211,21 +211,30 @@ public class TestDataLoader {
 		Commit com2 = this.commits.save(commit("Commit de mise à jour", dupont, 7));
 
 		// Prepare index entries for batch init
-		List<IndexEntry> indexes = readDataset(diffName + "/knew-add.csv")
+		List<IndexEntry> indexesCom1 = readDataset(diffName + "/knew-add.csv")
 				.entrySet().stream()
 				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.ADD, d.getValue(), cmat, com1))
 				.collect(Collectors.toList());
-		indexes.addAll(readDataset(diffName + "/knew-remove.csv")
+
+		List<IndexEntry> indexesCom2 = readDataset(diffName + "/knew-remove.csv")
 				.entrySet().stream()
 				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.REMOVE, d.getValue(), cmat, com2))
-				.collect(Collectors.toList()));
-		indexes.addAll(readDataset(diffName + "/knew-update.csv")
+				.collect(Collectors.toList());
+		indexesCom2.addAll(readDataset(diffName + "/knew-update.csv")
 				.entrySet().stream()
 				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.UPDATE, d.getValue(), cmat, com2))
 				.collect(Collectors.toList()));
 
 		// Batch init of data
-		this.index.save(indexes);
+		this.index.save(indexesCom1);
+		this.index.save(indexesCom2);
+
+		com1.setIndex(indexesCom1);
+		com2.setIndex(indexesCom2);
+
+		// BiDirectionnal for index <> commit
+		this.commits.save(com1);
+		this.commits.save(com2);
 
 		// // Force set updates
 		this.users.flush();

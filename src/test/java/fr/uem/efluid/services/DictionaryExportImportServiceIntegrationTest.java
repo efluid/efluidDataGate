@@ -25,7 +25,7 @@ import fr.uem.efluid.stubs.TestUtils;
 @RunWith(SpringJUnit4ClassRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
-public class ExportImportServiceIntegrationTest {
+public class DictionaryExportImportServiceIntegrationTest {
 
 	private static final String VALID_FILE = "valid-export.par";
 

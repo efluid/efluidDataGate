@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 09/02/2018*
+*Mise à jour au 12/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Modification de la gestion des entrées dans le dictionnaire : se fait sur un autre écran de saisie à partir de la liste

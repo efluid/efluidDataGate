@@ -23,6 +23,7 @@ import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.CommitPackage;
 import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
+import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.utils.Associate;
@@ -126,11 +127,35 @@ public class CommitService {
 	}
 
 	/**
-	 * 
+	 * <p>
+	 * From the prepared commit, rollback in local managed DB everything which was
+	 * rejected
+	 * </p>
 	 */
-	void merge() {
+	public void applyExclusionsFromLocalCommit(PilotedCommitPreparation<LocalPreparedDiff> prepared) {
 
-		// Expo
+		
+
+	}
+
+	/**
+	 * <p>
+	 * Apply the changes from the prepared merge diff, and store the commit (including the
+	 * index content)
+	 * </p>
+	 */
+	public void applyAndSaveMergeCommit() {
+
+	}
+
+	/**
+	 * <p>
+	 * Apply the changes from the prepared local diff, and store the commit (including the
+	 * index content)
+	 * </p>
+	 */
+	public void applyAndSaveLocalCommit() {
+
 	}
 
 	/**
