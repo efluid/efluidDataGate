@@ -1,8 +1,13 @@
 package fr.uem.efluid.model.repositories;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
@@ -34,4 +39,36 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 	 * @return
 	 */
 	List<IndexEntry> findByDictionaryEntryAndTimestampGreaterThanEqualOrderByTimestamp(DictionaryEntry dictionaryEntry, long timestamp);
+
+	/**
+	 * <b><font color="red">Query for internal use only</font></b>
+	 * 
+	 * @param dictionaryEntryUuid
+	 * @param keyValues
+	 * @return
+	 */
+	// TODO : Once with java9, specify as private
+	@Query(value = "select i.* "
+			+ "from index i "
+			+ "inner join ("
+			+ "		select max(ii.id) as max_id, ii.key_value from index ii where ii.dictionary_entry_uuid = :uuid group by ii.key_value"
+			+ ") mi on i.id = mi.max_id "
+			+ "where i.key_value in (:keys)", nativeQuery = true)
+	List<IndexEntry> _internal_findAllPreviousIndexEntries(@Param("uuid") UUID dictionaryEntryUuid, @Param("keys") List<String> keyValues);
+
+	/**
+	 * <p>
+	 * Get the "last" IndexEntry for each given KeyValue, using the specified
+	 * DictionaryEntry as scope select.
+	 * </p>
+	 * 
+	 * @param dictionaryEntry
+	 * @param keyValues
+	 * @return
+	 */
+	default Map<String, IndexEntry> findAllPreviousIndexEntries(DictionaryEntry dictionaryEntry, List<String> keyValues) {
+
+		return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid(), keyValues).stream()
+				.collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v));
+	}
 }

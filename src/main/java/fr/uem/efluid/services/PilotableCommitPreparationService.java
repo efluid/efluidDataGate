@@ -155,7 +155,59 @@ public class PilotableCommitPreparationService {
 	 * 
 	 */
 	public void completeCommitPreparation() {
+
+		// For any ref holder : mark completed
+		this.current.setStatus(PilotedCommitStatus.COMPLETED);
+
+		// Null = COMPLETED from local service pov
 		this.current = null;
+	}
+
+	/**
+	 * <p>
+	 * Entry point for local commit save
+	 * </p>
+	 * 
+	 * @param preparation
+	 */
+	public void saveLocalCommitPreparation(PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+		saveCommitPreparation(preparation);
+	}
+
+	/**
+	 * <p>
+	 * Entry point for merge commit save
+	 * </p>
+	 * 
+	 * @param preparation
+	 */
+	public void saveMergeCommitPreparation(PilotedCommitPreparation<MergePreparedDiff> preparation) {
+		saveCommitPreparation(preparation);
+	}
+
+	/**
+	 * <p>
+	 * Generic saving process. Declined with fixed type for clean frontend form push
+	 * </p>
+	 * 
+	 * @param preparation
+	 */
+	private void saveCommitPreparation(
+			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> preparation) {
+
+		this.current = preparation;
+
+		this.current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
+
+		// Apply rollbacks
+		this.commitService.applyExclusionsFromLocalCommit(preparation);
+
+		this.current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
+
+		// Save update
+		this.commitService.saveAndApplyPreparedCommit(preparation);
+
+		completeCommitPreparation();
 	}
 
 	/**
@@ -326,7 +378,9 @@ public class PilotableCommitPreparationService {
 		CANNOT_PREPARE,
 		CANCEL,
 		COMMIT_CAN_PREPARE,
-		COMMIT_PREPARED;
+		COMMIT_PREPARED,
+		ROLLBACK_APPLIED,
+		COMPLETED;
 
 	}
 

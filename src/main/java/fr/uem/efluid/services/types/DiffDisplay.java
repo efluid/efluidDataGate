@@ -1,5 +1,6 @@
 package fr.uem.efluid.services.types;
 
+import java.util.List;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
@@ -9,7 +10,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
  * @since v0.0.1
  * @version 1
  */
-public class DiffDisplay<T> implements Comparable<DiffDisplay<?>> {
+public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implements Comparable<DiffDisplay<?>> {
 
 	private UUID dictionaryEntryUuid;
 

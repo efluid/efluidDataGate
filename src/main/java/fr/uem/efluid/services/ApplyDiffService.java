@@ -43,7 +43,7 @@ public class ApplyDiffService {
 	 * 
 	 * @param diffLines
 	 */
-	public void applyDiff(List<DiffLine> diffLines) {
+	public void applyDiff(List<? extends DiffLine> diffLines) {
 
 		LOGGER.info("Will apply a diff of {} items", Integer.valueOf(diffLines.size()));
 		this.updates.runAllChangesAndCommit(diffLines);

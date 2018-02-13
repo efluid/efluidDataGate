@@ -2,30 +2,37 @@ package fr.uem.efluid.services;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.CommitRepository;
+import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.impls.InMemoryManagedRegenerateRepository;
 import fr.uem.efluid.services.ExportImportService.ExportImportPackage;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.CommitPackage;
+import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
-import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
+import fr.uem.efluid.services.types.RollbackLine;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.TechnicalException;
 
@@ -52,10 +59,23 @@ public class CommitService {
 	private CommitRepository commits;
 
 	@Autowired
+	private IndexRepository indexes;
+
+	@Autowired
 	private ExportImportService exportImportService;
 
+	@Autowired
+	private ApplyDiffService applyDiffService;
+
 	/**
+	 * <p>
+	 * Export complete commit list, with option to include only one fraction of the index
+	 * content
+	 * </p>
+	 * 
 	 * @param startingWithCommit
+	 *            optional uuid of a commit which will be the 1st fully exported, will
+	 *            previous ones will be exported as ref-only
 	 */
 	public ExportImportResult<ExportImportFile> exportCommits(UUID startingWithCommit) {
 
@@ -129,23 +149,24 @@ public class CommitService {
 	/**
 	 * <p>
 	 * From the prepared commit, rollback in local managed DB everything which was
-	 * rejected
+	 * rejected. Generic enough for compatibility with both local and merge commits
 	 * </p>
 	 */
-	public void applyExclusionsFromLocalCommit(PilotedCommitPreparation<LocalPreparedDiff> prepared) {
+	void applyExclusionsFromLocalCommit(
+			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> prepared) {
 
-		
+		LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
-	}
+		List<RollbackLine> rollbacked = prepared.getPreparedContent().stream().flatMap(this::streamDiffRollbacks)
+				.collect(Collectors.toList());
 
-	/**
-	 * <p>
-	 * Apply the changes from the prepared merge diff, and store the commit (including the
-	 * index content)
-	 * </p>
-	 */
-	public void applyAndSaveMergeCommit() {
+		if (rollbacked.size() > 0) {
 
+			LOGGER.info("In current commit preparation, a total of {} rollback entries were identified and are going to be applied",
+					Integer.valueOf(rollbacked.size()));
+
+			this.applyDiffService.rollbackDiff(rollbacked);
+		}
 	}
 
 	/**
@@ -154,8 +175,37 @@ public class CommitService {
 	 * index content)
 	 * </p>
 	 */
-	public void applyAndSaveLocalCommit() {
+	void saveAndApplyPreparedCommit(
+			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> prepared) {
 
+		LOGGER.debug("Process apply and saving of a new commit with state {}", prepared.getPreparingState());
+
+		Commit newCommit = CommitEditData.toEntity(prepared.getCommitData());
+		newCommit.setCreatedTime(LocalDateTime.now());
+		newCommit.setOriginalUserEmail("use-user-instead@todo.fr");
+		newCommit.setState(prepared.getPreparingState());
+
+		// Init commit
+		this.commits.save(newCommit);
+
+		List<IndexEntry> entries = prepared.getPreparedContent().stream()
+				.flatMap(l -> l.getDiff().stream())
+				.filter(PreparedIndexEntry::isSelected)
+				.map(PreparedIndexEntry::toEntity)
+				.peek(e -> e.setCommit(newCommit))
+				.collect(Collectors.toList());
+
+		LOGGER.debug("New commit {} of state {} with comment {} prepared with {} index lines",
+				newCommit.getUuid(), prepared.getPreparingState(), newCommit.getComment(), Integer.valueOf(entries.size()));
+
+		// Save index and set back to commit with bi-directional link
+		newCommit.setIndex(this.indexes.save(entries));
+
+		// Updated commit link
+		this.commits.save(newCommit);
+
+		// Now apply (will rollback previous steps if error found)
+		this.applyDiffService.applyDiff(entries);
 	}
 
 	/**
@@ -247,6 +297,44 @@ public class CommitService {
 
 		return result;
 
+	}
+
+	/**
+	 * <p>
+	 * Complete given diff as a one to rollback
+	 * </p>
+	 * 
+	 * @param entry
+	 * @param diffContent
+	 * @return
+	 */
+	private List<RollbackLine> getDiffRollbacks(DictionaryEntry entry, Collection<? extends DiffLine> diffContent) {
+
+		// All "previous" for current diff
+		Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(entry,
+				diffContent.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
+
+		// Completed rollback
+		return diffContent.stream()
+				.map(current -> new RollbackLine(current, previouses.get(current.getKeyValue())))
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>
+	 * Get rollback specified in one DiffDisplay
+	 * </p>
+	 * 
+	 * @param diff
+	 * @return
+	 */
+	private Stream<RollbackLine> streamDiffRollbacks(DiffDisplay<? extends List<? extends PreparedIndexEntry>> diff) {
+
+		LOGGER.debug("Process identification of rollback on dictionaryEntry {}, if any", diff.getDictionaryEntryUuid());
+
+		return getDiffRollbacks(new DictionaryEntry(diff.getDictionaryEntryUuid()),
+				diff.getDiff().stream().filter(PreparedIndexEntry::isRollbacked).collect(Collectors.toList()))
+						.stream();
 	}
 
 	/**

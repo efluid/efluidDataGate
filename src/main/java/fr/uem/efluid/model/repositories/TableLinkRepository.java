@@ -27,8 +27,11 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 	List<TableLink> findByDictionaryEntry(DictionaryEntry dictionaryEntry);
 
 	/**
+	 * <b><font color="red">Query for internal use only</font></b>
+	 * 
 	 * @return
 	 */
+	// TODO : Once with java9, specify as private
 	@Query(value = "SELECT l.dictionary_entry_uuid, d.uuid FROM link l INNER JOIN dictionary d ON d.table_name = l.table_to",
 			nativeQuery = true)
 	List<Object[]> _internal_findAllRelationships();

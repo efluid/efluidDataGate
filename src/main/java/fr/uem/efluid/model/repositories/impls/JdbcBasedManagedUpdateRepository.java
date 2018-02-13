@@ -82,7 +82,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 *      java.util.List)
 	 */
 	@Override
-	public void runAllChangesAndCommit(List<DiffLine> lines) {
+	public void runAllChangesAndCommit(List<? extends DiffLine> lines) {
 
 		LOGGER.debug("Identified change to apply on managed DB. Will process {} diffLines", Integer.valueOf(lines.size()));
 
@@ -177,7 +177,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 * @param lines
 	 * @param dictEntries
 	 */
-	private void checkUpdatesAndDeleteMissingIds(List<DiffLine> lines, Map<UUID, DictionaryEntry> dictEntries) {
+	private void checkUpdatesAndDeleteMissingIds(List<? extends DiffLine> lines, Map<UUID, DictionaryEntry> dictEntries) {
 
 		if (this.checkDeleteMissingIds || this.checkUpdateMissingIds) {
 			LOGGER.debug("Check on updates or delete missing ids is enabled : transform as select queries all concerned changes");

@@ -47,5 +47,5 @@ public interface ManagedUpdateRepository {
 	 * 
 	 * @param lines
 	 */
-	void runAllChangesAndCommit(List<DiffLine> lines);
+	void runAllChangesAndCommit(List<? extends DiffLine> lines);
 }

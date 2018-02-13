@@ -177,4 +177,24 @@ public class CommitEditData {
 
 		return edit;
 	}
+
+	/**
+	 * @param edit
+	 * @return
+	 */
+	public static Commit toEntity(CommitEditData edit) {
+
+		Commit commit = new Commit();
+
+		commit.setComment(edit.getComment());
+		commit.setCreatedTime(edit.getCreatedTime());
+		commit.setImportedTime(edit.getImportedTime());
+		if (edit.getMergeSources() != null && edit.getMergeSources().size() > 0) {
+			commit.setMergeSources(edit.getMergeSources());
+		}
+		commit.setOriginalUserEmail(edit.getOriginalUserEmail());
+		commit.setUuid(edit.getUuid());
+
+		return commit;
+	}
 }
