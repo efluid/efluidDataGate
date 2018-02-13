@@ -12,6 +12,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -149,6 +150,16 @@ public class CommitService extends AbstractApplicationService {
 	}
 
 	/**
+	 * @return
+	 */
+	public List<CommitEditData> getAvailableCommits() {
+
+		LOGGER.debug("Request for list of available commits");
+
+		return this.commits.findAll().stream().map(CommitEditData::fromEntity).collect(Collectors.toList());
+	}
+
+	/**
 	 * <p>
 	 * From the prepared commit, rollback in local managed DB everything which was
 	 * rejected. Generic enough for compatibility with both local and merge commits
@@ -176,8 +187,13 @@ public class CommitService extends AbstractApplicationService {
 	 * Apply the changes from the prepared local diff, and store the commit (including the
 	 * index content)
 	 * </p>
+	 * 
+	 * @param prepared
+	 *            preparation source for commit. Can be a local or a merge commit
+	 *            preparation
+	 * @return created commit uuid
 	 */
-	void saveAndApplyPreparedCommit(
+	UUID saveAndApplyPreparedCommit(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> prepared) {
 
 		LOGGER.debug("Process apply and saving of a new commit with state {}", prepared.getPreparingState());
@@ -188,6 +204,9 @@ public class CommitService extends AbstractApplicationService {
 		newCommit.setOriginalUserEmail(newCommit.getUser().getEmail());
 		newCommit.setState(prepared.getPreparingState());
 
+		// UUID generate (not done by HBM / DB)
+		newCommit.setUuid(UUID.randomUUID());
+		
 		// Init commit
 		this.commits.save(newCommit);
 
@@ -205,10 +224,12 @@ public class CommitService extends AbstractApplicationService {
 		newCommit.setIndex(this.indexes.save(entries));
 
 		// Updated commit link
-		this.commits.save(newCommit);
+		UUID commitUUID = this.commits.save(newCommit).getUuid();
 
 		// Now apply (will rollback previous steps if error found)
 		this.applyDiffService.applyDiff(entries);
+
+		return commitUUID;
 	}
 
 	/**
@@ -347,6 +368,10 @@ public class CommitService extends AbstractApplicationService {
 	 */
 	private static List<MergePreparedDiff> importedCommitIndexes(List<Commit> importedSources) {
 
+		if(importedSources == null || importedSources.isEmpty()){
+			return Lists.newArrayList();
+		}
+		
 		// Organized by DictionaryEntries
 		Map<UUID, List<PreparedMergeIndexEntry>> organized = importedSources.stream()
 				.flatMap(c -> c.getIndex().stream())

@@ -7,9 +7,12 @@
        <div class="alert alert-danger">
 	        <h4>Erreur détectée</h4>
 	        <div th:replace="commons::error-display (${code},${payload})">...</div>
-			<quote th:text="|En cas de besoin, merci de communiquer le code d'erreur suivant : ${code}-${timestamp}">JSON_WRITE_ERROR-12414421224112</quote>
+			<span class="remark">
+				Le détail de l'erreur a été tracé dans les informations techniques de l'application.
+				En cas de besoin, merci de communiquer le code d'erreur suivant : <span th:text="${code}?${code.name()}:'UNPROCESSED'">JSON_WRITE_ERROR</span>-<span th:text="${timestamp}">12414421224112</span>
+			</span>
         </div>
-		<a href="index.html" class="btn btn-secondary btn-sm" th:href="@{/index}">Revenir à la page d'accueil</a>
+		<a href="index.html" class="btn btn-secondary btn-sm" th:href="@{/}">Revenir à la page d'accueil</a>
     </span>
 </body>
 </html>

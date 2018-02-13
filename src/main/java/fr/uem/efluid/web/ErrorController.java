@@ -41,13 +41,14 @@ public class ErrorController {
 			ApplicationException ext = (ApplicationException) e;
 			model.addAttribute("code", ext.getError());
 			model.addAttribute("payload", ext.getPayload());
+			model.addAttribute("timestamp", ext.getTimestamp());
 		} else {
 			model.addAttribute("code", ErrorType.OTHER);
 			model.addAttribute("payload", null);
-		}
 
-		// Code + timestamp : unique ID for error. Allows to find error in logs
-		model.addAttribute("timestamp", Long.valueOf(System.currentTimeMillis()));
+			// Code + timestamp : unique ID for error. Allows to find error in logs
+			model.addAttribute("timestamp", Long.valueOf(System.currentTimeMillis()));
+		}
 
 		return "error";
 	}

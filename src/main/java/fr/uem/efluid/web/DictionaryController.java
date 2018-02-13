@@ -148,4 +148,16 @@ public class DictionaryController {
 	public void removeFunctionalDomainData(@PathVariable("uuid") UUID uuid) {
 		this.dictionaryManagementService.deleteFunctionalDomain(uuid);
 	}
+
+	/**
+	 * Rest Method for AJAX push
+	 * 
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping(value = "/dictionary/remove/{uuid}", method = POST)
+	@ResponseBody
+	public void removeDictionaryEntry(@PathVariable("uuid") UUID uuid) {
+		this.dictionaryManagementService.deleteDictionaryEntry(uuid);
+	}
 }

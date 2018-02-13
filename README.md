@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 12/02/2018*
+*Mise à jour au 13/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Modification de la gestion des entrées dans le dictionnaire : se fait sur un autre écran de saisie à partir de la liste
@@ -14,20 +14,23 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Modèle core : en place, avec repos
 * Utilisation BDD managed : Avec JDBCTemplate. Metadata OK avec PGSQL, a tester sur Oracle
 * Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
+* Merge : développé, non testé
 * Application / rollback de paramètres : en place, Application testé OK.
-* Export / import : en cours (composants communs) : Core + dictionary en place, testé. Reste specif pour import / export index
+* Export / import : dev en place, test seulement sur dictionnaire
 * Traitement des dépendances : En place, testé OK
 * Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
 * Les composants de génération "fine" de requêtes SQL ou d'inline de données sont désormais des beans springs extensibles
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
 * Build : maven OK. En attendant d'avoir un vrai service CI acceptant le projet, utilisation d'un build scripté (pipeline *struff*)
+* Sécurité : pas traité
 
 **Intégration maquette**
 * Mise en place d'un layout pour simpifier les templates Thymeleaf
 * index ("/") : page dynamique mais données en dur. Menu et authentification pas géré. 
 * édition des domaines fonctionnels ("/domains"): globalement implémenté. 
 * édition du dictionnaire ("/dictionary"): globalement implémenté. Quelques bugs, seront traités plus tard
-* préparation du diff ("/prepare"): logique de lancement asynchrone du diff en place, OK à ce stade. Pas beaucoup plus loin pour l'instant
+* préparation du diff ("/prepare"): globalement implémenté. Quelques bugs, seront traités plus tard
+* listing des commits ("/commits"): en cours
 * autres écrans : pas dynamisés / pas intégrés avec thymeleaf
 
 ## Utilisation

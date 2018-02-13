@@ -53,3 +53,95 @@
     font-size: 14px;
     padding: 5px 1px 15px 1px;
 }
+
+.remark {
+    font-style: italic;
+    font-size: 13px;
+}
+
+.dictionary-content {
+    margin-top: 20px;
+    border: 1px solid #CCC;
+}
+
+.dictionary-content table {
+    margin-bottom: 0px;
+}
+
+.dictionary-summary {
+    padding: 5px;
+    background-color: #F4F4F4;
+}
+
+.dictionary-summary .reducer {
+    display: block;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin: 4px;
+}
+
+.dictionary-summary .reducer-open {
+	background-image: url("/plus.png");
+}
+
+.dictionary-summary .reducer-close {
+    background-image: url("/minus.png");
+}
+
+.dictionary-summary .dictionary-name {
+	font-size: 17px;
+	color: #777;
+	font-weight: bold;
+}
+
+.dictionary-summary .dictionary-details {
+	font-size: 14px;
+	color: #777;
+	font-weight: bold;
+}
+
+.parameter-name {
+    font-weight: bold;
+}
+
+.action-line {
+    font-weight: normal;
+    color: black;
+}
+
+.action-line .action-display {
+    font-weight: bold;
+}
+
+.action-line .change-display {
+    display: block;
+    padding: 3px;
+    border: 1px #EEE solid;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.action-line.add .action-display {
+    color:green;
+}
+
+.action-line.update .action-display {
+    color:orange;
+}
+
+.action-line.remove .action-display {
+    color:red;
+}
+
+.action-line.add .change-display {
+	background-color: rgb(243, 250, 243);
+}
+
+.action-line.update .change-display {
+	background-color: rgb(236, 229, 204);
+}
+
+.action-line.remove .change-display {
+	background-color: rgb(255, 220, 220);
+}

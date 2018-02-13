@@ -1,17 +1,21 @@
 package fr.uem.efluid.web;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitStatus;
+import fr.uem.efluid.services.types.LocalPreparedDiff;
 
 /**
  * <p>
@@ -32,7 +36,10 @@ import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitSta
 public class BacklogController {
 
 	@Autowired
-	private PilotableCommitPreparationService commitService;
+	private CommitService commitService;
+
+	@Autowired
+	private PilotableCommitPreparationService pilotableCommitService;
 
 	@Autowired
 	private DictionaryManagementService dictionaryManagementService;
@@ -69,7 +76,60 @@ public class BacklogController {
 	@RequestMapping(value = "/prepare/progress", method = GET)
 	@ResponseBody
 	public PilotedCommitStatus preparationGetStatus() {
-		return this.commitService.getCurrentCommitPreparation().getStatus();
+		return this.pilotableCommitService.getCurrentCommitPreparation().getStatus();
+	}
+
+	/**
+	 * @param model
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping(path = "/prepare/commit", method = POST)
+	public String preparationLocalCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+
+		// Update current preparation with selected attributes
+		this.pilotableCommitService.copyCommitPreparationSelections(preparation);
+
+		// Get updated preparation
+		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
+
+		return "commit";
+	}
+
+	/**
+	 * @param model
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping(path = "/prepare/save", method = POST)
+	public String preparationLocalSave(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+
+		// Update current preparation with selected attributes
+		this.pilotableCommitService.copyCommitPreparationCommitData(preparation);
+		this.pilotableCommitService.saveCommitPreparation();
+
+		// Get updated preparation
+		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
+
+		// For success save message
+		model.addAttribute("from", "success_edit");
+
+		// Forward to commits list
+		return commitListPage(model);
+	}
+
+	/**
+	 * @param model
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping(path = "/commits", method = GET)
+	public String commitListPage(Model model) {
+
+		// Get updated preparation
+		model.addAttribute("commits", this.commitService.getAvailableCommits());
+
+		return "commits";
 	}
 
 	/**
@@ -83,7 +143,7 @@ public class BacklogController {
 	 * @return
 	 */
 	private String startPreparationAndRouteRegardingStatus(Model model, boolean forced) {
-		PilotedCommitPreparation<?> prepare = this.commitService.startLocalCommitPreparation(forced);
+		PilotedCommitPreparation<?> prepare = this.pilotableCommitService.startLocalCommitPreparation(forced);
 
 		// Diff already in progress : dedicated waiting page
 		if (prepare.getStatus() == PilotedCommitStatus.DIFF_RUNNING) {

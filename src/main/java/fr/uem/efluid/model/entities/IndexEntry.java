@@ -45,7 +45,6 @@ public class IndexEntry implements DiffLine {
 	@ManyToOne(optional = false)
 	private Commit commit;
 
-	@NotNull
 	private String payload;
 
 	private String keyValue;

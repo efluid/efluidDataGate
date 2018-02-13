@@ -36,7 +36,6 @@ public class Commit implements Shared {
 	@Id
 	private UUID uuid;
 
-	@NotBlank
 	private String hash;
 
 	@NotBlank

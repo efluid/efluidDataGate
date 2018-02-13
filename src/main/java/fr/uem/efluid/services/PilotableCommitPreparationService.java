@@ -7,6 +7,7 @@ import static fr.uem.efluid.utils.ErrorType.TABLE_NAME_INVALID;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -175,28 +176,6 @@ public class PilotableCommitPreparationService {
 
 	/**
 	 * <p>
-	 * Entry point for local commit save
-	 * </p>
-	 * 
-	 * @param preparation
-	 */
-	public void saveLocalCommitPreparation(PilotedCommitPreparation<LocalPreparedDiff> preparation) {
-		saveCommitPreparation(preparation);
-	}
-
-	/**
-	 * <p>
-	 * Entry point for merge commit save
-	 * </p>
-	 * 
-	 * @param preparation
-	 */
-	public void saveMergeCommitPreparation(PilotedCommitPreparation<MergePreparedDiff> preparation) {
-		saveCommitPreparation(preparation);
-	}
-
-	/**
-	 * <p>
 	 * The preparation is edited from an external form, but only few values can be edited,
 	 * and all of its content is already managed localy. So will simply copy "values than
 	 * can change" into current preparation.
@@ -204,7 +183,7 @@ public class PilotableCommitPreparationService {
 	 * 
 	 * @param changedPreparation
 	 */
-	private void copyCommitPreparationChanges(
+	public void copyCommitPreparationSelections(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> changedPreparation) {
 
 		int endContent = this.current.getPreparedContent().size();
@@ -225,6 +204,19 @@ public class PilotableCommitPreparationService {
 				currentEntry.setSelected(changedEntry.isSelected());
 			}
 		}
+	}
+
+	/**
+	 * <p>
+	 * The preparation is edited from an external form, but only few values can be edited,
+	 * and all of its content is already managed localy. So will simply copy "values than
+	 * can change" into current preparation.
+	 * </p>
+	 * 
+	 * @param changedPreparation
+	 */
+	public void copyCommitPreparationCommitData(
+			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> changedPreparation) {
 
 		// Other editable is the commit comment
 		this.current.getCommitData().setComment(changedPreparation.getCommitData().getComment());
@@ -234,14 +226,14 @@ public class PilotableCommitPreparationService {
 	 * <p>
 	 * Generic saving process. Declined with fixed type for clean frontend form push
 	 * </p>
-	 * 
-	 * @param preparation
+	 * <p>
+	 * Works on current preparation, completed with input "selected / rollbacked items"
+	 * and commit edit data.
+	 * </p>
 	 */
-	private void saveCommitPreparation(
-			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> preparation) {
+	public void saveCommitPreparation() {
 
-		// Apply diff changes to current preparation
-		copyCommitPreparationChanges(preparation);
+		LOGGER.info("Starting saving for current preparation {}", this.current.getIdentifier());
 
 		this.current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
 
@@ -251,9 +243,12 @@ public class PilotableCommitPreparationService {
 		this.current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
 
 		// Save update
-		this.commitService.saveAndApplyPreparedCommit(this.current);
+		UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(this.current);
 
+		// Drop preparation
 		completeCommitPreparation();
+
+		LOGGER.info("Saving completed for commit preparation. New commit is {}", commitUUID);
 	}
 
 	/**
@@ -360,6 +355,10 @@ public class PilotableCommitPreparationService {
 
 		catch (InterruptedException | ExecutionException e) {
 			LOGGER.error("Error will processing diff", e);
+			// If already identified, keep going on 1st identified error
+			if (this.current.getErrorDuringPreparation() != null) {
+				throw this.current.getErrorDuringPreparation();
+			}
 			return this.current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
 		}
 	}
@@ -378,9 +377,16 @@ public class PilotableCommitPreparationService {
 			// Controle if table not yet specified
 			assertDictionaryEntryIsRealTable(dict);
 
+			// Init table diff
 			LocalPreparedDiff tableDiff = LocalPreparedDiff.initFromDictionaryEntry(dict);
+
+			// Complete dictionary entry
+			tableDiff.completeFromEntity(dict);
+
+			// Search diff content
 			tableDiff.setDiff(this.diffService.currentContentDiff(dict).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+
 			return tableDiff;
 		};
 	}
@@ -495,6 +501,16 @@ public class PilotableCommitPreparationService {
 		private CommitEditData commitData;
 
 		/**
+		 * For pushed form only
+		 */
+		public PilotedCommitPreparation() {
+			this.identifier = null;
+			this.status = PilotedCommitStatus.COMMIT_CAN_PREPARE;
+			this.preparingState = null;
+			this.start = null;
+		}
+
+		/**
 		 * 
 		 */
 		protected PilotedCommitPreparation(CommitState preparingState) {
@@ -507,7 +523,7 @@ public class PilotableCommitPreparationService {
 		/**
 		 * @return the errorDuringPreparation
 		 */
-		public Throwable getErrorDuringPreparation() {
+		public ApplicationException getErrorDuringPreparation() {
 			return this.errorDuringPreparation;
 		}
 
@@ -614,6 +630,28 @@ public class PilotableCommitPreparationService {
 		 */
 		public CommitState getPreparingState() {
 			return this.preparingState;
+		}
+
+		/**
+		 * Quick access to covered Functional domains in preparation (used for commit
+		 * detail page)
+		 * 
+		 * @return
+		 */
+		public Collection<String> getSelectedFunctionalDomainNames() {
+			return this.preparedContent.stream()
+					.filter(d -> d.getDiff().stream().anyMatch(PreparedIndexEntry::isSelected))
+					.map(DiffDisplay::getDomainName)
+					.collect(Collectors.toSet());
+		}
+
+		/**
+		 * @return
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			return "Preparation[" + this.identifier + "|" + this.status + "]";
 		}
 
 	}

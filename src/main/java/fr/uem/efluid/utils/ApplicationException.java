@@ -9,6 +9,8 @@ public class ApplicationException extends RuntimeException {
 
 	private final ErrorType error;
 
+	private final Long timestamp = Long.valueOf(System.currentTimeMillis());
+
 	private String payload;
 
 	/**
@@ -75,6 +77,13 @@ public class ApplicationException extends RuntimeException {
 	 */
 	public ErrorType getError() {
 		return this.error;
+	}
+
+	/**
+	 * @return the timestamp
+	 */
+	public Long getTimestamp() {
+		return this.timestamp;
 	}
 
 	/**

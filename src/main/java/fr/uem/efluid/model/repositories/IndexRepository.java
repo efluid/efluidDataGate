@@ -1,5 +1,6 @@
 package fr.uem.efluid.model.repositories;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -51,7 +52,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 	@Query(value = "select i.* "
 			+ "from index i "
 			+ "inner join ("
-			+ "		select max(ii.id) as max_id, ii.key_value from index ii where ii.dictionary_entry_uuid = :uuid group by ii.key_value"
+			+ "	select max(ii.id) as max_id, ii.key_value from index ii where ii.dictionary_entry_uuid = :uuid group by ii.key_value"
 			+ ") mi on i.id = mi.max_id "
 			+ "where i.key_value in (:keys)", nativeQuery = true)
 	List<IndexEntry> _internal_findAllPreviousIndexEntries(@Param("uuid") UUID dictionaryEntryUuid, @Param("keys") List<String> keyValues);
@@ -67,6 +68,11 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 	 * @return
 	 */
 	default Map<String, IndexEntry> findAllPreviousIndexEntries(DictionaryEntry dictionaryEntry, List<String> keyValues) {
+
+		// Do not attempt to select with an empty "in"
+		if (keyValues == null || keyValues.isEmpty()) {
+			return new HashMap<>();
+		}
 
 		return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid(), keyValues).stream()
 				.collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v));

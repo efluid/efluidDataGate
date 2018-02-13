@@ -21,10 +21,17 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	private String dictionaryEntryName;
 
 	private String dictionaryEntryKeyName;
-	
+
 	private String dictionaryEntryTableName;
-	
+
 	private T diff;
+
+	/**
+	 * 
+	 */
+	public DiffDisplay() {
+		super();
+	}
 
 	/**
 	 * @param dict
@@ -57,7 +64,8 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	}
 
 	/**
-	 * @param dictionaryEntryTableName the dictionaryEntryTableName to set
+	 * @param dictionaryEntryTableName
+	 *            the dictionaryEntryTableName to set
 	 */
 	public void setDictionaryEntryTableName(String dictionaryEntryTableName) {
 		this.dictionaryEntryTableName = dictionaryEntryTableName;
@@ -131,7 +139,8 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	}
 
 	/**
-	 * @param dictionaryEntryKeyName the dictionaryEntryKeyName to set
+	 * @param dictionaryEntryKeyName
+	 *            the dictionaryEntryKeyName to set
 	 */
 	public void setDictionaryEntryKeyName(String dictionaryEntryKeyName) {
 		this.dictionaryEntryKeyName = dictionaryEntryKeyName;
@@ -148,7 +157,7 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 		setDictionaryEntryName(entity.getParameterName());
 		setDictionaryEntryKeyName(entity.getKeyName());
 		setDictionaryEntryTableName(entity.getTableName());
-		
+
 		if (entity.getDomain() != null) {
 			setDomainName(entity.getDomain().getName());
 			setDomainUuid(entity.getDomain().getUuid());

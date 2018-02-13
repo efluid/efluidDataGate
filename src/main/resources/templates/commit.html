@@ -1,86 +1,42 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html layout:decorator="layout">
 <head>
-    <title>Maquette Gestion Paramètrage Efluid</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" href="./css/core.css" media="screen" />
-    
 </head>
 <body>
-    <div class="container-fluid">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
-            <a class="navbar-brand" href="./index.html">Gestion du paramètrage Efluid</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="divider-horizontal"></div>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">       
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Dictionnaire
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./dictionary.html">Modification du dictionnaire</a>
-                            <a class="dropdown-item" href="./domains.html">Configuration des domaines fonctionnels</a>
-                            <a class="dropdown-item" href="./share.html">Export / Import de dictionnaire</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Lot de modification
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./commits.html">Liste des lots présents</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item active" href="./prepare.html">Préparer un lot</a>
-                            <a class="dropdown-item" href="./pull.html">Importer un lot</a>
-                            <a class="dropdown-item" href="./push.html">Exporter un lot</a>
-                        </div>
-                    </li>
-                </ul>
-                <form class="form-inline">
-                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
-                </form>
-            </div>
-        </nav>
+    <span layout:fragment="content">
         <div class="row"><div class="col-1">&nbsp;</div></div>
         <div class="row">
             <div class="col-1"></div>
-            <div class="col-6">
-                <form class="form-inline">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th scope="col">Identification du lot</th>
-                            </tr>
-                        </thead>
-                        <tr>
-                            <td><h5>Domaines fonctionnels concernés</h5>
-                                <ul>
-                                    <li>Gestion du matériel</li>
-                                    <li>Matrice des prix</li>
-                                    <li>Processus utilisateurs</li>
-                                    <li>Editions</li>
-                                </ul>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" class="form-control mx-sm-1" value="Paramètres 13FQSFQSF"/>&nbsp;&nbsp;<button type="button" class="btn btn-primary">Confirmer l'enregistrement du lot</button></td>
-                        </tr>
-                    </table>
+            <div class="col-9">
+                <form action="commit-save.html" th:action="@{/prepare/save}" method="post">
+                	<p>
+	                    <h5>Identification du lot de modifications</h5>
+                    	<table class="table">
+							<thead>
+								<tr><th scope="col">Domaines fonctionnels concernés</th></tr>
+							</thead>
+							<tr th:each="domain, tstat : ${preparation.selectedFunctionalDomainNames}">
+                            	<td th:text="${domain}">Gestion du matériel</td>
+                        	</tr>
+                        </table>
+                        
+                        <div class="form-group">
+                            <label for="whereCriteria"><b>Description du lot de modification</b></label>
+                            <input id="comment" type="text" class="form-control" th:field="${preparation.commitData.comment}" value="Lot de test" size="50"/>
+                        </div>
+					</p>
+					<p>
+						<div class="float-right">
+							<a class="btn btn-secondary btn-sm" th:href="@{/prepare}" href="prepare.html">Revenir en arrière</a>
+							<input type="submit" class="btn btn-success btn-sm" value="Confirmer les opérations"/><br/><br/>
+						</div>
+					</p>
                 </form>
             </div>
         </div>
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Commentaire sur la maquette</h4>
-            <p>Correspond à l'opération <strong>commit</strong> : on associe aux modifications ajoutées dans l'index à un commentaire. Un UUID sera généré derrière. On considère une ligne dans une table comme un <strong>chunk</strong></p>
-        </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+	</span>
+    <script layout:fragment="script">
+		
+    </script>
 </body>
 </html>

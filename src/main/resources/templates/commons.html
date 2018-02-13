@@ -2,33 +2,40 @@
 <html xmlns:th="http://www.thymeleaf.org">
 	<body>
 		<div th:fragment="error-display (code,payload)">
-			<span th:switch="${code.name()}">
-				<p th:case="'PREPARATION_INTERRUPTED'">La préparation du diff a été interrompue</p>
-				<p th:case="'PREPARATION_BIZ_FAILURE'">Le traitement du diff a rencontré une erreur suivante</p>
-				<p th:case="'PREPARATION_CANNOT_START'">Impossible de démarrer un diff quand un traitement est déjà en cours</p>
-				<p th:case="'UNSUPPORTED_UUID'">L'identifiant uuid indiqué n'est pas valide</p>
-				<p th:case="'COMMIT_IMPORT_INVALID'">Le fichier d'import de lot de modification n'est pas valide ou référence des données inconnues</p>
-				<p th:case="'METADATA_FAILED'">La lecture des métadonnées n'est pas possible sur la base de donnée gérée</p>
-				<p th:case="'APPLY_FAILED'">L'application des changements rencontre une erreur. Merci de contacter le support technique</p>
-				<p th:case="'DIC_NO_KEY'">La clé est obligatoire dans la spécification d'une table de paramètrage</p>
-				<p th:case="'IMPORT_FAIL_FILE'">Le fichier importé ne peut pas être stocké localement</p>
-				<p th:case="'EXPORT_FAIL_FILE'">Le fichier d'export ne peut pas être préparé</p>
-				<p th:case="'IMPORT_WRONG_TYPE'">Le fichier importé référence un type de package non supporté</p>
-				<p th:case="'IMPORT_WRONG_VERSION'">La version du traitement d'import est différente de celle indiquée dans le fichier importé</p>
-				<p th:case="'IMPORT_WRONG_INSTANCE'">Le composant de package indiqué ne peut pas être initialisé</p>
-				<p th:case="'EXPORT_WRONG_APPEND'">Impossible de préparer le fichier d'export en raison d'un problème d'accès système</p>
-				<p th:case="'EXPORT_ZIP_FAILED'">La compression du fichier d'export est impossible</p>
-				<p th:case="'IMPORT_ZIP_FAILED'">La décompression du fichier importé est impossible</p>
-				<p th:case="'IMPORT_WRONG_READ'">Impossible d'accéder au contenu du fichier importé</p>
-				<p th:case="'TMP_ERROR'">Le système ne permet pas la préparation du fichier temporaire</p>
-				<p th:case="'JSON_WRITE_ERROR'">Le format sérialisé ne peut pas être écrit avec les données indiquées</p>
-				<p th:case="'JSON_READ_ERROR'">Le format sérialisé ne peut pas être lu avec les données indiquées</p>
-				<p th:case="'TABLE_NAME_INVALID'">
-					La table indiquée "<span th:text="${payload}"></span>" est référencée dans le dictionnaire mais n'existe pas
-					dans la base de donnée gérée. Aucune extraction de données ne peut être réalisée si le dictionnaire n'est pas valide.
-				  	Un script d'initialisation doit peut-être être lancé ?
-				</p>
-				<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
+			<span th:if="${code}">
+				<span th:switch="${code.name()}">
+					<p th:case="'PREPARATION_INTERRUPTED'">La préparation du diff a été interrompue</p>
+					<p th:case="'PREPARATION_BIZ_FAILURE'">Le traitement du diff a rencontré une erreur suivante</p>
+					<p th:case="'PREPARATION_CANNOT_START'">Impossible de démarrer un diff quand un traitement est déjà en cours</p>
+					<p th:case="'UNSUPPORTED_UUID'">L'identifiant uuid indiqué n'est pas valide</p>
+					<p th:case="'COMMIT_IMPORT_INVALID'">Le fichier d'import de lot de modification n'est pas valide ou référence des données inconnues</p>
+					<p th:case="'METADATA_FAILED'">La lecture des métadonnées n'est pas possible sur la base de donnée gérée</p>
+					<p th:case="'APPLY_FAILED'">L'application des changements rencontre une erreur. Merci de contacter le support technique</p>
+					<p th:case="'DIC_NO_KEY'">La clé est obligatoire dans la spécification d'une table de paramètrage</p>
+					<p th:case="'IMPORT_FAIL_FILE'">Le fichier importé ne peut pas être stocké localement</p>
+					<p th:case="'EXPORT_FAIL_FILE'">Le fichier d'export ne peut pas être préparé</p>
+					<p th:case="'IMPORT_WRONG_TYPE'">Le fichier importé référence un type de package non supporté</p>
+					<p th:case="'IMPORT_WRONG_VERSION'">La version du traitement d'import est différente de celle indiquée dans le fichier importé</p>
+					<p th:case="'IMPORT_WRONG_INSTANCE'">Le composant de package indiqué ne peut pas être initialisé</p>
+					<p th:case="'EXPORT_WRONG_APPEND'">Impossible de préparer le fichier d'export en raison d'un problème d'accès système</p>
+					<p th:case="'EXPORT_ZIP_FAILED'">La compression du fichier d'export est impossible</p>
+					<p th:case="'IMPORT_ZIP_FAILED'">La décompression du fichier importé est impossible</p>
+					<p th:case="'IMPORT_WRONG_READ'">Impossible d'accéder au contenu du fichier importé</p>
+					<p th:case="'TMP_ERROR'">Le système ne permet pas la préparation du fichier temporaire</p>
+					<p th:case="'JSON_WRITE_ERROR'">Le format sérialisé ne peut pas être écrit avec les données indiquées</p>
+					<p th:case="'JSON_READ_ERROR'">Le format sérialisé ne peut pas être lu avec les données indiquées</p>
+					<p th:case="'TABLE_NAME_INVALID'">
+						La table indiquée "<span th:text="${payload}"></span>" est référencée dans le dictionnaire mais n'existe pas
+						dans la base de donnée gérée. Aucune extraction de données ne peut être réalisée si le dictionnaire n'est pas valide.
+					  	Un script d'initialisation doit peut-être être lancé ?
+					</p>
+					<p th:case="'DIC_NOT_REMOVABLE'">L'entrée de dictionnaire précisée ne peut pas être supprimée : il est utilisé dans l'index</p>
+					<p th:case="'DOMAIN_NOT_REMOVABLE'">Le domaine fonctionnel précisé ne peut pas être supprimé : il est utilisé dans l'index</p>
+					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
+				</span>
+			</span>
+			<span th:if="!${code}">
+				<p>Une erreur technique inconnue a été rencontrée</p>
 			</span>
 		</div>
 	</body>

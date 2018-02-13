@@ -93,6 +93,18 @@ public class DictionaryManagementService {
 	/**
 	 * @param uuid
 	 */
+	public void deleteDictionaryEntry(UUID uuid) {
+
+		LOGGER.info("Process delete on dictionary entry {}", uuid);
+
+		assertDictionaryEntryCanBeRemoved(uuid);
+
+		this.dictionary.delete(uuid);
+	}
+
+	/**
+	 * @param uuid
+	 */
 	public void deleteFunctionalDomain(UUID uuid) {
 
 		LOGGER.info("Process delete on functional domain {}", uuid);
@@ -546,10 +558,20 @@ public class DictionaryManagementService {
 	/**
 	 * @param uuid
 	 */
+	private void assertDictionaryEntryCanBeRemoved(UUID uuid) {
+
+		if (this.dictionary.findUsedIds().contains(uuid)) {
+			throw new ApplicationException(DIC_NOT_REMOVABLE,"Dictionary with UUID " + uuid + " is used in index and therefore cannot be deleted");
+		}
+	}
+
+	/**
+	 * @param uuid
+	 */
 	private void assertDomainCanBeRemoved(UUID uuid) {
 
 		if (this.domains.findUsedIds().contains(uuid)) {
-			throw new IllegalArgumentException("FunctionalDomain with UUID " + uuid + " is used in index and therefore cannot be deleted");
+			throw new ApplicationException(DOMAIN_NOT_REMOVABLE, "FunctionalDomain with UUID " + uuid + " is used in index and therefore cannot be deleted");
 		}
 	}
 
