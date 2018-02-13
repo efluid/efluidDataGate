@@ -14,9 +14,9 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
  */
 public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 
-	private DiffLine mine;
+	private PreparedIndexEntry mine;
 
-	private DiffLine their;
+	private PreparedIndexEntry their;
 
 	/**
 	 * 
@@ -28,7 +28,7 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 	/**
 	 * @return the mine
 	 */
-	public DiffLine getMine() {
+	public PreparedIndexEntry getMine() {
 		return this.mine;
 	}
 
@@ -36,14 +36,14 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 	 * @param mine
 	 *            the mine to set
 	 */
-	public void setMine(DiffLine mine) {
+	public void setMine(PreparedIndexEntry mine) {
 		this.mine = mine;
 	}
 
 	/**
 	 * @return the their
 	 */
-	public DiffLine getTheir() {
+	public PreparedIndexEntry getTheir() {
 		return this.their;
 	}
 
@@ -51,7 +51,7 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 	 * @param their
 	 *            the their to set
 	 */
-	public void setTheir(DiffLine their) {
+	public void setTheir(PreparedIndexEntry their) {
 		this.their = their;
 	}
 

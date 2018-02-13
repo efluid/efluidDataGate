@@ -267,30 +267,21 @@ public class PreparedIndexEntry implements DiffLine {
 
 	/**
 	 * <p>
-	 * For combining process : need to recreate a combined DiffLine as a complete
-	 * PreparedIndexEntry for clean rendering and further saving process
+	 * For combining process : minimal rendering, with support of hr payload for rendering
 	 * </p>
 	 * 
 	 * @param combined
-	 * @param dict
-	 * @param keyValue
-	 * @param timestamp
+	 * @param hrPayload
 	 * @return
 	 */
-	public static PreparedIndexEntry fromCombined(DiffLine combined, DictionaryEntry dict, String keyValue, long timestamp) {
+	public static PreparedIndexEntry fromCombined(DiffLine combined, String hrPayload) {
 
 		PreparedIndexEntry data = new PreparedIndexEntry();
 
 		data.setAction(combined.getAction());
-
-		data.setDictionaryEntryName(dict.getParameterName());
-		data.setDictionaryEntryUuid(dict.getUuid());
-		data.setDomainName(dict.getDomain().getName());
-		data.setDomainUuid(dict.getDomain().getUuid());
-
+		data.setDictionaryEntryUuid(combined.getDictionaryEntryUuid());
 		data.setPayload(combined.getPayload());
-		data.setKeyValue(keyValue);
-		data.setTimestamp(timestamp);
+		data.setKeyValue(combined.getKeyValue());
 
 		return data;
 	}

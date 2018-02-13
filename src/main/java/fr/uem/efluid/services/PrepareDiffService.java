@@ -282,7 +282,7 @@ public class PrepareDiffService {
 	 * @param preparingMergeIndexToComplete
 	 * @param mergeSource
 	 */
-	private static void completeMergeIndexes(
+	private void completeMergeIndexes(
 			DictionaryEntry dict,
 			List<? extends DiffLine> local,
 			List<? extends DiffLine> mergeSource,
@@ -293,14 +293,36 @@ public class PrepareDiffService {
 		Map<String, List<DiffLine>> minesByKey = local.stream().collect(Collectors.groupingBy(DiffLine::getKeyValue));
 		Map<String, List<DiffLine>> theirsByKey = mergeSource.stream().collect(Collectors.groupingBy(DiffLine::getKeyValue));
 
+		// Prepare "previous" if any for HR Payload
+		Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dict,
+				preparingMergeIndexToComplete.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
+
 		// For each merge result (Only one possible for each keyValue)
 		preparingMergeIndexToComplete.stream().forEach(m -> {
 
-			// Complete corresponding "mine" and "their" found on same key value
-			m.setMine(DiffLine.combinedOnSameTableAndKey(minesByKey.get(m.getKeyValue())));
-			m.setTheir(DiffLine.combinedOnSameTableAndKey(theirsByKey.get(m.getKeyValue())));
-			LOGGER.debug("Completion on merge data for table {}, key \"{}\" found \"mine\"={}, \"their\"=",
-					dict.getTableName(), m.getKeyValue(), m.getMine(), m.getTheir());
+			// Prepared combined diffs
+			DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(m.getKeyValue()));
+			DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(m.getKeyValue()));
+
+			// Will apply HR Payload (previous is the same for current, "mine" & "their")
+			IndexEntry previous = previouses.get(m.getKeyValue());
+
+			// HrPayload values (3 required for each entry)
+			String currentHrPayload = getConverter().convertToHrPayload(m.getPayload(), previous != null ? previous.getPayload() : null);
+			String mineHrPayload = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null,
+					previous != null ? previous.getPayload() : null);
+			String theirHrPayload = getConverter().convertToHrPayload(their != null ? their.getPayload() : null,
+					previous != null ? previous.getPayload() : null);
+
+			// Complete current entry HR payload for rendering
+			m.setHrPayload(currentHrPayload);
+
+			// Complete corresponding "mine" and "their"
+			m.setMine(PreparedIndexEntry.fromCombined(mine, mineHrPayload));
+			m.setTheir(PreparedIndexEntry.fromCombined(their, theirHrPayload));
+
+			LOGGER.debug("Completion on merge data for table {}, key \"{}\", \"HrPayload\"=\"{}\", \"mine\"={}, \"their\"={}",
+					dict.getTableName(), m.getKeyValue(), m.getHrPayload(), m.getMine(), m.getTheir());
 		});
 
 		// For whatever is NOT found in preparingMergeIndex, IGNORE !!!
