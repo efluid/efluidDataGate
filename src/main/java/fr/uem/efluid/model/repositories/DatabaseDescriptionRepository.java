@@ -3,7 +3,7 @@ package fr.uem.efluid.model.repositories;
 import java.util.Collection;
 
 import fr.uem.efluid.model.metas.TableDescription;
-import fr.uem.efluid.utils.TechnicalException;
+import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
@@ -19,12 +19,18 @@ public interface DatabaseDescriptionRepository {
 
 	/**
 	 * @return completed TableDescription for the managed database.
-	 * @throws TechnicalException
+	 * @throws ApplicationException
 	 */
-	public Collection<TableDescription> getTables() throws TechnicalException;
+	Collection<TableDescription> getTables() throws ApplicationException;
+
+	/**
+	 * @param tableName
+	 * @return
+	 */
+	boolean isTableExists(String tableName);
 
 	/**
 	 * Force refresh on cached data if any
 	 */
-	public void refreshAll();
+	void refreshAll();
 }

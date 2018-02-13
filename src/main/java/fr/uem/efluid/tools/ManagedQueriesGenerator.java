@@ -130,17 +130,17 @@ public class ManagedQueriesGenerator {
 	 *            the total number of column available for current managed source table
 	 * @return the select part of the query, ready to be saved
 	 */
-	public String mergeSelectClause(Stream<String> selectedColumnNames, int availableColumnNumber) {
+	public String mergeSelectClause(List<String> selectedColumnNames, int availableColumnNumber) {
 
-		if (selectedColumnNames.count() == availableColumnNumber) {
+		if (selectedColumnNames.size() == availableColumnNumber) {
 			return DEFAULT_SELECT_CLAUSE;
 		}
 
 		if (this.protectColumns) {
-			return ITEM_PROTECT + selectedColumnNames.collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT)) + ITEM_PROTECT;
+			return ITEM_PROTECT + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT)) + ITEM_PROTECT;
 		}
 
-		return selectedColumnNames.collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+		return selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package fr.uem.efluid.utils;
 
+import static fr.uem.efluid.utils.ErrorType.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -67,7 +68,7 @@ public class SharedOutputInputUtils {
 			}
 			return new File(SYSTEM_DEFAULT_TMP_DIR + "/id" + UUID.randomUUID().toString() + extension).toPath();
 		} catch (IOException e) {
-			throw new TechnicalException("Cannot create tmp file with extension " + extension, e);
+			throw new ApplicationException(TMP_ERROR, "Cannot create tmp file with extension " + extension, e);
 		}
 	}
 
@@ -171,7 +172,7 @@ public class SharedOutputInputUtils {
 			try {
 				return MAPPER.writeValueAsString(this.properties);
 			} catch (JsonProcessingException e) {
-				throw new TechnicalException("Cannot serialize to json", e);
+				throw new ApplicationException(JSON_WRITE_ERROR, "Cannot serialize to json", e);
 			}
 		}
 	}
@@ -192,7 +193,7 @@ public class SharedOutputInputUtils {
 			try {
 				this.jsonProperties = MAPPER.readValue(raw, Map.class);
 			} catch (IOException e) {
-				throw new TechnicalException("Cannot deserialize from json", e);
+				throw new ApplicationException(JSON_READ_ERROR, "Cannot deserialize from json", e);
 			}
 		}
 

@@ -16,13 +16,7 @@ public class PreparedIndexEntry implements DiffLine {
 
 	private Long id;
 
-	private UUID domainUuid;
-
-	private String domainName;
-
 	private UUID dictionaryEntryUuid;
-
-	private String dictionaryEntryName;
 
 	private IndexAction action;
 
@@ -78,36 +72,6 @@ public class PreparedIndexEntry implements DiffLine {
 	}
 
 	/**
-	 * @return the domainUuid
-	 */
-	public UUID getDomainUuid() {
-		return this.domainUuid;
-	}
-
-	/**
-	 * @param domainUuid
-	 *            the domainUuid to set
-	 */
-	public void setDomainUuid(UUID domainUuid) {
-		this.domainUuid = domainUuid;
-	}
-
-	/**
-	 * @return the domainName
-	 */
-	public String getDomainName() {
-		return this.domainName;
-	}
-
-	/**
-	 * @param domainName
-	 *            the domainName to set
-	 */
-	public void setDomainName(String domainName) {
-		this.domainName = domainName;
-	}
-
-	/**
 	 * @return the dictionaryEntryUuid
 	 */
 	@Override
@@ -121,21 +85,6 @@ public class PreparedIndexEntry implements DiffLine {
 	 */
 	public void setDictionaryEntryUuid(UUID dictionaryEntryUuid) {
 		this.dictionaryEntryUuid = dictionaryEntryUuid;
-	}
-
-	/**
-	 * @return the dictionaryEntryName
-	 */
-	public String getDictionaryEntryName() {
-		return this.dictionaryEntryName;
-	}
-
-	/**
-	 * @param dictionaryEntryName
-	 *            the dictionaryEntryName to set
-	 */
-	public void setDictionaryEntryName(String dictionaryEntryName) {
-		this.dictionaryEntryName = dictionaryEntryName;
 	}
 
 	/**
@@ -297,16 +246,24 @@ public class PreparedIndexEntry implements DiffLine {
 
 		PreparedIndexEntry data = new PreparedIndexEntry();
 
+		completeFromExistingEntity(data, existing);
+
+		return data;
+	}
+
+	/**
+	 * Used when reading an index content
+	 * 
+	 * @param partial
+	 * @param dict
+	 * @return
+	 */
+	protected static void completeFromExistingEntity(PreparedIndexEntry data, IndexEntry existing) {
+
 		data.setAction(existing.getAction());
 
 		if (existing.getDictionaryEntry() != null) {
-			data.setDictionaryEntryName(existing.getDictionaryEntry().getParameterName());
 			data.setDictionaryEntryUuid(existing.getDictionaryEntry().getUuid());
-
-			if (existing.getDictionaryEntry().getDomain() != null) {
-				data.setDomainName(existing.getDictionaryEntry().getDomain().getName());
-				data.setDomainUuid(existing.getDictionaryEntry().getDomain().getUuid());
-			}
 		}
 
 		data.setPayload(existing.getPayload());
@@ -314,7 +271,5 @@ public class PreparedIndexEntry implements DiffLine {
 		data.setKeyValue(existing.getKeyValue());
 		data.setCommitUuid(existing.getCommit() != null ? existing.getCommit().getUuid() : null);
 		data.setTimestamp(existing.getTimestamp());
-
-		return data;
 	}
 }

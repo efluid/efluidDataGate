@@ -1,5 +1,10 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.utils.ErrorType.PREPARATION_BIZ_FAILURE;
+import static fr.uem.efluid.utils.ErrorType.PREPARATION_CANNOT_START;
+import static fr.uem.efluid.utils.ErrorType.PREPARATION_INTERRUPTED;
+import static fr.uem.efluid.utils.ErrorType.TABLE_NAME_INVALID;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Comparator;
@@ -21,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.DiffDisplay;
@@ -29,7 +35,7 @@ import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
-import fr.uem.efluid.utils.TechnicalException;
+import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
@@ -63,10 +69,13 @@ public class PilotableCommitPreparationService {
 	@Autowired
 	private CommitService commitService;
 
+	@Autowired
+	private DatabaseDescriptionRepository managedDesc;
+
 	// TODO : use cfg entry.
 	private ExecutorService executor = Executors.newFixedThreadPool(4);
 
-	// One active only
+	// One active only - not a session : JUST 1 FOR ALL APP
 	private PilotedCommitPreparation<?> current;
 
 	/**
@@ -123,8 +132,9 @@ public class PilotableCommitPreparationService {
 
 			// Impossible situation
 			LOGGER.error("Cannot proced to import entry point for processing merge commit will a preparation is still running.");
-			throw new TechnicalException("Cannot proced to import entry point for processing merge commit will a "
-					+ "preparation is still running.");
+			throw new ApplicationException(PREPARATION_CANNOT_START,
+					"Cannot proced to import entry point for processing merge commit will a "
+							+ "preparation is still running.");
 		}
 
 		LOGGER.info("Request for a new merge commit preparation from an import - start a new one");
@@ -187,6 +197,41 @@ public class PilotableCommitPreparationService {
 
 	/**
 	 * <p>
+	 * The preparation is edited from an external form, but only few values can be edited,
+	 * and all of its content is already managed localy. So will simply copy "values than
+	 * can change" into current preparation.
+	 * </p>
+	 * 
+	 * @param changedPreparation
+	 */
+	private void copyCommitPreparationChanges(
+			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> changedPreparation) {
+
+		int endContent = this.current.getPreparedContent().size();
+
+		// Use basic global iterate on both current and changed
+		for (int i = 0; i < endContent; i++) {
+
+			DiffDisplay<? extends List<? extends PreparedIndexEntry>> currentDiff = this.current.getPreparedContent().get(i);
+			DiffDisplay<? extends List<? extends PreparedIndexEntry>> changedDiff = changedPreparation.getPreparedContent().get(i);
+			int endDiff = currentDiff.getDiff().size();
+
+			for (int j = 0; j < endDiff; j++) {
+				PreparedIndexEntry currentEntry = currentDiff.getDiff().get(j);
+				PreparedIndexEntry changedEntry = changedDiff.getDiff().get(j);
+
+				// Editable values are "selected" and "rollbacked"
+				currentEntry.setRollbacked(changedEntry.isRollbacked());
+				currentEntry.setSelected(changedEntry.isSelected());
+			}
+		}
+
+		// Other editable is the commit comment
+		this.current.getCommitData().setComment(changedPreparation.getCommitData().getComment());
+	}
+
+	/**
+	 * <p>
 	 * Generic saving process. Declined with fixed type for clean frontend form push
 	 * </p>
 	 * 
@@ -195,17 +240,18 @@ public class PilotableCommitPreparationService {
 	private void saveCommitPreparation(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> preparation) {
 
-		this.current = preparation;
+		// Apply diff changes to current preparation
+		copyCommitPreparationChanges(preparation);
 
 		this.current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
 
 		// Apply rollbacks
-		this.commitService.applyExclusionsFromLocalCommit(preparation);
+		this.commitService.applyExclusionsFromLocalCommit(this.current);
 
 		this.current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
 
 		// Save update
-		this.commitService.saveAndApplyPreparedCommit(preparation);
+		this.commitService.saveAndApplyPreparedCommit(this.current);
 
 		completeCommitPreparation();
 	}
@@ -246,7 +292,7 @@ public class PilotableCommitPreparationService {
 
 		} catch (InterruptedException e) {
 			LOGGER.error("Error will processing diff", e);
-			preparation.setErrorDuringPreparation(e);
+			this.current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
 	}
 
@@ -294,7 +340,7 @@ public class PilotableCommitPreparationService {
 
 		} catch (InterruptedException e) {
 			LOGGER.error("Error will processing diff", e);
-			preparation.setErrorDuringPreparation(e);
+			this.current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
 	}
 
@@ -307,15 +353,14 @@ public class PilotableCommitPreparationService {
 	 * @return
 	 */
 	private <T> T gatherResult(Future<T> future) {
+
 		try {
 			return future.get();
 		}
 
-		// TODO : better error identification
 		catch (InterruptedException | ExecutionException e) {
 			LOGGER.error("Error will processing diff", e);
-			this.current.setErrorDuringPreparation(e);
-			throw new TechnicalException("Aborted on exception ", e);
+			return this.current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
 		}
 	}
 
@@ -330,6 +375,9 @@ public class PilotableCommitPreparationService {
 	private Callable<LocalPreparedDiff> callDiff(DictionaryEntry dict) {
 
 		return () -> {
+			// Controle if table not yet specified
+			assertDictionaryEntryIsRealTable(dict);
+
 			LocalPreparedDiff tableDiff = LocalPreparedDiff.initFromDictionaryEntry(dict);
 			tableDiff.setDiff(this.diffService.currentContentDiff(dict).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
@@ -354,6 +402,9 @@ public class PilotableCommitPreparationService {
 			MergePreparedDiff correspondingDiff) {
 
 		return () -> {
+			// Controle if table not yet specified
+			assertDictionaryEntryIsRealTable(dict);
+
 			// Complete dictionary entry
 			correspondingDiff.completeFromEntity(dict);
 
@@ -364,6 +415,17 @@ public class PilotableCommitPreparationService {
 			// For chained process
 			return correspondingDiff;
 		};
+	}
+
+	/**
+	 * @param entry
+	 */
+	private void assertDictionaryEntryIsRealTable(DictionaryEntry entry) {
+
+		if (!this.managedDesc.isTableExists(entry.getTableName())) {
+			this.current.fail(new ApplicationException(TABLE_NAME_INVALID, "For dict entry " + entry.getUuid() + " the table name \""
+					+ entry.getTableName() + "\" is not a valid one in managed DB", entry.getTableName()));
+		}
 	}
 
 	/**
@@ -380,7 +442,8 @@ public class PilotableCommitPreparationService {
 		COMMIT_CAN_PREPARE,
 		COMMIT_PREPARED,
 		ROLLBACK_APPLIED,
-		COMPLETED;
+		COMPLETED,
+		FAILED;
 
 	}
 
@@ -425,7 +488,7 @@ public class PilotableCommitPreparationService {
 
 		private String errorKey;
 
-		private Throwable errorDuringPreparation;
+		private ApplicationException errorDuringPreparation;
 
 		private List<T> preparedContent;
 
@@ -449,11 +512,12 @@ public class PilotableCommitPreparationService {
 		}
 
 		/**
-		 * @param errorDuringPreparation
-		 *            the errorDuringPreparation to set
+		 * @param error
 		 */
-		public void setErrorDuringPreparation(Throwable errorDuringPreparation) {
-			this.errorDuringPreparation = errorDuringPreparation;
+		public <F> F fail(ApplicationException error) {
+			this.errorDuringPreparation = error;
+			setStatus(PilotedCommitStatus.FAILED);
+			throw error;
 		}
 
 		/**

@@ -1,5 +1,6 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.utils.ErrorType.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,9 +33,10 @@ import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
+import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.services.types.RollbackLine;
 import fr.uem.efluid.utils.Associate;
-import fr.uem.efluid.utils.TechnicalException;
+import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
@@ -47,7 +49,7 @@ import fr.uem.efluid.utils.TechnicalException;
  * @version 1
  */
 @Service
-public class CommitService {
+public class CommitService extends AbstractApplicationService {
 
 	private static final String PCKG_ALL = "commits-all";
 	private static final String PCKG_AFTER = "commits-part";
@@ -182,7 +184,8 @@ public class CommitService {
 
 		Commit newCommit = CommitEditData.toEntity(prepared.getCommitData());
 		newCommit.setCreatedTime(LocalDateTime.now());
-		newCommit.setOriginalUserEmail("use-user-instead@todo.fr");
+		newCommit.setUser(getCurrentUser());
+		newCommit.setOriginalUserEmail(newCommit.getUser().getEmail());
 		newCommit.setState(prepared.getPreparingState());
 
 		// Init commit
@@ -253,8 +256,9 @@ public class CommitService {
 
 				// Impossible situation
 				if (!hasItLocaly) {
-					throw new TechnicalException("Imported package is not compliant : the requested ref commit " + imported.getUuid()
-							+ " is not imported yet nore merged in local commit base.");
+					throw new ApplicationException(COMMIT_IMPORT_INVALID,
+							"Imported package is not compliant : the requested ref commit " + imported.getUuid()
+									+ " is not imported yet nore merged in local commit base.");
 				}
 
 				LOGGER.debug("Imported ref commit {} is already managed in local db. As a valid reference, ignore it", imported.getUuid());
@@ -344,9 +348,9 @@ public class CommitService {
 	private static List<MergePreparedDiff> importedCommitIndexes(List<Commit> importedSources) {
 
 		// Organized by DictionaryEntries
-		Map<UUID, List<PreparedIndexEntry>> organized = importedSources.stream()
+		Map<UUID, List<PreparedMergeIndexEntry>> organized = importedSources.stream()
 				.flatMap(c -> c.getIndex().stream())
-				.map(PreparedIndexEntry::fromExistingEntity)
+				.map(PreparedMergeIndexEntry::fromImportedEntity)
 				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid));
 
 		// And specified as MergePreparedDiff for complete compatibility with prepare
@@ -371,11 +375,11 @@ public class CommitService {
 	 */
 	private static void assertImportPackageIsValid(List<ExportImportPackage<?>> commitPackages) {
 		if (commitPackages.size() != 1) {
-			throw new TechnicalException("Import of commits can contain only one package file");
+			throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits can contain only one package file");
 		}
 
 		if (!(commitPackages.get(0) instanceof CommitPackage)) {
-			throw new TechnicalException("Import of commits doens't contains the expected package");
+			throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package");
 		}
 	}
 }

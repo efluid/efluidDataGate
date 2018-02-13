@@ -12,7 +12,6 @@ import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitStatus;
-import fr.uem.efluid.services.types.PreparedIndexEntry;
 
 /**
  * <p>

@@ -20,6 +20,10 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 
 	private String dictionaryEntryName;
 
+	private String dictionaryEntryKeyName;
+	
+	private String dictionaryEntryTableName;
+	
 	private T diff;
 
 	/**
@@ -43,6 +47,20 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	 */
 	public void setDiff(T diff) {
 		this.diff = diff;
+	}
+
+	/**
+	 * @return the dictionaryEntryTableName
+	 */
+	public String getDictionaryEntryTableName() {
+		return this.dictionaryEntryTableName;
+	}
+
+	/**
+	 * @param dictionaryEntryTableName the dictionaryEntryTableName to set
+	 */
+	public void setDictionaryEntryTableName(String dictionaryEntryTableName) {
+		this.dictionaryEntryTableName = dictionaryEntryTableName;
 	}
 
 	/**
@@ -106,6 +124,20 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	}
 
 	/**
+	 * @return the dictionaryEntryKeyName
+	 */
+	public String getDictionaryEntryKeyName() {
+		return this.dictionaryEntryKeyName;
+	}
+
+	/**
+	 * @param dictionaryEntryKeyName the dictionaryEntryKeyName to set
+	 */
+	public void setDictionaryEntryKeyName(String dictionaryEntryKeyName) {
+		this.dictionaryEntryKeyName = dictionaryEntryKeyName;
+	}
+
+	/**
 	 * Can be partially completed (uuid only) : get other dict entry properties from its
 	 * entity
 	 * 
@@ -113,11 +145,13 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	 */
 	public void completeFromEntity(DictionaryEntry entity) {
 
-		this.setDictionaryEntryName(entity.getParameterName());
-
+		setDictionaryEntryName(entity.getParameterName());
+		setDictionaryEntryKeyName(entity.getKeyName());
+		setDictionaryEntryTableName(entity.getTableName());
+		
 		if (entity.getDomain() != null) {
-			this.setDomainName(entity.getDomain().getName());
-			this.setDomainUuid(entity.getDomain().getUuid());
+			setDomainName(entity.getDomain().getName());
+			setDomainUuid(entity.getDomain().getUuid());
 		}
 	}
 

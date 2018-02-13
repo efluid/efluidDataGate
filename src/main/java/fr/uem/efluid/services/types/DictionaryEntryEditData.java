@@ -231,9 +231,9 @@ public class DictionaryEntryEditData {
 			return this.key;
 		}
 
-
 		/**
-		 * @param key the key to set
+		 * @param key
+		 *            the key to set
 		 */
 		public void setKey(boolean key) {
 			this.key = key;
@@ -286,7 +286,8 @@ public class DictionaryEntryEditData {
 		 *            from existing link has priority over col foreignKeyTable
 		 * @return
 		 */
-		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds, String linkedTable) {
+		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds, String keyValue,
+				String linkedTable) {
 			ColumnEditData editData = new ColumnEditData();
 			if (linkedTable == null) {
 				editData.setForeignKeyTable(col.getForeignKeyTable());
@@ -296,7 +297,12 @@ public class DictionaryEntryEditData {
 			editData.setName(col.getName());
 			editData.setType(col.getType());
 			if (selecteds != null) {
-				editData.setSelected(selecteds.contains(col.getName()));
+				// Excludes selected from name
+				if (col.getName().equals(keyValue)) {
+					editData.setKey(true);
+				} else {
+					editData.setSelected(selecteds.contains(col.getName()));
+				}
 			}
 			return editData;
 		}
@@ -313,12 +319,16 @@ public class DictionaryEntryEditData {
 		 *            from existing link
 		 * @return
 		 */
-		public static ColumnEditData fromSelecteds(String selected, String keyname, String linkedTable) {
+		public static ColumnEditData fromSelecteds(String selected, String keyname, ColumnType keyType, String linkedTable) {
 			ColumnEditData editData = new ColumnEditData();
 			editData.setName(selected);
-			editData.setKey(selected.equals(keyname));
+			if (selected.equals(keyname)) {
+				editData.setKey(true);
+				editData.setType(keyType);
+			} else {
+				editData.setSelected(true);
+			}
 			editData.setForeignKeyTable(linkedTable);
-			editData.setSelected(true);
 			return editData;
 		}
 	}

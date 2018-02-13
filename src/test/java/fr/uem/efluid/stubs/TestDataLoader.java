@@ -1,12 +1,17 @@
 package fr.uem.efluid.stubs;
 
-import static fr.uem.efluid.utils.DataGenerationUtils.*;
+import static fr.uem.efluid.utils.DataGenerationUtils.commit;
+import static fr.uem.efluid.utils.DataGenerationUtils.domain;
+import static fr.uem.efluid.utils.DataGenerationUtils.entry;
+import static fr.uem.efluid.utils.DataGenerationUtils.link;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
 
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -20,13 +25,13 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
-import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.services.AbstractApplicationService;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
 
@@ -200,15 +205,13 @@ public class TestDataLoader {
 		// Reset database
 		this.index.deleteAll();
 		this.commits.deleteAll();
-		this.users.deleteAll();
 
 		// Prepare data - core items
-		User dupont = this.users.save(user("dupont"));
 		DictionaryEntry cmat = setupDictionnaryForDiff();
 
 		// Prepare existing commits
-		Commit com1 = this.commits.save(commit("Commit initial de création", dupont, 15));
-		Commit com2 = this.commits.save(commit("Commit de mise à jour", dupont, 7));
+		Commit com1 = this.commits.save(commit("Commit initial de création", AbstractApplicationService.FAKE_USER, 15));
+		Commit com2 = this.commits.save(commit("Commit de mise à jour", AbstractApplicationService.FAKE_USER, 7));
 
 		// Prepare index entries for batch init
 		List<IndexEntry> indexesCom1 = readDataset(diffName + "/knew-add.csv")
@@ -237,7 +240,6 @@ public class TestDataLoader {
 		this.commits.save(com2);
 
 		// // Force set updates
-		this.users.flush();
 		this.commits.flush();
 		this.index.flush();
 
@@ -347,4 +349,8 @@ public class TestDataLoader {
 		Assert.assertTrue(predicate.test(this.dictionary.findOne(UUID.fromString(uuid))));
 	}
 
+	@PostConstruct
+	public void addFakeUser() {
+		this.users.save(AbstractApplicationService.FAKE_USER);
+	}
 }

@@ -1,5 +1,6 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.utils.ErrorType.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,7 +39,7 @@ import fr.uem.efluid.services.types.FunctionalDomainPackage;
 import fr.uem.efluid.services.types.SelectableTable;
 import fr.uem.efluid.services.types.TableLinkPackage;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
-import fr.uem.efluid.utils.TechnicalException;
+import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * @author elecomte
@@ -172,15 +173,21 @@ public class DictionaryManagementService {
 
 		// Dedicated case : missing table, pure simulated content
 		if (desc == TableDescription.MISSING) {
+
+			// On missing, add key column
+			if (!selecteds.contains(entry.getKeyName())) {
+				selecteds.add(entry.getKeyName());
+			}
+
 			edit.setMissingTable(true);
 			edit.setColumns(selecteds.stream()
-					.map(c -> ColumnEditData.fromSelecteds(c, entry.getTableName(), mappedLinks.get(c)))
+					.map(c -> ColumnEditData.fromSelecteds(c, entry.getKeyName(), entry.getKeyType(), mappedLinks.get(c)))
 					.sorted()
 					.collect(Collectors.toList()));
 		} else {
 			// Add metadata to use for edit
 			edit.setColumns(desc.getColumns().stream()
-					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, mappedLinks.get(c.getName())))
+					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, entry.getKeyName(), mappedLinks.get(c.getName())))
 					.sorted()
 					.collect(Collectors.toList()));
 		}
@@ -207,7 +214,7 @@ public class DictionaryManagementService {
 
 		// Add metadata to use for edit
 		edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
-				.map(c -> ColumnEditData.fromColumnDescription(c, null, null))
+				.map(c -> ColumnEditData.fromColumnDescription(c, null, null, null))
 				.peek(c -> c.setSelected(true)) // Default : select all
 				.sorted()
 				.collect(Collectors.toList()));
@@ -241,7 +248,7 @@ public class DictionaryManagementService {
 
 		// Specify key from columns
 		ColumnEditData key = editData.getColumns().stream().filter(ColumnEditData::isKey).findFirst()
-				.orElseThrow(() -> new TechnicalException("The key is mandatory"));
+				.orElseThrow(() -> new ApplicationException(DIC_NO_KEY, "The key is mandatory"));
 		entry.setKeyName(key.getName());
 		entry.setKeyType(key.getType());
 
@@ -552,7 +559,7 @@ public class DictionaryManagementService {
 	 */
 	private String columnsAsSelectClause(List<ColumnEditData> columns) {
 		return this.queryGenerator.mergeSelectClause(
-				columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName),
+				columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName).collect(Collectors.toList()),
 				columns.size());
 	}
 }

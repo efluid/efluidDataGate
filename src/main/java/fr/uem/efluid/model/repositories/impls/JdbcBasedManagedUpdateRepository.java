@@ -1,5 +1,6 @@
 package fr.uem.efluid.model.repositories.impls;
 
+import static fr.uem.efluid.utils.ErrorType.*;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +30,7 @@ import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DatasourceUtils;
-import fr.uem.efluid.utils.TechnicalException;
+import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
@@ -82,7 +83,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 *      java.util.List)
 	 */
 	@Override
-	public void runAllChangesAndCommit(List<? extends DiffLine> lines) {
+	public String[] runAllChangesAndCommit(List<? extends DiffLine> lines) {
 
 		LOGGER.debug("Identified change to apply on managed DB. Will process {} diffLines", Integer.valueOf(lines.size()));
 
@@ -117,6 +118,9 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 
 			// Commit immediately the update if successfull
 			this.managedDbTransactionManager.commit(status);
+
+			// For history saving
+			return queries;
 		}
 
 		// Debug complete diff content
@@ -129,7 +133,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 				lines.forEach(l -> LOGGER.debug("Dict[{}] : {} [{}] => {}", l.getDictionaryEntryUuid(), l.getAction(), l.getKeyValue(),
 						l.getPayload()));
 			}
-			throw new TechnicalException("Error on batched updated for diff content. Check process model", e);
+			throw new ApplicationException(APPLY_FAILED, "Error on batched updated for diff content. Check process model", e);
 		}
 	}
 

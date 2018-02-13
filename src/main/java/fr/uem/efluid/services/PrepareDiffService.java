@@ -268,10 +268,7 @@ public class PrepareDiffService {
 		entry.setTimestamp(System.currentTimeMillis());
 
 		// Complete from dict
-		entry.setDictionaryEntryName(dic.getParameterName());
 		entry.setDictionaryEntryUuid(dic.getUuid());
-		entry.setDomainName(dic.getDomain().getName());
-		entry.setDomainUuid(dic.getDomain().getUuid());
 
 		return entry;
 	}

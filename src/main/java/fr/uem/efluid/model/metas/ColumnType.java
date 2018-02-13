@@ -18,7 +18,8 @@ import java.sql.Types;
  * <li>{@link #BINARY} means <i>"something we need to manage with a special process in a
  * SQL query as it is not a scalare value inlined in a query"</i>. Used for BLOB (and CLOB
  * ??)</li>
- * <li>{@link #PK} means <i>"something with a generated value I shouldn't share with other database instances"</i>. Used to identify the </li>
+ * <li>{@link #PK} means <i>"something with a generated value I shouldn't share with other
+ * database instances"</i>. Used to identify the</li>
  * </ul>
  * </p>
  * 
@@ -29,18 +30,20 @@ import java.sql.Types;
 public enum ColumnType {
 
 	// TODO : If CLOB and BLOC cannot be managed the same way, use a dedicated type "TEXT"
-	BINARY('B'),
-	ATOMIC('O'),
-	STRING('S'),
-	PK('!');
+	BINARY('B', "LOB"),
+	ATOMIC('O', "Variable"),
+	STRING('S', "Literal"),
+	PK('!', "Identifiant");
 
 	private final char represent;
+	private final String displayName;
 
 	/**
 	 * @param represent
 	 */
-	private ColumnType(char represent) {
+	private ColumnType(char represent, String displayName) {
 		this.represent = represent;
+		this.displayName = displayName;
 	}
 
 	/**
@@ -48,6 +51,13 @@ public enum ColumnType {
 	 */
 	public char getRepresent() {
 		return this.represent;
+	}
+
+	/**
+	 * @return the displayName
+	 */
+	public String getDisplayName() {
+		return this.displayName;
 	}
 
 	/**

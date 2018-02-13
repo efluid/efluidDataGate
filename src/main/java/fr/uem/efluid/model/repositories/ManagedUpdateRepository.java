@@ -41,11 +41,13 @@ public interface ManagedUpdateRepository {
 	 * </p>
 	 * <p>
 	 * Due to the "double transaction" behavior of this process, it is needed by feature
-	 * to commit immediately successful changes in Managed DB. So please check that their
-	 * is no update on CORE db AFTER a call to this method
+	 * to commit immediately successful changes in Managed DB. So please check that there
+	 * is no "dangerous" update on CORE db AFTER a call to this method
 	 * </p>
 	 * 
 	 * @param lines
+	 *
+	 * @return the processed queries
 	 */
-	void runAllChangesAndCommit(List<? extends DiffLine> lines);
+	String[] runAllChangesAndCommit(List<? extends DiffLine> lines);
 }

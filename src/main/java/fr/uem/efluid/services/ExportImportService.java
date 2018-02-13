@@ -1,5 +1,6 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.utils.ErrorType.*;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Service;
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
-import fr.uem.efluid.utils.TechnicalException;
+import fr.uem.efluid.utils.ApplicationException;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;
@@ -98,7 +99,7 @@ public class ExportImportService {
 			return new ExportImportFile(compress(packFiles), "PCKG");
 
 		} catch (IOException e) {
-			throw new TechnicalException("Cannot process export on " + packages.size() + " packages", e);
+			throw new ApplicationException(EXPORT_FAIL_FILE, "Cannot process export on " + packages.size() + " packages", e);
 		}
 	}
 
@@ -118,7 +119,7 @@ public class ExportImportService {
 					.collect(Collectors.toList());
 
 		} catch (IOException e) {
-			throw new TechnicalException("Cannot process import on package " + file.getFilename(), e);
+			throw new ApplicationException(IMPORT_FAIL_FILE, "Cannot process import on package " + file.getFilename(), e);
 		}
 	}
 
@@ -146,7 +147,7 @@ public class ExportImportService {
 
 			// Check type is valid
 			if (!ExportImportPackage.class.isAssignableFrom(type)) {
-				throw new TechnicalException("Processing of package type load is invalid. Type " + type + " is not a package");
+				throw new ApplicationException(IMPORT_WRONG_TYPE, "Processing of package type load is invalid. Type " + type + " is not a package");
 			}
 
 			// Init instance
@@ -155,7 +156,7 @@ public class ExportImportService {
 
 			// Must have same version
 			if (!instance.getVersion().equals(version)) {
-				throw new TechnicalException("Processing of package type load is invalid. Version " + version
+				throw new ApplicationException(IMPORT_WRONG_VERSION, "Processing of package type load is invalid. Version " + version
 						+ " is not supported for \"" + name + "\" (current version is " + instance.getVersion() + ")");
 			}
 
@@ -178,7 +179,7 @@ public class ExportImportService {
 		// From instance init
 		catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
 				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			throw new TechnicalException("Processing of package type load is invalid. Check type", e);
+			throw new ApplicationException(IMPORT_WRONG_INSTANCE, "Processing of package type load is invalid. Check type", e);
 		}
 	}
 
@@ -198,12 +199,12 @@ public class ExportImportService {
 					LOGGER.debug("Adding file \"{}\" to zip destination \"{}\"", p, zip);
 					zipFile.addFile(p.toFile(), ZIP_PARAMS);
 				} catch (ZipException e) {
-					throw new TechnicalException("Cannot zip " + p, e);
+					throw new ApplicationException(EXPORT_ZIP_FAILED, "Cannot zip " + p, e);
 				}
 			});
 			return zip;
 		} catch (ZipException e) {
-			throw new TechnicalException("Cannot zip files " + unzipped);
+			throw new ApplicationException(EXPORT_ZIP_FAILED, "Cannot zip files " + unzipped);
 		}
 	}
 
@@ -222,7 +223,7 @@ public class ExportImportService {
 					.filter(Files::isRegularFile)
 					.collect(Collectors.toList());
 		} catch (ZipException e) {
-			throw new TechnicalException("Cannot unzip " + zipped);
+			throw new ApplicationException(IMPORT_ZIP_FAILED, "Cannot unzip " + zipped);
 		}
 	}
 
@@ -238,7 +239,7 @@ public class ExportImportService {
 			}
 			Files.write(path, value.getBytes(CHARSET), StandardOpenOption.APPEND);
 		} catch (IOException e) {
-			throw new TechnicalException("Cannot append to file " + path, e);
+			throw new ApplicationException(EXPORT_WRONG_APPEND, "Cannot append to file " + path, e);
 		}
 	}
 
@@ -250,7 +251,7 @@ public class ExportImportService {
 		try {
 			return new String(Files.readAllBytes(path), CHARSET);
 		} catch (IOException e) {
-			throw new TechnicalException("Cannot read file " + path, e);
+			throw new ApplicationException(IMPORT_WRONG_READ, "Cannot read file " + path, e);
 		}
 	}
 

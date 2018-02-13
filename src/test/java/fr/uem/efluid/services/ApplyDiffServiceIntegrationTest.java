@@ -19,7 +19,7 @@ import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.stubs.TestDataLoader;
 import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.utils.TechnicalException;
+import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * @author elecomte
@@ -92,7 +92,7 @@ public class ApplyDiffServiceIntegrationTest {
 		}
 
 		// Required
-		catch (TechnicalException e) {
+		catch (ApplicationException e) {
 			// DB unchanged
 			this.loader.assertSourceSize(4);
 			this.loader.assertSourceChildSize(4);
@@ -144,7 +144,7 @@ public class ApplyDiffServiceIntegrationTest {
 		}
 
 		// Required
-		catch (TechnicalException e) {
+		catch (ApplicationException e) {
 			// DB unchanged
 			this.loader.assertSourceSize(4);
 			this.loader.assertSourceChildSize(8);
@@ -173,7 +173,7 @@ public class ApplyDiffServiceIntegrationTest {
 		}
 
 		// Required
-		catch (TechnicalException e) {
+		catch (ApplicationException e) {
 			// DB unchanged
 			this.loader.assertSourceSize(4);
 			this.loader.assertSourceChildSize(8);
@@ -235,7 +235,7 @@ public class ApplyDiffServiceIntegrationTest {
 		}
 
 		// Required
-		catch (TechnicalException e) {
+		catch (ApplicationException e) {
 			// DB unchanged
 			this.loader.assertSourceSize(4);
 			this.loader.assertSourceChildSize(8);
@@ -317,7 +317,7 @@ public class ApplyDiffServiceIntegrationTest {
 		}
 
 		// Required
-		catch (TechnicalException e) {
+		catch (ApplicationException e) {
 			// DB unchanged
 			this.loader.assertSourceSize(7);
 			this.loader.assertSourceChildSize(12);

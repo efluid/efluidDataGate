@@ -36,6 +36,6 @@ public class RuntimeValuesUtils {
 			return UUID.fromString((String) o);
 		}
 
-		throw new TechnicalException("Unsuported UUID def type : " + o.getClass() + " with value " + o);
+		throw new ApplicationException(ErrorType.UNSUPPORTED_UUID, "Unsuported UUID def type : " + o.getClass() + " with value " + o);
 	}
 }

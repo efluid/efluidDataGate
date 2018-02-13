@@ -8,7 +8,10 @@
         <div class="row">
             <div class="col-1"></div>
             <div class="col-9">
-                <form action="/commit.html" th:action="@{/prepare/save}" method="post">
+            	<div class="alert alert-danger" th:if="${preparation.status.name()}=='FAILED'">
+            		La preparation plante : <div th:replace="commons::error-display (${preparation.errorDuringPreparation.error},${preparation.errorDuringPreparation.payload})">...</div>
+            	</div>
+                <form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/prepare/save}" method="post">
 	                <p>
 	                    <h5>Préparation d'un lot
 	                    <a th:href="@{/prepare/restart}" href="#" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les modifications</a></h5>
@@ -23,40 +26,44 @@
 	                        <button class="btn btn-primary" type="button">Filtrer par domaine fonctionnel</button>
 	                    </form>
 	                </p>
-	                <table class="table table-sm">
-	                    <thead>
-	                        <tr>
-	                            <th scope="col" width="20%">Domaine</th>
-	                            <th scope="col" width="20%">Paramètre</th>
-	                            <th scope="col" width="50%">Modification</th>
-	                            <th scope="col">
-									<div class="btn-group float-right" role="group">
-										<button type="button" class="btn btn-outline-primary btn-sm">Tout garder</button>
-										<button type="button" class="btn btn-outline-secondary btn-sm">Tout annuler</button>
-									</div>
-								</th>
-	                        </tr>
-	                    </thead>
-	                    <tbody>
-							<tr th:each="entry, stat : ${preparation.preparedDiff}" th:id="|${entry.dictionaryEntryUuid}_${entry.keyValue}|">
-								<td th:text="${entry.domainName}">Gestion du matériel</td>
-	                            <td th:text="${entry.dictionaryEntryName}">Catégorie de matériel</td>
-	                            <td>
-	                            	<input type="hidden" th:field="${preparation.preparedDiff[__${stat.index}__].name}"/>
-	                            	<input type="hidden" th:field="${preparation.preparedDiff[__${stat.index}__].name}"/>
-	                            	<span class="change-display">
-	                            		<span th:class="${#strings.toLowerCase(entry.action.name())}" class="add" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span> "Compteur d'eau" / "abc" / "FS"
-	                            	</span>
-	                            </td>
-		                        <td>
-									<div class="btn-group float-right" role="group">
-										<button type="button" th:class="${preparation.preparedDiff[__${stat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Garder</button>
-										<button type="button" th:class="!${preparation.preparedDiff[__${stat.index}__].selected}?'btn btn-secondary btn-sm unselect-button':'btn btn-outline-secondary btn-sm unselect-button'" class="btn btn-secondary btn-sm unselect-button">Annuler</button>
-									</div>
-								</td>
-							</tr>
-	                    </tbody>
-	                </table>
+	                <div th:each="diffDisplay, tstat : ${preparation.preparedContent}" class="dictionary-content" th:id="${diffDisplay.dictionaryEntryUuid}">
+	                	<div class="dictionary-summary">
+	                		<h4 th:text="|${diffDisplay.dictionaryEntryName} (table ${diffDisplay.dictionaryEntryTableName})|">Type de matériel (table TTYPEMATERIEL)</h4>
+	                		<p th:text="|Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</p>
+	                	</div>
+						<table class="table table-sm">
+							<thead>
+								<tr>
+									<th scope="col">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
+									<th scope="col">Type</th>
+									<th scope="col">Modification</th>
+									<th scope="col">
+										<div class="btn-group float-right" role="group">
+											<button type="button" th:id="|selectAllButtonFor${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary btn-sm">Tout garder</button>
+											<button type="button" th:id="|rollbackAllButtonFor${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-secondary btn-sm">Tout annuler</button>
+											<button type="button" th:id="|ignoreAllButtonFor${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
+										</div>
+									</th>
+							    </tr>
+							</thead>
+							<tbody>
+								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:class="|action-${#strings.toLowerCase(entry.action.name())}]" class="action-add">
+									<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
+									<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Gestion du matériel</td>
+		                            <td class="change-display" th:text="${entry.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</td>
+		                            <td>
+	            						<input type="hidden" th:id="|selectFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
+	            						<input type="hidden" th:id="|rollbackFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
+										<div class="btn-group float-right" role="group">
+											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Garder</button>
+											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Annuler</button>
+											<button type="button" th:class="!${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected or preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-secondary btn-sm ignore-button':'btn btn-outline-secondary btn-sm ignore-button'" class="btn btn-secondary btn-sm ignore-button">Ignorer</button>
+										</div>
+		                            </td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
 					<p>
 						<div class="float-right">
 							<input type="submit" class="btn btn-success btn-sm" value="Confirmer les opérations"/><br/><br/>

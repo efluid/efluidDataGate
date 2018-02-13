@@ -4,7 +4,12 @@
 </head>
 <body>
     <span layout:fragment="content">
-       Erreur détectée
+       <div class="alert alert-danger">
+	        <h4>Erreur détectée</h4>
+	        <div th:replace="commons::error-display (${code},${payload})">...</div>
+			<quote th:text="|En cas de besoin, merci de communiquer le code d'erreur suivant : ${code}-${timestamp}">JSON_WRITE_ERROR-12414421224112</quote>
+        </div>
+		<a href="index.html" class="btn btn-secondary btn-sm" th:href="@{/index}">Revenir à la page d'accueil</a>
     </span>
 </body>
 </html>

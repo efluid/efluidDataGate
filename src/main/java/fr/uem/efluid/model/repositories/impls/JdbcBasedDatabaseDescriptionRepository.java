@@ -1,5 +1,6 @@
 package fr.uem.efluid.model.repositories.impls;
 
+import static fr.uem.efluid.utils.ErrorType.*;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,7 +20,7 @@ import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
-import fr.uem.efluid.utils.TechnicalException;
+import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
@@ -42,7 +43,7 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 
 	@Override
 	@Cacheable("metadatas")
-	public Collection<TableDescription> getTables() throws TechnicalException {
+	public Collection<TableDescription> getTables() throws ApplicationException {
 
 		try {
 			// TODO : check availability on all tested database
@@ -58,7 +59,26 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 
 			return tables.values();
 		} catch (SQLException e) {
-			throw new TechnicalException("Cannot extract metadata", e);
+			throw new ApplicationException(METADATA_FAILED, "Cannot extract metadata", e);
+		}
+	}
+
+	/**
+	 * @param tableName
+	 * @return
+	 */
+	@Override
+	@Cacheable("existingTables")
+	public boolean isTableExists(String tableName) {
+
+		try {
+			DatabaseMetaData md = this.managedSource.getDataSource().getConnection().getMetaData();
+			LOGGER.debug("Checking existance on table {}", tableName);
+			try (ResultSet rs = md.getTables(null, null, tableName, TABLES_TYPES)) {
+				return rs.next();
+			}
+		} catch (SQLException e) {
+			throw new ApplicationException(METADATA_FAILED, "Cannot extract metadata", e);
 		}
 	}
 
@@ -67,7 +87,7 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 * @see fr.uem.efluid.model.repositories.DatabaseDescriptionRepository#refreshAll()
 	 */
 	@Override
-	@CacheEvict("metadatas")
+	@CacheEvict({ "metadatas", "existingTables" })
 	public void refreshAll() {
 		LOGGER.info("Metadata cache droped. Will extract fresh data on next call");
 	}
@@ -179,7 +199,7 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 			}
 
 		} catch (SQLException e) {
-			throw new TechnicalException("Cannot extract metadata", e);
+			throw new ApplicationException(METADATA_FAILED, "Cannot extract metadata", e);
 		}
 	}
 
@@ -226,7 +246,7 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 				}
 			}
 		} catch (SQLException e) {
-			throw new TechnicalException("Cannot extract metadata", e);
+			throw new ApplicationException(METADATA_FAILED, "Cannot extract metadata", e);
 		}
 	}
 

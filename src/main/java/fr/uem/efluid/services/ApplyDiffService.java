@@ -2,6 +2,7 @@ package fr.uem.efluid.services;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.entities.ApplyHistoryEntry;
+import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
 import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
 import fr.uem.efluid.services.types.RollbackLine;
 
@@ -28,12 +32,15 @@ import fr.uem.efluid.services.types.RollbackLine;
  */
 @Service
 @Transactional // Core DB Transaction, NOT managed DB Transaction
-public class ApplyDiffService {
+public class ApplyDiffService extends AbstractApplicationService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ApplyDiffService.class);
 
 	@Autowired
 	private ManagedUpdateRepository updates;
+
+	@Autowired
+	private ApplyHistoryEntryRepository history;
 
 	/**
 	 * <p>
@@ -46,7 +53,7 @@ public class ApplyDiffService {
 	public void applyDiff(List<? extends DiffLine> diffLines) {
 
 		LOGGER.info("Will apply a diff of {} items", Integer.valueOf(diffLines.size()));
-		this.updates.runAllChangesAndCommit(diffLines);
+		keepHistory(this.updates.runAllChangesAndCommit(diffLines), false);
 	}
 
 	/**
@@ -60,6 +67,28 @@ public class ApplyDiffService {
 	public void rollbackDiff(List<RollbackLine> rollBackLines) {
 
 		LOGGER.info("Will apply a rollback of {} items", Integer.valueOf(rollBackLines.size()));
-		this.updates.runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()));
+		keepHistory(
+				this.updates.runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList())),
+				true);
+	}
+
+	/**
+	 * <p>
+	 * Track every applied modifs in an history
+	 * </p>
+	 * 
+	 * @param queries
+	 * @param isRollback
+	 */
+	private void keepHistory(String[] queries, boolean isRollback) {
+
+		Long timestamp = Long.valueOf(System.currentTimeMillis());
+		User currentUser = getCurrentUser();
+
+		this.history.save(Stream.of(queries).map(ApplyHistoryEntry::new).peek(h -> {
+			h.setRollback(isRollback);
+			h.setTimestamp(timestamp);
+			h.setUser(currentUser);
+		}).collect(Collectors.toList()));
 	}
 }

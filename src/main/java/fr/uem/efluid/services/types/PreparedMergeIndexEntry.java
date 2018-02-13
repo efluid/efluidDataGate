@@ -1,7 +1,6 @@
 package fr.uem.efluid.services.types;
 
-import fr.uem.efluid.model.DiffLine;
-import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexEntry;
 
 /**
  * <p>
@@ -56,31 +55,17 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 	}
 
 	/**
-	 * <p>
-	 * For combining process : need to recreate a combined DiffLine as a complete
-	 * PreparedIndexEntry for clean rendering and further saving process
-	 * </p>
+	 * Used when reading an imported index content
 	 * 
-	 * @param combined
+	 * @param partial
 	 * @param dict
-	 * @param keyValue
-	 * @param timestamp
 	 * @return
 	 */
-	public static PreparedMergeIndexEntry fromImport(DiffLine combined, DictionaryEntry dict, String keyValue, long timestamp) {
+	public static PreparedMergeIndexEntry fromImportedEntity(IndexEntry existing) {
 
 		PreparedMergeIndexEntry data = new PreparedMergeIndexEntry();
 
-		data.setAction(combined.getAction());
-
-		data.setDictionaryEntryName(dict.getParameterName());
-		data.setDictionaryEntryUuid(dict.getUuid());
-		data.setDomainName(dict.getDomain().getName());
-		data.setDomainUuid(dict.getDomain().getUuid());
-
-		data.setPayload(combined.getPayload());
-		data.setKeyValue(keyValue);
-		data.setTimestamp(timestamp);
+		completeFromExistingEntity(data, existing);
 
 		return data;
 	}
