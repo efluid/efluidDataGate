@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.CommitRepository;
@@ -204,11 +205,16 @@ public class CommitService extends AbstractApplicationService {
 		newCommit.setOriginalUserEmail(newCommit.getUser().getEmail());
 		newCommit.setState(prepared.getPreparingState());
 
+		// Prepared commit uuid
+		UUID commitUUID = UUID.randomUUID();
+
 		// UUID generate (not done by HBM / DB)
-		newCommit.setUuid(UUID.randomUUID());
-		
+		newCommit.setUuid(commitUUID);
+
 		// Init commit
 		this.commits.save(newCommit);
+
+		LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commitUUID);
 
 		List<IndexEntry> entries = prepared.getPreparedContent().stream()
 				.flatMap(l -> l.getDiff().stream())
@@ -224,10 +230,15 @@ public class CommitService extends AbstractApplicationService {
 		newCommit.setIndex(this.indexes.save(entries));
 
 		// Updated commit link
-		UUID commitUUID = this.commits.save(newCommit).getUuid();
+		this.commits.save(newCommit);
 
-		// Now apply (will rollback previous steps if error found)
-		this.applyDiffService.applyDiff(entries);
+		// For merge : apply (will rollback previous steps if error found)
+		if (prepared.getPreparingState() == CommitState.MERGED) {
+			LOGGER.info("Processing merge commit {} : now apply all {} modifications prepared from imported values",
+					commitUUID, Integer.valueOf(entries.size()));
+			this.applyDiffService.applyDiff(entries);
+			LOGGER.debug("Processing merge commit {} : diff applied with success", commitUUID);
+		}
 
 		return commitUUID;
 	}
@@ -252,11 +263,14 @@ public class CommitService extends AbstractApplicationService {
 		// #2 Check package validity
 		assertImportPackageIsValid(commitPackages);
 
+		// Only one package possible for commit import
 		CommitPackage commitPckg = (CommitPackage) commitPackages.get(0);
 
+		LOGGER.debug("Import of commits from package {} initiated", commitPckg);
+
+		// #3 Extract local data to merge with
 		Map<UUID, Commit> localCommits = this.commits.findAll().stream()
 				.collect(Collectors.toMap(Commit::getUuid, v -> v));
-
 		Map<UUID, Commit> mergedCommits = localCommits.values().stream()
 				.flatMap(c -> Associate.onFlatmapOf(c.getMergeSources(), c))
 				.collect(Collectors.toMap(Associate::getOne, Associate::getTwo));
@@ -267,9 +281,10 @@ public class CommitService extends AbstractApplicationService {
 		// Need to be sorted by create time
 		Collections.sort(commitPckg.getContent(), Comparator.comparing(Commit::getCreatedTime));
 
-		// #3
+		// #4 Process commits, one by one
 		for (Commit imported : commitPckg.getContent()) {
 
+			// Check if already stored localy (in "local" or "merged")
 			boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());
 
 			// It's a ref : we MUST have it locally (imported as this or merged)
@@ -320,6 +335,9 @@ public class CommitService extends AbstractApplicationService {
 		// Can show number of processing commits
 		result.addCount(PCKG_ALL, commitPckg.getContent().size(), toProcess.size(), 0);
 
+		LOGGER.info("Import of commits from package {} done  : now the merge data is ready with {} source commits", commitPckg,
+				Integer.valueOf(commitPckg.getContent().size()));
+
 		return result;
 
 	}
@@ -368,10 +386,10 @@ public class CommitService extends AbstractApplicationService {
 	 */
 	private static List<MergePreparedDiff> importedCommitIndexes(List<Commit> importedSources) {
 
-		if(importedSources == null || importedSources.isEmpty()){
+		if (importedSources == null || importedSources.isEmpty()) {
 			return Lists.newArrayList();
 		}
-		
+
 		// Organized by DictionaryEntries
 		Map<UUID, List<PreparedMergeIndexEntry>> organized = importedSources.stream()
 				.flatMap(c -> c.getIndex().stream())

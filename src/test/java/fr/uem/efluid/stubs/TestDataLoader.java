@@ -25,6 +25,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
@@ -123,9 +124,11 @@ public class TestDataLoader {
 
 		FunctionalDomain dom1 = this.domains.save(domain("Source exemple"));
 		this.dictionary
-				.save(entry("Sources de données parent", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY"));
+				.save(entry("Sources de données parent", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY",
+						ColumnType.ATOMIC));
 		DictionaryEntry child = this.dictionary
-				.save(entry("Sources de données enfant", dom1, "VALUE, PARENT", TestUtils.SOURCE_CHILD_TABLE_NAME, "1=1", "KEY"));
+				.save(entry("Sources de données enfant", dom1, "VALUE, PARENT", TestUtils.SOURCE_CHILD_TABLE_NAME, "1=1", "KEY",
+						ColumnType.ATOMIC));
 
 		this.links.save(link(child, "PARENT", TestUtils.SOURCE_TABLE_NAME));
 
@@ -159,7 +162,8 @@ public class TestDataLoader {
 	public DictionaryEntry addDictionaryWithTrinome(String domain, String tableName) {
 
 		FunctionalDomain dom1 = this.domains.save(domain(domain));
-		DictionaryEntry dict = this.dictionary.save(entry(tableName, dom1, "VALUE, PRESET, SOMETHING", tableName, "1=1", "KEY"));
+		DictionaryEntry dict = this.dictionary
+				.save(entry(tableName, dom1, "VALUE, PRESET, SOMETHING", tableName, "1=1", "KEY", ColumnType.ATOMIC));
 		this.links.save(link(dict, "PARENT", tableName + "_dest"));
 		return dict;
 	}
@@ -173,7 +177,8 @@ public class TestDataLoader {
 
 		FunctionalDomain dom1 = this.domains.save(domain("Source exemple"));
 		DictionaryEntry cmat = this.dictionary
-				.save(entry("Sources de données", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY"));
+				.save(entry("Sources de données", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY",
+						ColumnType.ATOMIC));
 
 		this.domains.flush();
 		this.dictionary.flush();

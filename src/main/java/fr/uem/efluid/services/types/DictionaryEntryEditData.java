@@ -4,6 +4,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.NotEmpty;
+
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.ColumnType;
@@ -21,14 +25,19 @@ public class DictionaryEntryEditData {
 
 	private UUID uuid;
 
+	@NotNull
 	private UUID domainUuid;
 
+	@NotNull
 	private String name;
 
+	@NotNull
 	private String table;
 
+	@NotNull
 	private String where;
 
+	@NotEmpty
 	private List<ColumnEditData> columns;
 
 	private boolean missingTable;
@@ -166,10 +175,16 @@ public class DictionaryEntryEditData {
 	 */
 	public static final class ColumnEditData implements Comparable<ColumnEditData> {
 
+		@NotNull
 		private String name;
+
+		@NotNull
 		private ColumnType type;
+
 		private boolean key;
+
 		private String foreignKeyTable;
+
 		private boolean selected;
 
 		/**

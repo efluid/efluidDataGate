@@ -1,6 +1,8 @@
 package fr.uem.efluid.model.repositories.impls;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import static fr.uem.efluid.utils.ErrorType.APPLY_FAILED;
+import static fr.uem.efluid.utils.ErrorType.VERIFIED_APPLY_NOT_FOUND;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -29,8 +30,8 @@ import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
-import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.DatasourceUtils;
 
 /**
  * <p>
@@ -190,7 +191,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 					.map(e -> this.queryGenerator.producesGetOneQuery(dictEntries.get(e.getDictionaryEntryUuid()), e.getKeyValue()))
 					.forEach(s -> this.managedSource.query(s, rs -> {
 						if (!rs.next()) {
-							throw new DataRetrievalFailureException("Item not found. Checking query was " + s);
+							throw new ApplicationException(VERIFIED_APPLY_NOT_FOUND, "Item not found. Checking query was " + s, s);
 						}
 						return null;
 					}));

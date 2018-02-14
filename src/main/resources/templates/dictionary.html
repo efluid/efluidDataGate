@@ -43,7 +43,7 @@
 		const deleteButtonAction = (e) => {
 			hideDisplays();
 			var uuid = e.target.parentElement.parentElement.parentElement.id;
-			$.post("dictionary/remove/" + uuid, null, (data, status) => {
+			$.post("/dictionary/remove/" + uuid, null, (data, status) => {
 				showSuccess("Table de paramètrage retirée avec succès");
 				$("#" + uuid).remove();
 			});

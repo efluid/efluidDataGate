@@ -48,7 +48,7 @@ import fr.uem.efluid.utils.ApplicationException;
  */
 @Service
 @Transactional
-public class DictionaryManagementService {
+public class DictionaryManagementService extends AbstractApplicationService {
 
 	private static final String DICT_EXPORT = "full-dictionary";
 	private static final String DOMAINS_EXPORT = "full-domains";
@@ -154,6 +154,7 @@ public class DictionaryManagementService {
 		return this.dictionary.findAll().stream()
 				.map(e -> DictionaryEntrySummary.fromEntity(e, this.queryGenerator))
 				.peek(d -> d.setCanDelete(!usedIds.contains(d.getUuid())))
+				.sorted()
 				.collect(Collectors.toList());
 	}
 
@@ -167,6 +168,9 @@ public class DictionaryManagementService {
 
 		LOGGER.info("Open editable content for dictionary entry {}", entryUuid);
 
+		// Check valid uuid
+		assertDictionaryEntryExists(entryUuid);
+		
 		// Open existing one
 		DictionaryEntry entry = this.dictionary.findOne(entryUuid);
 
@@ -174,7 +178,7 @@ public class DictionaryManagementService {
 		DictionaryEntryEditData edit = DictionaryEntryEditData.fromEntity(entry);
 
 		// Need select clause as a list
-		Collection<String> selecteds = entry.getSelectClause() != null ? this.queryGenerator.splitSelectClause(entry.getSelectClause())
+		Collection<String> selecteds = isNotEmpty(entry.getSelectClause()) ? this.queryGenerator.splitSelectClause(entry.getSelectClause())
 				: Collections.emptyList();
 
 		TableDescription desc = getTableDescription(edit.getTable());
@@ -270,8 +274,11 @@ public class DictionaryManagementService {
 					+ " the id is not a real valid business identifier for the parameter table !!!", key.getName(), editData.getTable());
 		}
 
+		// Controle also that the key is unique (heavy load)
+		assertKeyIsUniqueValue(entry);
+
 		// Other common edited properties
-		entry.setDomain(new FunctionalDomain(editData.getDomainUuid()));
+		entry.setDomain(this.domains.findOne(editData.getDomainUuid()));
 		entry.setParameterName(editData.getName());
 		entry.setSelectClause(columnsAsSelectClause(editData.getColumns()));
 		entry.setWhereClause(editData.getWhere());
@@ -496,13 +503,15 @@ public class DictionaryManagementService {
 		Collection<TableLink> createdLinks = new ArrayList<>();
 
 		// Produces links from col foreign key
-		List<TableLink> editedLinks = cols.stream().filter(c -> c.getForeignKeyTable() != null).map(c -> {
-			TableLink link = new TableLink();
-			link.setColumnFrom(c.getName());
-			link.setTableTo(c.getForeignKeyTable());
-			link.setDictionaryEntry(entry);
-			return link;
-		}).collect(Collectors.toList());
+		List<TableLink> editedLinks = cols.stream()
+				.filter(c -> isNotEmpty(c.getForeignKeyTable()))
+				.map(c -> {
+					TableLink link = new TableLink();
+					link.setColumnFrom(c.getName());
+					link.setTableTo(c.getForeignKeyTable());
+					link.setDictionaryEntry(entry);
+					return link;
+				}).collect(Collectors.toList());
 
 		// Get existing to update / removoe
 		Map<String, TableLink> existingLinks = this.links.findByDictionaryEntry(entry).stream()
@@ -561,7 +570,8 @@ public class DictionaryManagementService {
 	private void assertDictionaryEntryCanBeRemoved(UUID uuid) {
 
 		if (this.dictionary.findUsedIds().contains(uuid)) {
-			throw new ApplicationException(DIC_NOT_REMOVABLE,"Dictionary with UUID " + uuid + " is used in index and therefore cannot be deleted");
+			throw new ApplicationException(DIC_NOT_REMOVABLE,
+					"Dictionary with UUID " + uuid + " is used in index and therefore cannot be deleted");
 		}
 	}
 
@@ -571,7 +581,21 @@ public class DictionaryManagementService {
 	private void assertDomainCanBeRemoved(UUID uuid) {
 
 		if (this.domains.findUsedIds().contains(uuid)) {
-			throw new ApplicationException(DOMAIN_NOT_REMOVABLE, "FunctionalDomain with UUID " + uuid + " is used in index and therefore cannot be deleted");
+			throw new ApplicationException(DOMAIN_NOT_REMOVABLE,
+					"FunctionalDomain with UUID " + uuid + " is used in index and therefore cannot be deleted");
+		}
+	}
+
+	/**
+	 * Using values verif, control that key is unique
+	 * 
+	 * @param dict
+	 */
+	private void assertKeyIsUniqueValue(DictionaryEntry dict) {
+		if (!this.metadatas.isColumnHasUniqueValue(dict.getTableName(), dict.getKeyName())) {
+			throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() + " with key "
+					+ dict.getKeyName() + " has its values are not unique", dict.getTableName() + "." + dict.getKeyName());
+
 		}
 	}
 
@@ -583,5 +607,16 @@ public class DictionaryManagementService {
 		return this.queryGenerator.mergeSelectClause(
 				columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName).collect(Collectors.toList()),
 				columns.size());
+	}
+
+	/**
+	 * Basic existance check
+	 * 
+	 * @param uuid
+	 */
+	private void assertDictionaryEntryExists(UUID uuid) {
+		if (!this.dictionary.exists(uuid)) {
+			throw new ApplicationException(DIC_ENTRY_NOT_FOUND, "Dictionary entry doesn't exist for uuid " + uuid);
+		}
 	}
 }

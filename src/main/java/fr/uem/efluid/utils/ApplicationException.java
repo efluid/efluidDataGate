@@ -101,4 +101,13 @@ public class ApplicationException extends RuntimeException {
 		this.payload = payload;
 	}
 
+	/**
+	 * @return
+	 * @see java.lang.Throwable#getMessage()
+	 */
+	@Override
+	public String getMessage() {
+		return "[" + this.getError().name() + "-" + this.getTimestamp() + "] " + super.getMessage();
+	}
+
 }

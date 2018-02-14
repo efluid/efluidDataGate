@@ -10,7 +10,7 @@ import fr.uem.efluid.tools.ManagedQueriesGenerator;
  * @since v0.0.1
  * @version 1
  */
-public final class DictionaryEntrySummary {
+public final class DictionaryEntrySummary implements Comparable<DictionaryEntrySummary> {
 
 	private final UUID uuid;
 
@@ -89,6 +89,23 @@ public final class DictionaryEntrySummary {
 	 */
 	public void setCanDelete(boolean canDelete) {
 		this.canDelete = canDelete;
+	}
+
+	/**
+	 * @param o
+	 * @return
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
+	@Override
+	public int compareTo(DictionaryEntrySummary o) {
+
+		int dom = this.getDomainName().compareTo(o.getDomainName());
+
+		if (dom != 0) {
+			return dom;
+		}
+
+		return this.getName().compareTo(o.getName());
 	}
 
 	/**

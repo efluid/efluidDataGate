@@ -163,7 +163,20 @@ public class PilotableCommitPreparationService {
 	}
 
 	/**
-	 * 
+	 * To abort preparation : drops it, then makes service ready for a new one
+	 */
+	public void cancelCommitPreparation() {
+
+		// For any ref holder : mark canceled and dropped
+		this.current.setStatus(PilotedCommitStatus.CANCEL);
+
+		// Null = COMPLETED / CANCEL from local service pov
+		this.current = null;
+	}
+
+	/**
+	 * To complete (validated) preparation : closes and drops it, then makes service ready
+	 * for a new one
 	 */
 	public void completeCommitPreparation() {
 
@@ -244,6 +257,9 @@ public class PilotableCommitPreparationService {
 
 		// Save update
 		UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(this.current);
+
+		// Reset cached diff values, if any, for further uses
+		this.diffService.resetDiffCaches();
 
 		// Drop preparation
 		completeCommitPreparation();
@@ -643,6 +659,13 @@ public class PilotableCommitPreparationService {
 					.filter(d -> d.getDiff().stream().anyMatch(PreparedIndexEntry::isSelected))
 					.map(DiffDisplay::getDomainName)
 					.collect(Collectors.toSet());
+		}
+
+		/**
+		 * @return
+		 */
+		public boolean isEmptyDiff() {
+			return this.preparedContent.stream().allMatch(d -> d.getDiff().isEmpty());
 		}
 
 		/**

@@ -207,3 +207,19 @@ Dans les faits, on a 2 types de transpositions à gérer pour chaque données in
 
     VALUE=S/QSFQOI42144,VALUE_OTHER=S/JR19RJ19021RK=,SOMETHING=O/14201FIOI==,WHEN=O/090FJZ0F0FI0KF
     
+### Requêtes utiles 
+**Consulter l'index**
+
+    select 
+       idx.id, 
+       concat(p.key_name,'=',idx.key_value) as key, 
+       p.table_name, 
+       p.where_clause as where, 
+       idx.action, 
+       idx.payload, 
+       c.original_user_email as commit_by 
+    from index idx 
+    inner join dictionary p on p.uuid = idx.dictionary_entry_uuid 
+    inner join commit c on c.uuid = idx.commit_uuid
+    order by table_name, id
+    

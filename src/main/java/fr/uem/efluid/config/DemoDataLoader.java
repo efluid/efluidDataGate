@@ -18,6 +18,7 @@ import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
@@ -73,22 +74,32 @@ public class DemoDataLoader {
 		this.domains.save(domain("Matrice des prix"));
 		this.domains.save(domain("Editions"));
 
-		DictionaryEntry cmat = this.dictionary.save(entry("Catégorie de matériel", dom1, null, "TCATEGORYMATERIEL", "1=1", "NOM"));
-		DictionaryEntry tmat = this.dictionary.save(entry("Type de matériel", dom1, null, "TTYPEMATERIEL", "1=1", "SERIE"));
-		DictionaryEntry mode = this.dictionary.save(entry("Modèle de compteur", dom1, "\"CODE_SERIE\", \"CREATE_DATE\", \"DESCRIPTION\", \"FABRICANT\", \"TYPEID\"", "TMODELE", "\"ACTIF\"=true", "CODE_SERIE"));
+		DictionaryEntry cmat = this.dictionary
+				.save(entry("Catégorie de matériel", dom1, null, "TCATEGORYMATERIEL", "1=1", "NOM", ColumnType.STRING));
+		DictionaryEntry tmat = this.dictionary
+				.save(entry("Type de matériel", dom1, null, "TTYPEMATERIEL", "1=1", "SERIE", ColumnType.STRING));
+		DictionaryEntry mode = this.dictionary
+				.save(entry("Modèle de compteur", dom1, "\"CODE_SERIE\", \"CREATE_DATE\", \"DESCRIPTION\", \"FABRICANT\", \"TYPEID\"",
+						"TMODELE", "\"ACTIF\"=true", "CODE_SERIE", ColumnType.STRING));
 		DictionaryEntry oth1 = this.dictionary
-				.save(entry("Test sur le type de compteur", dom1,"\"COUNT\", \"TYPEID\"", "TTABLEOTHER", "1=1", "VALUE"));
-		DictionaryEntry oth2 = this.dictionary.save(entry("Autre table pour voir", dom2, null, "TTABLEOTHERTEST2", "1=1", "VALUE1"));
-		this.dictionary.save(entry("Fake table", dom2, "\"ATTR1\", \"ATTR2\"", "FAKETABLE", "1=1", "SERIAL"));
+				.save(entry("Test sur le type de compteur", dom1, "\"COUNT\", \"TYPEID\"", "TTABLEOTHER", "1=1", "VALUE",
+						ColumnType.STRING));
+		DictionaryEntry oth2 = this.dictionary
+				.save(entry("Autre table pour voir", dom2, null, "TTABLEOTHERTEST2", "1=1", "VALUE1", ColumnType.STRING));
+		this.dictionary.save(entry("Fake table", dom2, "\"ATTR1\", \"ATTR2\"", "FAKETABLE", "1=1", "SERIAL", ColumnType.STRING));
 
 		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont, 5));
 		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur, 3));
 		Commit com3 = this.commits.save(commit("Ajout du reste", testeur, 1));
 
-		this.index.save(update("something", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), cmat, com1));
-		this.index.save(update("something", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), tmat, com2));
-		this.index.save(update("something", REMOVE, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), tmat, com2));
-		this.index.save(update("something", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), mode, com2));
+		this.index.save(
+				update("something", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), cmat, com1));
+		this.index.save(
+				update("something", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), tmat, com2));
+		this.index.save(
+				update("something", REMOVE, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), tmat, com2));
+		this.index.save(
+				update("something", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), mode, com2));
 		this.index.save(update("2355", ADD, content("Name=\"something\", Detail=\"other\", value=12345", this.converter), oth1, com2));
 
 		this.index.save(update("234", ADD, content("Name=\"other\", Detail=\"something\", value=12345", this.converter), oth2, com2));

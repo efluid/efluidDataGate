@@ -90,6 +90,7 @@
 	                                    <td th:text="${column.type.displayName}" title="Le type est relatif au format utilisé dans l'expression SQL. Identifiant = clé technique (souvent générée), Literal = Chaine de caractère ou date, Variable = nombre, binaire ou booleen (variable à état), LOB = Long binaire ou texte">Literal</td>
 	                                    <td>
 	                                    	<input type="hidden" th:field="${entry.columns[__${stat.index}__].name}"/>
+	                                    	<input type="hidden" th:field="${entry.columns[__${stat.index}__].type}"/>
 	                                        <select class="form-control" name="foreignKeyTable" th:field="${entry.columns[__${stat.index}__].foreignKeyTable}">
 	                                        	<option value=""></option>
 	              								<option th:each="table : ${tables}" th:value="${table.tableName}" th:text="${table.tableName}">Gestion du matériel</option>

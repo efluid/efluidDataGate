@@ -135,6 +135,13 @@ public class PrepareDiffService {
 	}
 
 	/**
+	 * 
+	 */
+	public void resetDiffCaches() {
+		this.regeneratedParamaters.refreshAll();
+	}
+
+	/**
 	 * For testability
 	 */
 	protected ManagedValueConverter getConverter() {

@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Repository;
 
 import fr.uem.efluid.model.DiffLine;
@@ -30,6 +29,8 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryManagedRegenerateRepository.class);
 
+	// TODO : check cache issue : seems to have pb (maybe related to concurrency ?)
+
 	@Autowired
 	private IndexRepository coreIndex;
 
@@ -40,7 +41,7 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
 	 * @return
 	 */
 	@Override
-	@Cacheable("regenerated")
+	// @Cacheable(cacheNames = "regenerated", key="#parameterEntry")
 	public Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry) {
 
 		LOGGER.debug("Regenerating values from local index for managed table {}", parameterEntry.getTableName());
@@ -77,5 +78,15 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
 		}
 
 		return lines;
+	}
+
+	/**
+	 * 
+	 * @see fr.uem.efluid.model.repositories.ManagedRegenerateRepository#refreshAll()
+	 */
+	@Override
+	// @CacheEvict(cacheNames = "regenerated", allEntries = true)
+	public void refreshAll() {
+		LOGGER.info("Regenerate cache droped. Will extract fresh data on next call");
 	}
 }

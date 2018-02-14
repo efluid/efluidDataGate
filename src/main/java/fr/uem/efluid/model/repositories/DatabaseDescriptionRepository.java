@@ -29,6 +29,15 @@ public interface DatabaseDescriptionRepository {
 	 */
 	boolean isTableExists(String tableName);
 
+	
+	/**
+	 * Check if for specified table, the given column as a unique value
+	 * @param tableName
+	 * @param colName
+	 * @return
+	 */
+	public boolean isColumnHasUniqueValue(String tableName, String colName) ;
+	
 	/**
 	 * Force refresh on cached data if any
 	 */

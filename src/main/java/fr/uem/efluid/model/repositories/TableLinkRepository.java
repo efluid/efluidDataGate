@@ -32,9 +32,9 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 	 * @return
 	 */
 	// TODO : Once with java9, specify as private
-	@Query(value = "SELECT l.dictionary_entry_uuid, d.uuid FROM link l INNER JOIN dictionary d ON d.table_name = l.table_to",
+	@Query(value = "SELECT concat(l.dictionary_entry_uuid,'') as from, concat(d.uuid,'') as to FROM link l INNER JOIN dictionary d ON d.table_name = l.table_to",
 			nativeQuery = true)
-	List<Object[]> _internal_findAllRelationships();
+	List<String[]> _internal_findAllRelationships();
 
 	/**
 	 * @return

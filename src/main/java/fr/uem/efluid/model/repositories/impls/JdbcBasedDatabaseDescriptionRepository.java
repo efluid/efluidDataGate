@@ -1,6 +1,8 @@
 package fr.uem.efluid.model.repositories.impls;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import static fr.uem.efluid.utils.ErrorType.METADATA_FAILED;
+import static fr.uem.efluid.utils.ErrorType.VALUE_CHECK_FAILED;
+
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.jdbc.InvalidResultSetAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +23,7 @@ import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 
 /**
@@ -40,6 +44,9 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 
 	@Autowired
 	private JdbcTemplate managedSource;
+
+	@Autowired
+	private ManagedQueriesGenerator generator;
 
 	@Override
 	@Cacheable("metadatas")
@@ -83,11 +90,26 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	}
 
 	/**
+	 * @param tableName
+	 * @return
+	 */
+	@Override
+	public boolean isColumnHasUniqueValue(String tableName, String colName) {
+
+		try {
+			return !this.managedSource.queryForRowSet(this.generator.producesUnicityQuery(tableName, colName)).next();
+		} catch (InvalidResultSetAccessException e) {
+			throw new ApplicationException(VALUE_CHECK_FAILED,
+					"Cannot extract resultset for column unicity on table " + tableName + ", column " + colName, e);
+		}
+	}
+
+	/**
 	 * 
 	 * @see fr.uem.efluid.model.repositories.DatabaseDescriptionRepository#refreshAll()
 	 */
 	@Override
-	@CacheEvict({ "metadatas", "existingTables" })
+	@CacheEvict(cacheNames = { "metadatas", "existingTables" }, allEntries = true)
 	public void refreshAll() {
 		LOGGER.info("Metadata cache droped. Will extract fresh data on next call");
 	}

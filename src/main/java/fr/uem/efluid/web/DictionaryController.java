@@ -4,6 +4,8 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 import java.util.UUID;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -115,7 +117,7 @@ public class DictionaryController {
 	 * @return
 	 */
 	@RequestMapping(path = "/dictionary/save", method = POST)
-	public String dictionarySave(Model model, @ModelAttribute DictionaryEntryEditData editData) {
+	public String dictionarySave(Model model, @ModelAttribute @Valid DictionaryEntryEditData editData) {
 
 		this.dictionaryManagementService.saveDictionaryEntry(editData);
 

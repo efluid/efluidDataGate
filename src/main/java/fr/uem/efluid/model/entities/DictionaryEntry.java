@@ -46,9 +46,11 @@ public class DictionaryEntry implements Shared {
 
 	private String selectClause;
 
+	@NotNull
 	private String keyName;
 
 	@Enumerated(EnumType.STRING)
+	@NotNull
 	private ColumnType keyType;
 
 	@NotNull

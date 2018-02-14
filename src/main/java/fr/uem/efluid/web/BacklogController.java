@@ -123,6 +123,21 @@ public class BacklogController {
 	 * @param name
 	 * @return
 	 */
+	@RequestMapping(path = "/prepare/cancel", method = GET)
+	public String preparationCancel(Model model) {
+
+		// Update current preparation as canceled
+		this.pilotableCommitService.cancelCommitPreparation();
+
+		// Forward to commits list
+		return commitListPage(model);
+	}
+
+	/**
+	 * @param model
+	 * @param name
+	 * @return
+	 */
 	@RequestMapping(path = "/commits", method = GET)
 	public String commitListPage(Model model) {
 

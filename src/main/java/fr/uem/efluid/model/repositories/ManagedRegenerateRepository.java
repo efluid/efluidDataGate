@@ -41,4 +41,8 @@ public interface ManagedRegenerateRepository {
 	 */
 	Map<String, String> regenerateKnewContent(List<? extends DiffLine> specifiedIndex);
 
+	/**
+	 * Refresh cached data if any
+	 */
+	void refreshAll();
 }

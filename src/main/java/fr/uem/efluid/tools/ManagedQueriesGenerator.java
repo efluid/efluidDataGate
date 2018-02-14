@@ -53,6 +53,7 @@ public class ManagedQueriesGenerator {
 	private final String insertQueryModel;
 	private final String updateQueryModel;
 	private final String deleteQueryModel;
+	private final String unicityQueryModel;
 
 	/**
 	 * Prepare generator regarding the specified rules
@@ -65,6 +66,7 @@ public class ManagedQueriesGenerator {
 		this.insertQueryModel = generateInsertQueryTemplate(rules);
 		this.updateQueryModel = generateUpdateQueryTemplate(rules);
 		this.deleteQueryModel = generateDeleteQueryTemplate(rules);
+		this.unicityQueryModel = generateUnicityQueryTemplate(rules);
 	}
 
 	/**
@@ -74,7 +76,7 @@ public class ManagedQueriesGenerator {
 	public String consolidateSelectClause(DictionaryEntry parameterEntry) {
 
 		// Basic consolidate => Select all
-		if (parameterEntry.getSelectClause() == null) {
+		if (parameterEntry.getSelectClause() == null || parameterEntry.getSelectClause().length() == 0) {
 			return DEFAULT_SELECT_CLAUSE;
 		}
 
@@ -191,6 +193,19 @@ public class ManagedQueriesGenerator {
 	}
 
 	/**
+	 * To check unicity on parameter key
+	 * 
+	 * @param tablename
+	 * @param columnName
+	 * @return
+	 */
+	public String producesUnicityQuery(String tablename, String columnName) {
+
+		// select 1 from "TTABLEOTHERTEST2" group by "ID" HAVING COUNT("ID") > 1
+		return String.format(this.unicityQueryModel, tablename, columnName, columnName);
+	}
+
+	/**
 	 * @param value
 	 * @return
 	 */
@@ -258,6 +273,18 @@ public class ManagedQueriesGenerator {
 	 */
 	private static final String generateDeleteQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("DELETE FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s ").toString();
+	}
+
+	/**
+	 * Generate the template regarding the rules on protect / not protected
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateUnicityQueryTemplate(QueryGenerationRules rules) {
+		return new StringBuilder("SELECT 1 FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" GROUP BY ")
+				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" HAVING COUNT(")
+				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(") > 1").toString();
 	}
 
 	/**

@@ -25,4 +25,15 @@ public abstract class AbstractApplicationService {
 		// TODO : use spring security for clean user management
 		return FAKE_USER;
 	}
+
+	/**
+	 * @param value
+	 * @return
+	 */
+	protected static boolean isNotEmpty(String value) {
+		if (value == null) {
+			return false;
+		}
+		return value.length() > 0;
+	}
 }

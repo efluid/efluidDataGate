@@ -147,7 +147,8 @@ public class ExportImportService {
 
 			// Check type is valid
 			if (!ExportImportPackage.class.isAssignableFrom(type)) {
-				throw new ApplicationException(IMPORT_WRONG_TYPE, "Processing of package type load is invalid. Type " + type + " is not a package");
+				throw new ApplicationException(IMPORT_WRONG_TYPE,
+						"Processing of package type load is invalid. Type " + type + " is not a package");
 			}
 
 			// Init instance
@@ -359,6 +360,16 @@ public class ExportImportService {
 		 * @return
 		 */
 		protected abstract T initContent();
+
+		/**
+		 * @return
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			return this.getClass().getSimpleName() + "[\"" + this.getName() + "\"|" + this.getExportDate() + "|v\"" + this.getVersion()
+					+ "\"]";
+		}
 
 	}
 }

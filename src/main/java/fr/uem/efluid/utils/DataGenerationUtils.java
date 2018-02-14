@@ -12,6 +12,7 @@ import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
@@ -59,7 +60,7 @@ public class DataGenerationUtils {
 	 * @param keyName
 	 * @return
 	 */
-	public static DictionaryEntry entry(String name, FunctionalDomain domain, String select, String table, String where, String keyName) {
+	public static DictionaryEntry entry(String name, FunctionalDomain domain, String select, String table, String where, String keyName, ColumnType keyType) {
 
 		DictionaryEntry entry = new DictionaryEntry();
 
@@ -71,7 +72,7 @@ public class DataGenerationUtils {
 		entry.setTableName(table);
 		entry.setWhereClause(where);
 		entry.setKeyName(keyName != null ? keyName.toUpperCase() : keyName);
-
+		entry.setKeyType(keyType);
 		return entry;
 	}
 
