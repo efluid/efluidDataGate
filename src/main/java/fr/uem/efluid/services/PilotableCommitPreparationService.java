@@ -62,7 +62,7 @@ public class PilotableCommitPreparationService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PilotableCommitPreparationService.class);
 
 	@Autowired
-	private PrepareDiffService diffService;
+	private PrepareIndexService diffService;
 
 	@Autowired
 	private DictionaryRepository dictionary;

@@ -32,7 +32,7 @@ import fr.uem.efluid.stubs.TestDataLoader;
 public class PrepareDiffServiceIntegrationTest {
 
 	@Autowired
-	private PrepareDiffService service;
+	private PrepareIndexService service;
 
 	@Autowired
 	private TestDataLoader loader;

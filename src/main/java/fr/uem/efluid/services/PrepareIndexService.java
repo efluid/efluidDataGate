@@ -54,9 +54,9 @@ import fr.uem.efluid.tools.ManagedValueConverter;
  */
 @Service
 @Transactional
-public class PrepareDiffService {
+public class PrepareIndexService {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(PrepareDiffService.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(PrepareIndexService.class);
 
 	@Autowired
 	private ManagedExtractRepository rawParameters;
@@ -143,10 +143,32 @@ public class PrepareDiffService {
 	}
 
 	/**
-	 * For testability
+	 * <p>
+	 * Utilitary fonction to complete given index entries with their respective HR Payload
+	 * for user friendly rendering
+	 * </p>
+	 * 
+	 * @param index
 	 */
-	protected ManagedValueConverter getConverter() {
-		return this.valueConverter;
+	void completeHrPayload(Collection<? extends PreparedIndexEntry> index) {
+
+		// Group by dict
+		Map<UUID, List<PreparedIndexEntry>> groupedByDict = index.stream()
+				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid));
+
+		groupedByDict.entrySet().stream().forEach(es -> {
+
+			// Previous values in index for all index
+			Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(
+					new DictionaryEntry(es.getKey()),
+					es.getValue().stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
+
+			es.getValue().stream().forEach(e -> {
+				IndexEntry previous = previouses.get(e.getKeyValue());
+				String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
+				e.setHrPayload(hrPayload);
+			});
+		});
 	}
 
 	/**
@@ -182,6 +204,13 @@ public class PrepareDiffService {
 		});
 
 		return diff;
+	}
+
+	/**
+	 * For testability
+	 */
+	protected ManagedValueConverter getConverter() {
+		return this.valueConverter;
 	}
 
 	/**
@@ -331,35 +360,6 @@ public class PrepareDiffService {
 		});
 
 		// For whatever is NOT found in preparingMergeIndex, IGNORE !!!
-	}
-
-	/**
-	 * <p>
-	 * Utilitary fonction to complete given index entries with their respective HR Payload
-	 * for user friendly rendering
-	 * </p>
-	 * 
-	 * @param index
-	 */
-	void completeHrPayload(Collection<? extends PreparedIndexEntry> index) {
-
-		// Group by dict
-		Map<UUID, List<PreparedIndexEntry>> groupedByDict = index.stream()
-				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid));
-
-		groupedByDict.entrySet().stream().forEach(es -> {
-
-			// Previous values in index for all index
-			Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(
-					new DictionaryEntry(es.getKey()),
-					es.getValue().stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
-
-			es.getValue().stream().forEach(e -> {
-				IndexEntry previous = previouses.get(e.getKeyValue());
-				String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
-				e.setHrPayload(hrPayload);
-			});
-		});
 	}
 
 	// /**

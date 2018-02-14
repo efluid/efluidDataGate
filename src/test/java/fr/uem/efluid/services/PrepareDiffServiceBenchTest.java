@@ -38,7 +38,7 @@ public class PrepareDiffServiceBenchTest {
 	private ManagedExtractRepository extract;
 
 	@Autowired
-	private PrepareDiffService service;
+	private PrepareIndexService service;
 
 	@Autowired
 	private TestDataLoader loader;

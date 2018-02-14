@@ -25,11 +25,11 @@ public class PrepareDiffServiceUnitTest {
 	final ManagedValueConverter converter = new ManagedValueConverter();
 
 	// No spring load here, for simple diff needs
-	private PrepareDiffService service = new PrepareDiffService() {
+	private PrepareIndexService service = new PrepareIndexService() {
 
 		/**
 		 * @return
-		 * @see fr.uem.efluid.services.PrepareDiffService#getConverter()
+		 * @see fr.uem.efluid.services.PrepareIndexService#getConverter()
 		 */
 		@Override
 		protected ManagedValueConverter getConverter() {

@@ -68,7 +68,7 @@ public class CommitService extends AbstractApplicationService {
 	private CommitRepository commits;
 
 	@Autowired
-	private PrepareDiffService diffs;
+	private PrepareIndexService diffs;
 
 	@Autowired
 	private IndexRepository indexes;
