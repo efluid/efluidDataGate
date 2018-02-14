@@ -322,8 +322,7 @@ public class PilotableCommitPreparationService {
 		LOGGER.info("Begin diff process on merge-commit preparation {}", this.current.getIdentifier());
 		long startTimeout = System.currentTimeMillis();
 
-		Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAll().stream()
-				.collect(Collectors.toMap(DictionaryEntry::getUuid, d -> d));
+		Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid();
 
 		long searchTimestamp = preparation.getCommitData().getCreatedTime().atZone(ZoneId.systemDefault()).toEpochSecond();
 

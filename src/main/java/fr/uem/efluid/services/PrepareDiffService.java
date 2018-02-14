@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -330,6 +331,35 @@ public class PrepareDiffService {
 		});
 
 		// For whatever is NOT found in preparingMergeIndex, IGNORE !!!
+	}
+
+	/**
+	 * <p>
+	 * Utilitary fonction to complete given index entries with their respective HR Payload
+	 * for user friendly rendering
+	 * </p>
+	 * 
+	 * @param index
+	 */
+	void completeHrPayload(Collection<? extends PreparedIndexEntry> index) {
+
+		// Group by dict
+		Map<UUID, List<PreparedIndexEntry>> groupedByDict = index.stream()
+				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid));
+
+		groupedByDict.entrySet().stream().forEach(es -> {
+
+			// Previous values in index for all index
+			Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(
+					new DictionaryEntry(es.getKey()),
+					es.getValue().stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
+
+			es.getValue().stream().forEach(e -> {
+				IndexEntry previous = previouses.get(e.getKeyValue());
+				String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
+				e.setHrPayload(hrPayload);
+			});
+		});
 	}
 
 	// /**

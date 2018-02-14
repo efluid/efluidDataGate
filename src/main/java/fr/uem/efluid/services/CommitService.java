@@ -1,6 +1,8 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import static fr.uem.efluid.utils.ErrorType.COMMIT_EXISTS;
+import static fr.uem.efluid.utils.ErrorType.COMMIT_IMPORT_INVALID;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.Commit;
@@ -28,6 +31,7 @@ import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.impls.InMemoryManagedRegenerateRepository;
 import fr.uem.efluid.services.ExportImportService.ExportImportPackage;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
+import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.CommitPackage;
 import fr.uem.efluid.services.types.DiffDisplay;
@@ -37,8 +41,8 @@ import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.services.types.RollbackLine;
-import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.Associate;
 
 /**
  * <p>
@@ -50,6 +54,7 @@ import fr.uem.efluid.utils.ApplicationException;
  * @since v0.0.1
  * @version 1
  */
+@Transactional
 @Service
 public class CommitService extends AbstractApplicationService {
 
@@ -61,6 +66,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private CommitRepository commits;
+
+	@Autowired
+	private PrepareDiffService diffs;
 
 	@Autowired
 	private IndexRepository indexes;
@@ -158,6 +166,26 @@ public class CommitService extends AbstractApplicationService {
 		LOGGER.debug("Request for list of available commits");
 
 		return this.commits.findAll().stream().map(CommitEditData::fromEntity).collect(Collectors.toList());
+	}
+
+	/**
+	 * @param commitUUID
+	 * @return
+	 */
+	public CommitDetails getExistingCommitDetails(UUID commitUUID) {
+
+		LOGGER.debug("Request for details on existing commit {}", commitUUID);
+
+		// Must exist
+		assertCommitExists(commitUUID);
+
+		// Load details
+		CommitDetails details = CommitDetails.fromEntity(this.commits.findOne(commitUUID));
+
+		// Need to complete HRPayload for index entries
+		this.diffs.completeHrPayload(details.getIndex());
+
+		return details;
 	}
 
 	/**
@@ -378,6 +406,15 @@ public class CommitService extends AbstractApplicationService {
 		return getDiffRollbacks(new DictionaryEntry(diff.getDictionaryEntryUuid()),
 				diff.getDiff().stream().filter(PreparedIndexEntry::isRollbacked).collect(Collectors.toList()))
 						.stream();
+	}
+
+	/**
+	 * @param commitUUID
+	 */
+	private void assertCommitExists(UUID commitUUID) {
+		if (!this.commits.exists(commitUUID)) {
+			throw new ApplicationException(COMMIT_EXISTS, "Specified commit " + commitUUID + " doesn't exist");
+		}
 	}
 
 	/**

@@ -89,8 +89,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 		LOGGER.debug("Identified change to apply on managed DB. Will process {} diffLines", Integer.valueOf(lines.size()));
 
 		// Preload dictionary for direct access by uuid
-		Map<UUID, DictionaryEntry> dictEntries = this.dictionary.findAll().stream()
-				.collect(Collectors.toMap(DictionaryEntry::getUuid, v -> v));
+		Map<UUID, DictionaryEntry> dictEntries = this.dictionary.findAllMappedByUuid();
 
 		// Manually perform Managed DB transaction for fine rollback management
 		DefaultTransactionDefinition paramTransactionDefinition = new DefaultTransactionDefinition();

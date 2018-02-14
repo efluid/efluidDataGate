@@ -1,7 +1,9 @@
 package fr.uem.efluid.model.repositories;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,4 +28,14 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 	 * @return
 	 */
 	DictionaryEntry findByTableName(String tableName);
+
+	/**
+	 * @return
+	 */
+	default Map<UUID, DictionaryEntry> findAllMappedByUuid() {
+
+		return findAll().stream()
+				.collect(Collectors.toMap(DictionaryEntry::getUuid, d -> d));
+
+	}
 }
