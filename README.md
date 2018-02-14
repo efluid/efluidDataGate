@@ -4,10 +4,10 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 13/02/2018*
+*Mise à jour au 14/02/2018*
 
 **Maquette statique**
-* Dernière version : 03/02/2018. Modification de la gestion des entrées dans le dictionnaire : se fait sur un autre écran de saisie à partir de la liste
+* Dernière version : 03/02/2018. Attention, des modifications sur les écrans de gestion du diff / merge n'ont pas été reportées sur la maquette
 
 **Points techniques**
 * Mise en place général : projet actif, stacks en place. BDD Postgres core fonctionnelle
@@ -15,7 +15,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Utilisation BDD managed : Avec JDBCTemplate. Metadata OK avec PGSQL, a tester sur Oracle
 * Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
 * Merge : développé, non testé
-* Application / rollback de paramètres : en place, Application testé OK.
+* Application / rollback de paramètres : en place, Application testé semble OK.
 * Export / import : dev en place, test seulement sur dictionnaire
 * Traitement des dépendances : En place, testé OK
 * Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
@@ -27,11 +27,15 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 **Intégration maquette**
 * Mise en place d'un layout pour simpifier les templates Thymeleaf
 * index ("/") : page dynamique mais données en dur. Menu et authentification pas géré. 
-* édition des domaines fonctionnels ("/domains"): globalement implémenté. 
-* édition du dictionnaire ("/dictionary"): globalement implémenté. Quelques bugs, seront traités plus tard
-* préparation du diff ("/prepare"): globalement implémenté. Quelques bugs, seront traités plus tard
-* listing des commits ("/commits"): en cours
-* autres écrans : pas dynamisés / pas intégrés avec thymeleaf
+* édition des domaines fonctionnels ("/domains"): en place
+* édition du dictionnaire ("/dictionary"): en place
+* préparation du diff ("/prepare"): en place
+* listing des commits ("/commits"): en place, y compris détail
+* export du dictionnaire ("/share"): en place. Import à venir
+* export / import de commits : non démarré
+* merge a l'import : non démarré
+* sécurité : non démarré
+* Wizzard de configuration : non démarré
 
 ## Utilisation
 
