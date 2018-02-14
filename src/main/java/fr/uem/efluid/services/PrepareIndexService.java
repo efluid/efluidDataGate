@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -148,26 +147,19 @@ public class PrepareIndexService {
 	 * for user friendly rendering
 	 * </p>
 	 * 
+	 * @param dic
 	 * @param index
 	 */
-	void completeHrPayload(Collection<? extends PreparedIndexEntry> index) {
+	void completeHrPayload(DictionaryEntry dic, Collection<? extends PreparedIndexEntry> index) {
 
-		// Group by dict
-		Map<UUID, List<PreparedIndexEntry>> groupedByDict = index.stream()
-				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid));
+		Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dic,
+				index.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()),
+				index.stream().map(PreparedIndexEntry::getId).collect(Collectors.toList()));
 
-		groupedByDict.entrySet().stream().forEach(es -> {
-
-			// Previous values in index for all index
-			Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(
-					new DictionaryEntry(es.getKey()),
-					es.getValue().stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
-
-			es.getValue().stream().forEach(e -> {
-				IndexEntry previous = previouses.get(e.getKeyValue());
-				String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
-				e.setHrPayload(hrPayload);
-			});
+		index.stream().forEach(e -> {
+			IndexEntry previous = previouses.get(e.getKeyValue());
+			String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
+			e.setHrPayload(hrPayload);
 		});
 	}
 
@@ -329,7 +321,7 @@ public class PrepareIndexService {
 
 		// Prepare "previous" if any for HR Payload
 		Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dict,
-				preparingMergeIndexToComplete.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
+				preparingMergeIndexToComplete.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()), null);
 
 		// For each merge result (Only one possible for each keyValue)
 		preparingMergeIndexToComplete.stream().forEach(m -> {

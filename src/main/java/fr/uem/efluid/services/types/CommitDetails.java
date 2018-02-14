@@ -29,7 +29,7 @@ public class CommitDetails {
 
 	private List<UUID> mergeSources;
 
-	private List<PreparedIndexEntry> index;
+	private List<DiffDisplay<List<PreparedIndexEntry>>> content;
 
 	private CommitState state;
 
@@ -143,18 +143,18 @@ public class CommitDetails {
 	}
 
 	/**
-	 * @return the index
+	 * @return the content
 	 */
-	public List<PreparedIndexEntry> getIndex() {
-		return this.index;
+	public List<DiffDisplay<List<PreparedIndexEntry>>> getContent() {
+		return this.content;
 	}
 
 	/**
-	 * @param index
-	 *            the index to set
+	 * @param content
+	 *            the content to set
 	 */
-	private void setIndex(List<PreparedIndexEntry> index) {
-		this.index = index;
+	private void setContent(List<DiffDisplay<List<PreparedIndexEntry>>> content) {
+		this.content = content;
 	}
 
 	/**
@@ -173,6 +173,13 @@ public class CommitDetails {
 	}
 
 	/**
+	 * @return
+	 */
+	public boolean isEmptyDiff() {
+		return this.content.stream().allMatch(d -> d.getDiff().isEmpty());
+	}
+
+	/**
 	 * @param commit
 	 * @return
 	 */
@@ -188,7 +195,18 @@ public class CommitDetails {
 		details.setOriginalUserEmail(commit.getOriginalUserEmail());
 		details.setUuid(commit.getUuid());
 		details.setMergeSources(commit.getMergeSources());
-		details.setIndex(commit.getIndex().stream().map(PreparedIndexEntry::fromExistingEntity).collect(Collectors.toList()));
+
+		// Using DiffDisplay for grouping index values
+		details.setContent(commit.getIndex().stream()
+				.map(PreparedIndexEntry::fromExistingEntity)
+				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
+				.entrySet().stream()
+				.map(e -> {
+					DiffDisplay<List<PreparedIndexEntry>> diff = new DiffDisplay<>();
+					diff.setDictionaryEntryUuid(e.getKey());
+					diff.setDiff(e.getValue());
+					return diff;
+				}).collect(Collectors.toList()));
 
 		return details;
 	}

@@ -22,7 +22,9 @@
                             <td th:text="${commit.comment}">Préchargement configuration</td>
                             <td th:text="${commit.originalUserEmail}">System</td>
                             <td th:text="${commit.createdTime}">01/11/2017</td>
-                            <td><button class="btn btn-secondary btn-sm float-right" type="button">Details</button></td>
+                            <td>
+                            	<a href="./details.html" th:href="@{/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

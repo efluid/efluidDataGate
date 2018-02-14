@@ -55,7 +55,29 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 			+ "	select max(ii.id) as max_id, ii.key_value from index ii where ii.dictionary_entry_uuid = :uuid group by ii.key_value"
 			+ ") mi on i.id = mi.max_id "
 			+ "where i.key_value in (:keys)", nativeQuery = true)
-	List<IndexEntry> _internal_findAllPreviousIndexEntries(@Param("uuid") UUID dictionaryEntryUuid, @Param("keys") List<String> keyValues);
+	List<IndexEntry> _internal_findAllPreviousIndexEntries(
+			@Param("uuid") UUID dictionaryEntryUuid,
+			@Param("keys") List<String> keyValues);
+
+	/**
+	 * <b><font color="red">Query for internal use only</font></b>
+	 * 
+	 * @param dictionaryEntryUuid
+	 * @param keyValues
+	 * @param excludeIds
+	 * @return
+	 */
+	// TODO : Once with java9, specify as private
+	@Query(value = "select i.* "
+			+ "from index i "
+			+ "inner join ("
+			+ "	select max(ii.id) as max_id, ii.key_value from index ii where ii.dictionary_entry_uuid = :uuid and ii.id not in (:excludeIds) group by ii.key_value"
+			+ ") mi on i.id = mi.max_id "
+			+ "where i.key_value in (:keys)", nativeQuery = true)
+	List<IndexEntry> _internal_findAllPreviousIndexEntries(
+			@Param("uuid") UUID dictionaryEntryUuid,
+			@Param("keys") List<String> keyValues,
+			@Param("excludeIds") List<Long> excludeIds);
 
 	/**
 	 * <p>
@@ -65,16 +87,26 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 	 * 
 	 * @param dictionaryEntry
 	 * @param keyValues
+	 * @param excludeIds
+	 *            ids of IndexEntries to exclude. Can be null or empty
 	 * @return
 	 */
-	default Map<String, IndexEntry> findAllPreviousIndexEntries(DictionaryEntry dictionaryEntry, List<String> keyValues) {
+	default Map<String, IndexEntry> findAllPreviousIndexEntries(
+			DictionaryEntry dictionaryEntry,
+			List<String> keyValues,
+			List<Long> excludeIds) {
 
 		// Do not attempt to select with an empty "in"
 		if (keyValues == null || keyValues.isEmpty()) {
 			return new HashMap<>();
 		}
 
-		return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid(), keyValues).stream()
+		if (excludeIds == null || excludeIds.isEmpty()) {
+			return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid(), keyValues).stream()
+					.collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v));
+		}
+
+		return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid(), keyValues, excludeIds).stream()
 				.collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v));
 	}
 }

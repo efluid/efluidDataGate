@@ -1,6 +1,7 @@
 package fr.uem.efluid.tools;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -197,7 +198,7 @@ public class ManagedValueConverter {
 		// Some can be missing
 		for (Value newOne : newOnes) {
 			Value oldOne = existingsMapped.remove(newOne.getName());
-			if (oldOne == null || !oldOne.getValue().equals(newOne.getValue())) {
+			if (oldOne == null || !Arrays.equals(oldOne.getValue(), newOne.getValue())) {
 				result.add(changedValue(oldOne, newOne));
 			}
 		}

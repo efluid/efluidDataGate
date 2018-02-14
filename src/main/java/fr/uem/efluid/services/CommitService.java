@@ -27,6 +27,7 @@ import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.CommitRepository;
+import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.impls.InMemoryManagedRegenerateRepository;
 import fr.uem.efluid.services.ExportImportService.ExportImportPackage;
@@ -72,6 +73,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private IndexRepository indexes;
+
+	@Autowired
+	private DictionaryRepository dictionary;
 
 	@Autowired
 	private ExportImportService exportImportService;
@@ -182,8 +186,14 @@ public class CommitService extends AbstractApplicationService {
 		// Load details
 		CommitDetails details = CommitDetails.fromEntity(this.commits.findOne(commitUUID));
 
-		// Need to complete HRPayload for index entries
-		this.diffs.completeHrPayload(details.getIndex());
+		Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid();
+
+		// Need to complete DictEnty + HRPayload for index entries
+		details.getContent().stream().forEach(d -> {
+			DictionaryEntry dict = mappedDict.get(d.getDictionaryEntryUuid());
+			d.completeFromEntity(dict);
+			this.diffs.completeHrPayload(dict, d.getDiff());
+		});
 
 		return details;
 	}
@@ -383,7 +393,7 @@ public class CommitService extends AbstractApplicationService {
 
 		// All "previous" for current diff
 		Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(entry,
-				diffContent.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
+				diffContent.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()), null);
 
 		// Completed rollback
 		return diffContent.stream()

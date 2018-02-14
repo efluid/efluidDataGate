@@ -3,15 +3,17 @@ package fr.uem.efluid.web;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import fr.uem.efluid.services.CommitService;
-import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitStatus;
@@ -40,9 +42,6 @@ public class BacklogController {
 
 	@Autowired
 	private PilotableCommitPreparationService pilotableCommitService;
-
-	@Autowired
-	private DictionaryManagementService dictionaryManagementService;
 
 	/**
 	 * <p>
@@ -148,6 +147,20 @@ public class BacklogController {
 	}
 
 	/**
+	 * @param model
+	 * @param uuid
+	 * @return
+	 */
+	@RequestMapping(path = "/details/{uuid}", method = GET)
+	public String commitDetailsPage(Model model, @PathVariable("uuid") UUID uuid) {
+
+		// Get updated preparation
+		model.addAttribute("details", this.commitService.getExistingCommitDetails(uuid));
+
+		return "details";
+	}
+
+	/**
 	 * <p>
 	 * Common behavior on preparation : need to route to diff or prepare page regarding
 	 * status. Support service-related "forced" start
@@ -167,10 +180,6 @@ public class BacklogController {
 
 		// Completed / available, basic prepare page
 		model.addAttribute("preparation", prepare);
-
-		// Need dictionary and domains for filtering
-		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
-		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 
 		return "prepare";
 	}
