@@ -1,5 +1,6 @@
 package fr.uem.efluid.web;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 import java.util.UUID;
@@ -7,6 +8,8 @@ import java.util.UUID;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -125,6 +128,39 @@ public class DictionaryController {
 		model.addAttribute("from", "success_edit");
 
 		return dictionaryPage(model);
+	}
+
+	/**
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping(path = "/share", method = GET)
+	public String exportPage(Model model) {
+
+		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
+
+		return "share";
+	}
+
+	/**
+	 * @param uuid
+	 * @return
+	 */
+	@RequestMapping(value = "/share/{uuid}-dictionary.par", method = GET)
+	@ResponseBody
+	public ResponseEntity<InputStreamResource> downloadExportOneDomain(@PathVariable("uuid") UUID uuid) {
+
+		return this.dictionaryManagementService.exportFonctionalDomains(uuid).getResult().toResponseData();
+	}
+
+	/**
+	 * @return
+	 */
+	@RequestMapping(value = "/share/all-dictionary.par", method = GET)
+	@ResponseBody
+	public ResponseEntity<InputStreamResource> downloadExportAllDomains() {
+
+		return this.dictionaryManagementService.exportAll().getResult().toResponseData();
 	}
 
 	/**

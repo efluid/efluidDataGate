@@ -1,119 +1,37 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html layout:decorator="layout">
 <head>
-    <title>Maquette Gestion Paramètrage Efluid</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" href="./css/core.css" media="screen" />
-    
 </head>
 <body>
-    <div class="container-fluid">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
-            <a class="navbar-brand" href="./index.html">Gestion du paramètrage Efluid</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="divider-horizontal"></div>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">       
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Dictionnaire
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./dictionary.html">Modification du dictionnaire</a>
-                            <a class="dropdown-item" href="./domains.html">Configuration des domaines fonctionnels</a>
-                            <a class="dropdown-item active" href="./share.html">Export / Import de dictionnaire</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Lot de modification
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./commits.html">Liste des lots présents</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="./prepare.html">Préparer un lot</a>
-                            <a class="dropdown-item" href="./pull.html">Importer un lot</a>
-                            <a class="dropdown-item" href="./push.html">Exporter un lot</a>
-                        </div>
-                    </li>
-                </ul>
-                <form class="form-inline">
-                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
-                </form>
-            </div>
-        </nav>
+    <span layout:fragment="content">
         <div class="row"><div class="col-1">&nbsp;</div></div>
         <div class="row">
             <div class="col-1"></div>
-            <div class="col-6"><h5>Import / export de dictionnaire</h5>
-                Attention les domaines fonctionnels sont également intégrés lors de l'import
-            </div>
-        </div>
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-6">
+            <div class="col-9">
+            	<h5>Import / export depuis le dictionnaire</h5>
+                <span class="help">Attention les domaines fonctionnels sont également intégrés lors de l'import</span>
                 <table class="table table-sm">
                     <thead>
                         <tr>
                             <th scope="col">Exporter par domaines fonctionnels</th>
                             <th scope="col" width="10%">
-                                <button type="button" class="btn btn-primary btn-sm float-right">Exporter tout</button>
+                                <a href="#" th:href="@{/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tout</a>
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td><button type="button" class="btn btn-primary btn-sm float-right">Exporter</button></td>
-                        </tr>
-                        <tr>
-                            <td>Matrice des prix</td>
-                            <td><button type="button" class="btn btn-primary btn-sm float-right">Exporter</button></td>
-                        </tr>
-                        <tr>
-                            <td>Processus utilisateurs</td>
-                            <td><button type="button" class="btn btn-primary btn-sm float-right">Exporter</button></td>
-                        </tr>
-                        <tr>
-                            <td>Editions</td>
-                            <td><button type="button" class="btn btn-primary btn-sm float-right">Exporter</button></td>
+                        <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
+                            <td th:text="${domain.name}">Gestion du matériel</td>
+                            <td><a href="#" th:href="@{/share/{id}-dictionary.par(id=${domain.uuid})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
+                           
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-6">
-                <form class="form-inline">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th scope="col">Importer un dictionnaire</th>
-                                <th scope="col" width="10%"></th>
-                            </tr>
-                        </thead>
-                        <tr>
-                            <td><input type="file" size="40"/></td>
-                            <td><button type="button" class="btn btn-primary btn-sm float-right">Importer</button></td>
-                        </tr>
-                    </table>
-                </form>
-            </div>
-        </div>
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Commentaire sur la maquette</h4>
-            <p>Fonctions simples pour exporter / importer le dictionnaire. Le format utilisé pourrait être quelque chose d'éditable manuellement (CSV like)</p>
-        </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    </span>
+    <script layout:fragment="script">
+    
+    </script>
 </body>
 </html>

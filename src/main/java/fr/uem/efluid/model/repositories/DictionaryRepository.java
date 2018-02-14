@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.FunctionalDomain;
 
 /**
  * @author elecomte
@@ -28,6 +29,12 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 	 * @return
 	 */
 	DictionaryEntry findByTableName(String tableName);
+
+	/**
+	 * @param domain
+	 * @return
+	 */
+	List<DictionaryEntry> findByDomain(FunctionalDomain domain);
 
 	/**
 	 * @return

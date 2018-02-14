@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.TableLink;
 
 /**
@@ -27,6 +28,12 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 	List<TableLink> findByDictionaryEntry(DictionaryEntry dictionaryEntry);
 
 	/**
+	 * @param domain
+	 * @return
+	 */
+	List<TableLink> findByDictionaryEntryDomain(FunctionalDomain domain);
+
+	/**
 	 * <b><font color="red">Query for internal use only</font></b>
 	 * 
 	 * @return
@@ -34,7 +41,7 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 	// TODO : Once with java9, specify as private
 	@Query(value = "SELECT concat(l.dictionary_entry_uuid,'') as from, concat(d.uuid,'') as to FROM link l INNER JOIN dictionary d ON d.table_name = l.table_to",
 			nativeQuery = true)
-	List<String[]> _internal_findAllRelationships();
+	List<Object[]> _internal_findAllRelationships();
 
 	/**
 	 * @return

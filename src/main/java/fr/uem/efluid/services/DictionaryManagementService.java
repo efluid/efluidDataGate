@@ -54,6 +54,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	private static final String DOMAINS_EXPORT = "full-domains";
 	private static final String LINKS_EXPORT = "full-links";
 
+	private static final String PARTIAL_DICT_EXPORT = "partial-dictionary";
+	private static final String PARTIAL_DOMAINS_EXPORT = "partial-domains";
+	private static final String PARTIAL_LINKS_EXPORT = "partial-links";
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryManagementService.class);
 
 	@Autowired
@@ -170,7 +174,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Check valid uuid
 		assertDictionaryEntryExists(entryUuid);
-		
+
 		// Open existing one
 		DictionaryEntry entry = this.dictionary.findOne(entryUuid);
 
@@ -315,6 +319,35 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		LOGGER.debug("Forced refresh on cache for metadata");
 
 		this.metadatas.refreshAll();
+	}
+
+	/**
+	 * @return
+	 */
+	public ExportImportResult<ExportImportFile> exportFonctionalDomains(UUID domainUUID) {
+
+		LOGGER.info("Process export of specified fonctional domain {} items", domainUUID);
+
+		FunctionalDomain domain = this.domains.findOne(domainUUID);
+
+		// Packages on limited data sets
+		DictionaryPackage dict = new DictionaryPackage(PARTIAL_DICT_EXPORT, LocalDateTime.now())
+				.initWithContent(this.dictionary.findByDomain(domain));
+		FunctionalDomainPackage doms = new FunctionalDomainPackage(PARTIAL_DOMAINS_EXPORT, LocalDateTime.now())
+				.initWithContent(Collections.singletonList(domain));
+		TableLinkPackage tl = new TableLinkPackage(PARTIAL_LINKS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.links.findByDictionaryEntryDomain(domain));
+
+		// Easy : just take all
+		ExportImportFile file = this.ioService.exportPackages(Arrays.asList(dict, doms, tl));
+
+		ExportImportResult<ExportImportFile> result = new ExportImportResult<>(file);
+
+		result.addCount(PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
+		result.addCount(PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
+		result.addCount(PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
+
+		return result;
 	}
 
 	/**
