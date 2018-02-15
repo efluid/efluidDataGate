@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -280,11 +281,20 @@ public class PilotableCommitPreparationService {
 	private void processAllDiff(PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
 		LOGGER.info("Begin diff process on commit preparation {}", this.current.getIdentifier());
-		long startTimeout = System.currentTimeMillis();
-
+		
 		try {
+			long startTimeout = System.currentTimeMillis();
+
+			// Process details
+			List<Callable<LocalPreparedDiff>> callables = this.dictionary.findAll().stream().map(this::callDiff)
+					.collect(Collectors.toList());
+			preparation.setProcessStarted(callables.size());
+			preparation.setProcessRemaining(new AtomicInteger(callables.size()));
+
+			LOGGER.info("Diff LOCAL process starting with {} diff to run", Integer.valueOf(callables.size()));
+
 			List<LocalPreparedDiff> fullDiff = this.executor
-					.invokeAll(this.dictionary.findAll().stream().map(this::callDiff).collect(Collectors.toList())).stream()
+					.invokeAll(callables).stream()
 					.map(this::gatherResult)
 					.sorted()
 					.collect(Collectors.toList());
@@ -301,7 +311,10 @@ public class PilotableCommitPreparationService {
 					Integer.valueOf(fullDiff.size()),
 					Long.valueOf(System.currentTimeMillis() - startTimeout));
 
-		} catch (InterruptedException e) {
+		} catch (ApplicationException a) {
+			LOGGER.error("Identified Local process error. Sharing", a);
+			throw a;
+		} catch (Throwable e) {
 			LOGGER.error("Error will processing diff", e);
 			this.current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
@@ -320,17 +333,25 @@ public class PilotableCommitPreparationService {
 	private void processAllMergeDiff(PilotedCommitPreparation<MergePreparedDiff> preparation) {
 
 		LOGGER.info("Begin diff process on merge-commit preparation {}", this.current.getIdentifier());
-		long startTimeout = System.currentTimeMillis();
-
-		Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid();
-
-		long searchTimestamp = preparation.getCommitData().getCreatedTime().atZone(ZoneId.systemDefault()).toEpochSecond();
 
 		try {
+			long startTimeout = System.currentTimeMillis();
+
+			Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid();
+
+			long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
+
+			// Process details
+			List<Callable<MergePreparedDiff>> callables = preparation.getPreparedContent().stream()
+					.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p))
+					.collect(Collectors.toList());
+			preparation.setProcessStarted(callables.size());
+			preparation.setProcessRemaining(new AtomicInteger(callables.size()));
+
+			LOGGER.info("Diff MERGE process starting with {} diff to run", Integer.valueOf(callables.size()));
+
 			List<MergePreparedDiff> fullDiff = this.executor
-					.invokeAll(preparation.getPreparedContent().stream()
-							.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p))
-							.collect(Collectors.toList()))
+					.invokeAll(callables)
 					.stream()
 					.map(this::gatherResult)
 					.sorted()
@@ -343,12 +364,15 @@ public class PilotableCommitPreparationService {
 			preparation.setEnd(LocalDateTime.now());
 			preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
-			LOGGER.info("Diff process completed on commit preparation {}. Found {} index entries. Total process duration was {} ms",
+			LOGGER.info("Diff process completed on merge commit preparation {}. Found {} index entries. Total process duration was {} ms",
 					this.current.getIdentifier(),
 					Integer.valueOf(fullDiff.size()),
 					Long.valueOf(System.currentTimeMillis() - startTimeout));
 
-		} catch (InterruptedException e) {
+		} catch (ApplicationException a) {
+			LOGGER.error("Identified Merge process error. Sharing", a);
+			throw a;
+		} catch (Throwable e) {
 			LOGGER.error("Error will processing diff", e);
 			this.current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
@@ -402,6 +426,10 @@ public class PilotableCommitPreparationService {
 			tableDiff.setDiff(this.diffService.currentContentDiff(dict).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
+			int rem = this.current.getProcessRemaining().decrementAndGet();
+			LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", Integer.valueOf(rem),
+					Integer.valueOf(this.current.getProcessStarted()));
+
 			return tableDiff;
 		};
 	}
@@ -432,6 +460,10 @@ public class PilotableCommitPreparationService {
 			// Then run one merge action for dictionaryEntry
 			correspondingDiff.setDiff(this.diffService.mergeIndexDiff(dict, lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+
+			int rem = this.current.getProcessRemaining().decrementAndGet();
+			LOGGER.info("Completed 1 merge Diff. Remaining : {} / {}", Integer.valueOf(rem),
+					Integer.valueOf(this.current.getProcessStarted()));
 
 			// For chained process
 			return correspondingDiff;
@@ -515,6 +547,10 @@ public class PilotableCommitPreparationService {
 
 		private CommitEditData commitData;
 
+		private AtomicInteger processRemaining;
+
+		private int processStarted;
+
 		/**
 		 * For pushed form only
 		 */
@@ -533,6 +569,36 @@ public class PilotableCommitPreparationService {
 			this.status = PilotedCommitStatus.DIFF_RUNNING;
 			this.start = LocalDateTime.now();
 			this.preparingState = preparingState;
+		}
+
+		/**
+		 * @return the processRemaining
+		 */
+		public AtomicInteger getProcessRemaining() {
+			return this.processRemaining;
+		}
+
+		/**
+		 * @param processRemaining
+		 *            the processRemaining to set
+		 */
+		public void setProcessRemaining(AtomicInteger processRemaining) {
+			this.processRemaining = processRemaining;
+		}
+
+		/**
+		 * @return the processStarted
+		 */
+		public int getProcessStarted() {
+			return this.processStarted;
+		}
+
+		/**
+		 * @param processStarted
+		 *            the processStarted to set
+		 */
+		public void setProcessStarted(int processStarted) {
+			this.processStarted = processStarted;
 		}
 
 		/**

@@ -31,6 +31,8 @@ public class CommitEditData {
 
 	private List<UUID> mergeSources;
 
+	private String domainNames;
+
 	private LocalDateTime rangeStartTime;
 
 	/**
@@ -53,6 +55,21 @@ public class CommitEditData {
 	 */
 	public void setUuid(UUID uuid) {
 		this.uuid = uuid;
+	}
+
+	/**
+	 * @return the domainNames
+	 */
+	public String getDomainNames() {
+		return this.domainNames;
+	}
+
+	/**
+	 * @param domainNames
+	 *            the domainNames to set
+	 */
+	public void setDomainNames(String domainNames) {
+		this.domainNames = domainNames;
 	}
 
 	/**

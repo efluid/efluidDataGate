@@ -7,17 +7,19 @@
 		<table class="table table-sm">
 		    <thead>
 		        <tr>
-		            <th scope="col" width="55%">Lots de modifications</th>
-		            <th scope="col" width="20%">Créé par</th>
-		            <th scope="col" width="20%">Le</th>
-		            <th scope="col" width="5%"></th>
+		            <th scope="col">Lots de modifications</th>
+		            <th scope="col">Domains couverts</th>
+		            <th scope="col">Créé par</th>
+		            <th scope="col">Le</th>
+		            <th scope="col"></th>
 		        </tr>
 		    </thead>
 		    <tbody>
 		        <tr th:each="commit, cstat : ${commits}">
 		            <td th:text="${commit.comment}">Préchargement configuration</td>
+		            <td th:text="${commit.domainNames}">Fonct domains</td>
 		            <td th:text="${commit.originalUserEmail}">System</td>
-		            <td th:text="${commit.createdTime}">01/11/2017</td>
+		            <td th:text="${custom.format(commit.createdTime)}">01/11/2017</td>
 		            <td>
 		            	<a href="./details.html" th:href="@{/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
 		            </td>

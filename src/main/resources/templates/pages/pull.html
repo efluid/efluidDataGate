@@ -1,76 +1,49 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html layout:decorator="layouts/pages">
 <head>
-    <title>Maquette Gestion Paramètrage Efluid</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" href="./css/core.css" media="screen" />
-    
 </head>
 <body>
-    <div class="container-fluid">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
-            <a class="navbar-brand" href="./index.html">Gestion du paramètrage Efluid</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="divider-horizontal"></div>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">       
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Dictionnaire
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./dictionary.html">Modification du dictionnaire</a>
-                            <a class="dropdown-item" href="./domains.html">Configuration des domaines fonctionnels</a>
-                            <a class="dropdown-item" href="./share.html">Export / Import de dictionnaire</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Lot de modification
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./commits.html">Liste des lots présents</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="./prepare.html">Préparer un lot</a>
-                            <a class="dropdown-item active" href="./pull.html">Importer un lot</a>
-                            <a class="dropdown-item" href="./push.html">Exporter un lot</a>
-                        </div>
-                    </li>
-                </ul>
-                <form class="form-inline">
-                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
-                </form>
-            </div>
-        </nav>
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-6">
-                <form class="form-inline">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th scope="col">Importer un lot de paramètrage</th>
-                            </tr>
-                        </thead>
-                        <tr>
-                            <td><input type="text" size="40" value="C:/Mon-fichier.zip"/>&nbsp;&nbsp;<a type="button" class="btn btn-primary float-right" href="./merge.html">Vérifier l'import</a></td>
-                        </tr>
-                    </table>
-                </form>
-            </div>
-        </div>
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Commentaire sur la maquette</h4>
-            <p>Ici on a l'équivalent du <strong>pull with merge</strong>. Le fichier importé est au format "backlog zippé". Dans cette maquette le button "Vérifier l'import" est fonctionnel (il renvoie vers le merge)</p>
-        </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <span layout:fragment="content">
+		<h5>Import d'un lot de modifications</h5>
+		<span class="help">
+			L'import est une opération complexe : toutes les données importées vont être comparées avec la base de données de paramétrage actuelle, 
+			et les différences et conflits vont être identifiés. Ils seront présentés alors dans une seconde étape afin de vous permettre d'indiquer
+			 ce qui doit concrêtement être appliquée. Les modifications de paramètrage sont ensuite reportées dans la base de données, le un lot de 
+			 modification spécifique est ajouté.
+		</span>
+		<form action="#" th:action="@{/pull/upload}" method="post" enctype="multipart/form-data">
+			<label class="btn btn-sm btn-primary">
+				Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
+			</label>
+			<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
+			<input type="submit" class="btn btn-success-outline btn-sm float-right" id="importSubmit" disabled="disabled" value="Importer les données de lots"/>
+		</form>
+	</span>
+	<script layout:fragment="script">
+		 /*<![CDATA[*/
+		
+		// Display of file 
+		const displayFile = () => {
+			hideDisplays();
+			var file = $("#importInput").val();
+			console.log(file);
+			if(file.endsWith(".zip") || file.endsWith(".par")){
+				$("#displayFile").text(file);
+				$("#importSubmit").prop('disabled', false);
+				$("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
+			} else {
+				showError("Le fichier fourni n'est pas dans un format valide. Seules les archives PAR sont supportées."); 
+				$("#importSubmit").prop('disabled', true);
+				$("#importSubmit").removeClass("btn-success").addClass("btn-outline-success");
+			}
+		};
+        
+    	// Init actions
+    	$(document).ready(() => {
+			$("#importInput").change(displayFile);
+		}); 
+		
+        /*]]>*/
+	</script>
 </body>
 </html>

@@ -2,10 +2,13 @@ package fr.uem.efluid.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -27,6 +30,12 @@ public class WebUtils {
 	public static final String TIME_FORMAT = "HH:mm:ss";
 
 	public static final String DATE_TIME_FORMAT = DATE_FORMAT + " " + TIME_FORMAT;
+
+	private static final DateTimeFormatter LDT_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
+
+	private static final Formatter DEFAULT_FORMATTER = new Formatter();
+
+	public static final String TH_FORMATTER = "custom";
 
 	/**
 	 * <p>
@@ -77,6 +86,41 @@ public class WebUtils {
 				.contentLength(file.getData().length)
 				.contentType(MediaType.APPLICATION_OCTET_STREAM)
 				.body(new InputStreamResource(new ByteArrayInputStream(file.getData())));
+	}
+
+	/**
+	 * With socle format
+	 * 
+	 * @param date
+	 * @return
+	 */
+	public static String format(LocalDateTime date) {
+		return LDT_FORMATTER.format(date);
+	}
+
+	/**
+	 * <p>
+	 * Add tools to use in templates
+	 * </p>
+	 * 
+	 * @param model
+	 */
+	public static void addTools(Model model) {
+		model.addAttribute(TH_FORMATTER, DEFAULT_FORMATTER);
+	}
+
+	/**
+	 * Usefull for easy access in Thymeleaf template
+	 * 
+	 * @author elecomte
+	 * @since v0.0.1
+	 * @version 1
+	 */
+	public static class Formatter {
+
+		public String format(LocalDateTime date) {
+			return WebUtils.format(date);
+		}
 	}
 
 }

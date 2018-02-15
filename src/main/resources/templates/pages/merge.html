@@ -1,135 +1,209 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html layout:decorator="layouts/pages">
 <head>
-    <title>Maquette Gestion Paramètrage Efluid</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" href="./css/core.css" media="screen" />
-    
 </head>
 <body>
-    <div class="container-fluid">
-        <nav class="navbar navbar-expand-lg navbar-light bg-light justify-content-between">
-            <a class="navbar-brand" href="./index.html">Gestion du paramètrage Efluid</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="divider-horizontal"></div>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">       
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Dictionnaire
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./dictionary.html">Modification du dictionnaire</a>
-                            <a class="dropdown-item" href="./domains.html">Configuration des domaines fonctionnels</a>
-                            <a class="dropdown-item" href="./share.html">Export / Import de dictionnaire</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle active" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Lot de modification
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./commits.html">Liste des lots présents</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="./prepare.html">Préparer un lot</a>
-                            <a class="dropdown-item active" href="./pull.html">Importer un lot</a>
-                            <a class="dropdown-item" href="./push.html">Exporter un lot</a>
-                        </div>
-                    </li>
-                </ul>
-                <form class="form-inline">
-                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
-                </form>
-            </div>
-        </nav>
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-8">
-                <p><h5>Validation du contenu du lot importé<button class="btn btn-dark btn-sm float-right" type="button">Rafraichir les données</button></h5></p>    
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col" width="20%">Domaine</th>
-                            <th scope="col" width="20%">Paramètre</th>
-                            <th scope="col" width="50%">Modification</th>
-                            <th scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Catégorie de matériel</td>
-                            <td><span class="add">Nouveau</span> "Compteur d'eau" / "abc" / "FS"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Accepter</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Rejeter</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Catégorie de matériel</td>
-                            <td><span class="remove">Suppression</span> "Compteur de gaz" / "abc" / "FS"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Accepter</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Rejeter</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="conflict">
-                            <td>Gestion du matériel</td>
-                            <td>Catégorie de matériel</td>
-                            <td><span class="remove">Conflit sur Suppression</span> de "Compteur d'énergie renouvelable" / "abc" / "FS" <button class="btn btn-secondary btn-sm" type="button">Details</button></td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Forcer</button>
-                                    <button type="button" class="btn btn-info btn-sm">Garder</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Résoudre</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Catégorie de matériel</td>
-                            <td><span class="update">Modification</span> "Compteur ABC" > "Compteur BCD"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-primary btn-sm">Accepter</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm">Rejeter</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>Gestion du matériel</td>
-                            <td>Catégorie de matériel</td>
-                            <td><span class="update">Modification</span> "Compteur 123" > "Compteur 456"</td>
-                            <td>
-                                <div class="btn-group float-right" role="group">
-                                    <button type="button" class="btn btn-outline-primary btn-sm">Accepter</button>
-                                    <button type="button" class="btn btn-secondary btn-sm">Rejeter</button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p><a href="./prepare.html" class="btn btn-primary float-right" type="button">Confirmer l'import du lot</a>
-                    <br/><br/><br/></p>
-            </div>
-        </div>        
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Commentaire sur la maquette</h4>
-            <p>Ici on a l'équivalent du <strong>merge</strong>. Comme pour la préparation d'un lot, les modifications sont spécifiées dans le tableau mais appliquées qu'avec la confirmation finale. Pour la résolution de conflit, dans une popin on affiche la ligne correspondante dans la BDD cible (courante), celle reçue dans le lot importé, et on peut saisir directement la valeur utilisée dans un texte field. Il peut être nécessaire de raffraichir le diff local en arrivant. Le bouton refresh permet de relancer cela</p>
-        </div>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+	<span layout:fragment="content">
+		<span th:if="${preparation.status.name()}=='FAILED'">
+			<div class="alert alert-danger">
+				<h4>L'analyse des lots pendant l'import a rencontré une erreur</h4>
+				<div th:replace="layouts/commons::error-display (${preparation.errorDuringPreparation.error},${preparation.errorDuringPreparation.payload})">...</div>
+				<span class="remark">
+					La préparation implique une extraction de toutes les données des tables identifiées comme du paramétrage dans le dictionnaire. 
+					En cas de soucis sur ces données, le processus peut ne pas aboutir. Pour recommencer, importer à nouveau le fichier 
+					Si nécessaire, merci de communiquer le code d'erreur suivant : <span th:text="|${preparation.errorDuringPreparation.error}-${preparation.errorDuringPreparation.timestamp}|">JSON_WRITE_ERROR-12414421224112</span>
+				</span>
+			</div>
+			<a href="index.html" class="btn btn-secondary btn-sm" th:href="@{/}">Revenir à la page d'accueil</a>
+			<a th:href="@{/pull}" href="#" class="btn btn-dark btn-sm">Retourner à l'import</a>
+		</span>
+		<form th:if="${preparation.status.name()}!='FAILED'" action="/merge.html" th:action="@{/merge/commit}" method="post">
+			<span th:if="${not preparation.emptyDiff}">
+				<p>
+					<h5>Ensemble des modifications identifiées
+						<div class="float-right">
+							<div class="btn-group" role="group">
+							<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout garder</button>
+							<button type="button" id="rollbackAllButton"  class="btn btn-outline-danger btn-sm">Tout annuler</button>
+							<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
+						</div>&nbsp;
+						<div class="btn-group" role="group">
+							<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
+							<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
+						</div>&nbsp;
+							<a th:href="@{/merge/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
+						</div>
+					</h5>
+				</p>
+				<div th:each="diffDisplay, tstat : ${preparation.preparedContent}" th:id="${diffDisplay.dictionaryEntryUuid}">
+					<div th:if="${!diffDisplay.diff.isEmpty()}" class="dictionary-content" >
+						<div class="dictionary-summary">
+							<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
+							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>
+							<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
+						</div>
+						<table class="table table-sm">
+							<thead>
+								<tr>
+									<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
+									<th scope="col" width="10%">Type</th>
+									<th scope="col">Modification</th>
+									<th scope="col" width="18%">
+										<div class="btn-group float-right" role="group">
+											<button type="button" th:id="|select_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary all-button btn-sm">Tout garder</button>
+											<button type="button" th:id="|rollback_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-danger all-button btn-sm">Tout annuler</button>
+											<button type="button" th:id="|ignore_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-secondary all-button btn-sm">Tout ignorer</button>
+										</div>
+									</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
+									<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
+									<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
+									<td><span class="change-display" th:text="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
+									<td>
+										<input type="hidden" th:id="|selectFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
+										<input type="hidden" th:id="|rollbackFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
+										<div class="btn-group float-right" role="group">
+											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Garder</button>
+											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Annuler</button>
+											<button type="button" th:class="!${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected or preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-secondary btn-sm ignore-button':'btn btn-outline-secondary btn-sm ignore-button'" class="btn btn-secondary btn-sm ignore-button">Ignorer</button>
+										</div>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<p>
+					<div class="float-right">
+						<input type="submit" class="btn btn-success btn-sm" value="Confirmer les opérations"/><br/><br/>
+					</div>
+				</p>
+			</span>
+			<span th:if="${preparation.emptyDiff}">
+				<p>
+					<h5>Aucune nouvelle modification identifiée dans les données de paramètrage par rapport au contenu de l'import.
+						<div class="float-right">
+							<a th:href="@{/merge/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
+							<a th:href="@{/pull}" href="#" class="btn btn-dark btn-sm">Retourner à l'import</a>
+						</div>
+					</h5>
+				</p>
+				<div class="alert alert-secondary" role="alert">
+					<strong>La recherche de différences n'a identifié aucune nouvelle données de paramètrage par rapport au(x) lot(s) importé(s)</strong>. 
+					Le traitement s'appuie sur les tables de paramètrage identifiées dans le dictionnaire, et recherche pour chacune les données actuellement 
+					présentes. Il compart ensuite le résultat avec les données déjà stockées dans l'ensemble des lots de modifications présents, complétées
+					par les données présentes dans le fichier importé, et recherche si des différences sont présentes. Il n'y a donc actuellement aucune
+					différence identifiée : toutes les données de paramètrage ont été déjà validées dans des lots de modification (cela ne veut pas
+					nécessairement dire que le fichier avait déjà été importé). 
+				</div>
+				<p>&nbsp;<br/><br/><br/><br/></p>
+			</span>
+		</form>
+	</span>
+    <script layout:fragment="script">
+		
+        // When selecting
+        const selectAction = (item) => {
+			hideDisplays();
+        	var selectInput = $("#selectFor" + item);
+        	var rollbackInput = $("#rollbackFor" + item);
+			if(selectInput.val() === 'false'){
+				console.info("selected " + item);
+				selectInput.val("true");
+				rollbackInput.val("false");
+				$("#" + item + " td button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
+				$("#" + item + " td button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
+				$("#" + item + " td button.ignore-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
+			}
+        };
+        
+        // When rollbacking
+        const rollbackAction = (item) => {
+			hideDisplays();
+        	var selectInput = $("#selectFor" + item);
+        	var rollbackInput = $("#rollbackFor" + item);
+			if(rollbackInput.val() === 'false'){
+				console.info("rollback " + item);
+				selectInput.val("false");
+				rollbackInput.val("true");
+				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
+				$("#" + item + " td button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
+				$("#" + item + " td button.ignore-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
+			}
+        };
+        
+        // When ignoring
+        const ignoreAction = (item) => {
+			hideDisplays();
+        	var selectInput = $("#selectFor" + item);
+        	var rollbackInput = $("#rollbackFor" + item);
+			if(selectInput.val() === 'true' || rollbackInput.val() === 'true'){
+				console.info("ignore " + item);
+				selectInput.val("false");
+				rollbackInput.val("false");
+				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
+				$("#" + item + " td button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
+				$("#" + item + " td button.ignore-button").removeClass("btn-outline-secondary").addClass("btn-secondary");
+			}
+        };
+        
+		// For table hidding
+		const hideAndShowTableAction = (tableUuid) => {
+			hideDisplays();
+			var table = $("#" + tableUuid + " table");
+			var button = $("#" + tableUuid + " span.reducer");
+			if(button.attr("class").indexOf('reducer-close') !== -1){
+				table.hide();
+				button.removeClass("reducer-close").addClass("reducer-open");
+			} else {
+				table.show();
+				button.removeClass("reducer-open").addClass("reducer-close");
+			}
+		};
+		
+		// For hidding all
+		const hideAndShowAllAction = (force) => {
+			$("span.reducer").each((index, e) => {
+				var tableUuid = e.parentElement.parentElement.parentElement.id;
+				var table = $("#" + tableUuid + " table");
+				var button = $("#" + tableUuid + " span.reducer");
+				if(force === 'hide'){
+					table.hide();
+					button.removeClass("reducer-close").addClass("reducer-open");
+				} else {
+					table.show();
+					button.removeClass("reducer-open").addClass("reducer-close");
+				}
+			});
+		};
+		
+		// For "select All / rollback All / ignore All"
+		const processAll = (butId) => {
+			var idParts = butId.split("_");
+			console.log("All " + idParts[0] + " on table " + idParts[1]);
+			$("#" + idParts[1] + " button." + idParts[0] + "-button").click();
+		};
+		
+    	// Init actions
+    	$(document).ready(() => {
+			// Default : hide all
+			hideAndShowAllAction('hide');
+			
+			$("span.reducer").click((e) => hideAndShowTableAction(e.target.parentElement.parentElement.parentElement.id));
+			$("button.select-button").click((e) => selectAction(e.target.parentElement.parentElement.parentElement.id));
+			$("button.rollback-button").click((e) => rollbackAction(e.target.parentElement.parentElement.parentElement.id));
+			$("button.ignore-button").click((e) => ignoreAction(e.target.parentElement.parentElement.parentElement.id));
+			$("button.all-button").click((e) => processAll(e.target.id));
+			$("#selectAllButton").click((e) => $("button.select-button").click());
+			$("#rollbackAllButton").click((e) => $("button.rollback-button").click());
+			$("#ignoreAllButton").click((e) => $("button.ignore-button").click());
+			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
+			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
+		}); 
+		
+    </script>
 </body>
 </html>

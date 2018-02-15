@@ -28,6 +28,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.services.ExportImportService.ExportImportPackage;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
@@ -72,6 +73,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private IndexRepository indexes;
+
+	@Autowired
+	private FunctionalDomainRepository domains;
 
 	@Autowired
 	private DictionaryRepository dictionary;
@@ -168,7 +172,18 @@ public class CommitService extends AbstractApplicationService {
 
 		LOGGER.debug("Request for list of available commits");
 
-		return this.commits.findAll().stream().map(CommitEditData::fromEntity).collect(Collectors.toList());
+		Map<UUID, List<String>> domainNames = this.domains.loadAllDomainNamesByCommitUuids();
+
+		return this.commits.findAll().stream()
+				.map(CommitEditData::fromEntity)
+				.peek(c -> {
+					// Add domain names for each commit (if any)
+					List<String> dns = domainNames.get(c.getUuid());
+					if (dns != null && dns.size() > 0) {
+						c.setDomainNames(dns.stream().collect(Collectors.joining(", ")));
+					}
+				})
+				.collect(Collectors.toList());
 	}
 
 	/**

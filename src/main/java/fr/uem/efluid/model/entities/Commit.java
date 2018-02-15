@@ -287,9 +287,18 @@ public class Commit implements Shared {
 				.applyString("has", h -> setHash(h))
 				.applyString("ema", e -> setOriginalUserEmail(e))
 				.applyString("idx", i -> {
+					// No idx item at all => Ref
 					if (i == null) {
 						setAsRefOnly();
-					} else {
+					}
+
+					// Empty => Empty idx list
+					else if ("".equals(i)) {
+						// No content
+					}
+
+					// Process content
+					else {
 						setIndex(Stream.of(i.split("\n")).map(s -> {
 							IndexEntry ent = new IndexEntry();
 							ent.deserialize(s);
