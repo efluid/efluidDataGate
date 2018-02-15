@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 14/02/2018*
+*Mise à jour au 15/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Attention, des modifications sur les écrans de gestion du diff / merge n'ont pas été reportées sur la maquette
@@ -14,10 +14,10 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * Modèle core : en place, avec repos
 * Utilisation BDD managed : Avec JDBCTemplate. Metadata OK avec PGSQL, a tester sur Oracle
 * Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
-* Merge : développé, non testé
+* Merge : développé, en cours de test
 * Application / rollback de paramètres : en place, Application testé semble OK.
-* Export / import : dev en place, test seulement sur dictionnaire
-* Traitement des dépendances : En place, testé OK
+* Export / import : dev en place, traitement OK
+* Traitement des dépendances : En place, testé OK (mais à revoir)
 * Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
 * Les composants de génération "fine" de requêtes SQL ou d'inline de données sont désormais des beans springs extensibles
 * Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
@@ -31,11 +31,11 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * édition du dictionnaire ("/dictionary"): en place
 * préparation du diff ("/prepare"): en place
 * listing des commits ("/commits"): en place, y compris détail
-* export du dictionnaire ("/share"): en place. Import à venir
-* export / import de commits : non démarré
-* merge a l'import : non démarré
+* export du dictionnaire ("/share"): en place
+* export / import de commits : en place
+* merge a l'import : en place
 * sécurité : non démarré
-* Wizzard de configuration : non démarré
+* Wizzard de configuration : démarré (étape 1 seulement)
 
 ## Utilisation
 
