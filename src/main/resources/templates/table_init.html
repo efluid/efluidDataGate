@@ -3,39 +3,33 @@
 <head>
 </head>
 <body>
-    <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-9">
-                <h5>Ajout d'une nouvelle table de paramètrage au dictionnaire.</h5>
-                <span class="help">Une table de paramètrage peut être n'importe quelle table de la base de donnée de l'application gérée.
-                Des informations techniques de cette table seront spécifiée après avoir selectionné la table à prendre en compte.
-                Une table ne peut être utilisée que pour une seule configuration de paramétrage dans le dictionnaire.</span>
-                <table class="table table-sm">
-					<thead>
-						<tr>
-							<th scope="col">Selection de la table à paramètrer</th>
-							<th scope="col"><a th:href="@{/dictionary/refresh}" href="./table_init.html" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les informations</a></th>
-						</tr>
-                    </thead>
-					<tbody>
-						<tr th:each="table : ${tables}" th:class="${table.entryName}?'table-used'">
-							<td>
-								<span th:text="${table.tableName}" class="table-name">TCATEGORYMATERIEL</span>
-							</td>
-							<td>
-								<span th:if="${table.entryName}" class="float-right">Déja utilisée avec le paramètre <strong th:text="${table.entryName}">Test Param</strong> du domaine <strong th:text="${table.domainName}">Domaine</strong></span>
-								<a th:if="!${table.entryName}" th:href="@{|/dictionary/new/${table.tableName}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm float-right" type="button">Utiliser cette table</a>
-							</td>
-						</tr>
-					</tbody>
-                </table>
-				<p>
-					<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm float-right" type="button">Annuler</a><br/><br/>
-				</p>
-            </div>
-        </div>
-    </span>
+	<span layout:fragment="content">
+		<h5>Ajout d'une nouvelle table de paramètrage au dictionnaire.</h5>
+		<span class="help">Une table de paramètrage peut être n'importe quelle table de la base de donnée de l'application gérée.
+		Des informations techniques de cette table seront spécifiée après avoir selectionné la table à prendre en compte.
+		Une table ne peut être utilisée que pour une seule configuration de paramétrage dans le dictionnaire.</span>
+		<table class="table table-sm">
+			<thead>
+				<tr>
+					<th scope="col">Selection de la table à paramètrer</th>
+					<th scope="col"><a th:href="@{/dictionary/refresh}" href="./table_init.html" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les informations</a></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="table : ${tables}" th:class="${table.entryName}?'table-used'">
+					<td>
+						<span th:text="${table.tableName}" class="table-name">TCATEGORYMATERIEL</span>
+					</td>
+					<td>
+						<span th:if="${table.entryName}" class="float-right">Déja utilisée avec le paramètre <strong th:text="${table.entryName}">Test Param</strong> du domaine <strong th:text="${table.domainName}">Domaine</strong></span>
+						<a th:if="!${table.entryName}" th:href="@{|/dictionary/new/${table.tableName}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm float-right" type="button">Utiliser cette table</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<p>
+			<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm float-right" type="button">Annuler</a><br/><br/>
+		</p>
+	</span>
 </body>
 </html>

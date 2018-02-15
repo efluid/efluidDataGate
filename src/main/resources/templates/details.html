@@ -4,62 +4,56 @@
 </head>
 <body>
     <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-9">
-				<div>
-					<h5>
-						Ensemble des modifications présentes dans le lot "<span th:text="${details.uuid}">ID988IDIDU</span>"
-						<div class="btn-group float-right" role="group">
-							<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
-							<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
-						</div>
-					</h5>
-					<p>
-						<ul>
-							<li><b>Détails</b> : <span th:text="${details.comment}">mon lot</span></li>
-							<li><b>Créé par</b> : <span th:text="${details.originalUserEmail}">perso@email.com</span></li>
-							<li><b>Créé le</b> : <span th:text="${details.createdTime}">jeudi</span></li>
-							<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>
-							<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${details.importedTime}">vendredi</span></li>
-						</ul>
-					</p>
-					
+		<div>
+			<h5>
+				Ensemble des modifications présentes dans le lot "<span th:text="${details.uuid}">ID988IDIDU</span>"
+				<div class="btn-group float-right" role="group">
+					<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
+					<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
 				</div>
-				<div th:if="${not details.emptyDiff}" th:each="diffDisplay, tstat : ${details.content}" th:id="${diffDisplay.dictionaryEntryUuid}">
-					<div th:if="${!diffDisplay.diff.isEmpty()}" class="dictionary-content" >
-						<div class="dictionary-summary">
-							<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
-							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>
-							<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
-						</div>
-						<table class="table table-sm">
-							<thead>
-								<tr>
-									<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
-									<th scope="col" width="10%">Type</th>
-									<th scope="col">Modification</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
-									<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
-									<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
-									<td><span class="change-display" th:text="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+			</h5>
+			<p>
+				<ul>
+					<li><b>Détails</b> : <span th:text="${details.comment}">mon lot</span></li>
+					<li><b>Créé par</b> : <span th:text="${details.originalUserEmail}">perso@email.com</span></li>
+					<li><b>Créé le</b> : <span th:text="${details.createdTime}">jeudi</span></li>
+					<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>
+					<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${details.importedTime}">vendredi</span></li>
+				</ul>
+			</p>
+			
+		</div>
+		<div th:if="${not details.emptyDiff}" th:each="diffDisplay, tstat : ${details.content}" th:id="${diffDisplay.dictionaryEntryUuid}">
+			<div th:if="${!diffDisplay.diff.isEmpty()}" class="dictionary-content" >
+				<div class="dictionary-summary">
+					<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
+					<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>
+					<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 				</div>
-				<div th:if="${details.emptyDiff}">
-					<p>Ce lot de modification ne comportait pas de modifications de paramètrage</p>
-				</div>
-				<p>
-					<div class="float-right"><a href="/commits.html" th:href="@{/commits}" class="btn btn-dark btn-sm">Revenir à la liste</a><br/><br/></div>
-				</p>
+				<table class="table table-sm">
+					<thead>
+						<tr>
+							<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
+							<th scope="col" width="10%">Type</th>
+							<th scope="col">Modification</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
+							<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
+							<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
+							<td><span class="change-display" th:text="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 		</div>
+		<div th:if="${details.emptyDiff}">
+			<p>Ce lot de modification ne comportait pas de modifications de paramètrage</p>
+		</div>
+		<p>
+			<div class="float-right"><a href="/commits.html" th:href="@{/commits}" class="btn btn-dark btn-sm">Revenir à la liste</a><br/><br/></div>
+		</p>
 	</span>
     <script layout:fragment="script">
 		

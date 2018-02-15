@@ -1,7 +1,7 @@
 package fr.uem.efluid.services.types;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class ExportImportResult<T> {
 
-	private List<ItemCount> counts = new ArrayList<>();
+	private Map<String, ItemCount> counts = new HashMap<>();
 
 	private final T result;
 
@@ -38,7 +38,7 @@ public class ExportImportResult<T> {
 	 * @param deleted
 	 */
 	public void addCount(String type, long added, long modified, long deleted) {
-		this.counts.add(new ItemCount(type, added, deleted, modified));
+		this.counts.put(type, new ItemCount(type, added, deleted, modified));
 	}
 
 	/**
@@ -46,6 +46,13 @@ public class ExportImportResult<T> {
 	 */
 	public static ExportImportResult<Void> newVoid() {
 		return new ExportImportResult<>(null);
+	}
+
+	/**
+	 * @return the counts
+	 */
+	public Map<String, ItemCount> getCounts() {
+		return this.counts;
 	}
 
 	/**

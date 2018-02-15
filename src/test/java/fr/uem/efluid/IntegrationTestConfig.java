@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableAutoConfiguration
 @EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 @EnableJpaRepositories({ REPOSITORIES, ROOT + ".stubs" })
-@EntityScan({ ENTITIES, ROOT + ".stubs" })
+@EntityScan({ ENTITIES, CONVERTERS, ROOT + ".stubs" })
 @ComponentScan({ CONFIG, SERVICES, WEB, REPOSITORIES_IMPLS, TOOLS, ROOT + ".stubs" })
 @Configuration
 public class IntegrationTestConfig {

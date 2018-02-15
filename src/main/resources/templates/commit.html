@@ -4,14 +4,10 @@
 </head>
 <body>
     <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-9">
-                <form action="commit-save.html" th:action="@{/prepare/save}" method="post">
-                	<p>
-	                    <h5>Identification du lot de modifications</h5>
-                    	<table class="table">
+    	<form action="commit-save.html" th:action="@{/prepare/save}" method="post">
+        	<p>
+	        	<h5>Identification du lot de modifications</h5>
+                <table class="table">
 							<thead>
 								<tr><th scope="col">Domaines fonctionnels concernés</th></tr>
 							</thead>
@@ -32,8 +28,6 @@
 						</div>
 					</p>
                 </form>
-            </div>
-        </div>
 	</span>
     <script layout:fragment="script">
 		

@@ -4,34 +4,71 @@
 </head>
 <body>
     <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-9">
-            	<h5>Import / export depuis le dictionnaire</h5>
-                <span class="help">Attention les domaines fonctionnels sont également intégrés lors de l'import</span>
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col">Exporter par domaines fonctionnels</th>
-                            <th scope="col" width="10%">
-                                <a href="#" th:href="@{/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tout</a>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
-                            <td th:text="${domain.name}">Gestion du matériel</td>
-                            <td><a href="#" th:href="@{/share/{id}-dictionary.par(id=${domain.uuid})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
-                           
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+		<h5>Export depuis le dictionnaire</h5>
+		<table class="table table-sm">
+		    <thead>
+		        <tr>
+		            <th scope="col">Domaines fonctionnels</th>
+		            <th scope="col" width="10%">
+		                <a href="#" th:href="@{/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines</a>
+		            </th>
+		        </tr>
+		    </thead>
+		    <tbody>
+		        <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
+		            <td th:text="${domain.name}">Gestion du matériel</td>
+		            <td><a href="#" th:href="@{/share/{id}-dictionary.par(id=${domain.uuid})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
+		        </tr>
+		    </tbody>
+		</table>
+		<p>
+			<h5>Import depuis le dictionnaire</h5>
+			<span class="help">Attention les domaines fonctionnels sont également intégrés lors de l'import</span>
+			<form action="#" th:action="@{/share/upload}" method="post" enctype="multipart/form-data">
+				<label class="btn btn-sm btn-primary">
+					Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
+				</label>
+				<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
+				<input type="submit" class="btn btn-success-outline btn-sm float-right" id="importSubmit" disabled="disabled" value="Importer les données dans le dictionnaire"/>
+		    </form>
+		    <div th:if="${result}" id="resultMessage" hidden="true">
+		    	<b>Import dans le dictionnaire réalisé avec succès.</b><br/><br/>
+		    	Les opérations suivantes ont été réalisées :
+		    	<ul>
+		    		<li th:if="${result.counts['full-domains']}"><span th:text="${result.counts['full-domains'].added}">1</span> création(s) et <span th:text="${result.counts['full-domains'].modified}">1</span> mise(s) à jour de domaine(s) fonctionnel(s)</li>
+		    		<li th:if="${result.counts['full-dictionary']}"><span th:text="${result.counts['full-dictionary'].added}">1</span> création(s) et <span th:text="${result.counts['full-dictionary'].modified}">1</span> mise(s) à jour de table(s) de paramètres dans le dictionnaire</li>
+		    		<li th:if="${result.counts['full-links']}"><span th:text="${result.counts['full-links'].added}">1</span> création(s) et <span th:text="${result.counts['full-links'].modified}">1</span> mise(s) à jour des lien(s) entre tables</li>
+		    	</ul>
+		    </div>
+	    </p>
     </span>
-    <script layout:fragment="script">
+    <script layout:fragment="script" th:inline="javascript">
     
+		// Display of file 
+		const displayFile = () => {
+			hideDisplays();
+			var file = $("#importInput").val();
+			console.log(file);
+			if(file.endsWith(".zip") || file.endsWith(".par")){
+				$("#displayFile").text(file);
+				$("#importSubmit").prop('disabled', false);
+				$("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
+			} else {
+				showError("Le fichier fourni n'est pas dans un format valide. Seules les archives PAR sont supportées."); 
+				$("#importSubmit").prop('disabled', true);
+				$("#importSubmit").removeClass("btn-success").addClass("btn-outline-success");
+			}
+		};
+        
+    	// Init actions
+    	$(document).ready(() => {
+			$("#importInput").change(displayFile);
+			var fromType = /*[[${result}?'success_import':'']]*/ 'success_import';
+			if(fromType === 'success_import'){
+			 	showSuccessHtml($("#resultMessage").html());
+			}
+		}); 
+		
     </script>
 </body>
 </html>

@@ -4,44 +4,38 @@
 </head>
 <body>
     <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-9">
-            	<h5>Edition des domaines fonctionnels</h5>
-                <span class="help">Les domaines fonctionnels représentent les ensembles de données prises en compte comme étant du paramètrage. 
-                Les opérations d'import / export et d'applications de modifications de paramètres peuvent être organisées par domaine fonctionnel.</span>
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col" width="70%">Domaines fonctionnels</th>
-                            <th scope="col"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
-                             <td th:text="${domain.name}">Gestion du matériel</td>
-                             <td>
-                             	<span class="float-right">
-                             		<button class="delete-button btn btn-secondary btn-sm" type="button" th:title="!${domain.canDelete}?'Impossible de supprimer un domaine fonctionnel pour lequel des lots de paramètrage existent'" th:disabled="!${domain.canDelete}">Supprimer</button>
-								</span>
-                             </td>
-                        </tr>
-                        <tr id="domainListInjectBefore">
-                            <td><input type="text" id="domainName" class="form-control" placeholder="Nom" required="true"/></td>
-                            <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+		<h5>Edition des domaines fonctionnels</h5>
+        <span class="help">Les domaines fonctionnels représentent les ensembles de données prises en compte comme étant du paramètrage. 
+        Les opérations d'import / export et d'applications de modifications de paramètres peuvent être organisées par domaine fonctionnel.</span>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th scope="col" width="70%">Domaines fonctionnels</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
+                     <td th:text="${domain.name}">Gestion du matériel</td>
+                     <td>
+                     	<span class="float-right">
+                     		<button class="delete-button btn btn-secondary btn-sm" type="button" th:title="!${domain.canDelete}?'Impossible de supprimer un domaine fonctionnel pour lequel des lots de paramètrage existent'" th:disabled="!${domain.canDelete}">Supprimer</button>
+						</span>
+					</td>
+			     </tr>
+			     <tr id="domainListInjectBefore">
+			         <td><input type="text" id="domainName" class="form-control" placeholder="Nom" required="true"/></td>
+			         <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+			     </tr>
+			</tbody>
+		</table>
     </span>
     <script layout:fragment="script">
     
 		// Delete buttons
 		const deleteButtonAction = (e) => {
 			hideDisplays();
-			var uuid = e.target.parentElement.parentElement.id;
+			var uuid = e.target.parentElement.parentElement.parentElement.id;
 			$.post("domains/remove/" + uuid, null, (data, status) => {
 				showSuccess("Domaine fonctionnel retiré avec succès");
 				$("#" + uuid).remove();

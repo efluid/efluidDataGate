@@ -3,22 +3,16 @@
 <head>
 </head>
 <body>
-    <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-6">
-                <h5>Détails techniques</h5>
-                <ul>
-                    <li>Base de données source : <span th:text="${details.dbUrl}">ORACLE_DB_SERVER_123, schéma ABCDEF</span></li>
-                    <li>Lots de paramètrage gérés : <span th:text="${details.commitsCount}">12</span></li>
-                    <li>Nombre de domaines fonctionnels : <span th:text="${details.domainsCount}">15</span></li>
-                    <li>Nombre de tables de paramètrage spécifiées dans le dictionnaire : <span th:text="${details.dictionaryCount}">100</span></li>
-                    <li>Taille estimée de l'index : <span th:text="${details.indexSize}">146 Mb</span></li>
-                    <li>Dernier import : Lot ABCDEF le 12/01/2018</li>
-                </ul>
-            </div>
-        </div>
-    </span>
+	<span layout:fragment="content">
+		<h5>Détails techniques</h5>
+		<ul>
+			<li>Base de données source : <span th:text="${details.dbUrl}">ORACLE_DB_SERVER_123, schéma ABCDEF</span></li>
+			<li>Lots de paramètrage gérés : <span th:text="${details.commitsCount}">12</span></li>
+			<li>Nombre de domaines fonctionnels : <span th:text="${details.domainsCount}">15</span></li>
+			<li>Nombre de tables de paramètrage spécifiées dans le dictionnaire : <span th:text="${details.dictionaryCount}">100</span></li>
+			<li>Taille estimée de l'index : <span th:text="${details.indexSize}">146 Mb</span></li>
+			<li>Dernier import : Lot ABCDEF le 12/01/2018</li>
+		</ul>
+	</span>
 </body>
 </html>

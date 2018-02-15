@@ -145,3 +145,12 @@
 .action-line.remove .change-display {
 	background-color: rgb(255, 220, 220);
 }
+
+.file-display {
+	padding-left: 10px;
+    font-size: 14px;
+}
+
+.file-display span {
+    font-style: italic;
+}

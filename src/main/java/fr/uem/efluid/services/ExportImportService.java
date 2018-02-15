@@ -116,6 +116,7 @@ public class ExportImportService {
 			return unCompress(path).stream()
 					.map(ExportImportService::readFile)
 					.map(ExportImportService::readPackage)
+					.filter(i -> i != null)
 					.collect(Collectors.toList());
 
 		} catch (IOException e) {
@@ -136,10 +137,16 @@ public class ExportImportService {
 		try {
 			String[] items = pack.split(ITEM_START_SEARCH);
 
+			// Empty pack :
+			if (items[0].endsWith(PACKAGE_END)) {
+				return null;
+			}
+
 			// Pack def is first item
 			// [pack|%s|%s|%s|%s]\n
 			// Class, name, date, version
 			String[] packParams = items[0].substring(6, items[0].length() - 2).split("\\|");
+
 			Class<?> type = Class.forName(packParams[0]);
 			String version = packParams[3];
 			LocalDateTime date = LocalDateTime.parse(packParams[2]);

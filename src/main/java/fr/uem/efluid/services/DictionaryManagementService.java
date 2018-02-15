@@ -415,9 +415,17 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		ExportImportResult<Void> result = ExportImportResult.newVoid();
 
 		// Details on imported counts (add vs updated items)
-		result.addCount(DICT_EXPORT, importedDicts.size() - newDictCount.get(), newDictCount.get(), 0);
-		result.addCount(DOMAINS_EXPORT, importedDomains.size() - newDomainsCount.get(), newDomainsCount.get(), 0);
-		result.addCount(LINKS_EXPORT, importedLinks.size() - newLinksCount.get(), newLinksCount.get(), 0);
+		if (importedDicts.size() > 0) {
+			result.addCount(DICT_EXPORT, newDictCount.get(), importedDicts.size() - newDictCount.get(), 0);
+		}
+
+		if (importedDomains.size() > 0) {
+			result.addCount(DOMAINS_EXPORT, newDomainsCount.get(), importedDomains.size() - newDomainsCount.get(), 0);
+		}
+
+		if (importedLinks.size() > 0) {
+			result.addCount(LINKS_EXPORT, newLinksCount.get(), importedLinks.size() - newLinksCount.get(), 0);
+		}
 
 		return result;
 	}
@@ -478,6 +486,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
 		local.setDomain(new FunctionalDomain(imported.getDomain().getUuid()));
+		local.setKeyName(imported.getKeyName());
 		local.setKeyType(imported.getKeyType());
 		local.setParameterName(imported.getParameterName());
 		local.setTableName(imported.getTableName());

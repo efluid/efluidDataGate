@@ -4,41 +4,35 @@
 </head>
 <body>
     <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-9">
-            	<h5>Edition du dictionnaire</h5>
-                <span class="help">Le dictionnaire représente les tables de l'application gérée à prendre en compte comme étant du paramètrage.</span>
-				<table class="table table-sm">
-					<thead>
-						<tr>
-							<th scope="col">Domaine</th>
-							<th scope="col">Nom</th>
-							<th scope="col" width="50%">Requête de sélection</th>
-							<th scope="col"></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr th:each="entry : ${dictionary}" th:id="${entry.uuid}">
-							<td th:text="${entry.domainName}">Gestion du matériel</td>
-                            <td th:text="${entry.name}">Catégorie de matériel</td>
-                            <td><span class="query-display" th:text="${entry.query}">SELECT COLKEY, COLA, COLB, COLC FROM TCATEGORYMATERIEL WHERE 1=1 ORDER BY COLKEY</span></td>
-							<td><span class="float-right">
-								<a th:href="@{|/dictionary/edit/${entry.uuid}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm" type="button">Editer</a>
-								<button class="btn btn-secondary btn-sm delete-button" type="button" th:title="!${entry.canDelete}?'Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent'" th:disabled="!${entry.canDelete}">Supprimer</button>
-							</span></td>
-						</tr>
-					</tbody>
-				</table>
-				<p>
-					<a th:href="@{/dictionary/new}" href="./dictionary_123.html" class="btn btn-success btn-sm float-right" type="button">Ajouter une nouvelle table de paramètrage</a><br/><br/>
-				</p>
-			</div>
-		</div>
+		<h5>Edition du dictionnaire</h5>
+		<span class="help">Le dictionnaire représente les tables de l'application gérée à prendre en compte comme étant du paramètrage.</span>
+		<table class="table table-sm">
+			<thead>
+				<tr>
+					<th scope="col">Domaine</th>
+					<th scope="col">Nom</th>
+					<th scope="col" width="50%">Requête de sélection</th>
+					<th scope="col"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="entry : ${dictionary}" th:id="${entry.uuid}">
+					<td th:text="${entry.domainName}">Gestion du matériel</td>
+					<td th:text="${entry.name}">Catégorie de matériel</td>
+					<td><span class="query-display" th:text="${entry.query}">SELECT COLKEY, COLA, COLB, COLC FROM TCATEGORYMATERIEL WHERE 1=1 ORDER BY COLKEY</span></td>
+					<td><span class="float-right">
+						<a th:href="@{|/dictionary/edit/${entry.uuid}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm" type="button">Editer</a>
+						<button class="btn btn-secondary btn-sm delete-button" type="button" th:title="!${entry.canDelete}?'Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent'" th:disabled="!${entry.canDelete}">Supprimer</button>
+					</span></td>
+				</tr>
+			</tbody>
+		</table>
+		<p>
+			<a th:href="@{/dictionary/new}" href="./dictionary_123.html" class="btn btn-success btn-sm float-right" type="button">Ajouter une nouvelle table de paramètrage</a><br/><br/>
+		</p>
 	</span>
-    <script layout:fragment="script" th:inline="javascript">
-    
+	<script layout:fragment="script" th:inline="javascript">
+
 		// Delete buttons
 		const deleteButtonAction = (e) => {
 			hideDisplays();
@@ -56,6 +50,6 @@
 			if(fromType === 'success_edit') showSuccess("Table de paramètrage ajoutée avec succès au dictionnaire");
 		}); 
 		
-    </script>
+	</script>
 </body>
 </html>

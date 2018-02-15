@@ -4,40 +4,34 @@
 </head>
 <body>
     <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-            <div class="col-1"></div>
-            <div class="col-9">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th scope="col" width="55%">Lots de modifications</th>
-                            <th scope="col" width="20%">Créé par</th>
-                            <th scope="col" width="20%">Le</th>
-                            <th scope="col" width="5%"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="commit, cstat : ${commits}">
-                            <td th:text="${commit.comment}">Préchargement configuration</td>
-                            <td th:text="${commit.originalUserEmail}">System</td>
-                            <td th:text="${commit.createdTime}">01/11/2017</td>
-                            <td>
-                            	<a href="./details.html" th:href="@{/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p>
-					<div class="float-right">
-						<a href="./prepare.html" th:href="@{/prepare}" class="btn btn-primary float-right" type="button">Préparer un nouveau lot de paramètrage</a><br/><br/>
-					</div>
-				</p>
-            </div>
-        </div>
+		<table class="table table-sm">
+		    <thead>
+		        <tr>
+		            <th scope="col" width="55%">Lots de modifications</th>
+		            <th scope="col" width="20%">Créé par</th>
+		            <th scope="col" width="20%">Le</th>
+		            <th scope="col" width="5%"></th>
+		        </tr>
+		    </thead>
+		    <tbody>
+		        <tr th:each="commit, cstat : ${commits}">
+		            <td th:text="${commit.comment}">Préchargement configuration</td>
+		            <td th:text="${commit.originalUserEmail}">System</td>
+		            <td th:text="${commit.createdTime}">01/11/2017</td>
+		            <td>
+		            	<a href="./details.html" th:href="@{/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
+		            </td>
+		        </tr>
+		    </tbody>
+		</table>
+		<p>
+			<div class="float-right">
+				<a href="./prepare.html" th:href="@{/prepare}" class="btn btn-primary float-right" type="button">Préparer un nouveau lot de paramètrage</a><br/><br/>
+			</div>
+		</p>
 	</span>
-    <script layout:fragment="script">
+	<script layout:fragment="script">
 		
-    </script>
+	</script>
 </body>
 </html>

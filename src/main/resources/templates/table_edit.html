@@ -4,122 +4,117 @@
 </head>
 <body>
     <span layout:fragment="content">
-        <div class="row"><div class="col-1">&nbsp;</div></div>
-        <div class="row">
-                <div class="col-1"></div>
-                <div class="col-9">
-                    <form action="#" th:action="@{/dictionary/save}" method="post">
-                        <h5>Edition d'une table de paramètrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
-                        <span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramètrage.
-                        La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel</span>
-                        <div class="form-group">
-                            <label for="name">Nom du paramètrage correspondant</label>
-                            <input id="name" type="text" class="form-control" th:field="${entry.name}" value="Programmation" size="50"/>
-                            <input type="hidden" th:field="${entry.uuid}" />
-                            <input type="hidden" th:field="${entry.table}" />
-                        </div>
-                        <div class="form-group">
-                            <label for="functionalDomain">Domaine fonctionnel</label>
-							<select name="functionalDomain" class="form-control" th:field="${entry.domainUuid}">
-              					<option th:each="domain : ${domains}" th:value="${domain.uuid}" th:text="${domain.name}">Gestion du matériel</option>
-            				</select>
-                            <small class="form-text text-muted">Le domaine fonctionnel ne pourra pas être modifié une fois la table de paramètrage créée</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="whereCriteria">Critère de filtrage des données</label>
-                            <input id="whereCriteria" type="text" class="form-control" th:field="${entry.where}" value="1=1" size="50"/>
-                            <small class="form-text text-muted">Le critère de filtrage est appliqué par défaut lors de chaque récupération de paramètre. Sa valeur est libre</small>
-                        </div>
-                        <div class="form-group">
-                            <label for="exampleInputPassword1">Requête de selection obtenue</label>
-                            <span class="query-display" id="currentQuery">SELECT COLKEY, COLA, COLB, COLC FROM TPROGRAMMATION WHERE 1=1 ORDER BY COLKEY</span>
-                        </div>
-                        <span th:if="${entry.missingTable}">
-                        	<div class="alert alert-danger">La table référencée <strong th:text="${entry.table}">TPROGRAMMATION</strong> n'existe pas dans la base de données gérée. 
-                        	L'entrée courante est probablement issue d'un import, pour lequel la mise à jour du modèle de donnée géré n'a pas encore été appliqué. 
-                        	Seules des informations partielles sont disponibles sur les colonnes prises en compte.
-                        	<strong>La modification de cette entrée de paramètrage est impossible tant que la table n'a pas été ajoutée</strong></div>
-                        	<table th:if="${#lists.size(entry.columns)}>0" class="table table-sm">
-	                            <thead>
-	                                <tr>
-	                                    <th scope="col">Colonne connue</th>
-	                                    <th scope="col">Type</th>
-	                                    <th scope="col">Dépendance vers</th>
-	                                </tr>
-	                            </thead>
-	                            <tbody>
-									<tr th:each="column, stat : ${entry.columns}" th:id="${column.name}">
-	                                    <td><span th:class="${column.key}?'table-key'" class="table-key" th:title="${column.key}?'Clé selectionnée'" th:text="${column.name}">COLKEY</span></td>
-	                                    <td>Inconnu<input type="hidden" th:id="|selectFor${column.name}|" value="true"></input></td>
-	                                    <td>Inconnu</td>
-	                                </tr>
-	                                <!--/* forced hidden "unselected" to make the query building using column names and not "*" */-->
-	                                <tr style="display:none" id="FORCER56TT">
-	                                    <td></td>
-	                                    <td><input type="hidden" th:id="selectForFORCER56TT" value="false"></input></td>
-	                                    <td></td>
-	                                </tr>
-	                            </tbody>
-	                        </table>
-	                        <div class="alert alert-danger" th:if="${#lists.size(entry.columns)}==0">Aucune colonne n'est identifiable en raison de la présence d'un critère de sélection "*" pour cette table</div>
-							<p>
-								<div class="float-right">
-									<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm">Annuler</a>
-									<button class="btn btn-outline-success btn-sm" disabled="disabled">Sauvegarder</button><br/><br/>
-	                       		</div>
-							</p>
-                        </span>
-                        <span th:if="!${entry.missingTable}">
-	                        <table class="table table-sm">
-	                            <thead>
-	                                <tr>
-	                                    <th scope="col">Colonne</th>
-	                                    <th scope="col">Type</th>
-	                                    <th scope="col">Dépendance vers</th>
-	                                    <th scope="col">
-	                                        <div class="btn-group float-right" role="group">
-	                                            <button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout utiliser</button>
-	                                            <button type="button" id="unselectAllButton" class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
-	                                        </div>
-	                                    </th>
-	                                </tr>
-	                            </thead>
-	                            <tbody>
-									<tr th:each="column, stat : ${entry.columns}" th:id="${column.name}">
-	                                    <td><span th:class="${column.type.name()}==PK?'table-key'" class="table-key" th:title="${column.type.name()}==PK?'Attention, si c\'est une clé primaire générée, elle ne devraient pas être utilisée comme clé ou même sélectionnée'" th:text="${column.name}">COLKEY</span></td>
-	                                    <td th:text="${column.type.displayName}" title="Le type est relatif au format utilisé dans l'expression SQL. Identifiant = clé technique (souvent générée), Literal = Chaine de caractère ou date, Variable = nombre, binaire ou booleen (variable à état), LOB = Long binaire ou texte">Literal</td>
-	                                    <td>
-	                                    	<input type="hidden" th:field="${entry.columns[__${stat.index}__].name}"/>
-	                                    	<input type="hidden" th:field="${entry.columns[__${stat.index}__].type}"/>
-	                                        <select class="form-control" name="foreignKeyTable" th:field="${entry.columns[__${stat.index}__].foreignKeyTable}">
-	                                        	<option value=""></option>
-	              								<option th:each="table : ${tables}" th:value="${table.tableName}" th:text="${table.tableName}">Gestion du matériel</option>
-	            							</select>
-	            							<input type="hidden" th:id="|selectFor${column.name}|" th:field="${entry.columns[__${stat.index}__].selected}"></input>
-	            							<input type="hidden" th:id="|keyFor${column.name}|" th:field="${entry.columns[__${stat.index}__].key}"></input>
-	                                    </td>
-	                                    <td>
-	                                        <div class="btn-group float-right" role="group">
-	                                        	<button type="button" th:class="${entry.columns[__${stat.index}__].key}?'btn btn-dark btn-sm key-button':'btn btn-outline-dark btn-sm key-button'" class="btn btn-primary btn-sm key-button">Clé</button>
-	                                            <button type="button" th:class="${entry.columns[__${stat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Utiliser</button>
-	                                            <button type="button" th:class="!${entry.columns[__${stat.index}__].selected or entry.columns[__${stat.index}__].key}?'btn btn-secondary btn-sm unselect-button':'btn btn-outline-secondary btn-sm unselect-button'" class="btn btn-secondary btn-sm unselect-button">Ignorer</button>
-	                                        </div>
-	                                    </td>
-	                                </tr>
-	                            </tbody>
-	                        </table>
-							<p>
-								<div class="float-right">
-									<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm" type="button">Annuler</a>
-									<input type="submit" class="btn btn-success btn-sm" value="Sauvegarder"/><br/><br/>
+		<form action="#" th:action="@{/dictionary/save}" method="post">
+			<h5>Edition d'une table de paramètrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
+			<span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramètrage.
+			La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel</span>
+			<div class="form-group">
+				<label for="name">Nom du paramètrage correspondant</label>
+				<input id="name" type="text" class="form-control" th:field="${entry.name}" value="Programmation" size="50"/>
+				<input type="hidden" th:field="${entry.uuid}" />
+				<input type="hidden" th:field="${entry.table}" />
+			</div>
+			<div class="form-group">
+				<label for="functionalDomain">Domaine fonctionnel</label>
+				<select name="functionalDomain" class="form-control" th:field="${entry.domainUuid}">
+					<option th:each="domain : ${domains}" th:value="${domain.uuid}" th:text="${domain.name}">Gestion du matériel</option>
+				</select>
+				<small class="form-text text-muted">Le domaine fonctionnel ne pourra pas être modifié une fois la table de paramètrage créée</small>
+			</div>
+			<div class="form-group">
+				<label for="whereCriteria">Critère de filtrage des données</label>
+				<input id="whereCriteria" type="text" class="form-control" th:field="${entry.where}" value="1=1" size="50"/>
+				<small class="form-text text-muted">Le critère de filtrage est appliqué par défaut lors de chaque récupération de paramètre. Sa valeur est libre</small>
+			</div>
+			<div class="form-group">
+				<label for="exampleInputPassword1">Requête de selection obtenue</label>
+				<span class="query-display" id="currentQuery">SELECT COLKEY, COLA, COLB, COLC FROM TPROGRAMMATION WHERE 1=1 ORDER BY COLKEY</span>
+			</div>
+			<span th:if="${entry.missingTable}">
+				<div class="alert alert-danger">La table référencée <strong th:text="${entry.table}">TPROGRAMMATION</strong> n'existe pas dans la base de données gérée. 
+				L'entrée courante est probablement issue d'un import, pour lequel la mise à jour du modèle de donnée géré n'a pas encore été appliqué. 
+				Seules des informations partielles sont disponibles sur les colonnes prises en compte.
+				<strong>La modification de cette entrée de paramètrage est impossible tant que la table n'a pas été ajoutée</strong></div>
+				<table th:if="${#lists.size(entry.columns)}>0" class="table table-sm">
+					<thead>
+						<tr>
+							<th scope="col">Colonne connue</th>
+							<th scope="col">Type</th>
+							<th scope="col">Dépendance vers</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="column, stat : ${entry.columns}" th:id="${column.name}">
+							<td><span th:class="${column.key}?'table-key'" class="table-key" th:title="${column.key}?'Clé selectionnée'" th:text="${column.name}">COLKEY</span></td>
+							<td>Inconnu<input type="hidden" th:id="|selectFor${column.name}|" value="true"></input></td>
+							<td>Inconnu</td>
+						</tr>
+						<!--/* forced hidden "unselected" to make the query building using column names and not "*" */-->
+						<tr style="display:none" id="FORCER56TT">
+							<td></td>
+							<td><input type="hidden" th:id="selectForFORCER56TT" value="false"></input></td>
+							<td></td>
+						</tr>
+					</tbody>
+			    </table>
+			    <div class="alert alert-danger" th:if="${#lists.size(entry.columns)}==0">Aucune colonne n'est identifiable en raison de la présence d'un critère de sélection "*" pour cette table</div>
+				<p>
+					<div class="float-right">
+						<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm">Annuler</a>
+						<button class="btn btn-outline-success btn-sm" disabled="disabled">Sauvegarder</button><br/><br/>
+			   		</div>
+				</p>
+			</span>
+			<span th:if="!${entry.missingTable}">
+			    <table class="table table-sm">
+			        <thead>
+			            <tr>
+							<th scope="col">Colonne</th>
+							<th scope="col">Type</th>
+							<th scope="col">Dépendance vers</th>
+							<th scope="col">
+								<div class="btn-group float-right" role="group">
+									<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout utiliser</button>
+									<button type="button" id="unselectAllButton" class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
 								</div>
-							</p>
-						</span>
-                    </form></div>
-            </div>
-        </span>
-    <script layout:fragment="script">
-        
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="column, stat : ${entry.columns}" th:id="${column.name}">
+							<td><span th:class="${column.type.name()}==PK?'table-key'" class="table-key" th:title="${column.type.name()}==PK?'Attention, si c\'est une clé primaire générée, elle ne devraient pas être utilisée comme clé ou même sélectionnée'" th:text="${column.name}">COLKEY</span></td>
+							<td th:text="${column.type.displayName}" title="Le type est relatif au format utilisé dans l'expression SQL. Identifiant = clé technique (souvent générée), Literal = Chaine de caractère ou date, Variable = nombre, binaire ou booleen (variable à état), LOB = Long binaire ou texte">Literal</td>
+							<td>
+								<input type="hidden" th:field="${entry.columns[__${stat.index}__].name}"/>
+								<input type="hidden" th:field="${entry.columns[__${stat.index}__].type}"/>
+								<select class="form-control" name="foreignKeyTable" th:field="${entry.columns[__${stat.index}__].foreignKeyTable}">
+									<option value=""></option>
+									<option th:each="table : ${tables}" th:value="${table.tableName}" th:text="${table.tableName}">Gestion du matériel</option>
+								</select>
+								<input type="hidden" th:id="|selectFor${column.name}|" th:field="${entry.columns[__${stat.index}__].selected}"></input>
+								<input type="hidden" th:id="|keyFor${column.name}|" th:field="${entry.columns[__${stat.index}__].key}"></input>
+							</td>
+							<td>
+								<div class="btn-group float-right" role="group">
+									<button type="button" th:class="${entry.columns[__${stat.index}__].key}?'btn btn-dark btn-sm key-button':'btn btn-outline-dark btn-sm key-button'" class="btn btn-primary btn-sm key-button">Clé</button>
+									<button type="button" th:class="${entry.columns[__${stat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Utiliser</button>
+									<button type="button" th:class="!${entry.columns[__${stat.index}__].selected or entry.columns[__${stat.index}__].key}?'btn btn-secondary btn-sm unselect-button':'btn btn-outline-secondary btn-sm unselect-button'" class="btn btn-secondary btn-sm unselect-button">Ignorer</button>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					<div class="float-right">
+						<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm" type="button">Annuler</a>
+						<input type="submit" class="btn btn-success btn-sm" value="Sauvegarder"/><br/><br/>
+					</div>
+				</p>
+			</span>
+		</form>
+	</span>
+	<script layout:fragment="script">
+
 		// Dynamic query
 		const updateQuery = () => {
 		

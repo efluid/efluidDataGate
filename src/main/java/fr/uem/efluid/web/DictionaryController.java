@@ -171,7 +171,6 @@ public class DictionaryController {
 	 * @return
 	 */
 	@RequestMapping(value = "/share/upload", method = POST)
-	@ResponseBody
 	public String uploadImport(Model model, MultipartHttpServletRequest request) {
 
 		model.addAttribute("result", this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request)));
