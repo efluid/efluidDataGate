@@ -1,13 +1,9 @@
 package fr.uem.efluid.services.types;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -81,21 +77,6 @@ public class ExportImportFile {
 	 */
 	public int getSize() {
 		return this.fileData.length;
-	}
-
-	/**
-	 * Produces a spring-mvc compliant response for the export file
-	 * 
-	 * @return
-	 */
-	public ResponseEntity<InputStreamResource> toResponseData() {
-
-		// Produces the response body with file content
-		return ResponseEntity
-				.ok()
-				.contentLength(this.fileData.length)
-				.contentType(MediaType.APPLICATION_OCTET_STREAM)
-				.body(new InputStreamResource(new ByteArrayInputStream(this.fileData)));
 	}
 
 }

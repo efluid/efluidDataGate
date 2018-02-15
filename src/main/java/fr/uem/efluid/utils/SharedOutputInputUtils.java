@@ -38,7 +38,7 @@ public class SharedOutputInputUtils {
 
 	static final ObjectMapper MAPPER = preparedObjectMapper();
 
-	static final DateTimeFormatter DATE_TIME_FORMATER = DateTimeFormatter.ofPattern(RestConstants.DATE_TIME_FORMAT);
+	static final DateTimeFormatter DATE_TIME_FORMATER = DateTimeFormatter.ofPattern(WebUtils.DATE_TIME_FORMAT);
 
 	/**
 	 * @param properties

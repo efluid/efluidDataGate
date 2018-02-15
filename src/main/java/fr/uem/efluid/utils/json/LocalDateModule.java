@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
-import fr.uem.efluid.utils.RestConstants;
+import fr.uem.efluid.utils.WebUtils;
 
 /**
  * @author elecomte
@@ -23,7 +23,7 @@ import fr.uem.efluid.utils.RestConstants;
  */
 public class LocalDateModule extends SimpleModule {
 
-	static final String DATE_FORMAT = RestConstants.DATE_FORMAT;
+	static final String DATE_FORMAT = WebUtils.DATE_FORMAT;
 
 	/**
 	 * 

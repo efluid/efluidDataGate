@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.deser.std.StdScalarDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdScalarSerializer;
 
-import fr.uem.efluid.utils.RestConstants;
+import fr.uem.efluid.utils.WebUtils;
 
 /**
  * @author elecomte
@@ -35,7 +35,7 @@ public class LocalDateTimeModule extends SimpleModule {
 	 */
 	public static class LocalDateTimeDeserializer extends StdScalarDeserializer<LocalDateTime> {
 
-		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern(RestConstants.DATE_TIME_FORMAT);
+		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern(WebUtils.DATE_TIME_FORMAT);
 
 		/**
 		 * 
@@ -64,7 +64,7 @@ public class LocalDateTimeModule extends SimpleModule {
 	 */
 	public static class LocalDateTimeSerializer extends StdScalarSerializer<LocalDateTime> {
 
-		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern(RestConstants.DATE_TIME_FORMAT);
+		private DateTimeFormatter formatter = DateTimeFormatter.ofPattern(WebUtils.DATE_TIME_FORMAT);
 
 		/**
 		 * 

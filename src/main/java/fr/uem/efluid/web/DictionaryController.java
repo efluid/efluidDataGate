@@ -16,10 +16,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.FunctionalDomainData;
+import fr.uem.efluid.utils.WebUtils;
 
 /**
  * <p>
@@ -150,7 +152,7 @@ public class DictionaryController {
 	@ResponseBody
 	public ResponseEntity<InputStreamResource> downloadExportOneDomain(@PathVariable("uuid") UUID uuid) {
 
-		return this.dictionaryManagementService.exportFonctionalDomains(uuid).getResult().toResponseData();
+		return WebUtils.outputExportImportFile(this.dictionaryManagementService.exportFonctionalDomains(uuid).getResult());
 	}
 
 	/**
@@ -160,7 +162,21 @@ public class DictionaryController {
 	@ResponseBody
 	public ResponseEntity<InputStreamResource> downloadExportAllDomains() {
 
-		return this.dictionaryManagementService.exportAll().getResult().toResponseData();
+		return WebUtils.outputExportImportFile(this.dictionaryManagementService.exportAll().getResult());
+	}
+
+	/**
+	 * @param model
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/share/upload", method = POST)
+	@ResponseBody
+	public String uploadImport(Model model, MultipartHttpServletRequest request) {
+
+		model.addAttribute("result", this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request)));
+
+		return exportPage(model);
 	}
 
 	/**
