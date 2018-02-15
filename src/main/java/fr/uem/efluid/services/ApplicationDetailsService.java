@@ -3,6 +3,8 @@ package fr.uem.efluid.services;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import javax.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,7 @@ import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
+import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.services.types.ApplicationDetails;
 
 /**
@@ -40,8 +43,23 @@ public class ApplicationDetailsService {
 	@Autowired
 	private DictionaryRepository dictionary;
 
+	@Autowired
+	private UserRepository users;
+
 	@Value("${param-efluid.managed-datasource.url}")
 	private String managedDbUrl;
+
+	// If wizzard started, cannot quit
+	private boolean wizzardCompleted;
+
+	/**
+	 * @return
+	 */
+	public boolean isNeedWizzard() {
+		// Until a wizzard is completed (or data is complete), it is not possible to avoid
+		// the wizzard
+		return !this.wizzardCompleted;
+	}
 
 	/**
 	 *
@@ -61,6 +79,16 @@ public class ApplicationDetailsService {
 		details.setIndexSize(getEstimatedIndexSize());
 
 		return details;
+	}
+
+	@PostConstruct
+	public void completeWizzard() {
+
+		this.wizzardCompleted = this.users.count() > 0 && this.dictionary.count() > 0;
+
+		if (!this.wizzardCompleted) {
+			LOGGER.info("Application is started in wizzard mode : no data found localy");
+		}
 	}
 
 	/**

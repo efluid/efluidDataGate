@@ -30,9 +30,14 @@ public class HomeController {
 	@RequestMapping("/")
 	public String index(Model model) {
 
+		// If not configured (no data : forward to wizzard)
+		if (this.applicationDetailsService.isNeedWizzard()) {
+			return "forward:/wizzard/";
+		}
+
 		model.addAttribute("details", this.applicationDetailsService.getCurrentDetails());
 
-		return "index";
+		return "pages/index";
 	}
 
 }

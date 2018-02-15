@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html layout:decorator="layout">
+<html layout:decorator="layouts/pages">
 <head>
 </head>
 <body>
@@ -7,7 +7,7 @@
 		<span th:if="${preparation.status.name()}=='FAILED'">
 			<div class="alert alert-danger">
 				<h4>La preparation du lot de modification a rencontré une erreur</h4>
-				<div th:replace="commons::error-display (${preparation.errorDuringPreparation.error},${preparation.errorDuringPreparation.payload})">...</div>
+				<div th:replace="layouts/commons::error-display (${preparation.errorDuringPreparation.error},${preparation.errorDuringPreparation.payload})">...</div>
 				<span class="remark">
 					La préparation implique une extraction de toutes les données des tables identifiées comme du paramétrage dans le dictionnaire. 
 					En cas de soucis sur ces données, le processus peut ne pas aboutir. 

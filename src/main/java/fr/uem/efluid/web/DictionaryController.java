@@ -49,7 +49,7 @@ public class DictionaryController {
 
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 
-		return "domains";
+		return "pages/domains";
 	}
 
 	@RequestMapping("/dictionary")
@@ -57,7 +57,7 @@ public class DictionaryController {
 
 		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
 
-		return "dictionary";
+		return "pages/dictionary";
 	}
 
 	/**
@@ -69,7 +69,7 @@ public class DictionaryController {
 
 		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
 
-		return "table_init";
+		return "pages/table_init";
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class DictionaryController {
 
 		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
 
-		return "table_init";
+		return "pages/table_init";
 	}
 
 	/**
@@ -98,7 +98,7 @@ public class DictionaryController {
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 		model.addAttribute("entry", this.dictionaryManagementService.editEditableDictionaryEntry(uuid));
 
-		return "table_edit";
+		return "pages/table_edit";
 	}
 
 	/**
@@ -113,7 +113,7 @@ public class DictionaryController {
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 		model.addAttribute("entry", this.dictionaryManagementService.prepareNewEditableDictionaryEntry(name));
 
-		return "table_edit";
+		return "pages/table_edit";
 	}
 
 	/**
@@ -141,7 +141,7 @@ public class DictionaryController {
 
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 
-		return "share";
+		return "pages/share";
 	}
 
 	/**

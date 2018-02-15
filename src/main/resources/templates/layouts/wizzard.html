@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <title>Gestion Paramètrage Efluid - Wizzard de configuration</title>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet"
+          href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous"/>
+    <link rel="stylesheet" href="/css/core.css" media="screen"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+    	<nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <span class="navbar-brand" >Gestion du paramètrage Efluid - Wizzard de configuration</span>
+		</nav>
+        <div class="row"><div class="col-1"><br/></div></div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-9">
+		       <span layout:fragment="content">
+		        <div>Here page content</div>
+		      </span>
+		      <div id="successDisplay" class="alert alert-success" style="display:none">C'est un succès</div>
+		      <div id="errorDisplay" class="alert alert-danger" style="display:none">C'est un echec</div>
+		   </div>
+		</div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script>
+    	
+    	// Utils
+    	
+    	String.prototype.endsWith = function(suffix) {
+		    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+		};
+    
+    	const hideDisplays = () => {
+    		$("#successDisplay").hide();
+    		$("#errorDisplay").hide();
+    	};
+    
+    	const showSuccessHtml = (html) => {
+    		$("#successDisplay").html(html).fadeIn();
+    	};
+    	
+    	const showSuccess = (message) => {
+    		$("#successDisplay").text(message).fadeIn();
+    	};
+    	
+    	const showError = (message) => {
+    		 $("#errorDisplay").text(message).fadeIn();
+    	};
+    	
+    	const setInvalid = (inputSelector, message) => {
+    		showError(message);
+    		$(inputSelector).addClass("is-invalid").focusin(function(){
+    			$("#errorDisplay").hide();
+    			$(this).removeClass("is-invalid");
+    		});
+    	};
+    	
+    </script>
+    <script layout:fragment="script">
+    	// Page script goes here
+    </script>
+</body>
+</html>

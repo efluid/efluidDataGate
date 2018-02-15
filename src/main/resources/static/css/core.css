@@ -154,3 +154,21 @@
 .file-display span {
     font-style: italic;
 }
+
+.wizzard-warning {
+	width:100%;
+	background-color:#EEE;
+	font-size:16px;
+	font-weight:bold;
+}
+
+.w-bc {
+	display:block;
+	font-size: 19px;
+	color:#AAA;
+}
+
+.w-bc .active {
+	font-weight: bold;
+	color:#000;
+}

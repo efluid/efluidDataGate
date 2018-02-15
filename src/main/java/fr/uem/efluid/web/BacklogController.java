@@ -92,7 +92,7 @@ public class BacklogController {
 		// Get updated preparation
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
 
-		return "commit";
+		return "pages/commit";
 	}
 
 	/**
@@ -143,7 +143,7 @@ public class BacklogController {
 		// Get updated preparation
 		model.addAttribute("commits", this.commitService.getAvailableCommits());
 
-		return "commits";
+		return "pages/commits";
 	}
 
 	/**
@@ -157,7 +157,7 @@ public class BacklogController {
 		// Get updated preparation
 		model.addAttribute("details", this.commitService.getExistingCommitDetails(uuid));
 
-		return "details";
+		return "pages/details";
 	}
 
 	/**
@@ -175,12 +175,12 @@ public class BacklogController {
 
 		// Diff already in progress : dedicated waiting page
 		if (prepare.getStatus() == PilotedCommitStatus.DIFF_RUNNING) {
-			return "diff";
+			return "pages/diff";
 		}
 
 		// Completed / available, basic prepare page
 		model.addAttribute("preparation", prepare);
 
-		return "prepare";
+		return "pages/prepare";
 	}
 }

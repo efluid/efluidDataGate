@@ -29,7 +29,6 @@ import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
-import fr.uem.efluid.model.repositories.impls.InMemoryManagedRegenerateRepository;
 import fr.uem.efluid.services.ExportImportService.ExportImportPackage;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.CommitDetails;
@@ -63,7 +62,7 @@ public class CommitService extends AbstractApplicationService {
 	private static final String PCKG_AFTER = "commits-part";
 	private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryManagedRegenerateRepository.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CommitService.class);
 
 	@Autowired
 	private CommitRepository commits;

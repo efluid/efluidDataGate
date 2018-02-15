@@ -1,12 +1,18 @@
 <!DOCTYPE html>
-<html layout:decorator="layout">
+<html layout:decorator="layouts/pages">
 <head>
 </head>
 <body>
     <span layout:fragment="content">
-       <div class="alert alert-danger">
+    	<div th:if="${status}==404" class="alert alert-danger">
+	        <h4>Page inconnue</h4>
+	        <span class="remark">
+				Cela arrive à tout le monde, même aux meilleurs ... Mais voilà, c'est la 404 que voilà !
+			</span>
+   		</div>
+        <div th:if="${status}!=404" class="alert alert-danger">
 	        <h4>Erreur détectée</h4>
-	        <div th:replace="commons::error-display (${code},${payload})">...</div>
+	        <div th:replace="layouts/commons::error-display (${code},${payload})">...</div>
 			<span class="remark">
 				Le détail de l'erreur a été tracé dans les informations techniques de l'application.
 				En cas de besoin, merci de communiquer le code d'erreur suivant : <span th:text="${code}?${code.name()}:'UNPROCESSED'">JSON_WRITE_ERROR</span>-<span th:text="${timestamp}">12414421224112</span>
