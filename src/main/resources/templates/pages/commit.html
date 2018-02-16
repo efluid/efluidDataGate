@@ -18,12 +18,13 @@
                         
                         <div class="form-group">
                             <label for="whereCriteria"><b>Description du lot de modification</b></label>
-                            <input id="comment" type="text" class="form-control" th:field="${preparation.commitData.comment}" value="Lot de test" size="50"/>
+							<textarea  th:field="${preparation.commitData.comment}" class="form-control" rows="10"></textarea>
                         </div>
 					</p>
 					<p>
 						<div class="float-right">
-							<a class="btn btn-secondary btn-sm" th:href="@{/prepare}" href="prepare.html">Revenir en arrière</a>
+							<a th:if="${preparation.preparingState.name()=='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/prepare}" href="prepare.html">Revenir en arrière</a>
+							<a th:if="${preparation.preparingState.name()!='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/merge}" href="prepare.html">Revenir en arrière</a>
 							<input type="submit" class="btn btn-success btn-sm" value="Confirmer les opérations"/><br/><br/>
 						</div>
 					</p>

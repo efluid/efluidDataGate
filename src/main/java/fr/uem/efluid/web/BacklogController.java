@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
@@ -193,6 +194,12 @@ public class BacklogController {
 	@RequestMapping(value = "/pull", method = GET)
 	public String pullPage(Model model) {
 
+		// Forward to merge if active
+		if (this.pilotableCommitService.getCurrentCommitPreparation() != null
+				&& this.pilotableCommitService.getCurrentCommitPreparation().getPreparingState() != CommitState.LOCAL) {
+			return processImport(model);
+		}
+
 		return "pages/pull";
 	}
 
@@ -222,6 +229,26 @@ public class BacklogController {
 		return "pages/merging";
 	}
 
+	// /**
+	// * <p>
+	// * For default merge page
+	// * </p>
+	// *
+	// * @param model
+	// * @return
+	// */
+	// @RequestMapping("/merge")
+	// public String mergePage(Model model) {
+	//
+	// model.addAttribute("preparation",
+	// this.pilotableCommitService.getCurrentCommitPreparation());
+	//
+	// // Default : don't show all
+	// model.addAttribute("showAll", Boolean.FALSE);
+	//
+	// return "pages/merge";
+	// }
+
 	/**
 	 * <p>
 	 * For default merge page
@@ -230,10 +257,12 @@ public class BacklogController {
 	 * @param model
 	 * @return
 	 */
-	@RequestMapping("/merge")
-	public String mergePage(Model model) {
+	@RequestMapping(value = "/merge", method = GET)
+	public String mergePage(Model model, @RequestParam(required = false, name = "showAll", defaultValue = "false") boolean showAll) {
 
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
+
+		model.addAttribute("showAll", Boolean.valueOf(showAll));
 
 		return "pages/merge";
 	}

@@ -18,4 +18,12 @@ public class MergePreparedDiff extends DiffDisplay<List<PreparedMergeIndexEntry>
 		super(dictionaryEntryUuid);
 		setDiff(importedDiff);
 	}
+
+	/**
+	 * @return
+	 */
+	public boolean isDiffNeedAction() {
+		return this.getDiff().stream().anyMatch(PreparedMergeIndexEntry::isNeedAction);
+	}
+
 }

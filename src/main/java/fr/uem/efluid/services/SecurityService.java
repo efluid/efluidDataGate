@@ -3,6 +3,7 @@ package fr.uem.efluid.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,6 +29,7 @@ public class SecurityService {
 	 * @param email
 	 * @param password
 	 */
+	@CacheEvict(cacheNames = "users", allEntries = true)
 	public void addSimpleUser(String login, String email, String password) {
 
 		LOGGER.info("Creation new user : {}", login);

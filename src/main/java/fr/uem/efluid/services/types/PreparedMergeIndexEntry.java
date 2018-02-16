@@ -1,5 +1,6 @@
 package fr.uem.efluid.services.types;
 
+import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.IndexEntry;
 
 /**
@@ -16,6 +17,8 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 	private PreparedIndexEntry mine;
 
 	private PreparedIndexEntry their;
+
+	private boolean needAction;
 
 	/**
 	 * 
@@ -55,6 +58,36 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 	}
 
 	/**
+	 * @return the needAction
+	 */
+	public boolean isNeedAction() {
+		return this.needAction;
+	}
+
+	/**
+	 * @param needAction
+	 *            the needAction to set
+	 */
+	public void setNeedAction(boolean needAction) {
+		this.needAction = needAction;
+	}
+
+	/**
+	 * <p>
+	 * For merge resolution : apply given diff as resolution (change current modification)
+	 * </p>
+	 * 
+	 * @param combined
+	 * @param hrPayload
+	 */
+	public void applyResolution(DiffLine combined, String hrPayload) {
+
+		setAction(combined.getAction());
+		setPayload(combined.getPayload());
+		setHrPayload(hrPayload);
+	}
+
+	/**
 	 * Used when reading an imported index content
 	 * 
 	 * @param partial
@@ -70,5 +103,23 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 		return data;
 	}
 
+	/**
+	 * Used when reading an imported index content
+	 * 
+	 * @param combined
+	 * @param hrPayload
+	 * @return
+	 */
+	public static PreparedMergeIndexEntry fromExistingTheir(PreparedIndexEntry their) {
+
+		PreparedMergeIndexEntry merge = new PreparedMergeIndexEntry();
+
+		merge.setDictionaryEntryUuid(their.getDictionaryEntryUuid());
+		merge.setKeyValue(their.getKeyValue());
+		merge.setTheir(their);
+		merge.setMine(their);
+
+		return merge;
+	}
 
 }

@@ -23,53 +23,85 @@
 					<h5>Ensemble des modifications identifiées
 						<div class="float-right">
 							<div class="btn-group" role="group">
-							<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout garder</button>
-							<button type="button" id="rollbackAllButton"  class="btn btn-outline-danger btn-sm">Tout annuler</button>
-							<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
-						</div>&nbsp;
-						<div class="btn-group" role="group">
-							<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
-							<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
-						</div>&nbsp;
+								<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout appliquer</button>
+								<button type="button" id="rollbackAllButton"  class="btn btn-outline-danger btn-sm">Tout ignorer</button>
+							</div>&nbsp;
+							<div class="btn-group" role="group">
+								<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
+								<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
+							</div>&nbsp;
 							<a th:href="@{/merge/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
+							<a th:if="!${showAll}" href="/merge?showAll=true" class="btn btn-dark btn-sm">Afficher les égalités</a>
+							<a th:if="${showAll}" href="/merge?showAll=false" class="btn btn-dark btn-sm">Masquer les égalités</a>
 						</div>
 					</h5>
 				</p>
 				<div th:each="diffDisplay, tstat : ${preparation.preparedContent}" th:id="${diffDisplay.dictionaryEntryUuid}">
-					<div th:if="${!diffDisplay.diff.isEmpty()}" class="dictionary-content" >
+					<div th:if="${!diffDisplay.diff.isEmpty() and (showAll or diffDisplay.diffNeedAction )}" class="dictionary-content" >
 						<div class="dictionary-summary">
 							<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
 							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>
-							<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
+							<span class="reducer reducer-table reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 						</div>
 						<table class="table table-sm">
 							<thead>
 								<tr>
 									<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
-									<th scope="col" width="10%">Type</th>
-									<th scope="col">Modification</th>
-									<th scope="col" width="18%">
+									<th scope="col" colspan="2" width="85%">
+										Modification
 										<div class="btn-group float-right" role="group">
-											<button type="button" th:id="|select_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary all-button btn-sm">Tout garder</button>
-											<button type="button" th:id="|rollback_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-danger all-button btn-sm">Tout annuler</button>
-											<button type="button" th:id="|ignore_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-secondary all-button btn-sm">Tout ignorer</button>
+											<button type="button" th:id="|select_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary all-button btn-sm">Tout appliquer</button>
+											<button type="button" th:id="|rollback_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-danger all-button btn-sm">Tout ignorer</button>
 										</div>
 									</th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
+								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:if="${showAll or entry.needAction}">
 									<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
-									<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
-									<td><span class="change-display" th:text="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
-									<td>
+									
+									<td width="72%">
+										<span class="reducer reducer-sm reducer-open float-right">&nbsp;</span>
+										<span class="change-details">
+											<span class="change-title">Modification locale</span> : 
+											<span th:if="${entry.mine}" th:class="|mine action-line ${#strings.toLowerCase(entry.mine.action.name())}|" class="action-add">
+												<span class="change-display">
+													<span class="action-display" th:text="${entry.mine.action.name()}=='ADD'?'Ajout':(${entry.mine.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
+													<span th:if="${entry.mine.payload}" th:text="${entry.mine.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
+													<span th:if="!${entry.mine.payload}"> - pas de détails - </span>
+												</span>
+											</span>
+											<span class="mine change-display-none" th:if="!${entry.mine}">Ligne non présente dans l'index (ligne supprimée ou non créée)</span>
+											<span class="change-title">Modification importée</span> : 
+											<span th:if="${entry.their}" th:class="|their change-display action-line ${#strings.toLowerCase(entry.their.action.name())}|" class="action-add">
+												<span class="change-display">
+													<span class="action-display" th:text="${entry.their.action.name()}=='ADD'?'Ajout':(${entry.their.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
+													<span th:if="${entry.their.payload}" th:text="${entry.their.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
+													<span th:if="!${entry.their.payload}"> - pas de détails - </span>
+												</span>
+											</span>
+											<span class="mine change-display-none" th:if="!${entry.their}">Non présente dans l'import</span>
+											<span class="change-title">Proposition</span> : 
+										</span>
+										<span th:if="${entry.action}" th:class="|merged change-display action-line ${#strings.toLowerCase(entry.action.name())}|">
+											<span class="change-display">
+												<span class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
+												<span th:if="${entry.payload}" th:text="${entry.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
+												<span th:if="!${entry.payload}"> - pas de détails - </span>
+											</span>
+										</span>
+										<span class="merged change-display-none" th:if="!${entry.action}">Modifications identiques, rien à changer</span>
+									</td>
+									<td th:if="${entry.needAction}">
 										<input type="hidden" th:id="|selectFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
 										<input type="hidden" th:id="|rollbackFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
 										<div class="btn-group float-right" role="group">
-											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Garder</button>
-											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Annuler</button>
-											<button type="button" th:class="!${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected or preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-secondary btn-sm ignore-button':'btn btn-outline-secondary btn-sm ignore-button'" class="btn btn-secondary btn-sm ignore-button">Ignorer</button>
+											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Appliquer</button>
+											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Ignorer</button>
 										</div>
+									</td>
+									<td th:if="!${entry.needAction}">
+										<button type="button" class="btn btn-secondary-outline btn-sm select-button float-right" disabled="disabled">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Déjà en place&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
 									</td>
 								</tr>
 							</tbody>
@@ -103,7 +135,8 @@
 			</span>
 		</form>
 	</span>
-    <script layout:fragment="script">
+    <script layout:fragment="script" th:inline="javascript">
+		 /*<![CDATA[*/
 		
         // When selecting
         const selectAction = (item) => {
@@ -116,7 +149,6 @@
 				rollbackInput.val("false");
 				$("#" + item + " td button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
 				$("#" + item + " td button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
-				$("#" + item + " td button.ignore-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
 			}
         };
         
@@ -131,22 +163,6 @@
 				rollbackInput.val("true");
 				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
 				$("#" + item + " td button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
-				$("#" + item + " td button.ignore-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
-			}
-        };
-        
-        // When ignoring
-        const ignoreAction = (item) => {
-			hideDisplays();
-        	var selectInput = $("#selectFor" + item);
-        	var rollbackInput = $("#rollbackFor" + item);
-			if(selectInput.val() === 'true' || rollbackInput.val() === 'true'){
-				console.info("ignore " + item);
-				selectInput.val("false");
-				rollbackInput.val("false");
-				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
-				$("#" + item + " td button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
-				$("#" + item + " td button.ignore-button").removeClass("btn-outline-secondary").addClass("btn-secondary");
 			}
         };
         
@@ -154,7 +170,7 @@
 		const hideAndShowTableAction = (tableUuid) => {
 			hideDisplays();
 			var table = $("#" + tableUuid + " table");
-			var button = $("#" + tableUuid + " span.reducer");
+			var button = $("#" + tableUuid + " span.reducer-table");
 			if(button.attr("class").indexOf('reducer-close') !== -1){
 				table.hide();
 				button.removeClass("reducer-close").addClass("reducer-open");
@@ -164,12 +180,26 @@
 			}
 		};
 		
+		// For table hidding
+		const hideAndShowDisplayAction = (trUuid) => {
+			hideDisplays();
+			var display = $("#" + trUuid + " span.change-details");
+			var button = $("#" + trUuid + " span.reducer-sm");
+			if(button.attr("class").indexOf('reducer-close') !== -1){
+				display.hide();
+				button.removeClass("reducer-close").addClass("reducer-open");
+			} else {
+				display.show();
+				button.removeClass("reducer-open").addClass("reducer-close");
+			}
+		};
+		
 		// For hidding all
-		const hideAndShowAllAction = (force) => {
-			$("span.reducer").each((index, e) => {
+		const hideAndShowAllTablesAction = (force) => {
+			$("span.reducer-table").each((index, e) => {
 				var tableUuid = e.parentElement.parentElement.parentElement.id;
 				var table = $("#" + tableUuid + " table");
-				var button = $("#" + tableUuid + " span.reducer");
+				var button = $("#" + tableUuid + " span.reducer-table");
 				if(force === 'hide'){
 					table.hide();
 					button.removeClass("reducer-close").addClass("reducer-open");
@@ -189,21 +219,23 @@
 		
     	// Init actions
     	$(document).ready(() => {
-			// Default : hide all
-			hideAndShowAllAction('hide');
+			var defaultShow = /*[[${showAll}?'show':'hide']]*/ 'hide';
+			hideAndShowAllTablesAction(defaultShow);
+			$("span.change-details").hide();
 			
-			$("span.reducer").click((e) => hideAndShowTableAction(e.target.parentElement.parentElement.parentElement.id));
+			$("span.reducer-table").click((e) => hideAndShowTableAction(e.target.parentElement.parentElement.parentElement.id));
+			$("span.reducer-sm").click((e) => hideAndShowDisplayAction(e.target.parentElement.parentElement.id));
+			
 			$("button.select-button").click((e) => selectAction(e.target.parentElement.parentElement.parentElement.id));
 			$("button.rollback-button").click((e) => rollbackAction(e.target.parentElement.parentElement.parentElement.id));
-			$("button.ignore-button").click((e) => ignoreAction(e.target.parentElement.parentElement.parentElement.id));
 			$("button.all-button").click((e) => processAll(e.target.id));
 			$("#selectAllButton").click((e) => $("button.select-button").click());
 			$("#rollbackAllButton").click((e) => $("button.rollback-button").click());
-			$("#ignoreAllButton").click((e) => $("button.ignore-button").click());
-			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
-			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
+			$("#closeAllButton").click((e) => hideAndShowAllTablesAction('hide'));
+			$("#showAllButton").click((e) => hideAndShowAllTablesAction('show'));
 		}); 
 		
+        /*]]>*/
     </script>
 </body>
 </html>

@@ -1,6 +1,12 @@
 package fr.uem.efluid.services;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
+
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.repositories.UserRepository;
 
 /**
  * @author elecomte
@@ -9,21 +15,20 @@ import fr.uem.efluid.model.entities.User;
  */
 public abstract class AbstractApplicationService {
 
-	public final static User FAKE_USER = new User();
-
-	static {
-		FAKE_USER.setEmail("fake@email.fr");
-		FAKE_USER.setLogin("fake");
-		FAKE_USER.setPassword("******");
-	}
+	@Autowired
+	private UserRepository users;
 
 	/**
 	 * @return
 	 */
+	@Cacheable("users")
 	protected User getCurrentUser() {
 
-		// TODO : use spring security for clean user management
-		return FAKE_USER;
+		// TODO : temp system for basic access. Replaced by spring sec.
+
+		List<User> found = this.users.findAll();
+
+		return found != null && !found.isEmpty() ? found.get(0) : null;
 	}
 
 	/**

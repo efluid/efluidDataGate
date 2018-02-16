@@ -24,15 +24,19 @@ public interface DiffLine {
 
 	IndexAction getAction();
 
+	long getTimestamp();
+
 	/**
+	 * 
 	 * @param dictionaryEntryUuid
 	 * @param keyValue
 	 * @param payload
 	 * @param action
+	 * @param timestamp
 	 * @return
 	 */
-	public static DiffLine combined(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action) {
-		return new CombinedDiffLine(dictionaryEntryUuid, keyValue, payload, action);
+	public static DiffLine combined(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action, long timestamp) {
+		return new CombinedDiffLine(dictionaryEntryUuid, keyValue, payload, action, timestamp);
 	}
 
 	/**
@@ -58,9 +62,12 @@ public interface DiffLine {
 
 		IndexAction currentAction = null;
 		String currentPayload = null;
+		long timestamp = 0;
 
 		// Replay, regarding each line action
 		for (DiffLine line : linesOnSameTableSameKey) {
+
+			timestamp = line.getTimestamp();
 
 			switch (line.getAction()) {
 			case ADD:
@@ -86,7 +93,7 @@ public interface DiffLine {
 
 		// Produces simulated diffline, with merged replayed value
 		return currentAction != null
-				? DiffLine.combined(first.getDictionaryEntryUuid(), first.getKeyValue(), currentPayload, currentAction)
+				? DiffLine.combined(first.getDictionaryEntryUuid(), first.getKeyValue(), currentPayload, currentAction, timestamp)
 				: null;
 	}
 
@@ -105,18 +112,21 @@ public interface DiffLine {
 
 		private final IndexAction action;
 
+		private final long timestamp;
+
 		/**
 		 * @param dictionaryEntryUuid
 		 * @param keyValue
 		 * @param payload
 		 * @param action
 		 */
-		CombinedDiffLine(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action) {
+		CombinedDiffLine(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action, long timestamp) {
 			super();
 			this.dictionaryEntryUuid = dictionaryEntryUuid;
 			this.keyValue = keyValue;
 			this.payload = payload;
 			this.action = action;
+			this.timestamp = timestamp;
 		}
 
 		/**
@@ -149,6 +159,14 @@ public interface DiffLine {
 		@Override
 		public IndexAction getAction() {
 			return this.action;
+		}
+
+		/**
+		 * @return the timestamp
+		 */
+		@Override
+		public long getTimestamp() {
+			return this.timestamp;
 		}
 
 		/**

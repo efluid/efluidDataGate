@@ -24,10 +24,10 @@ public class DiffLineUnitTest {
 		String key = "NAME1";
 
 		DiffLine combined = DiffLine.combinedOnSameTableAndKey(Arrays.asList(
-				DiffLine.combined(dict, key, "ADD1", ADD),
-				DiffLine.combined(dict, key, null, REMOVE),
-				DiffLine.combined(dict, key, "ADD2", ADD),
-				DiffLine.combined(dict, key, null, REMOVE)));
+				DiffLine.combined(dict, key, "ADD1", ADD, 3),
+				DiffLine.combined(dict, key, null, REMOVE, 4),
+				DiffLine.combined(dict, key, "ADD2", ADD, 5),
+				DiffLine.combined(dict, key, null, REMOVE, 6)));
 
 		Assert.assertNull(combined);
 	}
@@ -39,9 +39,9 @@ public class DiffLineUnitTest {
 		String key = "NAME1";
 
 		DiffLine combined = DiffLine.combinedOnSameTableAndKey(Arrays.asList(
-				DiffLine.combined(dict, key, "ADD1", ADD),
-				DiffLine.combined(dict, key, null, REMOVE),
-				DiffLine.combined(dict, key, "ADD2", ADD)));
+				DiffLine.combined(dict, key, "ADD1", ADD, 7),
+				DiffLine.combined(dict, key, null, REMOVE, 8),
+				DiffLine.combined(dict, key, "ADD2", ADD, 9)));
 
 		Assert.assertEquals(ADD, combined.getAction());
 		Assert.assertEquals("ADD2", combined.getPayload());
@@ -54,10 +54,10 @@ public class DiffLineUnitTest {
 		String key = "NAME1";
 
 		DiffLine combined = DiffLine.combinedOnSameTableAndKey(Arrays.asList(
-				DiffLine.combined(dict, key, "ADD1", ADD),
-				DiffLine.combined(dict, key, null, REMOVE),
-				DiffLine.combined(dict, key, "ADD2", ADD),
-				DiffLine.combined(dict, key, "MODIF3", UPDATE)));
+				DiffLine.combined(dict, key, "ADD1", ADD, 1),
+				DiffLine.combined(dict, key, null, REMOVE, 2),
+				DiffLine.combined(dict, key, "ADD2", ADD, 3),
+				DiffLine.combined(dict, key, "MODIF3", UPDATE, 4)));
 
 		Assert.assertEquals(ADD, combined.getAction());
 		Assert.assertEquals("MODIF3", combined.getPayload());
@@ -70,12 +70,12 @@ public class DiffLineUnitTest {
 		String key = "NAME1";
 
 		DiffLine combined = DiffLine.combinedOnSameTableAndKey(Arrays.asList(
-				DiffLine.combined(dict, key, "ADD1", ADD),
-				DiffLine.combined(dict, key, "MODIF1", UPDATE),
-				DiffLine.combined(dict, key, null, REMOVE),
-				DiffLine.combined(dict, key, "ADD2", ADD),
-				DiffLine.combined(dict, key, "MODIF2", UPDATE),
-				DiffLine.combined(dict, key, "MODIF3", UPDATE)));
+				DiffLine.combined(dict, key, "ADD1", ADD, 1),
+				DiffLine.combined(dict, key, "MODIF1", UPDATE, 2),
+				DiffLine.combined(dict, key, null, REMOVE, 3),
+				DiffLine.combined(dict, key, "ADD2", ADD, 4),
+				DiffLine.combined(dict, key, "MODIF2", UPDATE, 5),
+				DiffLine.combined(dict, key, "MODIF3", UPDATE, 6)));
 
 		Assert.assertEquals(ADD, combined.getAction());
 		Assert.assertEquals("MODIF3", combined.getPayload());

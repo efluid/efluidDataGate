@@ -2,6 +2,7 @@ package fr.uem.efluid.config;
 
 import static fr.uem.efluid.utils.DataGenerationUtils.domain;
 import static fr.uem.efluid.utils.DataGenerationUtils.entry;
+import static fr.uem.efluid.utils.DataGenerationUtils.user;
 
 import javax.annotation.PostConstruct;
 
@@ -17,7 +18,6 @@ import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.services.AbstractApplicationService;
 
 /**
  * <p>
@@ -49,7 +49,7 @@ public class MinimalDataLoader {
 
 		LOGGER.info("[MINIMAL] Init Minimal values for testing");
 
-		this.users.save(AbstractApplicationService.FAKE_USER);
+		this.users.save(user("minimal"));
 		FunctionalDomain dom1 = this.domains.save(domain("Minimal"));
 		this.dictionary.save(entry("Minimal dic", dom1, "\"WEIGHT\", \"LAST_UPDATED\"", "NOT_USED", "1=1", "VALUE", ColumnType.STRING));
 

@@ -84,7 +84,7 @@ public class ApplicationDetailsService {
 	@PostConstruct
 	public void completeWizzard() {
 
-		this.wizzardCompleted = this.users.count() > 0 && this.dictionary.count() > 0;
+		this.wizzardCompleted = this.users.count() > 0 && this.domains.count() > 0;
 
 		if (!this.wizzardCompleted) {
 			LOGGER.info("Application is started in wizzard mode : no data found localy");

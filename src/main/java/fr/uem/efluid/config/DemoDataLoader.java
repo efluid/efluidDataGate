@@ -24,7 +24,6 @@ import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.services.AbstractApplicationService;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
@@ -67,7 +66,6 @@ public class DemoDataLoader {
 		LOGGER.info("[DEMO] Init some demo values for testing");
 		User dupont = this.users.save(user("dupont"));
 		User testeur = this.users.save(user("testeur"));
-		this.users.save(AbstractApplicationService.FAKE_USER);
 
 		FunctionalDomain dom1 = this.domains.save(domain("Gestion du matériel"));
 		FunctionalDomain dom2 = this.domains.save(domain("Processus utilisateurs"));

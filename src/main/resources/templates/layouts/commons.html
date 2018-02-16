@@ -24,6 +24,10 @@
 					<p th:case="'EXPORT_ZIP_FAILED'">La compression du fichier d'export est impossible</p>
 					<p th:case="'IMPORT_ZIP_FAILED'">La décompression du fichier importé est impossible</p>
 					<p th:case="'IMPORT_WRONG_READ'">Impossible d'accéder au contenu du fichier importé</p>
+					<p th:case="'IMPORT_RUNNING'">
+						Un import de lots de modification est déjà en cours : impossible de démarrer un nouveau lot local tant que l'import n'est
+						pas complété ou abandonné. Pour accéder à l'écran de traitement d'import <a href="pull.html" th:href="@{/pull}" class="btn btn-dark btn-sm">Cliquer ici</a>
+					</p>
 					<p th:case="'UPLOAD_WRG_DATA'">Le format des données importées n'est pas supporté par l'application</p>
 					<p th:case="'TMP_ERROR'">Le système ne permet pas la préparation du fichier temporaire</p>
 					<p th:case="'JSON_WRITE_ERROR'">Le format sérialisé ne peut pas être écrit avec les données indiquées</p>

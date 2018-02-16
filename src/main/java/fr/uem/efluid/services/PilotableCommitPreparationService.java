@@ -1,9 +1,6 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.PREPARATION_BIZ_FAILURE;
-import static fr.uem.efluid.utils.ErrorType.PREPARATION_CANNOT_START;
-import static fr.uem.efluid.utils.ErrorType.PREPARATION_INTERRUPTED;
-import static fr.uem.efluid.utils.ErrorType.TABLE_NAME_INVALID;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -87,6 +84,12 @@ public class PilotableCommitPreparationService {
 
 		// On existing preparation
 		if (this.current != null) {
+
+			// Fail if launched on another type
+			if (this.current.getPreparingState() != CommitState.LOCAL) {
+				throw new ApplicationException(IMPORT_RUNNING,
+						"An import / Merge process is running. Cannot launch local prepare if merge not completed");
+			}
 
 			// Forced restart asked : close current, start a new one
 			if (force) {
@@ -200,22 +203,27 @@ public class PilotableCommitPreparationService {
 	public void copyCommitPreparationSelections(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> changedPreparation) {
 
-		int endContent = this.current.getPreparedContent().size();
+		int endContent = changedPreparation.getPreparedContent().size();
 
 		// Use basic global iterate on both current and changed
 		for (int i = 0; i < endContent; i++) {
 
 			DiffDisplay<? extends List<? extends PreparedIndexEntry>> currentDiff = this.current.getPreparedContent().get(i);
 			DiffDisplay<? extends List<? extends PreparedIndexEntry>> changedDiff = changedPreparation.getPreparedContent().get(i);
-			int endDiff = currentDiff.getDiff().size();
 
-			for (int j = 0; j < endDiff; j++) {
-				PreparedIndexEntry currentEntry = currentDiff.getDiff().get(j);
-				PreparedIndexEntry changedEntry = changedDiff.getDiff().get(j);
+			if (changedDiff != null && changedDiff.getDiff() != null) {
 
-				// Editable values are "selected" and "rollbacked"
-				currentEntry.setRollbacked(changedEntry.isRollbacked());
-				currentEntry.setSelected(changedEntry.isSelected());
+				int endDiff = changedDiff.getDiff().size();
+
+				for (int j = 0; j < endDiff; j++) {
+
+					PreparedIndexEntry currentEntry = currentDiff.getDiff().get(j);
+					PreparedIndexEntry changedEntry = changedDiff.getDiff().get(j);
+
+					// Editable values are "selected" and "rollbacked"
+					currentEntry.setRollbacked(changedEntry.isRollbacked());
+					currentEntry.setSelected(changedEntry.isSelected());
+				}
 			}
 		}
 	}
@@ -281,7 +289,7 @@ public class PilotableCommitPreparationService {
 	private void processAllDiff(PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
 		LOGGER.info("Begin diff process on commit preparation {}", this.current.getIdentifier());
-		
+
 		try {
 			long startTimeout = System.currentTimeMillis();
 
@@ -731,6 +739,13 @@ public class PilotableCommitPreparationService {
 		 */
 		public boolean isEmptyDiff() {
 			return this.preparedContent.stream().allMatch(d -> d.getDiff().isEmpty());
+		}
+
+		/**
+		 * @return
+		 */
+		public long getTotalCount() {
+			return this.preparedContent.stream().flatMap(d -> d.getDiff().stream()).count();
 		}
 
 		/**

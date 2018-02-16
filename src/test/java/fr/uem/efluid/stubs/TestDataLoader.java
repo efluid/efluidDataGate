@@ -1,9 +1,6 @@
 package fr.uem.efluid.stubs;
 
-import static fr.uem.efluid.utils.DataGenerationUtils.commit;
-import static fr.uem.efluid.utils.DataGenerationUtils.domain;
-import static fr.uem.efluid.utils.DataGenerationUtils.entry;
-import static fr.uem.efluid.utils.DataGenerationUtils.link;
+import static fr.uem.efluid.utils.DataGenerationUtils.*;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +22,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
@@ -32,7 +30,6 @@ import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.services.AbstractApplicationService;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
 
@@ -214,9 +211,10 @@ public class TestDataLoader {
 		// Prepare data - core items
 		DictionaryEntry cmat = setupDictionnaryForDiff();
 
+		User tester = this.users.findOne("testeur");
 		// Prepare existing commits
-		Commit com1 = this.commits.save(commit("Commit initial de création", AbstractApplicationService.FAKE_USER, 15));
-		Commit com2 = this.commits.save(commit("Commit de mise à jour", AbstractApplicationService.FAKE_USER, 7));
+		Commit com1 = this.commits.save(commit("Commit initial de création", tester, 15));
+		Commit com2 = this.commits.save(commit("Commit de mise à jour", tester, 7));
 
 		// Prepare index entries for batch init
 		List<IndexEntry> indexesCom1 = readDataset(diffName + "/knew-add.csv")
@@ -355,7 +353,7 @@ public class TestDataLoader {
 	}
 
 	@PostConstruct
-	public void addFakeUser() {
-		this.users.save(AbstractApplicationService.FAKE_USER);
+	public void addTestUser() {
+		this.users.save(this.users.save(user("testeur")));
 	}
 }

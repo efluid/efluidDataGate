@@ -324,34 +324,100 @@ public class PrepareIndexService {
 				preparingMergeIndexToComplete.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()), null);
 
 		// For each merge result (Only one possible for each keyValue)
-		preparingMergeIndexToComplete.stream().forEach(m -> {
+		preparingMergeIndexToComplete.stream().forEach(mergeEntry -> {
 
-			// Prepared combined diffs
-			DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(m.getKeyValue()));
-			DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(m.getKeyValue()));
+			// Adapt auto-resolution of entry
+			mergeResolution(
+					mergeEntry,
+					previouses.get(mergeEntry.getKeyValue()),
+					DiffLine.combinedOnSameTableAndKey(minesByKey.get(mergeEntry.getKeyValue())),
+					DiffLine.combinedOnSameTableAndKey(theirsByKey.remove(mergeEntry.getKeyValue())));
 
-			// Will apply HR Payload (previous is the same for current, "mine" & "their")
-			IndexEntry previous = previouses.get(m.getKeyValue());
-
-			// HrPayload values (3 required for each entry)
-			String currentHrPayload = getConverter().convertToHrPayload(m.getPayload(), previous != null ? previous.getPayload() : null);
-			String mineHrPayload = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null,
-					previous != null ? previous.getPayload() : null);
-			String theirHrPayload = getConverter().convertToHrPayload(their != null ? their.getPayload() : null,
-					previous != null ? previous.getPayload() : null);
-
-			// Complete current entry HR payload for rendering
-			m.setHrPayload(currentHrPayload);
-
-			// Complete corresponding "mine" and "their"
-			m.setMine(PreparedIndexEntry.fromCombined(mine, mineHrPayload));
-			m.setTheir(PreparedIndexEntry.fromCombined(their, theirHrPayload));
+			// Mark as a diff which need action
+			mergeEntry.setNeedAction(true);
 
 			LOGGER.debug("Completion on merge data for table {}, key \"{}\", \"HrPayload\"=\"{}\", \"mine\"={}, \"their\"={}",
-					dict.getTableName(), m.getKeyValue(), m.getHrPayload(), m.getMine(), m.getTheir());
+					dict.getTableName(), mergeEntry.getKeyValue(), mergeEntry.getHrPayload(), mergeEntry.getMine(), mergeEntry.getTheir());
 		});
 
-		// For whatever is NOT found in preparingMergeIndex, IGNORE !!!
+		// Add references to remaining "theirs"
+		theirsByKey.entrySet().stream().forEach(r -> {
+
+			// Create "nothing to do" MergeEntry
+			PreparedMergeIndexEntry merge = mergeAutoApplyTheir(previouses.get(r.getKey()),
+					DiffLine.combinedOnSameTableAndKey(r.getValue()));
+
+			// If not found in the diff : was already imported
+			merge.setNeedAction(false);
+
+			preparingMergeIndexToComplete.add(merge);
+		});
+	}
+
+	/**
+	 * Apply "their" immediately
+	 * 
+	 * @param localPrevious
+	 * @param foundTheir
+	 * @return
+	 */
+	private PreparedMergeIndexEntry mergeAutoApplyTheir(
+			IndexEntry localPrevious,
+			DiffLine foundTheir) {
+
+		// Prepare payload for "their" regarding local previous (if any)
+		String theirHrPayload = getConverter().convertToHrPayload(foundTheir.getPayload(),
+				localPrevious != null ? localPrevious.getPayload() : null);
+
+		// Corresponding details for the "their"
+		PreparedIndexEntry theirEntry = PreparedIndexEntry.fromCombined(foundTheir, theirHrPayload);
+
+		// Create "nothing to do" MergeEntry
+		return PreparedMergeIndexEntry.fromExistingTheir(theirEntry);
+	}
+
+	/**
+	 * Process resolution of merge
+	 * 
+	 * @param mergeEntry
+	 * @param localPrevious
+	 * @param foundMine
+	 * @param foundTheir
+	 */
+	private void mergeResolution(
+			PreparedMergeIndexEntry mergeEntry,
+			IndexEntry localPrevious,
+			DiffLine foundMine,
+			DiffLine foundTheir) {
+
+		String previousPayload = localPrevious != null ? localPrevious.getPayload() : null;
+
+		// Complete current entry HR payload for rendering
+		String currentHrPayload = getConverter().convertToHrPayload(mergeEntry.getPayload(), previousPayload);
+		mergeEntry.setHrPayload(currentHrPayload);
+
+		// If mine is there, complete payload and add combined
+		if (foundMine != null) {
+			String mineHrPayload = getConverter().convertToHrPayload(foundMine.getPayload(), previousPayload);
+			mergeEntry.setMine(PreparedIndexEntry.fromCombined(foundMine, mineHrPayload));
+		}
+
+		// Else copy proposition (case if current diff entry not yet commited)
+		else {
+			mergeEntry.setMine(PreparedIndexEntry.fromCombined(mergeEntry, currentHrPayload));
+		}
+
+		// If their is there, complete payload and add combined
+		if (foundTheir != null) {
+			String theirHrPayload = getConverter().convertToHrPayload(foundTheir.getPayload(), previousPayload);
+			mergeEntry.setTheir(PreparedIndexEntry.fromCombined(foundTheir, theirHrPayload));
+
+			// Case : their was modified after mine => Default resolution became "their"
+			if(foundMine == null || foundMine.getTimestamp() < foundTheir.getTimestamp() ){
+				mergeEntry.applyResolution(foundTheir, theirHrPayload);
+			}
+		}
+
 	}
 
 	// /**

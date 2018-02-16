@@ -154,6 +154,7 @@ public class IndexEntry implements DiffLine {
 	/**
 	 * @return the timestamp
 	 */
+	@Override
 	public long getTimestamp() {
 		return this.timestamp;
 	}

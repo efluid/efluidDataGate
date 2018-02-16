@@ -59,6 +59,7 @@ public class PreparedIndexEntry implements DiffLine {
 	/**
 	 * @return the timestamp
 	 */
+	@Override
 	public long getTimestamp() {
 		return this.timestamp;
 	}
@@ -231,6 +232,7 @@ public class PreparedIndexEntry implements DiffLine {
 		data.setDictionaryEntryUuid(combined.getDictionaryEntryUuid());
 		data.setPayload(combined.getPayload());
 		data.setKeyValue(combined.getKeyValue());
+		data.setHrPayload(hrPayload);
 
 		return data;
 	}

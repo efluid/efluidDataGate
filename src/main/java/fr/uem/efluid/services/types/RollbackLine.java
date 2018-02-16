@@ -57,13 +57,16 @@ public class RollbackLine {
 	 */
 	public DiffLine toCombinedDiff() {
 
+		long timestamp = System.currentTimeMillis();
+
 		// Rollback on delete => became an add
 		if ((this.current == null || this.current.getPayload() == null) && this.previous != null && this.previous.getPayload() != null) {
 			return DiffLine.combined(
 					this.previous.getDictionaryEntryUuid(),
 					this.previous.getKeyValue(),
 					this.previous.getPayload(),
-					IndexAction.ADD);
+					IndexAction.ADD,
+					timestamp);
 		}
 
 		// Rollback on add => became an delete
@@ -72,7 +75,8 @@ public class RollbackLine {
 					this.current.getDictionaryEntryUuid(),
 					this.current.getKeyValue(),
 					this.current.getPayload(),
-					IndexAction.REMOVE);
+					IndexAction.REMOVE,
+					timestamp);
 		}
 
 		// Other case are update current => previous
@@ -80,7 +84,8 @@ public class RollbackLine {
 				this.current.getDictionaryEntryUuid(),
 				this.current.getKeyValue(),
 				this.previous.getPayload(),
-				IndexAction.UPDATE);
+				IndexAction.UPDATE,
+				timestamp);
 	}
 
 }

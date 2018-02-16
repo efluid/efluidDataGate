@@ -81,11 +81,11 @@
     margin: 4px;
 }
 
-.dictionary-summary .reducer-open {
+.reducer-open {
 	background-image: url("/plus.png");
 }
 
-.dictionary-summary .reducer-close {
+.reducer-close {
     background-image: url("/minus.png");
 }
 
@@ -120,6 +120,19 @@
     border: 1px #EEE solid;
     font-style: italic;
     font-size: 14px;
+}
+
+.change-display-none {
+    display: block;
+    padding: 3px;
+    border: 1px #EEE solid;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.change-title {
+	font-size: 13px;
+	font-weight: bold;
 }
 
 .action-line.add .action-display {
@@ -189,4 +202,24 @@
 
 .selecter.unselected {
     background-image: url("/unselected.png");
+}
+
+.btn-group .btn-head {
+    margin-top: 7px;
+    margin-bottom: 0px;
+	font-size: 15px;
+    line-height:15px;
+}
+
+.reducer.reducer-sm {
+    display: block;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    margin: 8px;
+	background-size: 14px 14px;
+}
+
+.change-details {
+	display: none;
 }

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html layout:decorator="layouts/wizzard">
+<head>
+</head>
+<body>
+	<span layout:fragment="content">
+		<h3>Wizzare > Ajout d'utilisateur > Dictionnaire initial > <span class="w-active">Preparation de paramètre</span> > fin</h3>
+		<br/>
+		<div class="alert alert-primary" role="alert">
+			Si le dictionnaire est configuré, il est possible de préparer un premier lot de paramétrage établissant la situation "initiale". 
+			Cette opération n'est possible que si un dictionnaire a été configuré. Sinon vous pourrez réaliser cette opération plus tard.
+        </div>
+        <br/>
+        <div th:if="${!dictionary.isEmpty()}">
+        	<div th:if="${preparation == null}">
+				<div class="alert alert-secondary" role="alert">
+					Le dictionnaire est configuré avec <span th:text="${dictionary.size()}">2</span> tables de paramétrages connues. Il est possible 
+					de lancer l'analyse sur ces tables.
+				</div>
+				<div class="float-right">
+	        		<a href="#" th:href="@{/wizzard/2/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale</a>&nbsp;
+	        		<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration</a>
+				</div>
+        	</div>
+	        <div th:if="${preparation != null and preparation.status.name()=='DIFF_RUNNING'}" class="alert alert-secondary" role="alert">
+				<strong>Analyse en cours</strong>. Suivant la volumétrie du paramètrage, l'identification du lot initial peut p
+				rendre un certain temps. Il n'est pas possible d'arrêter un traitement en cours.
+				<div id="floatingCirclesG">
+					<div class="f_circleG" id="frotateG_01"></div>
+					<div class="f_circleG" id="frotateG_02"></div>
+					<div class="f_circleG" id="frotateG_03"></div>
+					<div class="f_circleG" id="frotateG_04"></div>
+					<div class="f_circleG" id="frotateG_05"></div>
+					<div class="f_circleG" id="frotateG_06"></div>
+					<div class="f_circleG" id="frotateG_07"></div>
+					<div class="f_circleG" id="frotateG_08"></div>
+				</div>
+			</div>
+			<div th:if="${preparation != null and preparation.status.name() !=  'DIFF_RUNNING'}">
+				<div class="alert alert-secondary" role="alert">
+					<strong>L'analyse est terminée.</strong> <span>134</span> entrées d'index ont été identifiées, 
+					pour <span>12</span> tables de paramètrages et <span>4</span> domaines
+					fonctionnels concernés. Le lot initial a été créé sous le nom "Lot initial".
+				</div>
+				<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
+			</div>
+		</div>
+		<div th:if="${dictionary.isEmpty()}" class="alert alert-secondary" role="alert">
+			<strong>Aucun dictionnaire trouvé, le lot initial devra être mis en place ultérieurement</strong>
+			<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
+		</div>
+	</span>
+	<script layout:fragment="script">
+		 /*<![CDATA[*/
+    
+		// Repeated check on status using basic rest service
+		const checkProgress = () => {
+			console.info("start a new check");
+			$.get("/prepare/progress", (data, status) => {
+				console.info("Check with data" + data);
+				if(data === 'DIFF_RUNNING'){
+					// Add new timeout 
+					setTimeout(checkProgress, 1000);
+				} else {
+					// Reload page for auto commit
+					window.location.replace("/wizzard/2/commit?commitName=Lot%20initial");
+				}
+			});
+		};
+		
+    	// Start loading
+    	$(document).ready(() => {
+			var fromType = /*[[${preparation and preparation.status.name()=='DIFF_RUNNING'}?'diff_check':'']]*/ 'diff_check';
+			if(fromType === 'diff_check'){
+				checkProgress();
+			}
+		}); 
+		
+        /*]]>*/
+    </script>
+</body>
+</html>
