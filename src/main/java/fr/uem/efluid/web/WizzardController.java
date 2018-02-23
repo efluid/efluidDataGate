@@ -135,8 +135,10 @@ public class WizzardController {
 	@RequestMapping(value = "/wizzard/2/commit", method = GET)
 	public String completedInitialCommit(Model model, @RequestParam("commitName") String commitName) {
 
-		// Force initial commit
-		this.pilotableCommitService.getCurrentCommitPreparation().getCommitData().setComment(commitName);
+		// Finalize dedicated for wizzard initial commit (auto select all)
+		this.pilotableCommitService.finalizeInitialCommitPreparation(commitName);
+		
+		// And auto-select all content
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
 		this.pilotableCommitService.saveCommitPreparation();
 

@@ -240,8 +240,38 @@ public class PilotableCommitPreparationService {
 	public void copyCommitPreparationCommitData(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> changedPreparation) {
 
+		setCommitPreparationCommitDataComment(changedPreparation.getCommitData().getComment());
+	}
+
+	/**
+	 * <p>Dedicated process for the wizzard piloted "initial commit" : apply the commit comment, and mark all diff as selected</p>
+	 * @param comment
+	 */
+	public void finalizeInitialCommitPreparation(String comment) {
+
+		// Copy comment
+		setCommitPreparationCommitDataComment(comment);
+		
+		// Mark all items as selecteds
+		this.current.getPreparedContent().stream().flatMap(d -> d.getDiff().stream()).forEach(i -> i.setSelected(true));
+	}
+
+	/**
+	 * <p>
+	 * Apply comment only for completed Commit Data
+	 * </p>
+	 * 
+	 * @param comment
+	 */
+	private void setCommitPreparationCommitDataComment(String comment) {
+
+		// If not done yet, init for comment apply
+		if (this.current.getCommitData() == null) {
+			this.current.setCommitData(new CommitEditData());
+		}
+
 		// Other editable is the commit comment
-		this.current.getCommitData().setComment(changedPreparation.getCommitData().getComment());
+		this.current.getCommitData().setComment(comment);
 	}
 
 	/**

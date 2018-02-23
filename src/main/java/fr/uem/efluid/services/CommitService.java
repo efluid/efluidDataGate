@@ -14,7 +14,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -448,7 +447,7 @@ public class CommitService extends AbstractApplicationService {
 	private static List<MergePreparedDiff> importedCommitIndexes(List<Commit> importedSources) {
 
 		if (importedSources == null || importedSources.isEmpty()) {
-			return Lists.newArrayList();
+			return new ArrayList<>();
 		}
 
 		// Organized by DictionaryEntries

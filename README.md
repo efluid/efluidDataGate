@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 15/02/2018*
+*Mise à jour au 16/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Attention, des modifications sur les écrans de gestion du diff / merge n'ont pas été reportées sur la maquette
@@ -46,8 +46,32 @@ Le prototype est basé sur Spring-boot. Il n'y a rien à installer pour l'exécu
 
 Le fichier de configuration technique de l'application est *src/main/resources/application.yml*
 
-### Quickstart
-Pour démarrer sans rien installer, juste à partir du projet cloné, en ayant maven sur son poste, utiliser : 
+### Quickstart standalone docker
+Deux dockerFiles différents sont proposés dans l'application : 1 pour construire une version simple de l'application, utilisant des BDD externes et un fichier de configuration externe, et 1 standalone permettant d'avoir une version totalement autonome de l'application
+
+Dans cette instance Standalone, la BDD postgres est embarquée, et des données initiales sont préchargées. 2 BDD sont créées : celle nécessaire au fonctionnement de l'application, et la BDD "cible" démo. Ainsi le fonctionnement normalement (équivalent à la "production") de l'application peut être testé uniquement en lançant ce container de test.
+
+Il peut être créé avec la démarche suivante (cela implique d'avoir uniquement docker installé sur son poste. Il n'est pas nécessaire d'avoir maven car on peut builder via un container docker)
+
+Soit le projet cloné dans "c:/work/projet" (cas avec Windows - modifier les dossiers si nécessaire), lancer : 
+
+    ## Build maven via un container docker (attention, pas de précache du .M2 ici donc lent)
+    docker run -it --rm -v c:\work\projet:/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 /bin/bash -c "mvn --batch-mode -DskipTests install; cp /usr/src/mymaven/src/docker/standalone/* /usr/src/mymaven/target"
+     
+    ## Si maven est installé sur le poste, utiliser plutôt :
+    mvn --batch-mode -DskipTests install
+    copy .\src\docker\standalone\* .\target
+    
+    ## Préparation du container
+    docker build -t param-gest-standalone:latest c:\work\projet\target
+    
+    ## Démarrage
+    docker run -p 8080:8080 -p 5432:5432 --name param-gest-test param-gest-standalone:latest
+
+Les BDD sont initialisées, puis l'application démarre. Elle est ensuite accessible sur [http://localhost:8080](http://localhost:8080) Elle démarre en mode Wizzard avec en BDD gérée 
+
+### Quickstart avec Maven
+Pour démarrer sans rien installer, juste à partir du projet cloné, en ayant maven sur son poste, et les bases de données nécessaires (voir plus loin), utiliser : 
 
     ## Attention, des dépendances qui ne sont pas présentes dans l'Artifactory Efluid peuvent être nécessaires. 
     ## Idéalement, exécuter la commande en désactivant l'utilisation du repository Efluid dans le fichier 
