@@ -25,6 +25,6 @@ public interface ManagedExtractRepository {
 	 *            table identifier for extraction
 	 * @return
 	 */
-	Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry);
+	Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs);
 
 }

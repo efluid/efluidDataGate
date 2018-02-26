@@ -1,15 +1,21 @@
 package fr.uem.efluid.utils;
 
 import static fr.uem.efluid.utils.ErrorType.*;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,6 +42,8 @@ public class SharedOutputInputUtils {
 
 	private static final String SYSTEM_DEFAULT_TMP_DIR = System.getProperty("java.io.tmpdir");
 
+	private static final String SERIAL_FILE_PARTS_SPLITER = ".";
+
 	static final ObjectMapper MAPPER = preparedObjectMapper();
 
 	static final DateTimeFormatter DATE_TIME_FORMATER = DateTimeFormatter.ofPattern(WebUtils.DATE_TIME_FORMAT);
@@ -54,6 +62,68 @@ public class SharedOutputInputUtils {
 	 */
 	public static OutputJsonPropertiesReader fromJson(String raw) {
 		return new OutputJsonPropertiesReader(raw);
+	}
+
+	/**
+	 * <p>
+	 * When serialize is done as a tmp file
+	 * </p>
+	 * 
+	 * @param name
+	 * @param data
+	 * @return
+	 */
+	public static Path serializeDataAsTmpFile(String[] pathPaths, byte[] data) {
+
+		String path = Stream.of(pathPaths).collect(Collectors.joining(SERIAL_FILE_PARTS_SPLITER));
+
+		try {
+			Path file = new File(SYSTEM_DEFAULT_TMP_DIR + "/" + path + ".data").toPath();
+			Files.write(file, data, StandardOpenOption.CREATE);
+			return file;
+		} catch (IOException e) {
+			throw new ApplicationException(DATA_WRITE_ERROR,
+					"Cannot create tmp data file with name " + path, e, path);
+		}
+	}
+
+	/**
+	 * @param rawPath
+	 * @return
+	 */
+	public static Path despecializePath(String rawPath) {
+		return Paths.get(rawPath);
+	}
+
+	/**
+	 * <p>
+	 * On serialized data file, get sub and path
+	 * </p>
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public static String[] pathNameParts(Path path) {
+		return path.getFileName().toString().split(SERIAL_FILE_PARTS_SPLITER);
+	}
+
+	/**
+	 * <p>
+	 * When serialize is done as a tmp file
+	 * </p>
+	 * 
+	 * @param name
+	 * @param data
+	 * @return
+	 */
+	public static byte[] deserializeDataFromTmpFile(Path path) {
+		try {
+			return Files.readAllBytes(path);
+		} catch (IOException e) {
+			throw new ApplicationException(DATA_READ_ERROR,
+					"Cannot read tmp data file with name " + path.getFileName().toString(), e, path.getFileName().toString());
+		}
+
 	}
 
 	/**

@@ -75,7 +75,7 @@ public class PrepareIndexService {
 	 * @param dictionaryEntryUuid
 	 * @return
 	 */
-	public Collection<PreparedIndexEntry> currentContentDiff(DictionaryEntry entry) {
+	public Collection<PreparedIndexEntry> currentContentDiff(DictionaryEntry entry, Map<String, byte[]> lobs) {
 
 		LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
 
@@ -83,7 +83,7 @@ public class PrepareIndexService {
 		// construction + restoration then diff.
 
 		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(entry);
-		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry);
+		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
 
 		return generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
 	}
@@ -98,12 +98,15 @@ public class PrepareIndexService {
 	 * </p>
 	 * 
 	 * @param entry
+	 * @param lobs
+	 *            for any extracted lobs
 	 * @param timeStampForSearch
 	 * @param mergeContent
 	 * @return
 	 */
 	public Collection<PreparedMergeIndexEntry> mergeIndexDiff(
 			DictionaryEntry entry,
+			Map<String, byte[]> lobs,
 			long timeStampForSearch,
 			List<PreparedMergeIndexEntry> mergeContent) {
 
@@ -123,7 +126,7 @@ public class PrepareIndexService {
 		toProcess.addAll(mergeContent);
 
 		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(toProcess);
-		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry);
+		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
 
 		Collection<PreparedMergeIndexEntry> diff = generateDiffIndexFromContent(PreparedMergeIndexEntry::new, knewContent, actualContent,
 				entry);
@@ -413,7 +416,7 @@ public class PrepareIndexService {
 			mergeEntry.setTheir(PreparedIndexEntry.fromCombined(foundTheir, theirHrPayload));
 
 			// Case : their was modified after mine => Default resolution became "their"
-			if(foundMine == null || foundMine.getTimestamp() < foundTheir.getTimestamp() ){
+			if (foundMine == null || foundMine.getTimestamp() < foundTheir.getTimestamp()) {
 				mergeEntry.applyResolution(foundTheir, theirHrPayload);
 			}
 		}

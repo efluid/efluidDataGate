@@ -4,7 +4,7 @@ param-efluid:
 
    managed-datasource:
        driverClassName: org.postgresql.Driver
-       url: jdbc:postgresql://localhost/demo?searchpath=public
+       url: jdbc:postgresql://small-server/demo?searchpath=public
        username: user
        password: user
        query: 
@@ -27,7 +27,7 @@ spring:
        cache: false
 
    datasource:
-       url: jdbc:postgresql://localhost/manager
+       url: jdbc:postgresql://small-server/manager
        username: user
        password: user
        driver-class-name: org.postgresql.Driver

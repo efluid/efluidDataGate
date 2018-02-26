@@ -1,6 +1,7 @@
 package fr.uem.efluid.services;
 
 import static fr.uem.efluid.utils.ErrorType.*;
+
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
@@ -19,8 +20,8 @@ import org.springframework.stereotype.Service;
 
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.services.types.ExportImportFile;
-import fr.uem.efluid.utils.SharedOutputInputUtils;
 import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 import net.lingala.zip4j.core.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.ZipParameters;

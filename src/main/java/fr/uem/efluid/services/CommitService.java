@@ -5,6 +5,7 @@ import static fr.uem.efluid.utils.ErrorType.COMMIT_IMPORT_INVALID;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,10 +26,12 @@ import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
+import fr.uem.efluid.model.repositories.LobPropertyRepository;
 import fr.uem.efluid.services.ExportImportService.ExportImportPackage;
 import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.CommitDetails;
@@ -37,6 +40,7 @@ import fr.uem.efluid.services.types.CommitPackage;
 import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
+import fr.uem.efluid.services.types.LobPropertyPackage;
 import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
@@ -60,6 +64,9 @@ public class CommitService extends AbstractApplicationService {
 
 	private static final String PCKG_ALL = "commits-all";
 	private static final String PCKG_AFTER = "commits-part";
+
+	private static final String PCKG_LOBS = "lobs";
+
 	private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CommitService.class);
@@ -78,6 +85,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private DictionaryRepository dictionary;
+
+	@Autowired
+	private LobPropertyRepository lobs;
 
 	@Autowired
 	private ExportImportService exportImportService;
@@ -117,9 +127,14 @@ public class CommitService extends AbstractApplicationService {
 			commitsToExport.stream().filter(c -> c.getCreatedTime().isBefore(startCommit.getCreatedTime())).forEach(Commit::setAsRefOnly);
 		}
 
+		// Get associated lobs
+		List<LobProperty> lobsToExport = loadLobsForCommits(commitsToExport);
+
 		// Then export :
 		ExportImportFile file = this.exportImportService.exportPackages(
-				Collections.singletonList(new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport)));
+				Arrays.asList(
+						new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
+						new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport)));
 
 		ExportImportResult<ExportImportFile> result = new ExportImportResult<>(file);
 
@@ -150,8 +165,9 @@ public class CommitService extends AbstractApplicationService {
 
 		// Then export :
 		ExportImportFile file = this.exportImportService.exportPackages(
-				Collections.singletonList(new CommitPackage(PCKG_CHERRY_PICK, LocalDateTime.now())
-						.initWithContent(Collections.singletonList(exported))));
+				Arrays.asList(
+						new CommitPackage(PCKG_CHERRY_PICK, LocalDateTime.now()).initWithContent(Collections.singletonList(exported)),
+						new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(this.lobs.findByCommit(exported))));
 
 		LOGGER.info("Export package for commit {} is ready. Size is {}b", commitUuid, Integer.valueOf(file.getSize()));
 
@@ -412,6 +428,15 @@ public class CommitService extends AbstractApplicationService {
 		return diffContent.stream()
 				.map(current -> new RollbackLine(current, previouses.get(current.getKeyValue())))
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * @param commitsToExport
+	 * @return
+	 */
+	private List<LobProperty> loadLobsForCommits(List<Commit> commitsToExport) {
+		return this.lobs
+				.findByCommitUuidIn(commitsToExport.stream().filter(c -> !c.isRefOnly()).map(Commit::getUuid).collect(Collectors.toList()));
 	}
 
 	/**

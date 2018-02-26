@@ -49,14 +49,14 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 	 * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#extractCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry)
 	 */
 	@Override
-	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry) {
+	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs) {
 
 		LOGGER.debug("Extracting values from managed table {}", parameterEntry.getTableName());
 
 		// Get columns for all table
 		return this.managedSource.query(
 				this.queryGenerator.producesSelectParameterQuery(parameterEntry),
-				new InternalExtractor(parameterEntry, this.valueConverter));
+				new InternalExtractor(parameterEntry, this.valueConverter, lobs));
 	}
 
 	/**
@@ -73,14 +73,16 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 		private final DictionaryEntry parameterEntry;
 		private final ManagedValueConverter valueConverter;
+		private final Map<String, byte[]> blobs;
 
 		/**
 		 * @param parameterEntry
 		 */
-		public InternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter) {
+		public InternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter, Map<String, byte[]> lobs) {
 			super();
 			this.parameterEntry = parameterEntry;
 			this.valueConverter = valueConverter;
+			this.blobs = lobs;
 		}
 
 		/**
@@ -121,7 +123,18 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 				String keyValue = null;
 				for (int i = 0; i < count; i++) {
 					if (i != keyPos) {
-						this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getString(i + 1), columnType[i], i == last);
+						ColumnType type = columnType[i];
+
+						// Call for binary only if needed
+						if (type == ColumnType.BINARY) {
+							this.valueConverter.appendBinaryValue(payload, columnNames[i], rs.getBytes(i + 1), i == last, this.blobs);
+						}
+
+						// Else basic string extraction
+						else {
+							this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getString(i + 1), type,
+									i == last);
+						}
 					} else {
 						keyValue = rs.getString(i + 1);
 					}

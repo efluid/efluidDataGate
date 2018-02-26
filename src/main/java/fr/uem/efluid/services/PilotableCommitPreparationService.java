@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -244,14 +245,18 @@ public class PilotableCommitPreparationService {
 	}
 
 	/**
-	 * <p>Dedicated process for the wizzard piloted "initial commit" : apply the commit comment, and mark all diff as selected</p>
+	 * <p>
+	 * Dedicated process for the wizzard piloted "initial commit" : apply the commit
+	 * comment, and mark all diff as selected
+	 * </p>
+	 * 
 	 * @param comment
 	 */
 	public void finalizeInitialCommitPreparation(String comment) {
 
 		// Copy comment
 		setCommitPreparationCommitDataComment(comment);
-		
+
 		// Mark all items as selecteds
 		this.current.getPreparedContent().stream().flatMap(d -> d.getDiff().stream()).forEach(i -> i.setSelected(true));
 	}
@@ -456,12 +461,13 @@ public class PilotableCommitPreparationService {
 
 			// Init table diff
 			LocalPreparedDiff tableDiff = LocalPreparedDiff.initFromDictionaryEntry(dict);
+			tableDiff.setDiffLobs(new HashMap<>());
 
 			// Complete dictionary entry
 			tableDiff.completeFromEntity(dict);
 
 			// Search diff content
-			tableDiff.setDiff(this.diffService.currentContentDiff(dict).stream()
+			tableDiff.setDiff(this.diffService.currentContentDiff(dict, tableDiff.getDiffLobs()).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
 			int rem = this.current.getProcessRemaining().decrementAndGet();
@@ -494,9 +500,11 @@ public class PilotableCommitPreparationService {
 
 			// Complete dictionary entry
 			correspondingDiff.completeFromEntity(dict);
+			correspondingDiff.setDiffLobs(new HashMap<>());
 
 			// Then run one merge action for dictionaryEntry
-			correspondingDiff.setDiff(this.diffService.mergeIndexDiff(dict, lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
+			correspondingDiff.setDiff(this.diffService
+					.mergeIndexDiff(dict, correspondingDiff.getDiffLobs(), lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
 			int rem = this.current.getProcessRemaining().decrementAndGet();

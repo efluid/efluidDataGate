@@ -1,5 +1,7 @@
 package fr.uem.efluid.tools;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Component;
 
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.StringSplitter;
 
 /**
@@ -45,6 +49,8 @@ public class ManagedValueConverter {
 
 	private final static Encoder B64_ENCODER = Base64.getEncoder();
 
+	private final static String LOB_DIGEST = "SHA-256";
+
 	/**
 	 * <p>
 	 * Using internal templating desc, prepare one value for extraction when processing
@@ -72,6 +78,42 @@ public class ManagedValueConverter {
 		builder.append(colName).append(AFFECT);
 
 		builder.append(type.getRepresent()).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
+
+		if (!last) {
+			builder.append(SEPARATOR);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Using internal templating desc, prepare one value for extraction when processing
+	 * content cell after cell, from a resultSet
+	 * </p>
+	 * 
+	 * @param builder
+	 *            current line builder. One builder for each content line
+	 * @param colName
+	 *            name of the cell
+	 * @param value
+	 *            raw content of the cell
+	 * @param type
+	 *            type of supported value, as specified in <tt>ColumnType</tt>
+	 * @param last
+	 *            true if it's the last cell
+	 */
+	public void appendBinaryValue(
+			final StringBuilder builder,
+			final String colName,
+			final byte[] value,
+			final boolean last,
+			final Map<String, byte[]> lobs) {
+
+		builder.append(colName).append(AFFECT);
+
+		String hash = hashBinary(value);
+		lobs.put(hash, value);
+
+		builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(hash);
 
 		if (!last) {
 			builder.append(SEPARATOR);
@@ -230,6 +272,27 @@ public class ManagedValueConverter {
 				.toString();
 	}
 
+	/**
+	 * <p>
+	 * For binaries, use a hash reprensentation for diff analysis
+	 * </p>
+	 * 
+	 * @param data
+	 * @return
+	 */
+	private static String hashBinary(byte[] data) {
+		try {
+			// Digest is not TS
+			MessageDigest digest = MessageDigest.getInstance(LOB_DIGEST);
+
+			// Hash and B64 hash
+			byte[] hash = digest.digest(data);
+			return B64_ENCODER.encodeToString(hash);
+		} catch (NoSuchAlgorithmException e) {
+			throw new ApplicationException(ErrorType.VALUE_SHA_UNSUP, "unsupported digest type " + LOB_DIGEST, e);
+		}
+
+	}
 	/*
 	 * ###################################################################################
 	 * ########## VALUE PROTECTOR APPENDERS. ONE METHOD FOR EACH SUPPORTED TYPE ##########
