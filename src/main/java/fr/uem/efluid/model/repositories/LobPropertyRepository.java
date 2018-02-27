@@ -26,4 +26,10 @@ public interface LobPropertyRepository extends JpaRepository<LobProperty, Long> 
 	 * @return
 	 */
 	List<LobProperty> findByCommit(Commit commit);
+
+	/**
+	 * @param hash
+	 * @return
+	 */
+	LobProperty findByHash(String hash);
 }

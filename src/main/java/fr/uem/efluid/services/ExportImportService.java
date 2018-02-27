@@ -116,7 +116,7 @@ public class ExportImportService {
 			Files.write(path, file.getData());
 
 			return unCompress(uncompressPath, path).stream()
-					.filter(p -> p.getFileName().endsWith(FILE_PCKG_EXT))
+					.filter(p -> p.getFileName().toString().endsWith(FILE_PCKG_EXT))
 					.map(ExportImportService::readFile)
 					.map(s -> readPackage(uncompressPath, s))
 					.filter(i -> i != null)

@@ -45,6 +45,7 @@ import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.services.types.RollbackLine;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 
@@ -226,6 +227,21 @@ public class CommitService extends AbstractApplicationService {
 	}
 
 	/**
+	 * @param encodedLobHash
+	 * @return
+	 */
+	public byte[] getExistingLobData(String encodedLobHash) {
+
+		String decHash = ManagedValueConverter.decodeAsString(encodedLobHash);
+
+		LOGGER.debug("Request for binary content with hash {}", decHash);
+
+		LobProperty lob = this.lobs.findByHash(decHash);
+
+		return lob.getData();
+	}
+
+	/**
 	 * <p>
 	 * From the prepared commit, rollback in local managed DB everything which was
 	 * rejected. Generic enough for compatibility with both local and merge commits
@@ -291,8 +307,15 @@ public class CommitService extends AbstractApplicationService {
 		LOGGER.debug("New commit {} of state {} with comment {} prepared with {} index lines",
 				newCommit.getUuid(), prepared.getPreparingState(), newCommit.getComment(), Integer.valueOf(entries.size()));
 
+		// Prepare used lobs
+		List<LobProperty> newLobs = this.diffs.prepareUsedLobsForIndex(entries, prepared.getDiffLobs());
+
 		// Save index and set back to commit with bi-directional link
 		newCommit.setIndex(this.indexes.save(entries));
+
+		// Add commit to lobs and save
+		newLobs.forEach(l -> l.setCommit(newCommit));
+		this.lobs.save(newLobs);
 
 		// Updated commit link
 		this.commits.save(newCommit);
@@ -393,7 +416,8 @@ public class CommitService extends AbstractApplicationService {
 		}
 
 		// #5 Get all lobs
-		currentPreparation.setDiffLobs(lobsPckg.getContent().stream().collect(Collectors.toConcurrentMap(l -> l.getHash(), l -> l.getData())));
+		currentPreparation
+				.setDiffLobs(lobsPckg.getContent().stream().collect(Collectors.toConcurrentMap(l -> l.getHash(), l -> l.getData())));
 
 		// Create the future merge commit info
 		currentPreparation.setCommitData(new CommitEditData());

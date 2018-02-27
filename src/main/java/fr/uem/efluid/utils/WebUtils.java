@@ -72,6 +72,23 @@ public class WebUtils {
 	}
 
 	/**
+	 * Produces a spring-mvc compliant response for the binary data
+	 * 
+	 * @param data
+	 *            to output as file
+	 * @return spring mvc response
+	 */
+	public static ResponseEntity<InputStreamResource> outputData(byte[] data) {
+
+		// Produces the response body with file content
+		return ResponseEntity
+				.ok()
+				.contentLength(data.length)
+				.contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.body(new InputStreamResource(new ByteArrayInputStream(data)));
+	}
+
+	/**
 	 * Produces a spring-mvc compliant response for the export file
 	 * 
 	 * @param file
@@ -81,11 +98,7 @@ public class WebUtils {
 	public static ResponseEntity<InputStreamResource> outputExportImportFile(ExportImportFile file) {
 
 		// Produces the response body with file content
-		return ResponseEntity
-				.ok()
-				.contentLength(file.getData().length)
-				.contentType(MediaType.APPLICATION_OCTET_STREAM)
-				.body(new InputStreamResource(new ByteArrayInputStream(file.getData())));
+		return outputData(file.getData());
 	}
 
 	/**

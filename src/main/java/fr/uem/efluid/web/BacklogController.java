@@ -188,6 +188,18 @@ public class BacklogController {
 	}
 
 	/**
+	 * @param hash
+	 * @return
+	 */
+	@RequestMapping(path = "/lob/{lobHashEnc}", method = GET)
+	@ResponseBody
+	public ResponseEntity<InputStreamResource> downloadLobContent(@PathVariable("lobHashEnc") String hash) {
+
+		// Search in both "prepared" and existing lobs data
+		return WebUtils.outputData(this.pilotableCommitService.getCurrentOrExistingLobData(hash));
+	}
+
+	/**
 	 * @param model
 	 * @return
 	 */

@@ -42,7 +42,7 @@
 						<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
 							<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
 							<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
-							<td><span class="change-display" th:text="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
+							<td><span class="change-display" th:utext="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
 						</tr>
 					</tbody>
 				</table>

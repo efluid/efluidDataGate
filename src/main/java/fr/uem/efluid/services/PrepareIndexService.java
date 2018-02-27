@@ -20,6 +20,7 @@ import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
@@ -199,6 +200,30 @@ public class PrepareIndexService {
 		});
 
 		return diff;
+	}
+
+	/**
+	 * <p>
+	 * Search on each diff for used lob hashes, and prepare the corresponding LobProperty
+	 * to save
+	 * </p>
+	 * 
+	 * @param diffs
+	 * @param lobs
+	 * @return
+	 */
+	List<LobProperty> prepareUsedLobsForIndex(List<? extends DiffLine> diffs, Map<String, byte[]> lobs) {
+
+		return diffs.stream()
+				.map(d -> this.valueConverter.extractUsedBinaryHashs(d.getPayload()))
+				.filter(v -> v != null && !v.isEmpty())
+				.flatMap(List::stream).map(h -> {
+					LobProperty lob = new LobProperty();
+					lob.setHash(h);
+					lob.setData(lobs.get(h));
+					return lob;
+				}).collect(Collectors.toList());
+
 	}
 
 	/**

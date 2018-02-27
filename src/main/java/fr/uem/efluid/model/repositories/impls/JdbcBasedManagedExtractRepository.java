@@ -130,6 +130,12 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 							this.valueConverter.appendBinaryValue(payload, columnNames[i], rs.getBytes(i + 1), i == last, this.blobs);
 						}
 
+						// Boolean need full represent of boolean
+						else if (type == ColumnType.BOOLEAN) {
+							this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getBoolean(i + 1) ? "true" : "false", type,
+									i == last);
+						}
+
 						// Else basic string extraction
 						else {
 							this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getString(i + 1), type,

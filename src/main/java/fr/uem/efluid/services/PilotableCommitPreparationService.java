@@ -35,6 +35,7 @@ import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.ApplicationException;
 
 /**
@@ -165,6 +166,29 @@ public class PilotableCommitPreparationService {
 	 */
 	public PilotedCommitPreparation<?> getCurrentCommitPreparation() {
 		return this.current;
+	}
+
+	/**
+	 * @param encodedLobHash
+	 * @return
+	 */
+	public byte[] getCurrentOrExistingLobData(String encodedLobHash) {
+
+		LOGGER.debug("Request for binary content with hash {}", encodedLobHash);
+
+		// 1st : search in current
+		if (this.current != null) {
+
+			String decHash = ManagedValueConverter.decodeAsString(encodedLobHash);
+			byte[] data = this.current.getDiffLobs().get(decHash);
+
+			if (data != null) {
+				return data;
+			}
+		}
+
+		// 2nd : try on existing
+		return this.commitService.getExistingLobData(encodedLobHash);
 	}
 
 	/**

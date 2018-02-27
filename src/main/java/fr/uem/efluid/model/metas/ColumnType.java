@@ -18,6 +18,7 @@ import java.sql.Types;
  * <li>{@link #BINARY} means <i>"something we need to manage with a special process in a
  * SQL query as it is not a scalare value inlined in a query"</i>. Used for BLOB (and CLOB
  * ??)</li>
+ * <li>{@link #BOOLEAN} for boolean only (required for specific value extraction)</li>
  * <li>{@link #PK} means <i>"something with a generated value I shouldn't share with other
  * database instances"</i>. Used to identify the</li>
  * </ul>
@@ -33,6 +34,7 @@ public enum ColumnType {
 	BINARY('B', "LOB"),
 	ATOMIC('O', "Variable"),
 	STRING('S', "Literal"),
+	BOOLEAN('1', "Booleen"),
 	PK('!', "Identifiant");
 
 	private final char represent;
@@ -69,12 +71,17 @@ public enum ColumnType {
 	 * @return
 	 */
 	public static ColumnType forObject(Object obj) {
+
 		if (obj instanceof String) {
 			return ColumnType.STRING;
 		}
 
 		if (obj instanceof byte[]) {
 			return ColumnType.BINARY;
+		}
+
+		if (obj instanceof Boolean) {
+			return ColumnType.BOOLEAN;
 		}
 
 		return ColumnType.ATOMIC;
@@ -96,6 +103,10 @@ public enum ColumnType {
 			return ColumnType.ATOMIC;
 		}
 
+		if (represent == BOOLEAN.represent) {
+			return ColumnType.BOOLEAN;
+		}
+
 		return BINARY;
 	}
 
@@ -111,8 +122,18 @@ public enum ColumnType {
 		 * with "big types" in limited ranges.
 		 */
 
+		// Explicit codes for boolean
+		if (type == Types.BOOLEAN || type == Types.BIT) {
+			return ColumnType.BOOLEAN;
+		}
+
+		// A 1st Small range of binaries
+		if (type >= Types.LONGVARBINARY && type <= Types.BINARY) {
+			return ColumnType.BINARY;
+		}
+
 		// Explicit identification by type range
-		if ((type >= Types.ROWID && type <= Types.DOUBLE) || type == Types.BOOLEAN) {
+		if ((type >= Types.ROWID && type <= Types.DOUBLE)) {
 			return ColumnType.ATOMIC;
 		}
 

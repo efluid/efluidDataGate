@@ -75,15 +75,10 @@ public interface Value {
 	 * @param val
 	 * @return
 	 */
-	default String getTypedForDisplay(String lobUrlTemplate) {
+	default String getTypedForDisplay() {
 
 		if (getType() == ColumnType.STRING) {
 			return TYPED_STRING_PROTECT + getValueAsString() + TYPED_STRING_PROTECT;
-		}
-
-		if (getType() == ColumnType.BINARY) {
-			String hash = getValueAsString();
-			return String.format(lobUrlTemplate, hash, hash);
 		}
 
 		return getValueAsString();

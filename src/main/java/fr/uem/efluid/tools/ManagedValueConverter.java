@@ -1,5 +1,7 @@
 package fr.uem.efluid.tools;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -49,9 +51,14 @@ public class ManagedValueConverter {
 
 	private final static Encoder B64_ENCODER = Base64.getEncoder();
 
+	private final static Decoder B64_DECODER = Base64.getDecoder();
+
 	private final static String LOB_DIGEST = "SHA-256";
 
-	private final static String LOB_URL_TEMPLATE = "<a href=\"/lob/%s\">%s</a>";
+	private final static String LOB_URL_TEMPLATE = "<a href=\"/lob/%s\" download=\"download\">" + ColumnType.BINARY.getDisplayName() + "</a>";
+
+	private final static String LOB_HASH_SEARCH = new StringBuilder(AFFECT).append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT)
+			.toString();
 
 	/**
 	 * <p>
@@ -78,6 +85,10 @@ public class ManagedValueConverter {
 			final boolean last) {
 
 		builder.append(colName).append(AFFECT);
+		
+		if(value.startsWith("t")){
+			System.out.println("gotcha");
+		}
 
 		builder.append(type.getRepresent()).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
 
@@ -112,10 +123,10 @@ public class ManagedValueConverter {
 
 		builder.append(colName).append(AFFECT);
 
-		String hash = hashBinary(value);
-		lobs.put(hash, value);
+		byte[] hash = hashBinary(value);
+		lobs.put(new String(hash, Value.CONTENT_ENCODING), value);
 
-		builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(hash);
+		builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(hash));
 
 		if (!last) {
 			builder.append(SEPARATOR);
@@ -161,8 +172,7 @@ public class ManagedValueConverter {
 	 * @return
 	 */
 	public String displayInternalValue(List<Value> values) {
-		return values.stream().map(v -> v.getName() + RENDERING_AFFECT + v.getTypedForDisplay(LOB_URL_TEMPLATE))
-				.collect(Collectors.joining(RENDERING_SEPARATOR));
+		return values.stream().map(v -> v.getName() + RENDERING_AFFECT + renderValue(v)).collect(Collectors.joining(RENDERING_SEPARATOR));
 	}
 
 	/**
@@ -180,6 +190,26 @@ public class ManagedValueConverter {
 		return StringSplitter.split(internalExtracted, SEPARATOR).stream()
 				.map(ExpandedValue::new)
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>
+	 * From the raw value from a Diff line, get only the hash codes for the used lobs (for
+	 * values of type "Binary"). Needs to expand the raw value to check each Values
+	 * </p>
+	 * 
+	 * @param internalExtracted
+	 * @return the used hashes
+	 */
+	public List<String> extractUsedBinaryHashs(String internalExtracted) {
+
+		// To avoid useless expand, check if a hash is used in internal
+		if (internalExtracted.indexOf(LOB_HASH_SEARCH) > 0) {
+			return expandInternalValue(internalExtracted).stream().filter(v -> v.getType() == ColumnType.BINARY)
+					.map(v -> v.getValueAsString()).collect(Collectors.toList());
+		}
+
+		return null;
 	}
 
 	/**
@@ -226,6 +256,22 @@ public class ManagedValueConverter {
 	}
 
 	/**
+	 * @param rawB64
+	 * @return
+	 */
+	public static byte[] decode(String rawB64) {
+		return B64_DECODER.decode(rawB64);
+	}
+
+	/**
+	 * @param rawB64
+	 * @return
+	 */
+	public static String decodeAsString(String rawB64) {
+		return new String(decode(rawB64), Value.CONTENT_ENCODING);
+	}
+
+	/**
 	 * <p>
 	 * For 2 provided payloads, build a human readable change set. Some values can be
 	 * missing, manage it as a "precise diff".
@@ -269,10 +315,29 @@ public class ManagedValueConverter {
 		String name = oldOne != null ? oldOne.getName() : newOne.getName();
 		return new StringBuilder(name)
 				.append(RENDERING_AFFECT)
-				.append(oldOne != null ? oldOne.getTypedForDisplay(LOB_URL_TEMPLATE) : MISSING_VALUE)
+				.append(oldOne != null ? renderValue(oldOne) : MISSING_VALUE)
 				.append(RENDERING_CHANGED)
-				.append(newOne != null ? newOne.getTypedForDisplay(LOB_URL_TEMPLATE) : MISSING_VALUE)
+				.append(newOne != null ? renderValue(newOne) : MISSING_VALUE)
 				.toString();
+	}
+
+	/**
+	 * Rendering is not a "natural" display on binary types
+	 * 
+	 * @param value
+	 * @return
+	 */
+	private static String renderValue(Value value) {
+
+		if (value.getType() == ColumnType.BINARY) {
+			try {
+				return String.format(LOB_URL_TEMPLATE, URLEncoder.encode(B64_ENCODER.encodeToString(value.getValue()), Value.CONTENT_ENCODING.name()));
+			} catch (UnsupportedEncodingException e) {
+				throw new ApplicationException(ErrorType.VALUE_SHA_UNSUP, "unsupported u encoding type " + LOB_DIGEST, e);
+			}
+		}
+
+		return value.getTypedForDisplay();
 	}
 
 	/**
@@ -283,14 +348,13 @@ public class ManagedValueConverter {
 	 * @param data
 	 * @return
 	 */
-	private static String hashBinary(byte[] data) {
+	private static byte[] hashBinary(byte[] data) {
 		try {
 			// Digest is not TS
 			MessageDigest digest = MessageDigest.getInstance(LOB_DIGEST);
 
-			// Hash and B64 hash
-			byte[] hash = digest.digest(data);
-			return B64_ENCODER.encodeToString(hash);
+			// Hash
+			return digest.digest(data);
 		} catch (NoSuchAlgorithmException e) {
 			throw new ApplicationException(ErrorType.VALUE_SHA_UNSUP, "unsupported digest type " + LOB_DIGEST, e);
 		}
@@ -318,8 +382,6 @@ public class ManagedValueConverter {
 		private final byte[] value;
 		private final ColumnType type;
 
-		private final static Decoder B64_DECODER = Base64.getDecoder();
-
 		/**
 		 * <p>
 		 * Do the real decoding process
@@ -331,7 +393,7 @@ public class ManagedValueConverter {
 			// Basic revert of what's done in appendExtractedValue
 			int pos = raw.indexOf(AFFECT);
 			this.name = raw.substring(0, pos).intern();
-			this.value = B64_DECODER.decode(raw.substring(pos + 3));
+			this.value = decode(raw.substring(pos + 3));
 			this.type = ColumnType.forRepresent(raw.charAt(pos + 1));
 		}
 
