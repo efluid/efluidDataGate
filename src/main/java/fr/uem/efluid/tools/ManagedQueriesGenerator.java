@@ -151,12 +151,12 @@ public class ManagedQueriesGenerator {
 	 * @param values
 	 * @return
 	 */
-	public String producesApplyAddQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values) {
+	public String producesApplyAddQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values,  List<String> referedLobs) {
 		// INSERT INTO %s (%) VALUES (%)
 		List<Value> combined = new ArrayList<>();
 		combined.add(new KeyValue(parameterEntry, keyValue));
 		combined.addAll(values);
-		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined), allValues(combined));
+		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined), allValues(combined, referedLobs));
 	}
 
 	/**
@@ -166,7 +166,7 @@ public class ManagedQueriesGenerator {
 	 */
 	public String producesApplyRemoveQuery(DictionaryEntry parameterEntry, String keyValue) {
 		// DELETE FROM %s WHERE %s
-		return String.format(this.deleteQueryModel, parameterEntry.getTableName(), valueAffect(new KeyValue(parameterEntry, keyValue)));
+		return String.format(this.deleteQueryModel, parameterEntry.getTableName(), valueAffect(new KeyValue(parameterEntry, keyValue), null));
 	}
 
 	/**
@@ -175,10 +175,10 @@ public class ManagedQueriesGenerator {
 	 * @param values
 	 * @return
 	 */
-	public String producesApplyUpdateQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values) {
+	public String producesApplyUpdateQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values,  List<String> referedLobs) {
 		// UPDATE %s SET %s WHERE %s
-		return String.format(this.updateQueryModel, parameterEntry.getTableName(), allValuesAffect(values),
-				valueAffect(new KeyValue(parameterEntry, keyValue)));
+		return String.format(this.updateQueryModel, parameterEntry.getTableName(), allValuesAffect(values, referedLobs),
+				valueAffect(new KeyValue(parameterEntry, keyValue), null));
 	}
 
 	/**
@@ -188,7 +188,7 @@ public class ManagedQueriesGenerator {
 	 */
 	public String producesGetOneQuery(DictionaryEntry parameterEntry, String keyValue) {
 		// SELECT %s FROM %s WHERE %s ORDER BY %s (reused query)
-		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), valueAffect(new KeyValue(parameterEntry, keyValue)),
+		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), valueAffect(new KeyValue(parameterEntry, keyValue), null),
 				parameterEntry.getKeyName());
 	}
 
@@ -209,11 +209,11 @@ public class ManagedQueriesGenerator {
 	 * @param value
 	 * @return
 	 */
-	private String valueAffect(Value value) {
+	private String valueAffect(Value value, List<String> lobsKey) {
 		if (this.protectColumns) {
-			return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped();
+			return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped(lobsKey);
 		}
-		return value.getName() + AFFECT + value.getTyped();
+		return value.getName() + AFFECT + value.getTyped(lobsKey);
 	}
 
 	/**
@@ -232,16 +232,16 @@ public class ManagedQueriesGenerator {
 	 * @param values
 	 * @return
 	 */
-	private String allValuesAffect(List<Value> values) {
-		return values.stream().map(v -> valueAffect(v)).collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+	private String allValuesAffect(List<Value> values, List<String> lobKeys) {
+		return values.stream().map(v -> valueAffect(v, lobKeys)).collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
 	}
 
 	/**
 	 * @param values
 	 * @return
 	 */
-	private static String allValues(List<Value> values) {
-		return values.stream().map(Value::getTyped).collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+	private static String allValues(List<Value> values, List<String> lobKeys) {
+		return values.stream().map(v -> v.getTyped(lobKeys)).collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
 	}
 
 	/**

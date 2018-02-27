@@ -51,6 +51,8 @@ public class ManagedValueConverter {
 
 	private final static String LOB_DIGEST = "SHA-256";
 
+	private final static String LOB_URL_TEMPLATE = "<a href=\"/lob/%s\">%s</a>";
+
 	/**
 	 * <p>
 	 * Using internal templating desc, prepare one value for extraction when processing
@@ -159,7 +161,8 @@ public class ManagedValueConverter {
 	 * @return
 	 */
 	public String displayInternalValue(List<Value> values) {
-		return values.stream().map(v -> v.getName() + RENDERING_AFFECT + v.getTyped()).collect(Collectors.joining(RENDERING_SEPARATOR));
+		return values.stream().map(v -> v.getName() + RENDERING_AFFECT + v.getTypedForDisplay(LOB_URL_TEMPLATE))
+				.collect(Collectors.joining(RENDERING_SEPARATOR));
 	}
 
 	/**
@@ -266,9 +269,9 @@ public class ManagedValueConverter {
 		String name = oldOne != null ? oldOne.getName() : newOne.getName();
 		return new StringBuilder(name)
 				.append(RENDERING_AFFECT)
-				.append(oldOne != null ? oldOne.getTyped() : MISSING_VALUE)
+				.append(oldOne != null ? oldOne.getTypedForDisplay(LOB_URL_TEMPLATE) : MISSING_VALUE)
 				.append(RENDERING_CHANGED)
-				.append(newOne != null ? newOne.getTyped() : MISSING_VALUE)
+				.append(newOne != null ? newOne.getTypedForDisplay(LOB_URL_TEMPLATE) : MISSING_VALUE)
 				.toString();
 	}
 

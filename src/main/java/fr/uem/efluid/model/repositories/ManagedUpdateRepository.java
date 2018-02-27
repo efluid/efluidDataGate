@@ -1,6 +1,7 @@
 package fr.uem.efluid.model.repositories;
 
 import java.util.List;
+import java.util.Map;
 
 import fr.uem.efluid.model.DiffLine;
 
@@ -46,8 +47,10 @@ public interface ManagedUpdateRepository {
 	 * </p>
 	 * 
 	 * @param lines
+	 * @param lobs
+	 *            the optional lobs content to apply in diffs
 	 *
 	 * @return the processed queries
 	 */
-	String[] runAllChangesAndCommit(List<? extends DiffLine> lines);
+	String[] runAllChangesAndCommit(List<? extends DiffLine> lines, Map<String, byte[]> lobs);
 }

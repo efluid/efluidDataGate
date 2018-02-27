@@ -1,5 +1,6 @@
 package fr.uem.efluid.services;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -91,7 +92,7 @@ public class PrepareDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupFullDatabase("diff8");
 			long start = System.currentTimeMillis();
-			this.service.currentContentDiff(this.dictionary.findOne(this.dictionaryEntryUuid));
+			this.service.currentContentDiff(this.dictionary.findOne(this.dictionaryEntryUuid), new HashMap<>());
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {
@@ -151,7 +152,7 @@ public class PrepareDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupSourceOnly("diff8");
 			long start = System.currentTimeMillis();
-			this.extract.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+			this.extract.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid), new HashMap<>());
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {

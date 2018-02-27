@@ -3,6 +3,7 @@ package fr.uem.efluid.services;
 import static fr.uem.efluid.model.entities.IndexAction.*;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Assert;
@@ -62,7 +63,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(P, "7", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"777\""),
 				this.loader.initIndexEntry(P, "8", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""));
 
-		this.service.applyDiff(diff);
+		this.service.applyDiff(diff, new HashMap<>());
 
 		// Added items
 		this.loader.assertSourceSize(8);
@@ -87,7 +88,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(P, "8", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""));
 
 		try {
-			this.service.applyDiff(diff);
+			this.service.applyDiff(diff, new HashMap<>());
 			Assert.fail();
 		}
 
@@ -115,7 +116,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(C, "7", REMOVE, null),
 				this.loader.initIndexEntry(C, "8", REMOVE, null));
 
-		this.service.applyDiff(diff);
+		this.service.applyDiff(diff, new HashMap<>());
 
 		// Removed items
 		this.loader.assertSourceSize(3);
@@ -139,7 +140,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(C, "8", REMOVE, null));
 
 		try {
-			this.service.applyDiff(diff);
+			this.service.applyDiff(diff, new HashMap<>());
 			Assert.fail();
 		}
 
@@ -168,7 +169,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(C, "8", REMOVE, null));
 
 		try {
-			this.service.applyDiff(diff);
+			this.service.applyDiff(diff, new HashMap<>());
 			Assert.fail();
 		}
 
@@ -199,7 +200,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(P, "4", UPDATE, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"444changed\""),
 				this.loader.initIndexEntry(C, "4", UPDATE, "VALUE=\"child-test\",PARENT=\"1\""));
 
-		this.service.applyDiff(diff);
+		this.service.applyDiff(diff, new HashMap<>());
 
 		// Modified items
 		this.loader.assertSourceSize(4);
@@ -230,7 +231,7 @@ public class ApplyDiffServiceIntegrationTest {
 				/* ID NOT EXIST */this.loader.initIndexEntry(C, "12", UPDATE, "VALUE=\"child-test\",PARENT=\"1\""));
 
 		try {
-			this.service.applyDiff(diff);
+			this.service.applyDiff(diff, new HashMap<>());
 			Assert.fail();
 		}
 
@@ -273,7 +274,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(C, "14", ADD, "VALUE=\"child-test\",PARENT=\"8\""),
 				this.loader.initIndexEntry(P, "9", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"999\""));
 
-		this.service.applyDiff(diff);
+		this.service.applyDiff(diff, new HashMap<>());
 
 		// Modified items
 		this.loader.assertSourceSize(7 - 1 + 2);
@@ -312,7 +313,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(P, "9", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"999\""));
 
 		try {
-			this.service.applyDiff(diff);
+			this.service.applyDiff(diff, new HashMap<>());
 			Assert.fail();
 		}
 

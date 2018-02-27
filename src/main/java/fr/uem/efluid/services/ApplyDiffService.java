@@ -1,6 +1,7 @@
 package fr.uem.efluid.services;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,10 +51,10 @@ public class ApplyDiffService extends AbstractApplicationService {
 	 * 
 	 * @param diffLines
 	 */
-	public void applyDiff(List<? extends DiffLine> diffLines) {
+	public void applyDiff(List<? extends DiffLine> diffLines, Map<String, byte[]> lobs) {
 
 		LOGGER.info("Will apply a diff of {} items", Integer.valueOf(diffLines.size()));
-		keepHistory(this.updates.runAllChangesAndCommit(diffLines), false);
+		keepHistory(this.updates.runAllChangesAndCommit(diffLines, lobs), false);
 	}
 
 	/**
@@ -64,12 +65,11 @@ public class ApplyDiffService extends AbstractApplicationService {
 	 * 
 	 * @param rollBackLines
 	 */
-	public void rollbackDiff(List<RollbackLine> rollBackLines) {
+	public void rollbackDiff(List<RollbackLine> rollBackLines, Map<String, byte[]> lobs) {
 
 		LOGGER.info("Will apply a rollback of {} items", Integer.valueOf(rollBackLines.size()));
-		keepHistory(
-				this.updates.runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList())),
-				true);
+		keepHistory(this.updates
+				.runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()), lobs), true);
 	}
 
 	/**

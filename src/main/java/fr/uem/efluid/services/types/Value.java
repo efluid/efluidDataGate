@@ -19,6 +19,8 @@ public interface Value {
 
 	char TYPED_STRING_PROTECT = '\'';
 
+	String INJECT_OF_LOB = "?";
+
 	/** Fixed format */
 	// TODO : can depends on database encoding ???
 	Charset CONTENT_ENCODING = Charset.forName("utf-8");
@@ -55,11 +57,35 @@ public interface Value {
 	 * @param val
 	 * @return
 	 */
-	default String getTyped() {
+	default String getTyped(List<String> lobKeys) {
 
 		if (getType() == ColumnType.STRING) {
 			return TYPED_STRING_PROTECT + getValueAsString() + TYPED_STRING_PROTECT;
 		}
+
+		if (getType() == ColumnType.BINARY) {
+			lobKeys.add(getValueAsString());
+			return INJECT_OF_LOB;
+		}
+
+		return getValueAsString();
+	}
+
+	/**
+	 * @param val
+	 * @return
+	 */
+	default String getTypedForDisplay(String lobUrlTemplate) {
+
+		if (getType() == ColumnType.STRING) {
+			return TYPED_STRING_PROTECT + getValueAsString() + TYPED_STRING_PROTECT;
+		}
+
+		if (getType() == ColumnType.BINARY) {
+			String hash = getValueAsString();
+			return String.format(lobUrlTemplate, hash, hash);
+		}
+
 		return getValueAsString();
 	}
 

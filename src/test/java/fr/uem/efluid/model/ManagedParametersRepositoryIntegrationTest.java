@@ -1,5 +1,6 @@
 package fr.uem.efluid.model;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,7 +31,7 @@ public class ManagedParametersRepositoryIntegrationTest {
 
 	@Autowired
 	private ManagedExtractRepository extracted;
-	
+
 	@Autowired
 	private ManagedRegenerateRepository regenerated;
 
@@ -50,7 +51,7 @@ public class ManagedParametersRepositoryIntegrationTest {
 	@Test
 	public void testExtractCurrentContentLow() {
 		setupDatabase("diff7");
-		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid), new HashMap<>());
 		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff7/actual.csv");
 	}
 
@@ -64,7 +65,7 @@ public class ManagedParametersRepositoryIntegrationTest {
 	@Test
 	public void testExtractCurrentContentHeavy() {
 		setupDatabase("diff8");
-		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid), new HashMap<>());
 		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff8/actual.csv");
 	}
 

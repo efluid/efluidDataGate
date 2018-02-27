@@ -38,4 +38,14 @@ public class LobPropertyPackage extends ExportImportPackage<LobProperty> {
 		return new LobProperty();
 	}
 
+	/**
+	 * @param rawContent
+	 * @return
+	 * @see fr.uem.efluid.services.ExportImportService.ExportImportPackage#deserializeOne(java.lang.String)
+	 */
+	@Override
+	protected LobProperty deserializeOne(String rawContent) {
+		// Update raw relative path to absolute path
+		return super.deserializeOne(getUncompressPath().toString() + "/" + rawContent);
+	}
 }

@@ -1,7 +1,6 @@
 package fr.uem.efluid.services.types;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
@@ -26,8 +25,6 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	private String dictionaryEntryTableName;
 
 	private T diff;
-
-	private Map<String, byte[]> diffLobs;
 
 	/**
 	 * 
@@ -147,21 +144,6 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	 */
 	public void setDictionaryEntryKeyName(String dictionaryEntryKeyName) {
 		this.dictionaryEntryKeyName = dictionaryEntryKeyName;
-	}
-
-	/**
-	 * @return the diffLobs
-	 */
-	public Map<String, byte[]> getDiffLobs() {
-		return this.diffLobs;
-	}
-
-	/**
-	 * @param diffLobs
-	 *            the diffLobs to set
-	 */
-	public void setDiffLobs(Map<String, byte[]> diffLobs) {
-		this.diffLobs = diffLobs;
 	}
 
 	/**

@@ -131,10 +131,9 @@ public class CommitService extends AbstractApplicationService {
 		List<LobProperty> lobsToExport = loadLobsForCommits(commitsToExport);
 
 		// Then export :
-		ExportImportFile file = this.exportImportService.exportPackages(
-				Arrays.asList(
-						new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
-						new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport)));
+		ExportImportFile file = this.exportImportService.exportPackages(Arrays.asList(
+				new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
+				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport)));
 
 		ExportImportResult<ExportImportFile> result = new ExportImportResult<>(file);
 
@@ -164,10 +163,9 @@ public class CommitService extends AbstractApplicationService {
 		Commit exported = this.commits.findOne(commitUuid);
 
 		// Then export :
-		ExportImportFile file = this.exportImportService.exportPackages(
-				Arrays.asList(
-						new CommitPackage(PCKG_CHERRY_PICK, LocalDateTime.now()).initWithContent(Collections.singletonList(exported)),
-						new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(this.lobs.findByCommit(exported))));
+		ExportImportFile file = this.exportImportService.exportPackages(Arrays.asList(
+				new CommitPackage(PCKG_CHERRY_PICK, LocalDateTime.now()).initWithContent(Collections.singletonList(exported)),
+				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(this.lobs.findByCommit(exported))));
 
 		LOGGER.info("Export package for commit {} is ready. Size is {}b", commitUuid, Integer.valueOf(file.getSize()));
 
@@ -246,7 +244,7 @@ public class CommitService extends AbstractApplicationService {
 			LOGGER.info("In current commit preparation, a total of {} rollback entries were identified and are going to be applied",
 					Integer.valueOf(rollbacked.size()));
 
-			this.applyDiffService.rollbackDiff(rollbacked);
+			this.applyDiffService.rollbackDiff(rollbacked, prepared.getDiffLobs());
 		}
 	}
 
@@ -303,7 +301,7 @@ public class CommitService extends AbstractApplicationService {
 		if (prepared.getPreparingState() == CommitState.MERGED) {
 			LOGGER.info("Processing merge commit {} : now apply all {} modifications prepared from imported values",
 					commitUUID, Integer.valueOf(entries.size()));
-			this.applyDiffService.applyDiff(entries);
+			this.applyDiffService.applyDiff(entries, prepared.getDiffLobs());
 			LOGGER.debug("Processing merge commit {} : diff applied with success", commitUUID);
 		}
 
@@ -330,8 +328,15 @@ public class CommitService extends AbstractApplicationService {
 		// #2 Check package validity
 		assertImportPackageIsValid(commitPackages);
 
-		// Only one package possible for commit import
-		CommitPackage commitPckg = (CommitPackage) commitPackages.get(0);
+		// Get package files - commits
+		CommitPackage commitPckg = (CommitPackage) commitPackages.stream().filter(p -> p.getClass() == CommitPackage.class).findFirst()
+				.orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
+						"Import of commits doens't contains the expected package types"));
+
+		// Get package files - lobs
+		LobPropertyPackage lobsPckg = (LobPropertyPackage) commitPackages.stream().filter(p -> p.getClass() == LobPropertyPackage.class)
+				.findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
+						"Import of commits doens't contains the expected package types"));
 
 		LOGGER.debug("Import of commits from package {} initiated", commitPckg);
 
@@ -386,6 +391,9 @@ public class CommitService extends AbstractApplicationService {
 				}
 			}
 		}
+
+		// #5 Get all lobs
+		currentPreparation.setDiffLobs(lobsPckg.getContent().stream().collect(Collectors.toConcurrentMap(l -> l.getHash(), l -> l.getData())));
 
 		// Create the future merge commit info
 		currentPreparation.setCommitData(new CommitEditData());
@@ -467,6 +475,8 @@ public class CommitService extends AbstractApplicationService {
 
 	/**
 	 * @param importedSources
+	 * @param importedLobs
+	 *            Lobs organized by dictionaryEntries
 	 * @return
 	 */
 	private static List<MergePreparedDiff> importedCommitIndexes(List<Commit> importedSources) {
@@ -497,17 +507,18 @@ public class CommitService extends AbstractApplicationService {
 	}
 
 	/**
-	 * Rules for commit package : one package only
+	 * Rules for commit package : one commit package + lobs package only
 	 * 
 	 * @param commitPackages
 	 */
 	private static void assertImportPackageIsValid(List<ExportImportPackage<?>> commitPackages) {
-		if (commitPackages.size() != 1) {
-			throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits can contain only one package file");
+		if (commitPackages.size() != 2) {
+			throw new ApplicationException(COMMIT_IMPORT_INVALID,
+					"Import of commits can contain only commit package file + lobs package file");
 		}
 
-		if (!(commitPackages.get(0) instanceof CommitPackage)) {
-			throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package");
+		if (commitPackages.stream().noneMatch(p -> p instanceof CommitPackage || p instanceof LobPropertyPackage)) {
+			throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types");
 		}
 	}
 }

@@ -6,12 +6,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -334,6 +334,9 @@ public class PilotableCommitPreparationService {
 			preparation.setProcessStarted(callables.size());
 			preparation.setProcessRemaining(new AtomicInteger(callables.size()));
 
+			// Init lobs holder (concurrent)
+			preparation.setDiffLobs(new ConcurrentHashMap<>());
+
 			LOGGER.info("Diff LOCAL process starting with {} diff to run", Integer.valueOf(callables.size()));
 
 			List<LocalPreparedDiff> fullDiff = this.executor
@@ -461,13 +464,12 @@ public class PilotableCommitPreparationService {
 
 			// Init table diff
 			LocalPreparedDiff tableDiff = LocalPreparedDiff.initFromDictionaryEntry(dict);
-			tableDiff.setDiffLobs(new HashMap<>());
 
 			// Complete dictionary entry
 			tableDiff.completeFromEntity(dict);
 
 			// Search diff content
-			tableDiff.setDiff(this.diffService.currentContentDiff(dict, tableDiff.getDiffLobs()).stream()
+			tableDiff.setDiff(this.diffService.currentContentDiff(dict, this.current.getDiffLobs()).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
 			int rem = this.current.getProcessRemaining().decrementAndGet();
@@ -500,11 +502,10 @@ public class PilotableCommitPreparationService {
 
 			// Complete dictionary entry
 			correspondingDiff.completeFromEntity(dict);
-			correspondingDiff.setDiffLobs(new HashMap<>());
 
 			// Then run one merge action for dictionaryEntry
 			correspondingDiff.setDiff(this.diffService
-					.mergeIndexDiff(dict, correspondingDiff.getDiffLobs(), lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
+					.mergeIndexDiff(dict, this.current.getDiffLobs(), lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
 			int rem = this.current.getProcessRemaining().decrementAndGet();
@@ -596,6 +597,8 @@ public class PilotableCommitPreparationService {
 		private AtomicInteger processRemaining;
 
 		private int processStarted;
+
+		private Map<String, byte[]> diffLobs;
 
 		/**
 		 * For pushed form only
@@ -784,6 +787,21 @@ public class PilotableCommitPreparationService {
 		 */
 		public long getTotalCount() {
 			return this.preparedContent.stream().flatMap(d -> d.getDiff().stream()).count();
+		}
+
+		/**
+		 * @return the diffLobs
+		 */
+		public Map<String, byte[]> getDiffLobs() {
+			return this.diffLobs;
+		}
+
+		/**
+		 * @param diffLobs
+		 *            the diffLobs to set
+		 */
+		public void setDiffLobs(Map<String, byte[]> diffLobs) {
+			this.diffLobs = diffLobs;
 		}
 
 		/**

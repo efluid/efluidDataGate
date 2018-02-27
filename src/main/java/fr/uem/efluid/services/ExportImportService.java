@@ -112,11 +112,13 @@ public class ExportImportService {
 
 		try {
 			Path path = SharedOutputInputUtils.initTmpFile(FILE_ID, FILE_ZIP_EXT, true);
+			Path uncompressPath = SharedOutputInputUtils.initTmpFolder();
 			Files.write(path, file.getData());
 
-			return unCompress(path).stream()
+			return unCompress(uncompressPath, path).stream()
+					.filter(p -> p.getFileName().endsWith(FILE_PCKG_EXT))
 					.map(ExportImportService::readFile)
-					.map(ExportImportService::readPackage)
+					.map(s -> readPackage(uncompressPath, s))
 					.filter(i -> i != null)
 					.collect(Collectors.toList());
 
@@ -126,10 +128,12 @@ public class ExportImportService {
 	}
 
 	/**
+	 * @param uncompressPath
+	 *            location of currently uncompressing package
 	 * @param pack
 	 * @return
 	 */
-	private static ExportImportPackage<?> readPackage(String pack) {
+	private static ExportImportPackage<?> readPackage(Path uncompressPath, String pack) {
 
 		if (LOGGER.isDebugEnabled()) {
 			LOGGER.debug("Reading package content : \n{}", pack);
@@ -178,6 +182,9 @@ public class ExportImportService {
 				itemSerialized.add(itemContent);
 			}
 
+			// Apply uncompressPath if ref to files is used
+			instance.setUncompressPath(uncompressPath);
+
 			// Deserialize => prepare content
 			instance.deserialize(itemSerialized);
 
@@ -193,7 +200,7 @@ public class ExportImportService {
 	}
 
 	/**
-	 * @param tmp
+	 * @param unzipped
 	 * @return
 	 * @throws IOException
 	 */
@@ -218,17 +225,19 @@ public class ExportImportService {
 	}
 
 	/**
-	 * @param tmp
-	 * @return
+	 * @param uncompressPath
+	 *            were zipped file will be uncompressed
+	 * @param zipped
+	 *            location of zipped pack
+	 * @return list of uncompressed files
 	 * @throws IOException
 	 */
-	private static List<Path> unCompress(Path zipped) throws IOException {
+	private static List<Path> unCompress(Path uncompressPath, Path zipped) throws IOException {
 
 		try {
-			Path unzipFolder = SharedOutputInputUtils.initTmpFolder();
 			ZipFile zipFile = new ZipFile(zipped.toString());
-			zipFile.extractAll(unzipFolder.toString());
-			return Files.walk(unzipFolder)
+			zipFile.extractAll(uncompressPath.toString());
+			return Files.walk(uncompressPath)
 					.filter(Files::isRegularFile)
 					.collect(Collectors.toList());
 		} catch (ZipException e) {
@@ -276,6 +285,8 @@ public class ExportImportService {
 		private final LocalDateTime exportDate;
 
 		private List<T> contents;
+
+		private Path uncompressPath;
 
 		/**
 		 * @param name
@@ -339,37 +350,6 @@ public class ExportImportService {
 		}
 
 		/**
-		 * @param contentRaw
-		 */
-		private void deserialize(List<String> contentRaw) {
-
-			this.contents = contentRaw.stream().map(s -> {
-				T content = initContent();
-				content.deserialize(s);
-				return content;
-			}).collect(Collectors.toList());
-
-		}
-
-		/**
-		 * @return
-		 */
-		private List<String> serialize() {
-
-			return this.contents.stream().map(Shared::serialize).collect(Collectors.toList());
-		}
-
-		/**
-		 * @return
-		 */
-		public abstract String getVersion();
-
-		/**
-		 * @return
-		 */
-		protected abstract T initContent();
-
-		/**
 		 * @return
 		 * @see java.lang.Object#toString()
 		 */
@@ -379,5 +359,53 @@ public class ExportImportService {
 					+ "\"]";
 		}
 
+		/**
+		 * @return
+		 */
+		public abstract String getVersion();
+
+		/**
+		 * @param rawContent
+		 * @return
+		 */
+		protected T deserializeOne(String rawContent) {
+			T content = initContent();
+			content.deserialize(rawContent);
+			return content;
+		}
+
+		/**
+		 * @return the uncompressPath
+		 */
+		protected Path getUncompressPath() {
+			return this.uncompressPath;
+		}
+
+		/**
+		 * @return
+		 */
+		protected abstract T initContent();
+
+		/**
+		 * @param uncompressPath
+		 *            the uncompressPath to set
+		 */
+		private void setUncompressPath(Path uncompressPath) {
+			this.uncompressPath = uncompressPath;
+		}
+
+		/**
+		 * @param contentRaw
+		 */
+		private void deserialize(List<String> contentRaw) {
+			this.contents = contentRaw.stream().map(this::deserializeOne).collect(Collectors.toList());
+		}
+
+		/**
+		 * @return
+		 */
+		private List<String> serialize() {
+			return this.contents.stream().map(Shared::serialize).collect(Collectors.toList());
+		}
 	}
 }

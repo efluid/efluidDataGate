@@ -41,10 +41,8 @@ public class LobProperty implements Shared {
 	private String hash;
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	private DictionaryEntry dictionaryEntry;
-
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	private Commit commit;
+
 	@Lob
 	private byte[] data;
 
@@ -101,21 +99,6 @@ public class LobProperty implements Shared {
 	}
 
 	/**
-	 * @return the dictionaryEntry
-	 */
-	public DictionaryEntry getDictionaryEntry() {
-		return this.dictionaryEntry;
-	}
-
-	/**
-	 * @param dictionaryEntry
-	 *            the dictionaryEntry to set
-	 */
-	public void setDictionaryEntry(DictionaryEntry dictionaryEntry) {
-		this.dictionaryEntry = dictionaryEntry;
-	}
-
-	/**
 	 * @return the commit
 	 */
 	public Commit getCommit() {
@@ -128,46 +111,6 @@ public class LobProperty implements Shared {
 	 */
 	public void setCommit(Commit commit) {
 		this.commit = commit;
-	}
-
-	/**
-	 * @return
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((this.dictionaryEntry == null) ? 0 : this.dictionaryEntry.hashCode());
-		result = prime * result + ((this.hash == null) ? 0 : this.hash.hashCode());
-		return result;
-	}
-
-	/**
-	 * @param obj
-	 * @return
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		LobProperty other = (LobProperty) obj;
-		if (this.dictionaryEntry == null) {
-			if (other.dictionaryEntry != null)
-				return false;
-		} else if (!this.dictionaryEntry.equals(other.dictionaryEntry))
-			return false;
-		if (this.hash == null) {
-			if (other.hash != null)
-				return false;
-		} else if (!this.hash.equals(other.hash))
-			return false;
-		return true;
 	}
 
 	/**
@@ -197,8 +140,8 @@ public class LobProperty implements Shared {
 	@Override
 	public String serialize() {
 		return SharedOutputInputUtils.serializeDataAsTmpFile(
-				new String[] { this.commit.getUuid().toString(), this.dictionaryEntry.getUuid().toString(), this.getHash() }, this.data)
-				.toString();
+				new String[] { this.commit.getUuid().toString(), this.getHash() }, this.data)
+				.getFileName().toString();
 	}
 
 	/**
@@ -214,11 +157,44 @@ public class LobProperty implements Shared {
 
 		// Get from filename
 		this.commit = new Commit(UUID.fromString(parts[0]));
-		this.dictionaryEntry = new DictionaryEntry(UUID.fromString(parts[1]));
-		this.hash = parts[2];
+		this.hash = parts[1];
 
 		// Get from file content
 		this.data = SharedOutputInputUtils.deserializeDataFromTmpFile(path);
+	}
+
+	/**
+	 * @return
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((this.hash == null) ? 0 : this.hash.hashCode());
+		return result;
+	}
+
+	/**
+	 * @param obj
+	 * @return
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LobProperty other = (LobProperty) obj;
+		if (this.hash == null) {
+			if (other.hash != null)
+				return false;
+		} else if (!this.hash.equals(other.hash))
+			return false;
+		return true;
 	}
 
 }

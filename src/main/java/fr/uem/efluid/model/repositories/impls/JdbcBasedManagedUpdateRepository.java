@@ -3,6 +3,7 @@ package fr.uem.efluid.model.repositories.impls;
 import static fr.uem.efluid.utils.ErrorType.APPLY_FAILED;
 import static fr.uem.efluid.utils.ErrorType.VERIFIED_APPLY_NOT_FOUND;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +36,7 @@ import fr.uem.efluid.utils.DatasourceUtils;
 
 /**
  * <p>
- * Very basic implements, with batched process but not preparedStatement : all queries are
- * ran as predefined.
+ * Very basic implements. Statement not optimized
  * </p>
  * <p>
  * Process the priority checking depends between tables
@@ -84,7 +84,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 *      java.util.List)
 	 */
 	@Override
-	public String[] runAllChangesAndCommit(List<? extends DiffLine> lines) {
+	public String[] runAllChangesAndCommit(List<? extends DiffLine> lines, Map<String, byte[]> allLobs) {
 
 		LOGGER.debug("Identified change to apply on managed DB. Will process {} diffLines", Integer.valueOf(lines.size()));
 
@@ -94,6 +94,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 		// Manually perform Managed DB transaction for fine rollback management
 		DefaultTransactionDefinition paramTransactionDefinition = new DefaultTransactionDefinition();
 		TransactionStatus status = this.managedDbTransactionManager.getTransaction(paramTransactionDefinition);
+		List<Object[]> lobArgs = new ArrayList<>();
 
 		try {
 			checkUpdatesAndDeleteMissingIds(lines, dictEntries);
@@ -101,20 +102,29 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 			// Prepare all queries, ordered by dictionary entry and action regarding links
 			String[] queries = lines.stream()
 					.sorted(sortedByLinks())
-					.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e))
+					.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, lobArgs))
 					.toArray(String[]::new);
 
 			// Debug all content
 			if (LOGGER.isDebugEnabled()) {
 				// Reproduce content to debug - heavy loading !!!
-				LOGGER.debug("Queries Before sort : \n{}", lines.stream().map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e))
-						.collect(Collectors.joining("\n")));
+				LOGGER.debug("Queries Before sort : \n{}",
+						lines.stream().map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, new ArrayList<>()))
+								.collect(Collectors.joining("\n")));
 				LOGGER.debug("Queries After sort : \n{}", lines.stream().sorted(sortedByLinks())
-						.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e)).collect(Collectors.joining("\n")));
+						.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, new ArrayList<>()))
+						.collect(Collectors.joining("\n")));
 			}
 
-			// Use batch update
-			this.managedSource.batchUpdate(queries);
+			// Use one-by-one update
+			for (int i = 0; i < queries.length; i++) {
+				Object[] args = lobArgs.get(i);
+				if (args.length > 0) {
+					this.managedSource.update(queries[i], args);
+				} else {
+					this.managedSource.update(queries[i]);
+				}
+			}
 
 			// Commit immediately the update if successfull
 			this.managedDbTransactionManager.commit(status);
@@ -142,19 +152,36 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 * @param line
 	 * @return
 	 */
-	private String queryFor(DictionaryEntry entry, DiffLine line) {
+	private String queryFor(DictionaryEntry entry, DiffLine line, Map<String, byte[]> allLobs, List<Object[]> lobArgs) {
+
+		List<String> refLobKeys = new ArrayList<>();
+		String q;
 
 		switch (line.getAction()) {
 		case ADD:
-			return this.queryGenerator.producesApplyAddQuery(entry, line.getKeyValue(),
-					this.payloadConverter.expandInternalValue(line.getPayload()));
+			q = this.queryGenerator.producesApplyAddQuery(entry, line.getKeyValue(),
+					this.payloadConverter.expandInternalValue(line.getPayload()), refLobKeys);
+			break;
 		case REMOVE:
-			return this.queryGenerator.producesApplyRemoveQuery(entry, line.getKeyValue());
+			q = this.queryGenerator.producesApplyRemoveQuery(entry, line.getKeyValue());
+			break;
 		case UPDATE:
 		default:
-			return this.queryGenerator.producesApplyUpdateQuery(entry, line.getKeyValue(),
-					this.payloadConverter.expandInternalValue(line.getPayload()));
+			q = this.queryGenerator.producesApplyUpdateQuery(entry, line.getKeyValue(),
+					this.payloadConverter.expandInternalValue(line.getPayload()), refLobKeys);
 		}
+
+		// If lobs were referenced, prepare params
+		if (refLobKeys.size() > 0) {
+			lobArgs.add(refLobKeys.stream().map(allLobs::get).collect(Collectors.toList()).toArray());
+		}
+
+		// Else empty param
+		else {
+			lobArgs.add(new Object[] {});
+		}
+
+		return q;
 	}
 
 	/**
