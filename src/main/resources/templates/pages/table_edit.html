@@ -87,12 +87,16 @@
 							<td>
 								<input type="hidden" th:field="${entry.columns[__${stat.index}__].name}"/>
 								<input type="hidden" th:field="${entry.columns[__${stat.index}__].type}"/>
-								<select class="form-control" name="foreignKeyTable" th:field="${entry.columns[__${stat.index}__].foreignKeyTable}">
+								<select class="form-control select-table" th:id="|fkSelectTabFor${column.name}|" name="foreignKeyTable" th:field="${entry.columns[__${stat.index}__].foreignKeyTable}">
 									<option value=""></option>
 									<option th:each="table : ${tables}" th:value="${table.tableName}" th:text="${table.tableName}">Gestion du matériel</option>
 								</select>
+								<select class="form-control select-column" th:id="|fkSelectColFor${column.name}|" name="foreignKeyColumn">
+									<option value=""></option>
+								</select>
 								<input type="hidden" th:id="|selectFor${column.name}|" th:field="${entry.columns[__${stat.index}__].selected}"></input>
 								<input type="hidden" th:id="|keyFor${column.name}|" th:field="${entry.columns[__${stat.index}__].key}"></input>
+								<input type="hidden" th:id="|fkColFor${column.name}|" th:field="${entry.columns[__${stat.index}__].foreignKeyColumn}"></input>
 							</td>
 							<td>
 								<div class="btn-group float-right" role="group">
@@ -112,6 +116,7 @@
 				</p>
 			</span>
 		</form>
+		<input type="hidden" th:each="table : ${tables}" th:id="${table.tableName}" th:value="${table.fusedColumnNames}"/>
 	</span>
 	<script layout:fragment="script">
 
@@ -132,6 +137,35 @@
 			
 			$("#currentQuery").text(query);
 			console.info(query);
+		};
+		
+		// Apply fk column options in select
+		const selectedFkTab = (colName) => {
+			console.info(colName);
+			var selectTab = $("#fkSelectTabFor" + colName)[0];
+			var selectCol = $("#fkSelectColFor" + colName);
+			if(selectTab.selectedIndex > 0){
+				var fkTab = selectTab.options[selectTab.selectedIndex].value;
+				selectCol.empty();
+				$("#" + fkTab).val().split(", ").forEach(s => selectCol.append($("<option></option>").attr("value",s).text(s)));
+				selectCol.val($("#fkColFor" + colName).val());
+				selectCol.fadeIn();
+			} else {
+				selectCol.hide();
+			}
+		};
+		
+		// Apply selected FK col
+		const selectedFkCol = (colName) => {
+			var val = $("#fkSelectColFor" + colName).val();
+			console.info(val);
+			$("#fkColFor" + colName).val(val);
+		};
+		
+		// Preloaded / selected FK columns
+		const prepareAllSelectedFks = () => {
+			var cols = $("tbody tr").toArray().map(tr => tr.id);
+			cols.forEach(id => selectedFkTab(id));
 		};
 		
 		// When unspecifying as key (internal only)
@@ -191,10 +225,13 @@
 			$("button.key-button").click((e) => keyAction(e.target.parentElement.parentElement.parentElement.id));
 			$("button.select-button").click((e) => selectAction(e.target.parentElement.parentElement.parentElement.id));
 			$("button.unselect-button").click((e) => unselectAction(e.target.parentElement.parentElement.parentElement.id));
+			$("select.select-table").change((e) => selectedFkTab(e.target.parentElement.parentElement.id));
+			$("select.select-column").change((e) => selectedFkCol(e.target.parentElement.parentElement.id));
 			$("#selectAllButton").click((e) => $("button.select-button").click());
 			$("#unselectAllButton").click((e) => $("button.unselect-button").click());
 			$("#whereCriteria").change(updateQuery);
 			updateQuery();
+			prepareAllSelectedFks();
 		}); 
     </script>
 </body>

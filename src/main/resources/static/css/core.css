@@ -48,6 +48,16 @@
 	color:brown;
 }
 
+select.select-table {
+	width: 350px;
+	display: inline;
+}
+
+select.select-column {
+	width: 250px;
+	display: inline;
+}
+
 .help {
 	display: block;
     font-size: 14px;

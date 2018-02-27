@@ -1,5 +1,8 @@
 package fr.uem.efluid.services.types;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * @author elecomte
  * @since v0.0.1
@@ -10,16 +13,18 @@ public class SelectableTable implements Comparable<SelectableTable> {
 	private final String tableName;
 	private final String entryName;
 	private final String domainName;
+	private final List<String> columnNames;
 
 	/**
 	 * @param tableName
 	 * @param entryName
 	 */
-	public SelectableTable(String tableName, String entryName, String domainName) {
+	public SelectableTable(String tableName, String entryName, String domainName, List<String> columnNames) {
 		super();
 		this.tableName = tableName;
 		this.entryName = entryName;
 		this.domainName = domainName;
+		this.columnNames = columnNames;
 	}
 
 	/**
@@ -41,6 +46,20 @@ public class SelectableTable implements Comparable<SelectableTable> {
 	 */
 	public String getDomainName() {
 		return this.domainName;
+	}
+
+	/**
+	 * @return the columnNames
+	 */
+	public List<String> getColumnNames() {
+		return this.columnNames;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getFusedColumnNames() {
+		return this.columnNames.stream().collect(Collectors.joining(", "));
 	}
 
 	/**

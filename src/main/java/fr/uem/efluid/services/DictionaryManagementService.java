@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.TableLink;
+import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
@@ -127,15 +128,20 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Existing data
 		List<DictionaryEntry> entries = this.dictionary.findAll();
-		List<String> allTables = this.metadatas.getTables().stream().map(t -> t.getName()).sorted().collect(Collectors.toList());
+
+		// Table with columns
+		Map<String, List<String>> allTables = this.metadatas.getTables().stream().collect(Collectors.toMap(t -> t.getName(),
+				t -> t.getColumns().stream().map(ColumnDescription::getName).sorted().collect(Collectors.toList())));
 
 		// Convert dictionnary as selectable
 		List<SelectableTable> selectables = entries.stream()
-				.map(e -> new SelectableTable(e.getTableName(), e.getParameterName(), e.getDomain().getName()))
+				.map(e -> new SelectableTable(e.getTableName(), e.getParameterName(), e.getDomain().getName(),
+						allTables.get(e.getTableName())))
 				.peek(s -> allTables.remove(s.getTableName())).collect(Collectors.toList());
 
 		// And add table not yet mapped
-		selectables.addAll(allTables.stream().map(t -> new SelectableTable(t, null, null)).collect(Collectors.toSet()));
+		selectables.addAll(allTables.keySet().stream().sorted().map(t -> new SelectableTable(t, null, null, allTables.get(t)))
+				.collect(Collectors.toSet()));
 
 		// Sorted by table name
 		Collections.sort(selectables);
@@ -188,8 +194,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		TableDescription desc = getTableDescription(edit.getTable());
 
 		// Keep links
-		Map<String, String> mappedLinks = this.links.findByDictionaryEntry(entry).stream()
-				.collect(Collectors.toMap(TableLink::getColumnFrom, TableLink::getTableTo));
+		Map<String, TableLink> mappedLinks = this.links.findByDictionaryEntry(entry).stream()
+				.collect(Collectors.toMap(TableLink::getColumnFrom, v -> v));
 
 		// Dedicated case : missing table, pure simulated content
 		if (desc == TableDescription.MISSING) {
@@ -551,6 +557,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 					TableLink link = new TableLink();
 					link.setColumnFrom(c.getName());
 					link.setTableTo(c.getForeignKeyTable());
+					link.setColumnTo(c.getForeignKeyColumn());
 					link.setDictionaryEntry(entry);
 					return link;
 				}).collect(Collectors.toList());

@@ -260,10 +260,14 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 					while (rs.next()) {
 						String columnName = rs.getString(8);
 						String destTable = rs.getString(3);
+						String destColumn = rs.getString(4);
 						desc.getColumns().stream()
 								.filter(c -> c.getName().equals(columnName))
 								.findFirst()
-								.ifPresent(c -> c.setForeignKeyTable(destTable));
+								.ifPresent(c -> {
+									c.setForeignKeyTable(destTable);
+									c.setForeignKeyColumn(destColumn);
+								});
 					}
 				}
 			}

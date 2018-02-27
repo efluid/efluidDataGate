@@ -11,7 +11,7 @@
 		<table class="table table-sm">
 			<thead>
 				<tr>
-					<th scope="col">Selection de la table à paramètrer</th>
+					<th scope="col" colspan="2">Selection de la table à paramètrer</th>
 					<th scope="col"><a th:href="@{/dictionary/refresh}" href="./table_init.html" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les informations</a></th>
 				</tr>
 			</thead>
@@ -19,6 +19,9 @@
 				<tr th:each="table : ${tables}" th:class="${table.entryName}?'table-used'">
 					<td>
 						<span th:text="${table.tableName}" class="table-name">TCATEGORYMATERIEL</span>
+					</td>
+					<td>
+						(colonnes <span th:text="${table.fusedColumnNames}">cola, colb ...</span>)
 					</td>
 					<td>
 						<span th:if="${table.entryName}" class="float-right">Déja utilisée avec le paramètre <strong th:text="${table.entryName}">Test Param</strong> du domaine <strong th:text="${table.domainName}">Domaine</strong></span>

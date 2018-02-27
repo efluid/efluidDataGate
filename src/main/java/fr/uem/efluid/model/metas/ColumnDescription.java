@@ -14,6 +14,7 @@ public class ColumnDescription implements Comparable<ColumnDescription> {
 	private String name;
 	private ColumnType type;
 	private String foreignKeyTable;
+	private String foreignKeyColumn;
 
 	/**
 	 * @return the name
@@ -58,6 +59,21 @@ public class ColumnDescription implements Comparable<ColumnDescription> {
 	 */
 	public void setForeignKeyTable(String foreignKeyTable) {
 		this.foreignKeyTable = foreignKeyTable;
+	}
+
+	/**
+	 * @return the foreignKeyColumn
+	 */
+	public String getForeignKeyColumn() {
+		return this.foreignKeyColumn;
+	}
+
+	/**
+	 * @param foreignKeyColumn
+	 *            the foreignKeyColumn to set
+	 */
+	public void setForeignKeyColumn(String foreignKeyColumn) {
+		this.foreignKeyColumn = foreignKeyColumn;
 	}
 
 	/**

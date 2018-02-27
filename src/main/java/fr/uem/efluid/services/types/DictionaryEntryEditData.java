@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.ColumnType;
 
@@ -185,6 +186,8 @@ public class DictionaryEntryEditData {
 
 		private String foreignKeyTable;
 
+		private String foreignKeyColumn;
+
 		private boolean selected;
 
 		/**
@@ -270,6 +273,21 @@ public class DictionaryEntryEditData {
 		}
 
 		/**
+		 * @return the foreignKeyColumn
+		 */
+		public String getForeignKeyColumn() {
+			return this.foreignKeyColumn;
+		}
+
+		/**
+		 * @param foreignKeyColumn
+		 *            the foreignKeyColumn to set
+		 */
+		public void setForeignKeyColumn(String foreignKeyColumn) {
+			this.foreignKeyColumn = foreignKeyColumn;
+		}
+
+		/**
 		 * @param o
 		 * @return
 		 * @see java.lang.Comparable#compareTo(java.lang.Object)
@@ -302,12 +320,14 @@ public class DictionaryEntryEditData {
 		 * @return
 		 */
 		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds, String keyValue,
-				String linkedTable) {
+				TableLink link) {
 			ColumnEditData editData = new ColumnEditData();
-			if (linkedTable == null) {
+			if (link == null) {
 				editData.setForeignKeyTable(col.getForeignKeyTable());
+				editData.setForeignKeyColumn(col.getForeignKeyColumn());
 			} else {
-				editData.setForeignKeyTable(linkedTable);
+				editData.setForeignKeyTable(link.getTableTo());
+				editData.setForeignKeyColumn(link.getColumnTo());
 			}
 			editData.setName(col.getName());
 			editData.setType(col.getType());
@@ -334,7 +354,7 @@ public class DictionaryEntryEditData {
 		 *            from existing link
 		 * @return
 		 */
-		public static ColumnEditData fromSelecteds(String selected, String keyname, ColumnType keyType, String linkedTable) {
+		public static ColumnEditData fromSelecteds(String selected, String keyname, ColumnType keyType, TableLink link) {
 			ColumnEditData editData = new ColumnEditData();
 			editData.setName(selected);
 			if (selected.equals(keyname)) {
@@ -343,7 +363,8 @@ public class DictionaryEntryEditData {
 			} else {
 				editData.setSelected(true);
 			}
-			editData.setForeignKeyTable(linkedTable);
+			editData.setForeignKeyTable(link.getTableTo());
+			editData.setForeignKeyColumn(link.getColumnTo());
 			return editData;
 		}
 	}
