@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 27/02/2018*
+*Mise à jour au 28/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Attention, des modifications sur les écrans de gestion du diff / merge n'ont pas été reportées sur la maquette
@@ -26,7 +26,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 **Intégration maquette**
 * Mise en place d'un layout pour simpifier les templates Thymeleaf
-* index ("/") : page dynamique mais données en dur. Menu et authentification pas géré. 
+* index ("/") : en place
 * édition des domaines fonctionnels ("/domains"): en place
 * édition du dictionnaire ("/dictionary"): en place
 * préparation du diff ("/prepare"): en place
