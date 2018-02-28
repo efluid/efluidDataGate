@@ -27,7 +27,7 @@
 				<small class="form-text text-muted">Le critère de filtrage est appliqué par défaut lors de chaque récupération de paramètre. Sa valeur est libre</small>
 			</div>
 			<div class="form-group">
-				<label for="exampleInputPassword1">Requête de selection obtenue</label>
+				<label for="exampleInputPassword1">Requête de selection obtenue&nbsp;&nbsp;&nbsp;<span class="important-remark">Les jointures sur les tables des dépendances ne sont générées qu'après enregistrement</span></label>
 				<span class="query-display" id="currentQuery">SELECT COLKEY, COLA, COLB, COLC FROM TPROGRAMMATION WHERE 1=1 ORDER BY COLKEY</span>
 			</div>
 			<span th:if="${entry.missingTable}">
@@ -71,7 +71,7 @@
 			            <tr>
 							<th scope="col">Colonne</th>
 							<th scope="col">Type</th>
-							<th scope="col">Dépendance vers</th>
+							<th scope="col">Dépendance vers (table / colonne)</th>
 							<th scope="col">
 								<div class="btn-group float-right" role="group">
 									<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout utiliser</button>
@@ -91,6 +91,7 @@
 									<option value=""></option>
 									<option th:each="table : ${tables}" th:value="${table.tableName}" th:text="${table.tableName}">Gestion du matériel</option>
 								</select>
+								&nbsp;
 								<select class="form-control select-column" th:id="|fkSelectColFor${column.name}|" name="foreignKeyColumn">
 									<option value=""></option>
 								</select>
@@ -131,9 +132,11 @@
 			
 			// Keys are identified also
 			var keys = cols.filter(col => $("#keyFor" + col).val()  === 'true');
+			
+			var key = (keys.length === 0)? cols[0] : keys[0];
 
 			// Composed query - Order by 1st key = first in columns
-			var query = 'SELECT "' + keys[0] + '", "' + (selecteds.length == cols.length?'*':selecteds.join('", "')) + '" FROM "' + $("#table").val() + '" WHERE ' +   $("#whereCriteria").val() + ' ORDER BY "' + keys[0] + '"';
+			var query = 'SELECT cur."' + key + '", cur."' + (selecteds.length == cols.length?'*':selecteds.join('", cur."')) + '" FROM "' + $("#table").val() + '" cur WHERE ' +   $("#whereCriteria").val() + ' ORDER BY "' + keys[0] + '"';
 			
 			$("#currentQuery").text(query);
 			console.info(query);

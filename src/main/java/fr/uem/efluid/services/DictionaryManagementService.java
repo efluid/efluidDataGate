@@ -1,6 +1,7 @@
 package fr.uem.efluid.services;
 
 import static fr.uem.efluid.utils.ErrorType.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,6 +105,14 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		assertDictionaryEntryCanBeRemoved(uuid);
 
+		List<TableLink> dicLinks = this.links.findByDictionaryEntry(new DictionaryEntry(uuid));
+
+		// Remove also associated links
+		if (dicLinks != null && !dicLinks.isEmpty()) {
+			LOGGER.debug("Remove {} associated links from dictionary entry {}", Integer.valueOf(dicLinks.size()), uuid);
+			this.links.delete(dicLinks);
+		}
+
 		this.dictionary.delete(uuid);
 	}
 
@@ -161,8 +170,12 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// TODO : keep this in cache, or precalculated (once used, cannot be "unused")
 		List<UUID> usedIds = this.dictionary.findUsedIds();
 
+		// For link building, need other dicts
+		Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName();
+
 		return this.dictionary.findAll().stream()
-				.map(e -> DictionaryEntrySummary.fromEntity(e, this.queryGenerator))
+				.map(e -> DictionaryEntrySummary.fromEntity(e,
+						this.queryGenerator.producesSelectParameterQuery(e, this.links.findByDictionaryEntry(e), allDicts)))
 				.peek(d -> d.setCanDelete(!usedIds.contains(d.getUuid())))
 				.sorted()
 				.collect(Collectors.toList());
@@ -187,14 +200,21 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Prepare basic fields to edit
 		DictionaryEntryEditData edit = DictionaryEntryEditData.fromEntity(entry);
 
+		// For link building, need other dicts
+		Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName();
+
+		// Links used for mapped tables
+		List<TableLink> dicLinks = this.links.findByDictionaryEntry(entry);
+
 		// Need select clause as a list
-		Collection<String> selecteds = isNotEmpty(entry.getSelectClause()) ? this.queryGenerator.splitSelectClause(entry.getSelectClause())
+		Collection<String> selecteds = isNotEmpty(entry.getSelectClause())
+				? this.queryGenerator.splitSelectClause(entry.getSelectClause(), dicLinks, allDicts)
 				: Collections.emptyList();
 
 		TableDescription desc = getTableDescription(edit.getTable());
 
 		// Keep links
-		Map<String, TableLink> mappedLinks = this.links.findByDictionaryEntry(entry).stream()
+		Map<String, TableLink> mappedLinks = dicLinks.stream()
 				.collect(Collectors.toMap(TableLink::getColumnFrom, v -> v));
 
 		// Dedicated case : missing table, pure simulated content
@@ -290,12 +310,20 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Other common edited properties
 		entry.setDomain(this.domains.findOne(editData.getDomainUuid()));
 		entry.setParameterName(editData.getName());
-		entry.setSelectClause(columnsAsSelectClause(editData.getColumns()));
+		entry.setSelectClause("- to update -");
 		entry.setWhereClause(editData.getWhere());
 
 		this.dictionary.save(entry);
 
+		// Prepare validated links
 		updateLinks(entry, editData.getColumns());
+
+		// Now update select clause using validated tableLinks
+		entry.setSelectClause(columnsAsSelectClause(editData.getColumns(), this.links.findByDictionaryEntry(entry),
+				this.dictionary.findAllMappedByTableName()));
+
+		// And refresh dict Entry
+		this.dictionary.save(entry);
 	}
 
 	/**
@@ -652,10 +680,12 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 * @param columns
 	 * @return
 	 */
-	private String columnsAsSelectClause(List<ColumnEditData> columns) {
+	private String columnsAsSelectClause(List<ColumnEditData> columns, List<TableLink> tabLinks, Map<String, DictionaryEntry> allEntries) {
 		return this.queryGenerator.mergeSelectClause(
 				columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName).collect(Collectors.toList()),
-				columns.size());
+				columns.size(),
+				tabLinks,
+				allEntries);
 	}
 
 	/**

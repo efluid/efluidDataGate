@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 16/02/2018*
+*Mise à jour au 27/02/2018*
 
 **Maquette statique**
 * Dernière version : 03/02/2018. Attention, des modifications sur les écrans de gestion du diff / merge n'ont pas été reportées sur la maquette
@@ -35,7 +35,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 * export / import de commits : en place
 * merge a l'import : en place
 * sécurité : non démarré
-* Wizzard de configuration : démarré (étape 1 seulement)
+* Wizzard de configuration : en place
 
 ## Utilisation
 

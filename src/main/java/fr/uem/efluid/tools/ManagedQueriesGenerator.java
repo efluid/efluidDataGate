@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.services.types.Value;
 
@@ -39,13 +42,24 @@ public class ManagedQueriesGenerator {
 
 	private static final String ITEM_PROTECT = "\"";
 
-	private static final String SELECT_CLAUSE_SEP_NO_PROTECT = ", ";
+	private static final String CURRENT_TAB_ALIAS = "cur.";
+
+	private static final String LINK_TAB_ALIAS = "ln";
+	
+	private static final String LINK_VAL_ALIAS_START = " as ln_";
+
+	private static final String SELECT_CLAUSE_SEP = ", ";
+
+	private static final String SELECT_CLAUSE_SEP_NO_PROTECT = SELECT_CLAUSE_SEP + CURRENT_TAB_ALIAS;
 
 	private static final String SELECT_CLAUSE_SEP_PROTECT = ITEM_PROTECT + SELECT_CLAUSE_SEP_NO_PROTECT + ITEM_PROTECT;
 
 	private static final String DEFAULT_SELECT_CLAUSE = "*";
 
 	private static final String AFFECT = "=";
+
+	private static final int SELECT_CLAUSE_FIRST_COL_PROTECT = 1 + CURRENT_TAB_ALIAS.length();
+	private static final int SELECT_CLAUSE_FIRST_COL_NO_PROTECT = CURRENT_TAB_ALIAS.length();
 
 	private final boolean protectColumns;
 
@@ -54,6 +68,9 @@ public class ManagedQueriesGenerator {
 	private final String updateQueryModel;
 	private final String deleteQueryModel;
 	private final String unicityQueryModel;
+	private final String selectJoinSubQueryModel;
+	private final String updateOrInsertLinkedSubQueryModel;
+	private final String selectLinkValueModel;
 
 	/**
 	 * Prepare generator regarding the specified rules
@@ -67,13 +84,16 @@ public class ManagedQueriesGenerator {
 		this.updateQueryModel = generateUpdateQueryTemplate(rules);
 		this.deleteQueryModel = generateDeleteQueryTemplate(rules);
 		this.unicityQueryModel = generateUnicityQueryTemplate(rules);
+		this.selectJoinSubQueryModel = generateSelectJoinSubQueryTemplate(rules);
+		this.updateOrInsertLinkedSubQueryModel = generateUpdateOrInsertLinkedSubQueryTemplate(rules);
+		this.selectLinkValueModel = generateSelectLinkValue(rules);
 	}
 
 	/**
 	 * @param parameterEntry
 	 * @return
 	 */
-	public String consolidateSelectClause(DictionaryEntry parameterEntry) {
+	private String consolidateSelectClause(DictionaryEntry parameterEntry) {
 
 		// Basic consolidate => Select all
 		if (parameterEntry.getSelectClause() == null || parameterEntry.getSelectClause().length() == 0) {
@@ -83,9 +103,9 @@ public class ManagedQueriesGenerator {
 		// If keyname not in select clause, need to add it
 		if (!parameterEntry.getSelectClause().contains(parameterEntry.getKeyName())) {
 			return (this.protectColumns)
-					? ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP_NO_PROTECT
+					? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
 							+ parameterEntry.getSelectClause()
-					: parameterEntry.getKeyName() + SELECT_CLAUSE_SEP_NO_PROTECT + parameterEntry.getSelectClause();
+					: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP + parameterEntry.getSelectClause();
 		}
 
 		return parameterEntry.getSelectClause();
@@ -95,14 +115,19 @@ public class ManagedQueriesGenerator {
 	 * @param parameterEntry
 	 * @return
 	 */
-	public String producesSelectParameterQuery(DictionaryEntry parameterEntry) {
+	public String producesSelectParameterQuery(DictionaryEntry parameterEntry, List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
 
 		// Need clean select for uses
 		String selectClause = consolidateSelectClause(parameterEntry);
 
+		// For inner linked (select contains them already)
+		String joinClauses = prepareJoinLinks(links, allEntries);
+
 		return String.format(this.selectQueryModel,
 				selectClause,
 				parameterEntry.getTableName(),
+				joinClauses,
 				parameterEntry.getWhereClause(),
 				parameterEntry.getKeyName());
 	}
@@ -111,13 +136,33 @@ public class ManagedQueriesGenerator {
 	 * @param selectClause
 	 * @return
 	 */
-	public Collection<String> splitSelectClause(String selectClause) {
+	public Collection<String> splitSelectClause(String selectClause, List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
 
-		if (this.protectColumns) {
-			return Arrays.asList(selectClause.substring(1, selectClause.length() - 1).split(SELECT_CLAUSE_SEP_PROTECT));
+		// When links are mapped, use a custom process
+		if (hasMappedLinks(links, allEntries)) {
+			return Stream.of(selectClause.split(SELECT_CLAUSE_SEP)).map(s -> {
+
+				// It's an alias : will provide the "from" col, embedded in alias
+				if (s.indexOf(LINK_TAB_ALIAS) == 0) {
+					return s.substring(s.indexOf(LINK_VAL_ALIAS_START) + LINK_VAL_ALIAS_START.length()).trim();
+				}
+
+				// Else, use normal process
+				if (this.protectColumns) {
+					return s.substring(SELECT_CLAUSE_FIRST_COL_PROTECT, s.length() - 1);
+				}
+
+				return s;
+			}).collect(Collectors.toList());
 		}
 
-		return Arrays.asList(selectClause.split(SELECT_CLAUSE_SEP_NO_PROTECT));
+		if (this.protectColumns) {
+			return Arrays.asList(
+					selectClause.substring(SELECT_CLAUSE_FIRST_COL_PROTECT, selectClause.length() - 1).split(SELECT_CLAUSE_SEP_PROTECT));
+		}
+
+		return Arrays.asList(selectClause.substring(SELECT_CLAUSE_FIRST_COL_NO_PROTECT).split(SELECT_CLAUSE_SEP_NO_PROTECT));
 	}
 
 	/**
@@ -132,17 +177,105 @@ public class ManagedQueriesGenerator {
 	 *            the total number of column available for current managed source table
 	 * @return the select part of the query, ready to be saved
 	 */
-	public String mergeSelectClause(List<String> selectedColumnNames, int availableColumnNumber) {
+	public String mergeSelectClause(List<String> selectedColumnNames, int availableColumnNumber, List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
 
 		if (selectedColumnNames.size() == availableColumnNumber) {
 			return DEFAULT_SELECT_CLAUSE;
 		}
 
-		if (this.protectColumns) {
-			return ITEM_PROTECT + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT)) + ITEM_PROTECT;
+		// Dedicated process if has mapped links for cleaner management
+		if (hasMappedLinks(links, allEntries)) {
+
+			StringBuilder select = new StringBuilder();
+
+			Map<String, String> selectLinks = prepareSelectLinks(links, allEntries);
+			int last = selectedColumnNames.size() - 1;
+
+			for (String col : selectedColumnNames) {
+
+				String linked = selectLinks.get(col);
+
+				if (linked == null) {
+					if (this.protectColumns) {
+						select.append(CURRENT_TAB_ALIAS).append(ITEM_PROTECT).append(col).append(ITEM_PROTECT);
+					} else {
+						select.append(CURRENT_TAB_ALIAS).append(col);
+					}
+				} else {
+					select.append(linked);
+				}
+
+				if (last > 0) {
+					select.append(SELECT_CLAUSE_SEP);
+				}
+
+				last--;
+			}
+
+			return select.toString();
 		}
 
-		return selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+		// No linkeds : default select
+		if (this.protectColumns) {
+			return CURRENT_TAB_ALIAS + ITEM_PROTECT + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT))
+					+ ITEM_PROTECT;
+		}
+
+		return CURRENT_TAB_ALIAS + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+	}
+
+	/**
+	 * @param links
+	 * @param allEntries
+	 * @return
+	 */
+	private Map<String, String> prepareSelectLinks(List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+
+		AtomicInteger pos = new AtomicInteger(0);
+
+		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).collect(Collectors.toMap(
+				TableLink::getColumnFrom,
+				l -> {
+					DictionaryEntry dic = allEntries.get(l.getTableTo());
+					// ln%s."%s" as ln_%s
+					return String.format(this.selectLinkValueModel, String.valueOf(pos.incrementAndGet()), dic.getKeyName(),
+							l.getColumnFrom());
+				}));
+	}
+
+	/**
+	 * @param links
+	 * @param allEntries
+	 * @return
+	 */
+	private String prepareJoinLinks(List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+
+		AtomicInteger pos = new AtomicInteger(0);
+
+		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).map(l -> {
+			DictionaryEntry dic = allEntries.get(l.getTableTo());
+			String alias = LINK_TAB_ALIAS + pos.incrementAndGet();
+			// INNER JOIN "%s" %s on %s."%s" = cur."%s"
+			return String.format(this.selectJoinSubQueryModel, dic.getTableName(), alias, alias, l.getColumnTo(), l.getColumnFrom());
+		}).collect(Collectors.joining(" "));
+	}
+
+	/**
+	 * <p>
+	 * For the dic entry links, check if some are mapped as dictionary entries : if true,
+	 * needs to use refered table key instead of internal id
+	 * </p>
+	 * 
+	 * @param links
+	 * @param allEntries
+	 *            mapped to table name
+	 * @return
+	 */
+	private static boolean hasMappedLinks(List<TableLink> links, Map<String, DictionaryEntry> allEntries) {
+		return links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
 	}
 
 	/**
@@ -151,7 +284,11 @@ public class ManagedQueriesGenerator {
 	 * @param values
 	 * @return
 	 */
-	public String producesApplyAddQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values,  List<String> referedLobs) {
+	public String producesApplyAddQuery(
+			DictionaryEntry parameterEntry,
+			String keyValue,
+			List<Value> values,
+			List<String> referedLobs) {
 		// INSERT INTO %s (%) VALUES (%)
 		List<Value> combined = new ArrayList<>();
 		combined.add(new KeyValue(parameterEntry, keyValue));
@@ -166,7 +303,8 @@ public class ManagedQueriesGenerator {
 	 */
 	public String producesApplyRemoveQuery(DictionaryEntry parameterEntry, String keyValue) {
 		// DELETE FROM %s WHERE %s
-		return String.format(this.deleteQueryModel, parameterEntry.getTableName(), valueAffect(new KeyValue(parameterEntry, keyValue), null));
+		return String.format(this.deleteQueryModel, parameterEntry.getTableName(),
+				valueAffect(new KeyValue(parameterEntry, keyValue), null));
 	}
 
 	/**
@@ -175,7 +313,7 @@ public class ManagedQueriesGenerator {
 	 * @param values
 	 * @return
 	 */
-	public String producesApplyUpdateQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values,  List<String> referedLobs) {
+	public String producesApplyUpdateQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values, List<String> referedLobs) {
 		// UPDATE %s SET %s WHERE %s
 		return String.format(this.updateQueryModel, parameterEntry.getTableName(), allValuesAffect(values, referedLobs),
 				valueAffect(new KeyValue(parameterEntry, keyValue), null));
@@ -188,7 +326,8 @@ public class ManagedQueriesGenerator {
 	 */
 	public String producesGetOneQuery(DictionaryEntry parameterEntry, String keyValue) {
 		// SELECT %s FROM %s WHERE %s ORDER BY %s (reused query)
-		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), valueAffect(new KeyValue(parameterEntry, keyValue), null),
+		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(),
+				valueAffect(new KeyValue(parameterEntry, keyValue), null),
 				parameterEntry.getKeyName());
 	}
 
@@ -251,7 +390,8 @@ public class ManagedQueriesGenerator {
 	 * @return
 	 */
 	private static final String generateSelectQueryTemplate(QueryGenerationRules rules) {
-		return new StringBuilder("SELECT %s FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s ORDER BY ")
+		return new StringBuilder("SELECT %s FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
+				.append(" cur %s WHERE %s ORDER BY ")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
 	}
 
@@ -273,6 +413,41 @@ public class ManagedQueriesGenerator {
 	 */
 	private static final String generateDeleteQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("DELETE FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s ").toString();
+	}
+
+	/**
+	 * Prepare join part for linked properties on select queries
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateSelectJoinSubQueryTemplate(QueryGenerationRules rules) {
+		return new StringBuilder("INNER JOIN ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" %s ON %s.")
+				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").append(" = cur.")
+				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
+	}
+
+	/**
+	 * Prepare sub select used for value gathered from linked table on insert or update
+	 * queries
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateUpdateOrInsertLinkedSubQueryTemplate(QueryGenerationRules rules) {
+		return new StringBuilder("(SELECT ").append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").append(" FROM ")
+				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s)").toString();
+	}
+
+	/**
+	 * Join selected value
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateSelectLinkValue(QueryGenerationRules rules) {
+		return new StringBuilder(LINK_TAB_ALIAS + "%s.").append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s")
+				.append(LINK_VAL_ALIAS_START + "%s ").toString();
 	}
 
 	/**

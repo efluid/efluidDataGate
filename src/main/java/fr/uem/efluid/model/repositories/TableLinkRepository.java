@@ -51,4 +51,14 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 		return _internal_findAllRelationships().stream()
 				.collect(Collectors.groupingBy(t -> dbRawToUuid(t[0]), Collectors.mapping(t -> dbRawToUuid(t[1]), Collectors.toSet())));
 	}
+
+	/**
+	 * @return
+	 */
+	default Map<UUID, List<TableLink>> findAllMappedByDictionaryEntryUUID() {
+
+		return findAll().stream()
+				.collect(Collectors.groupingBy(d -> d.getDictionaryEntry().getUuid()));
+
+	}
 }

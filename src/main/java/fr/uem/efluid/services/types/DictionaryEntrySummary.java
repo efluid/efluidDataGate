@@ -3,7 +3,6 @@ package fr.uem.efluid.services.types;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.tools.ManagedQueriesGenerator;
 
 /**
  * @author elecomte
@@ -112,12 +111,12 @@ public final class DictionaryEntrySummary implements Comparable<DictionaryEntryS
 	 * @param entity
 	 * @return
 	 */
-	public static DictionaryEntrySummary fromEntity(DictionaryEntry entity, ManagedQueriesGenerator generator) {
+	public static DictionaryEntrySummary fromEntity(DictionaryEntry entity, String selectQuery) {
 		return new DictionaryEntrySummary(
 				entity.getUuid(),
 				entity.getDomain().getUuid(),
 				entity.getDomain().getName(),
 				entity.getParameterName(),
-				generator.producesSelectParameterQuery(entity));
+				selectQuery);
 	}
 }

@@ -45,4 +45,14 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 				.collect(Collectors.toMap(DictionaryEntry::getUuid, d -> d));
 
 	}
+
+	/**
+	 * @return
+	 */
+	default Map<String, DictionaryEntry> findAllMappedByTableName() {
+
+		return findAll().stream()
+				.collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
+
+	}
 }

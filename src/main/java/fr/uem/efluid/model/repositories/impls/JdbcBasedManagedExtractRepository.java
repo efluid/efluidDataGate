@@ -16,7 +16,9 @@ import org.springframework.stereotype.Repository;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.metas.ColumnType;
+import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
+import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
@@ -43,6 +45,12 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 	@Autowired
 	private ManagedQueriesGenerator queryGenerator;
 
+	@Autowired
+	private DictionaryRepository dictionary;
+
+	@Autowired
+	private TableLinkRepository links;
+
 	/**
 	 * @param parameterEntry
 	 * @return
@@ -55,7 +63,8 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 		// Get columns for all table
 		return this.managedSource.query(
-				this.queryGenerator.producesSelectParameterQuery(parameterEntry),
+				this.queryGenerator.producesSelectParameterQuery(parameterEntry, this.links.findByDictionaryEntry(parameterEntry),
+						this.dictionary.findAllMappedByTableName()),
 				new InternalExtractor(parameterEntry, this.valueConverter, lobs));
 	}
 

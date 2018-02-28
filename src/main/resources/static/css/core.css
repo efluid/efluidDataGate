@@ -69,6 +69,12 @@ select.select-column {
     font-size: 13px;
 }
 
+.important-remark {
+    font-style: italic;
+    color: red;
+    font-size: 13px;
+}
+
 .dictionary-content {
     margin-top: 20px;
     border: 1px solid #CCC;
