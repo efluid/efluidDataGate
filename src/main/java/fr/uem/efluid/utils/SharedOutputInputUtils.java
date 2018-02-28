@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.json.LocalDateModule;
 import fr.uem.efluid.utils.json.LocalDateTimeModule;
 
@@ -43,6 +45,12 @@ public class SharedOutputInputUtils {
 	private static final String SYSTEM_DEFAULT_TMP_DIR = System.getProperty("java.io.tmpdir");
 
 	private static final String SERIAL_FILE_PARTS_SPLITER = ".";
+
+	private static final String PLUS_CHAR_REPLACE = "___";
+
+	private static final String SLASH_CHAR_REPLACE = "_S_";
+
+	private static final String BACKSLASH_CHAR_REPLACE = "_B_";
 
 	static final ObjectMapper MAPPER = preparedObjectMapper();
 
@@ -88,6 +96,24 @@ public class SharedOutputInputUtils {
 	}
 
 	/**
+	 * @param raw
+	 * @return
+	 */
+	public static String encodeB64ForFilename(String raw) {
+		return ManagedValueConverter.encodeAsString(raw).replaceAll("\\/", SLASH_CHAR_REPLACE).replaceAll("\\\\", BACKSLASH_CHAR_REPLACE)
+				.replaceAll("\\+", PLUS_CHAR_REPLACE);
+	}
+
+	/**
+	 * @param b64
+	 * @return
+	 */
+	public static String decodeB64ForFilename(String b64) {
+		return ManagedValueConverter.decodeAsString(
+				b64.replaceAll(SLASH_CHAR_REPLACE, "/").replaceAll(BACKSLASH_CHAR_REPLACE, "\\").replaceAll(PLUS_CHAR_REPLACE, "+"));
+	}
+
+	/**
 	 * @param rawPath
 	 * @return
 	 */
@@ -104,7 +130,23 @@ public class SharedOutputInputUtils {
 	 * @return
 	 */
 	public static String[] pathNameParts(Path path) {
-		return path.getFileName().toString().split(SERIAL_FILE_PARTS_SPLITER);
+		return path.getFileName().toString().split("\\" + SERIAL_FILE_PARTS_SPLITER);
+	}
+
+	/**
+	 * @param filename
+	 * @param folder
+	 */
+	public static Path repatriateTmpFile(String filename, Path folder) {
+		try {
+			Path file = new File(SYSTEM_DEFAULT_TMP_DIR + "/" + filename).toPath();
+			Path destination = folder.resolve(file.getFileName());
+			Files.move(file, destination, StandardCopyOption.REPLACE_EXISTING);
+			return destination;
+		} catch (IOException e) {
+			throw new ApplicationException(DATA_WRITE_ERROR,
+					"Cannot move tmp data file with name " + filename, e, filename);
+		}
 	}
 
 	/**
@@ -123,7 +165,6 @@ public class SharedOutputInputUtils {
 			throw new ApplicationException(DATA_READ_ERROR,
 					"Cannot read tmp data file with name " + path.getFileName().toString(), e, path.getFileName().toString());
 		}
-
 	}
 
 	/**

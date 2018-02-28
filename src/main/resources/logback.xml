@@ -12,19 +12,13 @@
 		<appender-ref ref="STDOUT" />
 	</logger>
 
-
-<!-- 	<logger name="org.thymeleaf" additivity="false">
+<!-- 
+ 	<logger name="fr.uem.efluid.model.repositories.impls.JdbcBasedManagedUpdateRepository" additivity="false">
 		<level value="DEBUG" />
 		<appender-ref ref="STDOUT" />
 	</logger>
-
-	<logger name="nz.net.ultraq.thymeleaf" additivity="false">
-		<level value="DEBUG" />
-		<appender-ref ref="STDOUT" />
-	</logger>
-
  -->
-
+ 
 	<root level="WARN">
 		<appender-ref ref="STDOUT" />
 	</root>

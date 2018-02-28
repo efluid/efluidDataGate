@@ -26,6 +26,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
+import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
@@ -88,8 +89,13 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 
 		LOGGER.debug("Identified change to apply on managed DB. Will process {} diffLines", Integer.valueOf(lines.size()));
 
-		// Preload dictionary for direct access by uuid
+		// Preload dictionary for direct access by uuid and tab name
 		Map<UUID, DictionaryEntry> dictEntries = this.dictionary.findAllMappedByUuid();
+		Map<String, DictionaryEntry> dictByTab = dictEntries.values().stream()
+				.collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
+
+		// Preload all table links for mapped queries
+		Map<UUID, List<TableLink>> mappedLinks = this.links.findAllMappedByDictionaryEntryUUID();
 
 		// Manually perform Managed DB transaction for fine rollback management
 		DefaultTransactionDefinition paramTransactionDefinition = new DefaultTransactionDefinition();
@@ -102,17 +108,19 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 			// Prepare all queries, ordered by dictionary entry and action regarding links
 			String[] queries = lines.stream()
 					.sorted(sortedByLinks())
-					.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, lobArgs))
+					.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, mappedLinks, dictByTab, lobArgs))
 					.toArray(String[]::new);
 
 			// Debug all content
 			if (LOGGER.isDebugEnabled()) {
 				// Reproduce content to debug - heavy loading !!!
 				LOGGER.debug("Queries Before sort : \n{}",
-						lines.stream().map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, new ArrayList<>()))
+						lines.stream().map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, mappedLinks, dictByTab,
+								new ArrayList<>()))
 								.collect(Collectors.joining("\n")));
 				LOGGER.debug("Queries After sort : \n{}", lines.stream().sorted(sortedByLinks())
-						.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, new ArrayList<>()))
+						.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, mappedLinks, dictByTab,
+								new ArrayList<>()))
 						.collect(Collectors.joining("\n")));
 			}
 
@@ -152,7 +160,13 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 * @param line
 	 * @return
 	 */
-	private String queryFor(DictionaryEntry entry, DiffLine line, Map<String, byte[]> allLobs, List<Object[]> lobArgs) {
+	private String queryFor(
+			DictionaryEntry entry,
+			DiffLine line,
+			Map<String, byte[]> allLobs,
+			Map<UUID, List<TableLink>> mappedLinks,
+			Map<String, DictionaryEntry> dictByTab,
+			List<Object[]> lobArgs) {
 
 		List<String> refLobKeys = new ArrayList<>();
 		String q;
@@ -160,7 +174,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 		switch (line.getAction()) {
 		case ADD:
 			q = this.queryGenerator.producesApplyAddQuery(entry, line.getKeyValue(),
-					this.payloadConverter.expandInternalValue(line.getPayload()), refLobKeys);
+					this.payloadConverter.expandInternalValue(line.getPayload()), refLobKeys, mappedLinks.get(entry.getUuid()), dictByTab);
 			break;
 		case REMOVE:
 			q = this.queryGenerator.producesApplyRemoveQuery(entry, line.getKeyValue());
@@ -168,7 +182,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 		case UPDATE:
 		default:
 			q = this.queryGenerator.producesApplyUpdateQuery(entry, line.getKeyValue(),
-					this.payloadConverter.expandInternalValue(line.getPayload()), refLobKeys);
+					this.payloadConverter.expandInternalValue(line.getPayload()), refLobKeys, mappedLinks.get(entry.getUuid()), dictByTab);
 		}
 
 		// If lobs were referenced, prepare params

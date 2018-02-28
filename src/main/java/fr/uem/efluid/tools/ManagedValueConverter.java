@@ -86,10 +86,6 @@ public class ManagedValueConverter {
 
 		builder.append(colName).append(AFFECT);
 		
-		if(value.startsWith("t")){
-			System.out.println("gotcha");
-		}
-
 		builder.append(type.getRepresent()).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
 
 		if (!last) {
@@ -204,7 +200,7 @@ public class ManagedValueConverter {
 	public List<String> extractUsedBinaryHashs(String internalExtracted) {
 
 		// To avoid useless expand, check if a hash is used in internal
-		if (internalExtracted.indexOf(LOB_HASH_SEARCH) > 0) {
+		if (internalExtracted != null && internalExtracted.indexOf(LOB_HASH_SEARCH) > 0) {
 			return expandInternalValue(internalExtracted).stream().filter(v -> v.getType() == ColumnType.BINARY)
 					.map(v -> v.getValueAsString()).collect(Collectors.toList());
 		}
@@ -269,6 +265,14 @@ public class ManagedValueConverter {
 	 */
 	public static String decodeAsString(String rawB64) {
 		return new String(decode(rawB64), Value.CONTENT_ENCODING);
+	}
+	
+	/**
+	 * @param raw
+	 * @return
+	 */
+	public static String encodeAsString(String raw){
+		return B64_ENCODER.encodeToString(raw.getBytes( Value.CONTENT_ENCODING));
 	}
 
 	/**

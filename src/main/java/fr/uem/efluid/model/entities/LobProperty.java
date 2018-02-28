@@ -1,5 +1,7 @@
 package fr.uem.efluid.model.entities;
 
+import static fr.uem.efluid.utils.SharedOutputInputUtils.*;
+
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,7 +15,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import fr.uem.efluid.model.Shared;
-import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * <p>
@@ -139,9 +140,9 @@ public class LobProperty implements Shared {
 	 */
 	@Override
 	public String serialize() {
-		return SharedOutputInputUtils.serializeDataAsTmpFile(
-				new String[] { this.commit.getUuid().toString(), this.getHash() }, this.data)
-				.getFileName().toString();
+		return serializeDataAsTmpFile(
+				new String[] { this.commit.getUuid().toString(), encodeB64ForFilename(this.getHash()) }, this.data)
+						.getFileName().toString();
 	}
 
 	/**
@@ -152,15 +153,15 @@ public class LobProperty implements Shared {
 	public void deserialize(String raw) {
 
 		// Raw data is temp file path
-		Path path = SharedOutputInputUtils.despecializePath(raw);
-		String[] parts = SharedOutputInputUtils.pathNameParts(path);
+		Path path = despecializePath(raw);
+		String[] parts = pathNameParts(path);
 
 		// Get from filename
 		this.commit = new Commit(UUID.fromString(parts[0]));
-		this.hash = parts[1];
+		this.hash = decodeB64ForFilename(parts[1]);
 
 		// Get from file content
-		this.data = SharedOutputInputUtils.deserializeDataFromTmpFile(path);
+		this.data = deserializeDataFromTmpFile(path);
 	}
 
 	/**

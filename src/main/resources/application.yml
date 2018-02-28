@@ -21,7 +21,7 @@ param-efluid:
 ## TECH FEATURES CUSTOM
 spring:
    profiles:
-       active: minimal
+       active: prod
 
    thymeleaf:
        cache: false

@@ -16,6 +16,8 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.metas.ColumnType;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 
 /**
  * <p>
@@ -29,6 +31,10 @@ import fr.uem.efluid.services.types.Value;
  * this : <code>select "colA", "colB", "colC" from "Table" where "colA"='truc'</code>.
  * This feature is optional : all behaviors are specified from available
  * <tt>QueryGenerationRules</tt> initialized in Spring context
+ * </p>
+ * <p>
+ * For mapping, a dedicated generation is used when the linked table is itself a parameter
+ * table.
  * </p>
  * 
  * @author elecomte
@@ -45,14 +51,14 @@ public class ManagedQueriesGenerator {
 	private static final String CURRENT_TAB_ALIAS = "cur.";
 
 	private static final String LINK_TAB_ALIAS = "ln";
-	
+
 	private static final String LINK_VAL_ALIAS_START = " as ln_";
 
 	private static final String SELECT_CLAUSE_SEP = ", ";
+	
+	private static final String SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS = SELECT_CLAUSE_SEP + CURRENT_TAB_ALIAS;
 
-	private static final String SELECT_CLAUSE_SEP_NO_PROTECT = SELECT_CLAUSE_SEP + CURRENT_TAB_ALIAS;
-
-	private static final String SELECT_CLAUSE_SEP_PROTECT = ITEM_PROTECT + SELECT_CLAUSE_SEP_NO_PROTECT + ITEM_PROTECT;
+	private static final String SELECT_CLAUSE_SEP_PROTECT_ALIAS = ITEM_PROTECT + SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS + ITEM_PROTECT;
 
 	private static final String DEFAULT_SELECT_CLAUSE = "*";
 
@@ -87,28 +93,6 @@ public class ManagedQueriesGenerator {
 		this.selectJoinSubQueryModel = generateSelectJoinSubQueryTemplate(rules);
 		this.updateOrInsertLinkedSubQueryModel = generateUpdateOrInsertLinkedSubQueryTemplate(rules);
 		this.selectLinkValueModel = generateSelectLinkValue(rules);
-	}
-
-	/**
-	 * @param parameterEntry
-	 * @return
-	 */
-	private String consolidateSelectClause(DictionaryEntry parameterEntry) {
-
-		// Basic consolidate => Select all
-		if (parameterEntry.getSelectClause() == null || parameterEntry.getSelectClause().length() == 0) {
-			return DEFAULT_SELECT_CLAUSE;
-		}
-
-		// If keyname not in select clause, need to add it
-		if (!parameterEntry.getSelectClause().contains(parameterEntry.getKeyName())) {
-			return (this.protectColumns)
-					? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
-							+ parameterEntry.getSelectClause()
-					: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP + parameterEntry.getSelectClause();
-		}
-
-		return parameterEntry.getSelectClause();
 	}
 
 	/**
@@ -159,10 +143,10 @@ public class ManagedQueriesGenerator {
 
 		if (this.protectColumns) {
 			return Arrays.asList(
-					selectClause.substring(SELECT_CLAUSE_FIRST_COL_PROTECT, selectClause.length() - 1).split(SELECT_CLAUSE_SEP_PROTECT));
+					selectClause.substring(SELECT_CLAUSE_FIRST_COL_PROTECT, selectClause.length() - 1).split(SELECT_CLAUSE_SEP_PROTECT_ALIAS));
 		}
 
-		return Arrays.asList(selectClause.substring(SELECT_CLAUSE_FIRST_COL_NO_PROTECT).split(SELECT_CLAUSE_SEP_NO_PROTECT));
+		return Arrays.asList(selectClause.substring(SELECT_CLAUSE_FIRST_COL_NO_PROTECT).split(SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS));
 	}
 
 	/**
@@ -218,11 +202,216 @@ public class ManagedQueriesGenerator {
 
 		// No linkeds : default select
 		if (this.protectColumns) {
-			return CURRENT_TAB_ALIAS + ITEM_PROTECT + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT))
+			return CURRENT_TAB_ALIAS + ITEM_PROTECT + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT_ALIAS))
 					+ ITEM_PROTECT;
 		}
 
-		return CURRENT_TAB_ALIAS + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+		return CURRENT_TAB_ALIAS + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS));
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @param keyValue
+	 * @param values
+	 * @return
+	 */
+	public String producesApplyAddQuery(
+			DictionaryEntry parameterEntry,
+			String keyValue,
+			List<Value> values,
+			List<String> referedLobs,
+			List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+		// INSERT INTO %s (%) VALUES (%)
+		List<Value> combined = new ArrayList<>();
+		combined.add(new KeyValue(parameterEntry, keyValue));
+		combined.addAll(values);
+		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined),
+				allValues(combined, referedLobs, links, allEntries));
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @param keyValue
+	 * @return
+	 */
+	public String producesApplyRemoveQuery(DictionaryEntry parameterEntry, String keyValue) {
+		// DELETE FROM %s WHERE %s
+		return String.format(this.deleteQueryModel, parameterEntry.getTableName(),
+				valueAffect(new KeyValue(parameterEntry, keyValue), null));
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @param keyValue
+	 * @param values
+	 * @return
+	 */
+	public String producesApplyUpdateQuery(DictionaryEntry parameterEntry,
+			String keyValue,
+			List<Value> values,
+			List<String> referedLobs,
+			List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+		// UPDATE %s SET %s WHERE %s
+		return String.format(this.updateQueryModel, parameterEntry.getTableName(), allValuesAffect(values, referedLobs, links, allEntries),
+				valueAffect(new KeyValue(parameterEntry, keyValue), null));
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @param keyValue
+	 * @return
+	 */
+	public String producesGetOneQuery(DictionaryEntry parameterEntry, String keyValue) {
+		// SELECT %s FROM %s WHERE %s ORDER BY %s (reused query)
+		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), "",
+				valueAffect(new KeyValue(parameterEntry, keyValue), null),
+				parameterEntry.getKeyName());
+	}
+
+	/**
+	 * To check unicity on parameter key
+	 * 
+	 * @param tablename
+	 * @param columnName
+	 * @return
+	 */
+	public String producesUnicityQuery(String tablename, String columnName) {
+
+		// select 1 from "TTABLEOTHERTEST2" group by "ID" HAVING COUNT("ID") > 1
+		return String.format(this.unicityQueryModel, tablename, columnName, columnName);
+	}
+
+	/**
+	 * @param value
+	 * @return
+	 */
+	private String valueAffect(Value value, List<String> lobsKey) {
+		if (this.protectColumns) {
+			return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped(lobsKey);
+		}
+		return value.getName() + AFFECT + value.getTyped(lobsKey);
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
+	private String allNames(List<Value> values) {
+		Stream<String> names = values.stream().map(Value::getName);
+		if (this.protectColumns) {
+			return ITEM_PROTECT + names.collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT_ALIAS)) + ITEM_PROTECT;
+		}
+		return names.collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS));
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
+	private String allValuesAffect(
+			List<Value> values,
+			List<String> lobKeys,
+			List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+
+		// col = val
+
+		// Dedicated when mapped links exist
+		if (hasMappedLinks(links, allEntries)) {
+
+			return values.stream().map(v -> {
+
+				int lnStart = v.getName().indexOf(LINK_TAB_ALIAS + "_");
+
+				if (lnStart > 0) {
+					String propName = v.getName().substring(lnStart);
+					return propName + AFFECT + linkValueSubSelect(propName, v.getValueAsString(), links, allEntries);
+				}
+
+				return valueAffect(v, lobKeys);
+
+			}).collect(Collectors.joining(SELECT_CLAUSE_SEP));
+
+		}
+
+		return values.stream().map(v -> valueAffect(v, lobKeys)).collect(Collectors.joining(SELECT_CLAUSE_SEP));
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
+	private String allValues(
+			List<Value> values,
+			List<String> lobKeys,
+			List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+
+		// Dedicated when mapped links exist
+		if (hasMappedLinks(links, allEntries)) {
+
+			return values.stream().map(v -> {
+
+				int lnStart = v.getName().indexOf(LINK_TAB_ALIAS + "_");
+
+				if (lnStart > 0) {
+					return linkValueSubSelect(v.getName().substring(lnStart), v.getValueAsString(), links, allEntries);
+				}
+
+				return valueAffect(v, lobKeys);
+
+			}).collect(Collectors.joining(SELECT_CLAUSE_SEP));
+		}
+
+		return values.stream().map(v -> v.getTyped(lobKeys)).collect(Collectors.joining(SELECT_CLAUSE_SEP));
+	}
+
+	/**
+	 * 
+	 * @param linkedAttr
+	 * @param value
+	 * @param links
+	 * @param allEntries
+	 * @return
+	 */
+	private String linkValueSubSelect(
+			String linkedAttr,
+			String value,
+			List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+
+		TableLink link = links.stream().filter(l -> l.getColumnFrom().equals(linkedAttr)).findFirst().orElseThrow(
+				() -> new ApplicationException(ErrorType.REFER_MISS_LINK, "Unknown value link : " + linkedAttr, linkedAttr));
+
+		DictionaryEntry dic = allEntries.get(link.getTableTo());
+
+		// (SELECT "%s" FROM "%s" WHERE %s)
+		return String.format(this.updateOrInsertLinkedSubQueryModel, link.getColumnTo(),
+				dic.getTableName(), valueAffect(new KeyValue(dic, value), null));
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @return
+	 */
+	private String consolidateSelectClause(DictionaryEntry parameterEntry) {
+
+		// Basic consolidate => Select all
+		if (parameterEntry.getSelectClause() == null || parameterEntry.getSelectClause().length() == 0) {
+			return DEFAULT_SELECT_CLAUSE;
+		}
+
+		// If keyname not in select clause, need to add it
+		if (!parameterEntry.getSelectClause().contains(parameterEntry.getKeyName())) {
+			return (this.protectColumns)
+					? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
+							+ parameterEntry.getSelectClause()
+					: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP + parameterEntry.getSelectClause();
+		}
+
+		return parameterEntry.getSelectClause();
 	}
 
 	/**
@@ -275,112 +464,7 @@ public class ManagedQueriesGenerator {
 	 * @return
 	 */
 	private static boolean hasMappedLinks(List<TableLink> links, Map<String, DictionaryEntry> allEntries) {
-		return links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
-	}
-
-	/**
-	 * @param parameterEntry
-	 * @param keyValue
-	 * @param values
-	 * @return
-	 */
-	public String producesApplyAddQuery(
-			DictionaryEntry parameterEntry,
-			String keyValue,
-			List<Value> values,
-			List<String> referedLobs) {
-		// INSERT INTO %s (%) VALUES (%)
-		List<Value> combined = new ArrayList<>();
-		combined.add(new KeyValue(parameterEntry, keyValue));
-		combined.addAll(values);
-		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined), allValues(combined, referedLobs));
-	}
-
-	/**
-	 * @param parameterEntry
-	 * @param keyValue
-	 * @return
-	 */
-	public String producesApplyRemoveQuery(DictionaryEntry parameterEntry, String keyValue) {
-		// DELETE FROM %s WHERE %s
-		return String.format(this.deleteQueryModel, parameterEntry.getTableName(),
-				valueAffect(new KeyValue(parameterEntry, keyValue), null));
-	}
-
-	/**
-	 * @param parameterEntry
-	 * @param keyValue
-	 * @param values
-	 * @return
-	 */
-	public String producesApplyUpdateQuery(DictionaryEntry parameterEntry, String keyValue, List<Value> values, List<String> referedLobs) {
-		// UPDATE %s SET %s WHERE %s
-		return String.format(this.updateQueryModel, parameterEntry.getTableName(), allValuesAffect(values, referedLobs),
-				valueAffect(new KeyValue(parameterEntry, keyValue), null));
-	}
-
-	/**
-	 * @param parameterEntry
-	 * @param keyValue
-	 * @return
-	 */
-	public String producesGetOneQuery(DictionaryEntry parameterEntry, String keyValue) {
-		// SELECT %s FROM %s WHERE %s ORDER BY %s (reused query)
-		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(),
-				valueAffect(new KeyValue(parameterEntry, keyValue), null),
-				parameterEntry.getKeyName());
-	}
-
-	/**
-	 * To check unicity on parameter key
-	 * 
-	 * @param tablename
-	 * @param columnName
-	 * @return
-	 */
-	public String producesUnicityQuery(String tablename, String columnName) {
-
-		// select 1 from "TTABLEOTHERTEST2" group by "ID" HAVING COUNT("ID") > 1
-		return String.format(this.unicityQueryModel, tablename, columnName, columnName);
-	}
-
-	/**
-	 * @param value
-	 * @return
-	 */
-	private String valueAffect(Value value, List<String> lobsKey) {
-		if (this.protectColumns) {
-			return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped(lobsKey);
-		}
-		return value.getName() + AFFECT + value.getTyped(lobsKey);
-	}
-
-	/**
-	 * @param values
-	 * @return
-	 */
-	private String allNames(List<Value> values) {
-		Stream<String> names = values.stream().map(Value::getName);
-		if (this.protectColumns) {
-			return ITEM_PROTECT + names.collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT)) + ITEM_PROTECT;
-		}
-		return names.collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
-	}
-
-	/**
-	 * @param values
-	 * @return
-	 */
-	private String allValuesAffect(List<Value> values, List<String> lobKeys) {
-		return values.stream().map(v -> valueAffect(v, lobKeys)).collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
-	}
-
-	/**
-	 * @param values
-	 * @return
-	 */
-	private static String allValues(List<Value> values, List<String> lobKeys) {
-		return values.stream().map(v -> v.getTyped(lobKeys)).collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT));
+		return  links!= null && links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
 	}
 
 	/**

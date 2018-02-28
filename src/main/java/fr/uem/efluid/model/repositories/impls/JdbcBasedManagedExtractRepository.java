@@ -59,13 +59,15 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 	@Override
 	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs) {
 
-		LOGGER.debug("Extracting values from managed table {}", parameterEntry.getTableName());
+		String query = this.queryGenerator.producesSelectParameterQuery(
+				parameterEntry,
+				this.links.findByDictionaryEntry(parameterEntry),
+				this.dictionary.findAllMappedByTableName());
+
+		LOGGER.debug("Extracting values from managed table {} with query \"{}\"", parameterEntry.getTableName(), query);
 
 		// Get columns for all table
-		return this.managedSource.query(
-				this.queryGenerator.producesSelectParameterQuery(parameterEntry, this.links.findByDictionaryEntry(parameterEntry),
-						this.dictionary.findAllMappedByTableName()),
-				new InternalExtractor(parameterEntry, this.valueConverter, lobs));
+		return this.managedSource.query(query, new InternalExtractor(parameterEntry, this.valueConverter, lobs));
 	}
 
 	/**

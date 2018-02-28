@@ -51,6 +51,10 @@
 						La clé spécifiée "<span th:text="${payload}">MY_KEY</span>" pour l'entrée de dictionnaire n'est pas valide : les données n'y
 						sont actuellement pas uniques. Il est impératif que pour la clé utilisée, ses valeurs soient uniques.
 					</p>
+					<p th:case="'REFER_MISS_LINK'">
+						Une dépendance devrait être spécifiée pour la valeur <span th:text="${payload}">COLA</span> mais elle n'existe pas.
+						Est-ce que le dictionaire a été modifié pour cette table de paramètre ?
+					</p>
 					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
 				</span>
 			</span>

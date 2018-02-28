@@ -81,6 +81,8 @@ public class ExportImportService {
 
 			for (ExportImportPackage<?> pckg : packages) {
 
+				pckg.setUncompressPath(workFolder);
+
 				Path pckgFile = Files.createFile(workFolder.resolve(pckg.getName() + FILE_PCKG_EXT));
 
 				// Identifier at start of package
@@ -94,6 +96,9 @@ public class ExportImportService {
 				append(pckgFile, PACKAGE_END);
 
 				packFiles.add(pckgFile);
+
+				// If package has complementary files, add them
+				packFiles.addAll(pckg.getComplementaryFiles());
 			}
 
 			// TODO : define CType
@@ -177,7 +182,12 @@ public class ExportImportService {
 
 			// Get items
 			for (int i = 1; i < items.length; i++) {
-				String itemContent = items[i].substring(0, items[i].length() - ITEM_END.length());
+
+				// Specific for last
+				String itemContent = (i == items.length - 1)
+						? items[i].substring(0, items[i].length() - (ITEM_END.length() + PACKAGE_END.length()))
+						: items[i].substring(0, items[i].length() - ITEM_END.length());
+						
 				LOGGER.debug("Identified serialized item in package \"{}\". Content : {}", name, itemContent);
 				itemSerialized.add(itemContent);
 			}
@@ -365,6 +375,10 @@ public class ExportImportService {
 		public abstract String getVersion();
 
 		/**
+		 * <p>
+		 * Extension point for package - item deserialize
+		 * </p>
+		 * 
 		 * @param rawContent
 		 * @return
 		 */
@@ -375,10 +389,33 @@ public class ExportImportService {
 		}
 
 		/**
+		 * <p>
+		 * Extension point for package - item serialize
+		 * </p>
+		 * 
+		 * @param content
+		 * @return
+		 */
+		protected String serializeOne(T content) {
+			return content.serialize();
+		}
+
+		/**
 		 * @return the uncompressPath
 		 */
 		protected Path getUncompressPath() {
 			return this.uncompressPath;
+		}
+
+		/**
+		 * <p>
+		 * If the export has complementary file, provides them here
+		 * </p>
+		 * 
+		 * @return
+		 */
+		protected List<Path> getComplementaryFiles() {
+			return new ArrayList<>();
 		}
 
 		/**
@@ -405,7 +442,7 @@ public class ExportImportService {
 		 * @return
 		 */
 		private List<String> serialize() {
-			return this.contents.stream().map(Shared::serialize).collect(Collectors.toList());
+			return this.contents.stream().map(this::serializeOne).collect(Collectors.toList());
 		}
 	}
 }
