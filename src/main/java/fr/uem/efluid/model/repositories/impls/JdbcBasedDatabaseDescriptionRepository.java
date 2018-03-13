@@ -28,7 +28,27 @@ import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
- * Provider of database description using JDBC Metadata model
+ * Provider of database description using JDBC Metadata model : calls for JDBC standard
+ * Metadata extraction, implemented by each vendor-specific driver.
+ * </p>
+ * <p>
+ * The metadata extraction used here is not optimized for performance but for usability
+ * using a description model defined in {@link TableDescription} for each identified
+ * table. The extraction will try to exclude all system tables. To help identify "valid"
+ * tables, a schema can be specified with parameter
+ * <code>param-efluid.managed-datasource.meta.filterSchema</code> : Only the table of the
+ * specified schema will be scanned. This parameter can also be null or "%", but it is
+ * recommanded to specify a value.
+ * </p>
+ * <p>
+ * <u>This metadata extraction implements has been tested on</u> :
+ * <ul>
+ * <li><b>PostgreSQL 10.1</b> (should be OK on all 9.x + versions)</li>
+ * <li><b>Oracle 11g</b> (Express edition) with driver OJDBC14 10.x</li>
+ * <li><b>Oracle 12c</b> (Express edition) with driver OJDBC8 12.x</li>
+ * </ul>
+ * Due to over-complicated extraction model used on Oracle JDBC drivers, it is much slower
+ * with Oracle databases, but still OK for application needs
  * </p>
  * 
  * @author elecomte
@@ -58,14 +78,28 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	public Collection<TableDescription> getTables() throws ApplicationException {
 
 		try {
-			// TODO : check availability on all tested database
 			DatabaseMetaData md = this.managedSource.getDataSource().getConnection().getMetaData();
 
-			// On "fresh" db, can be very slow if no schema filtering
-			if (md.getDatabaseProductName().equalsIgnoreCase(ORACLE_VENDOR)
-					&& (this.filterSchema == null || this.filterSchema.length() < 2)) {
-				LOGGER.warn("On Oracle database, the call of Metadata description can be very slow if no schema filtering is"
-						+ " specified. Please wait for metadata completion");
+			/*
+			 * On Oracle, metadata extraction is slower : It is based on a complexe data
+			 * extraction with various SP. So with a "fresh" db, it can be very slow on
+			 * first calls, until precaching works. If no schema is specified, metadata
+			 * needs to filter over 5000+ SYTEM tables ...
+			 */
+			if (md.getDatabaseProductName().equalsIgnoreCase(ORACLE_VENDOR)) {
+
+				// No Schema = very very slow
+				if (this.filterSchema == null || this.filterSchema.length() < 2) {
+					LOGGER.warn("On Oracle database, the call of Metadata description can be very slow (minutes long) "
+							+ "if no schema filtering is specified. Please wait for metadata completion, or update "
+							+ "configuration with a fixed param-efluid.managed-datasource.meta.filterSchema parameter");
+				}
+
+				// Always slower than PGSql
+				else {
+					LOGGER.info("Accessing metadata on Oracle database. Process can be quite slow (10 / 20 seconds long)"
+							+ " if many tables exist on specified schema \"{}\"", this.filterSchema);
+				}
 			}
 
 			// Check that, if specified, the filter schema exists in managed DB

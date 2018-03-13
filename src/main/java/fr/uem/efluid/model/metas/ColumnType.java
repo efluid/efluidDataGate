@@ -9,20 +9,28 @@ import java.time.temporal.Temporal;
  * parsing model can be effective even if limited to these 3 types :
  * <ul>
  * <li>{@link #STRING} means <i>"something we output in a SQL query as a string, like with
- * <code>a.col = 'something'</code>"</i>. Used for varchar, nvarchar, char, and all
- * date-related types, like datatime. Clob should be supported but as we may have a
- * dedicated management of CLOB / BLOB values in index, they are specified as
- * "BINARY".</li>
+ * <code>a.col = 'something'</code>"</i>. Used for varchar, nvarchar, char. Clob should be
+ * supported but as we may have a dedicated management of CLOB / BLOB values in index,
+ * they are specified as "BINARY". <b><font color="green">Tested OK with NVARCHAR(X),
+ * VARCHAR(X) and VARCHAR2(X) SQL types</font></b></li>
  * <li>{@link #ATOMIC} means <i>"something we output in a SQL query as an atomic, like
- * with <code>a.col = 1234</code>"</i>. Used for numbers and booleans (in java, nearly all
- * primitive types)</li>
+ * with <code>a.col = 1234</code>"</i>. Used for numbers (in java, nearly all primitive
+ * types). <b><font color="green">Tested OK with SQL NUMBER, SMALLINT,
+ * FLOAT</font></b></li>
  * <li>{@link #BINARY} means <i>"something we need to manage with a special process in a
  * SQL query as it is not a scalare value inlined in a query"</i>. Used for BLOB (and CLOB
- * ??)</li>
- * <li>{@link #BOOLEAN} for boolean only (required for specific value extraction)</li>
- * <li>{@link #TEMPORAL} for time / timestamp / date (required for specific value extraction with forma)</li>
+ * ??). <b><font color="green">Tested OK for SQL BYTEA and BLOB</font></b></li>
+ * <li>{@link #BOOLEAN} for boolean only (required for specific value extraction).
+ * <b><font color="green">Tested OK for SQL BOOLEAN (on PGSQL).</font> Number-based
+ * boolean (like for Oracle) are specified as <code>ATOMIC</code></b></li>
+ * <li>{@link #TEMPORAL} for time / timestamp / date (required for specific value
+ * extraction with format : date are formated internaly in ISO string format, then
+ * provided in user-specified database-related format in query
+ * generation).<b><font color="green">Tested OK for SQL TIMESTAMP</font></b></li>
  * <li>{@link #PK} means <i>"something with a generated value I shouldn't share with other
- * database instances"</i>. Used to identify the</li>
+ * database instances"</i>. Used to identify the internal PK, which is generaly NOT
+ * selected for dictionary entry managing. Identification is not based on type but on
+ * METADATA</li>
  * </ul>
  * </p>
  * 
@@ -32,7 +40,7 @@ import java.time.temporal.Temporal;
  */
 public enum ColumnType {
 
-	// TODO : If CLOB and BLOC cannot be managed the same way, use a dedicated type "TEXT"
+	// TODO : If CLOB and BLOB cannot be managed the same way, use a dedicated type "TEXT"
 	BINARY('B', "LOB"),
 	ATOMIC('O', "Variable"),
 	STRING('S', "Literal"),
@@ -90,7 +98,7 @@ public enum ColumnType {
 		if (obj instanceof Temporal) {
 			return ColumnType.TEMPORAL;
 		}
-		
+
 		return ColumnType.ATOMIC;
 	}
 
@@ -142,7 +150,7 @@ public enum ColumnType {
 		if (type >= Types.DATE && type <= Types.TIMESTAMP) {
 			return ColumnType.TEMPORAL;
 		}
-        
+
 		// A 1st Small range of binaries
 		if (type >= Types.LONGVARBINARY && type <= Types.BINARY) {
 			return ColumnType.BINARY;

@@ -251,3 +251,15 @@ Dans les faits, on a 2 types de transpositions à gérer pour chaque données in
     inner join commit c on c.uuid = idx.commit_uuid
     order by table_name, id
     
+**Supprimer un commit pour retester un import / merge**
+
+Penser à vérifier d'abord les commits présents
+
+	select * from commit
+
+Puis il est possible de supprimer le commit et les données associées à partir d'un critère sur le "comment" (ici pour un merge) :
+
+	delete from index where commit_uuid = (select uuid from commit where comment like '###%');
+	delete from commit_merge_sources where commit_uuid = (select uuid from commit where comment like '###%');
+	delete from lobs where commit_uuid = (select uuid from commit where comment like '###%');
+	delete from commit where uuid = (select uuid from commit where comment like '###%');

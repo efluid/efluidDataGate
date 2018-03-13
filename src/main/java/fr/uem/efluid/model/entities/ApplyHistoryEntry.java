@@ -5,6 +5,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -24,7 +25,8 @@ public class ApplyHistoryEntry {
 	private Long id;
 
 	private boolean rollback;
-
+	
+	@Size(max=4096)
 	private String query;
 
 	@ManyToOne(optional = false)
