@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
 	<body>
 		<div th:fragment="error-display (code,payload)">
 			<span th:if="${code}">
@@ -10,6 +11,10 @@
 					<p th:case="'UNSUPPORTED_UUID'">L'identifiant uuid indiqué n'est pas valide</p>
 					<p th:case="'COMMIT_IMPORT_INVALID'">Le fichier d'import de lot de modification n'est pas valide ou référence des données inconnues</p>
 					<p th:case="'COMMIT_EXISTS'">Le lot de préparation indiqué n'existe pas</p>
+					<p th:case="'METADATA_WRONG_SCHEMA'">
+						Le schéma <span th:text="${payload}">demo</span> configuré pour le filtrage des métadonnées n'existe pas 
+						dans la BDD managée courante
+					</p>
 					<p th:case="'METADATA_FAILED'">La lecture des métadonnées n'est pas possible sur la base de donnée gérée</p>
 					<p th:case="'VALUE_CHECK_FAILED'">Le contrôle des données n'est pas possible sur la base de donnée gérée</p>
 					<p th:case="'VALUE_SHA_UNSUP'">Le format de hashage prévu n'est pas supporté sur l'environnement actuel</p>
@@ -27,7 +32,9 @@
 					<p th:case="'IMPORT_WRONG_READ'">Impossible d'accéder au contenu du fichier importé</p>
 					<p th:case="'IMPORT_RUNNING'">
 						Un import de lots de modification est déjà en cours : impossible de démarrer un nouveau lot local tant que l'import n'est
-						pas complété ou abandonné. Pour accéder à l'écran de traitement d'import <a href="pull.html" th:href="@{/pull}" class="btn btn-dark btn-sm">Cliquer ici</a>
+						pas complété ou abandonné.<br/>
+						<a href="pull.html" th:href="@{/pull}" class="btn btn-dark btn-sm">Accéder à l'écran de traitement d'import</a>&nbsp;&nbsp;
+						<a href="#" th:href="@{/prepare/cancel}" class="btn btn-secondary btn-sm">Abandonner l'import en cours</a>
 					</p>
 					<p th:case="'UPLOAD_WRG_DATA'">Le format des données importées n'est pas supporté par l'application</p>
 					<p th:case="'TMP_ERROR'">Le système ne permet pas la préparation du fichier temporaire</p>

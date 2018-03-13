@@ -1,10 +1,13 @@
 package fr.uem.efluid.services.types;
 
 import java.nio.charset.Charset;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import fr.uem.efluid.model.metas.ColumnType;
+import fr.uem.efluid.utils.WebUtils;
 
 /**
  * <p>
@@ -17,6 +20,8 @@ import fr.uem.efluid.model.metas.ColumnType;
  */
 public interface Value {
 
+	DateTimeFormatter INTERNAL_LDT_FORMATTER = DateTimeFormatter.ofPattern(WebUtils.DATE_TIME_FORMAT);
+	
 	char TYPED_STRING_PROTECT = '\'';
 
 	String INJECT_OF_LOB = "?";
@@ -57,10 +62,16 @@ public interface Value {
 	 * @param val
 	 * @return
 	 */
-	default String getTyped(List<String> lobKeys) {
+	default String getTyped(List<String> lobKeys, DateTimeFormatter dbTemporalFormater) {
 
-		if (getType() == ColumnType.STRING) {
+		if (getType() == ColumnType.STRING ) {
 			return TYPED_STRING_PROTECT + getValueAsString() + TYPED_STRING_PROTECT;
+		}
+
+		// No choice, need to reformat for DB
+		if (getType() == ColumnType.TEMPORAL) {
+			LocalDateTime internal = LocalDateTime.parse(getValueAsString(), INTERNAL_LDT_FORMATTER);
+			return TYPED_STRING_PROTECT + dbTemporalFormater.format(internal) + TYPED_STRING_PROTECT;
 		}
 
 		if (getType() == ColumnType.BINARY) {

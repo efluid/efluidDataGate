@@ -1,6 +1,7 @@
 package fr.uem.efluid.model.metas;
 
 import java.sql.Types;
+import java.time.temporal.Temporal;
 
 /**
  * <p>
@@ -19,6 +20,7 @@ import java.sql.Types;
  * SQL query as it is not a scalare value inlined in a query"</i>. Used for BLOB (and CLOB
  * ??)</li>
  * <li>{@link #BOOLEAN} for boolean only (required for specific value extraction)</li>
+ * <li>{@link #TEMPORAL} for time / timestamp / date (required for specific value extraction with forma)</li>
  * <li>{@link #PK} means <i>"something with a generated value I shouldn't share with other
  * database instances"</i>. Used to identify the</li>
  * </ul>
@@ -35,6 +37,7 @@ public enum ColumnType {
 	ATOMIC('O', "Variable"),
 	STRING('S', "Literal"),
 	BOOLEAN('1', "Booleen"),
+	TEMPORAL('T', "Temporal"),
 	PK('!', "Identifiant");
 
 	private final char represent;
@@ -84,6 +87,10 @@ public enum ColumnType {
 			return ColumnType.BOOLEAN;
 		}
 
+		if (obj instanceof Temporal) {
+			return ColumnType.TEMPORAL;
+		}
+		
 		return ColumnType.ATOMIC;
 	}
 
@@ -107,6 +114,10 @@ public enum ColumnType {
 			return ColumnType.BOOLEAN;
 		}
 
+		if (represent == TEMPORAL.represent) {
+			return ColumnType.TEMPORAL;
+		}
+
 		return BINARY;
 	}
 
@@ -127,6 +138,11 @@ public enum ColumnType {
 			return ColumnType.BOOLEAN;
 		}
 
+		// A Small range for temporals
+		if (type >= Types.DATE && type <= Types.TIMESTAMP) {
+			return ColumnType.TEMPORAL;
+		}
+        
 		// A 1st Small range of binaries
 		if (type >= Types.LONGVARBINARY && type <= Types.BINARY) {
 			return ColumnType.BINARY;

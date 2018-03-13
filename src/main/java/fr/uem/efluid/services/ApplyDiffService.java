@@ -85,7 +85,7 @@ public class ApplyDiffService extends AbstractApplicationService {
 		Long timestamp = Long.valueOf(System.currentTimeMillis());
 		User currentUser = getCurrentUser();
 
-		this.history.save(Stream.of(queries).map(ApplyHistoryEntry::new).peek(h -> {
+		this.history.saveAll(Stream.of(queries).map(ApplyHistoryEntry::new).peek(h -> {
 			h.setRollback(isRollback);
 			h.setTimestamp(timestamp);
 			h.setUser(currentUser);

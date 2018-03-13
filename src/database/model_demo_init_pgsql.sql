@@ -1,4 +1,4 @@
--- Script de préparation de la BDD demo (schéma public)
+-- Script de préparation de la BDD demo (schéma public) - PGSQL
 
 DROP TABLE "TTABLEOTHER";
 DROP TABLE "TMODELE";

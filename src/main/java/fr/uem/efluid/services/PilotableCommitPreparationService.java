@@ -407,37 +407,44 @@ public class PilotableCommitPreparationService {
 		try {
 			long startTimeout = System.currentTimeMillis();
 
-			Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid();
+			if (preparation.getPreparedContent() != null && preparation.getPreparedContent().size() > 0) {
+				Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid();
 
-			long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
+				long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
 
-			// Process details
-			List<Callable<MergePreparedDiff>> callables = preparation.getPreparedContent().stream()
-					.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p))
-					.collect(Collectors.toList());
-			preparation.setProcessStarted(callables.size());
-			preparation.setProcessRemaining(new AtomicInteger(callables.size()));
+				// Process details
+				List<Callable<MergePreparedDiff>> callables = preparation.getPreparedContent().stream()
+						.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p))
+						.collect(Collectors.toList());
+				preparation.setProcessStarted(callables.size());
+				preparation.setProcessRemaining(new AtomicInteger(callables.size()));
 
-			LOGGER.info("Diff MERGE process starting with {} diff to run", Integer.valueOf(callables.size()));
+				LOGGER.info("Diff MERGE process starting with {} diff to run", Integer.valueOf(callables.size()));
 
-			List<MergePreparedDiff> fullDiff = this.executor
-					.invokeAll(callables)
-					.stream()
-					.map(this::gatherResult)
-					.sorted()
-					.collect(Collectors.toList());
+				List<MergePreparedDiff> fullDiff = this.executor
+						.invokeAll(callables)
+						.stream()
+						.map(this::gatherResult)
+						.sorted()
+						.collect(Collectors.toList());
 
-			// Keep in preparation for commit build, once completed
-			preparation.setPreparedContent(fullDiff);
+				// Keep in preparation for commit build, once completed
+				preparation.setPreparedContent(fullDiff);
 
-			// Mark preparation as completed
-			preparation.setEnd(LocalDateTime.now());
-			preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+				// Mark preparation as completed
+				preparation.setEnd(LocalDateTime.now());
+				preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
-			LOGGER.info("Diff process completed on merge commit preparation {}. Found {} index entries. Total process duration was {} ms",
-					this.current.getIdentifier(),
-					Integer.valueOf(fullDiff.size()),
-					Long.valueOf(System.currentTimeMillis() - startTimeout));
+				LOGGER.info(
+						"Diff process completed on merge commit preparation {}. Found {} index entries. Total process duration was {} ms",
+						this.current.getIdentifier(),
+						Integer.valueOf(fullDiff.size()),
+						Long.valueOf(System.currentTimeMillis() - startTimeout));
+			} else {
+				LOGGER.info("Import found no differences. No merge to run");
+				preparation.setEnd(LocalDateTime.now());
+				preparation.setStatus(PilotedCommitStatus.COMPLETED);
+			}
 
 		} catch (ApplicationException a) {
 			LOGGER.error("Identified Merge process error. Sharing", a);

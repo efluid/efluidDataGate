@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html layout:decorator="layouts/pages">
+<html layout:decorate="~{layouts/pages.html}">
 <head>
 </head>
 <body>
@@ -67,7 +67,7 @@
 											<span th:if="${entry.mine}" th:class="|mine action-line ${#strings.toLowerCase(entry.mine.action.name())}|" class="action-add">
 												<span class="change-display">
 													<span class="action-display" th:text="${entry.mine.action.name()}=='ADD'?'Ajout':(${entry.mine.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
-													<span th:if="${entry.mine.payload}" th:text="${entry.mine.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
+													<span th:if="${entry.mine.payload}" th:utext="${entry.mine.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
 													<span th:if="!${entry.mine.payload}"> - pas de détails - </span>
 												</span>
 											</span>
@@ -76,7 +76,7 @@
 											<span th:if="${entry.their}" th:class="|their change-display action-line ${#strings.toLowerCase(entry.their.action.name())}|" class="action-add">
 												<span class="change-display">
 													<span class="action-display" th:text="${entry.their.action.name()}=='ADD'?'Ajout':(${entry.their.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
-													<span th:if="${entry.their.payload}" th:text="${entry.their.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
+													<span th:if="${entry.their.payload}" th:utext="${entry.their.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
 													<span th:if="!${entry.their.payload}"> - pas de détails - </span>
 												</span>
 											</span>
@@ -86,7 +86,7 @@
 										<span th:if="${entry.action}" th:class="|merged change-display action-line ${#strings.toLowerCase(entry.action.name())}|">
 											<span class="change-display">
 												<span class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
-												<span th:if="${entry.payload}" th:text="${entry.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
+												<span th:if="${entry.payload}" th:utext="${entry.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
 												<span th:if="!${entry.payload}"> - pas de détails - </span>
 											</span>
 										</span>

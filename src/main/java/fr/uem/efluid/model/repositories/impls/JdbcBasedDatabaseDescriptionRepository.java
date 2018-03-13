@@ -1,7 +1,6 @@
 package fr.uem.efluid.model.repositories.impls;
 
-import static fr.uem.efluid.utils.ErrorType.METADATA_FAILED;
-import static fr.uem.efluid.utils.ErrorType.VALUE_CHECK_FAILED;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -13,6 +12,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.InvalidResultSetAccessException;
@@ -38,9 +38,14 @@ import fr.uem.efluid.utils.ApplicationException;
 @Repository
 public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescriptionRepository {
 
+	private static final String ORACLE_VENDOR = "Oracle";
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedDatabaseDescriptionRepository.class);
 
 	private static final String[] TABLES_TYPES = { "TABLE", "VIEW" };
+
+	@Value("${param-efluid.managed-datasource.meta.filterSchema}")
+	private String filterSchema;
 
 	@Autowired
 	private JdbcTemplate managedSource;
@@ -56,13 +61,24 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 			// TODO : check availability on all tested database
 			DatabaseMetaData md = this.managedSource.getDataSource().getConnection().getMetaData();
 
+			// On "fresh" db, can be very slow if no schema filtering
+			if (md.getDatabaseProductName().equalsIgnoreCase(ORACLE_VENDOR)
+					&& (this.filterSchema == null || this.filterSchema.length() < 2)) {
+				LOGGER.warn("On Oracle database, the call of Metadata description can be very slow if no schema filtering is"
+						+ " specified. Please wait for metadata completion");
+			}
+
+			// Check that, if specified, the filter schema exists in managed DB
+			assertSchemaExist(md);
+
 			// 4 metadata queries for completed values
 			Map<String, TableDescription> tables = loadCompliantTables(md);
 			initTablesColumns(md, tables);
 			completeTablesPrimaryKeys(md, tables);
 			completeTablesForeignKeys(md, tables);
 
-			LOGGER.info("Metadata extracted from managed database. Found {} tables", Integer.valueOf(tables.size()));
+			LOGGER.info("Metadata extracted from managed database with schema filtering on schema \"{}\". Found {} tables",
+					this.filterSchema, Integer.valueOf(tables.size()));
 
 			return tables.values();
 		} catch (SQLException e) {
@@ -115,6 +131,30 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	}
 
 	/**
+	 * @param md
+	 * @throws SQLException
+	 */
+	private void assertSchemaExist(DatabaseMetaData md) throws SQLException {
+
+		if (this.filterSchema != null && this.filterSchema.length() >= 2) {
+			boolean schemaFound = false;
+			try (ResultSet rs = md.getSchemas()) {
+				while (rs.next()) {
+					if (this.filterSchema.equalsIgnoreCase(rs.getString(1))) {
+						schemaFound = true;
+						break;
+					}
+				}
+			}
+			if (!schemaFound) {
+				throw new ApplicationException(METADATA_WRONG_SCHEMA,
+						"Specified schema " + this.filterSchema + " doesn't exist on current managed database");
+			}
+		}
+
+	}
+
+	/**
 	 * <p>
 	 * Columns are extracted in one set only, mixed for all tables.
 	 * 
@@ -160,13 +200,13 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 * @return
 	 * @throws SQLException
 	 */
-	private static void initTablesColumns(
+	private void initTablesColumns(
 			DatabaseMetaData md,
 			Map<String, TableDescription> descs)
 			throws SQLException {
 
 		// Get columns for all table
-		try (ResultSet rs = md.getColumns(null, null, "%", "%")) {
+		try (ResultSet rs = md.getColumns(null, this.filterSchema, "%", "%")) {
 			while (rs.next()) {
 				String tableName = rs.getString(3);
 
@@ -204,12 +244,12 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 * @param md
 	 * @param table
 	 */
-	private static void completeTablesPrimaryKeys(DatabaseMetaData md, Map<String, TableDescription> descs) {
+	private void completeTablesPrimaryKeys(DatabaseMetaData md, Map<String, TableDescription> descs) {
 		try {
 			// Get pk for each tables ...
 			for (TableDescription desc : descs.values()) {
 
-				try (ResultSet rs = md.getPrimaryKeys(null, null, desc.getName())) {
+				try (ResultSet rs = md.getPrimaryKeys(null, this.filterSchema, desc.getName())) {
 					while (rs.next()) {
 						String columnName = rs.getString(4);
 						desc.getColumns().stream()
@@ -252,11 +292,11 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 * @param md
 	 * @param table
 	 */
-	private static void completeTablesForeignKeys(DatabaseMetaData md, Map<String, TableDescription> descs) {
+	private void completeTablesForeignKeys(DatabaseMetaData md, Map<String, TableDescription> descs) {
 		try {
 			// Get fk for each tables ...
 			for (TableDescription desc : descs.values()) {
-				try (ResultSet rs = md.getImportedKeys(null, null, desc.getName());) {
+				try (ResultSet rs = md.getImportedKeys(null, this.filterSchema, desc.getName());) {
 					while (rs.next()) {
 						String columnName = rs.getString(8);
 						String destTable = rs.getString(3);
@@ -301,11 +341,11 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 *         mapped to their table name
 	 * @throws SQLException
 	 */
-	private static Map<String, TableDescription> loadCompliantTables(DatabaseMetaData md) throws SQLException {
+	private Map<String, TableDescription> loadCompliantTables(DatabaseMetaData md) throws SQLException {
 
 		Map<String, TableDescription> tables = new HashMap<>();
 
-		try (ResultSet rs = md.getTables(null, null, "%", TABLES_TYPES)) {
+		try (ResultSet rs = md.getTables(null, this.filterSchema, "%", TABLES_TYPES)) {
 			while (rs.next()) {
 				TableDescription desc = new TableDescription();
 				String tblName = rs.getString(3);

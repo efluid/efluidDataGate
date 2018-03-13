@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -110,10 +111,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Remove also associated links
 		if (dicLinks != null && !dicLinks.isEmpty()) {
 			LOGGER.debug("Remove {} associated links from dictionary entry {}", Integer.valueOf(dicLinks.size()), uuid);
-			this.links.delete(dicLinks);
+			this.links.deleteAll(dicLinks);
 		}
 
-		this.dictionary.delete(uuid);
+		this.dictionary.deleteById(uuid);
 	}
 
 	/**
@@ -125,7 +126,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		assertDomainCanBeRemoved(uuid);
 
-		this.domains.delete(uuid);
+		this.domains.deleteById(uuid);
 	}
 
 	/**
@@ -195,7 +196,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		assertDictionaryEntryExists(entryUuid);
 
 		// Open existing one
-		DictionaryEntry entry = this.dictionary.findOne(entryUuid);
+		DictionaryEntry entry = this.dictionary.getOne(entryUuid);
 
 		// Prepare basic fields to edit
 		DictionaryEntryEditData edit = DictionaryEntryEditData.fromEntity(entry);
@@ -212,9 +213,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				: Collections.emptyList();
 
 		TableDescription desc = getTableDescription(edit.getTable());
-
+		//dicLinks.get(0).equals(dicLinks.get(1))
 		// Keep links
-		Map<String, TableLink> mappedLinks = dicLinks.stream()
+		Map<String, TableLink> mappedLinks = dicLinks.stream().distinct()
 				.collect(Collectors.toMap(TableLink::getColumnFrom, v -> v));
 
 		// Dedicated case : missing table, pure simulated content
@@ -281,7 +282,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Update existing
 		if (editData.getUuid() != null) {
-			entry = this.dictionary.findOne(editData.getUuid());
+			entry = this.dictionary.getOne(editData.getUuid());
 		}
 
 		// Create new one
@@ -308,7 +309,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		assertKeyIsUniqueValue(entry);
 
 		// Other common edited properties
-		entry.setDomain(this.domains.findOne(editData.getDomainUuid()));
+		entry.setDomain(this.domains.getOne(editData.getDomainUuid()));
 		entry.setParameterName(editData.getName());
 		entry.setSelectClause("- to update -");
 		entry.setWhereClause(editData.getWhere());
@@ -362,7 +363,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		LOGGER.info("Process export of specified fonctional domain {} items", domainUUID);
 
-		FunctionalDomain domain = this.domains.findOne(domainUUID);
+		FunctionalDomain domain = this.domains.getOne(domainUUID);
 
 		// Packages on limited data sets
 		DictionaryPackage dict = new DictionaryPackage(PARTIAL_DICT_EXPORT, LocalDateTime.now())
@@ -439,9 +440,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.collect(Collectors.toList());
 
 		// Batched save on all imported
-		this.domains.save(importedDomains);
-		this.dictionary.save(importedDicts);
-		this.links.save(importedLinks);
+		this.domains.saveAll(importedDomains);
+		this.dictionary.saveAll(importedDicts);
+		this.links.saveAll(importedLinks);
 
 		LOGGER.info("Import completed of {} domains, {} dictionary entry and {} table links",
 				Integer.valueOf(importedDomains.size()), Integer.valueOf(importedDicts.size()), Integer.valueOf(importedLinks.size()));
@@ -472,19 +473,18 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 */
 	private FunctionalDomain importDomain(FunctionalDomain imported, AtomicInteger newCounts) {
 
-		FunctionalDomain local = this.domains.findOne(imported.getUuid());
+		Optional<FunctionalDomain> localOpt = this.domains.findById(imported.getUuid());
 
-		// Exists already : it's an update
-		if (local != null) {
-			LOGGER.debug("Import existing domain {} : will update currently owned", imported.getUuid());
-		}
+		// Exists already
+		localOpt.ifPresent(d -> LOGGER.debug("Import existing domain {} : will update currently owned", imported.getUuid()));
 
-		// Creating a new one locally
-		else {
+		// Or is a new one
+		FunctionalDomain local = localOpt.orElseGet(() -> {
 			LOGGER.debug("Import new domain {} : will create currently owned", imported.getUuid());
-			local = new FunctionalDomain(imported.getUuid());
+			FunctionalDomain loc = new FunctionalDomain(imported.getUuid());
 			newCounts.incrementAndGet();
-		}
+			return loc;
+		});
 
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
@@ -503,20 +503,19 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 */
 	private DictionaryEntry importDictionaryEntry(DictionaryEntry imported, AtomicInteger newCounts) {
 
-		DictionaryEntry local = this.dictionary.findOne(imported.getUuid());
+		Optional<DictionaryEntry> localOpt = this.dictionary.findById(imported.getUuid());
 
-		// Exists already : it's an update
-		if (local != null) {
-			LOGGER.debug("Import existing dictionary entry {} : will update currently owned", imported.getUuid());
-		}
+		// Exists already
+		localOpt.ifPresent(d -> LOGGER.debug("Import existing dictionary entry {} : will update currently owned", imported.getUuid()));
 
-		// Creating a new one locally
-		else {
+		// Or is a new one
+		DictionaryEntry local = localOpt.orElseGet(() -> {
 			LOGGER.debug("Import new dictionary entry {} : will create currently owned", imported.getUuid());
-			local = new DictionaryEntry(imported.getUuid());
+			DictionaryEntry loc = new DictionaryEntry(imported.getUuid());
 			newCounts.incrementAndGet();
-		}
-
+			return loc;
+		});
+		
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
 		local.setDomain(new FunctionalDomain(imported.getDomain().getUuid()));
@@ -540,20 +539,19 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 */
 	private TableLink importTableLink(TableLink imported, AtomicInteger newCounts) {
 
-		TableLink local = this.links.findOne(imported.getUuid());
+		Optional<TableLink> localOpt = this.links.findById(imported.getUuid());
 
-		// Exists already : it's an update
-		if (local != null) {
-			LOGGER.debug("Import existing TableLink {} : will update currently owned", imported.getUuid());
-		}
+		// Exists already
+		localOpt.ifPresent(d -> LOGGER.debug("Import existing TableLink {} : will update currently owned", imported.getUuid()));
 
-		// Creating a new one locally
-		else {
+		// Or is a new one
+		TableLink local = localOpt.orElseGet(() -> {
 			LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
-			local = new TableLink(imported.getUuid());
+			TableLink loc = new TableLink(imported.getUuid());
 			newCounts.incrementAndGet();
-		}
-
+			return loc;
+		});
+		
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
 		local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
@@ -591,17 +589,18 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				}).collect(Collectors.toList());
 
 		// Get existing to update / removoe
-		Map<String, TableLink> existingLinks = this.links.findByDictionaryEntry(entry).stream()
+		Map<String, TableLink> existingLinks = this.links.findByDictionaryEntry(entry).stream().distinct()
 				.collect(Collectors.toMap(TableLink::getColumnFrom, l -> l));
 
 		// And prepare 3 sets of links
 		for (TableLink link : editedLinks) {
 
-			TableLink existing = existingLinks.remove(link.getTableTo());
+			TableLink existing = existingLinks.remove(link.getColumnFrom());
 
 			// Update
 			if (existing != null) {
 				existing.setTableTo(link.getTableTo());
+				existing.setColumnTo(link.getColumnTo());
 				updatedLinks.add(existing);
 			}
 
@@ -622,11 +621,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Process DB updates
 		if (createdLinks.size() > 0)
-			this.links.save(createdLinks);
+			this.links.saveAll(createdLinks);
 		if (updatedLinks.size() > 0)
-			this.links.save(updatedLinks);
+			this.links.saveAll(updatedLinks);
 		if (deletedLinks.size() > 0)
-			this.links.delete(deletedLinks);
+			this.links.deleteAll(deletedLinks);
 	}
 
 	/**
@@ -694,7 +693,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 * @param uuid
 	 */
 	private void assertDictionaryEntryExists(UUID uuid) {
-		if (!this.dictionary.exists(uuid)) {
+		if (!this.dictionary.existsById(uuid)) {
 			throw new ApplicationException(DIC_ENTRY_NOT_FOUND, "Dictionary entry doesn't exist for uuid " + uuid);
 		}
 	}

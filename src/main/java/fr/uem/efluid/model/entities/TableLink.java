@@ -52,7 +52,6 @@ public class TableLink implements Shared {
 	 */
 	public TableLink() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
@@ -203,7 +202,8 @@ public class TableLink implements Shared {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((this.uuid == null) ? 0 : this.uuid.hashCode());
+		result = prime * result + ((this.getColumnFrom ()== null) ? 0 : this.getColumnFrom().hashCode());
+		result = prime * result + ((this.getDictionaryEntry() == null) ? 0 : this.getDictionaryEntry().hashCode());
 		return result;
 	}
 
@@ -218,13 +218,18 @@ public class TableLink implements Shared {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof TableLink))
 			return false;
 		TableLink other = (TableLink) obj;
-		if (this.uuid == null) {
-			if (other.uuid != null)
+		if (this.getColumnFrom() == null) {
+			if (other.getColumnFrom() != null)
 				return false;
-		} else if (!this.uuid.equals(other.uuid))
+		} else if (!this.getColumnFrom().equals(other.getColumnFrom()))
+			return false;
+		if (this.getDictionaryEntry() == null) {
+			if (other.getDictionaryEntry() != null)
+				return false;
+		} else if (!this.getDictionaryEntry().equals(other.getDictionaryEntry()))
 			return false;
 		return true;
 	}

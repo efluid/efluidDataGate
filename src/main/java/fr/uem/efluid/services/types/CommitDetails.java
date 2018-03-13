@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.CommitState;
+import fr.uem.efluid.model.entities.IndexEntry;
 
 /**
  * @author elecomte
@@ -196,8 +197,17 @@ public class CommitDetails {
 		details.setUuid(commit.getUuid());
 		details.setMergeSources(commit.getMergeSources());
 
+		return details;
+	}
+
+	/**
+	 * @param details
+	 * @param index
+	 */
+	public static void completeIndex(CommitDetails details, List<IndexEntry> index) {
+
 		// Using DiffDisplay for grouping index values
-		details.setContent(commit.getIndex().stream()
+		details.setContent(index.stream()
 				.map(PreparedIndexEntry::fromExistingEntity)
 				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
 				.entrySet().stream()
@@ -207,7 +217,5 @@ public class CommitDetails {
 					diff.setDiff(e.getValue());
 					return diff;
 				}).collect(Collectors.toList()));
-
-		return details;
 	}
 }

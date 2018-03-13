@@ -92,7 +92,7 @@ public class PrepareDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupFullDatabase("diff8");
 			long start = System.currentTimeMillis();
-			this.service.currentContentDiff(this.dictionary.findOne(this.dictionaryEntryUuid), new HashMap<>());
+			this.service.currentContentDiff(this.dictionary.getOne(this.dictionaryEntryUuid), new HashMap<>());
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {
@@ -122,7 +122,7 @@ public class PrepareDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupIndexOnly("diff8");
 			long start = System.currentTimeMillis();
-			this.regenerate.regenerateKnewContent(this.dictionary.findOne(this.dictionaryEntryUuid));
+			this.regenerate.regenerateKnewContent(this.dictionary.getOne(this.dictionaryEntryUuid));
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {
@@ -152,7 +152,7 @@ public class PrepareDiffServiceBenchTest {
 		for (int i = 0; i < play; i++) {
 			setupSourceOnly("diff8");
 			long start = System.currentTimeMillis();
-			this.extract.extractCurrentContent(this.dictionary.findOne(this.dictionaryEntryUuid), new HashMap<>());
+			this.extract.extractCurrentContent(this.dictionary.getOne(this.dictionaryEntryUuid), new HashMap<>());
 			long delay = System.currentTimeMillis() - start;
 			totalDuration += delay;
 			if (minDuration == 0 || minDuration > delay) {
@@ -174,7 +174,7 @@ public class PrepareDiffServiceBenchTest {
 	private void runRandomStaticDiffBenchmark() {
 
 		final int play = 25;
-		final DictionaryEntry dic = this.dictionary.findOne(this.dictionaryEntryUuid);
+		final DictionaryEntry dic = this.dictionary.getOne(this.dictionaryEntryUuid);
 
 		int totalLargeKnew = 0;
 		int totalLargeActual = 0;

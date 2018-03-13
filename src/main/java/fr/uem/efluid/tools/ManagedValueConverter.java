@@ -4,11 +4,15 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +25,7 @@ import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.StringSplitter;
+import fr.uem.efluid.utils.WebUtils;
 
 /**
  * <p>
@@ -55,10 +60,13 @@ public class ManagedValueConverter {
 
 	private final static String LOB_DIGEST = "SHA-256";
 
-	private final static String LOB_URL_TEMPLATE = "<a href=\"/lob/%s\" download=\"download\">" + ColumnType.BINARY.getDisplayName() + "</a>";
+	private final static String LOB_URL_TEMPLATE = "<a href=\"/lob/%s\" download=\"download\">" + ColumnType.BINARY.getDisplayName()
+			+ "</a>";
 
 	private final static String LOB_HASH_SEARCH = new StringBuilder(AFFECT).append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT)
 			.toString();
+
+	private final static DateTimeFormatter LDT_FORMATTER = DateTimeFormatter.ofPattern(WebUtils.DATE_TIME_FORMAT);
 
 	/**
 	 * <p>
@@ -85,8 +93,13 @@ public class ManagedValueConverter {
 			final boolean last) {
 
 		builder.append(colName).append(AFFECT);
-		
-		builder.append(type.getRepresent()).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
+
+		if (value == null) {
+			builder.append(type.getRepresent()).append(TYPE_IDENT);
+		} else {
+			builder.append(type.getRepresent()).append(TYPE_IDENT)
+					.append(B64_ENCODER.encodeToString(value.getBytes(Value.CONTENT_ENCODING)));
+		}
 
 		if (!last) {
 			builder.append(SEPARATOR);
@@ -119,10 +132,46 @@ public class ManagedValueConverter {
 
 		builder.append(colName).append(AFFECT);
 
-		byte[] hash = hashBinary(value);
-		lobs.put(new String(hash, Value.CONTENT_ENCODING), value);
+		String hash = hashBinary(value);
+		lobs.put(hash, value);
 
-		builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(hash));
+		builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(hash);
+
+		if (!last) {
+			builder.append(SEPARATOR);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Using internal templating desc and a fixed formating, prepare one TEMPORAL for
+	 * extraction when processing content cell after cell, from a resultSet
+	 * </p>
+	 * 
+	 * @param builder
+	 *            current line builder. One builder for each content line
+	 * @param colName
+	 *            name of the cell
+	 * @param date
+	 *            content of the cell as a <code>java.util.Date</code>
+	 * @param last
+	 *            true if it's the last cell
+	 */
+	public void appendTemporalValue(
+			final StringBuilder builder,
+			final String colName,
+			final Date date,
+			final boolean last) {
+
+		builder.append(colName).append(AFFECT);
+
+		if (date == null) {
+			builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT);
+		} else {
+			// Formated date
+			builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT).append(B64_ENCODER.encodeToString(LDT_FORMATTER
+					.format(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault())).getBytes(Value.CONTENT_ENCODING)));
+		}
 
 		if (!last) {
 			builder.append(SEPARATOR);
@@ -266,13 +315,13 @@ public class ManagedValueConverter {
 	public static String decodeAsString(String rawB64) {
 		return new String(decode(rawB64), Value.CONTENT_ENCODING);
 	}
-	
+
 	/**
 	 * @param raw
 	 * @return
 	 */
-	public static String encodeAsString(String raw){
-		return B64_ENCODER.encodeToString(raw.getBytes( Value.CONTENT_ENCODING));
+	public static String encodeAsString(String raw) {
+		return new String(B64_ENCODER.encode(raw.getBytes(Value.CONTENT_ENCODING)), Value.CONTENT_ENCODING);
 	}
 
 	/**
@@ -335,7 +384,8 @@ public class ManagedValueConverter {
 
 		if (value.getType() == ColumnType.BINARY) {
 			try {
-				return String.format(LOB_URL_TEMPLATE, URLEncoder.encode(B64_ENCODER.encodeToString(value.getValue()), Value.CONTENT_ENCODING.name()));
+				return String.format(LOB_URL_TEMPLATE,
+						URLEncoder.encode(new String(value.getValue(), Value.CONTENT_ENCODING), Value.CONTENT_ENCODING.name()));
 			} catch (UnsupportedEncodingException e) {
 				throw new ApplicationException(ErrorType.VALUE_SHA_UNSUP, "unsupported u encoding type " + LOB_DIGEST, e);
 			}
@@ -346,24 +396,31 @@ public class ManagedValueConverter {
 
 	/**
 	 * <p>
-	 * For binaries, use a hash reprensentation for diff analysis
+	 * For binaries, use a hash + B64 (not intended to be reversible) reprensentation for
+	 * diff analysis
 	 * </p>
 	 * 
 	 * @param data
 	 * @return
 	 */
-	private static byte[] hashBinary(byte[] data) {
+	private static String hashBinary(byte[] data) {
+
+		if (data == null) {
+			return "";
+		}
+
 		try {
 			// Digest is not TS
 			MessageDigest digest = MessageDigest.getInstance(LOB_DIGEST);
 
-			// Hash
-			return digest.digest(data);
+			// Hash + B64 (UTF8 encoded)
+			return new String(B64_ENCODER.encode(digest.digest(data)), Value.CONTENT_ENCODING);
 		} catch (NoSuchAlgorithmException e) {
 			throw new ApplicationException(ErrorType.VALUE_SHA_UNSUP, "unsupported digest type " + LOB_DIGEST, e);
 		}
 
 	}
+
 	/*
 	 * ###################################################################################
 	 * ########## VALUE PROTECTOR APPENDERS. ONE METHOD FOR EACH SUPPORTED TYPE ##########
@@ -397,8 +454,10 @@ public class ManagedValueConverter {
 			// Basic revert of what's done in appendExtractedValue
 			int pos = raw.indexOf(AFFECT);
 			this.name = raw.substring(0, pos).intern();
-			this.value = decode(raw.substring(pos + 3));
 			this.type = ColumnType.forRepresent(raw.charAt(pos + 1));
+			// Binary stay always rendered as B64 hash
+			this.value = this.type == ColumnType.BINARY ? raw.substring(pos + 3).getBytes(CONTENT_ENCODING)
+					: decode(raw.substring(pos + 3));
 		}
 
 		/**

@@ -211,7 +211,7 @@ public class TestDataLoader {
 		// Prepare data - core items
 		DictionaryEntry cmat = setupDictionnaryForDiff();
 
-		User tester = this.users.findOne("testeur");
+		User tester = this.users.getOne("testeur");
 		// Prepare existing commits
 		Commit com1 = this.commits.save(commit("Commit initial de création", tester, 15));
 		Commit com2 = this.commits.save(commit("Commit de mise à jour", tester, 7));
@@ -232,8 +232,8 @@ public class TestDataLoader {
 				.collect(Collectors.toList()));
 
 		// Batch init of data
-		this.index.save(indexesCom1);
-		this.index.save(indexesCom2);
+		this.index.saveAll(indexesCom1);
+		this.index.saveAll(indexesCom2);
 
 		com1.setIndex(indexesCom1);
 		com2.setIndex(indexesCom2);
@@ -328,14 +328,14 @@ public class TestDataLoader {
 	 * @param predicate
 	 */
 	public void assertSourceContentValidate(long id, Predicate<SimulatedSource> predicate) {
-		Assert.assertTrue(predicate.test(this.sources.findOne(id)));
+		Assert.assertTrue(predicate.test(this.sources.getOne(id)));
 	}
 
 	/**
 	 * @param predicate
 	 */
 	public void assertSourceChildContentValidate(long id, Predicate<SimulatedSourceChild> predicate) {
-		Assert.assertTrue(predicate.test(this.sourceChilds.findOne(id)));
+		Assert.assertTrue(predicate.test(this.sourceChilds.getOne(id)));
 	}
 
 	/**
@@ -349,7 +349,7 @@ public class TestDataLoader {
 	 * @param predicate
 	 */
 	public void assertDictionaryContentValidate(String uuid, Predicate<DictionaryEntry> predicate) {
-		Assert.assertTrue(predicate.test(this.dictionary.findOne(UUID.fromString(uuid))));
+		Assert.assertTrue(predicate.test(this.dictionary.getOne(UUID.fromString(uuid))));
 	}
 
 	@PostConstruct

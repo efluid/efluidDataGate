@@ -58,6 +58,8 @@ public class PrepareIndexService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PrepareIndexService.class);
 
+	private static final Logger MERGE_LOGGER = LoggerFactory.getLogger("merge.analysis");
+
 	@Autowired
 	private ManagedExtractRepository rawParameters;
 
@@ -351,6 +353,13 @@ public class PrepareIndexService {
 		Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dict,
 				preparingMergeIndexToComplete.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()), null);
 
+		if (MERGE_LOGGER.isDebugEnabled()) {
+			MERGE_LOGGER.debug(
+					"Beggin Merge resolution search for dict {} (table {}). Will process on {} previous, with {} \"mines\" and {} \"theirs\"",
+					dict.getUuid(), dict.getTableName(), Integer.valueOf(previouses.size()), Integer.valueOf(minesByKey.size()),
+					Integer.valueOf(theirsByKey.size()));
+		}
+
 		// For each merge result (Only one possible for each keyValue)
 		preparingMergeIndexToComplete.stream().forEach(mergeEntry -> {
 
@@ -401,7 +410,19 @@ public class PrepareIndexService {
 		PreparedIndexEntry theirEntry = PreparedIndexEntry.fromCombined(foundTheir, theirHrPayload);
 
 		// Create "nothing to do" MergeEntry
-		return PreparedMergeIndexEntry.fromExistingTheir(theirEntry);
+		PreparedMergeIndexEntry their = PreparedMergeIndexEntry.fromExistingTheir(theirEntry);
+
+		if (MERGE_LOGGER.isDebugEnabled()) {
+			MERGE_LOGGER.debug(
+					"Auto applied \"their\" on Entry {}, entry key {} (no resolution needed): localPrevious={}/{}, foundTheir={}/{}, preparedTheir={}/{}/{}",
+					foundTheir.getDictionaryEntryUuid(), foundTheir.getKeyValue(),
+					localPrevious != null ? localPrevious.getAction() : "?",
+					localPrevious != null ? localPrevious.getPayload() : " - N/A - ",
+					foundTheir.getAction(), foundTheir.getPayload(),
+					their.getAction(), their.getPayload(), their.getHrPayload());
+		}
+
+		return their;
 	}
 
 	/**
@@ -418,7 +439,7 @@ public class PrepareIndexService {
 			DiffLine foundMine,
 			DiffLine foundTheir) {
 
-		String previousPayload = localPrevious != null ? localPrevious.getPayload() : null;
+		String previousPayload = localPrevious != null && !localPrevious.equals(foundMine) ? localPrevious.getPayload() : null;
 
 		// Complete current entry HR payload for rendering
 		String currentHrPayload = getConverter().convertToHrPayload(mergeEntry.getPayload(), previousPayload);
@@ -442,8 +463,27 @@ public class PrepareIndexService {
 
 			// Case : their was modified after mine => Default resolution became "their"
 			if (foundMine == null || foundMine.getTimestamp() < foundTheir.getTimestamp()) {
-				mergeEntry.applyResolution(foundTheir, theirHrPayload);
+				String combinedHrPayload = localPrevious != null
+						? getConverter().convertToHrPayload(foundTheir.getPayload(), localPrevious.getPayload()) : theirHrPayload;
+				mergeEntry.applyResolution(foundTheir, combinedHrPayload);
+			} 
+
+			// Default resolution is always their : can select individually
+			else {
+				mergeEntry.setHrPayload(getConverter().convertToHrPayload(foundTheir.getPayload(), foundMine.getPayload()));
+				mergeEntry.setPayload(foundTheir.getPayload());
 			}
+		}
+
+		if (MERGE_LOGGER.isDebugEnabled()) {
+			MERGE_LOGGER.debug(
+					"Merge Resolution on Entry {}, entry key {} (resolution needed) : previous={}/{}/{}, mine={}/{}/{}, their={}/{}/{}, mergedResolution={}/{}/{}",
+					mergeEntry.getDictionaryEntryUuid(), mergeEntry.getKeyValue(),
+					localPrevious != null ? localPrevious.getAction() : "?",
+					localPrevious != null ? localPrevious.getPayload() : " - N/A - ", currentHrPayload,
+					mergeEntry.getMine().getAction(), mergeEntry.getMine().getPayload(), mergeEntry.getMine().getHrPayload(),
+					mergeEntry.getTheir().getAction(), mergeEntry.getTheir().getPayload(), mergeEntry.getTheir().getHrPayload(),
+					mergeEntry.getAction(), mergeEntry.getPayload(), mergeEntry.getHrPayload());
 		}
 
 	}

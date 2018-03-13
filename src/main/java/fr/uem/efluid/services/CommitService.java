@@ -122,7 +122,7 @@ public class CommitService extends AbstractApplicationService {
 		if (startingWithCommit != null) {
 			LOGGER.info("Partial commit export asked. Will use ref only for all commits BEFORE {}", startingWithCommit);
 
-			Commit startCommit = this.commits.findOne(startingWithCommit);
+			Commit startCommit = this.commits.getOne(startingWithCommit);
 
 			// Mark previous ones as "ref only"
 			commitsToExport.stream().filter(c -> c.getCreatedTime().isBefore(startCommit.getCreatedTime())).forEach(Commit::setAsRefOnly);
@@ -161,7 +161,7 @@ public class CommitService extends AbstractApplicationService {
 
 		LOGGER.debug("Asking for a chery-pick commit export on commit {}", commitUuid);
 
-		Commit exported = this.commits.findOne(commitUuid);
+		Commit exported = this.commits.getOne(commitUuid);
 
 		// Then export :
 		ExportImportFile file = this.exportImportService.exportPackages(Arrays.asList(
@@ -212,7 +212,10 @@ public class CommitService extends AbstractApplicationService {
 		assertCommitExists(commitUUID);
 
 		// Load details
-		CommitDetails details = CommitDetails.fromEntity(this.commits.findOne(commitUUID));
+		CommitDetails details = CommitDetails.fromEntity(this.commits.getOne(commitUUID));
+
+		// Load commit index
+		CommitDetails.completeIndex(details, this.indexes.findByCommitUuid(commitUUID));
 
 		Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid();
 
@@ -311,11 +314,11 @@ public class CommitService extends AbstractApplicationService {
 		List<LobProperty> newLobs = this.diffs.prepareUsedLobsForIndex(entries, prepared.getDiffLobs());
 
 		// Save index and set back to commit with bi-directional link
-		newCommit.setIndex(this.indexes.save(entries));
+		newCommit.setIndex(this.indexes.saveAll(entries));
 
 		// Add commit to lobs and save
 		newLobs.forEach(l -> l.setCommit(newCommit));
-		this.lobs.save(newLobs);
+		this.lobs.saveAll(newLobs);
 
 		// Updated commit link
 		this.commits.save(newCommit);
@@ -492,7 +495,7 @@ public class CommitService extends AbstractApplicationService {
 	 * @param commitUUID
 	 */
 	private void assertCommitExists(UUID commitUUID) {
-		if (!this.commits.exists(commitUUID)) {
+		if (!this.commits.existsById(commitUUID)) {
 			throw new ApplicationException(COMMIT_EXISTS, "Specified commit " + commitUUID + " doesn't exist");
 		}
 	}

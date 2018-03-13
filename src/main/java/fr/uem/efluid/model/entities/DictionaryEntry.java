@@ -275,7 +275,7 @@ public class DictionaryEntry implements Shared {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((this.uuid == null) ? 0 : this.uuid.hashCode());
+		result = prime * result + ((this.getUuid() == null) ? 0 : this.getUuid().hashCode());
 		return result;
 	}
 
@@ -290,13 +290,13 @@ public class DictionaryEntry implements Shared {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!(obj instanceof DictionaryEntry))
 			return false;
 		DictionaryEntry other = (DictionaryEntry) obj;
-		if (this.uuid == null) {
-			if (other.uuid != null)
+		if (this.getUuid() == null) {
+			if (other.getUuid() != null)
 				return false;
-		} else if (!this.uuid.equals(other.uuid))
+		} else if (!this.getUuid().equals(other.getUuid()))
 			return false;
 		return true;
 	}

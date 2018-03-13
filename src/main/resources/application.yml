@@ -3,13 +3,29 @@
 param-efluid:
 
    managed-datasource:
-       driverClassName: org.postgresql.Driver
-       url: jdbc:postgresql://small-server/demo?searchpath=public
-       username: user
-       password: user
+       #driverClassName: org.postgresql.Driver
+       #url: jdbc:postgresql://small-server/demo?searchpath=public
+       #username: user
+       #password: user
+       #connectionTestQuery: SELECT 1
+       driverClassName: oracle.jdbc.OracleDriver
+       url: jdbc:oracle:thin:@localhost:49161:xe
+       #username: reference
+       #password: reference
+       username: demo
+       password: demo
+       connectionTestQuery: SELECT 1 from DUAL
+       minimumIdle: 5
+       maxPoolSize: 20
+       timeout: 500
+       meta:
+           #filterSchema: public
+           #filterSchema: REFERENCE
+           filterSchema: DEMO
        query: 
            tableNamesProtected: true
            columnNamesProtected: true
+           databaseDateFormat: dd-MM-yyyy HH:mm:ss
    
    managed-updates:
        check-update-missing-ids: true
@@ -25,17 +41,25 @@ spring:
 
    thymeleaf:
        cache: false
-
+       check-template: true
+       check-template-location: true
+       content-type: text/html
+       encoding: UTF-8
+       mode: HTML
+       enabled: true
+   
    datasource:
-       url: jdbc:postgresql://small-server/manager
+       #url: jdbc:postgresql://localhost/reference_manager
+       url: jdbc:postgresql://localhost/client_manager
+       driver-class-name: org.postgresql.Driver
        username: user
        password: user
-       driver-class-name: org.postgresql.Driver
 
    jpa:
-       show-sql: false
+       open-in-view: false
+       show-sql: true
        hibernate:
-           ddl-auto: create
+           ddl-auto: update
 
 ## WEB SERVER CONFIG
 server:

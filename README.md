@@ -103,7 +103,7 @@ Puis création de 2 databases : manager et demo. Création d'un user "user"/"use
 Oracle XE peut être utilisé pour représenter l'application demo. 
 Démarrage avec docker
 
-    docker run --name oracle -d -p 49161:1521 -e ORACLE_ALLOW_REMOTE=true wnameless/oracle-xe-11g
+    docker run --name oracle -d -p 49161:1521 sath89/oracle-12c
 
 Se connecter ensuite à l'instance avec SQL Developer avec les paramètres : 
 * hostname: ...suivant installation...

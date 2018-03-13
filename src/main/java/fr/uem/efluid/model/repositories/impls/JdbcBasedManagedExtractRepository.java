@@ -67,7 +67,12 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 		LOGGER.debug("Extracting values from managed table {} with query \"{}\"", parameterEntry.getTableName(), query);
 
 		// Get columns for all table
-		return this.managedSource.query(query, new InternalExtractor(parameterEntry, this.valueConverter, lobs));
+		Map<String, String> payloads = this.managedSource.query(query, new InternalExtractor(parameterEntry, this.valueConverter, lobs));
+
+		LOGGER.debug("Extracted values from managed table {} with query \"{}\". Found {} results", parameterEntry.getTableName(), query,
+				Integer.valueOf(payloads.size()));
+
+		return payloads;
 	}
 
 	/**
@@ -145,6 +150,11 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 						else if (type == ColumnType.BOOLEAN) {
 							this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getBoolean(i + 1) ? "true" : "false", type,
 									i == last);
+						}
+
+						// Temporal need parsing for DB independency
+						else if (type == ColumnType.TEMPORAL) {
+							this.valueConverter.appendTemporalValue(payload, columnNames[i], rs.getTimestamp(i + 1), i == last);
 						}
 
 						// Else basic string extraction

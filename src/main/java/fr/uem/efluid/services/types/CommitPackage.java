@@ -26,7 +26,7 @@ public class CommitPackage extends ExportImportPackage<Commit> {
 	 */
 	@Override
 	public String getVersion() {
-		return "1";
+		return "2";
 	}
 
 	/**

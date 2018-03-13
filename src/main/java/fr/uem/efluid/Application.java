@@ -33,7 +33,15 @@ public class Application {
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
-
+//
+//	 
+//    @Bean
+//    public SpringTemplateEngine templateEngine(){
+//        SpringTemplateEngine templateEngine = new SpringTemplateEngine();
+//        templateEngine.setTemplateResolver(templateResolver());
+//        templateEngine.addDialect(new LayoutDialect());
+//        return templateEngine;
+//    }
 	/**
 	 * Packages to inspect for ctxt init
 	 */

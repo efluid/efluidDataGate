@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html layout:decorator="layouts/wizzard">
+<html layout:decorate="~{layouts/wizzard.html}">
 <head>
 </head>
 <body>
@@ -70,7 +70,7 @@
 		
     	// Start loading
     	$(document).ready(() => {
-			var fromType = /*[[${preparation and preparation.status.name()=='DIFF_RUNNING'}?'diff_check':'']]*/ 'diff_check';
+			var fromType = /*[[${preparation != null and preparation.status.name()=='DIFF_RUNNING'}?'diff_check':'']]*/ 'diff_check';
 			if(fromType === 'diff_check'){
 				checkProgress();
 			}

@@ -1,10 +1,12 @@
 package fr.uem.efluid.tools;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,10 +54,14 @@ public class ManagedQueriesGenerator {
 
 	private static final String LINK_TAB_ALIAS = "ln";
 
-	private static final String LINK_VAL_ALIAS_START = " as ln_";
+	private static final String LINK_TAB_REFLAP = LINK_TAB_ALIAS.toUpperCase() + "_";
+
+	private static final String LINK_VAL_ALIAS_START = " as " + LINK_TAB_ALIAS + "_";
 
 	private static final String SELECT_CLAUSE_SEP = ", ";
-	
+
+	private static final String SELECT_CLAUSE_SEP_PROTECT = ITEM_PROTECT + SELECT_CLAUSE_SEP + ITEM_PROTECT;
+
 	private static final String SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS = SELECT_CLAUSE_SEP + CURRENT_TAB_ALIAS;
 
 	private static final String SELECT_CLAUSE_SEP_PROTECT_ALIAS = ITEM_PROTECT + SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS + ITEM_PROTECT;
@@ -77,6 +83,7 @@ public class ManagedQueriesGenerator {
 	private final String selectJoinSubQueryModel;
 	private final String updateOrInsertLinkedSubQueryModel;
 	private final String selectLinkValueModel;
+	private final DateTimeFormatter dbDateFormater;
 
 	/**
 	 * Prepare generator regarding the specified rules
@@ -93,6 +100,7 @@ public class ManagedQueriesGenerator {
 		this.selectJoinSubQueryModel = generateSelectJoinSubQueryTemplate(rules);
 		this.updateOrInsertLinkedSubQueryModel = generateUpdateOrInsertLinkedSubQueryTemplate(rules);
 		this.selectLinkValueModel = generateSelectLinkValue(rules);
+		this.dbDateFormater = DateTimeFormatter.ofPattern(rules.getDatabaseDateFormat());
 	}
 
 	/**
@@ -143,7 +151,8 @@ public class ManagedQueriesGenerator {
 
 		if (this.protectColumns) {
 			return Arrays.asList(
-					selectClause.substring(SELECT_CLAUSE_FIRST_COL_PROTECT, selectClause.length() - 1).split(SELECT_CLAUSE_SEP_PROTECT_ALIAS));
+					selectClause.substring(SELECT_CLAUSE_FIRST_COL_PROTECT, selectClause.length() - 1)
+							.split(SELECT_CLAUSE_SEP_PROTECT_ALIAS));
 		}
 
 		return Arrays.asList(selectClause.substring(SELECT_CLAUSE_FIRST_COL_NO_PROTECT).split(SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS));
@@ -202,7 +211,8 @@ public class ManagedQueriesGenerator {
 
 		// No linkeds : default select
 		if (this.protectColumns) {
-			return CURRENT_TAB_ALIAS + ITEM_PROTECT + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT_ALIAS))
+			return CURRENT_TAB_ALIAS + ITEM_PROTECT
+					+ selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT_ALIAS))
 					+ ITEM_PROTECT;
 		}
 
@@ -226,7 +236,7 @@ public class ManagedQueriesGenerator {
 		List<Value> combined = new ArrayList<>();
 		combined.add(new KeyValue(parameterEntry, keyValue));
 		combined.addAll(values);
-		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined),
+		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined, links, allEntries),
 				allValues(combined, referedLobs, links, allEntries));
 	}
 
@@ -289,21 +299,50 @@ public class ManagedQueriesGenerator {
 	 */
 	private String valueAffect(Value value, List<String> lobsKey) {
 		if (this.protectColumns) {
-			return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped(lobsKey);
+			return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped(lobsKey, this.dbDateFormater);
 		}
-		return value.getName() + AFFECT + value.getTyped(lobsKey);
+		return value.getName() + AFFECT + value.getTyped(lobsKey, this.dbDateFormater);
 	}
 
 	/**
 	 * @param values
 	 * @return
 	 */
-	private String allNames(List<Value> values) {
-		Stream<String> names = values.stream().map(Value::getName);
-		if (this.protectColumns) {
-			return ITEM_PROTECT + names.collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT_ALIAS)) + ITEM_PROTECT;
+	private String allNames(List<Value> values,
+			List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+
+		Stream<String> names;
+
+		// Dedicated when mapped links exist
+		if (hasMappedLinks(links, allEntries)) {
+
+			names = values.stream().map(v -> {
+
+				int lnStart = v.getName().indexOf(LINK_TAB_REFLAP);
+
+				if (lnStart >= 0) {
+					String propName = v.getName().substring(lnStart + LINK_TAB_REFLAP.length());
+
+					// Has a link for propName : correct link attribute
+					Optional<TableLink> link = links.stream().filter(l -> l.getColumnFrom().equals(propName)).findFirst();
+					if (link.isPresent()) {
+						return propName;
+					}
+				}
+
+				return v.getName();
+
+			});
+
+		} else {
+			names = values.stream().map(Value::getName);
 		}
-		return names.collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS));
+
+		if (this.protectColumns) {
+			return ITEM_PROTECT + names.collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT)) + ITEM_PROTECT;
+		}
+		return names.collect(Collectors.joining(SELECT_CLAUSE_SEP));
 	}
 
 	/**
@@ -323,10 +362,10 @@ public class ManagedQueriesGenerator {
 
 			return values.stream().map(v -> {
 
-				int lnStart = v.getName().indexOf(LINK_TAB_ALIAS + "_");
+				int lnStart = v.getName().indexOf(LINK_TAB_REFLAP);
 
-				if (lnStart > 0) {
-					String propName = v.getName().substring(lnStart);
+				if (lnStart >= 0) {
+					String propName = v.getName().substring(lnStart + LINK_TAB_REFLAP.length());
 					return propName + AFFECT + linkValueSubSelect(propName, v.getValueAsString(), links, allEntries);
 				}
 
@@ -354,18 +393,19 @@ public class ManagedQueriesGenerator {
 
 			return values.stream().map(v -> {
 
-				int lnStart = v.getName().indexOf(LINK_TAB_ALIAS + "_");
+				int lnStart = v.getName().indexOf(LINK_TAB_REFLAP);
 
-				if (lnStart > 0) {
-					return linkValueSubSelect(v.getName().substring(lnStart), v.getValueAsString(), links, allEntries);
+				if (lnStart >= 0) {
+					return linkValueSubSelect(v.getName().substring(lnStart + LINK_TAB_REFLAP.length()), v.getValueAsString(), links,
+							allEntries);
 				}
 
-				return valueAffect(v, lobKeys);
+				return v.getTyped(lobKeys, this.dbDateFormater);
 
 			}).collect(Collectors.joining(SELECT_CLAUSE_SEP));
 		}
 
-		return values.stream().map(v -> v.getTyped(lobKeys)).collect(Collectors.joining(SELECT_CLAUSE_SEP));
+		return values.stream().map(v -> v.getTyped(lobKeys, this.dbDateFormater)).collect(Collectors.joining(SELECT_CLAUSE_SEP));
 	}
 
 	/**
@@ -464,7 +504,7 @@ public class ManagedQueriesGenerator {
 	 * @return
 	 */
 	private static boolean hasMappedLinks(List<TableLink> links, Map<String, DictionaryEntry> allEntries) {
-		return  links!= null && links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
+		return links != null && links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
 	}
 
 	/**
@@ -654,6 +694,16 @@ public class ManagedQueriesGenerator {
 		 * @return
 		 */
 		boolean isTableNamesProtected();
+
+		/**
+		 * <p>
+		 * The specified date format compliant with managed database for string-based
+		 * injection
+		 * </p>
+		 * 
+		 * @return
+		 */
+		String getDatabaseDateFormat();
 	}
 
 }

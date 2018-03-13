@@ -20,6 +20,6 @@ public interface SimulatedSourceChildRepository extends JpaRepository<SimulatedS
 	 * @param dataset
 	 */
 	default void initFromDataset(Map<String, String> dataset, ManagedValueConverter converter) {
-		save(dataset.entrySet().stream().map(e -> TestUtils.entryToSourceChild(e, converter)).collect(Collectors.toSet()));
+		saveAll(dataset.entrySet().stream().map(e -> TestUtils.entryToSourceChild(e, converter)).collect(Collectors.toSet()));
 	}
 }

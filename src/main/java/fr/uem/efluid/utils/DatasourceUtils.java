@@ -1,7 +1,15 @@
 package fr.uem.efluid.utils;
 
-import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.zaxxer.hikari.HikariDataSource;
 
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
 
@@ -16,17 +24,42 @@ public final class DatasourceUtils {
 
 	public static final java.lang.String DEFAULT_TRANSACTION_MANAGER = "transactionManager";
 
+	private static final String TRANSACTION_ISOLATION = "TRANSACTION_READ_COMMITTED";
+
 	/**
 	 * @return JdbcTemplate for managed database access
 	 */
 	public static JdbcTemplate createJdbcTemplate(CustomDataSourceParameters params) {
-		return new JdbcTemplate(
-				DataSourceBuilder.create()
-						.url(params.getUrl())
-						.driverClassName(params.getDriverClassName())
-						.username(params.getUsername())
-						.password(params.getPassword())
-						.build());
+		return new JdbcTemplate(prepareDatasource(params));
+	}
+
+	@SuppressWarnings("unchecked")
+	private static DataSource prepareDatasource(CustomDataSourceParameters params) {
+
+		try {
+			DriverManager.registerDriver(((Class<Driver>) Class.forName(params.getDriverClassName())).newInstance());
+
+			// Prepare standard HikariDataSource
+			HikariDataSource kc = (HikariDataSource) DataSourceBuilder.create()
+					.url(params.getUrl())
+					.driverClassName(params.getDriverClassName())
+					.username(params.getUsername())
+					.password(params.getPassword())
+					.build();
+
+			// Prepare pool configuration and other params
+			kc.setTransactionIsolation(TRANSACTION_ISOLATION);
+			kc.setAutoCommit(true);
+			kc.setConnectionInitSql(params.getConnectionTestQuery());
+			kc.setConnectionTestQuery(params.getConnectionTestQuery());
+			kc.setConnectionTimeout(1000 * params.getTimeout());
+			kc.setMinimumIdle(params.getMinimumIdle());
+			kc.setMaximumPoolSize(params.getMaxPoolSize());
+
+			return kc;
+		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | SQLException e) {
+			throw new ApplicationException(ErrorType.WRONG_DS_TYPE, "Cannot init Driver " + params.getDriverClassName());
+		}
 	}
 
 	/**
@@ -43,6 +76,10 @@ public final class DatasourceUtils {
 
 		private String driverClassName;
 		private String url;
+		private String connectionTestQuery;
+		private int minimumIdle;
+		private int maxPoolSize;
+		private int timeout;
 		private String username;
 		private String password;
 		private CustomQueryGenerationRules query;
@@ -82,6 +119,66 @@ public final class DatasourceUtils {
 		 */
 		public void setUrl(String url) {
 			this.url = url;
+		}
+
+		/**
+		 * @return the connectionTestQuery
+		 */
+		public String getConnectionTestQuery() {
+			return this.connectionTestQuery;
+		}
+
+		/**
+		 * @param connectionTestQuery
+		 *            the connectionTestQuery to set
+		 */
+		public void setConnectionTestQuery(String connectionTestQuery) {
+			this.connectionTestQuery = connectionTestQuery;
+		}
+
+		/**
+		 * @return the minimumIdle
+		 */
+		public int getMinimumIdle() {
+			return this.minimumIdle;
+		}
+
+		/**
+		 * @param minimumIdle
+		 *            the minimumIdle to set
+		 */
+		public void setMinimumIdle(int minimumIdle) {
+			this.minimumIdle = minimumIdle;
+		}
+
+		/**
+		 * @return the maxPoolSize
+		 */
+		public int getMaxPoolSize() {
+			return this.maxPoolSize;
+		}
+
+		/**
+		 * @param maxPoolSize
+		 *            the maxPoolSize to set
+		 */
+		public void setMaxPoolSize(int maxPoolSize) {
+			this.maxPoolSize = maxPoolSize;
+		}
+
+		/**
+		 * @return the timeout
+		 */
+		public int getTimeout() {
+			return this.timeout;
+		}
+
+		/**
+		 * @param timeout
+		 *            the timeout to set
+		 */
+		public void setTimeout(int timeout) {
+			this.timeout = timeout;
 		}
 
 		/**
@@ -146,6 +243,8 @@ public final class DatasourceUtils {
 
 		private boolean tableNamesProtected;
 
+		private String databaseDateFormat;
+
 		/**
 		 * 
 		 */
@@ -183,6 +282,22 @@ public final class DatasourceUtils {
 		 */
 		public void setTableNamesProtected(boolean tableNamesProtected) {
 			this.tableNamesProtected = tableNamesProtected;
+		}
+
+		/**
+		 * @return the databaseDateFormat
+		 */
+		@Override
+		public String getDatabaseDateFormat() {
+			return this.databaseDateFormat;
+		}
+
+		/**
+		 * @param databaseDateFormat
+		 *            the databaseDateFormat to set
+		 */
+		public void setDatabaseDateFormat(String databaseDateFormat) {
+			this.databaseDateFormat = databaseDateFormat;
 		}
 	}
 }
