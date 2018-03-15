@@ -3,6 +3,7 @@ package fr.uem.efluid.config;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 
@@ -15,6 +16,7 @@ import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
  * @version 1
  */
 @Configuration
+@ConditionalOnProperty(name = "param-efluid.managed-datasource.meta.preload", havingValue = "true")
 @Order(100)
 public class ManagedMetadataPreloader {
 

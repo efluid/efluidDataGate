@@ -43,7 +43,7 @@ public enum ColumnType {
 	// TODO : If CLOB and BLOB cannot be managed the same way, use a dedicated type "TEXT"
 	BINARY('B', "LOB"),
 	ATOMIC('O', "Variable"),
-	STRING('S', "Literal"),
+	STRING('S', "Litteral"),
 	BOOLEAN('1', "Booleen"),
 	TEMPORAL('T', "Temporal"),
 	PK('!', "Identifiant");

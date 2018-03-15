@@ -20,8 +20,10 @@ param-efluid:
        timeout: 500
        meta:
            #filterSchema: public
-           #filterSchema: REFERENCE
-           filterSchema: DEMO
+           filterSchema: REFERENCE
+           #filterSchema: DEMO
+           search-fk-type: oracle-by-name
+           preload: true
        query: 
            tableNamesProtected: true
            columnNamesProtected: true

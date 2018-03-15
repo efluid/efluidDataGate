@@ -11,6 +11,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
@@ -45,6 +46,7 @@ public class IndexEntry implements DiffLine {
 	@ManyToOne(optional = false)
 	private Commit commit;
 
+	@Size(max=4096)
 	private String payload;
 
 	private String keyValue;

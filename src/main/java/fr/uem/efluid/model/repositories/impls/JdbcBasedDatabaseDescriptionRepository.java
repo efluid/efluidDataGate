@@ -1,8 +1,12 @@
 package fr.uem.efluid.model.repositories.impls;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import static fr.uem.efluid.utils.ErrorType.METADATA_FAILED;
+import static fr.uem.efluid.utils.ErrorType.METADATA_WRONG_SCHEMA;
+import static fr.uem.efluid.utils.ErrorType.VALUE_CHECK_FAILED;
 
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -58,14 +62,38 @@ import fr.uem.efluid.utils.ApplicationException;
 @Repository
 public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescriptionRepository {
 
-	private static final String ORACLE_VENDOR = "Oracle";
-
 	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedDatabaseDescriptionRepository.class);
 
-	private static final String[] TABLES_TYPES = { "TABLE", "VIEW" };
+	private static final String ORACLE_VENDOR = "Oracle";
+
+	// Possible values for param-efluid.managed-datasource.meta.search-fk-type
+	private static final String SEARCH_FK_TYPE_STANDARD = "standard";
+	private static final String SEARCH_FK_TYPE_ORACLE_NAME = "oracle-by-name";
+	private static final String SEARCH_FK_TYPE_ORACLE_DETAILS = "oracle-by-details";
+	private static final String SEARCH_FK_TYPE_DISABLED = "disabled";
+
+	private static final String[] TABLES_TYPES = { "TABLE"/* , "VIEW" */ };
+
+	private static final String ORACLE_FK_SEARCH_BY_CONSTRAINT_NAME = "select c.table_name as from_table,"
+			+ " a.column_name as from_col, "
+			+ "c.r_constraint_name as dest_constraint "
+			+ "from all_constraints c"
+			+ " inner join all_cons_columns a on a.constraint_name = c.constraint_name and a.OWNER = c.OWNER "
+			+ "where c.OWNER = ? and c.constraint_type = 'R'";
+
+	private static final String ORACLE_PK_ENDING_FOR_FK_SEARCH = "_PK";
+
+	private static final String ORACLE_FK_SEARCH_BY_CONSTRAINT_DETAILS = "select c.table_name as from_table, a.column_name as from_col, p.table_name as dest_table, p.column_name as dest_col "
+			+ "from all_constraints c "
+			+ "inner join all_cons_columns a on a.constraint_name = c.constraint_name and a.OWNER = c.OWNER "
+			+ "inner join all_cons_columns p on p.constraint_name = c.r_constraint_name and p.OWNER = c.OWNER "
+			+ "where c.OWNER = ? and c.constraint_type = 'R'";
 
 	@Value("${param-efluid.managed-datasource.meta.filterSchema}")
 	private String filterSchema;
+
+	@Value("${param-efluid.managed-datasource.meta.search-fk-type}")
+	private String searchFkType;
 
 	@Autowired
 	private JdbcTemplate managedSource;
@@ -78,8 +106,12 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	public Collection<TableDescription> getTables() throws ApplicationException {
 
 		try {
-			DatabaseMetaData md = this.managedSource.getDataSource().getConnection().getMetaData();
+			LOGGER.info("Begin metadata extraction from managed database on schema \"{}\".", this.filterSchema);
 
+			long start = System.currentTimeMillis();
+			long firstStart = start;
+			DatabaseMetaData md = this.managedSource.getDataSource().getConnection().getMetaData();
+			LOGGER.debug("Metadata access duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
 			/*
 			 * On Oracle, metadata extraction is slower : It is based on a complexe data
 			 * extraction with various SP. So with a "fresh" db, it can be very slow on
@@ -106,13 +138,24 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 			assertSchemaExist(md);
 
 			// 4 metadata queries for completed values
+			start = System.currentTimeMillis();
 			Map<String, TableDescription> tables = loadCompliantTables(md);
-			initTablesColumns(md, tables);
-			completeTablesPrimaryKeys(md, tables);
-			completeTablesForeignKeys(md, tables);
+			LOGGER.debug("Metadata loadCompliantTables duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
 
-			LOGGER.info("Metadata extracted from managed database with schema filtering on schema \"{}\". Found {} tables",
-					this.filterSchema, Integer.valueOf(tables.size()));
+			start = System.currentTimeMillis();
+			initTablesColumns(md, tables);
+			LOGGER.debug("Metadata initTablesColumns duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
+
+			start = System.currentTimeMillis();
+			completeTablesPrimaryKeys(md, tables);
+			LOGGER.debug("Metadata completeTablesPrimaryKeys duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
+
+			start = System.currentTimeMillis();
+			completeTablesForeignKeys(md, tables);
+			LOGGER.debug("Metadata completeTablesForeignKeys duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
+
+			LOGGER.info("Metadata extracted in {}ms from managed database on schema \"{}\". Found {} tables",
+					Long.valueOf(System.currentTimeMillis() - firstStart), this.filterSchema, Integer.valueOf(tables.size()));
 
 			return tables.values();
 		} catch (SQLException e) {
@@ -162,30 +205,6 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	@CacheEvict(cacheNames = { "metadatas", "existingTables" }, allEntries = true)
 	public void refreshAll() {
 		LOGGER.info("Metadata cache droped. Will extract fresh data on next call");
-	}
-
-	/**
-	 * @param md
-	 * @throws SQLException
-	 */
-	private void assertSchemaExist(DatabaseMetaData md) throws SQLException {
-
-		if (this.filterSchema != null && this.filterSchema.length() >= 2) {
-			boolean schemaFound = false;
-			try (ResultSet rs = md.getSchemas()) {
-				while (rs.next()) {
-					if (this.filterSchema.equalsIgnoreCase(rs.getString(1))) {
-						schemaFound = true;
-						break;
-					}
-				}
-			}
-			if (!schemaFound) {
-				throw new ApplicationException(METADATA_WRONG_SCHEMA,
-						"Specified schema " + this.filterSchema + " doesn't exist on current managed database");
-			}
-		}
-
 	}
 
 	/**
@@ -301,6 +320,46 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 
 	/**
 	 * <p>
+	 * Regarding parameter
+	 * <code>param-efluid.managed-datasource.meta.search-fk-type</code>, process one of
+	 * the different available FK search processes
+	 * </p>
+	 * 
+	 * @param md
+	 * @param table
+	 */
+	private void completeTablesForeignKeys(DatabaseMetaData md, Map<String, TableDescription> descs) {
+
+		// Check is a supported param
+		assertFkParameterModelIsCompliantWithDatabaseVendor(md);
+
+		switch (this.searchFkType) {
+		case SEARCH_FK_TYPE_STANDARD:
+			LOGGER.info("FK search is done using standard metadata process. Can be very very slow with Oracle database");
+			completeTablesForeignKeysStandard(md, descs);
+			break;
+		case SEARCH_FK_TYPE_ORACLE_DETAILS:
+			LOGGER.info("FK search is done \"by details\" on oracle database with custom process. "
+					+ "If still too slow, and if PK names are normalised, try with parameter"
+					+ " param-efluid.managed-datasource.meta.search-fk-type ={}", SEARCH_FK_TYPE_ORACLE_NAME);
+			completeTablesForeignKeysOracleByConstraintDetails(md, descs);
+			break;
+		case SEARCH_FK_TYPE_ORACLE_NAME:
+			LOGGER.info("FK search is done \"by name\" on oracle database with custom process. If the "
+					+ "PK names are not normalized (NAME_PK), some FK can be missed");
+			completeTablesForeignKeysOracleByConstraintName(md, descs);
+			break;
+		default:
+			LOGGER.info("FK search value is disabled (parameter "
+					+ "param-efluid.managed-datasource.meta.search-fk-type specified as {}). No FK search in metadata",
+					SEARCH_FK_TYPE_DISABLED);
+			break;
+		}
+
+	}
+
+	/**
+	 * <p>
 	 * <b>Heavy-load</b> : Use a dedicated query for each tables to gather table FK. JDBC
 	 * metadata acces spec :
 	 * 
@@ -326,22 +385,115 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 	 * @param md
 	 * @param table
 	 */
-	private void completeTablesForeignKeys(DatabaseMetaData md, Map<String, TableDescription> descs) {
+	private void completeTablesForeignKeysStandard(DatabaseMetaData md, Map<String, TableDescription> descs) {
+
 		try {
+
+			try (ResultSet rs = md.getCatalogs()) {
+				while (rs.next()) {
+					LOGGER.debug("Catalog : {}", rs.getString(1));
+
+				}
+			}
+
 			// Get fk for each tables ...
 			for (TableDescription desc : descs.values()) {
+
 				try (ResultSet rs = md.getImportedKeys(null, this.filterSchema, desc.getName());) {
 					while (rs.next()) {
-						String columnName = rs.getString(8);
-						String destTable = rs.getString(3);
-						String destColumn = rs.getString(4);
-						desc.getColumns().stream()
-								.filter(c -> c.getName().equals(columnName))
-								.findFirst()
-								.ifPresent(c -> {
-									c.setForeignKeyTable(destTable);
-									c.setForeignKeyColumn(destColumn);
-								});
+						setForeignKey(desc, rs.getString(8), rs.getString(3), rs.getString(4));
+					}
+				}
+			}
+		} catch (SQLException e) {
+			throw new ApplicationException(METADATA_FAILED, "Cannot extract metadata", e);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Seach for FK on Oracle DB using a custom query, using all_constraints and
+	 * all_cons_columns views. Should find any FK, but slower thant the "by name" process
+	 * </p>
+	 * 
+	 * @param md
+	 * @param descs
+	 */
+	private void completeTablesForeignKeysOracleByConstraintDetails(DatabaseMetaData md, Map<String, TableDescription> descs) {
+
+		// Use own connection with local closure
+		try (Connection con = this.managedSource.getDataSource().getConnection();
+				PreparedStatement stat = con.prepareStatement(ORACLE_FK_SEARCH_BY_CONSTRAINT_DETAILS);) {
+
+			// Filtering by schema is mandatory
+			stat.setString(1, this.filterSchema);
+
+			try (ResultSet rs = stat.executeQuery()) {
+				while (rs.next()) {
+
+					// 1 : from_table
+					// 2 : from_col
+					// 3 : dest_table
+					// 4 : dest_col
+
+					TableDescription desc = descs.get(rs.getString(1));
+
+					if (desc != null) {
+						setForeignKey(desc, rs.getString(2), rs.getString(3), rs.getString(4));
+					}
+				}
+			}
+		} catch (SQLException e) {
+			throw new ApplicationException(METADATA_FAILED, "Cannot extract metadata", e);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Seach for FK on Oracle DB using a custom query, using all_constraints and
+	 * all_cons_columns views and processing normalized PK names. Should be the fastest
+	 * process, but can miss some FK if the PK names are not normalized. If it is the
+	 * case, try the "by details" process
+	 * </p>
+	 * 
+	 * @param md
+	 * @param descs
+	 */
+	private void completeTablesForeignKeysOracleByConstraintName(DatabaseMetaData md, Map<String, TableDescription> descs) {
+
+		// Use own connection with local closure
+		try (Connection con = this.managedSource.getDataSource().getConnection();
+				PreparedStatement stat = con.prepareStatement(ORACLE_FK_SEARCH_BY_CONSTRAINT_NAME);) {
+
+			// Filtering by schema is mandatory
+			stat.setString(1, this.filterSchema);
+
+			try (ResultSet rs = stat.executeQuery()) {
+				while (rs.next()) {
+
+					// 1 : from_table
+					// 2 : from_col
+					// 3 : dest_constraint (PK of dest table)
+
+					TableDescription desc = descs.get(rs.getString(1));
+
+					if (desc != null) {
+						String columnName = rs.getString(2);
+						String destConstraint = rs.getString(3);
+
+						// Use the PK name = 1st part is dest table name.
+						String destTable = destConstraint.substring(0, destConstraint.length() - ORACLE_PK_ENDING_FOR_FK_SEARCH.length());
+
+						TableDescription destDesc = descs.get(destTable);
+
+						if (destDesc != null) {
+
+							// Search for the PK on the dest table
+							destDesc.getColumns().stream()
+									.filter(c -> c.getType() == ColumnType.PK)
+									.findFirst() // Then apply FK if found
+									.ifPresent(c -> setForeignKey(desc, columnName, destTable, c.getName()));
+						}
 					}
 				}
 			}
@@ -384,11 +536,84 @@ public class JdbcBasedDatabaseDescriptionRepository implements DatabaseDescripti
 				TableDescription desc = new TableDescription();
 				String tblName = rs.getString(3);
 				desc.setName(tblName);
-				desc.setView("VIEW".equals(rs.getString(4)));
+				desc.setView(false); // "VIEW".equals(rs.getString(4)));
 				tables.put(tblName, desc);
 			}
 		}
 		return tables;
+	}
+
+	/**
+	 * @param md
+	 * @throws SQLException
+	 */
+	private void assertSchemaExist(DatabaseMetaData md) throws SQLException {
+
+		if (this.filterSchema != null && this.filterSchema.length() >= 2) {
+			boolean schemaFound = false;
+			try (ResultSet rs = md.getSchemas()) {
+				while (rs.next()) {
+					if (this.filterSchema.equalsIgnoreCase(rs.getString(1))) {
+						schemaFound = true;
+						break;
+					}
+				}
+			}
+			if (!schemaFound) {
+				throw new ApplicationException(METADATA_WRONG_SCHEMA,
+						"Specified schema " + this.filterSchema + " doesn't exist on current managed database");
+			}
+		}
+
+	}
+
+	/**
+	 * @param md
+	 */
+	private void assertFkParameterModelIsCompliantWithDatabaseVendor(DatabaseMetaData md) {
+
+		try {
+			switch (this.searchFkType) {
+			case SEARCH_FK_TYPE_ORACLE_DETAILS:
+			case SEARCH_FK_TYPE_ORACLE_NAME:
+				if (!md.getDatabaseProductName().equalsIgnoreCase(ORACLE_VENDOR)) {
+					throw new ApplicationException(METADATA_FAILED,
+							"Parameter param-efluid.managed-datasource.meta.search-fk-type can use value \""
+									+ SEARCH_FK_TYPE_ORACLE_DETAILS + "\" or \"" + SEARCH_FK_TYPE_ORACLE_NAME
+									+ "\" only if the current database is Oracle");
+				}
+				break;
+
+			default:
+				// Other are permited
+				break;
+			}
+		} catch (SQLException e) {
+			throw new ApplicationException(METADATA_FAILED, "Cannot extract metadata", e);
+		}
+	}
+
+	/**
+	 * @param desc
+	 * @param columnName
+	 * @param destTable
+	 * @param destColumn
+	 */
+	private static void setForeignKey(
+			TableDescription desc,
+			String columnName,
+			String destTable,
+			String destColumn) {
+
+		LOGGER.debug("Apply FK to table {} : column {} refers column {} of table {}", desc.getName(), columnName, destColumn, destTable);
+
+		desc.getColumns().stream()
+				.filter(c -> c.getName().equals(columnName))
+				.findFirst()
+				.ifPresent(c -> {
+					c.setForeignKeyTable(destTable);
+					c.setForeignKeyColumn(destColumn);
+				});
 	}
 
 }

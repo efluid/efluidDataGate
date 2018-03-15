@@ -10,6 +10,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.model.metas.ColumnType;
@@ -44,6 +45,7 @@ public class DictionaryEntry implements Shared {
 
 	private String whereClause;
 
+	@Size(max = 4096)
 	private String selectClause;
 
 	@NotNull
