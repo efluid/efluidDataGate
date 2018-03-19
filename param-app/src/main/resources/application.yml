@@ -1,0 +1,60 @@
+---
+## PARAMETER MANAGER CONFIG
+param-efluid:
+
+   managed-datasource:
+       driverClassName: oracle.jdbc.OracleDriver
+       url: jdbc:oracle:thin:@small-server:49161:xe
+       username: demo
+       password: demo
+       connectionTestQuery: SELECT 1 from DUAL
+       minimumIdle: 5
+       maxPoolSize: 20
+       timeout: 500
+       meta:
+           filterSchema: DEMO
+           search-fk-type: oracle-by-name
+           preload: true
+       query: 
+           tableNamesProtected: true
+           columnNamesProtected: true
+           databaseDateFormat: dd-MM-yyyy HH:mm:ss
+   
+   managed-updates:
+       check-update-missing-ids: true
+       check-delete-missing-ids: true
+           
+   details:
+       version: 1.1.1
+
+## TECH FEATURES CUSTOM
+spring:
+   profiles:
+       active: prod
+
+   thymeleaf:
+       cache: false
+       check-template: true
+       check-template-location: true
+       content-type: text/html
+       encoding: UTF-8
+       mode: HTML
+       enabled: true
+   
+   datasource:
+       #url: jdbc:postgresql://localhost/reference_manager
+       url: jdbc:postgresql://small-server/manager
+       driver-class-name: org.postgresql.Driver
+       username: user
+       password: user
+
+   jpa:
+       open-in-view: false
+       show-sql: true
+       hibernate:
+           ddl-auto: create
+
+## WEB SERVER CONFIG
+server:
+   contextPath:
+   port: 8080
