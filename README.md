@@ -4,40 +4,16 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 28/02/2018*
+*Mise à jour au 19/02/2018*
 
-**Maquette statique**
-* Dernière version : 03/02/2018. Attention, des modifications sur les écrans de gestion du diff / merge n'ont pas été reportées sur la maquette
+**Nouvelle organisation des projets**
+* Projet réorganisé pour distinguer l'application elle même de l'API de définition du dictionnaire depuis du code java
+* Ajout d'un sous projet générateur
+* Ajout d'un sous projet API
 
-**Points techniques**
-* Mise en place général : projet actif, stacks en place. BDD Postgres core fonctionnelle
-* Modèle core : en place, avec repos
-* Utilisation BDD managed : Avec JDBCTemplate. Metadata OK avec PGSQL, a tester sur Oracle
-* Preparation au diff : "regénération" des données préues à partir de l'index en place, testé.
-* Merge : développé, en cours de test
-* Application / rollback de paramètres : en place, Application testé semble OK.
-* Export / import : dev en place, traitement OK
-* Traitement des dépendances : En place, testé OK (mais à revoir)
-* Un benchmark synthétique des fonctions principale en place. Sera amélioré plus tard
-* Les composants de génération "fine" de requêtes SQL ou d'inline de données sont désormais des beans springs extensibles
-* Init de données de démo actif. La BDD et des données de tests sont créées automatiquement au démarrage
-* Build : maven OK. En attendant d'avoir un vrai service CI acceptant le projet, utilisation d'un build scripté (pipeline *struff*)
-* Sécurité : pas traité
+**Doc à mettre à jour**
 
-**Intégration maquette**
-* Mise en place d'un layout pour simpifier les templates Thymeleaf
-* index ("/") : en place
-* édition des domaines fonctionnels ("/domains"): en place
-* édition du dictionnaire ("/dictionary"): en place
-* préparation du diff ("/prepare"): en place
-* listing des commits ("/commits"): en place, y compris détail
-* export du dictionnaire ("/share"): en place
-* export / import de commits : en place
-* merge a l'import : en place
-* sécurité : non démarré
-* Wizzard de configuration : en place
-
-## Utilisation
+## Utilisation de l'application
 
 Le prototype est basé sur Spring-boot. Il n'y a rien à installer pour l'exécuter _par défaut_ :
 * Il démarre dans un mode "demo" par défaut
