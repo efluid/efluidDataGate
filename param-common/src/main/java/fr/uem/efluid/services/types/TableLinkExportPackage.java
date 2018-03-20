@@ -11,6 +11,9 @@ import fr.uem.efluid.model.shared.ExportAwareTableLink;
  */
 public abstract class TableLinkExportPackage<D extends ExportAwareTableLink<?>> extends SharedPackage<D> {
 
+	public static final String LINKS_EXPORT = "full-links";
+	public static final String PARTIAL_LINKS_EXPORT = "partial-links";
+
 	/**
 	 * @param name
 	 * @param exportDate

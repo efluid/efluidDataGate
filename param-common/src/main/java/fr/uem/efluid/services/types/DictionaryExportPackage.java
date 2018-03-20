@@ -13,6 +13,9 @@ import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
 public abstract class DictionaryExportPackage<D extends ExportAwareDictionaryEntry<? extends ExportAwareFunctionalDomain>>
 		extends SharedPackage<D> {
 
+	public static final String DICT_EXPORT = "full-dictionary";
+	public static final String PARTIAL_DICT_EXPORT = "partial-dictionary";
+
 	/**
 	 * @param name
 	 * @param exportDate

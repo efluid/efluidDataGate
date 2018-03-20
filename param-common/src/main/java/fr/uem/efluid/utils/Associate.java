@@ -39,6 +39,27 @@ public class Associate<K, V> {
 	}
 
 	/**
+	 * @return
+	 */
+	public boolean hasOne() {
+		return this.one != null;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean hasTwo() {
+		return this.two != null;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean hasBoth() {
+		return hasOne() && hasTwo();
+	}
+
+	/**
 	 * @param one
 	 * @param two
 	 * @return

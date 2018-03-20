@@ -33,16 +33,20 @@ import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
+import fr.uem.efluid.services.types.DictionaryExportPackage;
 import fr.uem.efluid.services.types.DictionaryPackage;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 import fr.uem.efluid.services.types.FunctionalDomainPackage;
+import fr.uem.efluid.services.types.FunctionalExportDomainPackage;
 import fr.uem.efluid.services.types.SelectableTable;
 import fr.uem.efluid.services.types.SharedPackage;
+import fr.uem.efluid.services.types.TableLinkExportPackage;
 import fr.uem.efluid.services.types.TableLinkPackage;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.SelectClauseGenerator;
 
 /**
  * @author elecomte
@@ -52,14 +56,6 @@ import fr.uem.efluid.utils.ApplicationException;
 @Service
 @Transactional
 public class DictionaryManagementService extends AbstractApplicationService {
-
-	private static final String DICT_EXPORT = "full-dictionary";
-	private static final String DOMAINS_EXPORT = "full-domains";
-	private static final String LINKS_EXPORT = "full-links";
-
-	private static final String PARTIAL_DICT_EXPORT = "partial-dictionary";
-	private static final String PARTIAL_DOMAINS_EXPORT = "partial-domains";
-	private static final String PARTIAL_LINKS_EXPORT = "partial-links";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryManagementService.class);
 
@@ -257,7 +253,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Prepare minimal values
 		edit.setTable(tableName);
 		edit.setName(tableName);
-		edit.setWhere(ManagedQueriesGenerator.DEFAULT_WHERE_CLAUSE);
+		edit.setWhere(SelectClauseGenerator.DEFAULT_WHERE_CLAUSE);
 
 		// Add metadata to use for edit
 		edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
@@ -366,11 +362,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		FunctionalDomain domain = this.domains.getOne(domainUUID);
 
 		// Packages on limited data sets
-		DictionaryPackage dict = new DictionaryPackage(PARTIAL_DICT_EXPORT, LocalDateTime.now())
+		DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.PARTIAL_DICT_EXPORT, LocalDateTime.now())
 				.initWithContent(this.dictionary.findByDomain(domain));
-		FunctionalDomainPackage doms = new FunctionalDomainPackage(PARTIAL_DOMAINS_EXPORT, LocalDateTime.now())
-				.initWithContent(Collections.singletonList(domain));
-		TableLinkPackage tl = new TableLinkPackage(PARTIAL_LINKS_EXPORT, LocalDateTime.now())
+		FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalExportDomainPackage.PARTIAL_DOMAINS_EXPORT,
+				LocalDateTime.now()).initWithContent(Collections.singletonList(domain));
+		TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.links.findByDictionaryEntryDomain(domain));
 
 		// Easy : just take all
@@ -378,9 +374,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
-		result.addCount(PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
-		result.addCount(PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
-		result.addCount(PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
+		result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
+		result.addCount(FunctionalExportDomainPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
+		result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
 
 		return result;
 	}
@@ -392,19 +388,21 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		LOGGER.info("Process export of complete dictionary related entities");
 
-		DictionaryPackage dict = new DictionaryPackage(DICT_EXPORT, LocalDateTime.now()).initWithContent(this.dictionary.findAll());
-		FunctionalDomainPackage doms = new FunctionalDomainPackage(DOMAINS_EXPORT, LocalDateTime.now())
+		DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.DICT_EXPORT, LocalDateTime.now())
+				.initWithContent(this.dictionary.findAll());
+		FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalExportDomainPackage.DOMAINS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.domains.findAll());
-		TableLinkPackage tl = new TableLinkPackage(LINKS_EXPORT, LocalDateTime.now()).initWithContent(this.links.findAll());
+		TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.links.findAll());
 
 		// Easy : just take all
 		ExportFile file = this.ioService.exportPackages(Arrays.asList(dict, doms, tl));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
-		result.addCount(DICT_EXPORT, dict.getContentSize(), 0, 0);
-		result.addCount(DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
-		result.addCount(LINKS_EXPORT, tl.getContentSize(), 0, 0);
+		result.addCount(DictionaryExportPackage.DICT_EXPORT, dict.getContentSize(), 0, 0);
+		result.addCount(FunctionalExportDomainPackage.DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
+		result.addCount(TableLinkExportPackage.LINKS_EXPORT, tl.getContentSize(), 0, 0);
 
 		return result;
 	}
@@ -451,15 +449,16 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Details on imported counts (add vs updated items)
 		if (importedDicts.size() > 0) {
-			result.addCount(DICT_EXPORT, newDictCount.get(), importedDicts.size() - newDictCount.get(), 0);
+			result.addCount(DictionaryExportPackage.DICT_EXPORT, newDictCount.get(), importedDicts.size() - newDictCount.get(), 0);
 		}
 
 		if (importedDomains.size() > 0) {
-			result.addCount(DOMAINS_EXPORT, newDomainsCount.get(), importedDomains.size() - newDomainsCount.get(), 0);
+			result.addCount(FunctionalExportDomainPackage.DOMAINS_EXPORT, newDomainsCount.get(),
+					importedDomains.size() - newDomainsCount.get(), 0);
 		}
 
 		if (importedLinks.size() > 0) {
-			result.addCount(LINKS_EXPORT, newLinksCount.get(), importedLinks.size() - newLinksCount.get(), 0);
+			result.addCount(TableLinkExportPackage.LINKS_EXPORT, newLinksCount.get(), importedLinks.size() - newLinksCount.get(), 0);
 		}
 
 		return result;

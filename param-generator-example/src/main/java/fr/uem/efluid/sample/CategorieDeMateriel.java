@@ -1,6 +1,8 @@
 package fr.uem.efluid.sample;
 
+import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
+import fr.uem.efluid.ParameterValue;
 
 /**
  * @author elecomte
@@ -13,8 +15,10 @@ public class CategorieDeMateriel {
 
 	private Long id;
 
+	@ParameterValue("NAME")
 	private String name;
 
+	@ParameterKey("CODE")
 	private String code;
 
 	/**

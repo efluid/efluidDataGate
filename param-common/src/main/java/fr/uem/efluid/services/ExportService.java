@@ -60,7 +60,7 @@ public class ExportService {
 	 * @param packages
 	 * @return
 	 */
-	ExportFile exportPackages(List<SharedPackage<?>> packages) {
+	public ExportFile exportPackages(List<SharedPackage<?>> packages) {
 
 		try {
 

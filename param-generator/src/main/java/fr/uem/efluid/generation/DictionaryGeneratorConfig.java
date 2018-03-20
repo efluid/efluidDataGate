@@ -7,11 +7,17 @@ package fr.uem.efluid.generation;
  */
 public interface DictionaryGeneratorConfig {
 
+	String AUTO_GEN_DEST_FILE_DESG = "auto";
+	
 	String getSourcePackage();
 
 	String getDestinationFolder();
 
+	boolean isProtectColumn();
+
 	LogFacade getLogger();
+	
+	String getDestinationFileDesignation();
 
 	/**
 	 * <p>

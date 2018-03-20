@@ -11,6 +11,9 @@ import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
  */
 public abstract class FunctionalExportDomainPackage<D extends ExportAwareFunctionalDomain> extends SharedPackage<D> {
 
+	public static final String DOMAINS_EXPORT = "full-domains";
+	public static final String PARTIAL_DOMAINS_EXPORT = "partial-domains";
+
 	/**
 	 * @param name
 	 * @param exportDate

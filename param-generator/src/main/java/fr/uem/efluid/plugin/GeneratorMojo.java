@@ -37,6 +37,12 @@ public class GeneratorMojo extends AbstractMojo implements DictionaryGeneratorCo
 	@Parameter
 	private String destinationFolder;
 
+	@Parameter(defaultValue = "true", required = false, readonly = true)
+	private boolean protectColumn;
+
+	@Parameter(defaultValue = DictionaryGeneratorConfig.AUTO_GEN_DEST_FILE_DESG, required = false, readonly = true)
+	private String destinationFileDesignation;
+
 	/**
 	 * @throws MojoExecutionException
 	 * @throws MojoFailureException
@@ -149,6 +155,38 @@ public class GeneratorMojo extends AbstractMojo implements DictionaryGeneratorCo
 	 */
 	public void setDestinationFolder(String destinationFolder) {
 		this.destinationFolder = destinationFolder;
+	}
+
+	/**
+	 * @return the protectColumn
+	 */
+	@Override
+	public boolean isProtectColumn() {
+		return this.protectColumn;
+	}
+
+	/**
+	 * @param protectColumn
+	 *            the protectColumn to set
+	 */
+	public void setProtectColumn(boolean protectColumn) {
+		this.protectColumn = protectColumn;
+	}
+
+	/**
+	 * @return the destinationFileDesignation
+	 */
+	@Override
+	public String getDestinationFileDesignation() {
+		return this.destinationFileDesignation;
+	}
+
+	/**
+	 * @param destinationFileDesignation
+	 *            the destinationFileDesignation to set
+	 */
+	public void setDestinationFileDesignation(String destinationFileDesignation) {
+		this.destinationFileDesignation = destinationFileDesignation;
 	}
 
 	/**
