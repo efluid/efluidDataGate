@@ -3,14 +3,21 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>param-generator</artifactId>
-	<packaging>jar</packaging>
-
+	<prerequisites>
+		<maven>3.0.4</maven>
+	</prerequisites>
+	
 	<parent>
 		<groupId>fr.uem.efluid</groupId>
 		<artifactId>param-parent</artifactId>
 		<version>0.1.1-SNAPSHOT</version>
 	</parent>
+
+	<artifactId>param-generator</artifactId>
+	<packaging>maven-plugin</packaging>
+
+	<name>Dictionary generator</name>
+	<description><![CDATA[A generator from Java API]]></description>
 
 	<build>
 		<plugins>

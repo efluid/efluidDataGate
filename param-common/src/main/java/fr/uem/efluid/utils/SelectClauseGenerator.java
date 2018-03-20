@@ -2,6 +2,7 @@ package fr.uem.efluid.utils;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -182,7 +183,7 @@ public class SelectClauseGenerator {
 
 		AtomicInteger pos = new AtomicInteger(0);
 
-		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).collect(Collectors.toMap(
+		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).collect(Collectors.toMap(
 				ExportAwareTableLink::getColumnFrom,
 				l -> {
 					ExportAwareDictionaryEntry<?> dic = allEntries.get(l.getTableTo());
@@ -201,5 +202,9 @@ public class SelectClauseGenerator {
 	private static final String generateSelectLinkValue(boolean columnNamesProtected) {
 		return new StringBuilder(LINK_TAB_ALIAS + "%s.").append(columnNamesProtected ? "\"%s\"" : "%s")
 				.append(LINK_VAL_ALIAS_START + "%s ").toString();
+	}
+	
+	protected static <T extends ExportAwareTableLink<?>> Comparator<T> linkOrder(){
+		return Comparator.comparing(ExportAwareTableLink::getTableTo);
 	}
 }

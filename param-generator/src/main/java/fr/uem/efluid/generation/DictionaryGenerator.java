@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,15 +36,18 @@ import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterLink;
 import fr.uem.efluid.ParameterTable;
 import fr.uem.efluid.ParameterValue;
+import fr.uem.efluid.clients.DictionaryApiClient;
 import fr.uem.efluid.generation.DictionaryGeneratorConfig.LogFacade;
+import fr.uem.efluid.model.GeneratedDictionaryPackage;
+import fr.uem.efluid.model.GeneratedFunctionalDomainPackage;
+import fr.uem.efluid.model.GeneratedTableLinkPackage;
 import fr.uem.efluid.model.ParameterDomainDefinition;
 import fr.uem.efluid.model.ParameterLinkDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
+import fr.uem.efluid.rest.v1.DictionaryApi;
+import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
 import fr.uem.efluid.services.ExportService;
-import fr.uem.efluid.services.types.DictionaryExportPackage;
 import fr.uem.efluid.services.types.ExportFile;
-import fr.uem.efluid.services.types.FunctionalExportDomainPackage;
-import fr.uem.efluid.services.types.TableLinkExportPackage;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.SelectClauseGenerator;
 
@@ -183,6 +185,7 @@ public class DictionaryGenerator {
 			ParameterTable paramTable = tableType.getAnnotation(ParameterTable.class);
 
 			ParameterTableDefinition def = new ParameterTableDefinition();
+			def.setCreatedTime(LocalDateTime.now());
 			def.setDomain(new ParameterDomainDefinition()); // Will be merged later
 
 			// Found domain name
@@ -261,6 +264,7 @@ public class DictionaryGenerator {
 					.filter(a -> a.getTwo().hasBoth())
 					.map(a -> {
 						ParameterLinkDefinition link = new ParameterLinkDefinition();
+						link.setCreatedTime(LocalDateTime.now());
 						link.setDictionaryEntry(def);
 						link.setColumnFrom(a.getOne().value());
 						link.setColumnTo(a.getTwo().getOne().toColumn());
@@ -329,6 +333,7 @@ public class DictionaryGenerator {
 		// Get all domain values
 		Map<String, ParameterDomainDefinition> domains = defs.values().stream().map(d -> d.getDomain().getName()).distinct().map(n -> {
 			ParameterDomainDefinition def = new ParameterDomainDefinition();
+			def.setCreatedTime(LocalDateTime.now());
 			def.setName(n);
 			def.setUuid(generateFixedUUID(n, ParameterDomainDefinition.class));
 			getLog().debug("Identified distinct domain \"" + n + "\" with generated UUID " + def.getUuid());
@@ -362,7 +367,17 @@ public class DictionaryGenerator {
 				new GeneratedFunctionalDomainPackage(allDomains),
 				new GeneratedTableLinkPackage(allLinks)));
 
-		writeExportFile(file, file.getFilename());
+		String filename = DictionaryGeneratorConfig.AUTO_GEN_DEST_FILE_DESG.equals(this.config.getDestinationFileDesignation())
+				? file.getFilename()
+				: this.config.getDestinationFileDesignation() + ".par";
+
+		// Write dictionary .par locally
+		writeExportFile(file, filename);
+
+		// Upload to remote server if asked for
+		if (this.config.isUploadToServer()) {
+			uploadExportFile(file);
+		}
 	}
 
 	/**
@@ -376,6 +391,21 @@ public class DictionaryGenerator {
 		Files.write(path, file.getData());
 
 		getLog().info("Dictionary export done in file " + path.toString());
+	}
+
+	/**
+	 * @param file
+	 * @throws Exception
+	 */
+	private void uploadExportFile(ExportFile file) throws Exception {
+
+		getLog().debug("Will upload the generated dictionary .par to " + this.config.getUploadEntryPointUri());
+
+		DictionaryApi client = new DictionaryApiClient(this.config.getUploadEntryPointUri());
+
+		CreatedDictionaryView view = client.uploadDictionaryPackage(file.toMultipartFile());
+
+		getLog().info("Generated dictionary uploaded to " + this.config.getUploadEntryPointUri() + ". Get result : " + view);
 	}
 
 	/**
@@ -441,89 +471,5 @@ public class DictionaryGenerator {
 				.toString();
 
 		return UUID.fromString(uuid);
-	}
-
-	/**
-	 * @author elecomte
-	 * @since v0.0.1
-	 * @version 1
-	 */
-	private static final class GeneratedDictionaryPackage extends DictionaryExportPackage<ParameterTableDefinition> {
-
-		/**
-		 * @param name
-		 * @param exportDate
-		 */
-		public GeneratedDictionaryPackage(Collection<ParameterTableDefinition> allTables) {
-			super(DictionaryExportPackage.DICT_EXPORT, LocalDateTime.now());
-			initWithContent(allTables.stream().sorted(Comparator.comparing(ParameterTableDefinition::getParameterName))
-					.collect(Collectors.toList()));
-		}
-
-		/**
-		 * @return
-		 * @see fr.uem.efluid.services.types.SharedPackage#initContent()
-		 */
-		@Override
-		protected ParameterTableDefinition initContent() {
-			return new ParameterTableDefinition();
-		}
-
-	}
-
-	/**
-	 * @author elecomte
-	 * @since v0.0.1
-	 * @version 1
-	 */
-	private static final class GeneratedFunctionalDomainPackage extends FunctionalExportDomainPackage<ParameterDomainDefinition> {
-
-		/**
-		 * @param name
-		 * @param exportDate
-		 */
-		public GeneratedFunctionalDomainPackage(Collection<ParameterDomainDefinition> allDomains) {
-			super(FunctionalExportDomainPackage.DOMAINS_EXPORT, LocalDateTime.now());
-			initWithContent(allDomains.stream().sorted(Comparator.comparing(ParameterDomainDefinition::getName))
-					.collect(Collectors.toList()));
-		}
-
-		/**
-		 * @return
-		 * @see fr.uem.efluid.services.types.SharedPackage#initContent()
-		 */
-		@Override
-		protected ParameterDomainDefinition initContent() {
-			return new ParameterDomainDefinition();
-		}
-
-	}
-
-	/**
-	 * @author elecomte
-	 * @since v0.0.1
-	 * @version 1
-	 */
-	private static final class GeneratedTableLinkPackage extends TableLinkExportPackage<ParameterLinkDefinition> {
-
-		/**
-		 * @param name
-		 * @param exportDate
-		 */
-		public GeneratedTableLinkPackage(Collection<ParameterLinkDefinition> allLinks) {
-			super(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now());
-			initWithContent(allLinks.stream().sorted(Comparator.comparing(ParameterLinkDefinition::getTableTo))
-					.collect(Collectors.toList()));
-		}
-
-		/**
-		 * @return
-		 * @see fr.uem.efluid.services.types.SharedPackage#initContent()
-		 */
-		@Override
-		protected ParameterLinkDefinition initContent() {
-			return new ParameterLinkDefinition();
-		}
-
 	}
 }

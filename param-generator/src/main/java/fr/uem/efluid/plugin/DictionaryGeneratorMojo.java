@@ -26,15 +26,15 @@ import fr.uem.efluid.generation.DictionaryGeneratorConfig;
  */
 @Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES,
 		requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class GeneratorMojo extends AbstractMojo implements DictionaryGeneratorConfig {
+public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryGeneratorConfig {
 
 	@Parameter(defaultValue = "${project}", required = true, readonly = true)
 	private MavenProject project;
 
-	@Parameter
+	@Parameter(required = true, readonly = true)
 	private String sourcePackage;
 
-	@Parameter
+	@Parameter(defaultValue = "${project.basedir}/target", required = true, readonly = true)
 	private String destinationFolder;
 
 	@Parameter(defaultValue = "true", required = false, readonly = true)
@@ -42,6 +42,12 @@ public class GeneratorMojo extends AbstractMojo implements DictionaryGeneratorCo
 
 	@Parameter(defaultValue = DictionaryGeneratorConfig.AUTO_GEN_DEST_FILE_DESG, required = false, readonly = true)
 	private String destinationFileDesignation;
+
+	@Parameter(defaultValue = "false", required = false, readonly = true)
+	private boolean uploadToServer;
+
+	@Parameter(required = false, readonly = true)
+	private String uploadEntryPointUri;
 
 	/**
 	 * @throws MojoExecutionException
@@ -118,27 +124,11 @@ public class GeneratorMojo extends AbstractMojo implements DictionaryGeneratorCo
 	}
 
 	/**
-	 * @param project
-	 *            the project to set
-	 */
-	public void setProject(MavenProject project) {
-		this.project = project;
-	}
-
-	/**
 	 * @return the sourcePackage
 	 */
 	@Override
 	public String getSourcePackage() {
 		return this.sourcePackage;
-	}
-
-	/**
-	 * @param sourcePackage
-	 *            the sourcePackage to set
-	 */
-	public void setSourcePackage(String sourcePackage) {
-		this.sourcePackage = sourcePackage;
 	}
 
 	/**
@@ -150,27 +140,11 @@ public class GeneratorMojo extends AbstractMojo implements DictionaryGeneratorCo
 	}
 
 	/**
-	 * @param destinationFolder
-	 *            the destinationFolder to set
-	 */
-	public void setDestinationFolder(String destinationFolder) {
-		this.destinationFolder = destinationFolder;
-	}
-
-	/**
 	 * @return the protectColumn
 	 */
 	@Override
 	public boolean isProtectColumn() {
 		return this.protectColumn;
-	}
-
-	/**
-	 * @param protectColumn
-	 *            the protectColumn to set
-	 */
-	public void setProtectColumn(boolean protectColumn) {
-		this.protectColumn = protectColumn;
 	}
 
 	/**
@@ -182,11 +156,19 @@ public class GeneratorMojo extends AbstractMojo implements DictionaryGeneratorCo
 	}
 
 	/**
-	 * @param destinationFileDesignation
-	 *            the destinationFileDesignation to set
+	 * @return the uploadToServer
 	 */
-	public void setDestinationFileDesignation(String destinationFileDesignation) {
-		this.destinationFileDesignation = destinationFileDesignation;
+	@Override
+	public boolean isUploadToServer() {
+		return this.uploadToServer;
+	}
+
+	/**
+	 * @return the uploadEntryPointUri
+	 */
+	@Override
+	public String getUploadEntryPointUri() {
+		return this.uploadEntryPointUri;
 	}
 
 	/**

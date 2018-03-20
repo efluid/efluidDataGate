@@ -3,6 +3,10 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
+	<prerequisites>
+		<maven>3.0.4</maven>
+	</prerequisites>
+
 	<groupId>fr.uem.efluid</groupId>
 	<artifactId>param-parent</artifactId>
 	<version>0.1.1-SNAPSHOT</version>
@@ -40,6 +44,9 @@
 		<dependency.jquery.version>3.3.1-1</dependency.jquery.version>
 		<dependency.popper.version>1.13.0</dependency.popper.version>
 
+		<!-- Fixed plugins -->
+		<plugin.maven-plugin.version>3.4</plugin.maven-plugin.version>
+
 	</properties>
 
 	<build>
@@ -54,6 +61,19 @@
 						<source>${java.version}</source>
 						<target>${java.version}</target>
 					</configuration>
+				</plugin>
+
+				<!-- For maven plugin build -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-plugin-plugin</artifactId>
+					<version>${plugin.maven-plugin.version}</version>
+				</plugin>
+
+				<plugin>
+					<groupId>${project.groupId}</groupId>
+					<artifactId>param-generator</artifactId>
+					<version>${project.version}</version>
 				</plugin>
 
 			</plugins>
@@ -147,7 +167,7 @@
 				<artifactId>param-generator</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 		</dependencies>
 	</dependencyManagement>
 </project>

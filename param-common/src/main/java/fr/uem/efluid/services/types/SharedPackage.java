@@ -121,6 +121,13 @@ public abstract class SharedPackage<T extends Shared> {
 
 	/**
 	 * @return
+	 */
+	public String getReloadableTypeName() {
+		return this.getClass().getName();
+	}
+
+	/**
+	 * @return
 	 * @see java.lang.Object#toString()
 	 */
 	@Override

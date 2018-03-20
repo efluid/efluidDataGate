@@ -1,8 +1,13 @@
 package fr.uem.efluid.services.types;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * <p>
@@ -69,6 +74,56 @@ public class ExportFile {
 	 */
 	public int getSize() {
 		return this.fileData.length;
+	}
+
+	/**
+	 * @return
+	 */
+	public MultipartFile toMultipartFile() {
+
+		return new MultipartFile() {
+
+			@Override
+			public String getName() {
+				return ExportFile.this.getFilename();
+			}
+
+			@Override
+			public String getOriginalFilename() {
+				return ExportFile.this.getFilename();
+			}
+
+			@Override
+			public String getContentType() {
+				return ExportFile.this.getContentType();
+			}
+
+			@Override
+			public boolean isEmpty() {
+				return false;
+			}
+
+			@Override
+			public long getSize() {
+				return ExportFile.this.getSize();
+			}
+
+			@Override
+			public byte[] getBytes() throws IOException {
+				return ExportFile.this.getData();
+			}
+
+			@Override
+			public InputStream getInputStream() throws IOException {
+				return new ByteArrayInputStream(getBytes());
+			}
+
+			@Override
+			public void transferTo(File dest) throws IOException, IllegalStateException {
+				throw new IllegalStateException("Not supported");
+			}
+
+		};
 	}
 
 }

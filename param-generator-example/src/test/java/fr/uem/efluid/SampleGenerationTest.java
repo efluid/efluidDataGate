@@ -59,6 +59,16 @@ public class SampleGenerationTest {
 			public String getDestinationFileDesignation() {
 				return DictionaryGeneratorConfig.AUTO_GEN_DEST_FILE_DESG;
 			}
+
+			@Override
+			public boolean isUploadToServer() {
+				return true;
+			}
+
+			@Override
+			public String getUploadEntryPointUri() {
+				return "http://127.0.0.1:8080/rest/v1/dictionary";
+			}
 		});
 
 		generator.generateDictionaryExport(getClass().getClassLoader());

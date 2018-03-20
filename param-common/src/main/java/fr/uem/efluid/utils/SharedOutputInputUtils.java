@@ -199,7 +199,7 @@ public class SharedOutputInputUtils {
 	/**
 	 * @return prepared Jackson mapper for JSON production
 	 */
-	private static ObjectMapper preparedObjectMapper() {
+	public static ObjectMapper preparedObjectMapper() {
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		// TODO : modules not used in direct value deserialization ?

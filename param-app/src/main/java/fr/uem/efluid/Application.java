@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 @EnableJpaRepositories(REPOSITORIES)
 @EntityScan({ ENTITIES, CONVERTERS })
-@ComponentScan({ CONFIG, SERVICES, WEB, REPOSITORIES_IMPLS, TOOLS })
+@ComponentScan({ CONFIG, SERVICES, WEB, REPOSITORIES_IMPLS, TOOLS, REST })
 @EnableCaching
 @Configuration
 public class Application {
@@ -33,15 +33,7 @@ public class Application {
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
-//
-//	 
-//    @Bean
-//    public SpringTemplateEngine templateEngine(){
-//        SpringTemplateEngine templateEngine = new SpringTemplateEngine();
-//        templateEngine.setTemplateResolver(templateResolver());
-//        templateEngine.addDialect(new LayoutDialect());
-//        return templateEngine;
-//    }
+
 	/**
 	 * Packages to inspect for ctxt init
 	 */
@@ -52,6 +44,7 @@ public class Application {
 		String ENTITIES = ROOT + ".model.entities";
 		String CONVERTERS = ROOT + ".utils.jpa";
 		String SERVICES = ROOT + ".services";
+		String REST = ROOT + ".rest";
 		String WEB = ROOT + ".web";
 		String CONFIG = ROOT + ".config";
 		String TOOLS = ROOT + ".tools";

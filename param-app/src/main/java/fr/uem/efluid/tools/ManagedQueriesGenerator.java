@@ -339,7 +339,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
 		AtomicInteger pos = new AtomicInteger(0);
 
-		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).map(l -> {
+		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).map(l -> {
 			DictionaryEntry dic = allEntries.get(l.getTableTo());
 			String alias = LINK_TAB_ALIAS + pos.incrementAndGet();
 			// INNER JOIN "%s" %s on %s."%s" = cur."%s"

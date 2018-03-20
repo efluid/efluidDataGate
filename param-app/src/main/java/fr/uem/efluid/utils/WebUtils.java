@@ -23,11 +23,33 @@ import fr.uem.efluid.services.types.ExportImportFile;
  */
 public class WebUtils {
 
-	public static final String API_ROOT = "/services";
-
 	private static final Formatter DEFAULT_FORMATTER = new Formatter();
 
 	public static final String TH_FORMATTER = "custom";
+
+	/**
+	 * <p>
+	 * Read a spring-mvc processed Multipart upload request, and provides it as a standard
+	 * {@link ExportFile}.
+	 * </p>
+	 * 
+	 * @param request
+	 *            the request provided in Spring-mvc Rest controller action on uploads
+	 * @return a standard {@link ExportFile} with access to content.
+	 */
+	public static ExportFile inputExportImportFile(MultipartFile file) {
+
+		if (file == null) {
+			throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "No available file for parameter files");
+		}
+
+		// Standard wrapper for spring-mvc data model
+		try {
+			return new ExportImportFile(file, file.getContentType());
+		} catch (IOException e) {
+			throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "Cannot process data read for imported file " + file.getName(), e);
+		}
+	}
 
 	/**
 	 * <p>

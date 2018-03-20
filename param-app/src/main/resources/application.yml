@@ -42,7 +42,6 @@ spring:
        enabled: true
    
    datasource:
-       #url: jdbc:postgresql://localhost/reference_manager
        url: jdbc:postgresql://small-server/manager
        driver-class-name: org.postgresql.Driver
        username: user

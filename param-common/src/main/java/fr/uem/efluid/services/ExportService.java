@@ -75,7 +75,7 @@ public class ExportService {
 
 				// Identifier at start of package
 				append(pckgFile,
-						String.format(PACKAGE_START, pckg.getClass().getName(), pckg.getName(), pckg.getExportDate(), pckg.getVersion()));
+						String.format(PACKAGE_START, pckg.getReloadableTypeName(), pckg.getName(), pckg.getExportDate(), pckg.getVersion()));
 
 				// Package content
 				pckg.serialize().forEach(s -> append(pckgFile, ITEM_START + s + ITEM_END));
