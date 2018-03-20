@@ -4,7 +4,7 @@ Prototype d'application dédiée à l'identification, au packaging et au déploi
 
 ## Avancement général
 
-*Mise à jour au 19/02/2018*
+*Mise à jour au 30/02/2018* : Ajout du générateur de dictionnaire à partir d'une API Java
 
 **Nouvelle organisation des projets**
 * Projet réorganisé pour distinguer l'application elle même de l'API de définition du dictionnaire depuis du code java
@@ -100,6 +100,64 @@ Pour intiliser l'instance demo : Elle est utilisée pour représenter une applic
     
 Ce sont les mêmes modèles, les mêmes données pour les 2 scripts
 
+### Genération de dictionnaire à partir de l'API
+
+Une API permettant de spécifier un dictionnaire complet (table, domaines et liens) est fournie dans le module **param-api**
+
+Voici un exemple de mise en oeuvre : 
+    
+    @GestionDuMateriel
+    @ParameterTable(name = "Categorie", tableName = "TCATEGORY")
+    public class CategorieDeMateriel {
+       
+       private Long id;
+       
+       @ParameterValue("NAME")
+       private String name;
+       
+       @ParameterKey("CODE")
+       private String code;
+       
+       // ...
+    }
+
+L'API est utilisée par un générateur dédié spécifié dans le module **param-generator**. Celui ci est avant tout un plugin maven, mis en oeuvre avec la configuration suivante : 
+
+    <plugin>
+       <groupId>${project.groupId}</groupId>
+       <artifactId>param-generator</artifactId>
+       <executions>
+          <execution>
+             <id>generate</id>
+             <phase>generate-sources</phase>
+             <goals>
+             	   <goal>generate</goal>
+             </goals>
+          </execution>
+       </executions>
+       <configuration>
+          <destinationFileDesignation>generated-dictionary</destinationFileDesignation>
+          <destinationFolder>${project.basedir}/target</destinationFolder>
+          <protectColumn>true</protectColumn>
+          <sourcePackage>fr.uem.efluid.sample</sourcePackage>
+          <uploadToServer>true</uploadToServer>
+          <uploadEntryPointUri>http://127.0.0.1:8080/rest/v1/dictionary</uploadEntryPointUri>
+       </configuration>
+    </plugin>
+
+Ce générateur construit un fichier .par d'export / import de dictionnaire, immédiatement importable dans une instance de l'application. Il est également capable de l'uploader directement sur une instance active de l'application.
+
+Les propriétés de configuration sont : 
+* **destinationFileDesignation** : identifiant du nom de l'archive .par. Si égale à "auto", alors un uuid aléatoire est utilisé.
+* **destinationFolder** : Emplacement de sortie du fichier .par généré. Par défaut "${project.basedir}/target"
+* **protectColumn** : Indique si le format de colonne de la BDD utilisée doit être protégé (identique option équivalente de l'application)
+* **sourcePackage** : Racine du package java à parser pour la recherche du modèle du dictionnaire
+* **uploadToServer** : Si true, va uploader le .par dans une instance de l'application. Par défaut false
+* **uploadEntryPointUri** : Url du point d'entrée du service REST "dictionnaire" de l'application où le .par sera uploadé. Exemple : "http://127.0.0.1:8080/rest/v1/dictionary"
+
+Un projet exemple est fourni : **param-generator-example**, avec un modèle complet. Un script SQL (oracle) d'initialisation des tables correspondantes est fourni dans src/database
+
+    
 ## Conception / Principes
 CF support de présentation.
 
