@@ -20,9 +20,9 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
-import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitPreparation;
-import fr.uem.efluid.services.PilotableCommitPreparationService.PilotedCommitStatus;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
+import fr.uem.efluid.services.types.PilotedCommitPreparation;
+import fr.uem.efluid.services.types.PilotedCommitStatus;
 import fr.uem.efluid.utils.WebUtils;
 
 /**
