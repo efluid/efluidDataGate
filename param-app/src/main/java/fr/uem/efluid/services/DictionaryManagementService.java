@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -206,7 +207,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Need select clause as a list
 		Collection<String> selecteds = isNotEmpty(entry.getSelectClause())
 				? this.queryGenerator.splitSelectClause(entry.getSelectClause(), dicLinks, allDicts)
-				: Collections.emptyList();
+				: Lists.emptyList();
 
 		TableDescription desc = getTableDescription(edit.getTable());
 		// dicLinks.get(0).equals(dicLinks.get(1))
@@ -217,13 +218,16 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Dedicated case : missing table, pure simulated content
 		if (desc == TableDescription.MISSING) {
 
+			// Avoid immutable lists
+			Collection<String> editableSelecteds = new ArrayList<>(selecteds);
+
 			// On missing, add key column
-			if (!selecteds.contains(entry.getKeyName())) {
-				selecteds.add(entry.getKeyName());
+			if (!editableSelecteds.contains(entry.getKeyName())) {
+				editableSelecteds.add(entry.getKeyName());
 			}
 
 			edit.setMissingTable(true);
-			edit.setColumns(selecteds.stream()
+			edit.setColumns(editableSelecteds.stream()
 					.map(c -> ColumnEditData.fromSelecteds(c, entry.getKeyName(), entry.getKeyType(), mappedLinks.get(c)))
 					.sorted()
 					.collect(Collectors.toList()));

@@ -150,8 +150,13 @@
 			if(selectTab.selectedIndex > 0){
 				var fkTab = selectTab.options[selectTab.selectedIndex].value;
 				selectCol.empty();
-				$("#" + fkTab).val().split(", ").forEach(s => selectCol.append($("<option></option>").attr("value",s).text(s)));
-				selectCol.val($("#fkColFor" + colName).val());
+				var fkCols = $("#" + fkTab).val();
+				if(fkCols === ''){
+					selectCol.append($("<option></option>").attr("value","").text("### REF INCONNUE ###"));
+				} else {
+					fkCols.split(", ").forEach(s => selectCol.append($("<option></option>").attr("value",s).text(s)));
+					selectCol.val($("#fkColFor" + colName).val());
+				}
 				selectCol.fadeIn();
 			} else {
 				selectCol.hide();

@@ -362,8 +362,10 @@ public class DictionaryEntryEditData {
 			} else {
 				editData.setSelected(true);
 			}
-			editData.setForeignKeyTable(link.getTableTo());
-			editData.setForeignKeyColumn(link.getColumnTo());
+			if (link != null) {
+				editData.setForeignKeyTable(link.getTableTo());
+				editData.setForeignKeyColumn(link.getColumnTo());
+			}
 			return editData;
 		}
 	}

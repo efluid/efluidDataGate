@@ -59,7 +59,7 @@ public class SelectableTable implements Comparable<SelectableTable> {
 	 * @return
 	 */
 	public String getFusedColumnNames() {
-		return this.columnNames.stream().collect(Collectors.joining(", "));
+		return this.columnNames != null ? this.columnNames.stream().collect(Collectors.joining(", ")) : null;
 	}
 
 	/**

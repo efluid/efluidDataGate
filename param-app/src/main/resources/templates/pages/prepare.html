@@ -15,7 +15,8 @@
 				</span>
 			</div>
 			<a href="index.html" class="btn btn-secondary btn-sm" th:href="@{/ui/}">Revenir à la page d'accueil</a>
-			<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-dark btn-sm">Recommencer</a>
+			<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-primary btn-sm">Recommencer</a>
+			<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-dark btn-sm">Annuler la préparation</a>
 		</span>
 		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/ui/prepare/commit}" method="post">
 			<span th:if="${not preparation.emptyDiff}">
