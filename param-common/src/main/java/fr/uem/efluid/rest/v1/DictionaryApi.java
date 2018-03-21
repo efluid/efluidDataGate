@@ -12,6 +12,10 @@ import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
 import fr.uem.efluid.utils.ApplicationException;
 
 /**
+ * <p>
+ * Rest API def for dictionary management
+ * </p>
+ * 
  * @author elecomte
  * @since v0.0.1
  * @version 1
@@ -19,6 +23,15 @@ import fr.uem.efluid.utils.ApplicationException;
 @RequestMapping(Api.API_ROOT + "/v1/dictionary")
 public interface DictionaryApi {
 
+	/**
+	 * <p>
+	 * Upload a given .par file containing dictionary items, and apply it
+	 * </p>
+	 * 
+	 * @param file
+	 * @return
+	 * @throws ApplicationException
+	 */
 	@RequestMapping(value = "/upload", method = POST)
 	@ResponseBody
 	CreatedDictionaryView uploadDictionaryPackage(@RequestParam("file") MultipartFile file) throws ApplicationException;
