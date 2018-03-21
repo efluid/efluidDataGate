@@ -21,14 +21,14 @@
 					<td th:text="${entry.name}">Catégorie de matériel</td>
 					<td><span class="query-display" th:text="${entry.query}">SELECT COLKEY, COLA, COLB, COLC FROM TCATEGORYMATERIEL WHERE 1=1 ORDER BY COLKEY</span></td>
 					<td><span class="float-right">
-						<a th:href="@{|/dictionary/edit/${entry.uuid}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm" type="button">Editer</a>
+						<a th:href="@{|/ui/dictionary/edit/${entry.uuid}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm" type="button">Editer</a>
 						<button class="btn btn-secondary btn-sm delete-button" type="button" th:title="!${entry.canDelete}?'Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent'" th:disabled="!${entry.canDelete}">Supprimer</button>
 					</span></td>
 				</tr>
 			</tbody>
 		</table>
 		<p>
-			<a th:href="@{/dictionary/new}" href="./dictionary_123.html" class="btn btn-success btn-sm float-right" type="button">Ajouter une nouvelle table de paramètrage</a><br/><br/>
+			<a th:href="@{/ui/dictionary/new}" href="./dictionary_123.html" class="btn btn-success btn-sm float-right" type="button">Ajouter une nouvelle table de paramètrage</a><br/><br/>
 		</p>
 	</span>
 	<script layout:fragment="script" th:inline="javascript">
@@ -37,7 +37,7 @@
 		const deleteButtonAction = (e) => {
 			hideDisplays();
 			var uuid = e.target.parentElement.parentElement.parentElement.id;
-			$.post("/dictionary/remove/" + uuid, null, (data, status) => {
+			$.post("/ui/dictionary/remove/" + uuid, null, (data, status) => {
 				showSuccess("Table de paramètrage retirée avec succès");
 				$("#" + uuid).remove();
 			});

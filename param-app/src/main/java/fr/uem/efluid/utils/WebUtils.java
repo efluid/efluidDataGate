@@ -4,6 +4,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+import org.pac4j.core.context.Pac4jConstants;
+import org.pac4j.core.profile.CommonProfile;
+import org.pac4j.core.profile.definition.CommonProfileDefinition;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +14,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportFile;
 
@@ -26,6 +30,8 @@ public class WebUtils {
 	private static final Formatter DEFAULT_FORMATTER = new Formatter();
 
 	public static final String TH_FORMATTER = "custom";
+
+	public static final String PROFIL_TOKEN = "_token_";
 
 	/**
 	 * <p>
@@ -124,6 +130,26 @@ public class WebUtils {
 	 */
 	public static void addTools(Model model) {
 		model.addAttribute(TH_FORMATTER, DEFAULT_FORMATTER);
+	}
+
+	/**
+	 * <p>
+	 * Prepare a Pac4j CommonProfile for specified authenticated user during web
+	 * authentication
+	 * </p>
+	 * 
+	 * @param user
+	 * @return
+	 */
+	public static CommonProfile webSecurityProfileFromUser(User user) {
+
+		final CommonProfile profile = new CommonProfile();
+		profile.setId(user.getLogin());
+		profile.addAttribute(Pac4jConstants.USERNAME, user.getLogin());
+		profile.addAttribute(CommonProfileDefinition.EMAIL, user.getEmail());
+		profile.addAttribute(PROFIL_TOKEN, user.getToken());
+
+		return profile;
 	}
 
 	/**

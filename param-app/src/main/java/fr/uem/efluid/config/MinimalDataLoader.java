@@ -5,6 +5,7 @@ import static fr.uem.efluid.utils.DataGenerationUtils.user;
 
 import javax.annotation.PostConstruct;
 
+import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,15 +38,18 @@ public class MinimalDataLoader {
 	@Autowired
 	private UserRepository users;
 
+	@Autowired
+	private PasswordEncoder encoder;
+
 	@PostConstruct
 	public void initValues() {
 
-		LOGGER.info("[MINIMAL] Init Minimal values for testing");
+		LOGGER.info("[MINIMAL] Init Minimal values for testing. User \"minimal\" with password / token equals to login");
 
-		this.users.save(user("minimal"));
+		this.users.save(user("minimal", this.encoder));
 		this.domains.save(domain("Defaut"));
 
-		LOGGER.info("[MINIMAL] Minimal values init done");
+		LOGGER.warn("[MINIMAL] Minimal values init done. Not OK in production environment !!!");
 	}
 
 }

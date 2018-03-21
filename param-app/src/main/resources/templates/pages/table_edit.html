@@ -4,7 +4,7 @@
 </head>
 <body>
     <span layout:fragment="content">
-		<form action="#" th:action="@{/dictionary/save}" method="post">
+		<form action="#" th:action="@{/ui/dictionary/save}" method="post">
 			<h5>Edition d'une table de paramètrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
 			<span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramètrage.
 			La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel</span>
@@ -60,7 +60,7 @@
 			    <div class="alert alert-danger" th:if="${#lists.size(entry.columns)}==0">Aucune colonne n'est identifiable en raison de la présence d'un critère de sélection "*" pour cette table</div>
 				<p>
 					<div class="float-right">
-						<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm">Annuler</a>
+						<a th:href="@{/ui/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm">Annuler</a>
 						<button class="btn btn-outline-success btn-sm" disabled="disabled">Sauvegarder</button><br/><br/>
 			   		</div>
 				</p>
@@ -111,7 +111,7 @@
 				</table>
 				<p>
 					<div class="float-right">
-						<a th:href="@{/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm" type="button">Annuler</a>
+						<a th:href="@{/ui/dictionary}" href="./dictionary.html" class="btn btn-secondary btn-sm" type="button">Annuler</a>
 						<input type="submit" class="btn btn-success btn-sm" value="Sauvegarder"/><br/><br/>
 					</div>
 				</p>

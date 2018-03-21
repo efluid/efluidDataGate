@@ -8,12 +8,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.SecurityService;
+import fr.uem.efluid.services.types.PilotedCommitStatus;
 import fr.uem.efluid.utils.WebUtils;
 
 /**
@@ -27,6 +29,7 @@ import fr.uem.efluid.utils.WebUtils;
  * @version 1
  */
 @Controller
+@RequestMapping("/wizzard")
 public class WizzardController {
 
 	@Autowired
@@ -40,11 +43,11 @@ public class WizzardController {
 
 	@Autowired
 	private ApplicationDetailsService detailsService;
-	
+
 	/**
 	 * @return
 	 */
-	@RequestMapping(path = "/wizzard/", method = GET)
+	@RequestMapping(path = "/", method = GET)
 	public String welcome() {
 
 		return "wizzard/welcome";
@@ -53,7 +56,7 @@ public class WizzardController {
 	/**
 	 * @return
 	 */
-	@RequestMapping(path = "/wizzard/1", method = GET)
+	@RequestMapping(path = "/1", method = GET)
 	public String userPage() {
 
 		return "wizzard/user";
@@ -65,7 +68,7 @@ public class WizzardController {
 	 * @param email
 	 * @return
 	 */
-	@RequestMapping(path = "/wizzard/1", method = POST)
+	@RequestMapping(path = "/1", method = POST)
 	public String userSave(
 			@RequestParam("login") String login,
 			@RequestParam("password") String password,
@@ -81,7 +84,7 @@ public class WizzardController {
 	 * @param domainName
 	 * @return
 	 */
-	@RequestMapping(value = "/wizzard/2", method = GET)
+	@RequestMapping(value = "/2", method = GET)
 	public String initialCommitPage(Model model) {
 
 		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
@@ -94,7 +97,7 @@ public class WizzardController {
 	 * @param domainName
 	 * @return
 	 */
-	@RequestMapping(value = "/wizzard/2/create", method = POST)
+	@RequestMapping(value = "/2/create", method = POST)
 	public String addFunctionalDomainData(Model model, @RequestParam("domainName") String domainName) {
 
 		this.dictionaryManagementService.createNewFunctionalDomain(domainName);
@@ -107,7 +110,7 @@ public class WizzardController {
 	 * @param request
 	 * @return
 	 */
-	@RequestMapping(value = "/wizzard/2/upload", method = POST)
+	@RequestMapping(value = "/2/upload", method = POST)
 	public String uploadDictionary(Model model, MultipartHttpServletRequest request) {
 
 		this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request));
@@ -119,7 +122,7 @@ public class WizzardController {
 	 * @param model
 	 * @return
 	 */
-	@RequestMapping(value = "/wizzard/2/init", method = GET)
+	@RequestMapping(value = "/2/init", method = GET)
 	public String startInitialCommit(Model model) {
 
 		model.addAttribute("preparation", this.pilotableCommitService.startLocalCommitPreparation(true));
@@ -128,16 +131,25 @@ public class WizzardController {
 	}
 
 	/**
+	 * @return status as a value
+	 */
+	@RequestMapping(path = { "/2/progress" }, method = GET)
+	@ResponseBody
+	public PilotedCommitStatus preparationGetStatus() {
+		return this.pilotableCommitService.getCurrentCommitPreparation().getStatus();
+	}
+
+	/**
 	 * @param model
 	 * @param commitName
 	 * @return
 	 */
-	@RequestMapping(value = "/wizzard/2/commit", method = GET)
+	@RequestMapping(value = "/2/commit", method = GET)
 	public String completedInitialCommit(Model model, @RequestParam("commitName") String commitName) {
 
 		// Finalize dedicated for wizzard initial commit (auto select all)
 		this.pilotableCommitService.finalizeInitialCommitPreparation(commitName);
-		
+
 		// And auto-select all content
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
 		this.pilotableCommitService.saveCommitPreparation();
@@ -148,12 +160,11 @@ public class WizzardController {
 	/**
 	 * @return
 	 */
-	@RequestMapping(value = "/wizzard/3", method = GET)
+	@RequestMapping(value = "/3", method = GET)
 	public String completedWizzard() {
 
 		this.detailsService.completeWizzard();
-		
+
 		return "wizzard/completed";
 	}
-
 }

@@ -24,9 +24,10 @@ public class User {
 	@NotBlank
 	private String email;
 
-	// TODO : add password encryption (using spring security pwd encoder)
 	@NotBlank
 	private String password;
+
+	private String token;
 
 	/**
 	 */
@@ -85,6 +86,21 @@ public class User {
 	 */
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	/**
+	 * @return the token
+	 */
+	public String getToken() {
+		return this.token;
+	}
+
+	/**
+	 * @param token
+	 *            the token to set
+	 */
+	public void setToken(String token) {
+		this.token = token;
 	}
 
 	/**

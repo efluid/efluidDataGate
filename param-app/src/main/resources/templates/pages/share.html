@@ -10,21 +10,21 @@
 		        <tr>
 		            <th scope="col">Domaines fonctionnels</th>
 		            <th scope="col" width="10%">
-		                <a href="#" th:href="@{/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines</a>
+		                <a href="#" th:href="@{/ui/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines</a>
 		            </th>
 		        </tr>
 		    </thead>
 		    <tbody>
 		        <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
 		            <td th:text="${domain.name}">Gestion du matériel</td>
-		            <td><a href="#" th:href="@{/share/{id}-dictionary.par(id=${domain.uuid})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
+		            <td><a href="#" th:href="@{/ui/share/{id}-dictionary.par(id=${domain.uuid})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
 		        </tr>
 		    </tbody>
 		</table>
 		<p>
 			<h5>Import depuis le dictionnaire</h5>
 			<span class="help">Attention les domaines fonctionnels sont également intégrés lors de l'import</span>
-			<form action="#" th:action="@{/share/upload}" method="post" enctype="multipart/form-data">
+			<form action="#" th:action="@{/ui/share/upload}" method="post" enctype="multipart/form-data">
 				<label class="btn btn-sm btn-primary">
 					Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
 				</label>

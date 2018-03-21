@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+		<div>
+			<h5>Mon profil utilisateur</h5>
+			<p>
+				<ul>
+					<li><b>Login</b> : <span th:text="${user.login}">Dupont</span></li>
+					<li><b>Email</b> : <span th:text="${user.email}">perso@email.com</span></li>
+					<li><b>Token</b> (utilisé pour les appels de services REST): <span class="token-display" th:text="${user.token}">1234</span></li>
+				</ul>
+			</p>
+		</div>
+	</span>
+</body>
+</html>

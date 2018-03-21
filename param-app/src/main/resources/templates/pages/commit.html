@@ -4,7 +4,7 @@
 </head>
 <body>
     <span layout:fragment="content">
-    	<form action="commit-save.html" th:action="@{/prepare/save}" method="post">
+    	<form action="commit-save.html" th:action="@{/ui/prepare/save}" method="post">
         	<p>
 	        	<h5>Identification du lot de modifications</h5>
                 <table class="table">
@@ -23,8 +23,8 @@
 					</p>
 					<p>
 						<div class="float-right">
-							<a th:if="${preparation.preparingState.name()=='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/prepare}" href="prepare.html">Revenir en arrière</a>
-							<a th:if="${preparation.preparingState.name()!='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/merge}" href="prepare.html">Revenir en arrière</a>
+							<a th:if="${preparation.preparingState.name()=='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/ui/prepare}" href="prepare.html">Revenir en arrière</a>
+							<a th:if="${preparation.preparingState.name()!='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/ui/merge}" href="prepare.html">Revenir en arrière</a>
 							<input type="submit" class="btn btn-success btn-sm" value="Confirmer les opérations"/><br/><br/>
 						</div>
 					</p>

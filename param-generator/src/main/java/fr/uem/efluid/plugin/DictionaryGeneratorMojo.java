@@ -49,6 +49,9 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
 	@Parameter(required = false, readonly = true)
 	private String uploadEntryPointUri;
 
+	@Parameter(required = false, readonly = true)
+	private String uploadSecurityToken;
+
 	/**
 	 * @throws MojoExecutionException
 	 * @throws MojoFailureException
@@ -169,6 +172,14 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
 	@Override
 	public String getUploadEntryPointUri() {
 		return this.uploadEntryPointUri;
+	}
+
+	/**
+	 * @return the uploadSecurityToken
+	 */
+	@Override
+	public String getUploadSecurityToken() {
+		return this.uploadSecurityToken;
 	}
 
 	/**

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import fr.uem.efluid.services.ApplicationDetailsService;
 
@@ -27,7 +28,26 @@ public class HomeController {
 	@Autowired
 	private ApplicationDetailsService applicationDetailsService;
 
+	/**
+	 * @param model
+	 * @return
+	 */
 	@RequestMapping("/")
+	public String index() {
+
+		// If not configured (no data : forward to wizzard)
+		if (this.applicationDetailsService.isNeedWizzard()) {
+			return "forward:/wizzard/";
+		}
+
+		return "redirect:/ui";
+	}
+
+	/**
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping("/ui")
 	public String index(Model model) {
 
 		// If not configured (no data : forward to wizzard)
@@ -40,9 +60,41 @@ public class HomeController {
 		return "pages/index";
 	}
 
+	/**
+	 * <p>
+	 * Authentication error
+	 * </p>
+	 * 
+	 * @param username
+	 * @param error
+	 * @return
+	 */
+	@RequestMapping("/login")
+	public String loginForm(Model model,
+			@RequestParam(name = "username", required = false) String username,
+			@RequestParam(name = "error", required = false) String error) {
+
+		// If not configured (no data : forward to wizzard)
+		if (this.applicationDetailsService.isNeedWizzard()) {
+			return "forward:/wizzard/";
+		}
+
+		if (username != null) {
+			model.addAttribute("error", username);
+		}
+
+		if (error != null) {
+			model.addAttribute("error", error);
+		}
+
+		return "pages/login";
+	}
+
+	/**
+	 * @return
+	 */
 	@RequestMapping("/swagger")
 	public String swagger() {
 		return "redirect:/webjars/swagger-ui/2.2.10/index.html?url=/v2/api-docs";
 	}
-
 }

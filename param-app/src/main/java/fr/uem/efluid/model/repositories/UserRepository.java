@@ -11,5 +11,15 @@ import fr.uem.efluid.model.entities.User;
  */
 public interface UserRepository extends JpaRepository<User, String> {
 
-	// Basic user management. Login is used as natural key
+	/**
+	 * @param login
+	 * @return
+	 */
+	User findByLogin(String login);
+
+	/**
+	 * @param token
+	 * @return
+	 */
+	User findByToken(String token);
 }

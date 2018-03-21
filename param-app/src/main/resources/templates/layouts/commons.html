@@ -33,8 +33,8 @@
 					<p th:case="'IMPORT_RUNNING'">
 						Un import de lots de modification est déjà en cours : impossible de démarrer un nouveau lot local tant que l'import n'est
 						pas complété ou abandonné.<br/>
-						<a href="pull.html" th:href="@{/pull}" class="btn btn-dark btn-sm">Accéder à l'écran de traitement d'import</a>&nbsp;&nbsp;
-						<a href="#" th:href="@{/prepare/cancel}" class="btn btn-secondary btn-sm">Abandonner l'import en cours</a>
+						<a href="pull.html" th:href="@{/ui/pull}" class="btn btn-dark btn-sm">Accéder à l'écran de traitement d'import</a>&nbsp;&nbsp;
+						<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-secondary btn-sm">Abandonner l'import en cours</a>
 					</p>
 					<p th:case="'UPLOAD_WRG_DATA'">Le format des données importées n'est pas supporté par l'application</p>
 					<p th:case="'TMP_ERROR'">Le système ne permet pas la préparation du fichier temporaire</p>

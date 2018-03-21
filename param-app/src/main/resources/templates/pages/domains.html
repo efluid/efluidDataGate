@@ -36,7 +36,7 @@
 		const deleteButtonAction = (e) => {
 			hideDisplays();
 			var uuid = e.target.parentElement.parentElement.parentElement.id;
-			$.post("domains/remove/" + uuid, null, (data, status) => {
+			$.post("/ui/domains/remove/" + uuid, null, (data, status) => {
 				showSuccess("Domaine fonctionnel retiré avec succès");
 				$("#" + uuid).remove();
 			});
@@ -50,7 +50,7 @@
 			if(name == null || name === ''){
 				setInvalid("#domainName","Le nom du domaine fonctionnel est obligatoire");
 			}
-			$.post("domains/add/" + inputName.val(), null, (data, status) => {
+			$.post("/ui/domains/add/" + inputName.val(), null, (data, status) => {
 				showSuccess("Domaine fonctionnel ajouté avec succès");
 		        var newDomainRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td><button class="delete-button btn btn-secondary btn-sm" type="button">Supprimer</button></td></tr>';
 				$("#domainListInjectBefore").before(newDomainRow);

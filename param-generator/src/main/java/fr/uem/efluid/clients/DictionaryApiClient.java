@@ -25,13 +25,15 @@ import fr.uem.efluid.utils.ErrorType;
 public class DictionaryApiClient implements DictionaryApi {
 
 	private final String uri;
+	private final String token;
 	private final RestTemplate template;
 
 	/**
 	 * 
 	 */
-	public DictionaryApiClient(String uri) {
+	public DictionaryApiClient(String uri, String token) {
 		this.uri = uri;
+		this.token = token;
 		this.template = new RestTemplate();
 		RestApi.configureMessageConverters(this.template);
 	}
@@ -56,7 +58,7 @@ public class DictionaryApiClient implements DictionaryApi {
 			data.add("file", resource);
 
 			HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(data, RestApi.FIXED_UPLOAD_HEADERS);
-			return this.template.postForObject(this.uri + "/upload", request, CreatedDictionaryView.class);
+			return this.template.postForObject(this.uri + "/upload?token=" + this.token, request, CreatedDictionaryView.class);
 
 		} catch (Exception e) {
 			throw new ApplicationException(ErrorType.WRONG_CLIENT_CALL, "Cannot process call to /updoad", e);

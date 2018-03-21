@@ -1,12 +1,9 @@
 package fr.uem.efluid.services;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 
 import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.security.UserHolder;
 
 /**
  * @author elecomte
@@ -16,19 +13,13 @@ import fr.uem.efluid.model.repositories.UserRepository;
 public abstract class AbstractApplicationService {
 
 	@Autowired
-	private UserRepository users;
+	private UserHolder users;
 
 	/**
 	 * @return
 	 */
-	@Cacheable("users")
 	protected User getCurrentUser() {
-
-		// TODO : temp system for basic access. Replaced by spring sec.
-
-		List<User> found = this.users.findAll();
-
-		return found != null && !found.isEmpty() ? found.get(0) : null;
+		return this.users.getCurrentUser();
 	}
 
 	/**

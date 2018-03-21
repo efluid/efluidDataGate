@@ -11,7 +11,7 @@
 <body>
     <div class="container-fluid">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="./index.html" th:href="@{/}">Gestion du paramètrage Efluid</a>
+            <a class="navbar-brand" href="./index.html" th:href="@{/ui/}">Gestion du paramètrage Efluid</a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -23,9 +23,9 @@
                             Dictionnaire
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./dictionary.html" th:href="@{/dictionary}">Modification du dictionnaire</a>
-                            <a class="dropdown-item" href="./domains.html" th:href="@{/domains}">Configuration des domaines fonctionnels</a>
-                            <a class="dropdown-item" href="./share.html" th:href="@{/share}">Export / Import de dictionnaire</a>
+                            <a class="dropdown-item" href="./dictionary.html" th:href="@{/ui/dictionary}">Modification du dictionnaire</a>
+                            <a class="dropdown-item" href="./domains.html" th:href="@{/ui/domains}">Configuration des domaines fonctionnels</a>
+                            <a class="dropdown-item" href="./share.html" th:href="@{/ui/share}">Export / Import de dictionnaire</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -33,18 +33,26 @@
                             Lot de modification
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./commits.html" th:href="@{/commits}">Liste des lots présents</a>
+                            <a class="dropdown-item" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="./prepare.html" th:href="@{/prepare}">Préparer un lot</a>
-                            <a class="dropdown-item" href="./pull.html" th:href="@{/pull}">Importer un lot</a>
-                            <a class="dropdown-item" href="./push.html" th:href="@{/push}">Exporter un lot</a>
+                            <a class="dropdown-item" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a>
+                            <a class="dropdown-item" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a>
+                            <a class="dropdown-item" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Utilisateurs
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a>
                         </div>
                     </li>
                 </ul>
                 <form class="form-inline">
                     <a href="./swagger.html" th:href="@{/swagger}" target="_blank" class="btn btn-sm btn-primary" type="button">API REST</a>
                     &nbsp;&nbsp;
-                    <button class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</button>
+                     <a href="./index.html" th:href="@{/logout?url=/ui}" class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</a>
                 </form>
             </div>
         </nav>

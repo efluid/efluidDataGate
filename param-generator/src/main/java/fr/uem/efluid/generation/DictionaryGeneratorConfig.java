@@ -23,6 +23,8 @@ public interface DictionaryGeneratorConfig {
 	
 	String getUploadEntryPointUri();
 	
+	String getUploadSecurityToken();
+	
 	/**
 	 * <p>
 	 * For shared logging using source logger. As in maven plugin process we have to use a

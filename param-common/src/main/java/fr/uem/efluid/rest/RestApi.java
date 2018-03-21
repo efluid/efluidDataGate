@@ -29,6 +29,8 @@ import io.swagger.annotations.SwaggerDefinition.Scheme;
 				description = RestApi.API_DESCRIOTION))
 public final class RestApi {
 
+	public static final String TOKEN_PARAM = "token";
+	
 	public static final String LICENSE_NAME = "Copyright 2018 Efluid SAS";
 
 	public static final String API_TITLE = "Efluid Param Gest API";

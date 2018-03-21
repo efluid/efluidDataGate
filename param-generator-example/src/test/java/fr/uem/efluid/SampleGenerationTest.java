@@ -69,6 +69,11 @@ public class SampleGenerationTest {
 			public String getUploadEntryPointUri() {
 				return "http://127.0.0.1:8080/rest/v1/dictionary";
 			}
+
+			@Override
+			public String getUploadSecurityToken() {
+				return "afc9921811684c7f88062cd47ddf0ff5";
+			}
 		});
 
 		generator.generateDictionaryExport(getClass().getClassLoader());

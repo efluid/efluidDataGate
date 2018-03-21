@@ -13,7 +13,7 @@
 		            <th scope="col">Domains couverts</th>
 		            <th scope="col">Créé par</th>
 		            <th scope="col">Le</th>
-		            <th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/push/all-commits.par}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
+		            <th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/ui/push/all-commits.par}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
 				</tr>
 			</thead>
 			<tbody>
@@ -25,7 +25,7 @@
 					<td>
 						<div class="float-right">
 							<div th:id="|selecterFor${commit.uuid}|" class="selecter selected" title="Activer l'export complet à partir de ce lot">&nbsp;</div>&nbsp;&nbsp;
-							<a href="#" th:href="@{/push/{id}-commits.par(id=${commit.uuid})}" class="btn btn-primary btn-sm">Exporter seul</a>
+							<a href="#" th:href="@{/ui/push/{id}-commits.par(id=${commit.uuid})}" class="btn btn-primary btn-sm">Exporter seul</a>
 						</div>
 					</td>
 				</tr>

@@ -11,6 +11,8 @@ import fr.uem.efluid.rest.RestApi;
 import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
 import fr.uem.efluid.utils.ApplicationException;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 
 /**
@@ -38,6 +40,9 @@ public interface DictionaryApi {
 	@RequestMapping(value = "/upload", method = POST)
 	@ResponseBody
 	@ApiOperation("Upload and apply a given dictionary \".par\" archive. The archive must be valid. Will provides details on operated changes")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+	})
 	CreatedDictionaryView uploadDictionaryPackage(@RequestParam("file") MultipartFile file) throws ApplicationException;
 
 }

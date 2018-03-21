@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
+import org.pac4j.core.credentials.password.PasswordEncoder;
+
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.CommitState;
@@ -26,12 +28,28 @@ public class DataGenerationUtils {
 	 * @param login
 	 * @return
 	 */
+	public static User user(String login, PasswordEncoder encoder) {
+
+		User user = new User(login);
+
+		user.setEmail(login + "@efluid.fr");
+		user.setPassword(encoder.encode(login));
+		user.setToken(login);
+
+		return user;
+	}
+
+	/**
+	 * @param login
+	 * @return
+	 */
 	public static User user(String login) {
 
 		User user = new User(login);
 
 		user.setEmail(login + "@efluid.fr");
 		user.setPassword("FPQSFIKQPSFIQSF[ENCRYPTED]");
+		user.setToken(login);
 
 		return user;
 	}
@@ -60,7 +78,8 @@ public class DataGenerationUtils {
 	 * @param keyName
 	 * @return
 	 */
-	public static DictionaryEntry entry(String name, FunctionalDomain domain, String select, String table, String where, String keyName, ColumnType keyType) {
+	public static DictionaryEntry entry(String name, FunctionalDomain domain, String select, String table, String where, String keyName,
+			ColumnType keyType) {
 
 		DictionaryEntry entry = new DictionaryEntry();
 

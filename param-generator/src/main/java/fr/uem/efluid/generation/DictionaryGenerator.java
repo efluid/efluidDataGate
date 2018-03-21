@@ -401,7 +401,7 @@ public class DictionaryGenerator {
 
 		getLog().debug("Will upload the generated dictionary .par to " + this.config.getUploadEntryPointUri());
 
-		DictionaryApi client = new DictionaryApiClient(this.config.getUploadEntryPointUri());
+		DictionaryApi client = new DictionaryApiClient(this.config.getUploadEntryPointUri(), this.config.getUploadSecurityToken());
 
 		CreatedDictionaryView view = client.uploadDictionaryPackage(file.toMultipartFile());
 

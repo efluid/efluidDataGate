@@ -14,10 +14,10 @@
 					Si nécessaire, merci de communiquer le code d'erreur suivant : <span th:text="|${preparation.errorDuringPreparation.error}-${preparation.errorDuringPreparation.timestamp}|">JSON_WRITE_ERROR-12414421224112</span>
 				</span>
 			</div>
-			<a href="index.html" class="btn btn-secondary btn-sm" th:href="@{/}">Revenir à la page d'accueil</a>
-			<a th:href="@{/prepare/restart}" href="#" class="btn btn-dark btn-sm">Recommencer</a>
+			<a href="index.html" class="btn btn-secondary btn-sm" th:href="@{/ui/}">Revenir à la page d'accueil</a>
+			<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-dark btn-sm">Recommencer</a>
 		</span>
-		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/prepare/commit}" method="post">
+		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/ui/prepare/commit}" method="post">
 			<span th:if="${not preparation.emptyDiff}">
 				<p>
 					<h5>Ensemble des modifications identifiées
@@ -31,8 +31,8 @@
 							<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
 							<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
 						</div>&nbsp;
-							<a th:href="@{/prepare/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
-							<a th:href="@{/prepare/restart}" href="#" class="btn btn-dark btn-sm" type="button">Regénérer</a>
+							<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
+							<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-dark btn-sm" type="button">Regénérer</a>
 						</div>
 					</h5>
 				</p>
@@ -87,8 +87,8 @@
 				<p>
 					<h5>Aucune nouvelle modification identifiée dans les données de paramètrage.
 						<div class="float-right">
-							<a th:href="@{/prepare/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
-							<a th:href="@{/prepare/restart}" href="#" class="btn btn-dark btn-sm">Rafraichir les modifications</a>
+							<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
+							<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-dark btn-sm">Rafraichir les modifications</a>
 						</div>
 					</h5>
 				</p>

@@ -27,6 +27,7 @@ import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.LobProperty;
+import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
@@ -285,8 +286,8 @@ public class CommitService extends AbstractApplicationService {
 
 		Commit newCommit = CommitEditData.toEntity(prepared.getCommitData());
 		newCommit.setCreatedTime(LocalDateTime.now());
-		newCommit.setUser(getCurrentUser());
-		newCommit.setOriginalUserEmail(newCommit.getUser().getEmail());
+		newCommit.setUser(new User(getCurrentUser().getLogin()));
+		newCommit.setOriginalUserEmail(getCurrentUser().getEmail());
 		newCommit.setState(prepared.getPreparingState());
 
 		// Prepared commit uuid

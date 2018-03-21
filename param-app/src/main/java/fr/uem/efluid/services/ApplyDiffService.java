@@ -83,7 +83,7 @@ public class ApplyDiffService extends AbstractApplicationService {
 	private void keepHistory(String[] queries, boolean isRollback) {
 
 		Long timestamp = Long.valueOf(System.currentTimeMillis());
-		User currentUser = getCurrentUser();
+		User currentUser = new User(getCurrentUser().getLogin());
 
 		this.history.saveAll(Stream.of(queries).map(ApplyHistoryEntry::new).peek(h -> {
 			h.setRollback(isRollback);

@@ -17,6 +17,16 @@
     background-color: rgb(226, 185, 170);
 }
 
+.token-display {
+    padding: 2px 10px;
+    margin: O 2px;
+    background-color: #FAFAFA;
+    border: 1px #EEE solid;
+    font-weight: bold;
+    font-size: 16px;
+    color:brown;
+}
+
 .query-display {
     display: block;
     padding: 3px;

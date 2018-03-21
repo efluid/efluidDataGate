@@ -40,7 +40,7 @@ import fr.uem.efluid.utils.WebUtils;
  * @version 1
  */
 @Controller
-@RequestMapping
+@RequestMapping("/ui")
 public class BacklogController {
 
 	@Autowired

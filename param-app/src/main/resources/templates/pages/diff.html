@@ -30,14 +30,14 @@
     	// Repeated check on status using basic rest service
 		const checkProgress = () => {
 			console.info("start a new check");
-			$.get("/prepare/progress", (data, status) => {
+			$.get("/ui/prepare/progress", (data, status) => {
 				console.info("Check with data" + data);
 				if(data === 'DIFF_RUNNING'){
 					// Add new timeout 
 					setTimeout(checkProgress, 1000);
 				} else {
 					// Reload page for valid data
-					window.location.replace("/prepare");
+					window.location.replace("/ui/prepare");
 				}
 			});
 		};

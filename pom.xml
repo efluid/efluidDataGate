@@ -38,8 +38,9 @@
 		<dependency.maven-plugin-annotations.version>3.5</dependency.maven-plugin-annotations.version>
 		<dependency.maven-core.version>3.3.9</dependency.maven-core.version>
 		<dependency.reflections-utils.version>0.9.11</dependency.reflections-utils.version>
-		<dependency.pac4j.version>2.1.0</dependency.pac4j.version>
-		<dependency.spring-security-pac4j.version>3.0.0</dependency.spring-security-pac4j.version>
+        <dependency.spring-webmvc-pac4j.version>2.2.0</dependency.spring-webmvc-pac4j.version>
+        <dependency.pac4j.version>2.3.0</dependency.pac4j.version>
+        
 		<dependency.swagger-api.version>1.5.18</dependency.swagger-api.version>
 		<dependency.springfox-swagger.version>2.8.0</dependency.springfox-swagger.version>
 		<dependency.classmate.version>1.3.1</dependency.classmate.version>
@@ -134,29 +135,11 @@
 
 			<!-- Pac4j related libraries -->
 			
-			<dependency>
-				<groupId>org.pac4j</groupId>
-				<artifactId>spring-security-pac4j</artifactId>
-				<version>${dependency.spring-security-pac4j.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.pac4j</groupId>
-				<artifactId>pac4j-oauth</artifactId>
-				<version>${dependency.pac4j.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>org.pac4j</groupId>
-				<artifactId>pac4j-gae</artifactId>
-				<version>${dependency.pac4j.version}</version>
-			</dependency>
-			
-			<dependency>
-				<groupId>org.pac4j</groupId>
-				<artifactId>pac4j-oidc</artifactId>
-				<version>${dependency.pac4j.version}</version>
-			</dependency>
+	        <dependency>
+	            <groupId>org.pac4j</groupId>
+	            <artifactId>spring-webmvc-pac4j</artifactId>
+	            <version>${dependency.spring-webmvc-pac4j.version}</version>
+	        </dependency>
 
 			<dependency>
 				<groupId>org.pac4j</groupId>

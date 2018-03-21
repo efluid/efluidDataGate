@@ -12,6 +12,8 @@ import fr.uem.efluid.rest.v1.model.CommitCreatedResultView;
 import fr.uem.efluid.rest.v1.model.CommitPrepareDetailsView;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 
 /**
@@ -37,6 +39,9 @@ public interface BacklogApi {
 	@RequestMapping(value = "/diff", method = POST)
 	@ResponseBody
 	@ApiOperation("Start a new diff : launch an asynchronous analysis of the differences found in the managed database, to prepare a new commit. Provides the diff status")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+	})
 	PilotedCommitStatus initPreparedCommit();
 
 	/**
@@ -49,6 +54,9 @@ public interface BacklogApi {
 	@RequestMapping(value = "/cancel", method = POST)
 	@ResponseBody
 	@ApiOperation("Cancel a running or prepared diff. Will be ready to start a new one")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+	})
 	PilotedCommitStatus cancelPreparedCommit();
 
 	/**
@@ -61,6 +69,9 @@ public interface BacklogApi {
 	@RequestMapping(value = "/status", method = GET)
 	@ResponseBody
 	@ApiOperation("Get the currently running diff status. If diff completed, status will be \"COMMIT_CAN_PREPARE\"")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+	})
 	PilotedCommitStatus getCurrentPreparedCommitStatus();
 
 	/**
@@ -74,6 +85,9 @@ public interface BacklogApi {
 	@RequestMapping(value = "/details", method = GET)
 	@ResponseBody
 	@ApiOperation("Get some details on the \"COMMIT_CAN_PREPARE\" diff. If not completed yet, result is empty")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+	})
 	CommitPrepareDetailsView getCurrentPreparedCommitDetails();
 
 	/**
@@ -88,6 +102,9 @@ public interface BacklogApi {
 	@RequestMapping(value = "/commit", method = POST)
 	@ResponseBody
 	@ApiOperation("Approve all diff content on currently \"COMMIT_CAN_PREPARE\" diff, and create a commit with the specified comment. If diff is not completed yet, will fail.")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+	})
 	CommitCreatedResultView validateCurrentPreparedCommit(@RequestParam String commitComment);
 
 }
