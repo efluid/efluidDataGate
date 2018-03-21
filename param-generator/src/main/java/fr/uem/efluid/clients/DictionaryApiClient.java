@@ -7,7 +7,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import fr.uem.efluid.rest.Api;
+import fr.uem.efluid.rest.RestApi;
 import fr.uem.efluid.rest.v1.DictionaryApi;
 import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
 import fr.uem.efluid.utils.ApplicationException;
@@ -33,7 +33,7 @@ public class DictionaryApiClient implements DictionaryApi {
 	public DictionaryApiClient(String uri) {
 		this.uri = uri;
 		this.template = new RestTemplate();
-		Api.configureMessageConverters(this.template);
+		RestApi.configureMessageConverters(this.template);
 	}
 
 	/**
@@ -55,7 +55,7 @@ public class DictionaryApiClient implements DictionaryApi {
 			};
 			data.add("file", resource);
 
-			HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(data, Api.FIXED_UPLOAD_HEADERS);
+			HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(data, RestApi.FIXED_UPLOAD_HEADERS);
 			return this.template.postForObject(this.uri + "/upload", request, CreatedDictionaryView.class);
 
 		} catch (Exception e) {

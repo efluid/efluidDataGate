@@ -14,13 +14,28 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.web.client.RestTemplate;
 
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import io.swagger.annotations.Info;
+import io.swagger.annotations.License;
+import io.swagger.annotations.SwaggerDefinition;
+import io.swagger.annotations.SwaggerDefinition.Scheme;
 
 /**
  * @author elecomte
  * @since v0.0.1
  * @version 1
  */
-public final class Api {
+@SwaggerDefinition(basePath = RestApi.API_ROOT, schemes = Scheme.HTTP, host = "hostname",
+		info = @Info(license = @License(name = RestApi.LICENSE_NAME), title = RestApi.API_TITLE, version = RestApi.ACTIVE_API_VERSION,
+				description = RestApi.API_DESCRIOTION))
+public final class RestApi {
+
+	public static final String LICENSE_NAME = "Copyright 2018 Efluid SAS";
+
+	public static final String API_TITLE = "Efluid Param Gest API";
+
+	public static final String API_DESCRIOTION = "REST API for management of Efluid Param Gest application. Reserved for technical systems";
+
+	public static final String ACTIVE_API_VERSION = "v1";
 
 	public static final String API_ROOT = "/rest";
 
@@ -57,4 +72,5 @@ public final class Api {
 
 		restTemplate.setMessageConverters(converters);
 	}
+
 }

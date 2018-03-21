@@ -1,9 +1,18 @@
 package fr.uem.efluid.rest.v1;
 
+import java.util.stream.Collectors;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RestController;
 
 import fr.uem.efluid.rest.v1.model.CommitCreatedResultView;
+import fr.uem.efluid.rest.v1.model.CommitPrepareDetailsView;
+import fr.uem.efluid.rest.v1.model.CommitPrepareDetailsView.CommitPrepareTableView;
+import fr.uem.efluid.services.PilotableCommitPreparationService;
+import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 
 /**
  * @author elecomte
@@ -13,14 +22,32 @@ import fr.uem.efluid.services.types.PilotedCommitStatus;
 @RestController
 public class BacklogApiController implements BacklogApi {
 
+	@Autowired
+	private PilotableCommitPreparationService pilotableCommitService;
+
 	/**
 	 * @return
 	 * @see fr.uem.efluid.rest.v1.BacklogApi#initPreparedCommit()
 	 */
 	@Override
 	public PilotedCommitStatus initPreparedCommit() {
-		// TODO Auto-generated method stub
-		return null;
+
+		return this.pilotableCommitService.startLocalCommitPreparation(false).getStatus();
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.rest.v1.BacklogApi#cancelPreparedCommit()
+	 */
+	@Override
+	public PilotedCommitStatus cancelPreparedCommit() {
+
+		// Update current preparation as canceled
+		if (this.pilotableCommitService.getCurrentCommitPreparation() != null) {
+			this.pilotableCommitService.cancelCommitPreparation();
+		}
+
+		return PilotedCommitStatus.CANCEL;
 	}
 
 	/**
@@ -29,8 +56,41 @@ public class BacklogApiController implements BacklogApi {
 	 */
 	@Override
 	public PilotedCommitStatus getCurrentPreparedCommitStatus() {
-		// TODO Auto-generated method stub
-		return null;
+
+		PilotedCommitPreparation<?> preparation = this.pilotableCommitService.getCurrentCommitPreparation();
+		return preparation != null ? preparation.getStatus() : PilotedCommitStatus.NOT_LAUNCHED;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.rest.v1.BacklogApi#getCurrentPreparedCommitDetails()
+	 */
+	@Override
+	public CommitPrepareDetailsView getCurrentPreparedCommitDetails() {
+
+		PilotedCommitPreparation<?> preparation = this.pilotableCommitService.getCurrentCommitPreparation();
+
+		if (preparation == null || preparation.getStatus() != PilotedCommitStatus.COMMIT_CAN_PREPARE) {
+			return null;
+		}
+
+		CommitPrepareDetailsView result = new CommitPrepareDetailsView();
+
+		// Details on content by table
+		result.setDetails(
+				preparation.getPreparedContent().stream().map(d -> {
+					CommitPrepareTableView table = new CommitPrepareTableView();
+					table.setDomain(d.getDomainName());
+					table.setTable(d.getDictionaryEntryTableName());
+					table.setIndexRowCount(d.getDiff().size());
+					table.setParameter(d.getDictionaryEntryName());
+					return table;
+				}).collect(Collectors.toList()));
+
+		// Total count for quick checking
+		result.setIndexRowCount(preparation.getTotalCount());
+
+		return result;
 	}
 
 	/**
@@ -41,8 +101,21 @@ public class BacklogApiController implements BacklogApi {
 	@Override
 	public CommitCreatedResultView validateCurrentPreparedCommit(String commitComment) {
 
-		// TODO Auto-generated method stub
-		return null;
-	}
+		PilotedCommitPreparation<?> preparation = this.pilotableCommitService.getCurrentCommitPreparation();
 
+		if (preparation == null || preparation.getStatus() != PilotedCommitStatus.COMMIT_CAN_PREPARE) {
+			throw new ApplicationException(ErrorType.PREPARATION_NOT_READY, "Preparation of active commit is not ready");
+		}
+
+		// Finalize preparation
+		this.pilotableCommitService.finalizeInitialCommitPreparation(commitComment);
+
+		// Complete and gather result data
+		CommitCreatedResultView result = new CommitCreatedResultView();
+		result.setCommitDomainNames(preparation.getSelectedFunctionalDomainNames());
+		result.setIndexRowCount(preparation.getTotalCount());
+		result.setCommitUuid(this.pilotableCommitService.saveCommitPreparation());
+
+		return result;
+	}
 }

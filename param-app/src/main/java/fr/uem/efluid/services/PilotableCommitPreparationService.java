@@ -312,8 +312,10 @@ public class PilotableCommitPreparationService {
 	 * Works on current preparation, completed with input "selected / rollbacked items"
 	 * and commit edit data.
 	 * </p>
+	 * 
+	 * @return the created commit UUID
 	 */
-	public void saveCommitPreparation() {
+	public UUID saveCommitPreparation() {
 
 		LOGGER.info("Starting saving for current preparation {}", this.current.getIdentifier());
 
@@ -334,6 +336,8 @@ public class PilotableCommitPreparationService {
 		completeCommitPreparation();
 
 		LOGGER.info("Saving completed for commit preparation. New commit is {}", commitUUID);
+
+		return commitUUID;
 	}
 
 	/**

@@ -40,4 +40,9 @@ public class HomeController {
 		return "pages/index";
 	}
 
+	@RequestMapping("/swagger")
+	public String swagger() {
+		return "redirect:/webjars/swagger-ui/2.2.10/index.html?url=/v2/api-docs";
+	}
+
 }

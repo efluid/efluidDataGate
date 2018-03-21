@@ -14,7 +14,7 @@ param-efluid:
        meta:
            filterSchema: DEMO
            search-fk-type: oracle-by-name
-           preload: true
+           preload: false
        query: 
            tableNamesProtected: true
            columnNamesProtected: true
@@ -49,9 +49,9 @@ spring:
 
    jpa:
        open-in-view: false
-       show-sql: true
+       show-sql: false
        hibernate:
-           ddl-auto: create
+           ddl-auto: update
 
 ## WEB SERVER CONFIG
 server:

@@ -37,7 +37,7 @@ public class Application {
 	/**
 	 * Packages to inspect for ctxt init
 	 */
-	interface Packages {
+	public interface Packages {
 		String ROOT = "fr.uem.efluid";
 		String REPOSITORIES = ROOT + ".model.repositories";
 		String REPOSITORIES_IMPLS = REPOSITORIES + ".impls";

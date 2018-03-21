@@ -1,6 +1,6 @@
 package fr.uem.efluid.rest.v1.model;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.UUID;
 
 /**
@@ -10,7 +10,7 @@ import java.util.UUID;
  */
 public class CommitCreatedResultView {
 
-	private List<String> commitDomainNames;
+	private Collection<String> commitDomainNames;
 
 	private UUID commitUuid;
 
@@ -26,7 +26,7 @@ public class CommitCreatedResultView {
 	/**
 	 * @return the commitDomainNames
 	 */
-	public List<String> getCommitDomainNames() {
+	public Collection<String> getCommitDomainNames() {
 		return this.commitDomainNames;
 	}
 
@@ -34,7 +34,7 @@ public class CommitCreatedResultView {
 	 * @param commitDomainNames
 	 *            the commitDomainNames to set
 	 */
-	public void setCommitDomainNames(List<String> commitDomainNames) {
+	public void setCommitDomainNames(Collection<String> commitDomainNames) {
 		this.commitDomainNames = commitDomainNames;
 	}
 

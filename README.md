@@ -101,7 +101,6 @@ Pour intiliser l'instance demo : Elle est utilisée pour représenter une applic
 Ce sont les mêmes modèles, les mêmes données pour les 2 scripts
 
 ### Genération de dictionnaire à partir de l'API
-
 Une API permettant de spécifier un dictionnaire complet (table, domaines et liens) est fournie dans le module **param-api**
 
 Voici un exemple de mise en oeuvre : 
@@ -157,7 +156,17 @@ Les propriétés de configuration sont :
 
 Un projet exemple est fourni : **param-generator-example**, avec un modèle complet. Un script SQL (oracle) d'initialisation des tables correspondantes est fourni dans src/database
 
-    
+### Services REST
+Une API de services **REST** est intégrée. 
+
+**Elle permet** :
+* De créer / mettre à jour le dictionnaire par import de .par (utilisé pour le système de génération avec l'API java)
+* De lancer / suivre / annuler / valider un diff. Il devient donc possible de piloter la préparation de lots directement depuis une application tiers (par exemple depuis Efluid directement)
+
+A ce stade aucune sécurité n'est intégrée, les services REST sont accessibles à tous. Un système à base de d'API token sera mis en place.
+
+Depuis le bandeau haut de l'application, cliquer le bouton "API REST" pour accéder à une interface de navigation / test de l'API (format Swagger + swagger-ui v2).
+
 ## Conception / Principes
 CF support de présentation.
 

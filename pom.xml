@@ -38,11 +38,17 @@
 		<dependency.maven-plugin-annotations.version>3.5</dependency.maven-plugin-annotations.version>
 		<dependency.maven-core.version>3.3.9</dependency.maven-core.version>
 		<dependency.reflections-utils.version>0.9.11</dependency.reflections-utils.version>
+		<dependency.pac4j.version>2.1.0</dependency.pac4j.version>
+		<dependency.spring-security-pac4j.version>3.0.0</dependency.spring-security-pac4j.version>
+		<dependency.swagger-api.version>1.5.18</dependency.swagger-api.version>
+		<dependency.springfox-swagger.version>2.8.0</dependency.springfox-swagger.version>
+		<dependency.classmate.version>1.3.1</dependency.classmate.version>
 
 		<!-- dependencies - webjars -->
 		<dependency.bootstrap.version>4.0.0-2</dependency.bootstrap.version>
 		<dependency.jquery.version>3.3.1-1</dependency.jquery.version>
 		<dependency.popper.version>1.13.0</dependency.popper.version>
+		<dependency.swagger-ui.version>2.2.10</dependency.swagger-ui.version>
 
 		<!-- Fixed plugins -->
 		<plugin.maven-plugin.version>3.4</plugin.maven-plugin.version>
@@ -85,6 +91,8 @@
 
 		<dependencies>
 
+			<!-- Basic common tools -->
+
 			<dependency>
 				<groupId>net.lingala.zip4j</groupId>
 				<artifactId>zip4j</artifactId>
@@ -95,6 +103,71 @@
 				<groupId>com.oracle</groupId>
 				<artifactId>ojdbc8</artifactId>
 				<version>${dependency.ojdbc8.version}</version>
+			</dependency>
+			
+			<!-- Web Features -->
+
+			<dependency>
+				<groupId>io.swagger</groupId>
+				<artifactId>swagger-annotations</artifactId>
+				<version>${dependency.swagger-api.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>io.springfox</groupId>
+				<artifactId>springfox-swagger2</artifactId>
+				<version>${dependency.springfox-swagger.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>io.springfox</groupId>
+				<artifactId>springfox-swagger-ui</artifactId>
+				<version>${dependency.springfox-swagger.version}</version>
+			</dependency>
+
+			<!-- Fix on https://github.com/springfox/springfox/issues/948 -->
+			<dependency>
+				<groupId>com.fasterxml</groupId>
+				<artifactId>classmate</artifactId>
+				<version>${dependency.classmate.version}</version>
+			</dependency>
+
+			<!-- Pac4j related libraries -->
+			
+			<dependency>
+				<groupId>org.pac4j</groupId>
+				<artifactId>spring-security-pac4j</artifactId>
+				<version>${dependency.spring-security-pac4j.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.pac4j</groupId>
+				<artifactId>pac4j-oauth</artifactId>
+				<version>${dependency.pac4j.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.pac4j</groupId>
+				<artifactId>pac4j-gae</artifactId>
+				<version>${dependency.pac4j.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.pac4j</groupId>
+				<artifactId>pac4j-oidc</artifactId>
+				<version>${dependency.pac4j.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.pac4j</groupId>
+				<artifactId>pac4j-http</artifactId>
+				<version>${dependency.pac4j.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.pac4j</groupId>
+				<artifactId>pac4j-jwt</artifactId>
+				<version>${dependency.pac4j.version}</version>
 			</dependency>
 
 			<!-- WebJars (Web libraries managed as java artifacts) -->
@@ -117,7 +190,14 @@
 				<version>${dependency.popper.version}</version>
 			</dependency>
 
-			<!-- ##### DEPENDENCIES FOR MAVEN PLUGINS DEV ##### -->
+			<dependency>
+				<groupId>org.webjars</groupId>
+				<artifactId>swagger-ui</artifactId>
+				<version>${dependency.swagger-ui.version}</version>
+			</dependency>
+
+			<!-- Dependencies for maven plugin development -->
+
 			<dependency>
 				<groupId>org.apache.maven</groupId>
 				<artifactId>maven-plugin-api</artifactId>
