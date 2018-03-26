@@ -181,7 +181,7 @@ public class CommitDetails {
 	 * @return
 	 */
 	public boolean isEmptyDiff() {
-		return this.content.stream().allMatch(d -> d.getDiff().isEmpty());
+		return this.content == null || this.content.stream().allMatch(d -> d.getDiff().isEmpty());
 	}
 
 	/**
