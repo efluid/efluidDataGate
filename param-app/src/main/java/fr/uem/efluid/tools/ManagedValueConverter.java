@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -229,10 +230,13 @@ public class ManagedValueConverter {
 	 */
 	public List<Value> expandInternalValue(String internalExtracted) {
 
-		// TODO : Need to define if we have to keep type or not
-		return StringSplitter.split(internalExtracted, SEPARATOR).stream()
-				.map(ExpandedValue::new)
-				.collect(Collectors.toList());
+		if (internalExtracted != null && !"".equals(internalExtracted)) {
+			return StringSplitter.split(internalExtracted, SEPARATOR).stream()
+					.map(ExpandedValue::new)
+					.collect(Collectors.toList());
+		}
+
+		return Collections.emptyList();
 	}
 
 	/**
