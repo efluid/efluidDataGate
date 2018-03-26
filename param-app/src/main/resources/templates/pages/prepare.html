@@ -37,11 +37,12 @@
 						</div>
 					</h5>
 				</p>
-				<div th:each="diffDisplay, tstat : ${preparation.preparedContent}" th:id="${diffDisplay.dictionaryEntryUuid}">
+				<div th:each="diffDisplay, tstat : ${preparation.preparedContent}" th:id="${tstat.index}">
 					<div th:if="${!diffDisplay.diff.isEmpty()}" class="dictionary-content" >
 						<div class="dictionary-summary">
 							<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
-							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>
+							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>&nbsp;
+							<span class="dictionary-diff-size" th:text="|${diffDisplay.diff.size()} valeur(s)|">15 valeurs</span>
 							<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 						</div>
 						<table class="table table-sm">
@@ -60,13 +61,13 @@
 								</tr>
 							</thead>
 							<tbody>
-								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
+								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${tstat.index}_${estat.index}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
 									<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
 									<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
 									<td><span class="change-display" th:utext="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
 									<td>
-										<input type="hidden" th:id="|selectFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
-										<input type="hidden" th:id="|rollbackFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
+										<input type="hidden" th:id="|selectFor${tstat.index}_${estat.index}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
+										<input type="hidden" th:id="|rollbackFor${tstat.index}_${estat.index}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
 										<div class="btn-group float-right" role="group">
 											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Garder</button>
 											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Annuler</button>
@@ -107,11 +108,9 @@
 		
         // When selecting
         const selectAction = (item) => {
-			hideDisplays();
         	var selectInput = $("#selectFor" + item);
         	var rollbackInput = $("#rollbackFor" + item);
 			if(selectInput.val() === 'false'){
-				console.info("selected " + item);
 				selectInput.val("true");
 				rollbackInput.val("false");
 				$("#" + item + " td button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
@@ -122,11 +121,9 @@
         
         // When rollbacking
         const rollbackAction = (item) => {
-			hideDisplays();
         	var selectInput = $("#selectFor" + item);
         	var rollbackInput = $("#rollbackFor" + item);
 			if(rollbackInput.val() === 'false'){
-				console.info("rollback " + item);
 				selectInput.val("false");
 				rollbackInput.val("true");
 				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
@@ -137,11 +134,9 @@
         
         // When ignoring
         const ignoreAction = (item) => {
-			hideDisplays();
         	var selectInput = $("#selectFor" + item);
         	var rollbackInput = $("#rollbackFor" + item);
 			if(selectInput.val() === 'true' || rollbackInput.val() === 'true'){
-				console.info("ignore " + item);
 				selectInput.val("false");
 				rollbackInput.val("false");
 				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
@@ -183,7 +178,6 @@
 		// For "select All / rollback All / ignore All"
 		const processAll = (butId) => {
 			var idParts = butId.split("_");
-			console.log("All " + idParts[0] + " on table " + idParts[1]);
 			$("#" + idParts[1] + " button." + idParts[0] + "-button").click();
 		};
 		

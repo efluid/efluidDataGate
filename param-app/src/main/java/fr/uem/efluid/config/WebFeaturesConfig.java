@@ -4,6 +4,9 @@ import java.util.ArrayList;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -22,8 +25,14 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
  * @version 1
  */
 @Configuration
+@ControllerAdvice
 @EnableSwagger2
 public class WebFeaturesConfig {
+
+	@InitBinder
+	public void initBinder(WebDataBinder binder) {
+		binder.setAutoGrowCollectionLimit(500000);
+	}
 
 	@Bean
 	WebMvcConfigurer configurer() {

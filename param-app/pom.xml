@@ -99,7 +99,7 @@
 
 		<dependency>
 			<groupId>org.pac4j</groupId>
-			<artifactId>spring-webmvc-pac4j</artifactId>
+			<artifactId>j2e-pac4j</artifactId>
 		</dependency>
 
 		<dependency>

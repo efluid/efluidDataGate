@@ -39,6 +39,7 @@
 		<dependency.maven-core.version>3.3.9</dependency.maven-core.version>
 		<dependency.reflections-utils.version>0.9.11</dependency.reflections-utils.version>
         <dependency.spring-webmvc-pac4j.version>2.2.0</dependency.spring-webmvc-pac4j.version>
+		<dependency.pac4j-jee.version>3.0.0</dependency.pac4j-jee.version>
         <dependency.pac4j.version>2.3.0</dependency.pac4j.version>
         
 		<dependency.swagger-api.version>1.5.18</dependency.swagger-api.version>
@@ -141,6 +142,13 @@
 	            <version>${dependency.spring-webmvc-pac4j.version}</version>
 	        </dependency>
 
+			<!-- For basic Servlet integration of PAC4J -->
+			<dependency>
+				<groupId>org.pac4j</groupId>
+				<artifactId>j2e-pac4j</artifactId>
+				<version>${dependency.pac4j-jee.version}</version>
+			</dependency>
+		
 			<dependency>
 				<groupId>org.pac4j</groupId>
 				<artifactId>pac4j-http</artifactId>

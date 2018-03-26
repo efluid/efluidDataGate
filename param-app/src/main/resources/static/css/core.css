@@ -127,6 +127,12 @@ select.select-column {
 	font-weight: bold;
 }
 
+.dictionary-diff-size {
+	font-size: 14px;
+	color: brown;
+	font-weight: bold;
+}
+
 .parameter-name {
     font-weight: bold;
 }

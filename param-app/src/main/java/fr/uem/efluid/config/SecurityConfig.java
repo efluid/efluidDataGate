@@ -4,15 +4,16 @@ import org.pac4j.core.client.Clients;
 import org.pac4j.core.config.Config;
 import org.pac4j.http.client.direct.ParameterClient;
 import org.pac4j.http.client.indirect.FormClient;
-import org.pac4j.springframework.web.SecurityInterceptor;
+import org.pac4j.j2e.filter.CallbackFilter;
+import org.pac4j.j2e.filter.SecurityFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.handler.MappedInterceptor;
 
 import fr.uem.efluid.rest.RestApi;
 import fr.uem.efluid.security.AllAuthorizer;
@@ -67,15 +68,54 @@ public class SecurityConfig {
 		return config;
 	}
 
+	/**
+	 * @return
+	 */
 	@Bean
-	public MappedInterceptor webInterceptor() {
-		return new MappedInterceptor(new String[] { "/ui", "/ui/*" },
-				new SecurityInterceptor(config(), WEB_CLIENT, AUTHORIZER));
+	public FilterRegistrationBean<SecurityFilter> webSecurityFilter() {
+
+		LOGGER.debug("[SECURITY] Mapping rest security on \"/ui\", \"/ui/*\"");
+
+		FilterRegistrationBean<SecurityFilter> registration = new FilterRegistrationBean<>();
+		registration.setFilter(new SecurityFilter(config(), WEB_CLIENT, AUTHORIZER));
+		registration.addUrlPatterns(new String[] { "/ui", "/ui/*" });
+		registration.setName("pac4jWestSecurityFilter");
+		registration.setOrder(1);
+
+		return registration;
 	}
 
+	/**
+	 * @return
+	 */
 	@Bean
-	public MappedInterceptor restInterceptor() {
-		return new MappedInterceptor(new String[] { "/rest/v1/backlog/*", "/rest/v1/dictionary/*" },
-				new SecurityInterceptor(config(), REST_CLIENT, AUTHORIZER));
+	public FilterRegistrationBean<SecurityFilter> restSecurityFilter() {
+
+		LOGGER.debug("[SECURITY] Mapping rest security on \"/rest/v1/backlog/*\", \"/rest/v1/dictionary/*\"");
+
+		FilterRegistrationBean<SecurityFilter> registration = new FilterRegistrationBean<>();
+		registration.setFilter(new SecurityFilter(config(), REST_CLIENT, AUTHORIZER));
+		registration.addUrlPatterns(new String[] { "/rest/v1/backlog/*", "/rest/v1/dictionary/*" });
+		registration.setName("pac4jRestSecurityFilter");
+		registration.setOrder(1);
+
+		return registration;
+	}
+
+	/**
+	 * @return
+	 */
+	@Bean
+	public FilterRegistrationBean<CallbackFilter> callbackFilter() {
+
+		LOGGER.debug("[SECURITY] Mapping callback on \"/callback\"");
+
+		FilterRegistrationBean<CallbackFilter> registration = new FilterRegistrationBean<>();
+		registration.setFilter(new CallbackFilter(config(), "/"));
+		registration.addUrlPatterns(new String[] { "/callback" });
+		registration.setName("pac4jCallbackFilter");
+		registration.setOrder(1);
+
+		return registration;
 	}
 }

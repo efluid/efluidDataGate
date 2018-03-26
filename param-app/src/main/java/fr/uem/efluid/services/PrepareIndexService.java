@@ -272,31 +272,27 @@ public class PrepareIndexService {
 			final Set<T> diff,
 			final DictionaryEntry dic) {
 
-		if (actualOne.getKey() != null) {
-			// Found : for delete identification immediately remove from found ones
-			String knewPayload = knewContent.remove(actualOne.getKey());
+		// Found : for delete identification immediately remove from found ones
+		String knewPayload = knewContent.remove(actualOne.getKey());
 
-			// Exist already
-			if (knewPayload != null) {
+		// Exist already
+		if (knewPayload != null) {
 
-				// TODO : add independency over column model
+			// TODO : add independency over column model
 
-				// Content is different : it's an Update
-				if (!actualOne.getValue().equals(knewPayload)) {
-					LOGGER.debug("New endex entry for {} : UPDATED from \"{}\" to \"{}\"", actualOne.getKey(), knewPayload,
-							actualOne.getValue());
-					diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.UPDATE, actualOne.getKey(), actualOne.getValue(), knewPayload,
-							dic));
-				}
+			// Content is different : it's an Update
+			if (!actualOne.getValue().equals(knewPayload)) {
+				LOGGER.debug("New endex entry for {} : UPDATED from \"{}\" to \"{}\"", actualOne.getKey(), knewPayload,
+						actualOne.getValue());
+				diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.UPDATE, actualOne.getKey(), actualOne.getValue(), knewPayload,
+						dic));
 			}
+		}
 
-			// Doesn't exist already : it's an addition
-			else {
-				LOGGER.debug("New endex entry for {} : ADD with \"{}\" to \"{}\"", actualOne.getKey(), actualOne.getValue());
-				diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKey(), actualOne.getValue(), null, dic));
-			}
-		} else {
-			LOGGER.debug("Found one null key when using column {} on table {} ", dic.getKeyName(), dic.getTableName());
+		// Doesn't exist already : it's an addition
+		else {
+			LOGGER.debug("New endex entry for {} : ADD with \"{}\" to \"{}\"", actualOne.getKey(), actualOne.getValue());
+			diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKey(), actualOne.getValue(), null, dic));
 		}
 	}
 

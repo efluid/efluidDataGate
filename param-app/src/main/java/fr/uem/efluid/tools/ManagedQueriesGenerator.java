@@ -318,12 +318,14 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 			return DEFAULT_SELECT_CLAUSE;
 		}
 
+		// Clean search for key
+		String keyRef = this.protectColumns
+				? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
+				: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP;
+
 		// If keyname not in select clause, need to add it
-		if (!parameterEntry.getSelectClause().contains(parameterEntry.getKeyName())) {
-			return (this.protectColumns)
-					? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
-							+ parameterEntry.getSelectClause()
-					: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP + parameterEntry.getSelectClause();
+		if (!parameterEntry.getSelectClause().contains(keyRef)) {
+			return keyRef + parameterEntry.getSelectClause();
 		}
 
 		return parameterEntry.getSelectClause();
