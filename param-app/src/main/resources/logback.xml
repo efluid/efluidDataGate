@@ -41,10 +41,15 @@
 	</logger> -->
 
 	<!-- If enabled to debug in JdbcBasedDatabaseDescriptionRepository, will output details on metadata extraction, including step durations -->
-	<!-- <logger name="fr.uem.efluid.model.repositories.impls.JdbcBasedDatabaseDescriptionRepository" additivity="false"> 
+	<logger name="fr.uem.efluid.model.repositories.impls.AbstractDatabaseDescriptionRepository" additivity="false"> 
 		<level value="DEBUG" /> 
 		<appender-ref ref="STDOUT" /> 
-	</logger> -->
+	</logger>
+
+	<logger name="fr.uem.efluid.model.repositories.impls.OracleDatabaseDescriptionRepository" additivity="false"> 
+		<level value="DEBUG" /> 
+		<appender-ref ref="STDOUT" /> 
+	</logger>
 
 	<!-- Explicit logger for DIFF MERGE processes. Log it here into current console -->
 	<logger name="merge.analysis" additivity="false">

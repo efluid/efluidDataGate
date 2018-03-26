@@ -136,7 +136,7 @@
 			var key = (keys.length === 0)? cols[0] : keys[0];
 
 			// Composed query - Order by 1st key = first in columns
-			var query = 'SELECT cur."' + key + '", cur."' + (selecteds.length == cols.length?'*':selecteds.join('", cur."')) + '" FROM "' + $("#table").val() + '" cur WHERE ' +   $("#whereCriteria").val() + ' ORDER BY "' + keys[0] + '"';
+			var query = 'SELECT cur."' + key + '", cur."' + (selecteds.length == cols.length?'*':selecteds.join('", cur."')) + '" FROM "' + $("#table").val() + '" cur WHERE ' +   $("#whereCriteria").val() + ' ORDER BY cur."' + keys[0] + '"';
 			
 			$("#currentQuery").text(query);
 			console.info(query);

@@ -355,7 +355,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 */
 	private static final String generateSelectQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("SELECT %s FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
-				.append(" cur %s WHERE %s ORDER BY ")
+				.append(" cur %s WHERE %s ORDER BY cur.")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
 	}
 

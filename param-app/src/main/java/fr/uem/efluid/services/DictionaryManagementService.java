@@ -14,7 +14,6 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.assertj.core.util.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -207,7 +206,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Need select clause as a list
 		Collection<String> selecteds = isNotEmpty(entry.getSelectClause())
 				? this.queryGenerator.splitSelectClause(entry.getSelectClause(), dicLinks, allDicts)
-				: Lists.emptyList();
+				: Collections.emptyList();
 
 		TableDescription desc = getTableDescription(edit.getTable());
 		// dicLinks.get(0).equals(dicLinks.get(1))

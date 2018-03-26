@@ -15,6 +15,7 @@
 						Le schéma <span th:text="${payload}">demo</span> configuré pour le filtrage des métadonnées n'existe pas 
 						dans la BDD managée courante
 					</p>
+					<p th:case="'METADATA_WRONG_TYPE'">La lecture des métadonnées a été démarrée avec un type de base de données incorrect. Le driver ne correspond pas au format de BDD?</p>
 					<p th:case="'METADATA_FAILED'">La lecture des métadonnées n'est pas possible sur la base de donnée gérée</p>
 					<p th:case="'VALUE_CHECK_FAILED'">Le contrôle des données n'est pas possible sur la base de donnée gérée</p>
 					<p th:case="'VALUE_SHA_UNSUP'">Le format de hashage prévu n'est pas supporté sur l'environnement actuel</p>

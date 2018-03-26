@@ -4,17 +4,22 @@ param-efluid:
 
    managed-datasource:
        driverClassName: oracle.jdbc.OracleDriver
-       url: jdbc:oracle:thin:@small-server:49161:xe
-       username: demo
-       password: demo
+       ##url: jdbc:oracle:thin:@small-server:49161:xe
+       url: jdbc:oracle:thin:@LDBDDEDT2:2483/DE13EDT5
+       ##username: demo
+       ##password: demo
+       username: NB_ERDF_DEV
+       password: Its4bdd_NB_ERDF_DEV
        connectionTestQuery: SELECT 1 from DUAL
        minimumIdle: 5
        maxPoolSize: 20
        timeout: 500
        meta:
-           filterSchema: DEMO
+           ##filterSchema: DEMO
+           filterSchema: NB_ERDF_DEV
            search-fk-type: oracle-by-name
            preload: false
+           fixed-cached: true
        query: 
            tableNamesProtected: true
            columnNamesProtected: true
@@ -45,7 +50,7 @@ spring:
        enabled: true
    
    datasource:
-       url: jdbc:postgresql://small-server/manager
+       url: jdbc:postgresql://localhost/reference_manager
        driver-class-name: org.postgresql.Driver
        username: user
        password: user
