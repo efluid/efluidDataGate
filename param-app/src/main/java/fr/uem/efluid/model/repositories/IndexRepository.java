@@ -36,6 +36,16 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 
 	/**
 	 * <p>
+	 * Search for existing commit indexes
+	 * </p>
+	 * 
+	 * @param commitUuid
+	 * @return
+	 */
+	long countByCommitUuid(UUID commitUuid);
+
+	/**
+	 * <p>
 	 * Load full index detail for one DictionaryEntry (= on managed table)
 	 * </p>
 	 * 

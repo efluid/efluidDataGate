@@ -18,6 +18,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,6 +73,9 @@ public class CommitService extends AbstractApplicationService {
 	private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(CommitService.class);
+
+	@Value("${param-efluid.display.details-index-max}")
+	private long maxDisplayDetails;
 
 	@Autowired
 	private CommitRepository commits;
@@ -215,17 +219,30 @@ public class CommitService extends AbstractApplicationService {
 		// Load details
 		CommitDetails details = CommitDetails.fromEntity(this.commits.getOne(commitUUID));
 
-		// Load commit index
-		CommitDetails.completeIndex(details, this.indexes.findByCommitUuid(commitUUID));
 
-		Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid();
+		long size = this.indexes.countByCommitUuid(commitUUID);
+		
+		// Check index size for commit
+		if (size < this.maxDisplayDetails) {
 
-		// Need to complete DictEnty + HRPayload for index entries
-		details.getContent().stream().forEach(d -> {
-			DictionaryEntry dict = mappedDict.get(d.getDictionaryEntryUuid());
-			d.completeFromEntity(dict);
-			this.diffs.completeHrPayload(dict, d.getDiff());
-		});
+			Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid();
+			
+			// Load commit index
+			CommitDetails.completeIndex(details, this.indexes.findByCommitUuid(commitUUID));
+
+			// Need to complete DictEnty + HRPayload for index entries
+			details.getContent().stream().forEach(d -> {
+				DictionaryEntry dict = mappedDict.get(d.getDictionaryEntryUuid());
+				d.completeFromEntity(dict);
+				this.diffs.completeHrPayload(dict, d.getDiff());
+			});
+		} 
+		
+		// Too much data, get only dictionary item listings
+		else {
+			details.setTooMuchData(true);
+			details.setSize(size);
+		}
 
 		return details;
 	}
@@ -308,14 +325,20 @@ public class CommitService extends AbstractApplicationService {
 				.peek(e -> e.setCommit(newCommit))
 				.collect(Collectors.toList());
 
+		LOGGER.info("Prepared index with {} items for new commit {}", Integer.valueOf(entries.size()), commitUUID);
+
 		LOGGER.debug("New commit {} of state {} with comment {} prepared with {} index lines",
 				newCommit.getUuid(), prepared.getPreparingState(), newCommit.getComment(), Integer.valueOf(entries.size()));
 
 		// Prepare used lobs
 		List<LobProperty> newLobs = this.diffs.prepareUsedLobsForIndex(entries, prepared.getDiffLobs());
 
+		LOGGER.info("Start saving {} index items for new commit {}", Integer.valueOf(entries.size()), commitUUID);
+
 		// Save index and set back to commit with bi-directional link
 		newCommit.setIndex(this.indexes.saveAll(entries));
+
+		LOGGER.info("Start saving {} lobs items for new commit {}", Integer.valueOf(newLobs.size()), commitUUID);
 
 		// Add commit to lobs and save
 		newLobs.forEach(l -> l.setCommit(newCommit));
@@ -331,6 +354,9 @@ public class CommitService extends AbstractApplicationService {
 			this.applyDiffService.applyDiff(entries, prepared.getDiffLobs());
 			LOGGER.debug("Processing merge commit {} : diff applied with success", commitUUID);
 		}
+
+		LOGGER.info("Commit {} saved with {} items and {} lobs", commitUUID, Integer.valueOf(entries.size()),
+				Integer.valueOf(newLobs.size()));
 
 		return commitUUID;
 	}

@@ -476,6 +476,7 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 		case "DATE":
 			return ColumnType.TEMPORAL;
 		case "NUMBER":
+		case "FLOAT":
 			return ColumnType.ATOMIC;
 		case "BLOB":
 		case "CLOB":

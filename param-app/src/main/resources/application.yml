@@ -7,8 +7,8 @@ param-efluid:
        url: jdbc:oracle:thin:@localhost:49161:xe
        ##url: jdbc:oracle:thin:@small-server:49161:xe
        ##url: jdbc:oracle:thin:@LDBDDEDT2:2483/DE13EDT5
-       username: demo
-       password: demo
+       username: reference
+       password: reference
        ##username: NB_ERDF_DEV
        ##password: Its4bdd_NB_ERDF_DEV
        connectionTestQuery: SELECT 1 from DUAL
@@ -16,7 +16,7 @@ param-efluid:
        maxPoolSize: 20
        timeout: 500
        meta:
-           filterSchema: DEMO
+           filterSchema: REFERENCE
            ##filterSchema: NB_ERDF_DEV
            search-fk-type: oracle-by-name
            preload: false
@@ -32,6 +32,9 @@ param-efluid:
        check-update-missing-ids: true
        check-delete-missing-ids: true
 
+   display:
+       details-index-max: 10000
+       
    security:
        salt: 12345678901234567890123456789012
                   
@@ -62,7 +65,7 @@ spring:
        open-in-view: false
        show-sql: false
        hibernate:
-           ddl-auto: create
+           ddl-auto: update
 
 ## WEB SERVER CONFIG
 server:

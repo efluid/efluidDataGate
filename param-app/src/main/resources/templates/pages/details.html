@@ -19,6 +19,7 @@
 					<li><b>Créé le</b> : <span th:text="${details.createdTime}">jeudi</span></li>
 					<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>
 					<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${details.importedTime}">vendredi</span></li>
+					<li th:if="${details.tooMuchData}"><span class="dictionary-diff-size">Trop de lignes (<span th:text="${details.size}">19998</span>) pour afficher le détail du diff</span></li>
 				</ul>
 			</p>
 			

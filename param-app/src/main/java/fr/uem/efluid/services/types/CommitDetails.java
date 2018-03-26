@@ -34,6 +34,10 @@ public class CommitDetails {
 
 	private CommitState state;
 
+	private boolean tooMuchData;
+
+	private long size;
+
 	private CommitDetails() {
 		super();
 	}
@@ -178,6 +182,36 @@ public class CommitDetails {
 	 */
 	public boolean isEmptyDiff() {
 		return this.content.stream().allMatch(d -> d.getDiff().isEmpty());
+	}
+
+	/**
+	 * @return the tooMuchData
+	 */
+	public boolean isTooMuchData() {
+		return this.tooMuchData;
+	}
+
+	/**
+	 * @param tooMuchData
+	 *            the tooMuchData to set
+	 */
+	public void setTooMuchData(boolean tooMuchData) {
+		this.tooMuchData = tooMuchData;
+	}
+
+	/**
+	 * @return the size
+	 */
+	public long getSize() {
+		return this.size;
+	}
+
+	/**
+	 * @param size
+	 *            the size to set
+	 */
+	public void setSize(long size) {
+		this.size = size;
 	}
 
 	/**
