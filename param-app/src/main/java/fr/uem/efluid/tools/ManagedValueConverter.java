@@ -61,6 +61,9 @@ public class ManagedValueConverter {
 
 	private final static DateTimeFormatter LDT_FORMATTER = DateTimeFormatter.ofPattern(FormatUtils.DATE_TIME_FORMAT);
 
+	@org.springframework.beans.factory.annotation.Value("${param-efluid.managed-datasource.value.keep-empty}")
+	private boolean keepEmptyValues;
+
 	/**
 	 * <p>
 	 * Using internal templating desc, prepare one value for extraction when processing
@@ -75,27 +78,23 @@ public class ManagedValueConverter {
 	 *            raw content of the cell
 	 * @param type
 	 *            type of supported value, as specified in <tt>ColumnType</tt>
-	 * @param last
-	 *            true if it's the last cell
 	 */
 	public void appendExtractedValue(
 			final StringBuilder builder,
 			final String colName,
 			final String value,
-			final ColumnType type,
-			final boolean last) {
+			final ColumnType type) {
 
-		builder.append(colName).append(AFFECT);
+		if (this.keepEmptyValues || value != null) {
 
-		if (value == null) {
-			builder.append(type.getRepresent()).append(TYPE_IDENT);
-		} else {
-			builder.append(type.getRepresent()).append(TYPE_IDENT)
-					.append(FormatUtils.encodeAsString(value));
-		}
+			builder.append(colName).append(AFFECT);
 
-		if (!last) {
-			builder.append(SEPARATOR);
+			if (value == null) {
+				builder.append(type.getRepresent()).append(TYPE_IDENT);
+			} else {
+				builder.append(type.getRepresent()).append(TYPE_IDENT)
+						.append(FormatUtils.encodeAsString(value));
+			}
 		}
 	}
 
@@ -113,25 +112,20 @@ public class ManagedValueConverter {
 	 *            raw content of the cell
 	 * @param type
 	 *            type of supported value, as specified in <tt>ColumnType</tt>
-	 * @param last
-	 *            true if it's the last cell
 	 */
 	public void appendBinaryValue(
 			final StringBuilder builder,
 			final String colName,
 			final byte[] value,
-			final boolean last,
 			final Map<String, byte[]> lobs) {
 
-		builder.append(colName).append(AFFECT);
+		if (this.keepEmptyValues || value != null) {
+			builder.append(colName).append(AFFECT);
 
-		String hash = hashBinary(value);
-		lobs.put(hash, value);
+			String hash = hashBinary(value);
+			lobs.put(hash, value);
 
-		builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(hash);
-
-		if (!last) {
-			builder.append(SEPARATOR);
+			builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(hash);
 		}
 	}
 
@@ -147,27 +141,22 @@ public class ManagedValueConverter {
 	 *            name of the cell
 	 * @param date
 	 *            content of the cell as a <code>java.util.Date</code>
-	 * @param last
-	 *            true if it's the last cell
 	 */
 	public void appendTemporalValue(
 			final StringBuilder builder,
 			final String colName,
-			final Date date,
-			final boolean last) {
+			final Date date) {
 
-		builder.append(colName).append(AFFECT);
+		if (this.keepEmptyValues || date != null) {
+			builder.append(colName).append(AFFECT);
 
-		if (date == null) {
-			builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT);
-		} else {
-			// Formated date
-			builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT).append(FormatUtils.encodeAsString(LDT_FORMATTER
-					.format(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()))));
-		}
-
-		if (!last) {
-			builder.append(SEPARATOR);
+			if (date == null) {
+				builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT);
+			} else {
+				// Formated date
+				builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT).append(FormatUtils.encodeAsString(LDT_FORMATTER
+						.format(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()))));
+			}
 		}
 	}
 
@@ -186,19 +175,31 @@ public class ManagedValueConverter {
 
 		StringBuilder oneLine = new StringBuilder();
 
-		int remaining = lineContent.size() - 1;
-
 		for (Map.Entry<String, Object> value : lineContent.entrySet()) {
 			appendExtractedValue(
 					oneLine,
 					value.getKey(),
 					value.getValue().toString(),
-					ColumnType.forObject(value.getValue()),
-					remaining == 0);
-			remaining--;
+					ColumnType.forObject(value.getValue()));
 		}
 
-		return oneLine.toString();
+		return finalizePayload(oneLine.toString());
+	}
+
+	/**
+	 * <p>
+	 * Concatened values can have a last trailing "," joiner, to remove
+	 * </p>
+	 * 
+	 * @param rawPayload
+	 * @return
+	 */
+	public String finalizePayload(String rawPayload) {
+		int last = rawPayload.length() - 1;
+		if (rawPayload.charAt(last) == SEPARATOR) {
+			return rawPayload.substring(0, last);
+		}
+		return rawPayload;
 	}
 
 	/**

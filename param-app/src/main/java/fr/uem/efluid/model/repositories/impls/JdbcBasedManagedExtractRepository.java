@@ -118,7 +118,6 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 			// Prepare data definition from meta
 			final int count = meta.getColumnCount();
-			final int last = count - 1;
 			String[] columnNames = new String[count];
 			ColumnType[] columnType = new ColumnType[count];
 			int keyPos = 1;
@@ -143,31 +142,30 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 						// Call for binary only if needed
 						if (type == ColumnType.BINARY) {
-							this.valueConverter.appendBinaryValue(payload, columnNames[i], rs.getBytes(i + 1), i == last, this.blobs);
+							this.valueConverter.appendBinaryValue(payload, columnNames[i], rs.getBytes(i + 1), this.blobs);
 						}
 
 						// Boolean need full represent of boolean
 						else if (type == ColumnType.BOOLEAN) {
-							this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getBoolean(i + 1) ? "true" : "false", type,
-									i == last);
+							this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getBoolean(i + 1) ? "true" : "false",
+									type);
 						}
 
 						// Temporal need parsing for DB independency
 						else if (type == ColumnType.TEMPORAL) {
-							this.valueConverter.appendTemporalValue(payload, columnNames[i], rs.getTimestamp(i + 1), i == last);
+							this.valueConverter.appendTemporalValue(payload, columnNames[i], rs.getTimestamp(i + 1));
 						}
 
 						// Else basic string extraction
 						else {
-							this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getString(i + 1), type,
-									i == last);
+							this.valueConverter.appendExtractedValue(payload, columnNames[i], rs.getString(i + 1), type);
 						}
 					} else {
 						keyValue = rs.getString(i + 1);
 					}
 				}
 
-				extraction.put(keyValue, payload.toString());
+				extraction.put(keyValue, this.valueConverter.finalizePayload(payload.toString()));
 			}
 
 			return extraction;

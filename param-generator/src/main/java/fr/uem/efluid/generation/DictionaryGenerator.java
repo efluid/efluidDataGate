@@ -184,51 +184,56 @@ public class DictionaryGenerator {
 			// Table cfg
 			ParameterTable paramTable = tableType.getAnnotation(ParameterTable.class);
 
-			ParameterTableDefinition def = new ParameterTableDefinition();
-			def.setCreatedTime(LocalDateTime.now());
-			def.setDomain(new ParameterDomainDefinition()); // Will be merged later
+			// Only process concrete use of annotation
+			if (paramTable != null) {
+				
+				ParameterTableDefinition def = new ParameterTableDefinition();
+				def.setCreatedTime(LocalDateTime.now());
+				def.setDomain(new ParameterDomainDefinition()); // Will be merged later
 
-			// Found domain name
-			def.getDomain().setName(paramTable.domainName() != null && paramTable.domainName().trim().length() > 0 ? paramTable.domainName()
-					: annotDomains.get(tableType));
+				// Found domain name
+				def.getDomain()
+						.setName(paramTable.domainName() != null && paramTable.domainName().trim().length() > 0 ? paramTable.domainName()
+								: annotDomains.get(tableType));
 
-			// Domain is mandatory
-			if (def.getDomain().getName() == null) {
-				throw new IllegalArgumentException(
-						"No domain found for type " + tableType.getName()
-								+ ". Need to specify the domain with meta-annotation, with package annotation or with domainName property in @ParameterTable");
+				// Domain is mandatory
+				if (def.getDomain().getName() == null) {
+					throw new IllegalArgumentException(
+							"No domain found for type " + tableType.getName()
+									+ ". Need to specify the domain with meta-annotation, with package annotation or with domainName property in @ParameterTable");
+				}
+
+				// Init table def
+				def.setParameterName(paramTable.name());
+				def.setTableName(paramTable.tableName());
+				def.setWhereClause(paramTable.filterClause());
+				def.setUuid(generateFixedUUID(paramTable.tableName(), ParameterTableDefinition.class));
+
+				getLog().debug("Found mapped parameter type " + tableType.getName() + " with table " + def.getTableName()
+						+ " and generated UUID " + def.getUuid().toString());
+
+				// Search for key (field / method)
+				List<Associate<ParameterKey, Class<?>>> keys = findAnnotOnFieldOrMethod(tableType, ParameterKey.class, Field::getType,
+						Method::getReturnType);
+
+				// At least one is needed
+				if (keys.size() == 0) {
+					throw new IllegalArgumentException(
+							"No key found for type " + tableType.getName() + ". Need to specify a @ParameterKey on field or method");
+				}
+
+				// Use first
+				Associate<ParameterKey, Class<?>> key = keys.get(0);
+
+				// Init key def
+				def.setKeyName(key.getOne().value());
+				def.setKeyType(key.getOne().type() != null && key.getOne().type() != ColumnType.UNKNOWN ? key.getOne().type()
+						: ColumnType.forClass(key.getTwo()));
+
+				getLog().debug("Found key " + def.getKeyName() + " of type " + def.getKeyType() + " for type " + tableType.getName());
+
+				tables.put(tableType, def);
 			}
-
-			// Init table def
-			def.setParameterName(paramTable.name());
-			def.setTableName(paramTable.tableName());
-			def.setWhereClause(paramTable.filterClause());
-			def.setUuid(generateFixedUUID(paramTable.tableName(), ParameterTableDefinition.class));
-
-			getLog().debug("Found mapped parameter type " + tableType.getName() + " with table " + def.getTableName()
-					+ " and generated UUID " + def.getUuid().toString());
-
-			// Search for key (field / method)
-			List<Associate<ParameterKey, Class<?>>> keys = findAnnotOnFieldOrMethod(tableType, ParameterKey.class, Field::getType,
-					Method::getReturnType);
-
-			// At least one is needed
-			if (keys.size() == 0) {
-				throw new IllegalArgumentException(
-						"No key found for type " + tableType.getName() + ". Need to specify a @ParameterKey on field or method");
-			}
-
-			// Use first
-			Associate<ParameterKey, Class<?>> key = keys.get(0);
-
-			// Init key def
-			def.setKeyName(key.getOne().value());
-			def.setKeyType(key.getOne().type() != null && key.getOne().type() != ColumnType.UNKNOWN ? key.getOne().type()
-					: ColumnType.forClass(key.getTwo()));
-
-			getLog().debug("Found key " + def.getKeyName() + " of type " + def.getKeyType() + " for type " + tableType.getName());
-
-			tables.put(tableType, def);
 		}
 
 		return tables;

@@ -24,6 +24,8 @@ param-efluid:
            tableNamesProtected: true
            columnNamesProtected: true
            databaseDateFormat: dd-MM-yyyy HH:mm:ss
+       value:
+           keep-empty: false
    
    managed-updates:
        check-update-missing-ids: true
