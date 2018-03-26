@@ -31,7 +31,7 @@
 					<span class="dictionary-diff-size" th:text="|${diffDisplay.diff.size()} valeur(s)|">15 valeurs</span>
 					<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 				</div>
-				<table class="table table-sm">
+				<table class="table table-sm" th:if="${diffDisplay.diff.size() <= 1000}">
 					<thead>
 						<tr>
 							<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>

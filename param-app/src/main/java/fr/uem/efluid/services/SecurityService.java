@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.types.UserDetails;
 
 /**
@@ -29,6 +30,9 @@ public class SecurityService extends AbstractApplicationService {
 	private UserRepository users;
 
 	@Autowired
+	private UserHolder holder;
+
+	@Autowired
 	private PasswordEncoder encoder;
 
 	/**
@@ -37,7 +41,7 @@ public class SecurityService extends AbstractApplicationService {
 	 * @param password
 	 */
 	@CacheEvict(cacheNames = "users", allEntries = true)
-	public void addSimpleUser(String login, String email, String password) {
+	public void addSimpleUser(String login, String email, String password, boolean fromWizzard) {
 
 		LOGGER.info("Creation new user : {}", login);
 
@@ -46,6 +50,10 @@ public class SecurityService extends AbstractApplicationService {
 		user.setPassword(this.encoder.encode(password));
 		user.setEmail(email);
 		user.setToken(generateToken());
+
+		if (fromWizzard) {
+			this.holder.setWizzardUser(user);
+		}
 
 		this.users.save(user);
 	}

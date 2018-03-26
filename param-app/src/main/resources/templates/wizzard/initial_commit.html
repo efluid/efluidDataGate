@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html layout:decorate="~{layouts/wizzard.html}">
 <head>
+    <link rel="stylesheet" href="/css/spinning.css" media="screen"/>
 </head>
 <body>
 	<span layout:fragment="content">
-		<h3>Wizzare > Ajout d'utilisateur > Dictionnaire initial > <span class="w-active">Preparation de paramètre</span> > fin</h3>
+		<span class="w-bc">Ajout d'utilisateur > Dictionnaire initial > <span class="w-active">Preparation de paramètre</span> > fin</span>
 		<br/>
 		<div class="alert alert-primary" role="alert">
 			Si le dictionnaire est configuré, il est possible de préparer un premier lot de paramétrage établissant la situation "initiale". 
@@ -23,8 +24,8 @@
 				</div>
         	</div>
 	        <div th:if="${preparation != null and preparation.status.name()=='DIFF_RUNNING'}" class="alert alert-secondary" role="alert">
-				<strong>Analyse en cours</strong>. Suivant la volumétrie du paramètrage, l'identification du lot initial peut p
-				rendre un certain temps. Il n'est pas possible d'arrêter un traitement en cours.
+				<strong>Analyse en cours</strong>. Suivant la volumétrie du paramètrage, l'identification du lot initial peut prendre 
+				un certain temps. Il n'est pas possible d'arrêter un traitement en cours.
 				<div id="floatingCirclesG">
 					<div class="f_circleG" id="frotateG_01"></div>
 					<div class="f_circleG" id="frotateG_02"></div>
@@ -36,10 +37,11 @@
 					<div class="f_circleG" id="frotateG_08"></div>
 				</div>
 			</div>
-			<div th:if="${preparation != null and preparation.status.name() !=  'DIFF_RUNNING'}">
+			<div th:if="${preparation != null and preparation.status.name() != 'DIFF_RUNNING'}">
 				<div class="alert alert-secondary" role="alert">
-					<strong>L'analyse est terminée.</strong> <span>134</span> entrées d'index ont été identifiées, 
-					pour <span>12</span> tables de paramètrages et <span>4</span> domaines
+					<strong>L'analyse est terminée.</strong> <span th:text="${preparation.totalCount}">134</span> entrées d'index ont été identifiées, 
+					pour <span th:text="${preparation.preparedContent.size()}">12</span> tables de paramètrages et 
+					<span th:text="${preparation.selectedFunctionalDomainNames.size()}">4</span> domaines
 					fonctionnels concernés. Le lot initial a été créé sous le nom "Lot initial".
 				</div>
 				<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
@@ -58,7 +60,7 @@
 			console.info("start a new check");
 			$.get("/wizzard/2/progress", (data, status) => {
 				console.info("Check with data" + data);
-				if(data === 'DIFF_RUNNING'){
+				if(data === 'DIFF_RUNNING' || data === 'NOT_LAUNCHED'){
 					// Add new timeout 
 					setTimeout(checkProgress, 1000);
 				} else {

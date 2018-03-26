@@ -170,6 +170,19 @@ public class PilotableCommitPreparationService {
 	}
 
 	/**
+	 * <p>
+	 * For checked status
+	 * </p>
+	 * 
+	 * @return
+	 */
+	public PilotedCommitStatus getCurrentCommitPreparationStatus() {
+
+		PilotedCommitPreparation<?> preparation = getCurrentCommitPreparation();
+		return preparation != null ? preparation.getStatus() : PilotedCommitStatus.NOT_LAUNCHED;
+	}
+
+	/**
 	 * @param encodedLobHash
 	 * @return
 	 */

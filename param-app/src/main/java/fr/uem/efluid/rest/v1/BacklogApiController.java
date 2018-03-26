@@ -56,9 +56,7 @@ public class BacklogApiController implements BacklogApi {
 	 */
 	@Override
 	public PilotedCommitStatus getCurrentPreparedCommitStatus() {
-
-		PilotedCommitPreparation<?> preparation = this.pilotableCommitService.getCurrentCommitPreparation();
-		return preparation != null ? preparation.getStatus() : PilotedCommitStatus.NOT_LAUNCHED;
+		return this.pilotableCommitService.getCurrentCommitPreparationStatus();
 	}
 
 	/**

@@ -16,6 +16,7 @@ public class ApplicationDetails {
 	private String indexSize;
 	private long commitsCount;
 	private long dictionaryCount;
+	private long lobsCount;
 
 	/**
 	 * 
@@ -94,5 +95,20 @@ public class ApplicationDetails {
 	 */
 	public void setCommitsCount(long commitsCount) {
 		this.commitsCount = commitsCount;
+	}
+
+	/**
+	 * @return the lobsCount
+	 */
+	public long getLobsCount() {
+		return this.lobsCount;
+	}
+
+	/**
+	 * @param lobsCount
+	 *            the lobsCount to set
+	 */
+	public void setLobsCount(long lobsCount) {
+		this.lobsCount = lobsCount;
 	}
 }

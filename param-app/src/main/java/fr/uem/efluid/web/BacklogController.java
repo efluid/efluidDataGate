@@ -81,7 +81,7 @@ public class BacklogController {
 	@RequestMapping(path = { "/prepare/progress", "/merge/progress" }, method = GET)
 	@ResponseBody
 	public PilotedCommitStatus preparationGetStatus() {
-		return this.pilotableCommitService.getCurrentCommitPreparation().getStatus();
+		return this.pilotableCommitService.getCurrentCommitPreparationStatus();
 	}
 
 	/**

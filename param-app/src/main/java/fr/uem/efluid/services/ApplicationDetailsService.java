@@ -16,6 +16,7 @@ import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
+import fr.uem.efluid.model.repositories.LobPropertyRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.services.types.ApplicationDetails;
 
@@ -27,7 +28,8 @@ import fr.uem.efluid.services.types.ApplicationDetails;
 @Service
 public class ApplicationDetailsService {
 
-	private static final long INDEX_ENTRY_ESTIMATED_SIZE = 1024;
+	private static final long INDEX_ENTRY_ESTIMATED_SIZE = 500;
+	private static final long LOB_ESTIMATED_SIZE = 2000;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationDetailsService.class);
 
@@ -42,6 +44,9 @@ public class ApplicationDetailsService {
 
 	@Autowired
 	private DictionaryRepository dictionary;
+
+	@Autowired
+	private LobPropertyRepository lobs;
 
 	@Autowired
 	private UserRepository users;
@@ -76,6 +81,7 @@ public class ApplicationDetailsService {
 		details.setDbUrl(this.managedDbUrl);
 		details.setDomainsCount(this.domains.count());
 		details.setDictionaryCount(this.dictionary.count());
+		details.setLobsCount(this.lobs.count());
 		details.setIndexSize(getEstimatedIndexSize());
 
 		return details;
@@ -95,11 +101,14 @@ public class ApplicationDetailsService {
 	 * @return
 	 */
 	private String getEstimatedIndexSize() {
+
 		long size = this.index.count() * INDEX_ENTRY_ESTIMATED_SIZE;
-		BigDecimal estim = new BigDecimal(size / (1024 * 1024));
+		long lobSize = this.lobs.count() * LOB_ESTIMATED_SIZE;
+		BigDecimal estim = new BigDecimal((size + lobSize) / (1024 * 1024));
 		estim.setScale(1, RoundingMode.HALF_UP);
 
-		LOGGER.debug("Checking estimated index size. Found {} items, for a an estimated total size of {} Mb", Long.valueOf(size), estim);
+		LOGGER.debug("Checking estimated index size. Found {} items and {} lobs, for a an estimated total size of {} Mb",
+				Long.valueOf(size), Long.valueOf(lobSize), estim);
 
 		return estim.toPlainString() + " Mb";
 	}

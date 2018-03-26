@@ -74,7 +74,7 @@ public class WizzardController {
 			@RequestParam("password") String password,
 			@RequestParam("email") String email) {
 
-		this.security.addSimpleUser(login, email, password);
+		this.security.addSimpleUser(login, email, password, true);
 
 		return "wizzard/initial_dictionary";
 	}
@@ -136,7 +136,7 @@ public class WizzardController {
 	@RequestMapping(path = { "/2/progress" }, method = GET)
 	@ResponseBody
 	public PilotedCommitStatus preparationGetStatus() {
-		return this.pilotableCommitService.getCurrentCommitPreparation().getStatus();
+		return this.pilotableCommitService.getCurrentCommitPreparationStatus();
 	}
 
 	/**

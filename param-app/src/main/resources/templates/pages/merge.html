@@ -40,7 +40,8 @@
 					<div th:if="${!diffDisplay.diff.isEmpty() and (showAll or diffDisplay.diffNeedAction )}" class="dictionary-content" >
 						<div class="dictionary-summary">
 							<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
-							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>
+							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>&nbsp;
+							<span class="dictionary-diff-size" th:text="|${diffDisplay.diff.size()} valeur(s)|">15 valeurs</span>
 							<span class="reducer reducer-table reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 						</div>
 						<table class="table table-sm">
@@ -57,7 +58,7 @@
 								</tr>
 							</thead>
 							<tbody>
-								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:if="${showAll or entry.needAction}">
+								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${tstat.index}_${estat.index}|" th:if="${showAll or entry.needAction}">
 									<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
 									
 									<td width="72%">
@@ -93,8 +94,8 @@
 										<span class="merged change-display-none" th:if="!${entry.action}">Modifications identiques, rien à changer</span>
 									</td>
 									<td th:if="${entry.needAction}">
-										<input type="hidden" th:id="|selectFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
-										<input type="hidden" th:id="|rollbackFor${diffDisplay.dictionaryEntryUuid}_${entry.keyValue}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
+										<input type="hidden" th:id="|selectFor${tstat.index}_${estat.index}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
+										<input type="hidden" th:id="|rollbackFor${tstat.index}_${estat.index}|" th:field="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
 										<div class="btn-group float-right" role="group">
 											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Appliquer</button>
 											<button type="button" th:class="${preparation.preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Ignorer</button>

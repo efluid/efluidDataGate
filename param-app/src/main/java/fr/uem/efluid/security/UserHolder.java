@@ -23,6 +23,8 @@ public class UserHolder {
 	private static final Logger LOGGER = LoggerFactory.getLogger(UserHolder.class);
 
 	private ThreadLocal<User> currentUser = new ThreadLocal<>();
+	
+	private User wizzardUser;
 
 	/**
 	 * @param user
@@ -36,7 +38,15 @@ public class UserHolder {
 	 * @return
 	 */
 	public User getCurrentUser() {
-		return this.currentUser.get();
+		return this.wizzardUser != null ? this.wizzardUser : this.currentUser.get();
+	}
+	
+	/**
+	 * @param user
+	 */
+	public void setWizzardUser(User user) {
+		LOGGER.debug("Apply active wizzard user {}", user.getLogin());
+		this.wizzardUser = user;
 	}
 
 	@PostConstruct
