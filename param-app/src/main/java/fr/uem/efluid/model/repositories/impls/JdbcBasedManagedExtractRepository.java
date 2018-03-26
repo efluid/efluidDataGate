@@ -34,7 +34,7 @@ import fr.uem.efluid.tools.ManagedValueConverter;
 @Repository
 public class JdbcBasedManagedExtractRepository implements ManagedExtractRepository {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedExtractRepository.class);
+	protected static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedExtractRepository.class);
 
 	@Autowired
 	private JdbcTemplate managedSource;
@@ -111,6 +111,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 		@Override
 		public Map<String, String> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
+			int totalSize = 0;
 			Map<String, String> extraction = new HashMap<>();
 
 			final String keyName = this.parameterEntry.getKeyName().toUpperCase();
@@ -162,6 +163,15 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 						}
 					} else {
 						keyValue = rs.getString(i + 1);
+					}
+
+					// Only on debug : alert on large data load
+					if (LOGGER.isDebugEnabled()) {
+						if (totalSize % 100000 == 0) {
+							LOGGER.debug("Large data extraction - table \"{}\" - extracted {} items", this.parameterEntry.getTableName(),
+									Integer.valueOf(totalSize));
+						}
+						totalSize++;
 					}
 				}
 

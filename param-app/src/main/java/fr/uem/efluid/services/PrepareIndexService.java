@@ -85,7 +85,10 @@ public class PrepareIndexService {
 		// Here one of the app complexity : diff check using JDBC, for one table. Backlog
 		// construction + restoration then diff.
 
+		LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
 		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(entry);
+		
+		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
 
 		return generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
@@ -128,12 +131,17 @@ public class PrepareIndexService {
 		toProcess.addAll(localIndexToTimeStamp);
 		toProcess.addAll(mergeContent);
 
+		LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
 		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(toProcess);
+		
+		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
 
 		Collection<PreparedMergeIndexEntry> diff = generateDiffIndexFromContent(PreparedMergeIndexEntry::new, knewContent, actualContent,
 				entry);
 
+		LOGGER.info("Diff prepared. Complete merge data for table \"{}\"", entry.getTableName());
+		
 		// Then apply from local and from import to identify diff changes
 		completeMergeIndexes(entry, localIndexToTimeStamp, mergeContent, diff);
 
@@ -190,16 +198,22 @@ public class PrepareIndexService {
 			final Map<String, String> actualContent,
 			DictionaryEntry dic) {
 
+		LOGGER.info("Start diff index Generate for table \"{}\"", dic.getTableName());
+
 		final Set<T> diff = ConcurrentHashMap.newKeySet();
 
 		// Use parallel process for higher distribution of verification
 		switchedStream(actualContent).forEach(actualOne -> searchDiff(diffTypeBuilder, actualOne, knewContent, diff, dic));
+
+		LOGGER.info("Existing vs Knew content diff completed for table \"{}\". Start not managed knew content", dic.getTableName());
 
 		// Remaining in knewContent are deleted ones
 		switchedStream(knewContent).forEach(e -> {
 			LOGGER.debug("New endex entry for {} : REMOVE from \"{}\"", e.getKey(), e.getValue());
 			diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.REMOVE, e.getKey(), null, e.getValue(), dic));
 		});
+
+		LOGGER.info("Not managed knew content completed for table \"{}\".", dic.getTableName());
 
 		return diff;
 	}

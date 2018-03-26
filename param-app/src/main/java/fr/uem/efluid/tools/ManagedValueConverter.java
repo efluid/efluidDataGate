@@ -95,6 +95,8 @@ public class ManagedValueConverter {
 				builder.append(type.getRepresent()).append(TYPE_IDENT)
 						.append(FormatUtils.encodeAsString(value));
 			}
+
+			builder.append(SEPARATOR);
 		}
 	}
 
@@ -125,7 +127,7 @@ public class ManagedValueConverter {
 			String hash = hashBinary(value);
 			lobs.put(hash, value);
 
-			builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(hash);
+			builder.append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT).append(hash).append(SEPARATOR);
 		}
 	}
 
@@ -157,6 +159,8 @@ public class ManagedValueConverter {
 				builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT).append(FormatUtils.encodeAsString(LDT_FORMATTER
 						.format(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()))));
 			}
+
+			builder.append(SEPARATOR);
 		}
 	}
 
@@ -196,7 +200,7 @@ public class ManagedValueConverter {
 	 */
 	public String finalizePayload(String rawPayload) {
 		int last = rawPayload.length() - 1;
-		if (rawPayload.charAt(last) == SEPARATOR) {
+		if (last > -1 && rawPayload.charAt(last) == SEPARATOR) {
 			return rawPayload.substring(0, last);
 		}
 		return rawPayload;
