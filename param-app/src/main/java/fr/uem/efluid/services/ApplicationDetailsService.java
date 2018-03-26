@@ -79,6 +79,7 @@ public class ApplicationDetailsService {
 
 		details.setCommitsCount(this.commits.count());
 		details.setDbUrl(this.managedDbUrl);
+		details.setIndexCount(this.index.count());
 		details.setDomainsCount(this.domains.count());
 		details.setDictionaryCount(this.dictionary.count());
 		details.setLobsCount(this.lobs.count());

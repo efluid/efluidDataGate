@@ -13,6 +13,7 @@ public class ApplicationDetails {
 
 	private String dbUrl;
 	private long domainsCount;
+	private long indexCount;
 	private String indexSize;
 	private long commitsCount;
 	private long dictionaryCount;
@@ -37,6 +38,20 @@ public class ApplicationDetails {
 	 */
 	public void setDbUrl(String dbUrl) {
 		this.dbUrl = dbUrl;
+	}
+
+	/**
+	 * @return the indexCount
+	 */
+	public long getIndexCount() {
+		return this.indexCount;
+	}
+
+	/**
+	 * @param indexCount the indexCount to set
+	 */
+	public void setIndexCount(long indexCount) {
+		this.indexCount = indexCount;
 	}
 
 	/**
