@@ -19,7 +19,6 @@
 					<li><b>Créé le</b> : <span th:text="${details.createdTime}">jeudi</span></li>
 					<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>
 					<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${details.importedTime}">vendredi</span></li>
-					<li th:if="${details.tooMuchData}"><span class="dictionary-diff-size">Trop de lignes (<span th:text="${details.size}">19998</span>) pour afficher le détail du diff</span></li>
 				</ul>
 			</p>
 			
@@ -32,7 +31,7 @@
 					<span class="dictionary-diff-size" th:text="|${diffDisplay.diff.size()} valeur(s)|">15 valeurs</span>
 					<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 				</div>
-				<table class="table table-sm" th:if="${diffDisplay.diff.size() <= 1000}">
+				<table class="table table-sm">
 					<thead>
 						<tr>
 							<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
@@ -50,8 +49,11 @@
 				</table>
 			</div>
 		</div>
-		<div th:if="${details.emptyDiff}">
+		<div th:if="${details.emptyDiff && !details.tooMuchData}">
 			<p>Ce lot de modification ne comportait pas de modifications de paramètrage</p>
+		</div>
+		<div th:if="${details.tooMuchData}">
+			<p>Ce lot de modification comporte un nombre de modifications de paramètrage trop volumineux (<span th:text="${details.size}">19998</span> lignes) pour être affiché</p>
 		</div>
 		<p>
 			<div class="float-right"><a href="/commits.html" th:href="@{/ui/commits}" class="btn btn-dark btn-sm">Revenir à la liste</a><br/><br/></div>

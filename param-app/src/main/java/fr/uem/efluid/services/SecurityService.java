@@ -52,6 +52,8 @@ public class SecurityService extends AbstractApplicationService {
 		user.setToken(generateToken());
 
 		if (fromWizzard) {
+			LOGGER.info("New user {} is created in wizzard mode. Set it as current active user for holder, dropped after wizzard complete",
+					login);
 			this.holder.setWizzardUser(user);
 		}
 
@@ -59,6 +61,10 @@ public class SecurityService extends AbstractApplicationService {
 	}
 
 	/**
+	 * <p>
+	 * For rendering of user info
+	 * </p>
+	 * 
 	 * @return
 	 */
 	public UserDetails getCurrentUserDetails() {
@@ -66,6 +72,16 @@ public class SecurityService extends AbstractApplicationService {
 		User freshUser = this.users.getOne(getCurrentUser().getLogin());
 
 		return UserDetails.fromEntity(freshUser);
+	}
+
+	/**
+	 * <p>
+	 * Called when wizzard process is completed to break wizzard user mode
+	 * </p>
+	 */
+	public void completeWizzardUserMode() {
+		LOGGER.info("Wizzard completed. Drop user from holder");
+		this.holder.setWizzardUser(null);
 	}
 
 	/**

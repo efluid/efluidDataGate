@@ -163,6 +163,8 @@ public class WizzardController {
 	@RequestMapping(value = "/3", method = GET)
 	public String completedWizzard() {
 
+		// Finalize temp wizzard data
+		this.security.completeWizzardUserMode();
 		this.detailsService.completeWizzard();
 
 		return "wizzard/completed";

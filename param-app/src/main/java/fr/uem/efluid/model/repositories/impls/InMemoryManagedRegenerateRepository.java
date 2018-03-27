@@ -1,8 +1,8 @@
 package fr.uem.efluid.model.repositories.impls;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
 		LOGGER.debug("Regenerating values from specified index with {} items", Integer.valueOf(specifiedIndex.size()));
 
 		// Content for playing back the backlog
-		Map<String, String> lines = new ConcurrentHashMap<>(1000);
+		Map<String, String> lines = new HashMap<>(10000);
 
 		for (DiffLine line : specifiedIndex) {
 

@@ -5,6 +5,7 @@ import org.pac4j.core.config.Config;
 import org.pac4j.http.client.direct.ParameterClient;
 import org.pac4j.http.client.indirect.FormClient;
 import org.pac4j.j2e.filter.CallbackFilter;
+import org.pac4j.j2e.filter.LogoutFilter;
 import org.pac4j.j2e.filter.SecurityFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,6 +115,23 @@ public class SecurityConfig {
 		registration.setFilter(new CallbackFilter(config(), "/"));
 		registration.addUrlPatterns(new String[] { "/callback" });
 		registration.setName("pac4jCallbackFilter");
+		registration.setOrder(1);
+
+		return registration;
+	}
+
+	/**
+	 * @return
+	 */
+	@Bean
+	public FilterRegistrationBean<LogoutFilter> logoutFilter() {
+
+		LOGGER.debug("[SECURITY] Mapping logout on \"/logout\"");
+
+		FilterRegistrationBean<LogoutFilter> registration = new FilterRegistrationBean<>();
+		registration.setFilter(new LogoutFilter(config(), "/"));
+		registration.addUrlPatterns(new String[] { "/logout" });
+		registration.setName("pac4jLogoutFilter");
 		registration.setOrder(1);
 
 		return registration;
