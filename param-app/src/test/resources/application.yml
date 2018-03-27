@@ -6,15 +6,33 @@ param-efluid:
        url: jdbc:h2:~\h2;DB_CLOSE_ON_EXIT=FALSE
        username: sa
        password: 
-       driver-class-name: org.h2.Driver
+       driverClassName: org.h2.Driver
+       connectionTestQuery: SELECT 1
+       minimumIdle: 2
+       maxPoolSize: 6
+       timeout: 500
+       meta:
+           filterSchema: 
+           search-fk-type: standard
+           preload: false
+           fixed-cached: false
        query: 
            tableNamesProtected: true
            columnNamesProtected: true
-   
+           databaseDateFormat: dd-MM-yyyy HH:mm:ss
+       value:
+           keep-empty: true
+              
    managed-updates:
        check-update-missing-ids: true
        check-delete-missing-ids: true
 
+   display:
+       details-index-max: 10000
+       
+   security:
+       salt: 12345678901234567890123456789012
+       
    details:
        version: TEST
 

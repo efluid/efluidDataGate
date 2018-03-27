@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
-import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -27,10 +26,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @version 1
  */
 @EnableAutoConfiguration
-@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
+@EnableTransactionManagement()
 @EnableJpaRepositories({ REPOSITORIES, ROOT + ".stubs" })
 @EntityScan({ ENTITIES, CONVERTERS, ROOT + ".stubs" })
-@ComponentScan({ CONFIG, SERVICES, WEB, REPOSITORIES_IMPLS, TOOLS, ROOT + ".stubs" })
+@ComponentScan({ CONFIG, SERVICES, WEB, REPOSITORIES_IMPLS, TOOLS, REST, SECURITY, ROOT + ".stubs" })
 @Configuration
 public class IntegrationTestConfig {
 
