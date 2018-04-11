@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -18,6 +19,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -31,16 +33,19 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @version 1
  */
 @Entity
+@Table(name = "commits")
 public class Commit implements Shared {
 
 	@Id
 	private UUID uuid;
 
+	@Column(name = "hashv")
 	private String hash;
 
 	@NotBlank
 	private String originalUserEmail;
 
+	@Column(name = "comments")
 	private String comment;
 
 	@NotNull

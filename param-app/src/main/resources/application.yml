@@ -56,10 +56,10 @@ spring:
        enabled: true
    
    datasource:
-       url: jdbc:postgresql://localhost/reference_manager
-       driver-class-name: org.postgresql.Driver
-       username: user
-       password: user
+       url: jdbc:oracle:thin:@localhost:49161:xe
+       driver-class-name: oracle.jdbc.OracleDriver
+       username: demo
+       password: demo
    
    servlet:
        multipart:
@@ -68,9 +68,9 @@ spring:
    
    jpa:
        open-in-view: false
-       show-sql: false
+       show-sql: true
        hibernate:
-           ddl-auto: update
+           ddl-auto: create
 
 ## WEB SERVER CONFIG
 server:

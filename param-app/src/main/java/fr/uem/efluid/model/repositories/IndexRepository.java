@@ -70,9 +70,9 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 	 */
 	// TODO : Once with java9, specify as private
 	@Query(value = "select i.* "
-			+ "from index i "
+			+ "from indexes i "
 			+ "inner join ("
-			+ "	select max(ii.id) as max_id, ii.key_value from index ii where ii.dictionary_entry_uuid = :uuid group by ii.key_value"
+			+ "	select max(ii.id) as max_id, ii.key_value from indexes ii where ii.dictionary_entry_uuid = :uuid group by ii.key_value"
 			+ ") mi on i.id = mi.max_id "
 			+ "where i.key_value in (:keys)", nativeQuery = true)
 	List<IndexEntry> _internal_findAllPreviousIndexEntries(
@@ -89,9 +89,9 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 	 */
 	// TODO : Once with java9, specify as private
 	@Query(value = "select i.* "
-			+ "from index i "
+			+ "from indexes i "
 			+ "inner join ("
-			+ "	select max(ii.id) as max_id, ii.key_value from index ii where ii.dictionary_entry_uuid = :uuid and ii.id not in (:excludeIds) group by ii.key_value"
+			+ "	select max(ii.id) as max_id, ii.key_value from indexes ii where ii.dictionary_entry_uuid = :uuid and ii.id not in (:excludeIds) group by ii.key_value"
 			+ ") mi on i.id = mi.max_id "
 			+ "where i.key_value in (:keys)", nativeQuery = true)
 	List<IndexEntry> _internal_findAllPreviousIndexEntries(

@@ -29,7 +29,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @version 1
  */
 @Entity
-@Table(name = "index")
+@Table(name = "indexes")
 public class IndexEntry implements DiffLine {
 
 	@Id

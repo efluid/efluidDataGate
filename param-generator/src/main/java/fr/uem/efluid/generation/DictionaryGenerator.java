@@ -49,6 +49,7 @@ import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
 import fr.uem.efluid.services.ExportService;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.utils.Associate;
+import fr.uem.efluid.utils.RuntimeValuesUtils;
 import fr.uem.efluid.utils.SelectClauseGenerator;
 
 /**
@@ -186,7 +187,7 @@ public class DictionaryGenerator {
 
 			// Only process concrete use of annotation
 			if (paramTable != null) {
-				
+
 				ParameterTableDefinition def = new ParameterTableDefinition();
 				def.setCreatedTime(LocalDateTime.now());
 				def.setDomain(new ParameterDomainDefinition()); // Will be merged later
@@ -463,18 +464,7 @@ public class DictionaryGenerator {
 		Arrays.fill(complete, '0');
 
 		String raw = new StringBuilder(32).append(refTyp).append(complete).append(refHas).toString();
-		String uuid = new StringBuilder(36)
-				.append(raw.substring(0, 7))
-				.append('-')
-				.append(raw.substring(8, 12))
-				.append('-')
-				.append(raw.substring(13, 17))
-				.append('-')
-				.append(raw.substring(18, 22))
-				.append('-')
-				.append(raw.substring(23))
-				.toString();
 
-		return UUID.fromString(uuid);
+		return RuntimeValuesUtils.loadUUIDFromRaw(raw);
 	}
 }
