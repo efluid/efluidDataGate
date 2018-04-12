@@ -14,7 +14,7 @@ param-efluid:
        connectionTestQuery: SELECT 1 from DUAL
        minimumIdle: 5
        maxPoolSize: 20
-       timeout: 500
+       timeout: 60000
        meta:
            filterSchema: REFERENCE
            ##filterSchema: NB_ERDF_DEV
@@ -56,10 +56,10 @@ spring:
        enabled: true
    
    datasource:
-       url: jdbc:oracle:thin:@localhost:49161:xe
-       driver-class-name: oracle.jdbc.OracleDriver
-       username: demo
-       password: demo
+       url: jdbc:h2:~\h2-param-app;DB_CLOSE_ON_EXIT=FALSE
+       username: sa
+       password: 
+       driver-class-name: org.h2.Driver
    
    servlet:
        multipart:
@@ -70,7 +70,7 @@ spring:
        open-in-view: false
        show-sql: true
        hibernate:
-           ddl-auto: create
+           ddl-auto: update
 
 ## WEB SERVER CONFIG
 server:

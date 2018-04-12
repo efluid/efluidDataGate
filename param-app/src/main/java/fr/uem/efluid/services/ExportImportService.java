@@ -75,12 +75,8 @@ public class ExportImportService extends ExportService {
 		}
 
 		try {
-			String[] items = pack.split(ITEM_START_SEARCH);
-
-			// Empty pack :
-			if (items[0].endsWith(PACKAGE_END)) {
-				return null;
-			}
+			// Ignore pack ending
+			String[] items = pack.substring(0, pack.length() - PACKAGE_END.length()).split(ITEM_START_SEARCH);
 
 			// Pack def is first item
 			// [pack|%s|%s|%s|%s]\n
@@ -88,7 +84,7 @@ public class ExportImportService extends ExportService {
 			String[] packParams = items[0].substring(6, items[0].length() - 2).split("\\|");
 
 			Class<?> type = Class.forName(packParams[0]);
-			String version = packParams[3];
+			String version = packParams[3].replaceAll(PACKAGE_START_ENDING, "");
 			LocalDateTime date = LocalDateTime.parse(packParams[2]);
 			String name = packParams[1];
 
@@ -113,10 +109,8 @@ public class ExportImportService extends ExportService {
 			// Get items
 			for (int i = 1; i < items.length; i++) {
 
-				// Specific for last
-				String itemContent = (i == items.length - 1)
-						? items[i].substring(0, items[i].length() - (ITEM_END.length() + PACKAGE_END.length()))
-						: items[i].substring(0, items[i].length() - ITEM_END.length());
+				// Drop item ending
+				String itemContent = items[i].substring(0, items[i].length() - ITEM_END.length());
 
 				LOGGER.debug("Identified serialized item in package \"{}\". Content : {}", name, itemContent);
 				itemSerialized.add(itemContent);

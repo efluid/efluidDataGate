@@ -46,7 +46,14 @@
 					<p th:case="'TABLE_NAME_INVALID'">
 						La table indiquée "<span th:text="${payload}"></span>" est référencée dans le dictionnaire mais n'existe pas
 						dans la base de donnée gérée. Aucune extraction de données ne peut être réalisée si le dictionnaire n'est pas valide.
-					  	Un script d'initialisation doit peut-être être lancé ?
+					  	Un script d'initialisation doit peut-être être lancé ?<br/>
+						<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-secondary btn-sm">Abandonner l'opération en cours</a>
+					</p>
+					<p th:case="'TABLE_WRONG_REF'">
+						Une ou plusieurs tables référencées dans le fichier importé n'existent pas dans la base locale. Le dictionnaire doit 
+						être identique entre l'instance source et l'instance destination lors d'un export / import. 
+						Avez-vous importé la dernière version du dictionnaire ? <br/>
+						<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-secondary btn-sm">Abandonner l'import en cours</a>
 					</p>
 					<p th:case="'DIC_NOT_REMOVABLE'">L'entrée de dictionnaire précisée ne peut pas être supprimée : il est utilisé dans l'index</p>
 					<p th:case="'DOMAIN_NOT_REMOVABLE'">Le domaine fonctionnel précisé ne peut pas être supprimé : il est utilisé dans l'index</p>

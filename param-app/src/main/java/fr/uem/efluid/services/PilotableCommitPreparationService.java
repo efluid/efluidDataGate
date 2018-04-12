@@ -571,7 +571,11 @@ public class PilotableCommitPreparationService {
 	 */
 	private void assertDictionaryEntryIsRealTable(DictionaryEntry entry) {
 
-		if (!this.managedDesc.isTableExists(entry.getTableName())) {
+		if (entry == null) {
+			this.current.fail(new ApplicationException(TABLE_WRONG_REF, "Specified table entry is missing in managed DB"));
+		}
+
+		else if (!this.managedDesc.isTableExists(entry.getTableName())) {
 			this.current.fail(new ApplicationException(TABLE_NAME_INVALID, "For dict entry " + entry.getUuid() + " the table name \""
 					+ entry.getTableName() + "\" is not a valid one in managed DB", entry.getTableName()));
 		}

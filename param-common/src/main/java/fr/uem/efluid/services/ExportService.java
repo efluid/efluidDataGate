@@ -33,7 +33,9 @@ import net.lingala.zip4j.util.Zip4jConstants;
  */
 public class ExportService {
 
-	protected static final String PACKAGE_START = "[pack|%s|%s|%s|%s]\n";
+	protected static final String PACKAGE_START_ENDING = "]\n";
+	
+	protected static final String PACKAGE_START = "[pack|%s|%s|%s|%s" + PACKAGE_START_ENDING;
 
 	protected static final String PACKAGE_END = "[/pack]\n";
 

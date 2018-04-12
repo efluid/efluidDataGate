@@ -219,14 +219,13 @@ public class CommitService extends AbstractApplicationService {
 		// Load details
 		CommitDetails details = CommitDetails.fromEntity(this.commits.getOne(commitUUID));
 
-
 		long size = this.indexes.countByCommitUuid(commitUUID);
-		
+
 		// Check index size for commit
 		if (size < this.maxDisplayDetails) {
 
 			Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid();
-			
+
 			// Load commit index
 			CommitDetails.completeIndex(details, this.indexes.findByCommitUuid(commitUUID));
 
@@ -236,8 +235,8 @@ public class CommitService extends AbstractApplicationService {
 				d.completeFromEntity(dict);
 				this.diffs.completeHrPayload(dict, d.getDiff());
 			});
-		} 
-		
+		}
+
 		// Too much data, get only dictionary item listings
 		else {
 			details.setTooMuchData(true);
