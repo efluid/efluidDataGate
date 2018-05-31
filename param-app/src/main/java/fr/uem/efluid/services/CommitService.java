@@ -233,7 +233,8 @@ public class CommitService extends AbstractApplicationService {
 			details.getContent().stream().forEach(d -> {
 				DictionaryEntry dict = mappedDict.get(d.getDictionaryEntryUuid());
 				d.completeFromEntity(dict);
-				this.diffs.completeHrPayload(dict, d.getDiff());
+				// Update for rendering
+				d.setDiff(this.diffs.prepareDiffForRendering(dict, d.getDiff()));
 			});
 		}
 

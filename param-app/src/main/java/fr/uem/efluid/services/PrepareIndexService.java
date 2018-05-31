@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
+import fr.uem.efluid.services.types.SimilarPreparedIndexEntry;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
@@ -69,6 +71,9 @@ public class PrepareIndexService {
 	@Autowired
 	private ManagedValueConverter valueConverter;
 
+	@Value("${param-efluid.display.combine-similar-diff-after}")
+	private long maxSimilarBeforeCombined;
+
 	@Autowired
 	private IndexRepository indexes;
 
@@ -87,7 +92,7 @@ public class PrepareIndexService {
 
 		LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
 		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(entry);
-		
+
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
 
@@ -133,7 +138,7 @@ public class PrepareIndexService {
 
 		LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
 		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(toProcess);
-		
+
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
 
@@ -141,7 +146,7 @@ public class PrepareIndexService {
 				entry);
 
 		LOGGER.info("Diff prepared. Complete merge data for table \"{}\"", entry.getTableName());
-		
+
 		// Then apply from local and from import to identify diff changes
 		completeMergeIndexes(entry, localIndexToTimeStamp, mergeContent, diff);
 
@@ -158,23 +163,46 @@ public class PrepareIndexService {
 	/**
 	 * <p>
 	 * Utilitary fonction to complete given index entries with their respective HR Payload
-	 * for user friendly rendering
+	 * for user friendly rendering. Provides the completed rendering list in return, as
+	 * some display process may require to combine contents when they are similar. In this
+	 * case they are provided as SimilarPreparedIndexEntry
 	 * </p>
 	 * 
 	 * @param dic
 	 * @param index
+	 * @return List adapted for rendering : some results may be combined
 	 */
-	void completeHrPayload(DictionaryEntry dic, Collection<? extends PreparedIndexEntry> index) {
+	List<PreparedIndexEntry> prepareDiffForRendering(DictionaryEntry dic, List<PreparedIndexEntry> index) {
 
+		List<PreparedIndexEntry> listToRender = new ArrayList<>();
+
+		// Get all previouses for HR payload init
 		Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dic,
 				index.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()),
 				index.stream().map(PreparedIndexEntry::getId).collect(Collectors.toList()));
 
-		index.stream().forEach(e -> {
+		// Complete HR payloads and combine by payload
+		Map<String, List<PreparedIndexEntry>> combineds = index.stream().peek(e -> {
 			IndexEntry previous = previouses.get(e.getKeyValue());
 			String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
 			e.setHrPayload(hrPayload);
+		}).collect(Collectors.groupingBy(p -> p.getHrPayload()));
+
+		// Rendering display is based on combined
+		combineds.values().stream().forEach(e -> {
+
+			// Only one : not combined
+			if (e.size() < this.maxSimilarBeforeCombined) {
+				listToRender.addAll(e);
+			}
+
+			// Else a combined rendering
+			else {
+				listToRender.add(SimilarPreparedIndexEntry.fromSimilar(e));
+			}
 		});
+
+		return listToRender;
 	}
 
 	/**

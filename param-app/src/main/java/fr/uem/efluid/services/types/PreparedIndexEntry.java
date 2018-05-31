@@ -12,7 +12,7 @@ import fr.uem.efluid.model.entities.IndexEntry;
  * @since v0.0.1
  * @version 1
  */
-public class PreparedIndexEntry implements DiffLine {
+public class PreparedIndexEntry implements DiffLine, Rendered {
 
 	private Long id;
 
@@ -139,6 +139,7 @@ public class PreparedIndexEntry implements DiffLine {
 	/**
 	 * @return the hrPayload
 	 */
+	@Override
 	public String getHrPayload() {
 		return this.hrPayload;
 	}
@@ -194,6 +195,15 @@ public class PreparedIndexEntry implements DiffLine {
 	 */
 	public void setCommitUuid(UUID commitUuid) {
 		this.commitUuid = commitUuid;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.services.types.Rendered#isDisplayOnly()
+	 */
+	@Override
+	public boolean isDisplayOnly() {
+		return false;
 	}
 
 	/**
@@ -274,4 +284,5 @@ public class PreparedIndexEntry implements DiffLine {
 		data.setCommitUuid(existing.getCommit() != null ? existing.getCommit().getUuid() : null);
 		data.setTimestamp(existing.getTimestamp());
 	}
+
 }

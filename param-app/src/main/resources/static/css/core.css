@@ -146,6 +146,10 @@ select.select-column {
     font-weight: bold;
 }
 
+.action-line .similar-display {
+	color:red;
+}
+
 .action-line .change-display {
     display: block;
     padding: 3px;
