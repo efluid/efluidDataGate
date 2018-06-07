@@ -147,7 +147,8 @@ select.select-column {
 }
 
 .action-line .similar-display {
-	color:red;
+	color: rgba(128, 78, 136, 1);
+	font-weight: bold;
 }
 
 .action-line .change-display {

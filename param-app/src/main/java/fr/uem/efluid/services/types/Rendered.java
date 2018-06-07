@@ -19,7 +19,9 @@ public interface Rendered {
 	 * 
 	 * @return
 	 */
-	boolean isDisplayOnly();
+	default boolean isDisplayOnly(){
+		return false;
+	}
 
 	/**
 	 * <p>
@@ -29,4 +31,16 @@ public interface Rendered {
 	 * @return
 	 */
 	String getHrPayload();
+
+	/**
+	 * @return
+	 */
+	default int getRealSize() {
+		return 1;
+	}
+
+	/**
+	 * @return
+	 */
+	String getCombinedKey();
 }

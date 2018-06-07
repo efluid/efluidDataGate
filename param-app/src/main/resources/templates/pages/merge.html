@@ -41,7 +41,7 @@
 						<div class="dictionary-summary">
 							<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
 							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>&nbsp;
-							<span class="dictionary-diff-size" th:text="|${diffDisplay.diff.size()} valeur(s)|">15 valeurs</span>
+							<span class="dictionary-diff-size" th:text="|${diffDisplay.realDiffSize} valeur(s)|">15 valeurs</span>
 							<span class="reducer reducer-table reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 						</div>
 						<table class="table table-sm">
@@ -59,8 +59,8 @@
 							</thead>
 							<tbody>
 								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${tstat.index}_${estat.index}|" th:if="${showAll or entry.needAction}">
-									<td th:text="${entry.keyValue}">XAZER5555 - 22</td>
-									
+									<td th:if="${!entry.displayOnly}" th:text="${entry.keyValue}">XAZER5555 - 22</td>
+									<td th:if="${entry.displayOnly}" class="similar-display" th:text="|${entry.keyValues.size()} entrées similaires|" th:title="|clées : ${entry.combinedKey}|">34 entrées similaires</td>
 									<td width="72%">
 										<span class="reducer reducer-sm reducer-open float-right">&nbsp;</span>
 										<span class="change-details">

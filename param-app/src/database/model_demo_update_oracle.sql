@@ -1,0 +1,24 @@
+-- Test similar detection
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0001',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0002',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0003',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0004',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0005',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0006',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0007',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0008',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0009',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0010',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0011',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0012',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0013',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0014',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0015',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0016',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0017',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0018',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0019',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0020',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0021',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0022',5);
+insert into TMATERIEL(details, serial, cat_id) values ('Similare Test','PO0023',5);

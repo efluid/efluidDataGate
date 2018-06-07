@@ -4,7 +4,7 @@ param-efluid:
 
    managed-datasource:
        driverClassName: oracle.jdbc.OracleDriver
-       url: jdbc:oracle:thin:@localhost:49161:xe
+       url: jdbc:oracle:thin:@small-server:49161:xe
        ##url: jdbc:oracle:thin:@small-server:49161:xe
        ##url: jdbc:oracle:thin:@LDBDDEDT2:2483/DE13EDT5
        username: demo
@@ -77,7 +77,7 @@ spring:
        open-in-view: false
        show-sql: true
        hibernate:
-           ddl-auto: create
+           ddl-auto: none
     
 ## WEB SERVER CONFIG
 server:

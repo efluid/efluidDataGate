@@ -121,5 +121,4 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 
 		return merge;
 	}
-
 }

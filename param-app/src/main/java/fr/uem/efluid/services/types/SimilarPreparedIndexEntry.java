@@ -9,7 +9,7 @@ import java.util.List;
  * @since v0.0.6
  * @version 1
  */
-public class SimilarPreparedIndexEntry extends PreparedIndexEntry {
+public class SimilarPreparedIndexEntry extends PreparedIndexEntry implements CombinedSimilar<PreparedIndexEntry> {
 
 	private List<Long> ids = new ArrayList<>();
 
@@ -23,26 +23,9 @@ public class SimilarPreparedIndexEntry extends PreparedIndexEntry {
 	}
 
 	/**
-	 * @return
-	 * @see fr.uem.efluid.services.types.PreparedIndexEntry#getId()
-	 */
-	@Override
-	public Long getId() {
-		return null;
-	}
-
-	/**
-	 * @return
-	 * @see fr.uem.efluid.services.types.PreparedIndexEntry#getKeyValue()
-	 */
-	@Override
-	public String getKeyValue() {
-		return null;
-	}
-
-	/**
 	 * @return the ids
 	 */
+	@Override
 	public List<Long> getIds() {
 		return this.ids;
 	}
@@ -58,6 +41,7 @@ public class SimilarPreparedIndexEntry extends PreparedIndexEntry {
 	/**
 	 * @return the keyValues
 	 */
+	@Override
 	public List<String> getKeyValues() {
 		return this.keyValues;
 	}
@@ -72,11 +56,22 @@ public class SimilarPreparedIndexEntry extends PreparedIndexEntry {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.services.types.PreparedIndexEntry#isDisplayOnly()
+	 * @see fr.uem.efluid.services.types.CombinedSimilar#split()
 	 */
 	@Override
-	public boolean isDisplayOnly() {
-		return true;
+	public List<PreparedIndexEntry> split() {
+
+		List<PreparedIndexEntry> splited = new ArrayList<>();
+
+		for (int i = 0; i < this.keyValues.size(); i++) {
+			PreparedIndexEntry ie = new PreparedIndexEntry();
+			copyContent(this, ie);
+			ie.setKeyValue(this.keyValues.get(i));
+			ie.setId(this.ids.get(i));
+			splited.add(ie);
+		}
+
+		return splited;
 	}
 
 	/**
@@ -101,6 +96,9 @@ public class SimilarPreparedIndexEntry extends PreparedIndexEntry {
 		comb.setPayload(first.getPayload());
 		comb.setTimestamp(first.getTimestamp());
 
+		// Including key for sorting / ref
+		comb.setKeyValue(first.getKeyValue());
+
 		// Then keep identified combined
 		diffItems.stream().forEach(d -> {
 			comb.getIds().add(d.getId());
@@ -109,4 +107,5 @@ public class SimilarPreparedIndexEntry extends PreparedIndexEntry {
 
 		return comb;
 	}
+
 }

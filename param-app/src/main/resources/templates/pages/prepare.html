@@ -42,7 +42,7 @@
 						<div class="dictionary-summary">
 							<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
 							<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>&nbsp;
-							<span class="dictionary-diff-size" th:text="|${diffDisplay.diff.size()} valeur(s)|">15 valeurs</span>
+							<span class="dictionary-diff-size" th:text="|${diffDisplay.realDiffSize} valeur(s)|">15 valeurs</span>
 							<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 						</div>
 						<table class="table table-sm">
@@ -63,7 +63,7 @@
 							<tbody>
 								<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${tstat.index}_${estat.index}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
 									<td th:if="${!entry.displayOnly}" th:text="${entry.keyValue}">XAZER5555 - 22</td>
-									<td th:if="${entry.displayOnly}" class="similar-display" th:text="|${entry.keyValues.size()} entrées similaires|" th:title="|clées : ${entry.keyValues}|">34 entrées similaires</td>
+									<td th:if="${entry.displayOnly}" class="similar-display" th:text="|${entry.keyValues.size()} entrées similaires|" th:title="|clées : ${entry.combinedKey}|">34 entrées similaires</td>
 									<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
 									<td><span class="change-display" th:utext="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
 									<td>

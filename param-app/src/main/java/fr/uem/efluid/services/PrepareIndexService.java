@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -25,9 +26,12 @@ import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
+import fr.uem.efluid.services.types.CombinedSimilar;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
+import fr.uem.efluid.services.types.Rendered;
 import fr.uem.efluid.services.types.SimilarPreparedIndexEntry;
+import fr.uem.efluid.services.types.SimilarPreparedMergeIndexEntry;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
@@ -96,7 +100,11 @@ public class PrepareIndexService {
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
 
-		return generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
+		// Completed diff
+		Collection<PreparedIndexEntry> index = generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
+
+		// Detect and process similar entries for display
+		return combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar);
 	}
 
 	/**
@@ -150,7 +158,7 @@ public class PrepareIndexService {
 		// Then apply from local and from import to identify diff changes
 		completeMergeIndexes(entry, localIndexToTimeStamp, mergeContent, diff);
 
-		return diff;
+		return combineSimilarDiffEntries(diff, SimilarPreparedMergeIndexEntry::fromSimilar);
 	}
 
 	/**
@@ -174,35 +182,20 @@ public class PrepareIndexService {
 	 */
 	List<PreparedIndexEntry> prepareDiffForRendering(DictionaryEntry dic, List<PreparedIndexEntry> index) {
 
-		List<PreparedIndexEntry> listToRender = new ArrayList<>();
-
 		// Get all previouses for HR payload init
 		Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dic,
 				index.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()),
 				index.stream().map(PreparedIndexEntry::getId).collect(Collectors.toList()));
 
-		// Complete HR payloads and combine by payload
-		Map<String, List<PreparedIndexEntry>> combineds = index.stream().peek(e -> {
+		// Complete HR payloads
+		index.forEach(e -> {
 			IndexEntry previous = previouses.get(e.getKeyValue());
 			String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
 			e.setHrPayload(hrPayload);
-		}).collect(Collectors.groupingBy(p -> p.getHrPayload()));
-
-		// Rendering display is based on combined
-		combineds.values().stream().forEach(e -> {
-
-			// Only one : not combined
-			if (e.size() < this.maxSimilarBeforeCombined) {
-				listToRender.addAll(e);
-			}
-
-			// Else a combined rendering
-			else {
-				listToRender.add(SimilarPreparedIndexEntry.fromSimilar(e));
-			}
 		});
 
-		return listToRender;
+		// And then combine for rendering
+		return combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar);
 	}
 
 	/**
@@ -268,6 +261,32 @@ public class PrepareIndexService {
 					return lob;
 				}).collect(Collectors.toList());
 
+	}
+
+	/**
+	 * @param diffWithSimilars
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	<T extends PreparedIndexEntry> List<T> splitCombinedSimilar(List<T> diffWithSimilars) {
+
+		// Check if their is similar items
+		if (diffWithSimilars.stream().anyMatch(Rendered::isDisplayOnly)) {
+
+			return diffWithSimilars.stream().flatMap(d -> {
+
+				// Combined to split + stream
+				if (d.isDisplayOnly()) {
+					return ((CombinedSimilar<T>) d).split().stream();
+				}
+
+				// Standard to stream
+				return Stream.of(d);
+			}).collect(Collectors.toList());
+		}
+
+		// If no similar : return provided list
+		return diffWithSimilars;
 	}
 
 	/**
@@ -530,95 +549,51 @@ public class PrepareIndexService {
 
 	}
 
-	// /**
-	// * <p>
-	// * When differences exist in both local and merge index, need to identify conflict,
-	// * and try to resolve it if it's possible
-	// * </p>
-	// *
-	// * @param dict
-	// * @param keyValue
-	// * @param merge
-	// * @param local
-	// * nullable
-	// */
-	// private static void completeConflictingMergeForOneKey(DictionaryEntry dict, String
-	// keyValue, List<PreparedMergeIndexEntry> merge,
-	// List<IndexEntry> local) {
-	//
-	// List<PreparedIndexEntry> mergeEntries =
-	// merge.stream().map(PreparedMergeIndexEntry::getTheir).collect(Collectors.toList());
-	//
-	// // Merge local
-	// DiffLine combinedLocal = DiffLine.combinedOnSameTableAndKey(local);
-	//
-	// PreparedMergeIndexEntry last = merge.get(merge.size() - 1);
-	//
-	// // Just one remote change : compare with combinedLocal
-	// if (merge.size() == 1) {
-	//
-	// // Nothing in local index : get "their" directly
-	// if (combinedLocal == null) {
-	// last.setResult(last.getTheir());
-	// last.setMergeAction(KEEP);
-	// } else {
-	//
-	// // Same change local and remote : no conflict, just keep
-	// if (combinedLocal.equals(last.getTheir())) {
-	// last.setResult(last.getTheir());
-	// last.setMergeAction(KEEP);
-	// }
-	//
-	// // Not the same changes : it's a conflict (use local as default)
-	// else {
-	// last.setResult(PreparedIndexEntry.fromCombined(combinedLocal, dict, keyValue,
-	// last.getTheir().getTimestamp()));
-	// last.setMergeAction(RESOLVE_CONFLICT);
-	// }
-	// }
-	// }
-	//
-	// // Else compare with combined merge
-	// else {
-	//
-	// DiffLine combinedMerge = DiffLine.combinedOnSameTableAndKey(mergeEntries);
-	//
-	// // Change last item with combined
-	// last.getTheir().setAction(combinedMerge.getAction());
-	// last.getTheir().setPayload(combinedMerge.getPayload());
-	//
-	// /*
-	// * Note on merge Action : as default value in PreparedMergeIndexEntry is
-	// * "DROP", for X changes in "their", they will all be droped as default, and
-	// * only the last one is kept as valid "their". Every droped entries are not
-	// * even displayed to user in merge screen, so he will only see the
-	// * "real final changes"*.
-	// */
-	//
-	// // Nothing in local index : get "their" directly
-	// if (combinedLocal == null) {
-	// last.setResult(PreparedIndexEntry.fromCombined(combinedMerge, dict, keyValue,
-	// last.getTheir().getTimestamp()));
-	// last.setMergeAction(KEEP);
-	// }
-	//
-	// // Combined diff on both local and merge "their"
-	// else {
-	//
-	// // Same change local and remote : no conflict, just keep
-	// if (combinedLocal.equals(combinedMerge)) {
-	// last.setResult(PreparedIndexEntry.fromCombined(combinedMerge, dict, keyValue,
-	// last.getTheir().getTimestamp()));
-	// last.setMergeAction(KEEP);
-	// }
-	//
-	// // Not the same changes : it's a conflict (use local as default)
-	// else {
-	// last.setResult(PreparedIndexEntry.fromCombined(combinedLocal, dict, keyValue,
-	// last.getTheir().getTimestamp()));
-	// last.setMergeAction(RESOLVE_CONFLICT);
-	// }
-	// }
-	// }
-	// }
+	/**
+	 * <p>
+	 * Combines the diff which are similar as <tt>SimilarPreparedIndexEntry</tt> from
+	 * already prepared list of <tt>PreparedIndexEntry</tt>. The resulting list contains
+	 * the modified rendering
+	 * </p>
+	 * 
+	 * @param readyToRender
+	 *            List of <tt>PreparedIndexEntry</tt> for similar content search
+	 * @return list to finally render
+	 */
+	private <T extends PreparedIndexEntry> List<T> combineSimilarDiffEntries(Collection<T> readyToRender,
+			Function<Collection<T>, ? extends T> similarConvert) {
+
+		List<T> listToRender = new ArrayList<>();
+
+		// Combine by HR payload
+		Map<String, List<T>> combineds = readyToRender.stream().collect(Collectors.groupingBy(p -> p.getHrPayload()));
+
+		// Rendering display is based on combined
+		combineds.values().stream().forEach(e -> {
+
+			// Only one : not combined
+			if (e.size() < this.maxSimilarBeforeCombined) {
+				listToRender.addAll(e);
+			}
+
+			// Else a combined rendering
+			else {
+				listToRender.add(similarConvert.apply(e));
+			}
+		});
+
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("Full combined result : ");
+			listToRender.stream().forEach(i -> {
+				if (i.isDisplayOnly()) {
+					LOGGER.debug("[COMBINED] {} for {} : {}", i.getKeyValue(),
+							((SimilarPreparedIndexEntry) i).getKeyValues().stream().collect(Collectors.joining(",")), i.getHrPayload());
+				} else {
+					LOGGER.debug("[DIFF-ENTRY] {} : {}", i.getKeyValue(), i.getHrPayload());
+				}
+			});
+		}
+
+		return listToRender;
+	}
 }

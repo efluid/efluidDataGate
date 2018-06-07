@@ -49,6 +49,13 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	}
 
 	/**
+	 * @return real size of diff, when some items are combined
+	 */
+	public long getRealDiffSize() {
+		return this.diff.stream().mapToInt(Rendered::getRealSize).sum();
+	}
+
+	/**
 	 * @param diff
 	 *            the diff to set
 	 */

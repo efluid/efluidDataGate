@@ -319,7 +319,7 @@ public class CommitService extends AbstractApplicationService {
 		LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commitUUID);
 
 		List<IndexEntry> entries = prepared.getPreparedContent().stream()
-				.flatMap(l -> l.getDiff().stream())
+				.flatMap(l -> this.diffs.splitCombinedSimilar(l.getDiff()).stream())
 				.filter(PreparedIndexEntry::isSelected)
 				.map(PreparedIndexEntry::toEntity)
 				.peek(e -> e.setCommit(newCommit))
