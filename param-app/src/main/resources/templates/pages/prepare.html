@@ -53,9 +53,9 @@
 									<th scope="col">Modification</th>
 									<th scope="col" width="18%">
 										<div class="btn-group float-right" role="group">
-											<button type="button" th:id="|select_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary all-button btn-sm">Tout garder</button>
-											<button type="button" th:id="|rollback_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-danger all-button btn-sm">Tout annuler</button>
-											<button type="button" th:id="|ignore_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-secondary all-button btn-sm">Tout ignorer</button>
+											<button type="button" th:id="|select_${tstat.index}|" class="btn btn-outline-primary all-button btn-sm">Tout garder</button>
+											<button type="button" th:id="|rollback_${tstat.index}|" class="btn btn-outline-danger all-button btn-sm">Tout annuler</button>
+											<button type="button" th:id="|ignore_${tstat.index}|" class="btn btn-outline-secondary all-button btn-sm">Tout ignorer</button>
 										</div>
 									</th>
 								</tr>
@@ -179,6 +179,7 @@
 		// For "select All / rollback All / ignore All"
 		const processAll = (butId) => {
 			var idParts = butId.split("_");
+			console.log("#" + idParts[1] + " button." + idParts[0] + "-button");
 			$("#" + idParts[1] + " button." + idParts[0] + "-button").click();
 		};
 		

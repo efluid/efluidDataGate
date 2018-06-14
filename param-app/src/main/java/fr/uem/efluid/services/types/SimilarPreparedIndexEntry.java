@@ -3,17 +3,16 @@ package fr.uem.efluid.services.types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author elecomte
- * @since v0.0.6
- * @version 1
+ * @since v0.0.2
+ * @version 2
  */
 public class SimilarPreparedIndexEntry extends PreparedIndexEntry implements CombinedSimilar<PreparedIndexEntry> {
 
-	private List<Long> ids = new ArrayList<>();
-
-	private List<String> keyValues = new ArrayList<>();
+	private Collection<? extends PreparedIndexEntry> combineds = new ArrayList<>();
 
 	/**
 	 * 
@@ -23,55 +22,57 @@ public class SimilarPreparedIndexEntry extends PreparedIndexEntry implements Com
 	}
 
 	/**
-	 * @return the ids
-	 */
-	@Override
-	public List<Long> getIds() {
-		return this.ids;
-	}
-
-	/**
-	 * @param ids
-	 *            the ids to set
-	 */
-	public void setIds(List<Long> ids) {
-		this.ids = ids;
-	}
-
-	/**
-	 * @return the keyValues
-	 */
-	@Override
-	public List<String> getKeyValues() {
-		return this.keyValues;
-	}
-
-	/**
-	 * @param keyValues
-	 *            the keyValues to set
-	 */
-	public void setKeyValues(List<String> keyValues) {
-		this.keyValues = keyValues;
-	}
-
-	/**
 	 * @return
 	 * @see fr.uem.efluid.services.types.CombinedSimilar#split()
 	 */
 	@Override
 	public List<PreparedIndexEntry> split() {
+		return getCombineds().stream().peek(dest -> {
+			dest.setRollbacked(this.isRollbacked());
+			dest.setSelected(this.isSelected());
+		}).collect(Collectors.toList());
+	}
 
-		List<PreparedIndexEntry> splited = new ArrayList<>();
+	/**
+	 * @return
+	 * @see fr.uem.efluid.services.types.CombinedSimilar#getKeyValues()
+	 */
+	@Override
+	public List<String> getKeyValues() {
+		return this.combineds.stream().map(PreparedIndexEntry::getKeyValue).collect(Collectors.toList());
+	}
 
-		for (int i = 0; i < this.keyValues.size(); i++) {
-			PreparedIndexEntry ie = new PreparedIndexEntry();
-			copyContent(this, ie);
-			ie.setKeyValue(this.keyValues.get(i));
-			ie.setId(this.ids.get(i));
-			splited.add(ie);
-		}
+	/**
+	 * @return
+	 * @see fr.uem.efluid.services.types.Rendered#getRealSize()
+	 */
+	@Override
+	public int getRealSize() {
+		return this.combineds.size();
+	}
 
-		return splited;
+	/**
+	 * @return
+	 * @see fr.uem.efluid.services.types.PreparedIndexEntry#getCombinedKey()
+	 */
+	@Override
+	public String getCombinedKey() {
+		return this.combineds.stream().map(PreparedIndexEntry::getKeyValue).collect(Collectors.joining(", "));
+	}
+
+	/**
+	 * @return the combineds
+	 */
+	private Collection<? extends PreparedIndexEntry> getCombineds() {
+		return this.combineds;
+	}
+
+	/**
+	 * @param combineds
+	 *            the combineds to set
+	 */
+	private void setCombineds(Collection<? extends PreparedIndexEntry> combineds) {
+		this.combineds = combineds;
 	}
 
 	/**
@@ -99,11 +100,7 @@ public class SimilarPreparedIndexEntry extends PreparedIndexEntry implements Com
 		// Including key for sorting / ref
 		comb.setKeyValue(first.getKeyValue());
 
-		// Then keep identified combined
-		diffItems.stream().forEach(d -> {
-			comb.getIds().add(d.getId());
-			comb.getKeyValues().add(d.getKeyValue());
-		});
+		comb.setCombineds(diffItems);
 
 		return comb;
 	}

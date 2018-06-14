@@ -15,22 +15,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
+import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
 
@@ -40,7 +40,6 @@ import fr.uem.efluid.utils.DataGenerationUtils;
  * @version 1
  */
 @Component
-@Transactional
 @SuppressWarnings("boxing")
 public class TestDataLoader {
 
@@ -72,6 +71,9 @@ public class TestDataLoader {
 
 	@Autowired
 	private ManagedValueConverter converter;
+
+	@Autowired
+	private UserHolder userHolder;
 
 	/**
 	 * @param path
@@ -269,6 +271,11 @@ public class TestDataLoader {
 		return cmat.getUuid();
 	}
 
+	public void flushSources() {
+		this.sources.flush();
+		this.sourceChilds.flush();
+	}
+
 	/**
 	 * @param datasToCompare
 	 * @param dataset
@@ -356,6 +363,6 @@ public class TestDataLoader {
 
 	@PostConstruct
 	public void addTestUser() {
-		this.users.save(this.users.save(user("testeur")));
+		this.userHolder.setWizzardUser(this.users.save(user("testeur")));
 	}
 }

@@ -3,7 +3,6 @@ package fr.uem.efluid.services;
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
@@ -23,8 +23,8 @@ import fr.uem.efluid.stubs.TestUtils;
  * @since v0.0.1
  * @version 1
  */
-@Ignore
-@RunWith(SpringRunner.class) 
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+@RunWith(SpringRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
 public class DictionaryExportImportServiceIntegrationTest {
@@ -34,13 +34,15 @@ public class DictionaryExportImportServiceIntegrationTest {
 	private static final String D = "import domain";
 	private static final String T = "IMPORT_TABLE";
 
+	private static final String TTESTSOURCE_UUID_IMPORT = "4bc61b4c-550c-4c9b-9e6a-4d8138f6de1f";
+	private static final String IMPORT_TABLE_UUID_IMPORT = "ebe80301-fa84-4432-9341-e792f86084d5";
+	
 	@Autowired
 	private DictionaryManagementService dictService;
 
 	@Autowired
 	private TestDataLoader loader;
 
-	@Transactional
 	public void setupDatabase() {
 		this.loader.setupDictionaryForUpdate();
 		this.loader.addDictionaryWithTrinome(D, T).getUuid();
@@ -54,7 +56,6 @@ public class DictionaryExportImportServiceIntegrationTest {
 	}
 
 	@Test
-	@Ignore
 	public void testImportFullDictionary() throws IOException {
 
 		// No initial DB
@@ -64,15 +65,14 @@ public class DictionaryExportImportServiceIntegrationTest {
 		this.dictService.importAll(importFile);
 
 		this.loader.assertDictionarySize(3);
-		this.loader.assertDictionaryContentValidate("effd3aaa-ed84-4386-a68b-9e62374f462d", d -> d.getTableName().equals("TTESTSOURCE"));
-		this.loader.assertDictionaryContentValidate("8402ea6b-da3c-445e-9b20-3ccb15e2eb22",
+		this.loader.assertDictionaryContentValidate(TTESTSOURCE_UUID_IMPORT, d -> d.getTableName().equals("TTESTSOURCE"));
+		this.loader.assertDictionaryContentValidate(IMPORT_TABLE_UUID_IMPORT,
 				d -> d.getTableName().equals(T) && d.getParameterName().equals(T));
 		this.loader.assertDomainsSize(2);
 		this.loader.assertLinksSize(2);
 	}
 
 	@Test
-	@Ignore
 	public void testExportImportFullDictionary() throws IOException {
 		setupDatabase();
 
@@ -86,8 +86,8 @@ public class DictionaryExportImportServiceIntegrationTest {
 		this.dictService.importAll(importFile);
 
 		this.loader.assertDictionarySize(3);
-		this.loader.assertDictionaryContentValidate("effd3aaa-ed84-4386-a68b-9e62374f462d", d -> d.getTableName().equals("TTESTSOURCE"));
-		this.loader.assertDictionaryContentValidate("8402ea6b-da3c-445e-9b20-3ccb15e2eb22",
+		this.loader.assertDictionaryContentValidate(TTESTSOURCE_UUID_IMPORT, d -> d.getTableName().equals("TTESTSOURCE"));
+		this.loader.assertDictionaryContentValidate(IMPORT_TABLE_UUID_IMPORT,
 				d -> d.getTableName().equals(T) && d.getParameterName().equals(T));
 		this.loader.assertDomainsSize(2);
 		this.loader.assertLinksSize(2);

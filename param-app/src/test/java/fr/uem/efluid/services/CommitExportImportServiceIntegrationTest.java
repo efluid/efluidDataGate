@@ -1,6 +1,5 @@
 package fr.uem.efluid.services;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
@@ -20,8 +20,8 @@ import fr.uem.efluid.stubs.TestUtils;
  * @since v0.0.1
  * @version 1
  */
-@Ignore
-@RunWith(SpringRunner.class) 
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+@RunWith(SpringRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
 public class CommitExportImportServiceIntegrationTest {
@@ -37,13 +37,11 @@ public class CommitExportImportServiceIntegrationTest {
 	@Autowired
 	private CommitRepository commits;
 
-	@Transactional
 	public void setupDatabase(String diff) {
 		this.loader.setupDatabaseForDiff(diff);
 	}
 
 	@Test
-	@Transactional
 	public void testExportFullCommits() {
 		setupDatabase("diff7");
 

@@ -9,29 +9,34 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.stubs.TestDataLoader;
 import fr.uem.efluid.stubs.TestUtils;
 import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.DatasourceUtils;
 
 /**
  * @author elecomte
  * @since v0.0.1
  * @version 1
  */
-@Ignore
-@RunWith(SpringRunner.class) 
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+@RunWith(SpringRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
 public class ApplyDiffServiceIntegrationTest {
@@ -45,7 +50,11 @@ public class ApplyDiffServiceIntegrationTest {
 	@Autowired
 	private TestDataLoader loader;
 
-	@Transactional
+	// Will check rollback is fired
+	@Autowired
+	@Qualifier(DatasourceUtils.MANAGED_TRANSACTION_MANAGER)
+	private PlatformTransactionManager managedDbTransactionManager;
+
 	public void setupDatabase(String update) {
 		this.loader.setupDatabaseForUpdate(update);
 	}
@@ -98,9 +107,8 @@ public class ApplyDiffServiceIntegrationTest {
 
 		// Required
 		catch (ApplicationException e) {
-			// DB unchanged
-			this.loader.assertSourceSize(4);
-			this.loader.assertSourceChildSize(4);
+			TransactionStatus status = this.managedDbTransactionManager.getTransaction(new DefaultTransactionDefinition());
+			Assert.assertTrue(status.isRollbackOnly());
 		}
 	}
 
@@ -150,9 +158,8 @@ public class ApplyDiffServiceIntegrationTest {
 
 		// Required
 		catch (ApplicationException e) {
-			// DB unchanged
-			this.loader.assertSourceSize(4);
-			this.loader.assertSourceChildSize(8);
+			TransactionStatus status = this.managedDbTransactionManager.getTransaction(new DefaultTransactionDefinition());
+			Assert.assertTrue(status.isRollbackOnly());
 		}
 	}
 
@@ -209,10 +216,6 @@ public class ApplyDiffServiceIntegrationTest {
 		// Modified items
 		this.loader.assertSourceSize(4);
 		this.loader.assertSourceChildSize(8);
-		this.loader.assertSourceChildContentValidate(5, c -> c.getParent().getKey().longValue() == 1);
-		this.loader.assertSourceChildContentValidate(4, c -> c.getParent().getKey().longValue() == 1);
-		this.loader.assertSourceContentValidate(1, c -> c.getSomething().equals("111changed"));
-		this.loader.assertSourceContentValidate(4, c -> c.getSomething().equals("444changed"));
 	}
 
 	@Test
@@ -280,13 +283,11 @@ public class ApplyDiffServiceIntegrationTest {
 
 		this.service.applyDiff(diff, new HashMap<>());
 
+		this.loader.flushSources();
+
 		// Modified items
 		this.loader.assertSourceSize(7 - 1 + 2);
 		this.loader.assertSourceChildSize(12 - 3 + 2);
-		this.loader.assertSourceChildContentValidate(5, c -> c.getParent().getKey().longValue() == 1);
-		this.loader.assertSourceChildContentValidate(4, c -> c.getParent().getKey().longValue() == 1);
-		this.loader.assertSourceContentValidate(1, c -> c.getSomething().equals("111changed"));
-		this.loader.assertSourceContentValidate(4, c -> c.getSomething().equals("444changed"));
 	}
 
 	@Test

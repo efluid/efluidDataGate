@@ -7,7 +7,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
@@ -28,8 +28,8 @@ import fr.uem.efluid.stubs.TestDataLoader;
  * @since v0.0.1
  * @version 1
  */
-@Ignore
-@RunWith(SpringRunner.class) 
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+@RunWith(SpringRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
 public class PrepareDiffServiceIntegrationTest {
@@ -45,26 +45,25 @@ public class PrepareDiffServiceIntegrationTest {
 
 	private UUID dictionaryEntryUuid;
 
-	@Transactional
 	public void setupDatabase(String diff) {
 		this.dictionaryEntryUuid = this.loader.setupDatabaseForDiff(diff);
 	}
 
 	@Test
-	@Transactional
 	public void testProcessDiffNoIndex() {
 
 		setupDatabase("diff7");
-		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(this.dictionary.getOne(this.dictionaryEntryUuid), new HashMap<>());
+		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(this.dictionary.getOne(this.dictionaryEntryUuid),
+				new HashMap<>());
 		Assert.assertEquals(0, index.size());
 	}
 
 	@Test
-	@Transactional
 	public void testProcessDiffLargeIndex() {
 
 		setupDatabase("diff8");
-		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(this.dictionary.getOne(this.dictionaryEntryUuid), new HashMap<>());
+		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(this.dictionary.getOne(this.dictionaryEntryUuid),
+				new HashMap<>());
 		Assert.assertEquals(80 + 100 + 85, index.size());
 		List<PreparedIndexEntry> adds = index.stream()
 				.filter(i -> i.getAction() == IndexAction.ADD)

@@ -10,12 +10,19 @@
 		</encoder>
 	</appender>
 
+	<!-- Log loaded config file at spring startup-->
+	<logger name="org.springframework.boot.context.config.ConfigFileApplicationListener" additivity="false">
+		<level value="DEBUG" />
+		<appender-ref ref="STDOUT" />
+	</logger>
+
 	<!-- Default INFO enabled logs for application -->
 	<logger name="fr.uem.efluid" additivity="false">
 		<level value="INFO" />
 		<appender-ref ref="STDOUT" />
 	</logger>
 
+<!-- 
 	<logger name="fr.uem.efluid.model.repositories.impls" additivity="false"> 
 		<level value="DEBUG" /> 
 		<appender-ref ref="STDOUT" /> 
@@ -25,13 +32,14 @@
 		<level value="DEBUG" /> 
 		<appender-ref ref="STDOUT" /> 
 	</logger>
-
+ -->
+ 
 	<!-- Explicit logger for DIFF MERGE processes. Log it here into current console -->
-	<logger name="merge.analysis" additivity="false">
+<!-- <logger name="merge.analysis" additivity="false">
 		<level value="DEBUG" />
 		<appender-ref ref="STDOUT" />
 	</logger>
-
+ -->	
 	<!-- Default level for every logged resources -->
 	<root level="WARN">
 		<appender-ref ref="STDOUT" />

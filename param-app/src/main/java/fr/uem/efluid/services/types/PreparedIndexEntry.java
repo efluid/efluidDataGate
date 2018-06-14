@@ -263,25 +263,6 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
 		return data;
 	}
 
-	/**
-	 * <p>
-	 * Copy content between 2 <tt>PreparedIndexEntry</tt> : all fields excep id and key
-	 * </p>
-	 * 
-	 * @param src
-	 * @param dest
-	 */
-	protected static void copyContent(PreparedIndexEntry src, PreparedIndexEntry dest) {
-
-		dest.setAction(src.getAction());
-		dest.setCommitUuid(src.getCommitUuid());
-		dest.setDictionaryEntryUuid(src.getDictionaryEntryUuid());
-		dest.setHrPayload(src.getHrPayload());
-		dest.setPayload(src.getPayload());
-		dest.setRollbacked(src.isRollbacked());
-		dest.setSelected(src.isSelected());
-		dest.setTimestamp(src.getTimestamp());
-	}
 
 	/**
 	 * Used when reading an index content

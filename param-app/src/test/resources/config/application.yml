@@ -3,14 +3,10 @@
 param-efluid:
 
    managed-datasource:
-       url: jdbc:h2:~\h2;DB_CLOSE_ON_EXIT=FALSE
+       url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
        username: sa
        password: 
-       driverClassName: org.h2.Driver
-       connectionTestQuery: SELECT 1
-       minimumIdle: 2
-       maxPoolSize: 6
-       timeout: 500
+       driver-class-name: org.h2.Driver
        meta:
            filterSchema: 
            search-fk-type: standard
@@ -29,6 +25,7 @@ param-efluid:
 
    display:
        details-index-max: 10000
+       combine-similar-diff-after: 10000000
        
    security:
        salt: 12345678901234567890123456789012
@@ -45,7 +42,7 @@ spring:
         cache: false
 
     datasource:
-       url: jdbc:h2:~\h2;DB_CLOSE_ON_EXIT=FALSE
+       url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
        username: sa
        password: 
        driver-class-name: org.h2.Driver

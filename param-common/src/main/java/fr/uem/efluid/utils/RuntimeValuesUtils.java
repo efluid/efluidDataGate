@@ -52,15 +52,15 @@ public class RuntimeValuesUtils {
 		if (raw.indexOf('-') == -1) {
 
 			String uuid = new StringBuilder(36)
-					.append(raw.substring(0, 7))
+					.append(raw.substring(0, 8))
 					.append('-')
 					.append(raw.substring(8, 12))
 					.append('-')
-					.append(raw.substring(13, 17))
+					.append(raw.substring(12, 16))
 					.append('-')
-					.append(raw.substring(18, 22))
+					.append(raw.substring(16, 20))
 					.append('-')
-					.append(raw.substring(23))
+					.append(raw.substring(20))
 					.toString();
 
 			return UUID.fromString(uuid.toLowerCase());

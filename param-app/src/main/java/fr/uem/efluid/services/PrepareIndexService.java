@@ -56,7 +56,7 @@ import fr.uem.efluid.tools.ManagedValueConverter;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Service
 @Transactional
