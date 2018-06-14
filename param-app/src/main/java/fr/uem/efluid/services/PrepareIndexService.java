@@ -566,7 +566,7 @@ public class PrepareIndexService {
 		List<T> listToRender = new ArrayList<>();
 
 		// Combine by HR payload
-		Map<String, List<T>> combineds = readyToRender.stream().collect(Collectors.groupingBy(p -> p.getHrPayload()));
+		Map<String, List<T>> combineds = readyToRender.stream().collect(Collectors.groupingBy(p -> p.getHrPayload() != null ? p.getHrPayload() : ""));
 
 		// Rendering display is based on combined
 		combineds.values().stream().forEach(e -> {
