@@ -25,7 +25,7 @@
 					<td>
 						<div class="float-right">
 							<div th:id="|selecterFor${commit.uuid}|" class="selecter selected" title="Activer l'export complet à partir de ce lot">&nbsp;</div>&nbsp;&nbsp;
-							<a href="#" th:href="@{/ui/push/{id}-commits.par(id=${commit.uuid})}" class="btn btn-primary btn-sm">Exporter seul</a>
+							<a href="#" th:href="@{/ui/push/{id}-commit.par(id=${commit.uuid})}" class="btn btn-primary btn-sm">Exporter seul</a>
 						</div>
 					</td>
 				</tr>
@@ -61,11 +61,11 @@
        			if(i === 0){
        				exportAllB.text("Exporter tous les lots");
 					exportAllB.removeClass("btn-primary").addClass("btn-success");
-					exportAllB.prop('href','/push/all-commits.par');
+					exportAllB.prop('href','/ui/push/all-commits.par');
        			}else{
        				exportAllB.text("Exporter à partir du lot");
 					exportAllB.removeClass("btn-success").addClass("btn-primary");
-					exportAllB.prop('href','/push/until-' + item + '-commits.par');
+					exportAllB.prop('href','/ui/push/until-' + item + '-commits.par');
        			}
 			}
         };
