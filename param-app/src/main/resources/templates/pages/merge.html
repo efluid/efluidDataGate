@@ -18,11 +18,21 @@
 			<a th:href="@{/ui/pull}" href="#" class="btn btn-dark btn-sm">Retourner à l'import</a>
 		</span>
 		<form th:if="${preparation.status.name()}!='FAILED'" action="/merge.html" th:action="@{/ui/merge/commit}" method="post">
+			<span th:if="${not needsAction}">
+				<div class="alert alert-secondary">
+					<h4>L'import n'a révélé aucune différence par rapport aux données actuelles</h4>
+					<span class="remark">
+						La totalité des modifications présentes dans le lot importé sont déjà en place dans la base de donnée actuelle. 
+						Valider le lot n'apportera donc pas de changements, mais reste nécessaire pour éviter une comparaison de données
+						 inutile lors des prochains imports.
+					</span>
+				</div>
+			</span>
 			<span th:if="${not preparation.emptyDiff}">
 				<p>
 					<h5>Ensemble des modifications identifiées
 						<div class="float-right">
-							<div class="btn-group" role="group">
+							<div th:if="${needsAction}" class="btn-group" role="group">
 								<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout appliquer</button>
 								<button type="button" id="rollbackAllButton"  class="btn btn-outline-danger btn-sm">Tout ignorer</button>
 							</div>&nbsp;
@@ -31,8 +41,8 @@
 								<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
 							</div>&nbsp;
 							<a th:href="@{/ui/merge/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
-							<a th:if="!${showAll}" href="/merge?showAll=true" class="btn btn-dark btn-sm">Afficher les égalités</a>
-							<a th:if="${showAll}" href="/merge?showAll=false" class="btn btn-dark btn-sm">Masquer les égalités</a>
+							<a th:if="!${showAll}" th:href="@{/ui/merge?showAll=true}" href="/merge?showAll=true" class="btn btn-dark btn-sm">Afficher les égalités</a>
+							<a th:if="${showAll}" th:href="@{/ui/merge?showAll=false}" href="/merge?showAll=false" class="btn btn-dark btn-sm">Masquer les égalités</a>
 						</div>
 					</h5>
 				</p>
@@ -49,11 +59,13 @@
 								<tr>
 									<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
 									<th scope="col" colspan="2" width="85%">
-										Modification
-										<div class="btn-group float-right" role="group">
-											<button type="button" th:id="|select_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary all-button btn-sm">Tout appliquer</button>
-											<button type="button" th:id="|rollback_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-danger all-button btn-sm">Tout ignorer</button>
-										</div>
+										<span th:if="${needsAction}">
+											Modification
+											<div class="btn-group float-right" role="group">
+												<button type="button" th:id="|select_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary all-button btn-sm">Tout appliquer</button>
+												<button type="button" th:id="|rollback_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-danger all-button btn-sm">Tout ignorer</button>
+											</div>
+										</span>
 									</th>
 								</tr>
 							</thead>

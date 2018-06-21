@@ -171,6 +171,34 @@ public class PilotableCommitPreparationService {
 
 	/**
 	 * <p>
+	 * Combines results of all "isNeedAction" for a prepared merge, to check if the merge
+	 * commit can be applied immediately
+	 * </p>
+	 * 
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean isCurrentMergeCommitNeedsAction() {
+
+		// Works only on ready merge commits
+		if (this.current != null && this.current.getStatus() == PilotedCommitStatus.COMMIT_CAN_PREPARE
+				&& this.current.getPreparingState() == CommitState.MERGED) {
+
+			// Check if at least one content needs action
+			boolean result = ((PilotedCommitPreparation<MergePreparedDiff>) this.current).getPreparedContent().stream()
+					.anyMatch(p -> p.isDiffNeedAction());
+
+			LOGGER.debug("Checking if current merge commit needs action. Found {}", Boolean.valueOf(result));
+
+			return result;
+		}
+
+		// Other kinds are ignored
+		return false;
+	}
+
+	/**
+	 * <p>
 	 * For checked status
 	 * </p>
 	 * 
@@ -242,28 +270,40 @@ public class PilotableCommitPreparationService {
 	public void copyCommitPreparationSelections(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> changedPreparation) {
 
-		int endContent = changedPreparation.getPreparedContent().size();
+		// Can be empty if no content was selected (ex : import a commit when everything
+		// is already managed locally)
+		if (changedPreparation != null && changedPreparation.getPreparedContent() != null) {
 
-		// Use basic global iterate on both current and changed
-		for (int i = 0; i < endContent; i++) {
+			int endContent = changedPreparation.getPreparedContent().size();
 
-			DiffDisplay<? extends List<? extends PreparedIndexEntry>> currentDiff = this.current.getPreparedContent().get(i);
-			DiffDisplay<? extends List<? extends PreparedIndexEntry>> changedDiff = changedPreparation.getPreparedContent().get(i);
+			LOGGER.debug("Process copy of preparation selection for {} commit index contents", Integer.valueOf(endContent));
 
-			if (changedDiff != null && changedDiff.getDiff() != null) {
+			// Use basic global iterate on both current and changed
+			for (int i = 0; i < endContent; i++) {
 
-				int endDiff = changedDiff.getDiff().size();
+				DiffDisplay<? extends List<? extends PreparedIndexEntry>> currentDiff = this.current.getPreparedContent().get(i);
+				DiffDisplay<? extends List<? extends PreparedIndexEntry>> changedDiff = changedPreparation.getPreparedContent().get(i);
 
-				for (int j = 0; j < endDiff; j++) {
+				if (changedDiff != null && changedDiff.getDiff() != null) {
 
-					PreparedIndexEntry currentEntry = currentDiff.getDiff().get(j);
-					PreparedIndexEntry changedEntry = changedDiff.getDiff().get(j);
+					int endDiff = changedDiff.getDiff().size();
 
-					// Editable values are "selected" and "rollbacked"
-					currentEntry.setRollbacked(changedEntry.isRollbacked());
-					currentEntry.setSelected(changedEntry.isSelected());
+					for (int j = 0; j < endDiff; j++) {
+
+						PreparedIndexEntry currentEntry = currentDiff.getDiff().get(j);
+						PreparedIndexEntry changedEntry = changedDiff.getDiff().get(j);
+
+						// Editable values are "selected" and "rollbacked"
+						currentEntry.setRollbacked(changedEntry.isRollbacked());
+						currentEntry.setSelected(changedEntry.isSelected());
+					}
 				}
 			}
+		}
+
+		// Case : no identified selection
+		else {
+			LOGGER.debug("Cannot apply preparation selection on commit as not content was provided : empty commit ?");
 		}
 	}
 

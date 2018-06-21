@@ -273,7 +273,7 @@ public class BacklogController {
 	public String mergePage(Model model, @RequestParam(required = false, name = "showAll", defaultValue = "false") boolean showAll) {
 
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
-
+		model.addAttribute("needsAction", Boolean.valueOf(this.pilotableCommitService.isCurrentMergeCommitNeedsAction()));
 		model.addAttribute("showAll", Boolean.valueOf(showAll));
 
 		return "pages/merge";
