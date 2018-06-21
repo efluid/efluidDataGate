@@ -6,11 +6,15 @@ import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
+ * <p>
+ * Shared information on top level organization : data is managed in projects
+ * </p>
+ * 
  * @author elecomte
- * @since v0.0.1
+ * @since v0.2.0
  * @version 1
  */
-public abstract class ExportAwareFunctionalDomain<D extends ExportAwareProject>  implements Shared {
+public abstract class ExportAwareProject implements Shared {
 
 	/**
 	 * @return
@@ -24,11 +28,6 @@ public abstract class ExportAwareFunctionalDomain<D extends ExportAwareProject> 
 	public abstract LocalDateTime getCreatedTime();
 
 	/**
-	 * @return associated project
-	 */
-	public abstract D getProject();
-	
-	/**
 	 * @return
 	 * @see fr.uem.efluid.model.Shared#serialize()
 	 */
@@ -39,7 +38,6 @@ public abstract class ExportAwareFunctionalDomain<D extends ExportAwareProject> 
 				.with("uid", getUuid())
 				.with("cre", getCreatedTime())
 				.with("nam", getName())
-				.with("pro", getProject().getUuid())
 				.toString();
 	}
 
@@ -68,7 +66,7 @@ public abstract class ExportAwareFunctionalDomain<D extends ExportAwareProject> 
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		ExportAwareFunctionalDomain<?> other = (ExportAwareFunctionalDomain<?>) obj;
+		ExportAwareProject other = (ExportAwareProject) obj;
 		if (this.getUuid() == null) {
 			if (other.getUuid() != null)
 				return false;

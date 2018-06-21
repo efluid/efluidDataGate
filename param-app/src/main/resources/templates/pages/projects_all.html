@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+		<h5>Edition des projets</h5>
+        <span class="help">Les projets ...</span>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th scope="col" width="70%">Projets</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="project : ${projects}" th:id="${project.uuid}">
+                     <td th:text="${project.name}">Production</td>
+                     <td>&nbsp;</td>
+			     </tr>
+			     <tr id="projectListInjectBefore">
+			         <td><input type="text" id="projectName" class="form-control" placeholder="Nom" required="true"/></td>
+			         <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+			     </tr>
+			</tbody>
+		</table>
+    </span>
+    <script layout:fragment="script">
+
+		// Add row button
+		const addButtonAction = () => {
+			hideDisplays();
+			var inputName = $("#projectName");
+			var name = inputName.val();
+			if(name == null || name === ''){
+				setInvalid("#projectName","Le nom du projet est obligatoire");
+			}
+			$.post("/ui/projects/add/" + inputName.val(), null, (data, status) => {
+				showSuccess("Projet créé avec succès");
+		        var newProjectRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td>&nbsp;</td></tr>';
+				$("#projectListInjectBefore").before(newProjectRow);
+				inputName.val("");
+		    });
+		};
+    
+    	// Init actions
+    	$(document).ready(() => {
+			$("#addButton").click(addButtonAction);
+		}); 
+    </script>
+</body>
+</html>

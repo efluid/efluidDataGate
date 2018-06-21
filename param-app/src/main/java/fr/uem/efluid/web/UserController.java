@@ -18,7 +18,7 @@ import fr.uem.efluid.services.SecurityService;
  */
 @Controller
 @RequestMapping("/ui")
-public class UserController {
+public class UserController extends CommonController {
 
 	@Autowired
 	private SecurityService secu;
@@ -26,6 +26,10 @@ public class UserController {
 	@RequestMapping("/user")
 	public String currentUser(Model model) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		// Current user details
 		model.addAttribute("user", this.secu.getCurrentUserDetails());
 

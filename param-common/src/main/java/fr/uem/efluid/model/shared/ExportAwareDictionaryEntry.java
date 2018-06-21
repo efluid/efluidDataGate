@@ -18,7 +18,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @since v0.0.1
  * @version 1
  */
-public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctionalDomain> implements Shared {
+public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctionalDomain<?>> implements Shared {
 
 	/**
 	 * @param parameterName

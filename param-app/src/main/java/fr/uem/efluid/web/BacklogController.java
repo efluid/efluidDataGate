@@ -41,7 +41,7 @@ import fr.uem.efluid.utils.WebUtils;
  */
 @Controller
 @RequestMapping("/ui")
-public class BacklogController {
+public class BacklogController extends CommonController {
 
 	@Autowired
 	private CommitService commitService;
@@ -92,6 +92,10 @@ public class BacklogController {
 	@RequestMapping(path = { "/prepare/commit", "/merge/commit" }, method = POST)
 	public String preparationLocalCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
 		// Update current preparation with selected attributes
 		this.pilotableCommitService.copyCommitPreparationSelections(preparation);
 
@@ -108,6 +112,10 @@ public class BacklogController {
 	 */
 	@RequestMapping(path = { "/prepare/save", "/merge/save" }, method = POST)
 	public String preparationLocalSave(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
 
 		// Update current preparation with selected attributes
 		this.pilotableCommitService.copyCommitPreparationCommitData(preparation);
@@ -131,6 +139,10 @@ public class BacklogController {
 	@RequestMapping(path = { "/prepare/cancel", "/merge/cancel" }, method = GET)
 	public String preparationCancel(Model model) {
 
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
 		// Update current preparation as canceled
 		this.pilotableCommitService.cancelCommitPreparation();
 
@@ -145,6 +157,14 @@ public class BacklogController {
 	 */
 	@RequestMapping(path = "/push", method = GET)
 	public String commitExportPage(Model model) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
 
 		// For formatting
 		WebUtils.addTools(model);
@@ -206,6 +226,10 @@ public class BacklogController {
 	@RequestMapping(value = "/pull", method = GET)
 	public String pullPage(Model model) {
 
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
 		// Forward to merge if active
 		if (this.pilotableCommitService.getCurrentCommitPreparation() != null
 				&& this.pilotableCommitService.getCurrentCommitPreparation().getPreparingState() != CommitState.LOCAL) {
@@ -223,6 +247,10 @@ public class BacklogController {
 	@RequestMapping(value = "/pull/upload", method = POST)
 	public String uploadImport(Model model, MultipartHttpServletRequest request) {
 
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
 		model.addAttribute("result", this.pilotableCommitService.startMergeCommitPreparation(WebUtils.inputExportImportFile(request)));
 
 		return "pages/merging";
@@ -236,30 +264,14 @@ public class BacklogController {
 	@RequestMapping(value = "/pull/upload", method = GET)
 	public String processImport(Model model) {
 
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
 
 		return "pages/merging";
 	}
-
-	// /**
-	// * <p>
-	// * For default merge page
-	// * </p>
-	// *
-	// * @param model
-	// * @return
-	// */
-	// @RequestMapping("/merge")
-	// public String mergePage(Model model) {
-	//
-	// model.addAttribute("preparation",
-	// this.pilotableCommitService.getCurrentCommitPreparation());
-	//
-	// // Default : don't show all
-	// model.addAttribute("showAll", Boolean.FALSE);
-	//
-	// return "pages/merge";
-	// }
 
 	/**
 	 * <p>
@@ -271,6 +283,10 @@ public class BacklogController {
 	 */
 	@RequestMapping(value = "/merge", method = GET)
 	public String mergePage(Model model, @RequestParam(required = false, name = "showAll", defaultValue = "false") boolean showAll) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
 
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
 		model.addAttribute("needsAction", Boolean.valueOf(this.pilotableCommitService.isCurrentMergeCommitNeedsAction()));
@@ -286,6 +302,10 @@ public class BacklogController {
 	 */
 	@RequestMapping(path = "/commits", method = GET)
 	public String commitListPage(Model model) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
 
 		// For formatting
 		WebUtils.addTools(model);
@@ -303,6 +323,10 @@ public class BacklogController {
 	 */
 	@RequestMapping(path = "/details/{uuid}", method = GET)
 	public String commitDetailsPage(Model model, @PathVariable("uuid") UUID uuid) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
 
 		// For formatting
 		WebUtils.addTools(model);
@@ -324,6 +348,11 @@ public class BacklogController {
 	 * @return
 	 */
 	private String startPreparationAndRouteRegardingStatus(Model model, boolean forced) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
 		PilotedCommitPreparation<?> prepare = this.pilotableCommitService.startLocalCommitPreparation(forced);
 
 		// Diff already in progress : dedicated waiting page

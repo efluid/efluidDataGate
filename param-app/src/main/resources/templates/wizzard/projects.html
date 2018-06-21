@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/wizzard.html}">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+    	<span class="w-bc">Ajout d'utilisateur > <span class="w-active">Projets</span> > Dictionnaire initial > Preparation de paramètre > fin</span>
+		<br/>
+		<div class="alert alert-primary" role="alert">
+			Les données de paramètrage sont organisées par projet. La présence d'au moins un projet est obligatoire. 
+			Les utilisateurs doivent sélectionner un projet actif sur lequel travailler
+			Vous pourrez modifier la liste des projets, ou choisir des projets préférés plus tard
+        </div>
+        
+        <form action="/wizzard/2.html" th:action="@{/wizzard/2}" method="post">
+			<div class="form-group">
+				<label for="projectName">Saisir un nom de projet à créer</label>
+				<input id="projectName" type="text" class="form-control" name="domainName" size="50"/>
+			</div>
+			<div>
+				<button type="button" id="addButton" class="btn btn-success btn-sm float-right" disabled="disabled">Créer le projet</button>
+				<br/><br/>
+			</div>
+			<span  id="projectList">
+				<div class="form-group">
+					<h5>Liste des projets</h5>
+			        <table class="table table-sm">
+			            <thead>
+			                <tr>
+			                    <th scope="col" width="70%">Projets</th>
+			                    <th scope="col">Utiliser comme projet actif</th>
+			                </tr>
+			            </thead>
+			            <tbody>
+						     <tr id="projectListInjectBefore"><td colspan="100%">&nbsp;</td></tr>
+						</tbody>
+					</table>
+				</div>
+				<div>
+					<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right" disabled="disabled">Valider le(s) projet(s) et continuer</button>
+				</div>
+			</span>
+		</form>
+		
+    </span>
+    <script layout:fragment="script">
+
+		// Check value
+    	const checkProjectAdd = () => {
+			var inputName = $("#projectName");
+			var name = inputName.val();
+			if(name == null || name === ''){
+    			$("#addButton").prop('disabled', true);
+				$("#addButton").removeClass("btn-success").addClass("btn-outline-success");
+			} else {
+    			$("#addButton").prop('disabled', false);
+				$("#addButton").removeClass("btn-outline-success").addClass("btn-success");
+			}
+		}
+			
+		// Add row button
+		const addButtonAction = () => {
+			var inputName = $("#projectName");
+			var name = inputName.val();
+			$.post("/wizzard/2/add/" + inputName.val(), null, (data, status) => {
+		        var newProjectRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td><input type="radio" name="selected" value="' + data.uuid + '"/></td></tr>';
+				$("#projectListInjectBefore").before(newProjectRow);
+				inputName.val("");
+				$("#addButton").html("Ajouter un autre projet");
+    			$("#nextButton").prop('disabled', false);
+    			$("#projectList").fadeIn();
+				$("#nextButton").removeClass("btn-outline-success").addClass("btn-success");
+				checkProjectAdd();
+		    });
+		};
+    
+    	// Init actions
+    	$(document).ready(() => {
+    		$("#projectList").hide();
+			$("#addButton").click(addButtonAction);
+			$("#projectName").on('input',checkProjectAdd);
+			checkProjectAdd();
+		}); 
+    </script>
+</body>
+</html>

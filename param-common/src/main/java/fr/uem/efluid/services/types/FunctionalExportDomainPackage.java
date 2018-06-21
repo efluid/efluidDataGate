@@ -3,13 +3,15 @@ package fr.uem.efluid.services.types;
 import java.time.LocalDateTime;
 
 import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
+import fr.uem.efluid.model.shared.ExportAwareProject;
 
 /**
  * @author elecomte
  * @since v0.0.1
  * @version 1
  */
-public abstract class FunctionalExportDomainPackage<D extends ExportAwareFunctionalDomain> extends SharedPackage<D> {
+public abstract class FunctionalExportDomainPackage<D extends ExportAwareFunctionalDomain<? extends ExportAwareProject>>
+		extends SharedPackage<D> {
 
 	public static final String DOMAINS_EXPORT = "full-domains";
 	public static final String PARTIAL_DOMAINS_EXPORT = "partial-domains";
@@ -28,7 +30,7 @@ public abstract class FunctionalExportDomainPackage<D extends ExportAwareFunctio
 	 */
 	@Override
 	public final String getVersion() {
-		return "1";
+		return "2";
 	}
 
 }

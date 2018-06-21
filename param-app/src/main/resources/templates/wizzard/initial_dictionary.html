@@ -4,7 +4,7 @@
 </head>
 <body>
 	<span layout:fragment="content">
-		<span class="w-bc">Ajout d'utilisateur > <span class="w-active">Dictionnaire initial</span> > Preparation de paramètre > fin</span>
+		<span class="w-bc">Ajout d'utilisateur > Projets > <span class="w-active">Dictionnaire initial</span> > Preparation de paramètre > fin</span>
 		<br/>
 		<div class="alert alert-primary" role="alert">
 			Le dictionnaire est la base de définition des tables de paramétrage gérées avec l'application. Ces tables sont basées sur le contenu de la base de données
@@ -13,7 +13,7 @@
         	partiel ou complet.<br/>
         	Si vous compter recevoir des packages de paramètrages, <b>il est recommandé de créer le dictionnaire en important celui de référence</b>.
         </div>
-        <form action="/wizzard/2.html" th:action="@{/wizzard/2/create}" method="post">
+        <form action="/wizzard/2.html" th:action="@{/wizzard/3/create}" method="post">
 			<div class="form-group">
 				<label for="domainName">Saisir un nom de domaine fonctionnel à créer</label>
 				<input id="domainName" type="text" class="form-control" name="domainName" size="50"/>
@@ -24,7 +24,7 @@
 		</form>
 		<br/>
 		<br/>
-		<form action="#" th:action="@{/wizzard/2/upload}" method="post" enctype="multipart/form-data">
+		<form action="#" th:action="@{/wizzard/3/upload}" method="post" enctype="multipart/form-data">
 			<label for="import">Ou importer un package de dictionnaire existant</label><br/>
 			<label class="btn btn-sm btn-primary">
 				Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>

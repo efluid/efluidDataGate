@@ -23,7 +23,7 @@ import fr.uem.efluid.services.ApplicationDetailsService;
  * @version 1
  */
 @Controller
-public class HomeController {
+public class HomeController extends CommonController {
 
 	@Autowired
 	private ApplicationDetailsService applicationDetailsService;
@@ -53,6 +53,10 @@ public class HomeController {
 		// If not configured (no data : forward to wizzard)
 		if (this.applicationDetailsService.isNeedWizzard()) {
 			return "forward:/wizzard/";
+		}
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
 		}
 
 		model.addAttribute("details", this.applicationDetailsService.getCurrentDetails());

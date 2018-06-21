@@ -5,21 +5,20 @@ import java.util.UUID;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
+import fr.uem.efluid.model.shared.ExportAwareProject;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * @author elecomte
- * @since v0.0.1
+ * @since v0.2.0
  * @version 1
  */
 @Entity
-@Table(name = "domain")
-public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
+@Table(name = "projects")
+public class Project extends ExportAwareProject {
 
 	@Id
 	private UUID uuid;
@@ -32,13 +31,10 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 
 	private LocalDateTime importedTime;
 
-	@ManyToOne(optional = false)
-	private Project project;
-
 	/**
 	 * @param uuid
 	 */
-	public FunctionalDomain(UUID uuid) {
+	public Project(UUID uuid) {
 		super();
 		this.uuid = uuid;
 	}
@@ -46,7 +42,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	/**
 	 * 
 	 */
-	public FunctionalDomain() {
+	public Project() {
 		super();
 	}
 
@@ -115,22 +111,6 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	}
 
 	/**
-	 * @return the project
-	 */
-	@Override
-	public Project getProject() {
-		return this.project;
-	}
-
-	/**
-	 * @param project
-	 *            the project to set
-	 */
-	public void setProject(Project project) {
-		this.project = project;
-	}
-
-	/**
 	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
@@ -140,8 +120,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 		SharedOutputInputUtils.fromJson(raw)
 				.applyUUID("uid", v -> setUuid(v))
 				.applyLdt("cre", v -> setCreatedTime(v))
-				.applyString("nam", v -> setName(v))
-				.applyUUID("dom", v -> setProject(new Project(v)));
+				.applyString("nam", v -> setName(v));
 	}
 
 }

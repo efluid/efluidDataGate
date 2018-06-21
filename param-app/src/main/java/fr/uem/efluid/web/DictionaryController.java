@@ -39,7 +39,7 @@ import fr.uem.efluid.utils.WebUtils;
  */
 @Controller
 @RequestMapping("/ui")
-public class DictionaryController {
+public class DictionaryController extends CommonController {
 
 	@Autowired
 	private DictionaryManagementService dictionaryManagementService;
@@ -47,6 +47,10 @@ public class DictionaryController {
 	@RequestMapping("/domains")
 	public String domainsPage(Model model) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 
 		return "pages/domains";
@@ -55,6 +59,10 @@ public class DictionaryController {
 	@RequestMapping("/dictionary")
 	public String dictionaryPage(Model model) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
 
 		return "pages/dictionary";
@@ -67,6 +75,10 @@ public class DictionaryController {
 	@RequestMapping("/dictionary/new")
 	public String dictionaryAddNew(Model model) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
 
 		return "pages/table_init";
@@ -79,6 +91,10 @@ public class DictionaryController {
 	@RequestMapping("/dictionary/refresh")
 	public String dictionaryAddNewWithRefresh(Model model) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		this.dictionaryManagementService.refreshCachedMetadata();
 
 		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
@@ -94,6 +110,10 @@ public class DictionaryController {
 	@RequestMapping("/dictionary/edit/{uuid}")
 	public String dictionaryEdit(Model model, @PathVariable("uuid") UUID uuid) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 		model.addAttribute("entry", this.dictionaryManagementService.editEditableDictionaryEntry(uuid));
@@ -109,6 +129,10 @@ public class DictionaryController {
 	@RequestMapping("/dictionary/new/{name}")
 	public String dictionaryAddNewForTable(Model model, @PathVariable("name") String name) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 		model.addAttribute("entry", this.dictionaryManagementService.prepareNewEditableDictionaryEntry(name));
@@ -124,6 +148,10 @@ public class DictionaryController {
 	@RequestMapping(path = "/dictionary/save", method = POST)
 	public String dictionarySave(Model model, @ModelAttribute @Valid DictionaryEntryEditData editData) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		this.dictionaryManagementService.saveDictionaryEntry(editData);
 
 		// For success save message
@@ -139,6 +167,10 @@ public class DictionaryController {
 	@RequestMapping(path = "/share", method = GET)
 	public String exportPage(Model model) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
 
 		return "pages/share";
@@ -173,6 +205,10 @@ public class DictionaryController {
 	@RequestMapping(value = "/share/upload", method = POST)
 	public String uploadImport(Model model, MultipartHttpServletRequest request) {
 
+		if(!controlSelectedProject(model)){
+			return REDIRECT_SELECT;
+		}
+		
 		model.addAttribute("result", this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request)));
 
 		return exportPage(model);

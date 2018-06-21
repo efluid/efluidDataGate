@@ -41,12 +41,24 @@
                         </div>
                     </li>
                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Projets
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a>
+                            <a class="dropdown-item" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir des projets préférés</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Utilisateurs
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a>
                         </div>
+                    </li>
+                    <li th:if="${project != null}">
+                        Projet actuel : <span th:text="${project.name}">RECETTE</span>
                     </li>
                 </ul>
                 <form class="form-inline">

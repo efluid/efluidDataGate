@@ -3,9 +3,13 @@ package fr.uem.efluid.web;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import java.util.Arrays;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -14,8 +18,10 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
+import fr.uem.efluid.services.ProjectManagementService;
 import fr.uem.efluid.services.SecurityService;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.utils.WebUtils;
 
 /**
@@ -43,6 +49,9 @@ public class WizzardController {
 
 	@Autowired
 	private ApplicationDetailsService detailsService;
+
+	@Autowired
+	private ProjectManagementService projectService;
 
 	/**
 	 * @return
@@ -76,7 +85,39 @@ public class WizzardController {
 
 		this.security.addSimpleUser(login, email, password, true);
 
+		return "wizzard/projects";
+	}
+
+	/**
+	 * @param login
+	 * @param password
+	 * @param email
+	 * @return
+	 */
+	@RequestMapping(path = "/2", method = POST)
+	public String projectSave(@RequestParam("selected") String selected) {
+
+		UUID uuid = UUID.fromString(selected);
+
+		// Select is automatically set as prefered for current user
+		this.projectService.setPreferedProjectsForCurrentUser(Arrays.asList(uuid));
+
+		// And as selected
+		this.projectService.selectProject(uuid);
+
 		return "wizzard/initial_dictionary";
+	}
+
+	/**
+	 * Rest Method for AJAX push
+	 * 
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping(value = "/2/add/{name}", method = POST)
+	@ResponseBody
+	public ProjectData addProjectData(@PathVariable("name") String name) {
+		return this.projectService.createNewProject(name);
 	}
 
 	/**
@@ -84,7 +125,7 @@ public class WizzardController {
 	 * @param domainName
 	 * @return
 	 */
-	@RequestMapping(value = "/2", method = GET)
+	@RequestMapping(value = "/3", method = GET)
 	public String initialCommitPage(Model model) {
 
 		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
@@ -97,7 +138,7 @@ public class WizzardController {
 	 * @param domainName
 	 * @return
 	 */
-	@RequestMapping(value = "/2/create", method = POST)
+	@RequestMapping(value = "/3/create", method = POST)
 	public String addFunctionalDomainData(Model model, @RequestParam("domainName") String domainName) {
 
 		this.dictionaryManagementService.createNewFunctionalDomain(domainName);
@@ -110,7 +151,7 @@ public class WizzardController {
 	 * @param request
 	 * @return
 	 */
-	@RequestMapping(value = "/2/upload", method = POST)
+	@RequestMapping(value = "/3/upload", method = POST)
 	public String uploadDictionary(Model model, MultipartHttpServletRequest request) {
 
 		this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request));
@@ -122,7 +163,7 @@ public class WizzardController {
 	 * @param model
 	 * @return
 	 */
-	@RequestMapping(value = "/2/init", method = GET)
+	@RequestMapping(value = "/3/init", method = GET)
 	public String startInitialCommit(Model model) {
 
 		model.addAttribute("preparation", this.pilotableCommitService.startLocalCommitPreparation(true));
@@ -133,7 +174,7 @@ public class WizzardController {
 	/**
 	 * @return status as a value
 	 */
-	@RequestMapping(path = { "/2/progress" }, method = GET)
+	@RequestMapping(path = { "/3/progress" }, method = GET)
 	@ResponseBody
 	public PilotedCommitStatus preparationGetStatus() {
 		return this.pilotableCommitService.getCurrentCommitPreparationStatus();
@@ -144,7 +185,7 @@ public class WizzardController {
 	 * @param commitName
 	 * @return
 	 */
-	@RequestMapping(value = "/2/commit", method = GET)
+	@RequestMapping(value = "/3/commit", method = GET)
 	public String completedInitialCommit(Model model, @RequestParam("commitName") String commitName) {
 
 		// Finalize dedicated for wizzard initial commit (auto select all)
@@ -160,7 +201,7 @@ public class WizzardController {
 	/**
 	 * @return
 	 */
-	@RequestMapping(value = "/3", method = GET)
+	@RequestMapping(value = "/4", method = GET)
 	public String completedWizzard() {
 
 		// Finalize temp wizzard data

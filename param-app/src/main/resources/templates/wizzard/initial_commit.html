@@ -5,7 +5,7 @@
 </head>
 <body>
 	<span layout:fragment="content">
-		<span class="w-bc">Ajout d'utilisateur > Dictionnaire initial > <span class="w-active">Preparation de paramètre</span> > fin</span>
+		<span class="w-bc">Ajout d'utilisateur > Projets > Dictionnaire initial > <span class="w-active">Preparation de paramètre</span> > fin</span>
 		<br/>
 		<div class="alert alert-primary" role="alert">
 			Si le dictionnaire est configuré, il est possible de préparer un premier lot de paramétrage établissant la situation "initiale". 
@@ -19,7 +19,7 @@
 					de lancer l'analyse sur ces tables.
 				</div>
 				<div class="float-right">
-	        		<a href="#" th:href="@{/wizzard/2/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale</a>&nbsp;
+	        		<a href="#" th:href="@{/wizzard/3/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale</a>&nbsp;
 	        		<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration</a>
 				</div>
         	</div>
@@ -44,12 +44,12 @@
 					<span th:text="${preparation.selectedFunctionalDomainNames.size()}">4</span> domaines
 					fonctionnels concernés. Le lot initial a été créé sous le nom "Lot initial".
 				</div>
-				<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
+				<a href="/wizzard_user.html" th:href="@{/wizzard/4}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
 			</div>
 		</div>
 		<div th:if="${dictionary.isEmpty()}" class="alert alert-secondary" role="alert">
 			<strong>Aucun dictionnaire trouvé, le lot initial devra être mis en place ultérieurement</strong>
-			<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
+			<a href="/wizzard_user.html" th:href="@{/wizzard/4}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
 		</div>
 	</span>
 	<script layout:fragment="script">
@@ -58,14 +58,14 @@
 		// Repeated check on status using basic rest service
 		const checkProgress = () => {
 			console.info("start a new check");
-			$.get("/wizzard/2/progress", (data, status) => {
+			$.get("/wizzard/3/progress", (data, status) => {
 				console.info("Check with data" + data);
 				if(data === 'DIFF_RUNNING' || data === 'NOT_LAUNCHED'){
 					// Add new timeout 
 					setTimeout(checkProgress, 1000);
 				} else {
 					// Reload page for auto commit
-					window.location.replace("/wizzard/2/commit?commitName=Lot%20initial");
+					window.location.replace("/wizzard/3/commit?commitName=Lot%20initial");
 				}
 			});
 		};

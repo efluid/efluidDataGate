@@ -1,7 +1,13 @@
 package fr.uem.efluid.model.entities;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
@@ -28,6 +34,12 @@ public class User {
 	private String password;
 
 	private String token;
+
+	@ManyToMany(targetEntity = Project.class, fetch = FetchType.EAGER)
+	private Set<Project> preferedProjects = new HashSet<>();
+
+	@ManyToOne(fetch = FetchType.EAGER)
+	private Project selectedProject;
 
 	/**
 	 */
@@ -101,6 +113,36 @@ public class User {
 	 */
 	public void setToken(String token) {
 		this.token = token;
+	}
+
+	/**
+	 * @return the preferedProjects
+	 */
+	public Set<Project> getPreferedProjects() {
+		return this.preferedProjects;
+	}
+
+	/**
+	 * @param preferedProjects
+	 *            the preferedProjects to set
+	 */
+	public void setPreferedProjects(Set<Project> preferedProjects) {
+		this.preferedProjects = preferedProjects;
+	}
+
+	/**
+	 * @return the selectedProject
+	 */
+	public Project getSelectedProject() {
+		return this.selectedProject;
+	}
+
+	/**
+	 * @param selectedProject
+	 *            the selectedProject to set
+	 */
+	public void setSelectedProject(Project selectedProject) {
+		this.selectedProject = selectedProject;
 	}
 
 	/**
