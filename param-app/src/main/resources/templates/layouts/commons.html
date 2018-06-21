@@ -11,6 +11,7 @@
 					<p th:case="'UNSUPPORTED_UUID'">L'identifiant uuid indiqué n'est pas valide</p>
 					<p th:case="'COMMIT_IMPORT_INVALID'">Le fichier d'import de lot de modification n'est pas valide ou référence des données inconnues</p>
 					<p th:case="'COMMIT_EXISTS'">Le lot de préparation indiqué n'existe pas</p>
+					<p th:case="'COMMIT_MISS_COMMENT'">Le commentaire est obligatoire lors de l'enregistrement d'un lot</p>
 					<p th:case="'METADATA_WRONG_SCHEMA'">
 						Le schéma <span th:text="${payload}">demo</span> configuré pour le filtrage des métadonnées n'existe pas 
 						dans la BDD managée courante

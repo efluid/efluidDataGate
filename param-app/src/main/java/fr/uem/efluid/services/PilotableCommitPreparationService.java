@@ -372,6 +372,11 @@ public class PilotableCommitPreparationService {
 
 		LOGGER.info("Starting saving for current preparation {}", this.current.getIdentifier());
 
+		// Check mandatory comment (checked front side also)
+		if (this.current.getCommitData().getComment() == null) {
+			throw new ApplicationException(COMMIT_MISS_COMMENT, "Commit preparation cannot be saved without a fixed comment");
+		}
+
 		this.current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
 
 		// Apply rollbacks

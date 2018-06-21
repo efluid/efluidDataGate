@@ -8,30 +8,54 @@
         	<p>
 	        	<h5>Identification du lot de modifications</h5>
                 <table class="table">
-							<thead>
-								<tr><th scope="col">Domaines fonctionnels concernés</th></tr>
-							</thead>
-							<tr th:each="domain, tstat : ${preparation.selectedFunctionalDomainNames}">
-                            	<td th:text="${domain}">Gestion du matériel</td>
-                        	</tr>
-                        </table>
+					<thead>
+						<tr><th scope="col">Domaines fonctionnels concernés</th></tr>
+					</thead>
+					<tr th:each="domain, tstat : ${preparation.selectedFunctionalDomainNames}">
+                       	<td th:text="${domain}">Gestion du matériel</td>
+                   	</tr>
+				</table>
                         
-                        <div class="form-group">
-                            <label for="whereCriteria"><b>Description du lot de modification</b></label>
-							<textarea  th:field="${preparation.commitData.comment}" class="form-control" rows="10"></textarea>
-                        </div>
-					</p>
-					<p>
-						<div class="float-right">
-							<a th:if="${preparation.preparingState.name()=='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/ui/prepare}" href="prepare.html">Revenir en arrière</a>
-							<a th:if="${preparation.preparingState.name()!='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/ui/merge}" href="prepare.html">Revenir en arrière</a>
-							<input type="submit" class="btn btn-success btn-sm" value="Confirmer les opérations"/><br/><br/>
-						</div>
-					</p>
-                </form>
+                <div class="form-group">
+                	<label for="whereCriteria"><b>Description du lot de modification</b></label>
+					<textarea id="commitComment" th:field="${preparation.commitData.comment}" class="form-control" rows="10"></textarea>
+					<small class="form-text text-muted">Champs obligatoire</small>
+				</div>
+			</p>
+			<p>
+				<div class="float-right">
+					<a th:if="${preparation.preparingState.name()=='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/ui/prepare}" href="prepare.html">Revenir en arrière</a>
+					<a th:if="${preparation.preparingState.name()!='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/ui/merge}" href="prepare.html">Revenir en arrière</a>
+					<input type="submit" id="commitSubmit" class="btn btn-success btn-sm" title="Le commentaire est obligatoire" value="Confirmer les opérations"/><br/><br/>
+				</div>
+			</p>
+		</form>
 	</span>
-    <script layout:fragment="script">
+	 <script layout:fragment="script" th:inline="javascript">
+		 /*<![CDATA[*/
+    
+    	// Control on mandatory field
+    	const checkCommitComment = () => {
+    		var com = $("#commitComment").val();
+    		console.log(com != '');
+    		if(com != ''){
+    			console.log("enable");
+    			$("#commitSubmit").prop('disabled', false);
+				$("#commitSubmit").removeClass("btn-outline-success").addClass("btn-success");
+    		} else {
+    			console.log("disable");
+    			$("#commitSubmit").prop('disabled', true);
+				$("#commitSubmit").removeClass("btn-success").addClass("btn-outline-success");
+    		}
+    	};
+        
+    	// Init actions
+    	$(document).ready(() => {
+			$("#commitComment").on('input',checkCommitComment);
+			checkCommitComment();
+		}); 
 		
+        /*]]>*/
     </script>
 </body>
 </html>
