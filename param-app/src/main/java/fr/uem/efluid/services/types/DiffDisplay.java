@@ -10,7 +10,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
  * @since v0.0.1
  * @version 1
  */
-public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implements Comparable<DiffDisplay<?>> {
+public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<DiffDisplay<?>> {
 
 	private UUID dictionaryEntryUuid;
 
@@ -24,7 +24,7 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 
 	private String dictionaryEntryTableName;
 
-	private T diff;
+	private List<T> diff;
 
 	/**
 	 * 
@@ -44,7 +44,7 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	/**
 	 * @return the diff
 	 */
-	public T getDiff() {
+	public List<T> getDiff() {
 		return this.diff;
 	}
 
@@ -59,7 +59,7 @@ public class DiffDisplay<T extends List<? extends PreparedIndexEntry>> implement
 	 * @param diff
 	 *            the diff to set
 	 */
-	public void setDiff(T diff) {
+	public void setDiff(List<T> diff) {
 		this.diff = diff;
 	}
 

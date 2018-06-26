@@ -269,7 +269,7 @@ public class CommitService extends AbstractApplicationService {
 	 * </p>
 	 */
 	void applyExclusionsFromLocalCommit(
-			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> prepared) {
+			PilotedCommitPreparation<? extends DiffDisplay<? extends PreparedIndexEntry>> prepared) {
 
 		LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
@@ -296,8 +296,8 @@ public class CommitService extends AbstractApplicationService {
 	 *            preparation
 	 * @return created commit uuid
 	 */
-	UUID saveAndApplyPreparedCommit(
-			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> prepared) {
+	<A extends DiffDisplay<? extends PreparedIndexEntry>> UUID saveAndApplyPreparedCommit(
+			PilotedCommitPreparation<A> prepared) {
 
 		LOGGER.debug("Process apply and saving of a new commit with state {}", prepared.getPreparingState());
 
@@ -509,7 +509,7 @@ public class CommitService extends AbstractApplicationService {
 	 * @param diff
 	 * @return
 	 */
-	private Stream<RollbackLine> streamDiffRollbacks(DiffDisplay<? extends List<? extends PreparedIndexEntry>> diff) {
+	private Stream<RollbackLine> streamDiffRollbacks(DiffDisplay<? extends PreparedIndexEntry> diff) {
 
 		LOGGER.debug("Process identification of rollback on dictionaryEntry {}, if any", diff.getDictionaryEntryUuid());
 

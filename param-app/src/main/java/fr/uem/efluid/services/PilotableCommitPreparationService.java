@@ -267,8 +267,8 @@ public class PilotableCommitPreparationService {
 	 * 
 	 * @param changedPreparation
 	 */
-	public void copyCommitPreparationSelections(
-			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> changedPreparation) {
+	public <B extends PreparedIndexEntry, A extends DiffDisplay<B>> void copyCommitPreparationSelections(
+			PilotedCommitPreparation<A> changedPreparation) {
 
 		// Can be empty if no content was selected (ex : import a commit when everything
 		// is already managed locally)
@@ -281,8 +281,8 @@ public class PilotableCommitPreparationService {
 			// Use basic global iterate on both current and changed
 			for (int i = 0; i < endContent; i++) {
 
-				DiffDisplay<? extends List<? extends PreparedIndexEntry>> currentDiff = this.current.getPreparedContent().get(i);
-				DiffDisplay<? extends List<? extends PreparedIndexEntry>> changedDiff = changedPreparation.getPreparedContent().get(i);
+				DiffDisplay<? extends PreparedIndexEntry> currentDiff = this.current.getPreparedContent().get(i);
+				DiffDisplay<? extends PreparedIndexEntry> changedDiff = changedPreparation.getPreparedContent().get(i);
 
 				if (changedDiff != null && changedDiff.getDiff() != null) {
 
@@ -317,7 +317,7 @@ public class PilotableCommitPreparationService {
 	 * @param changedPreparation
 	 */
 	public void copyCommitPreparationCommitData(
-			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> changedPreparation) {
+			PilotedCommitPreparation<? extends DiffDisplay<? extends PreparedIndexEntry>> changedPreparation) {
 
 		setCommitPreparationCommitDataComment(changedPreparation.getCommitData().getComment());
 	}
