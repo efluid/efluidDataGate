@@ -66,6 +66,9 @@ public class Commit implements Shared {
 	@ElementCollection(fetch = FetchType.EAGER)
 	private List<UUID> mergeSources = new ArrayList<>();
 
+	@ManyToOne(optional = false)
+	private Project project;
+
 	@Transient
 	private transient boolean refOnly = false;
 
@@ -237,6 +240,21 @@ public class Commit implements Shared {
 	}
 
 	/**
+	 * @return the project
+	 */
+	public Project getProject() {
+		return this.project;
+	}
+
+	/**
+	 * @param project
+	 *            the project to set
+	 */
+	public void setProject(Project project) {
+		this.project = project;
+	}
+
+	/**
 	 * @return the refOnly
 	 */
 	public boolean isRefOnly() {
@@ -265,6 +283,7 @@ public class Commit implements Shared {
 					.with("cre", getCreatedTime())
 					.with("has", getHash())
 					.with("ema", getOriginalUserEmail())
+					.with("pro", getProject().getUuid())
 					.toString();
 		}
 
@@ -311,7 +330,8 @@ public class Commit implements Shared {
 							return ent;
 						}).collect(Collectors.toList()));
 					}
-				});
+				})
+				.applyUUID("pro", v -> setProject(new Project(v)));
 	}
 
 	/**

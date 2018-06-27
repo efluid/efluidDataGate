@@ -13,13 +13,13 @@ import fr.uem.efluid.security.UserHolder;
 public abstract class AbstractApplicationService {
 
 	@Autowired
-	private UserHolder users;
+	protected UserHolder holder;
 
 	/**
 	 * @return
 	 */
 	protected User getCurrentUser() {
-		return this.users.getCurrentUser();
+		return this.holder.getCurrentUser();
 	}
 
 	/**

@@ -3,7 +3,6 @@ package fr.uem.efluid.web;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
-import java.util.Arrays;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,10 +98,9 @@ public class WizzardController {
 
 		UUID uuid = UUID.fromString(selected);
 
-		// Select is automatically set as prefered for current user
-		this.projectService.setPreferedProjectsForCurrentUser(Arrays.asList(uuid));
+		// User already has all created projects as prefered
 
-		// And as selected
+		// Select is automatically marked as selected
 		this.projectService.selectProject(uuid);
 
 		return "wizzard/initial_dictionary";

@@ -1,5 +1,8 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.utils.ErrorType.PROJECT_MANDATORY;
+import static fr.uem.efluid.utils.ErrorType.PROJECT_NAME_EXIST;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +12,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +21,7 @@ import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.services.types.ProjectData;
+import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
@@ -28,7 +33,7 @@ import fr.uem.efluid.services.types.ProjectData;
  * 
  * @author elecomte
  * @since v0.2.0
- * @version 1
+ * @version 2
  */
 @Service
 @Transactional
@@ -55,7 +60,7 @@ public class ProjectManagementService extends AbstractApplicationService {
 		// every request, for basic stateless model. Could be improved as the stateless
 		// model is not mandatory here regarding the needs
 
-		return ProjectData.fromEntity(this.projects.findSelectedProjectForUserLogin(getCurrentUser().getLogin()));
+		return ProjectData.fromEntity(getCurrentSelectedProjectEntity());
 	}
 
 	/**
@@ -65,11 +70,18 @@ public class ProjectManagementService extends AbstractApplicationService {
 	 * 
 	 * @param projectId
 	 */
+	@CacheEvict(cacheNames = "details", allEntries = true)
 	public void selectProject(UUID projectId) {
+
 		User user = this.users.getOne(getCurrentUser().getLogin());
+
 		LOGGER.debug("Select project {} for current user {}", projectId, user.getLogin());
-		user.setSelectedProject(this.projects.getOne(projectId));
+
+		Project project = this.projects.getOne(projectId);
+		user.setSelectedProject(project);
 		this.users.save(user);
+
+		LOGGER.info("User {} is now working with project {}", user.getLogin(), project.getName());
 	}
 
 	/**
@@ -81,16 +93,34 @@ public class ProjectManagementService extends AbstractApplicationService {
 	}
 
 	/**
-	 * @param projects
+	 * <p>
+	 * Update on current connected user
+	 * </p>
+	 * 
+	 * @param projectIds
 	 */
-	public void setPreferedProjectsForCurrentUser(List<UUID> projects) {
+	public void setPreferedProjectsForCurrentUser(List<UUID> projectIds) {
 
 		User user = this.users.getOne(getCurrentUser().getLogin());
 
-		LOGGER.debug("Update selected projects for current user {}. Set {} projects", user.getLogin(), Integer.valueOf(projects.size()));
+		setPreferedProjectsForUser(user, projectIds);
+	}
+
+	/**
+	 * <p>
+	 * Set the prefered users from given uuids
+	 * </p>
+	 * 
+	 * @param user
+	 * @param projectIds
+	 */
+	public void setPreferedProjectsForUser(User user, List<UUID> projectIds) {
+
+		LOGGER.debug("Update selected projects for user {}. Set {} projects", user.getLogin(), Integer.valueOf(projectIds.size()));
 
 		// New list
-		user.setPreferedProjects(new HashSet<>(this.projects.findAllById(projects)));
+		user.setPreferedProjects(new HashSet<>(this.projects.findAllById(projectIds)));
+
 		this.users.save(user);
 	}
 
@@ -106,13 +136,22 @@ public class ProjectManagementService extends AbstractApplicationService {
 
 		LOGGER.debug("Create new project {}", name);
 
+		assertProjectNameIsAvailable(name);
+		
 		Project project = new Project();
 
 		project.setUuid(UUID.randomUUID());
 		project.setName(name);
 		project.setCreatedTime(LocalDateTime.now());
 
-		return ProjectData.fromEntity(this.projects.save(project));
+		project = this.projects.save(project);
+
+		// Also add it as prefered to current user
+		User user = this.users.getOne(getCurrentUser().getLogin());
+		user.getPreferedProjects().add(project);
+		this.users.save(user);
+
+		return ProjectData.fromEntity(project);
 	}
 
 	/**
@@ -124,5 +163,39 @@ public class ProjectManagementService extends AbstractApplicationService {
 	 */
 	public List<ProjectData> getAllProjects() {
 		return this.projects.findAll().stream().map(ProjectData::fromEntity).collect(Collectors.toList());
+	}
+
+	/**
+	 * @return
+	 */
+	Project getCurrentSelectedProjectEntity() {
+		return this.projects.findSelectedProjectForUserLogin(getCurrentUser().getLogin());
+	}
+
+	/**
+	 * <p>
+	 * Internal validation of availability of a selected project with clean failure
+	 * checking
+	 * </p>
+	 */
+	private void assertProjectNameIsAvailable(String name) {
+
+		if(this.projects.findByName(name) != null){
+			throw new ApplicationException(PROJECT_NAME_EXIST, "A project with name " + name + " already exist", name);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Internal validation of availability of a selected project with clean failure
+	 * checking
+	 * </p>
+	 */
+	void assertCurrentUserHasSelectedProject() {
+
+		String login = getCurrentUser().getLogin();
+		if (this.projects.findSelectedProjectForUserLogin(login) == null) {
+			throw new ApplicationException(PROJECT_MANDATORY, "No selected active project for current user " + login);
+		}
 	}
 }

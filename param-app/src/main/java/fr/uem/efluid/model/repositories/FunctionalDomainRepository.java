@@ -49,4 +49,11 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 		return _internal_findAllNamesUsedByCommits().stream()
 				.collect(Collectors.groupingBy(t -> dbRawToUuid(t[0]), Collectors.mapping(t -> String.valueOf(t[1]), Collectors.toList())));
 	}
+
+	/**
+	 * @param projectUuid
+	 * @return
+	 */
+	@Query(value = "select count(*) from domain d where d.project_uuid = :projectUuid", nativeQuery = true)
+	int countForProject(UUID projectUuid);
 }

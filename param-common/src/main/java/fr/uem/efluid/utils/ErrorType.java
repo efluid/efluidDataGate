@@ -3,7 +3,7 @@ package fr.uem.efluid.utils;
 /**
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 10
  */
 public enum ErrorType {
 
@@ -62,7 +62,10 @@ public enum ErrorType {
 	
 	VERIFIED_APPLY_NOT_FOUND,
 	
-	REFER_MISS_LINK
+	REFER_MISS_LINK,
+	
+	PROJECT_MANDATORY,
+	PROJECT_NAME_EXIST
 	;
 
 }

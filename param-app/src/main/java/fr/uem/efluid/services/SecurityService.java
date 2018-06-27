@@ -1,6 +1,8 @@
 package fr.uem.efluid.services;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.slf4j.Logger;
@@ -12,13 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.types.UserDetails;
 
 /**
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Service
 @Transactional
@@ -30,10 +31,10 @@ public class SecurityService extends AbstractApplicationService {
 	private UserRepository users;
 
 	@Autowired
-	private UserHolder holder;
+	private PasswordEncoder encoder;
 
 	@Autowired
-	private PasswordEncoder encoder;
+	private ProjectManagementService projectService;
 
 	/**
 	 * @param login
@@ -41,7 +42,7 @@ public class SecurityService extends AbstractApplicationService {
 	 * @param password
 	 */
 	@CacheEvict(cacheNames = "users", allEntries = true)
-	public void addSimpleUser(String login, String email, String password, boolean fromWizzard) {
+	public User addSimpleUser(String login, String email, String password, boolean fromWizzard) {
 
 		LOGGER.info("Creation new user : {}", login);
 
@@ -57,7 +58,49 @@ public class SecurityService extends AbstractApplicationService {
 			this.holder.setWizzardUser(user);
 		}
 
-		this.users.save(user);
+		return this.users.save(user);
+	}
+
+	/**
+	 * <p>
+	 * Create a complete user for user management features. Apply the selected prefered
+	 * project in the same time
+	 * </p>
+	 * 
+	 * @param login
+	 * @param email
+	 * @param password
+	 * @param preferedProjects
+	 *            Selected prefered projects for the new user
+	 */
+	public void createUser(String login, String email, String password, List<UUID> preferedProjects) {
+
+		User user = addSimpleUser(login, email, password, false);
+
+		this.projectService.setPreferedProjectsForUser(user, preferedProjects);
+	}
+
+	/**
+	 * <p>
+	 * Create a complete user for user management features. Apply the selected prefered
+	 * project in the same time
+	 * </p>
+	 * 
+	 * @param login
+	 * @param email
+	 * @param password
+	 * @param preferedProjects
+	 *            Selected prefered projects for the new user
+	 */
+	public void editUser(String login, String email, List<UUID> preferedProjects) {
+
+		User user = this.users.getOne(login);
+
+		// Apply new values
+		user.setEmail(email);
+
+		// Edit and save
+		this.projectService.setPreferedProjectsForUser(user, preferedProjects);
 	}
 
 	/**
@@ -69,9 +112,32 @@ public class SecurityService extends AbstractApplicationService {
 	 */
 	public UserDetails getCurrentUserDetails() {
 
-		User freshUser = this.users.getOne(getCurrentUser().getLogin());
+		return getUserDetails(getCurrentUser().getLogin());
+	}
+
+	/**
+	 * <p>
+	 * For rendering of user to edit
+	 * </p>
+	 * 
+	 * @param login
+	 *            identifier for user to get
+	 * @return
+	 */
+	public UserDetails getUserDetails(String login) {
+
+		User freshUser = this.users.getOne(login);
 
 		return UserDetails.fromEntity(freshUser);
+	}
+
+	/**
+	 * @return
+	 */
+	public List<UserDetails> getAllUserDetails() {
+		return this.users.findAll().stream()
+				.map(UserDetails::fromEntity)
+				.collect(Collectors.toList());
 	}
 
 	/**

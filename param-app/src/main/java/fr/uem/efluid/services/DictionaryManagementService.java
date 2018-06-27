@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.TableDescription;
@@ -76,6 +77,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 	@Autowired
 	private ExportImportService ioService;
+
+	@Autowired
+	private ProjectManagementService projectService;
 
 	/**
 	 * @return
@@ -332,13 +336,19 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 */
 	public FunctionalDomainData createNewFunctionalDomain(String name) {
 
-		LOGGER.info("Process add of a new functional domain with name {}", name);
+		// Requires project
+		this.projectService.assertCurrentUserHasSelectedProject();
+
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		LOGGER.info("Process add of a new functional domain with name {} into project {}", name, project.getName());
 
 		FunctionalDomain domain = new FunctionalDomain();
 
 		domain.setUuid(UUID.randomUUID());
 		domain.setCreatedTime(LocalDateTime.now());
 		domain.setName(name);
+		domain.setProject(project);
 
 		this.domains.save(domain);
 

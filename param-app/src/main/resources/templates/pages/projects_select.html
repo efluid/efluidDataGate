@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>	
+	<span layout:fragment="content">
+		<h5>Choix du projet actif</h5>
+		<table class="table table-sm">
+			<thead>
+				<tr>
+					<th scope="col" colspan="100%">Projets</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="prefered, stat : ${prefereds}" th:id="${prefered.uuid}">
+					<td th:class="${prefered.uuid.equals(project.uuid)}?'table-key'" th:text="${prefered.name}">Autre</td>
+	                <td><a href="projects_select.html" th:href="@{|/ui/projects/select/${prefered.uuid}|}" class="btn btn-primary btn-sm">Choisir</a></td>
+				</tr>
+			</tbody>
+		</table>
+	</span>
+</body>
+</html>

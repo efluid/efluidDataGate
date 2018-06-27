@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+		<h5>Administration des utilisateurs</h5>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th scope="col" colspan="2" width="40%">Utilisateurs</th>
+                    <th scope="col" width="40%">Projets préférés</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="user : ${users}" th:id="${project.uuid}">
+                     <td th:text="${user.login}">jdupont</td>
+                     <td th:text="${user.email}">jdupont@email.fr</td>
+                     <td th:text="${user.preferedProjectsRender}">default, other</td>
+                     <td><a href="user_edit.html" th:href="@{|/ui/user/${user.login}|}" class="btn btn-primary btn-sm">Modifier</a></td>
+			     </tr>
+			     <tr>
+			         <td colspan="3"></td>
+			         <td scope="col"><a href="user_new.html" th:href="@{/ui/user/new}" class="btn btn-success btn-sm">Créer un utilisateur</a></td>
+			     </tr>
+			</tbody>
+		</table>
+    </span>
+</body>
+</html>

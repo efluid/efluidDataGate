@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>	
+	<span layout:fragment="content">
+		<form action="#" th:action="@{/ui/projects/prefered/save}" method="post">
+			<h5>Choix de mes projets préférés</h5>
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th scope="col">Projet</th>
+						<th scope="col">Préféré ?</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr th:each="project, stat : ${projects}" th:id="${project.uuid}">
+						<td th:text="${project.name}">Autre</td>
+						<td><input type="checkbox" name="prefered" th:value="${project.uuid}" th:checked="${prefereds.contains(project)}"/></td>
+					</tr>
+				</tbody>
+			</table>
+			<button id="nextButton" type="submit" class="btn btn-success btn-sm float-right">Sauvegarder</button><br/><br/>
+		</form>
+	</span>
+</body>
+</html>

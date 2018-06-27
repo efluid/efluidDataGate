@@ -3,6 +3,7 @@ package fr.uem.efluid.utils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.core.profile.CommonProfile;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportFile;
+import fr.uem.efluid.services.types.ProjectData;
 
 /**
  * For REST / WEB needs
@@ -163,6 +165,10 @@ public class WebUtils {
 
 		public String format(LocalDateTime date) {
 			return FormatUtils.format(date);
+		}
+
+		public boolean containsProjectData(ProjectData data, List<ProjectData> mayContain) {
+			return mayContain.stream().map(ProjectData::getUuid).anyMatch(p -> data.getUuid().equals(p));
 		}
 	}
 

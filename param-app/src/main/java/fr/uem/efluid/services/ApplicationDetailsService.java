@@ -17,8 +17,10 @@ import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.LobPropertyRepository;
+import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.services.types.ApplicationDetails;
+import fr.uem.efluid.services.types.ProjectData;
 
 /**
  * @author elecomte
@@ -50,6 +52,12 @@ public class ApplicationDetailsService {
 
 	@Autowired
 	private UserRepository users;
+
+	@Autowired
+	private ProjectRepository projects;
+
+	@Autowired
+	private ProjectManagementService projectService;
 
 	@Value("${param-efluid.managed-datasource.url}")
 	private String managedDbUrl;
@@ -84,6 +92,13 @@ public class ApplicationDetailsService {
 		details.setDictionaryCount(this.dictionary.count());
 		details.setLobsCount(this.lobs.count());
 		details.setIndexSize(getEstimatedIndexSize());
+		details.setProjectsCount(this.projects.count());
+
+		ProjectData project = this.projectService.getCurrentSelectedProject();
+
+		if (project != null) {
+			details.setDomainsCountForProject(this.domains.countForProject(project.getUuid()));
+		}
 
 		return details;
 	}

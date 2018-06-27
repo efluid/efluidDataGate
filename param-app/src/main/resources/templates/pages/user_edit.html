@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>	
+	<span layout:fragment="content">
+		<form action="#" th:action="@{/ui/users}" method="post">
+			<h5>Edition d'un utilisateur</h5>
+			<div class="form-group">
+				<label for="login">Login</label>
+				<span th:text="${user.login}">Dupont</span>
+			</div>
+			<div class="form-group">
+				<label for="password">Mot de passe</label>
+				<input type="password" th:field="${user.password}" class="form-control" name="password" size="50"/>
+			</div>
+			<div class="form-group">
+				<label for="email">Adresse email</label>
+				<input type="text" th:field="${user.email}" class="form-control" name="email" size="50"/>
+			</div>
+			<div>
+				<table class="table table-sm">
+					<thead>
+						<tr>
+							<th scope="col">Projet</th>
+							<th scope="col">Préféré ?</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="column, stat : ${projects}" th:id="${project.uuid}">
+							<td th:text="${project.name}">Autre</span></td>
+							<td><input type="checkbox" name="prefered" th:value="${project.uuid}" th:checked="${user.isPrefered(project.uuid)}"/></td>
+						</tr>
+					</tbody>
+			    </table>
+			</div>
+			<div>
+				<span class="remark">Attention : Tous les champs sont obligatoires</span>
+				<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right" disabled="disabled">Sauvegarder</button><br/><br/>
+			</div>
+		</form>
+	</span>
+</body>
+</html>

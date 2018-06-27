@@ -2,19 +2,18 @@ package fr.uem.efluid.web;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import java.util.List;
 import java.util.UUID;
-
-import javax.validation.Valid;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import fr.uem.efluid.services.types.PreferedProjectsEditData;
 import fr.uem.efluid.services.types.ProjectData;
+import fr.uem.efluid.utils.WebUtils;
 
 /**
  * <p>
@@ -67,7 +66,9 @@ public class ProjectController extends CommonController {
 			return REDIRECT_SELECT;
 		}
 
-		model.addAttribute("prefered", this.projectManagementService.getPreferedProjectsForCurrentUser());
+		// For formatting
+		WebUtils.addTools(model);
+		model.addAttribute("prefereds", this.projectManagementService.getPreferedProjectsForCurrentUser());
 		model.addAttribute("projects", this.projectManagementService.getAllProjects());
 
 		return "pages/projects_pref";
@@ -79,13 +80,13 @@ public class ProjectController extends CommonController {
 	 * @return
 	 */
 	@RequestMapping(path = "/projects/prefered/save", method = POST)
-	public String preferedProjectsSave(Model model, @ModelAttribute @Valid PreferedProjectsEditData editData) {
+	public String preferedProjectsSave(Model model, @RequestParam List<UUID> prefered) {
 
 		if (!controlSelectedProject(model)) {
 			return REDIRECT_SELECT;
 		}
 
-		this.projectManagementService.setPreferedProjectsForCurrentUser(editData.getPreferedProjectUuids());
+		this.projectManagementService.setPreferedProjectsForCurrentUser(prefered);
 
 		// For success save message
 		model.addAttribute("from", "success_edit");
@@ -100,7 +101,7 @@ public class ProjectController extends CommonController {
 	@RequestMapping("/projects/select")
 	public String selectCurrentProjectPage(Model model) {
 
-		model.addAttribute("prefered", this.projectManagementService.getPreferedProjectsForCurrentUser());
+		model.addAttribute("prefereds", this.projectManagementService.getPreferedProjectsForCurrentUser());
 		model.addAttribute("project", this.projectManagementService.getCurrentSelectedProject());
 
 		return "pages/projects_select";
@@ -111,8 +112,8 @@ public class ProjectController extends CommonController {
 	 * @param name
 	 * @return
 	 */
-	@RequestMapping(path = "/projects/select/{uuid}", method = POST)
-	public String dictionarySave(Model model, @PathVariable("uuid") String uuid) {
+	@RequestMapping("/projects/select/{uuid}")
+	public String selectProject(Model model, @PathVariable("uuid") String uuid) {
 
 		this.projectManagementService.selectProject(UUID.fromString(uuid));
 

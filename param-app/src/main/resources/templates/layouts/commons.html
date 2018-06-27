@@ -71,6 +71,14 @@
 						Une dépendance devrait être spécifiée pour la valeur <span th:text="${payload}">COLA</span> mais elle n'existe pas.
 						Est-ce que le dictionaire a été modifié pour cette table de paramètre ?
 					</p>
+					<p th:case="'PROJECT_MANDATORY'">
+						Un projet actif doit obligatoirement être sélectionné pour éditer les domaines ou les lots de modifications. 
+						Vérifiez que le projet actif est bien affiché dans le menu haut.
+					</p>
+					<p th:case="'PROJECT_NAME_EXIST'">
+						Il existe déjà un projet avec le nom "<span th:text="${payload}">projet</span>". Merci de choisir un nom unique pour chaque
+						nouveau projet
+					</p>
 					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
 				</span>
 			</span>

@@ -18,6 +18,9 @@ public class ApplicationDetails {
 	private long commitsCount;
 	private long dictionaryCount;
 	private long lobsCount;
+	private long projectsCount;
+
+	private long domainsCountForProject;
 
 	/**
 	 * 
@@ -31,6 +34,21 @@ public class ApplicationDetails {
 	 */
 	public String getDbUrl() {
 		return this.dbUrl;
+	}
+
+	/**
+	 * @return the domainsCountForProject
+	 */
+	public long getDomainsCountForProject() {
+		return this.domainsCountForProject;
+	}
+
+	/**
+	 * @param domainsCountForProject
+	 *            the domainsCountForProject to set
+	 */
+	public void setDomainsCountForProject(long domainsCountForProject) {
+		this.domainsCountForProject = domainsCountForProject;
 	}
 
 	/**
@@ -48,7 +66,8 @@ public class ApplicationDetails {
 	}
 
 	/**
-	 * @param indexCount the indexCount to set
+	 * @param indexCount
+	 *            the indexCount to set
 	 */
 	public void setIndexCount(long indexCount) {
 		this.indexCount = indexCount;
@@ -125,5 +144,20 @@ public class ApplicationDetails {
 	 */
 	public void setLobsCount(long lobsCount) {
 		this.lobsCount = lobsCount;
+	}
+
+	/**
+	 * @return the projectsCount
+	 */
+	public long getProjectsCount() {
+		return this.projectsCount;
+	}
+
+	/**
+	 * @param projectsCount
+	 *            the projectsCount to set
+	 */
+	public void setProjectsCount(long projectsCount) {
+		this.projectsCount = projectsCount;
 	}
 }

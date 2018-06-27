@@ -28,7 +28,7 @@
 			            <thead>
 			                <tr>
 			                    <th scope="col" width="70%">Projets</th>
-			                    <th scope="col">Utiliser comme projet actif</th>
+			                    <th scope="col" style="text-align:center">Utiliser comme projet actif</th>
 			                </tr>
 			            </thead>
 			            <tbody>
@@ -44,6 +44,8 @@
 		
     </span>
     <script layout:fragment="script">
+
+		var count = 0;
 
 		// Check value
     	const checkProjectAdd = () => {
@@ -63,7 +65,7 @@
 			var inputName = $("#projectName");
 			var name = inputName.val();
 			$.post("/wizzard/2/add/" + inputName.val(), null, (data, status) => {
-		        var newProjectRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td><input type="radio" name="selected" value="' + data.uuid + '"/></td></tr>';
+		        var newProjectRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td style="text-align:center"><input type="radio" name="selected" value="' + data.uuid + '"' + (count == 0 ? '" checked="checked"' : '') + '/></td></tr>';
 				$("#projectListInjectBefore").before(newProjectRow);
 				inputName.val("");
 				$("#addButton").html("Ajouter un autre projet");
@@ -71,6 +73,7 @@
     			$("#projectList").fadeIn();
 				$("#nextButton").removeClass("btn-outline-success").addClass("btn-success");
 				checkProjectAdd();
+				count++;
 		    });
 		};
     

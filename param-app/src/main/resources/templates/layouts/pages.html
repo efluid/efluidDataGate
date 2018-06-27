@@ -46,7 +46,7 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a>
-                            <a class="dropdown-item" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir des projets préférés</a>
+                            <a class="dropdown-item" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir mes projets préférés</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -55,13 +55,14 @@
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a>
+                            <a class="dropdown-item" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a>
                         </div>
-                    </li>
-                    <li th:if="${project != null}">
-                        Projet actuel : <span th:text="${project.name}">RECETTE</span>
                     </li>
                 </ul>
                 <form class="form-inline">
+                	<span class="active-project" th:if="${project != null}">
+                        Projet actuel : <a href="./projects_prefered.html" th:href="@{/ui/projects/select}" th:text="${project.name}">RECETTE</a>
+                    </span>
                     <a href="./swagger.html" th:href="@{/swagger}" target="_blank" class="btn btn-sm btn-primary" type="button">API REST</a>
                     &nbsp;&nbsp;
                      <a href="./index.html" th:href="@{/logout?url=/ui}" class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</a>

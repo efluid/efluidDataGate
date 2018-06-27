@@ -28,6 +28,7 @@ import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.LobProperty;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
@@ -100,6 +101,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private ApplyDiffService applyDiffService;
+
+	@Autowired
+	private ProjectManagementService projectService;
 
 	/**
 	 * <p>
@@ -299,13 +303,20 @@ public class CommitService extends AbstractApplicationService {
 	UUID saveAndApplyPreparedCommit(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> prepared) {
 
-		LOGGER.debug("Process apply and saving of a new commit with state {}", prepared.getPreparingState());
+		// Requires project
+		this.projectService.assertCurrentUserHasSelectedProject();
+
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		LOGGER.debug("Process apply and saving of a new commit with state {} into project {}", prepared.getPreparingState(),
+				project.getName());
 
 		Commit newCommit = CommitEditData.toEntity(prepared.getCommitData());
 		newCommit.setCreatedTime(LocalDateTime.now());
 		newCommit.setUser(new User(getCurrentUser().getLogin()));
 		newCommit.setOriginalUserEmail(getCurrentUser().getEmail());
 		newCommit.setState(prepared.getPreparingState());
+		newCommit.setProject(project);
 
 		// Prepared commit uuid
 		UUID commitUUID = UUID.randomUUID();

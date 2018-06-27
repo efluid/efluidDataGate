@@ -1,9 +1,9 @@
 package fr.uem.efluid.services.types;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 
 /**
@@ -23,14 +23,14 @@ public class UserDetails {
 
 	private final String token;
 
-	private final List<String> preferedProjects;
+	private final List<ProjectData> preferedProjects;
 
 	/**
 	 * @param login
 	 * @param email
 	 * @param token
 	 */
-	public UserDetails(String login, String email, String token, List<String> preferedProjects) {
+	public UserDetails(String login, String email, String token, List<ProjectData> preferedProjects) {
 		super();
 		this.login = login;
 		this.email = email;
@@ -62,8 +62,27 @@ public class UserDetails {
 	/**
 	 * @return the preferedProjectUuids
 	 */
-	public List<String> getPreferedProjects() {
+	public List<ProjectData> getPreferedProjects() {
 		return this.preferedProjects;
+	}
+
+	/**
+	 * @return easy to display rendering of project list
+	 */
+	public String getPreferedProjectsRender() {
+		return this.preferedProjects.stream().map(ProjectData::getName).collect(Collectors.joining(", "));
+	}
+
+	/**
+	 * <p>
+	 * For easy checked selection in user edit
+	 * </p>
+	 * 
+	 * @param uuid
+	 * @return
+	 */
+	public boolean isPrefered(UUID uuid) {
+		return this.preferedProjects.stream().anyMatch(p -> p.getUuid().equals(uuid));
 	}
 
 	/**
@@ -72,7 +91,7 @@ public class UserDetails {
 	 */
 	public static UserDetails fromEntity(User user) {
 		return new UserDetails(user.getLogin(), user.getEmail(), user.getToken(),
-				user.getPreferedProjects().stream().map(Project::getName).collect(Collectors.toList()));
+				user.getPreferedProjects().stream().map(ProjectData::fromEntity).collect(Collectors.toList()));
 	}
 
 }

@@ -141,7 +141,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 				.applyUUID("uid", v -> setUuid(v))
 				.applyLdt("cre", v -> setCreatedTime(v))
 				.applyString("nam", v -> setName(v))
-				.applyUUID("dom", v -> setProject(new Project(v)));
+				.applyUUID("pro", v -> setProject(new Project(v)));
 	}
 
 }

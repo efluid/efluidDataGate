@@ -68,6 +68,16 @@ select.select-column {
 	display: inline;
 }
 
+.active-project {
+    font-size: 13px;
+    padding-right: 15px;
+}
+
+.active-project a {
+    font-decoration: none;
+    font-weight: bold;
+}
+
 .help {
 	display: block;
     font-size: 14px;
