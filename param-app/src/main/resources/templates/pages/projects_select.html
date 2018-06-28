@@ -12,9 +12,9 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr th:each="prefered, stat : ${prefereds}" th:id="${prefered.uuid}">
-					<td th:class="${prefered.uuid.equals(project.uuid)}?'table-key'" th:text="${prefered.name}">Autre</td>
-	                <td><a href="projects_select.html" th:href="@{|/ui/projects/select/${prefered.uuid}|}" class="btn btn-primary btn-sm">Choisir</a></td>
+				<tr th:each="prefered, stat : ${prefereds}" th:id="${prefered.uuid}" th:class="|project-theme-bg-${prefered.color}|">
+					<td th:style="${prefered.uuid.equals(project.uuid)}?'font-weight:bold'" th:text="${prefered.name}">Autre</td>
+	                <td><a href="projects_select.html" th:href="@{|/ui/projects/select/${prefered.uuid}|}" class="float-right btn btn-secondary btn-sm">Choisir</a></td>
 				</tr>
 			</tbody>
 		</table>

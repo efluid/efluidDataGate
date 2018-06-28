@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
+import fr.uem.efluid.model.entities.Project;
 
 /**
  * @author elecomte
@@ -37,11 +38,23 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 	List<DictionaryEntry> findByDomain(FunctionalDomain domain);
 
 	/**
+	 * @param domains
 	 * @return
 	 */
-	default Map<UUID, DictionaryEntry> findAllMappedByUuid() {
+	List<DictionaryEntry> findByDomainIn(List<FunctionalDomain> domains);
 
-		return findAll().stream()
+	/**
+	 * @param project
+	 * @return
+	 */
+	List<DictionaryEntry> findByDomainProject(Project project);
+
+	/**
+	 * @return
+	 */
+	default Map<UUID, DictionaryEntry> findAllMappedByUuid(Project project) {
+
+		return findByDomainProject(project).stream()
 				.collect(Collectors.toMap(DictionaryEntry::getUuid, d -> d));
 
 	}
@@ -49,9 +62,9 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 	/**
 	 * @return
 	 */
-	default Map<String, DictionaryEntry> findAllMappedByTableName() {
+	default Map<String, DictionaryEntry> findAllMappedByTableName(Project project) {
 
-		return findAll().stream()
+		return findByDomainProject(project).stream()
 				.collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
 
 	}

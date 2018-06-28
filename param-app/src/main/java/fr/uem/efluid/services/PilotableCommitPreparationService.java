@@ -5,6 +5,7 @@ import static fr.uem.efluid.utils.ErrorType.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -74,22 +75,27 @@ public class PilotableCommitPreparationService {
 	@Autowired
 	private DatabaseDescriptionRepository managedDesc;
 
+	@Autowired
+	private ProjectManagementService projectService;
+
 	// TODO : use cfg entry.
 	private ExecutorService executor = Executors.newFixedThreadPool(4);
 
-	// One active only - not a session : JUST 1 FOR ALL APP
-	private PilotedCommitPreparation<?> current;
+	// One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
+	private Map<UUID, PilotedCommitPreparation<?>> currents = new HashMap<>();
 
 	/**
 	 * Start async diff analysis before commit
 	 */
 	public PilotedCommitPreparation<?> startLocalCommitPreparation(boolean force) {
 
+		UUID projectUuid = getActiveProjectUuid();
+
 		// On existing preparation
-		if (this.current != null) {
+		if (this.currents.get(projectUuid) != null) {
 
 			// Fail if launched on another type
-			if (this.current.getPreparingState() != CommitState.LOCAL) {
+			if (this.currents.get(projectUuid).getPreparingState() != CommitState.LOCAL) {
 				throw new ApplicationException(IMPORT_RUNNING,
 						"An import / Merge process is running. Cannot launch local prepare if merge not completed");
 			}
@@ -97,20 +103,20 @@ public class PilotableCommitPreparationService {
 			// Forced restart asked : close current, start a new one
 			if (force) {
 				LOGGER.info("Request for a new commit preparation - preparation exist already, and "
-						+ "force restart asked, so will drop current preparation {}", this.current.getIdentifier());
+						+ "force restart asked, so will drop current preparation {}", this.currents.get(projectUuid).getIdentifier());
 
 				// Cancel for any existing reference ...
-				this.current.setStatus(PilotedCommitStatus.CANCEL);
+				this.currents.get(projectUuid).setStatus(PilotedCommitStatus.CANCEL);
 
 				// ... but droping should be enough
-				this.current = null;
+				this.currents.remove(projectUuid);
 			}
 
 			// Keep current else
 			else {
 
 				LOGGER.info("Request for a new commit preparation - preparation already running / "
-						+ "available, so use existing {}", this.current.getIdentifier());
+						+ "available, so use existing {}", this.currents.get(projectUuid).getIdentifier());
 
 				// Default will provides existing if still running
 				return getCurrentCommitPreparation();
@@ -121,9 +127,10 @@ public class PilotableCommitPreparationService {
 
 		// For CommitState LOCAL => Use PreparedIndexEntry
 		PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
+		preparation.setProjectUuid(projectUuid);
 
 		// Specify as active one
-		this.current = preparation;
+		this.currents.put(projectUuid, preparation);
 
 		CompletableFuture.runAsync(() -> processAllDiff(preparation));
 
@@ -135,8 +142,10 @@ public class PilotableCommitPreparationService {
 	 */
 	public ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> startMergeCommitPreparation(ExportFile file) {
 
+		UUID projectUuid = getActiveProjectUuid();
+
 		// On existing preparation
-		if (this.current != null) {
+		if (this.currents.get(projectUuid) != null) {
 
 			// Impossible situation
 			LOGGER.error("Cannot proced to import entry point for processing merge commit will a preparation is still running.");
@@ -149,13 +158,14 @@ public class PilotableCommitPreparationService {
 
 		// For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
 		PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
+		preparation.setProjectUuid(projectUuid);
 
 		// First step is NOT async : load the package and identify the appliable index
 		ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> importResult = this.commitService.importCommits(file,
 				preparation);
 
 		// Specify as active one
-		this.current = preparation;
+		this.currents.put(projectUuid, preparation);
 
 		CompletableFuture.runAsync(() -> processAllMergeDiff(preparation));
 
@@ -166,7 +176,7 @@ public class PilotableCommitPreparationService {
 	 * @return
 	 */
 	public PilotedCommitPreparation<?> getCurrentCommitPreparation() {
-		return this.current;
+		return this.currents.get(getActiveProjectUuid());
 	}
 
 	/**
@@ -180,12 +190,14 @@ public class PilotableCommitPreparationService {
 	@SuppressWarnings("unchecked")
 	public boolean isCurrentMergeCommitNeedsAction() {
 
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
 		// Works only on ready merge commits
-		if (this.current != null && this.current.getStatus() == PilotedCommitStatus.COMMIT_CAN_PREPARE
-				&& this.current.getPreparingState() == CommitState.MERGED) {
+		if (current != null && current.getStatus() == PilotedCommitStatus.COMMIT_CAN_PREPARE
+				&& current.getPreparingState() == CommitState.MERGED) {
 
 			// Check if at least one content needs action
-			boolean result = ((PilotedCommitPreparation<MergePreparedDiff>) this.current).getPreparedContent().stream()
+			boolean result = ((PilotedCommitPreparation<MergePreparedDiff>) current).getPreparedContent().stream()
 					.anyMatch(p -> p.isDiffNeedAction());
 
 			LOGGER.debug("Checking if current merge commit needs action. Found {}", Boolean.valueOf(result));
@@ -216,13 +228,15 @@ public class PilotableCommitPreparationService {
 	 */
 	public byte[] getCurrentOrExistingLobData(String encodedLobHash) {
 
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
 		LOGGER.debug("Request for binary content with hash {}", encodedLobHash);
 
 		// 1st : search in current
-		if (this.current != null) {
+		if (current != null) {
 
 			String decHash = FormatUtils.decodeAsString(encodedLobHash);
-			byte[] data = this.current.getDiffLobs().get(decHash);
+			byte[] data = current.getDiffLobs().get(decHash);
 
 			if (data != null) {
 				return data;
@@ -238,11 +252,13 @@ public class PilotableCommitPreparationService {
 	 */
 	public void cancelCommitPreparation() {
 
+		UUID projectUuid = getActiveProjectUuid();
+
 		// For any ref holder : mark canceled and dropped
-		this.current.setStatus(PilotedCommitStatus.CANCEL);
+		this.currents.get(projectUuid).setStatus(PilotedCommitStatus.CANCEL);
 
 		// Null = COMPLETED / CANCEL from local service pov
-		this.current = null;
+		this.currents.remove(projectUuid);
 	}
 
 	/**
@@ -251,11 +267,13 @@ public class PilotableCommitPreparationService {
 	 */
 	public void completeCommitPreparation() {
 
+		UUID projectUuid = getActiveProjectUuid();
+
 		// For any ref holder : mark completed
-		this.current.setStatus(PilotedCommitStatus.COMPLETED);
+		this.currents.get(projectUuid).setStatus(PilotedCommitStatus.COMPLETED);
 
 		// Null = COMPLETED from local service pov
-		this.current = null;
+		this.currents.remove(projectUuid);
 	}
 
 	/**
@@ -281,7 +299,8 @@ public class PilotableCommitPreparationService {
 			// Use basic global iterate on both current and changed
 			for (int i = 0; i < endContent; i++) {
 
-				DiffDisplay<? extends List<? extends PreparedIndexEntry>> currentDiff = this.current.getPreparedContent().get(i);
+				DiffDisplay<? extends List<? extends PreparedIndexEntry>> currentDiff = getCurrentCommitPreparation().getPreparedContent()
+						.get(i);
 				DiffDisplay<? extends List<? extends PreparedIndexEntry>> changedDiff = changedPreparation.getPreparedContent().get(i);
 
 				if (changedDiff != null && changedDiff.getDiff() != null) {
@@ -336,25 +355,7 @@ public class PilotableCommitPreparationService {
 		setCommitPreparationCommitDataComment(comment);
 
 		// Mark all items as selecteds
-		this.current.getPreparedContent().stream().flatMap(d -> d.getDiff().stream()).forEach(i -> i.setSelected(true));
-	}
-
-	/**
-	 * <p>
-	 * Apply comment only for completed Commit Data
-	 * </p>
-	 * 
-	 * @param comment
-	 */
-	private void setCommitPreparationCommitDataComment(String comment) {
-
-		// If not done yet, init for comment apply
-		if (this.current.getCommitData() == null) {
-			this.current.setCommitData(new CommitEditData());
-		}
-
-		// Other editable is the commit comment
-		this.current.getCommitData().setComment(comment);
+		getCurrentCommitPreparation().getPreparedContent().stream().flatMap(d -> d.getDiff().stream()).forEach(i -> i.setSelected(true));
 	}
 
 	/**
@@ -370,22 +371,24 @@ public class PilotableCommitPreparationService {
 	 */
 	public UUID saveCommitPreparation() {
 
-		LOGGER.info("Starting saving for current preparation {}", this.current.getIdentifier());
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		LOGGER.info("Starting saving for current preparation {}", current.getIdentifier());
 
 		// Check mandatory comment (checked front side also)
-		if (this.current.getCommitData().getComment() == null) {
+		if (current.getCommitData().getComment() == null) {
 			throw new ApplicationException(COMMIT_MISS_COMMENT, "Commit preparation cannot be saved without a fixed comment");
 		}
 
-		this.current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
+		current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
 
 		// Apply rollbacks
-		this.commitService.applyExclusionsFromLocalCommit(this.current);
+		this.commitService.applyExclusionsFromLocalCommit(current);
 
-		this.current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
+		current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
 
 		// Save update
-		UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(this.current);
+		UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current);
 
 		// Reset cached diff values, if any, for further uses
 		this.diffService.resetDiffCaches();
@@ -400,6 +403,34 @@ public class PilotableCommitPreparationService {
 
 	/**
 	 * <p>
+	 * Apply comment only for completed Commit Data
+	 * </p>
+	 * 
+	 * @param comment
+	 */
+	private void setCommitPreparationCommitDataComment(String comment) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		// If not done yet, init for comment apply
+		if (current.getCommitData() == null) {
+			current.setCommitData(new CommitEditData());
+		}
+
+		// Other editable is the commit comment
+		current.getCommitData().setComment(comment);
+	}
+
+	/**
+	 * @return
+	 */
+	private UUID getActiveProjectUuid() {
+		this.projectService.assertCurrentUserHasSelectedProject();
+		return this.projectService.getCurrentSelectedProject().getUuid();
+	}
+
+	/**
+	 * <p>
 	 * Asynchronous task which is itself a process of asynchronous execution of managed
 	 * table diffs (one task for each managed table). Similar to a "git status"
 	 * </p>
@@ -410,7 +441,9 @@ public class PilotableCommitPreparationService {
 	 */
 	private void processAllDiff(PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
-		LOGGER.info("Begin diff process on commit preparation {}", this.current.getIdentifier());
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		LOGGER.info("Begin diff process on commit preparation {}", current.getIdentifier());
 
 		try {
 			long startTimeout = System.currentTimeMillis();
@@ -440,7 +473,7 @@ public class PilotableCommitPreparationService {
 			preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
 			LOGGER.info("Diff process completed on commit preparation {}. Found {} index entries. Total process duration was {} ms",
-					this.current.getIdentifier(),
+					current.getIdentifier(),
 					Integer.valueOf(fullDiff.size()),
 					Long.valueOf(System.currentTimeMillis() - startTimeout));
 
@@ -449,7 +482,7 @@ public class PilotableCommitPreparationService {
 			throw a;
 		} catch (Throwable e) {
 			LOGGER.error("Error will processing diff", e);
-			this.current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
+			current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
 	}
 
@@ -465,13 +498,17 @@ public class PilotableCommitPreparationService {
 	 */
 	private void processAllMergeDiff(PilotedCommitPreparation<MergePreparedDiff> preparation) {
 
-		LOGGER.info("Begin diff process on merge-commit preparation {}", this.current.getIdentifier());
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		LOGGER.info("Begin diff process on merge-commit preparation {}", current.getIdentifier());
 
 		try {
 			long startTimeout = System.currentTimeMillis();
 
 			if (preparation.getPreparedContent() != null && preparation.getPreparedContent().size() > 0) {
-				Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid();
+
+				Map<UUID, DictionaryEntry> dictByUuid = this.dictionary
+						.findAllMappedByUuid(this.projectService.getCurrentSelectedProjectEntity());
 
 				long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
 
@@ -500,7 +537,7 @@ public class PilotableCommitPreparationService {
 
 				LOGGER.info(
 						"Diff process completed on merge commit preparation {}. Found {} index entries. Total process duration was {} ms",
-						this.current.getIdentifier(),
+						current.getIdentifier(),
 						Integer.valueOf(fullDiff.size()),
 						Long.valueOf(System.currentTimeMillis() - startTimeout));
 			} else {
@@ -514,7 +551,7 @@ public class PilotableCommitPreparationService {
 			throw a;
 		} catch (Throwable e) {
 			LOGGER.error("Error will processing diff", e);
-			this.current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
+			current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
 	}
 
@@ -534,11 +571,13 @@ public class PilotableCommitPreparationService {
 
 		catch (InterruptedException | ExecutionException e) {
 			LOGGER.error("Error will processing diff", e);
+			PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
 			// If already identified, keep going on 1st identified error
-			if (this.current.getErrorDuringPreparation() != null) {
-				throw this.current.getErrorDuringPreparation();
+			if (current.getErrorDuringPreparation() != null) {
+				throw current.getErrorDuringPreparation();
 			}
-			return this.current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
+			return current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
 		}
 	}
 
@@ -552,6 +591,8 @@ public class PilotableCommitPreparationService {
 	 */
 	private Callable<LocalPreparedDiff> callDiff(DictionaryEntry dict) {
 
+		final PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
 		return () -> {
 			// Controle if table not yet specified
 			assertDictionaryEntryIsRealTable(dict);
@@ -563,12 +604,12 @@ public class PilotableCommitPreparationService {
 			tableDiff.completeFromEntity(dict);
 
 			// Search diff content
-			tableDiff.setDiff(this.diffService.currentContentDiff(dict, this.current.getDiffLobs()).stream()
+			tableDiff.setDiff(this.diffService.currentContentDiff(dict, current.getDiffLobs()).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
-			int rem = this.current.getProcessRemaining().decrementAndGet();
+			int rem = current.getProcessRemaining().decrementAndGet();
 			LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", Integer.valueOf(rem),
-					Integer.valueOf(this.current.getProcessStarted()));
+					Integer.valueOf(current.getProcessStarted()));
 
 			return tableDiff;
 		};
@@ -590,6 +631,8 @@ public class PilotableCommitPreparationService {
 			long lastLocalCommitTimestamp,
 			MergePreparedDiff correspondingDiff) {
 
+		final PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
 		return () -> {
 			// Controle if table not yet specified
 			assertDictionaryEntryIsRealTable(dict);
@@ -599,12 +642,12 @@ public class PilotableCommitPreparationService {
 
 			// Then run one merge action for dictionaryEntry
 			correspondingDiff.setDiff(this.diffService
-					.mergeIndexDiff(dict, this.current.getDiffLobs(), lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
+					.mergeIndexDiff(dict, current.getDiffLobs(), lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
-			int rem = this.current.getProcessRemaining().decrementAndGet();
+			int rem = current.getProcessRemaining().decrementAndGet();
 			LOGGER.info("Completed 1 merge Diff. Remaining : {} / {}", Integer.valueOf(rem),
-					Integer.valueOf(this.current.getProcessStarted()));
+					Integer.valueOf(current.getProcessStarted()));
 
 			// For chained process
 			return correspondingDiff;
@@ -616,12 +659,14 @@ public class PilotableCommitPreparationService {
 	 */
 	private void assertDictionaryEntryIsRealTable(DictionaryEntry entry) {
 
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
 		if (entry == null) {
-			this.current.fail(new ApplicationException(TABLE_WRONG_REF, "Specified table entry is missing in managed DB"));
+			current.fail(new ApplicationException(TABLE_WRONG_REF, "Specified table entry is missing in managed DB"));
 		}
 
 		else if (!this.managedDesc.isTableExists(entry.getTableName())) {
-			this.current.fail(new ApplicationException(TABLE_NAME_INVALID, "For dict entry " + entry.getUuid() + " the table name \""
+			current.fail(new ApplicationException(TABLE_NAME_INVALID, "For dict entry " + entry.getUuid() + " the table name \""
 					+ entry.getTableName() + "\" is not a valid one in managed DB", entry.getTableName()));
 		}
 	}

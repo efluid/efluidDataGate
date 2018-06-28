@@ -8,14 +8,14 @@
 		<br/>
 		<div class="alert alert-primary" role="alert">
 			Le dictionnaire est la base de définition des tables de paramétrage gérées avec l'application. Ces tables sont basées sur le contenu de la base de données
-			de Efluid, et sont associées à des domaines fonctionnels. Au moins un domaine fonctionnel doit être créé.<br/>
-        	Ici vous pouvez indiquer un premier domaine fonctionnel que vous pourrez compléter plus tard, ou fournir un fichier d'import existant contenant un dictionnaire
-        	partiel ou complet.<br/>
+			de Efluid, et sont associées à des domaines fonctionnels. Au moins un domaine fonctionnel doit être créé. Toutes ces données sont associées au projet courant<br/>
+        	Ici vous pouvez indiquer un premier domaine fonctionnel pour le projet <span th:text="${project.name}">project</span> que vous pourrez compléter plus tard, 
+        	ou fournir un fichier d'import existant contenant un dictionnaire partiel ou complet.<br/>
         	Si vous compter recevoir des packages de paramètrages, <b>il est recommandé de créer le dictionnaire en important celui de référence</b>.
         </div>
         <form action="/wizzard/2.html" th:action="@{/wizzard/3/create}" method="post">
 			<div class="form-group">
-				<label for="domainName">Saisir un nom de domaine fonctionnel à créer</label>
+				<label for="domainName">Saisir un nom de domaine fonctionnel à créer pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span> </label>
 				<input id="domainName" type="text" class="form-control" name="domainName" size="50"/>
 			</div>
 			<div>

@@ -190,9 +190,20 @@ public class DictionaryController extends CommonController {
 	/**
 	 * @return
 	 */
+	@RequestMapping(value = "/share/project-dictionary.par", method = GET)
+	@ResponseBody
+	public ResponseEntity<InputStreamResource> downloadExportAllDomainsInCurrentProject() {
+
+		return WebUtils.outputExportImportFile(this.dictionaryManagementService.exportCurrentProject().getResult());
+	}
+
+
+	/**
+	 * @return
+	 */
 	@RequestMapping(value = "/share/all-dictionary.par", method = GET)
 	@ResponseBody
-	public ResponseEntity<InputStreamResource> downloadExportAllDomains() {
+	public ResponseEntity<InputStreamResource> downloadExportAllDomainsAllProject() {
 
 		return WebUtils.outputExportImportFile(this.dictionaryManagementService.exportAll().getResult());
 	}

@@ -6,7 +6,9 @@ import static fr.uem.efluid.utils.ErrorType.PROJECT_NAME_EXIST;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -132,17 +134,18 @@ public class ProjectManagementService extends AbstractApplicationService {
 	 * @param name
 	 * @return add entity as data
 	 */
-	public ProjectData createNewProject(String name) {
+	public ProjectData createNewProject(String name, int color) {
 
 		LOGGER.debug("Create new project {}", name);
 
 		assertProjectNameIsAvailable(name);
-		
+
 		Project project = new Project();
 
 		project.setUuid(UUID.randomUUID());
 		project.setName(name);
 		project.setCreatedTime(LocalDateTime.now());
+		project.setColor(color);
 
 		project = this.projects.save(project);
 
@@ -166,6 +169,36 @@ public class ProjectManagementService extends AbstractApplicationService {
 	}
 
 	/**
+	 * Process one Project
+	 * 
+	 * @param imported
+	 * @return
+	 */
+	Project importProject(Project imported, AtomicInteger newCounts) {
+
+		Optional<Project> localOpt = this.projects.findById(imported.getUuid());
+
+		// Exists already
+		localOpt.ifPresent(d -> LOGGER.debug("Import existing project {} : will update currently owned", imported.getUuid()));
+
+		// Or is a new one
+		Project local = localOpt.orElseGet(() -> {
+			LOGGER.debug("Import new project {} : will create currently owned", imported.getUuid());
+			Project loc = new Project(imported.getUuid());
+			newCounts.incrementAndGet();
+			return loc;
+		});
+
+		// Common attrs
+		local.setCreatedTime(imported.getCreatedTime());
+		local.setName(imported.getName());
+
+		local.setImportedTime(LocalDateTime.now());
+
+		return local;
+	}
+
+	/**
 	 * @return
 	 */
 	Project getCurrentSelectedProjectEntity() {
@@ -180,7 +213,7 @@ public class ProjectManagementService extends AbstractApplicationService {
 	 */
 	private void assertProjectNameIsAvailable(String name) {
 
-		if(this.projects.findByName(name) != null){
+		if (this.projects.findByName(name) != null) {
 			throw new ApplicationException(PROJECT_NAME_EXIST, "A project with name " + name + " already exist", name);
 		}
 	}

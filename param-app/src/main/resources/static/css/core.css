@@ -69,13 +69,14 @@ select.select-column {
 }
 
 .active-project {
-    font-size: 13px;
+    font-size: 14px;
     padding-right: 15px;
 }
 
 .active-project a {
     font-decoration: none;
     font-weight: bold;
+    color: Black !important;
 }
 
 .help {
@@ -269,4 +270,80 @@ select.select-column {
 
 .change-details {
 	display: none;
+}
+
+
+/* COLOR PICKER - CUSTOM */
+
+.color-picker {
+	float: right;
+}
+
+.color-picker label {
+    margin-left: 4px;
+    margin-right: 10px;
+    font-weight: bold;
+    float: left;
+    font-size: 14px;
+}
+
+.color-picker label span {
+    margin-left: 4px;
+}
+
+/* THEMING - TEXT - BG SUPPORT */
+
+/* Grey (default) */
+.project-theme-txt-0 {
+    color:Grey !important;
+}
+
+.project-theme-bg-0 {
+	/* Color copied from default bootstrap bg */
+    background-color:#f8f9fa !important;
+}
+
+/* Blue */
+.project-theme-txt-1 {
+    color:Blue !important;
+}
+
+.project-theme-bg-1 {
+    background-color:SkyBlue !important;
+}
+
+/* Green */
+.project-theme-txt-2 {
+    color:Green !important;
+}
+
+.project-theme-bg-2 {
+    background-color:#A8FBA8 !important;
+}
+
+/* Yellow */
+.project-theme-txt-3 {
+    color:Gold !important;
+}
+
+.project-theme-bg-3 {
+    background-color:LemonChiffon !important;
+}
+
+/* Pink */
+.project-theme-txt-4 {
+    color:HotPink !important;
+}
+
+.project-theme-bg-4 {
+    background-color:MistyRose !important;
+}
+
+/* Purple */
+.project-theme-txt-5 {
+    color:Purple !important;
+}
+
+.project-theme-bg-5 {
+    background-color:Lavender !important;
 }

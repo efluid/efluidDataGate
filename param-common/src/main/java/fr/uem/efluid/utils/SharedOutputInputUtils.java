@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,7 +38,7 @@ import fr.uem.efluid.utils.json.LocalDateTimeModule;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public class SharedOutputInputUtils {
 
@@ -224,7 +225,7 @@ public class SharedOutputInputUtils {
 	 * 
 	 * @author elecomte
 	 * @since v0.0.1
-	 * @version 1
+	 * @version 2
 	 */
 	public static class JsonPropertiesWriter {
 
@@ -277,6 +278,17 @@ public class SharedOutputInputUtils {
 			return this;
 		}
 
+		/**
+		 * @param key
+		 * @param value
+		 * @return
+		 */
+		public JsonPropertiesWriter with(String key, int value) {
+			this.properties.put(key, String.valueOf(value));
+
+			return this;
+		}
+
 		@Override
 		public String toString() {
 			try {
@@ -292,7 +304,7 @@ public class SharedOutputInputUtils {
 	 * 
 	 * @author elecomte
 	 * @since v0.0.1
-	 * @version 1
+	 * @version 2
 	 */
 	public static class OutputJsonPropertiesReader {
 
@@ -305,6 +317,18 @@ public class SharedOutputInputUtils {
 			} catch (IOException e) {
 				throw new ApplicationException(JSON_READ_ERROR, "Cannot deserialize from json", e);
 			}
+		}
+
+		/**
+		 * @param name
+		 * @return
+		 */
+		public int getPropertyInt(String name) {
+			Object jsonProperty = this.jsonProperties.get(name);
+			if (jsonProperty == null) {
+				return 0;
+			}
+			return Integer.parseInt(jsonProperty.toString());
 		}
 
 		/**
@@ -341,6 +365,17 @@ public class SharedOutputInputUtils {
 				return null;
 			}
 			return LocalDateTime.parse(jsonProperty.toString().trim(), DATE_TIME_FORMATER);
+		}
+
+		/**
+		 * @param name
+		 * @param apply
+		 * @return
+		 */
+		public OutputJsonPropertiesReader applyInt(String name, IntConsumer apply) {
+			int prop = getPropertyInt(name);
+			apply.accept(prop);
+			return this;
 		}
 
 		/**

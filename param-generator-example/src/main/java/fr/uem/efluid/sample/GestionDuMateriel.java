@@ -8,6 +8,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 import fr.uem.efluid.ParameterDomain;
+import fr.uem.efluid.ParameterProject;
+import fr.uem.efluid.ProjectColor;
 
 /**
  * @author elecomte
@@ -17,7 +19,7 @@ import fr.uem.efluid.ParameterDomain;
 @Documented
 @Retention(CLASS)
 @Target(TYPE)
-@ParameterDomain("Gestion du materiel")
+@ParameterDomain(name = "Gestion du materiel", project = @ParameterProject(name = "My project", color = ProjectColor.BLUE))
 public @interface GestionDuMateriel {
 
 	// Meta-annotation, no content

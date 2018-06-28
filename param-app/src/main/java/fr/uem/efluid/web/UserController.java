@@ -1,16 +1,14 @@
 package fr.uem.efluid.web;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
-import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
 import java.util.List;
 import java.util.UUID;
 
-import javax.websocket.server.PathParam;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -71,7 +69,7 @@ public class UserController extends CommonController {
 	 * @return
 	 */
 	@RequestMapping("/user/{login}")
-	public String selectedUser(Model model, @PathParam("login") String login) {
+	public String selectedUser(Model model, @PathVariable("login") String login) {
 
 		if (!controlSelectedProject(model)) {
 			return REDIRECT_SELECT;
@@ -93,7 +91,7 @@ public class UserController extends CommonController {
 	 * @param prefered
 	 * @return
 	 */
-	@RequestMapping(value = "/users", method = PUT)
+	@RequestMapping(value = "/users/add", method = POST)
 	public String addUser(
 			Model model,
 			@RequestParam("login") String login,
@@ -114,7 +112,7 @@ public class UserController extends CommonController {
 	 * @param prefered
 	 * @return
 	 */
-	@RequestMapping(value = "/users", method = POST)
+	@RequestMapping(value = "/users/update", method = POST)
 	public String updateUser(
 			Model model,
 			@RequestParam("login") String login,

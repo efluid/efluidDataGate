@@ -9,20 +9,37 @@
 		<div class="alert alert-primary" role="alert">
 			Les données de paramètrage sont organisées par projet. La présence d'au moins un projet est obligatoire. 
 			Les utilisateurs doivent sélectionner un projet actif sur lequel travailler
-			Vous pourrez modifier la liste des projets, ou choisir des projets préférés plus tard
+			Vous pourrez modifier la liste des projets, ou choisir des projets préférés plus tard.<br/><br/>
+			Un projet est identifié par un nom unique et par une couleur. La couleur est reprise dans les menus de l'application
+			et permet d'identifier plus simplement quel est le projet actif.
         </div>
         
-        <form action="/wizzard/2.html" th:action="@{/wizzard/2}" method="post">
-			<div class="form-group">
-				<label for="projectName">Saisir un nom de projet à créer</label>
-				<input id="projectName" type="text" class="form-control" name="domainName" size="50"/>
+        <form class="form-inline">
+			<div class="form-group mb-2">
+				<label for="projectName">Nom du projet&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input id="projectName" type="text" class="form-control" size="30" name="domainName"/>
 			</div>
-			<div>
+			<div class="form-group mx-sm-3 mb-2">
+				<span class="color-picker">
+    				<label class="project-theme-txt-0"><input class="project-color" type="radio" name="color" value="0" checked="checked"><span>Gris</span></label>
+    				<label class="project-theme-txt-1"><input class="project-color" type="radio" name="color" value="1" ><span>Bleu</span></label>
+    				<label class="project-theme-txt-2"><input class="project-color" type="radio" name="color" value="2"><span>Vert</span></label>
+    				<label class="project-theme-txt-3"><input class="project-color" type="radio" name="color" value="3"><span>Jaune</span></label>
+    				<label class="project-theme-txt-4"><input class="project-color" type="radio" name="color" value="4"><span>Rose</span></label>
+    				<label class="project-theme-txt-5"><input class="project-color" type="radio" name="color" value="5"><span>Violet</span></label>
+    				&nbsp;&nbsp;&nbsp;&nbsp;
+				</span>
+  			</div>
+  			
+			<div class="form-group mx-sm-3 mb-2 float-right">
 				<button type="button" id="addButton" class="btn btn-success btn-sm float-right" disabled="disabled">Créer le projet</button>
-				<br/><br/>
 			</div>
-			<span  id="projectList">
-				<div class="form-group">
+		</form>
+		
+		<div id="projectList">
+			<br/>
+        	<form action="/wizzard/2.html" th:action="@{/wizzard/2}" method="post">
+        		<div>
 					<h5>Liste des projets</h5>
 			        <table class="table table-sm">
 			            <thead>
@@ -39,13 +56,16 @@
 				<div>
 					<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right" disabled="disabled">Valider le(s) projet(s) et continuer</button>
 				</div>
-			</span>
-		</form>
-		
+			</form>
+		</div>
     </span>
     <script layout:fragment="script">
 
 		var count = 0;
+		
+		const getPickedColor = () => {
+			return $(".project-color:checked").val();
+		};
 
 		// Check value
     	const checkProjectAdd = () => {
@@ -58,14 +78,15 @@
     			$("#addButton").prop('disabled', false);
 				$("#addButton").removeClass("btn-outline-success").addClass("btn-success");
 			}
-		}
+		};
 			
 		// Add row button
 		const addButtonAction = () => {
 			var inputName = $("#projectName");
 			var name = inputName.val();
-			$.post("/wizzard/2/add/" + inputName.val(), null, (data, status) => {
-		        var newProjectRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td style="text-align:center"><input type="radio" name="selected" value="' + data.uuid + '"' + (count == 0 ? '" checked="checked"' : '') + '/></td></tr>';
+			var color = getPickedColor();
+			$.post("/wizzard/2/add/" + name + "/" + color, null, (data, status) => {
+		        var newProjectRow = '<tr id="' + data.uuid + '"><td class="project-theme-txt-' + data.color + '"><b>' + data.name + '</b></td><td style="text-align:center"><input type="radio" name="selected" value="' + data.uuid + '"' + (count == 0 ? '" checked="checked"' : '') + '/></td></tr>';
 				$("#projectListInjectBefore").before(newProjectRow);
 				inputName.val("");
 				$("#addButton").html("Ajouter un autre projet");

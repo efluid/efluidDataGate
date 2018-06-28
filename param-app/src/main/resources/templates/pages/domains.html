@@ -4,7 +4,7 @@
 </head>
 <body>
     <span layout:fragment="content">
-		<h5>Edition des domaines fonctionnels</h5>
+		<h5>Edition des domaines fonctionnels pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
         <span class="help">Les domaines fonctionnels représentent les ensembles de données prises en compte comme étant du paramètrage. 
         Les opérations d'import / export et d'applications de modifications de paramètres peuvent être organisées par domaine fonctionnel.</span>
         <table class="table table-sm">

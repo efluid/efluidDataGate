@@ -1,42 +1,34 @@
-package fr.uem.efluid.model.entities;
+package fr.uem.efluid.model;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
+import fr.uem.efluid.ParameterProject;
+import fr.uem.efluid.ProjectColor;
 import fr.uem.efluid.model.shared.ExportAwareProject;
-import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * @author elecomte
- * @since v0.2.0
+ * @since v0.0.1
  * @version 1
  */
-@Entity
-@Table(name = "projects")
-public class Project extends ExportAwareProject {
+@SpecifiedWith(ParameterProject.class)
+public class ParameterProjectDefinition extends ExportAwareProject {
 
-	@Id
+	public static final String DEFAULT_PROJECT = "Default";
+	
 	private UUID uuid;
 
-	@NotNull
 	private String name;
 
-	private int color;
-
-	@NotNull
 	private LocalDateTime createdTime;
 
-	private LocalDateTime importedTime;
+	private ProjectColor color;
 
 	/**
 	 * @param uuid
 	 */
-	public Project(UUID uuid) {
+	public ParameterProjectDefinition(UUID uuid) {
 		super();
 		this.uuid = uuid;
 	}
@@ -44,7 +36,7 @@ public class Project extends ExportAwareProject {
 	/**
 	 * 
 	 */
-	public Project() {
+	public ParameterProjectDefinition() {
 		super();
 	}
 
@@ -101,31 +93,7 @@ public class Project extends ExportAwareProject {
 	 */
 	@Override
 	public LocalDateTime getImportedTime() {
-		return this.importedTime;
-	}
-
-	/**
-	 * @param importedTime
-	 *            the importedTime to set
-	 */
-	public void setImportedTime(LocalDateTime importedTime) {
-		this.importedTime = importedTime;
-	}
-
-	/**
-	 * @return the color
-	 */
-	@Override
-	public int getColor() {
-		return this.color;
-	}
-
-	/**
-	 * @param color
-	 *            the color to set
-	 */
-	public void setColor(int color) {
-		this.color = color;
+		return null;
 	}
 
 	/**
@@ -134,12 +102,22 @@ public class Project extends ExportAwareProject {
 	 */
 	@Override
 	public void deserialize(String raw) {
-
-		SharedOutputInputUtils.fromJson(raw)
-				.applyUUID("uid", v -> setUuid(v))
-				.applyLdt("cre", v -> setCreatedTime(v))
-				.applyString("nam", v -> setName(v))
-				.applyInt("col", v -> setColor(v));
+		// Not implemented
 	}
 
+	/**
+	 * @return the color
+	 */
+	@Override
+	public int getColor() {
+		return this.color == null ? 0 : this.color.ordinal();
+	}
+
+	/**
+	 * @param color
+	 *            the color to set
+	 */
+	public void setColor(ProjectColor color) {
+		this.color = color;
+	}
 }

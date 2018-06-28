@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
@@ -57,12 +58,12 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 	 * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#extractCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry)
 	 */
 	@Override
-	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs) {
+	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project) {
 
 		String query = this.queryGenerator.producesSelectParameterQuery(
 				parameterEntry,
 				this.links.findByDictionaryEntry(parameterEntry),
-				this.dictionary.findAllMappedByTableName());
+				this.dictionary.findAllMappedByTableName(project));
 
 		LOGGER.debug("Extracting values from managed table {} with query \"{}\"", parameterEntry.getTableName(), query);
 

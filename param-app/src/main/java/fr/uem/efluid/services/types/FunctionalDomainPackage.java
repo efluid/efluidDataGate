@@ -9,7 +9,7 @@ import fr.uem.efluid.model.entities.FunctionalDomain;
  * @since v0.0.1
  * @version 1
  */
-public class FunctionalDomainPackage extends FunctionalExportDomainPackage<FunctionalDomain> {
+public class FunctionalDomainPackage extends FunctionalDomainExportPackage<FunctionalDomain> {
 
 	/**
 	 * @param name

@@ -3,6 +3,7 @@ package fr.uem.efluid.model.repositories;
 import java.util.Map;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.Project;
 
 /**
  * <p>
@@ -25,6 +26,6 @@ public interface ManagedExtractRepository {
 	 *            table identifier for extraction
 	 * @return
 	 */
-	Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs);
+	Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project);
 
 }

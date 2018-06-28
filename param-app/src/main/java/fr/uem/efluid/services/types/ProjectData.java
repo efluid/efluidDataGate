@@ -2,7 +2,9 @@ package fr.uem.efluid.services.types;
 
 import java.util.UUID;
 
+import fr.uem.efluid.ProjectColor;
 import fr.uem.efluid.model.entities.Project;
+import fr.uem.efluid.rest.v1.model.ProjectDetailView;
 
 /**
  * @author elecomte
@@ -14,6 +16,8 @@ public class ProjectData {
 	private UUID uuid;
 
 	private String name;
+
+	private int color;
 
 	/**
 	 * 
@@ -50,6 +54,21 @@ public class ProjectData {
 	 */
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	/**
+	 * @return the color
+	 */
+	public int getColor() {
+		return this.color;
+	}
+
+	/**
+	 * @param color
+	 *            the color to set
+	 */
+	public void setColor(int color) {
+		this.color = color;
 	}
 
 	/**
@@ -94,6 +113,7 @@ public class ProjectData {
 		Project entity = new Project();
 		entity.setName(data.getName());
 		entity.setUuid(data.getUuid());
+		entity.setColor(data.getColor());
 		return entity;
 	}
 
@@ -110,6 +130,29 @@ public class ProjectData {
 		ProjectData data = new ProjectData();
 		data.setName(entity.getName());
 		data.setUuid(entity.getUuid());
+		data.setColor(entity.getColor());
 		return data;
+	}
+
+	/**
+	 * <p>
+	 * For API
+	 * </p>
+	 * 
+	 * @param data
+	 * @return
+	 */
+	public static ProjectDetailView toView(ProjectData data) {
+
+		if (data == null) {
+			return null;
+		}
+
+		ProjectDetailView view = new ProjectDetailView();
+		view.setName(view.getName());
+		view.setUuid(view.getUuid());
+		view.setColor(ProjectColor.values()[data.getColor()].name());
+
+		return view;
 	}
 }

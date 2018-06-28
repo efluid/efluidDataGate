@@ -6,7 +6,7 @@
 <body>
     <span layout:fragment="content">
 		<p>
-		    <h5>Préparation d'un lot
+		    <h5>Préparation d'un lot pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span>
 		    <button class="btn btn-outline-dark btn-sm float-right" type="button" disabled="disabled">Rafraichir les modifications</button></h5>
 		</p>
 		<div class="alert alert-secondary" role="alert">

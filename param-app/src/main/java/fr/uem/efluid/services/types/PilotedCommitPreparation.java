@@ -13,10 +13,10 @@ import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
- * A <tt>PilotedCommitPreparation</tt> is a major load event associated to a
- * preparation of index or index related data. Their is only ONE preparation of any
- * kind which is available in the application, due to memory use and data extraction
- * heavy load. But this preparation can be of various type.
+ * A <tt>PilotedCommitPreparation</tt> is a major load event associated to a preparation
+ * of index or index related data. Their is only ONE preparation of any kind which is
+ * available in the application, due to memory use and data extraction heavy load. But
+ * this preparation can be of various type.
  * </p>
  * <p>
  * Common rules for a preparation :
@@ -24,12 +24,12 @@ import fr.uem.efluid.utils.ApplicationException;
  * <li>Used to prepare a commit of a fixed {@link CommitState}</li>
  * <li>Identified by uuid, but not exported. (currently not realy used)</li>
  * <li>Identified with start and end time of preparation</li>
- * <li>Associated to an evolving status : defines how far we are in the preparation.
- * Can evolve to include a full "% remaining" process</li>
+ * <li>Associated to an evolving status : defines how far we are in the preparation. Can
+ * evolve to include a full "% remaining" process</li>
  * <li>Holds a content, the "result" of the preparation. Supposed to be related to
  * <tt>DiffLine</tt> (but type is free in this vearsion)</li>
- * <li>Associated to a commit definition which will embbed the result of the
- * preparation once completed and validated.</li>
+ * <li>Associated to a commit definition which will embbed the result of the preparation
+ * once completed and validated.</li>
  * </ul>
  * </p>
  * 
@@ -63,6 +63,8 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	private int processStarted;
 
 	private Map<String, byte[]> diffLobs;
+
+	private UUID projectUuid;
 
 	/**
 	 * For pushed form only
@@ -227,8 +229,8 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	}
 
 	/**
-	 * Quick access to covered Functional domains in preparation (used for commit
-	 * detail page)
+	 * Quick access to covered Functional domains in preparation (used for commit detail
+	 * page)
 	 * 
 	 * @return
 	 */
@@ -266,6 +268,21 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	 */
 	public void setDiffLobs(Map<String, byte[]> diffLobs) {
 		this.diffLobs = diffLobs;
+	}
+
+	/**
+	 * @return the projectUuid
+	 */
+	public UUID getProjectUuid() {
+		return this.projectUuid;
+	}
+
+	/**
+	 * @param projectUuid
+	 *            the projectUuid to set
+	 */
+	public void setProjectUuid(UUID projectUuid) {
+		this.projectUuid = projectUuid;
 	}
 
 	/**

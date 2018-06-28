@@ -13,6 +13,8 @@ import fr.uem.efluid.services.types.ProjectData;
  */
 public abstract class CommonController {
 
+	static final String PROJECT_ATTR = "project";
+	
 	protected static final String REDIRECT_SELECT = "redirect:/ui/projects/select";
 	
 	@Autowired
@@ -27,7 +29,7 @@ public abstract class CommonController {
 		ProjectData current = this.projectManagementService.getCurrentSelectedProject();
 
 		if (current != null) {
-			model.addAttribute("project", current);
+			model.addAttribute(PROJECT_ATTR, current);
 			return true;
 		}
 

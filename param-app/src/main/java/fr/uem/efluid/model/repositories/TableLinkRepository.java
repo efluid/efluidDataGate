@@ -34,6 +34,12 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 	List<TableLink> findByDictionaryEntryDomain(FunctionalDomain domain);
 
 	/**
+	 * @param domains
+	 * @return
+	 */
+	List<TableLink> findByDictionaryEntryDomainIn(List<FunctionalDomain> domains);
+	
+	/**
 	 * <b><font color="red">Query for internal use only</font></b>
 	 * 
 	 * @return

@@ -10,7 +10,7 @@ import fr.uem.efluid.model.shared.ExportAwareProject;
  * @since v0.0.1
  * @version 1
  */
-public abstract class FunctionalExportDomainPackage<D extends ExportAwareFunctionalDomain<? extends ExportAwareProject>>
+public abstract class FunctionalDomainExportPackage<D extends ExportAwareFunctionalDomain<? extends ExportAwareProject>>
 		extends SharedPackage<D> {
 
 	public static final String DOMAINS_EXPORT = "full-domains";
@@ -20,7 +20,7 @@ public abstract class FunctionalExportDomainPackage<D extends ExportAwareFunctio
 	 * @param name
 	 * @param exportDate
 	 */
-	public FunctionalExportDomainPackage(String name, LocalDateTime exportDate) {
+	public FunctionalDomainExportPackage(String name, LocalDateTime exportDate) {
 		super(name, exportDate);
 	}
 

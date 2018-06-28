@@ -7,6 +7,11 @@
     	<form action="commit-save.html" th:action="@{/ui/prepare/save}" method="post">
         	<p>
 	        	<h5>Identification du lot de modifications</h5>
+	        	
+                <div class="form-group">
+	        		<span>Projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></span>
+				</div>
+	        	
                 <table class="table">
 					<thead>
 						<tr><th scope="col">Domaines fonctionnels concernés</th></tr>

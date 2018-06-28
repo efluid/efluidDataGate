@@ -30,6 +30,7 @@ import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
+import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
@@ -39,8 +40,10 @@ import fr.uem.efluid.services.types.DictionaryPackage;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.FunctionalDomainData;
+import fr.uem.efluid.services.types.FunctionalDomainExportPackage;
 import fr.uem.efluid.services.types.FunctionalDomainPackage;
-import fr.uem.efluid.services.types.FunctionalExportDomainPackage;
+import fr.uem.efluid.services.types.ProjectExportPackage;
+import fr.uem.efluid.services.types.ProjectPackage;
 import fr.uem.efluid.services.types.SelectableTable;
 import fr.uem.efluid.services.types.SharedPackage;
 import fr.uem.efluid.services.types.TableLinkExportPackage;
@@ -73,6 +76,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	private TableLinkRepository links;
 
 	@Autowired
+	private ProjectRepository projects;
+
+	@Autowired
 	private ManagedQueriesGenerator queryGenerator;
 
 	@Autowired
@@ -86,12 +92,15 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 */
 	public List<FunctionalDomainData> getAvailableFunctionalDomains() {
 
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
 		LOGGER.debug("Listing functional Domains");
 
 		// TODO : keep this in cache, or precalculated (once used, cannot be "unused")
 		List<UUID> usedIds = this.domains.findUsedIds();
 
-		return this.domains.findAll().stream()
+		return this.domains.findByProject(project).stream()
 				.map(FunctionalDomainData::fromEntity)
 				.peek(d -> d.setCanDelete(!usedIds.contains(d.getUuid())))
 				.collect(Collectors.toList());
@@ -136,8 +145,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		LOGGER.debug("Listing selectable tables for a new dictionary entry");
 
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
 		// Existing data
-		List<DictionaryEntry> entries = this.dictionary.findAll();
+		List<DictionaryEntry> entries = this.dictionary.findByDomainProject(project);
 
 		// Table with columns
 		Map<String, List<String>> allTables = this.metadatas.getTables().stream().collect(Collectors.toMap(t -> t.getName(),
@@ -166,13 +178,16 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 */
 	public List<DictionaryEntrySummary> getDictionnaryEntrySummaries() {
 
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
 		LOGGER.debug("Listing dictionary content");
 
 		// TODO : keep this in cache, or precalculated (once used, cannot be "unused")
 		List<UUID> usedIds = this.dictionary.findUsedIds();
 
 		// For link building, need other dicts
-		Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName();
+		Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName(project);
 
 		return this.dictionary.findAll().stream()
 				.map(e -> DictionaryEntrySummary.fromEntity(e,
@@ -190,6 +205,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 */
 	public DictionaryEntryEditData editEditableDictionaryEntry(UUID entryUuid) {
 
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
 		LOGGER.info("Open editable content for dictionary entry {}", entryUuid);
 
 		// Check valid uuid
@@ -202,7 +220,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		DictionaryEntryEditData edit = DictionaryEntryEditData.fromEntity(entry);
 
 		// For link building, need other dicts
-		Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName();
+		Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName(project);
 
 		// Links used for mapped tables
 		List<TableLink> dicLinks = this.links.findByDictionaryEntry(entry);
@@ -279,7 +297,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 */
 	public void saveDictionaryEntry(DictionaryEntryEditData editData) {
 
-		LOGGER.info("Process saving on dictionary Entry on table {} (current id : {})", editData.getTable(), editData.getUuid());
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		LOGGER.info("Process saving on dictionary Entry on table {} for project {} (current id : {})",
+				editData.getTable(), project.getName(), editData.getUuid());
 
 		DictionaryEntry entry;
 
@@ -324,7 +346,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Now update select clause using validated tableLinks
 		entry.setSelectClause(columnsAsSelectClause(editData.getColumns(), this.links.findByDictionaryEntry(entry),
-				this.dictionary.findAllMappedByTableName()));
+				this.dictionary.findAllMappedByTableName(project)));
 
 		// And refresh dict Entry
 		this.dictionary.save(entry);
@@ -375,20 +397,61 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		FunctionalDomain domain = this.domains.getOne(domainUUID);
 
 		// Packages on limited data sets
+		ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, LocalDateTime.now())
+				.initWithContent(Arrays.asList(domain.getProject()));
 		DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.PARTIAL_DICT_EXPORT, LocalDateTime.now())
 				.initWithContent(this.dictionary.findByDomain(domain));
-		FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalExportDomainPackage.PARTIAL_DOMAINS_EXPORT,
+		FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT,
 				LocalDateTime.now()).initWithContent(Collections.singletonList(domain));
 		TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.links.findByDictionaryEntryDomain(domain));
 
 		// Easy : just take all
-		ExportFile file = this.ioService.exportPackages(Arrays.asList(dict, doms, tl));
+		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, dict, doms, tl));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
+		result.addCount(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, proj.getContentSize(), 0, 0);
 		result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
-		result.addCount(FunctionalExportDomainPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
+		result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
+		result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
+
+		return result;
+	}
+
+	/**
+	 * @return
+	 */
+	public ExportImportResult<ExportFile> exportCurrentProject() {
+
+		this.projectService.assertCurrentUserHasSelectedProject();
+
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		LOGGER.info("Process export of complete dictionary related entities for current project {}", project.getName());
+
+		ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, LocalDateTime.now())
+				.initWithContent(Arrays.asList(project));
+
+		// Will filter by domains from package
+		List<FunctionalDomain> fdoms = this.domains.findByProject(project);
+
+		FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT,
+				LocalDateTime.now())
+						.initWithContent(fdoms);
+		DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.PARTIAL_DICT_EXPORT, LocalDateTime.now())
+				.initWithContent(this.dictionary.findByDomainIn(fdoms));
+		TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.links.findByDictionaryEntryDomainIn(fdoms));
+
+		// Easy : just take all
+		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, dict, doms, tl));
+
+		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
+
+		result.addCount(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, proj.getContentSize(), 0, 0);
+		result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
+		result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
 		result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
 
 		return result;
@@ -401,20 +464,23 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		LOGGER.info("Process export of complete dictionary related entities");
 
+		ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.projects.findAll());
 		DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.DICT_EXPORT, LocalDateTime.now())
 				.initWithContent(this.dictionary.findAll());
-		FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalExportDomainPackage.DOMAINS_EXPORT, LocalDateTime.now())
+		FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalDomainExportPackage.DOMAINS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.domains.findAll());
 		TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.links.findAll());
 
 		// Easy : just take all
-		ExportFile file = this.ioService.exportPackages(Arrays.asList(dict, doms, tl));
+		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, dict, doms, tl));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
+		result.addCount(ProjectExportPackage.PROJECTS_EXPORT, proj.getContentSize(), 0, 0);
 		result.addCount(DictionaryExportPackage.DICT_EXPORT, dict.getContentSize(), 0, 0);
-		result.addCount(FunctionalExportDomainPackage.DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
+		result.addCount(FunctionalDomainExportPackage.DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
 		result.addCount(TableLinkExportPackage.LINKS_EXPORT, tl.getContentSize(), 0, 0);
 
 		return result;
@@ -429,45 +495,57 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Less easy : need to complete and identify if value is new or not
 		List<SharedPackage<?>> packages = this.ioService.importPackages(file);
+		AtomicInteger newProjsCount = new AtomicInteger(0);
 		AtomicInteger newDomainsCount = new AtomicInteger(0);
 		AtomicInteger newDictCount = new AtomicInteger(0);
 		AtomicInteger newLinksCount = new AtomicInteger(0);
 
 		// Process on each, with right order :
 
-		// #1st The functional domains (used by other)
+		// #1st The projects (used by other)
+		List<Project> importedProjects = packages.stream().filter(p -> p.getClass() == ProjectPackage.class)
+				.flatMap(p -> ((ProjectPackage) p).streamContent()).map(d -> this.projectService.importProject(d, newProjsCount))
+				.collect(Collectors.toList());
+
+		// #2nd The functional domains (used by other)
 		List<FunctionalDomain> importedDomains = packages.stream().filter(p -> p.getClass() == FunctionalDomainPackage.class)
 				.flatMap(p -> ((FunctionalDomainPackage) p).streamContent()).map(d -> importDomain(d, newDomainsCount))
 				.collect(Collectors.toList());
 
-		// #2nd The dictionary (referencing domains)
+		// #3rd The dictionary (referencing domains)
 		List<DictionaryEntry> importedDicts = packages.stream().filter(p -> p.getClass() == DictionaryPackage.class)
 				.flatMap(p -> ((DictionaryPackage) p).streamContent()).map(d -> importDictionaryEntry(d, newDictCount))
 				.collect(Collectors.toList());
 
-		// #3rd The links (referencing dictionary entries)
+		// #4th The links (referencing dictionary entries)
 		List<TableLink> importedLinks = packages.stream().filter(p -> p.getClass() == TableLinkPackage.class)
 				.flatMap(p -> ((TableLinkPackage) p).streamContent()).map(d -> importTableLink(d, newLinksCount))
 				.collect(Collectors.toList());
 
 		// Batched save on all imported
+		this.projects.saveAll(importedProjects);
 		this.domains.saveAll(importedDomains);
 		this.dictionary.saveAll(importedDicts);
 		this.links.saveAll(importedLinks);
 
-		LOGGER.info("Import completed of {} domains, {} dictionary entry and {} table links",
-				Integer.valueOf(importedDomains.size()), Integer.valueOf(importedDicts.size()), Integer.valueOf(importedLinks.size()));
+		LOGGER.info("Import completed of {} projects, {} domains, {} dictionary entry and {} table links",
+				Integer.valueOf(importedProjects.size()), Integer.valueOf(importedDomains.size()), Integer.valueOf(importedDicts.size()),
+				Integer.valueOf(importedLinks.size()));
 
 		ExportImportResult<Void> result = ExportImportResult.newVoid();
 
 		// Details on imported counts (add vs updated items)
-		if (importedDicts.size() > 0) {
-			result.addCount(DictionaryExportPackage.DICT_EXPORT, newDictCount.get(), importedDicts.size() - newDictCount.get(), 0);
+		if (importedProjects.size() > 0) {
+			result.addCount(ProjectExportPackage.PROJECTS_EXPORT, newProjsCount.get(), importedProjects.size() - newProjsCount.get(), 0);
 		}
 
 		if (importedDomains.size() > 0) {
-			result.addCount(FunctionalExportDomainPackage.DOMAINS_EXPORT, newDomainsCount.get(),
+			result.addCount(FunctionalDomainExportPackage.DOMAINS_EXPORT, newDomainsCount.get(),
 					importedDomains.size() - newDomainsCount.get(), 0);
+		}
+
+		if (importedDicts.size() > 0) {
+			result.addCount(DictionaryExportPackage.DICT_EXPORT, newDictCount.get(), importedDicts.size() - newDictCount.get(), 0);
 		}
 
 		if (importedLinks.size() > 0) {

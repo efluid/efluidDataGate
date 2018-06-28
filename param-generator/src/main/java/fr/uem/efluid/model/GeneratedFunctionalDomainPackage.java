@@ -5,14 +5,14 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-import fr.uem.efluid.services.types.FunctionalExportDomainPackage;
+import fr.uem.efluid.services.types.FunctionalDomainExportPackage;
 
 /**
  * @author elecomte
  * @since v0.0.1
  * @version 1
  */
-public class GeneratedFunctionalDomainPackage extends FunctionalExportDomainPackage<ParameterDomainDefinition> {
+public class GeneratedFunctionalDomainPackage extends FunctionalDomainExportPackage<ParameterDomainDefinition> {
 
 	private static final String RELOADABLE_TYPE = "fr.uem.efluid.services.types.FunctionalDomainPackage";
 
@@ -21,7 +21,7 @@ public class GeneratedFunctionalDomainPackage extends FunctionalExportDomainPack
 	 * @param exportDate
 	 */
 	public GeneratedFunctionalDomainPackage(Collection<ParameterDomainDefinition> allDomains) {
-		super(FunctionalExportDomainPackage.DOMAINS_EXPORT, LocalDateTime.now());
+		super(FunctionalDomainExportPackage.DOMAINS_EXPORT, LocalDateTime.now());
 		initWithContent(allDomains.stream().sorted(Comparator.comparing(ParameterDomainDefinition::getName))
 				.collect(Collectors.toList()));
 	}

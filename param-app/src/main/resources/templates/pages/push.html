@@ -4,8 +4,8 @@
 </head>
 <body>
     <span layout:fragment="content">
-		<h5>Export de lots de modifications</h5>
-		<span class="help">L'export complet se fait à partir du 1er lot selectionné.</span>
+		<h5>Export de lots de modifications pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
+		<span class="help">L'export complet se fait à partir du 1er lot selectionné. Les exports de lots ne comportent que les données du projet courant.</span>
 		<table class="table table-sm">
 			<thead>
 				<tr>

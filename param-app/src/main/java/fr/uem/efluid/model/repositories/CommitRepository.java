@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.Project;
 
 /**
  * @author elecomte
@@ -16,6 +17,12 @@ import fr.uem.efluid.model.entities.Commit;
  */
 public interface CommitRepository extends JpaRepository<Commit, UUID> {
 
-	@Query("select c from Commit c, Commit a where a.uuid = :uuid and c.createdTime >= a.uuid")
-	List<Commit> findAllAfterSpecifiedCommitUUID(@Param("uuid") UUID uuid);
+	@Query("select c from Commit c, Commit a where a.uuid = :uuid and c.createdTime >= a.uuid and c.project.uuid = :projectUuid")
+	List<Commit> findAllAfterSpecifiedCommitUUID(@Param("uuid") UUID uuid, UUID projectUuid);
+
+	/**
+	 * @param project
+	 * @return
+	 */
+	List<Commit> findByProject(Project project);
 }

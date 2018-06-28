@@ -9,7 +9,7 @@ import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.types.DictionaryExportPackage;
 import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.ExportImportResult.ItemCount;
-import fr.uem.efluid.services.types.FunctionalExportDomainPackage;
+import fr.uem.efluid.services.types.FunctionalDomainExportPackage;
 import fr.uem.efluid.services.types.TableLinkExportPackage;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.WebUtils;
@@ -43,7 +43,7 @@ public class DictionaryApiController implements DictionaryApi {
 		CreatedDictionaryView view = new CreatedDictionaryView();
 
 		ItemCount dict = result.getCounts().get(DictionaryExportPackage.DICT_EXPORT);
-		ItemCount doms = result.getCounts().get(FunctionalExportDomainPackage.DOMAINS_EXPORT);
+		ItemCount doms = result.getCounts().get(FunctionalDomainExportPackage.DOMAINS_EXPORT);
 		ItemCount lins = result.getCounts().get(TableLinkExportPackage.LINKS_EXPORT);
 
 		view.setAddedDictionaryEntryCount(dict.getAdded());

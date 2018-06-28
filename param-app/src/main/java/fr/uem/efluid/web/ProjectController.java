@@ -49,10 +49,10 @@ public class ProjectController extends CommonController {
 	 * @param name
 	 * @return
 	 */
-	@RequestMapping(value = "/projects/add/{name}", method = POST)
+	@RequestMapping(value = "/projects/add/{name}/{color}", method = POST)
 	@ResponseBody
-	public ProjectData addProjectData(@PathVariable("name") String name) {
-		return this.projectManagementService.createNewProject(name);
+	public ProjectData addProjectData(@PathVariable("name") String name, @PathVariable("color") int color) {
+		return this.projectManagementService.createNewProject(name, color);
 	}
 
 	/**

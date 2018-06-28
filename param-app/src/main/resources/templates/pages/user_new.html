@@ -4,19 +4,19 @@
 </head>
 <body>	
 	<span layout:fragment="content">
-		<form action="#" th:action="@{/ui/users}" method="post">
+		<form action="#" th:action="@{/ui/users/add}" method="post">
 			<h5>Création d'un utilisateur</h5>
 			<div class="form-group">
 				<label for="login">Login</label>
-				<span th:text="${user.login}">Dupont</span>
+				<input type="text" class="form-control" name="login" size="50"/>
 			</div>
 			<div class="form-group">
 				<label for="password">Mot de passe</label>
-				<input type="password" th:field="${user.password}" class="form-control" name="password" size="50"/>
+				<input type="password" class="form-control" name="password" size="50"/>
 			</div>
 			<div class="form-group">
 				<label for="email">Adresse email</label>
-				<input type="text" th:field="${user.email}" class="form-control" name="email" size="50"/>
+				<input type="text" class="form-control" name="email" size="50"/>
 			</div>
 			<div>
 				<table class="table table-sm">
@@ -28,8 +28,8 @@
 					</thead>
 					<tbody>
 						<tr th:each="project, stat : ${projects}" th:id="${project.uuid}">
-							<td th:text="${project.name}">Autre</span></td>
-							<td><input type="checkbox" name="prefered" th:value="${project.uuid}" th:checked="${user.isPrefered(project.uuid)}"/></td>
+							<td th:text="${project.name}">Autre</td>
+							<td><input type="checkbox" name="prefered" th:value="${project.uuid}"/></td>
 						</tr>
 					</tbody>
 			    </table>
@@ -40,5 +40,32 @@
 			</div>
 		</form>
 	</span>
+	<script layout:fragment="script">
+
+		const checkContinue = () => {
+			var allOk = true; 
+			$("input").each( (i,e) => {
+				if(e.type != 'checkbox' && e.value === ''){ 
+					allOk = false; 
+					console.info(i + "->" + e.value);
+				}
+			});
+			
+			if(allOk){
+				$("#nextButton").prop('disabled', false);
+				$("#nextButton").removeClass("btn-outline-success").addClass("btn-success");
+			} else {	
+				$("#nextButton").prop('disabled', true);
+				$("#nextButton").removeClass("btn-success").addClass("btn-outline-success");
+			}
+        };
+        
+    	// Init actions
+    	$(document).ready(() => {
+			$("input").change(checkContinue);
+			$("input").keypress(checkContinue);
+			checkContinue();
+		}); 
+    </script>
 </body>
 </html>

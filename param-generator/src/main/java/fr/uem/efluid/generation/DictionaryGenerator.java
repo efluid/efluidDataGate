@@ -34,15 +34,19 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.ParameterDomain;
 import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterLink;
+import fr.uem.efluid.ParameterProject;
 import fr.uem.efluid.ParameterTable;
 import fr.uem.efluid.ParameterValue;
+import fr.uem.efluid.ProjectColor;
 import fr.uem.efluid.clients.DictionaryApiClient;
 import fr.uem.efluid.generation.DictionaryGeneratorConfig.LogFacade;
 import fr.uem.efluid.model.GeneratedDictionaryPackage;
 import fr.uem.efluid.model.GeneratedFunctionalDomainPackage;
+import fr.uem.efluid.model.GeneratedProjectPackage;
 import fr.uem.efluid.model.GeneratedTableLinkPackage;
 import fr.uem.efluid.model.ParameterDomainDefinition;
 import fr.uem.efluid.model.ParameterLinkDefinition;
+import fr.uem.efluid.model.ParameterProjectDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
 import fr.uem.efluid.rest.v1.DictionaryApi;
 import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
@@ -55,11 +59,11 @@ import fr.uem.efluid.utils.SelectClauseGenerator;
 /**
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public class DictionaryGenerator {
 
-	private static final String VERSION = "1";
+	private static final String VERSION = "2";
 
 	private final DictionaryGeneratorConfig config;
 
@@ -88,18 +92,24 @@ public class DictionaryGenerator {
 			/* Search using filtering tools, based on a configured package root */
 			Reflections reflections = initReflectionEntryPoint(contextClassLoader);
 
+			/* Will prepare project when found */
+			Map<String, ParameterProject> projects = new HashMap<>();
+
 			/* Process all tables init + key for clean link building */
 			Map<Class<?>, ParameterTableDefinition> typeTables = initParameterTablesWithKeys(reflections,
-					searchDomainsByAnnotation(reflections));
+					searchDomainsByAnnotation(reflections, projects));
+
+			/* Complete project definitions */
+			Map<String, ParameterProjectDefinition> projectDefs = identifyParameterProjects(projects);
 
 			/* Then process table values / links using refs */
 			Collection<ParameterLinkDefinition> allLinks = completeParameterValuesAndLinks(reflections, typeTables);
 
 			/* Finally, extract domains */
-			Collection<ParameterDomainDefinition> allDomains = completeParameterDomains(typeTables);
+			Collection<ParameterDomainDefinition> allDomains = completeParameterDomains(typeTables, projects, projectDefs);
 
 			/* Now can export */
-			export(allDomains, typeTables.values(), allLinks);
+			export(projectDefs.values(), allDomains, typeTables.values(), allLinks);
 
 			getLog().info("###### PARAM-GENERATOR VERSION " + VERSION + " - GENERATE COMPLETED IN "
 					+ BigDecimal.valueOf(System.currentTimeMillis() - start, 3).toPlainString()
@@ -127,7 +137,7 @@ public class DictionaryGenerator {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Map<Class<?>, String> searchDomainsByAnnotation(Reflections reflections) {
+	private Map<Class<?>, String> searchDomainsByAnnotation(Reflections reflections, Map<String, ParameterProject> projects) {
 
 		getLog().debug("Process domains spec search");
 
@@ -139,7 +149,13 @@ public class DictionaryGenerator {
 
 		// Domain search is the entry point of all mapped types
 		for (Class<?> typedDomain : domains) {
-			String domainName = typedDomain.getAnnotation(ParameterDomain.class).value();
+			ParameterDomain domain = typedDomain.getAnnotation(ParameterDomain.class);
+
+			String domainName = domain.name();
+
+			// Specified project - keep it in ref
+			ParameterProject project = domain.project();
+			projects.put(domainName, project);
 
 			// Search for annotated with meta
 			if (Annotation.class.isAssignableFrom(typedDomain)) {
@@ -329,10 +345,45 @@ public class DictionaryGenerator {
 	}
 
 	/**
+	 * @param projectsByDomains
+	 * @return
+	 */
+	private Map<String, ParameterProjectDefinition> identifyParameterProjects(Map<String, ParameterProject> projectsByDomains) {
+
+		getLog().debug("Process completion of all projects extracted from " + projectsByDomains.size() + " identified ref + 1 default");
+
+		Map<String, ParameterProjectDefinition> projectByNames = projectsByDomains.values().stream()
+				.distinct()
+				.map(p -> {
+					ParameterProjectDefinition def = new ParameterProjectDefinition();
+					def.setCreatedTime(LocalDateTime.now());
+					def.setName(p.name());
+					def.setColor(p.color());
+					def.setUuid(generateFixedUUID(p.name(), ParameterProjectDefinition.class));
+					getLog().debug("Identified distinct project \"" + def.getName() + "\" with generated UUID " + def.getUuid());
+					return def;
+				})
+				.collect(Collectors.toMap(d -> d.getName(), d -> d));
+
+		// If not done yet, add also default
+		ParameterProjectDefinition defaultDef = new ParameterProjectDefinition();
+		defaultDef.setCreatedTime(LocalDateTime.now());
+		defaultDef.setName(ParameterProjectDefinition.DEFAULT_PROJECT);
+		defaultDef.setColor(ProjectColor.GREY);
+		defaultDef.setUuid(generateFixedUUID(ParameterProjectDefinition.DEFAULT_PROJECT, ParameterProjectDefinition.class));
+		projectByNames.put(ParameterProjectDefinition.DEFAULT_PROJECT, defaultDef);
+
+		return projectByNames;
+	}
+
+	/**
 	 * @param reflections
 	 * @return
 	 */
-	private Collection<ParameterDomainDefinition> completeParameterDomains(Map<Class<?>, ParameterTableDefinition> defs) {
+	private Collection<ParameterDomainDefinition> completeParameterDomains(
+			Map<Class<?>, ParameterTableDefinition> defs,
+			Map<String, ParameterProject> projectsByDomains,
+			Map<String, ParameterProjectDefinition> projectsByName) {
 
 		getLog().debug("Process completion of distinct domains extracted from " + defs.size() + " identified tables");
 
@@ -342,7 +393,16 @@ public class DictionaryGenerator {
 			def.setCreatedTime(LocalDateTime.now());
 			def.setName(n);
 			def.setUuid(generateFixedUUID(n, ParameterDomainDefinition.class));
-			getLog().debug("Identified distinct domain \"" + n + "\" with generated UUID " + def.getUuid());
+
+			// linking to project
+			ParameterProject projectPar = projectsByDomains.get(n);
+
+			// If none found, set default project
+			def.setProject(projectPar != null ? projectsByName.get(projectPar.name())
+					: projectsByName.get(ParameterProjectDefinition.DEFAULT_PROJECT));
+
+			getLog().debug("Identified distinct domain \"" + n + "\" with generated UUID " + def.getUuid() + " onto project "
+					+ def.getProject().getName());
 			return def;
 		}).collect(Collectors.toMap(ParameterDomainDefinition::getName, v -> v));
 
@@ -356,19 +416,23 @@ public class DictionaryGenerator {
 	}
 
 	/**
-	 * @param domains
-	 * @param tables
-	 * @param links
+	 * @param allProjects
+	 * @param allDomains
+	 * @param allTables
+	 * @param allLinks
+	 * @throws Exception
 	 */
 	private void export(
+			Collection<ParameterProjectDefinition> allProjects,
 			Collection<ParameterDomainDefinition> allDomains,
 			Collection<ParameterTableDefinition> allTables,
 			Collection<ParameterLinkDefinition> allLinks) throws Exception {
 
-		getLog().info("Identified " + allDomains.size() + " domains, " + allTables.size() + " tables and " + allLinks.size()
-				+ " links : now export dictionary to " + this.config.getDestinationFolder());
+		getLog().info("Identified " + allProjects.size() + " projects, " + allDomains.size() + " domains, " + allTables.size()
+				+ " tables and " + allLinks.size() + " links : now export dictionary to " + this.config.getDestinationFolder());
 
 		ExportFile file = this.export.exportPackages(Arrays.asList(
+				new GeneratedProjectPackage(allProjects),
 				new GeneratedDictionaryPackage(allTables),
 				new GeneratedFunctionalDomainPackage(allDomains),
 				new GeneratedTableLinkPackage(allLinks)));

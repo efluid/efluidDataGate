@@ -5,25 +5,31 @@
 <body>
     <span layout:fragment="content">
 		<h5>Export depuis le dictionnaire</h5>
-		<table class="table table-sm">
-		    <thead>
-		        <tr>
-		            <th scope="col">Domaines fonctionnels</th>
-		            <th scope="col" width="10%">
-		                <a href="#" th:href="@{/ui/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines</a>
-		            </th>
-		        </tr>
-		    </thead>
-		    <tbody>
-		        <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
-		            <td th:text="${domain.name}">Gestion du matériel</td>
-		            <td><a href="#" th:href="@{/ui/share/{id}-dictionary.par(id=${domain.uuid})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
-		        </tr>
-		    </tbody>
-		</table>
+		<p>
+			<h6>Export complet pour tous les projets <a href="#" th:href="@{/ui/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines pour tous les projets</a></h6>
+		</p>
+		<p>
+			<h6>Export pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h6>
+			<table class="table table-sm">
+			    <thead>
+			        <tr>
+			            <th scope="col">Domaines fonctionnels</th>
+			            <th scope="col" width="10%">
+			                <a href="#" th:href="@{/ui/share/project-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines</a>
+			            </th>
+			        </tr>
+			    </thead>
+			    <tbody>
+			        <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
+			            <td th:text="${domain.name}">Gestion du matériel</td>
+			            <td><a href="#" th:href="@{/ui/share/{id}-dictionary.par(id=${domain.uuid})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
+			        </tr>
+			    </tbody>
+			</table>
+		</p>
 		<p>
 			<h5>Import depuis le dictionnaire</h5>
-			<span class="help">Attention les domaines fonctionnels sont également intégrés lors de l'import</span>
+			<span class="help">Attention les domaines fonctionnels sont également intégrés lors de l'import. L'import peut traiter 1 ou plusieurs projets.</span>
 			<form action="#" th:action="@{/ui/share/upload}" method="post" enctype="multipart/form-data">
 				<label class="btn btn-sm btn-primary">
 					Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
@@ -35,6 +41,7 @@
 		    	<b>Import dans le dictionnaire réalisé avec succès.</b><br/><br/>
 		    	Les opérations suivantes ont été réalisées :
 		    	<ul>
+		    		<li th:if="${result.counts['full-projects']}"><span th:text="${result.counts['full-projects'].added}">1</span> création(s) et <span th:text="${result.counts['full-projects'].modified}">1</span> mise(s) à jour de projet(s)</li>
 		    		<li th:if="${result.counts['full-domains']}"><span th:text="${result.counts['full-domains'].added}">1</span> création(s) et <span th:text="${result.counts['full-domains'].modified}">1</span> mise(s) à jour de domaine(s) fonctionnel(s)</li>
 		    		<li th:if="${result.counts['full-dictionary']}"><span th:text="${result.counts['full-dictionary'].added}">1</span> création(s) et <span th:text="${result.counts['full-dictionary'].modified}">1</span> mise(s) à jour de table(s) de paramètres dans le dictionnaire</li>
 		    		<li th:if="${result.counts['full-links']}"><span th:text="${result.counts['full-links'].added}">1</span> création(s) et <span th:text="${result.counts['full-links'].modified}">1</span> mise(s) à jour des lien(s) entre tables</li>

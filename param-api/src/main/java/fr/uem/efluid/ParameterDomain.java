@@ -54,5 +54,14 @@ public @interface ParameterDomain {
 	 * 
 	 * @return
 	 */
-	String value();
+	String name();
+
+	/**
+	 * <p>
+	 * Specification of project for current domain. Project are unique by name
+	 * </p>
+	 * 
+	 * @return
+	 */
+	ParameterProject project();
 }

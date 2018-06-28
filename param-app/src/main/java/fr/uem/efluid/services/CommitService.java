@@ -122,14 +122,19 @@ public class CommitService extends AbstractApplicationService {
 		 * old commits, and to do a chery pick, with one selected commit
 		 */
 
-		LOGGER.debug("Asking for a commit export");
+		this.projectService.assertCurrentUserHasSelectedProject();
+
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		LOGGER.debug("Asking for a commit export for project {}", project.getName());
 
 		String pckgName = startingWithCommit != null ? PCKG_ALL : PCKG_AFTER;
-		List<Commit> commitsToExport = this.commits.findAll();
+		List<Commit> commitsToExport = this.commits.findByProject(project);
 
 		// If starting uuid is specified, mark all "previous" as not exported as ref only
 		if (startingWithCommit != null) {
-			LOGGER.info("Partial commit export asked. Will use ref only for all commits BEFORE {}", startingWithCommit);
+			LOGGER.info("Partial commit export asked. Will use ref only for all commits BEFORE {} into project {}", startingWithCommit,
+					project.getName());
 
 			Commit startCommit = this.commits.getOne(startingWithCommit);
 
@@ -151,8 +156,9 @@ public class CommitService extends AbstractApplicationService {
 		long refOnly = commitsToExport.stream().filter(Commit::isRefOnly).count();
 		result.addCount(pckgName, commitsToExport.size() - refOnly, refOnly, 0);
 
-		LOGGER.info("Export package for commit is ready. {} total commits exported, uncluding {} exported as ref only. File size is {}b",
-				Integer.valueOf(commitsToExport.size()), Long.valueOf(refOnly), Integer.valueOf(file.getSize()));
+		LOGGER.info("Export package for commit is ready. {} total commits exported for project \"{}\", "
+				+ "uncluding {} exported as ref only. File size is {}b", Integer.valueOf(commitsToExport.size()), project.getName(),
+				Long.valueOf(refOnly), Integer.valueOf(file.getSize()));
 
 		// Result is for display / File load
 		return result;
@@ -193,11 +199,14 @@ public class CommitService extends AbstractApplicationService {
 	 */
 	public List<CommitEditData> getAvailableCommits() {
 
-		LOGGER.debug("Request for list of available commits");
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
 
-		Map<UUID, List<String>> domainNames = this.domains.loadAllDomainNamesByCommitUuids();
+		LOGGER.debug("Request for list of available commits for project ");
 
-		return this.commits.findAll().stream()
+		Map<UUID, List<String>> domainNames = this.domains.loadAllDomainNamesByCommitUuids(project);
+
+		return this.commits.findByProject(project).stream()
 				.map(CommitEditData::fromEntity)
 				.peek(c -> {
 					// Add domain names for each commit (if any)
@@ -215,6 +224,9 @@ public class CommitService extends AbstractApplicationService {
 	 */
 	public CommitDetails getExistingCommitDetails(UUID commitUUID) {
 
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+		
 		LOGGER.debug("Request for details on existing commit {}", commitUUID);
 
 		// Must exist
@@ -228,7 +240,7 @@ public class CommitService extends AbstractApplicationService {
 		// Check index size for commit
 		if (size < this.maxDisplayDetails) {
 
-			Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid();
+			Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid(project);
 
 			// Load commit index
 			CommitDetails.completeIndex(details, this.indexes.findByCommitUuid(commitUUID));

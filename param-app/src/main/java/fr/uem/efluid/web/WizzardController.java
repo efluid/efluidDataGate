@@ -94,7 +94,7 @@ public class WizzardController {
 	 * @return
 	 */
 	@RequestMapping(path = "/2", method = POST)
-	public String projectSave(@RequestParam("selected") String selected) {
+	public String projectSave(Model model, @RequestParam("selected") String selected) {
 
 		UUID uuid = UUID.fromString(selected);
 
@@ -103,6 +103,8 @@ public class WizzardController {
 		// Select is automatically marked as selected
 		this.projectService.selectProject(uuid);
 
+		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
+		
 		return "wizzard/initial_dictionary";
 	}
 
@@ -112,10 +114,10 @@ public class WizzardController {
 	 * @param name
 	 * @return
 	 */
-	@RequestMapping(value = "/2/add/{name}", method = POST)
+	@RequestMapping(value = "/2/add/{name}/{color}", method = POST)
 	@ResponseBody
-	public ProjectData addProjectData(@PathVariable("name") String name) {
-		return this.projectService.createNewProject(name);
+	public ProjectData addProjectData(@PathVariable("name") String name, @PathVariable("color") int color) {
+		return this.projectService.createNewProject(name, color);
 	}
 
 	/**
@@ -126,6 +128,7 @@ public class WizzardController {
 	@RequestMapping(value = "/3", method = GET)
 	public String initialCommitPage(Model model) {
 
+		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
 		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
 
 		return "wizzard/initial_commit";
@@ -200,8 +203,10 @@ public class WizzardController {
 	 * @return
 	 */
 	@RequestMapping(value = "/4", method = GET)
-	public String completedWizzard() {
+	public String completedWizzard(Model model) {
 
+		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
+		
 		// Finalize temp wizzard data
 		this.security.completeWizzardUserMode();
 		this.detailsService.completeWizzard();

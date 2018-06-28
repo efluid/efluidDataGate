@@ -12,13 +12,15 @@ import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
  * @version 1
  */
 @SpecifiedWith(ParameterDomain.class)
-public class ParameterDomainDefinition extends ExportAwareFunctionalDomain {
+public class ParameterDomainDefinition extends ExportAwareFunctionalDomain<ParameterProjectDefinition> {
 
 	private UUID uuid;
 
 	private String name;
 
 	private LocalDateTime createdTime;
+
+	private ParameterProjectDefinition project;
 
 	/**
 	 * @param uuid
@@ -89,6 +91,22 @@ public class ParameterDomainDefinition extends ExportAwareFunctionalDomain {
 	@Override
 	public LocalDateTime getImportedTime() {
 		return null;
+	}
+
+	/**
+	 * @return the project
+	 */
+	@Override
+	public ParameterProjectDefinition getProject() {
+		return this.project;
+	}
+
+	/**
+	 * @param project
+	 *            the project to set
+	 */
+	public void setProject(ParameterProjectDefinition project) {
+		this.project = project;
 	}
 
 	/**

@@ -22,6 +22,11 @@ public abstract class ExportAwareProject implements Shared {
 	public abstract String getName();
 
 	/**
+	 * @return
+	 */
+	public abstract int getColor();
+
+	/**
 	 * @param createdTime
 	 *            the createdTime to set
 	 */
@@ -38,6 +43,7 @@ public abstract class ExportAwareProject implements Shared {
 				.with("uid", getUuid())
 				.with("cre", getCreatedTime())
 				.with("nam", getName())
+				.with("col", getColor())
 				.toString();
 	}
 

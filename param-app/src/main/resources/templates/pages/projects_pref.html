@@ -9,14 +9,14 @@
 			<table class="table table-sm">
 				<thead>
 					<tr>
-						<th scope="col">Projet</th>
-						<th scope="col">Préféré ?</th>
+						<th scope="col" width="70%">Projet</th>
+						<th scope="col"><span class="float-right">Préféré ?</span></th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr th:each="project, stat : ${projects}" th:id="${project.uuid}">
+					<tr th:each="project, stat : ${projects}" th:id="${project.uuid}" th:class="|project-theme-bg-${project.color}|">
 						<td th:text="${project.name}">Autre</td>
-						<td><input type="checkbox" name="prefered" th:value="${project.uuid}" th:checked="${prefereds.contains(project)}"/></td>
+						<td><span class="float-right"><input type="checkbox" name="prefered" th:value="${project.uuid}" th:checked="${prefereds.contains(project)}"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
 					</tr>
 				</tbody>
 			</table>

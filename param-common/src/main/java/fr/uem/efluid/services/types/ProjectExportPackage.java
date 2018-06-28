@@ -9,7 +9,7 @@ import fr.uem.efluid.model.shared.ExportAwareProject;
  * @since v0.0.1
  * @version 1
  */
-public abstract class ProjectExportDomainPackage<P extends ExportAwareProject> extends SharedPackage<P> {
+public abstract class ProjectExportPackage<P extends ExportAwareProject> extends SharedPackage<P> {
 
 	public static final String PROJECTS_EXPORT = "full-projects";
 	public static final String PARTIAL_PROJECTS_EXPORT = "partial-projects";
@@ -18,7 +18,7 @@ public abstract class ProjectExportDomainPackage<P extends ExportAwareProject> e
 	 * @param name
 	 * @param exportDate
 	 */
-	public ProjectExportDomainPackage(String name, LocalDateTime exportDate) {
+	public ProjectExportPackage(String name, LocalDateTime exportDate) {
 		super(name, exportDate);
 	}
 
