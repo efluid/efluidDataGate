@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.ApplyHistoryEntry;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
 import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
@@ -43,6 +44,9 @@ public class ApplyDiffService extends AbstractApplicationService {
 	@Autowired
 	private ApplyHistoryEntryRepository history;
 
+	@Autowired
+	private ProjectManagementService projectService;
+
 	/**
 	 * <p>
 	 * Due to specific transactional process required on managed DB updated by this
@@ -53,8 +57,11 @@ public class ApplyDiffService extends AbstractApplicationService {
 	 */
 	public void applyDiff(List<? extends DiffLine> diffLines, Map<String, byte[]> lobs) {
 
-		LOGGER.info("Will apply a diff of {} items", Integer.valueOf(diffLines.size()));
-		keepHistory(this.updates.runAllChangesAndCommit(diffLines, lobs), false);
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		LOGGER.info("Will apply a diff of {} items for project {}", Integer.valueOf(diffLines.size()), project.getName());
+		keepHistory(this.updates.runAllChangesAndCommit(diffLines, lobs, project), false);
 	}
 
 	/**
@@ -67,9 +74,14 @@ public class ApplyDiffService extends AbstractApplicationService {
 	 */
 	public void rollbackDiff(List<RollbackLine> rollBackLines, Map<String, byte[]> lobs) {
 
-		LOGGER.info("Will apply a rollback of {} items", Integer.valueOf(rollBackLines.size()));
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		LOGGER.info("Will apply a rollback of {} items for project {}", Integer.valueOf(rollBackLines.size()), project.getName());
 		keepHistory(this.updates
-				.runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()), lobs), true);
+				.runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()), lobs,
+						project),
+				true);
 	}
 
 	/**

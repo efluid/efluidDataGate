@@ -15,9 +15,11 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
+import fr.uem.efluid.stubs.DataLoadResult;
 import fr.uem.efluid.stubs.TestDataLoader;
 
 /**
@@ -44,15 +46,18 @@ public class ManagedParametersRepositoryIntegrationTest {
 	private DictionaryRepository dictionary;
 
 	private UUID dictionaryEntryUuid;
+	private UUID projectUuid;
 
 	public void setupDatabase(String diff) {
-		this.dictionaryEntryUuid = this.loader.setupDatabaseForDiff(diff);
+		DataLoadResult res =  this.loader.setupDatabaseForDiff(diff);
+		this.dictionaryEntryUuid = res.getDicUuid();
+		this.projectUuid = res.getProjectUuid();
 	}
 
 	@Test
 	public void testExtractCurrentContentLow() {
 		setupDatabase("diff7");
-		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.getOne(this.dictionaryEntryUuid), new HashMap<>());
+		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.getOne(this.dictionaryEntryUuid), new HashMap<>(), new Project(this.projectUuid));
 		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff7/actual.csv");
 	}
 
@@ -66,7 +71,7 @@ public class ManagedParametersRepositoryIntegrationTest {
 	@Test
 	public void testExtractCurrentContentHeavy() {
 		setupDatabase("diff8");
-		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.getOne(this.dictionaryEntryUuid), new HashMap<>());
+		Map<String, String> raw = this.extracted.extractCurrentContent(this.dictionary.getOne(this.dictionaryEntryUuid), new HashMap<>(), new Project(this.projectUuid));
 		this.loader.assertDatasetEqualsRegardingConverter(raw, "diff8/actual.csv");
 	}
 

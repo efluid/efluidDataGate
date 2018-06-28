@@ -18,11 +18,13 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
+import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
@@ -41,6 +43,9 @@ import fr.uem.efluid.tools.ManagedValueConverter;
 public class DemoDataLoader {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(DemoDataLoader.class);
+
+	@Autowired
+	private ProjectRepository projects;
 
 	@Autowired
 	private FunctionalDomainRepository domains;
@@ -67,10 +72,12 @@ public class DemoDataLoader {
 		User dupont = this.users.save(user("dupont"));
 		User testeur = this.users.save(user("testeur"));
 
-		FunctionalDomain dom1 = this.domains.save(domain("Gestion du matériel"));
-		FunctionalDomain dom2 = this.domains.save(domain("Processus utilisateurs"));
-		this.domains.save(domain("Matrice des prix"));
-		this.domains.save(domain("Editions"));
+		Project proj1 = this.projects.save(project("Default"));
+		
+		FunctionalDomain dom1 = this.domains.save(domain("Gestion du matériel", proj1));
+		FunctionalDomain dom2 = this.domains.save(domain("Processus utilisateurs", proj1));
+		this.domains.save(domain("Matrice des prix", proj1));
+		this.domains.save(domain("Editions", proj1));
 
 		DictionaryEntry cmat = this.dictionary
 				.save(entry("Catégorie de matériel", dom1, null, "TCATEGORYMATERIEL", "1=1", "NOM", ColumnType.STRING));
@@ -86,9 +93,9 @@ public class DemoDataLoader {
 				.save(entry("Autre table pour voir", dom2, null, "TTABLEOTHERTEST2", "1=1", "VALUE1", ColumnType.STRING));
 		this.dictionary.save(entry("Fake table", dom2, "\"ATTR1\", \"ATTR2\"", "FAKETABLE", "1=1", "SERIAL", ColumnType.STRING));
 
-		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont, 5));
-		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur, 3));
-		Commit com3 = this.commits.save(commit("Ajout du reste", testeur, 1));
+		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont, 5, proj1));
+		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur, 3, proj1));
+		Commit com3 = this.commits.save(commit("Ajout du reste", testeur, 1, proj1));
 
 		this.index.save(
 				update("something", ADD, content("Name=\"something\", Detail=\"something\", value=12345", this.converter), cmat, com1));

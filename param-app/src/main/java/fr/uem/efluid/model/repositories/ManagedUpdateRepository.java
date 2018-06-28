@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.entities.Project;
 
 /**
  * <p>
@@ -52,5 +53,5 @@ public interface ManagedUpdateRepository {
 	 *
 	 * @return the processed queries
 	 */
-	String[] runAllChangesAndCommit(List<? extends DiffLine> lines, Map<String, byte[]> lobs);
+	String[] runAllChangesAndCommit(List<? extends DiffLine> lines, Map<String, byte[]> lobs, Project project);
 }

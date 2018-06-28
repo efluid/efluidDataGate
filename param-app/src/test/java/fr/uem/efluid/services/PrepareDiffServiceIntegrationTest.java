@@ -21,6 +21,7 @@ import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
+import fr.uem.efluid.stubs.DataLoadResult;
 import fr.uem.efluid.stubs.TestDataLoader;
 
 /**
@@ -46,7 +47,8 @@ public class PrepareDiffServiceIntegrationTest {
 	private UUID dictionaryEntryUuid;
 
 	public void setupDatabase(String diff) {
-		this.dictionaryEntryUuid = this.loader.setupDatabaseForDiff(diff);
+		DataLoadResult res = this.loader.setupDatabaseForDiff(diff);
+		this.dictionaryEntryUuid = res.getDicUuid();
 	}
 
 	@Test

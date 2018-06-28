@@ -13,6 +13,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.tools.ManagedValueConverter;
@@ -20,7 +21,7 @@ import fr.uem.efluid.tools.ManagedValueConverter;
 /**
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public class DataGenerationUtils {
 
@@ -58,13 +59,14 @@ public class DataGenerationUtils {
 	 * @param name
 	 * @return
 	 */
-	public static FunctionalDomain domain(String name) {
+	public static FunctionalDomain domain(String name, Project project) {
 
 		FunctionalDomain domain = new FunctionalDomain();
 
 		domain.setCreatedTime(LocalDateTime.now().minusDays(name.length()));
 		domain.setUuid(UUID.randomUUID());
 		domain.setName(name);
+		domain.setProject(project);
 
 		return domain;
 	}
@@ -117,11 +119,29 @@ public class DataGenerationUtils {
 	}
 
 	/**
-	 * @param detail
-	 * @param user
+	 * @param name
 	 * @return
 	 */
-	public static Commit commit(String detail, User user, int daysOld) {
+	public static Project project(String name) {
+
+		Project project = new Project();
+
+		project.setUuid(UUID.randomUUID());
+		project.setName(name);
+		project.setCreatedTime(LocalDateTime.now().minusDays(10));
+		project.setColor(2);
+
+		return project;
+	}
+
+	/**
+	 * @param detail
+	 * @param user
+	 * @param daysOld
+	 * @param proj
+	 * @return
+	 */
+	public static Commit commit(String detail, User user, int daysOld, Project proj) {
 
 		Commit commit = new Commit();
 
@@ -132,6 +152,7 @@ public class DataGenerationUtils {
 		commit.setState(CommitState.LOCAL);
 		commit.setOriginalUserEmail(user.getEmail());
 		commit.setUser(user);
+		commit.setProject(proj);
 
 		return commit;
 	}

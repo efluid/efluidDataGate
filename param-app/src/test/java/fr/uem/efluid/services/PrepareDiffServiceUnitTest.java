@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.IndexAction;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.stubs.TestUtils;
@@ -103,9 +104,10 @@ public class PrepareDiffServiceUnitTest {
 		Map<String, String> diff1Actual = TestUtils.readDataset(diffName + "/actual.csv", this.converter);
 		Map<String, String> diff1Knew = TestUtils.readDataset(diffName + "/knew.csv", this.converter);
 
+		Project proj = DataGenerationUtils.project("mock");
 		// Static internal
 		return this.service.generateDiffIndexFromContent(PreparedIndexEntry::new, diff1Knew, diff1Actual,
-				DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock"), "s*", "table", "1=1", "key", ColumnType.STRING));
+				DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock", proj), "s*", "table", "1=1", "key", ColumnType.STRING));
 
 	}
 }

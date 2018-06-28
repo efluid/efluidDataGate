@@ -23,11 +23,13 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
+import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.security.UserHolder;
@@ -68,6 +70,9 @@ public class TestDataLoader {
 
 	@Autowired
 	private TableLinkRepository links;
+
+	@Autowired
+	private ProjectRepository projects;
 
 	@Autowired
 	private ManagedValueConverter converter;
@@ -117,13 +122,16 @@ public class TestDataLoader {
 	/**
 	 * @return
 	 */
-	public void setupDictionaryForUpdate() {
+	public Project setupDictionaryForUpdate() {
 
 		this.links.deleteAll();
 		this.dictionary.deleteAll();
 		this.domains.deleteAll();
+		this.projects.deleteAll();
 
-		FunctionalDomain dom1 = this.domains.save(domain("Source exemple"));
+		Project proj = this.projects.save(project("Default"));
+		setActiveProject(proj);
+		FunctionalDomain dom1 = this.domains.save(domain("Source exemple", proj));
 		this.dictionary
 				.save(entry("Sources de données parent", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY",
 						ColumnType.ATOMIC));
@@ -133,9 +141,12 @@ public class TestDataLoader {
 
 		this.links.save(link(child, "PARENT", TestUtils.SOURCE_TABLE_NAME));
 
+		this.projects.flush();
 		this.domains.flush();
 		this.dictionary.flush();
 		this.links.flush();
+		
+		return proj;
 	}
 
 	/**
@@ -146,7 +157,9 @@ public class TestDataLoader {
 		this.links.deleteAll();
 		this.dictionary.deleteAll();
 		this.domains.deleteAll();
+		this.projects.deleteAll();
 
+		this.projects.flush();
 		this.domains.flush();
 		this.dictionary.flush();
 		this.links.flush();
@@ -160,9 +173,9 @@ public class TestDataLoader {
 	 * @param tableName
 	 * @return
 	 */
-	public DictionaryEntry addDictionaryWithTrinome(String domain, String tableName) {
+	public DictionaryEntry addDictionaryWithTrinome(String domain, String tableName, Project proj) {
 
-		FunctionalDomain dom1 = this.domains.save(domain(domain));
+		FunctionalDomain dom1 = this.domains.save(domain(domain, proj));
 		DictionaryEntry dict = this.dictionary
 				.save(entry(tableName, dom1, "VALUE, PRESET, SOMETHING", tableName, "1=1", "KEY", ColumnType.ATOMIC));
 		this.links.save(link(dict, "PARENT", tableName + "_dest"));
@@ -172,18 +185,22 @@ public class TestDataLoader {
 	/**
 	 * @return
 	 */
-	public DictionaryEntry setupDictionnaryForDiff() {
+	public DataLoadResult setupDictionnaryForDiff() {
 		this.dictionary.deleteAll();
 		this.domains.deleteAll();
+		this.projects.deleteAll();
 
-		FunctionalDomain dom1 = this.domains.save(domain("Source exemple"));
+		Project proj = this.projects.save(project("Default"));
+		setActiveProject(proj);
+		FunctionalDomain dom1 = this.domains.save(domain("Source exemple", proj));
 		DictionaryEntry cmat = this.dictionary
 				.save(entry("Sources de données", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY",
 						ColumnType.ATOMIC));
 
+		this.projects.flush();
 		this.domains.flush();
 		this.dictionary.flush();
-		return cmat;
+		return new DataLoadResult(cmat.getUuid(), proj.getUuid());
 	}
 
 	/**
@@ -206,33 +223,33 @@ public class TestDataLoader {
 	 * @param diffName
 	 * @return
 	 */
-	public DictionaryEntry setupIndexDatabaseForDiff(String diffName) {
+	public DataLoadResult setupIndexDatabaseForDiff(String diffName) {
 
 		// Reset database
 		this.index.deleteAll();
 		this.commits.deleteAll();
 
 		// Prepare data - core items
-		DictionaryEntry cmat = setupDictionnaryForDiff();
+		DataLoadResult res = setupDictionnaryForDiff();
 
 		User tester = this.users.getOne("testeur");
 		// Prepare existing commits
-		Commit com1 = this.commits.save(commit("Commit initial de création", tester, 15));
-		Commit com2 = this.commits.save(commit("Commit de mise à jour", tester, 7));
+		Commit com1 = this.commits.save(commit("Commit initial de création", tester, 15, new Project(res.getProjectUuid())));
+		Commit com2 = this.commits.save(commit("Commit de mise à jour", tester, 7,new Project(res.getProjectUuid())));
 
 		// Prepare index entries for batch init
 		List<IndexEntry> indexesCom1 = readDataset(diffName + "/knew-add.csv")
 				.entrySet().stream()
-				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.ADD, d.getValue(), cmat, com1))
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.ADD, d.getValue(), new DictionaryEntry(res.getDicUuid()), com1))
 				.collect(Collectors.toList());
 
 		List<IndexEntry> indexesCom2 = readDataset(diffName + "/knew-remove.csv")
 				.entrySet().stream()
-				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.REMOVE, d.getValue(), cmat, com2))
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.REMOVE, d.getValue(), new DictionaryEntry(res.getDicUuid()), com2))
 				.collect(Collectors.toList());
 		indexesCom2.addAll(readDataset(diffName + "/knew-update.csv")
 				.entrySet().stream()
-				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.UPDATE, d.getValue(), cmat, com2))
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.UPDATE, d.getValue(), new DictionaryEntry(res.getDicUuid()), com2))
 				.collect(Collectors.toList()));
 
 		// Batch init of data
@@ -250,7 +267,7 @@ public class TestDataLoader {
 		this.commits.flush();
 		this.index.flush();
 
-		return cmat;
+		return res;
 	}
 
 	/**
@@ -259,16 +276,16 @@ public class TestDataLoader {
 	 * @param diffName
 	 * @return
 	 */
-	public UUID setupDatabaseForDiff(String diffName) {
+	public DataLoadResult setupDatabaseForDiff(String diffName) {
 
 		LOGGER.debug("Start to restore database for diff test");
 
 		setupSourceDatabaseForDiff(diffName);
-		DictionaryEntry cmat = setupIndexDatabaseForDiff(diffName);
+		DataLoadResult res = setupIndexDatabaseForDiff(diffName);
 
 		LOGGER.debug("Database setup with dataset {} for a new diff test", diffName);
 
-		return cmat.getUuid();
+		return res;
 	}
 
 	public void flushSources() {
@@ -364,5 +381,11 @@ public class TestDataLoader {
 	@PostConstruct
 	public void addTestUser() {
 		this.userHolder.setWizzardUser(this.users.save(user("testeur")));
+	}
+	
+	public void setActiveProject(Project pro){
+		User user = this.userHolder.getCurrentUser();
+		user.setSelectedProject(pro);
+		this.users.save(user);
 	}
 }

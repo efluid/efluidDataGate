@@ -23,6 +23,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.LobProperty;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
@@ -81,6 +82,9 @@ public class PrepareIndexService {
 	@Autowired
 	private IndexRepository indexes;
 
+	@Autowired
+	private ProjectManagementService projectService;
+
 	private boolean useParallelDiff = false;
 
 	/**
@@ -88,6 +92,9 @@ public class PrepareIndexService {
 	 * @return
 	 */
 	public Collection<PreparedIndexEntry> currentContentDiff(DictionaryEntry entry, Map<String, byte[]> lobs) {
+
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
 
 		LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
 
@@ -98,7 +105,7 @@ public class PrepareIndexService {
 		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(entry);
 
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
-		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
+		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
 
 		// Completed diff
 		Collection<PreparedIndexEntry> index = generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
@@ -129,6 +136,9 @@ public class PrepareIndexService {
 			long timeStampForSearch,
 			List<PreparedMergeIndexEntry> mergeContent) {
 
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
 		LOGGER.debug("Regenerating values from combined local + specified index for managed table \"{}\", using"
 				+ " timestamp for local index search {}", entry.getTableName(), Long.valueOf(timeStampForSearch));
 
@@ -148,7 +158,7 @@ public class PrepareIndexService {
 		Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(toProcess);
 
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
-		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs);
+		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
 
 		Collection<PreparedMergeIndexEntry> diff = generateDiffIndexFromContent(PreparedMergeIndexEntry::new, knewContent, actualContent,
 				entry);
@@ -566,7 +576,8 @@ public class PrepareIndexService {
 		List<T> listToRender = new ArrayList<>();
 
 		// Combine by HR payload
-		Map<String, List<T>> combineds = readyToRender.stream().collect(Collectors.groupingBy(p -> p.getHrPayload() != null ? p.getHrPayload() : ""));
+		Map<String, List<T>> combineds = readyToRender.stream()
+				.collect(Collectors.groupingBy(p -> p.getHrPayload() != null ? p.getHrPayload() : ""));
 
 		// Rendering display is based on combined
 		combineds.values().stream().forEach(e -> {

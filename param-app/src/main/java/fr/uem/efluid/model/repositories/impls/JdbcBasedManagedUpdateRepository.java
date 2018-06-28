@@ -26,6 +26,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
@@ -85,12 +86,12 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 *      java.util.List)
 	 */
 	@Override
-	public String[] runAllChangesAndCommit(List<? extends DiffLine> lines, Map<String, byte[]> allLobs) {
+	public String[] runAllChangesAndCommit(List<? extends DiffLine> lines, Map<String, byte[]> allLobs, Project project) {
 
 		LOGGER.debug("Identified change to apply on managed DB. Will process {} diffLines", Integer.valueOf(lines.size()));
 
 		// Preload dictionary for direct access by uuid and tab name
-		Map<UUID, DictionaryEntry> dictEntries = this.dictionary.findAllMappedByUuid();
+		Map<UUID, DictionaryEntry> dictEntries = this.dictionary.findAllMappedByUuid(project);
 		Map<String, DictionaryEntry> dictByTab = dictEntries.values().stream()
 				.collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
 

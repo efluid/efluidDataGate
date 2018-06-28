@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.stubs.TestDataLoader;
 import fr.uem.efluid.stubs.TestUtils;
@@ -44,8 +45,8 @@ public class DictionaryExportImportServiceIntegrationTest {
 	private TestDataLoader loader;
 
 	public void setupDatabase() {
-		this.loader.setupDictionaryForUpdate();
-		this.loader.addDictionaryWithTrinome(D, T).getUuid();
+		Project pro = this.loader.setupDictionaryForUpdate();
+		this.loader.addDictionaryWithTrinome(D, T, pro).getUuid();
 	}
 
 	@Test
