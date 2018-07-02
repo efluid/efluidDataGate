@@ -104,7 +104,7 @@ public class WizzardController {
 		this.projectService.selectProject(uuid);
 
 		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
-		
+
 		return "wizzard/initial_dictionary";
 	}
 
@@ -129,7 +129,7 @@ public class WizzardController {
 	public String initialCommitPage(Model model) {
 
 		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
-		model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
+		model.addAttribute("dictionaryExists", Boolean.valueOf(this.dictionaryManagementService.isDictionnaryExists()));
 
 		return "wizzard/initial_commit";
 	}
@@ -167,7 +167,7 @@ public class WizzardController {
 	@RequestMapping(value = "/3/init", method = GET)
 	public String startInitialCommit(Model model) {
 
-		model.addAttribute("preparation", this.pilotableCommitService.startLocalCommitPreparation(true));
+		model.addAttribute("preResult", this.pilotableCommitService.startWizzardLocalCommitPreparation());
 
 		return initialCommitPage(model);
 	}
@@ -178,7 +178,7 @@ public class WizzardController {
 	@RequestMapping(path = { "/3/progress" }, method = GET)
 	@ResponseBody
 	public PilotedCommitStatus preparationGetStatus() {
-		return this.pilotableCommitService.getCurrentCommitPreparationStatus();
+		return this.pilotableCommitService.getAllCommitPreparationStatus();
 	}
 
 	/**
@@ -190,11 +190,10 @@ public class WizzardController {
 	public String completedInitialCommit(Model model, @RequestParam("commitName") String commitName) {
 
 		// Finalize dedicated for wizzard initial commit (auto select all)
-		this.pilotableCommitService.finalizeInitialCommitPreparation(commitName);
+		this.pilotableCommitService.finalizeWizzardCommitPreparation(commitName);
 
 		// And auto-select all content
-		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
-		this.pilotableCommitService.saveCommitPreparation();
+		model.addAttribute("preResult", this.pilotableCommitService.saveWizzardCommitPreparations());
 
 		return initialCommitPage(model);
 	}
@@ -206,7 +205,7 @@ public class WizzardController {
 	public String completedWizzard(Model model) {
 
 		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
-		
+
 		// Finalize temp wizzard data
 		this.security.completeWizzardUserMode();
 		this.detailsService.completeWizzard();

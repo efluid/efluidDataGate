@@ -5,15 +5,22 @@
 <body>	
 	<span layout:fragment="content">
 		<h5>Choix du projet actif</h5>
+		<div th:if="${project == null}" class="alert alert-danger" role="alert">
+			<strong>Vous n'avez actuellement pas encore sélectionné de projet actif</strong>. Les opérations sont réalisées par projet. 
+			Le choix d'un projet actif est obligatoire pour utiliser l'application. 
+			Vous pouvez modifier ce choix à tout moment en cliquant sur le nom du projet en haut à droit de la page. Vous pouvez alors
+			choisir le projet actif depuis la liste de vos projets préférés.
+		</div>
 		<table class="table table-sm">
 			<thead>
 				<tr>
-					<th scope="col" colspan="100%">Projets</th>
+					<th scope="col" colspan="100%">Projets préférés</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr th:each="prefered, stat : ${prefereds}" th:id="${prefered.uuid}" th:class="|project-theme-bg-${prefered.color}|">
-					<td th:style="${prefered.uuid.equals(project.uuid)}?'font-weight:bold'" th:text="${prefered.name}">Autre</td>
+					<td th:if="${project != null}" th:style="${prefered.uuid.equals(project.uuid)}?'font-weight:bold'" th:text="${prefered.name}">Autre</td>
+					<td th:if="${project == null}" th:text="${prefered.name}">Autre</td>
 	                <td><a href="projects_select.html" th:href="@{|/ui/projects/select/${prefered.uuid}|}" class="float-right btn btn-secondary btn-sm">Choisir</a></td>
 				</tr>
 			</tbody>

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.Project;
@@ -169,6 +171,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		Collections.sort(selectables);
 
 		return selectables;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isDictionnaryExists() {
+		return this.dictionary.count() > 0;
 	}
 
 	/**
@@ -500,26 +509,37 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		AtomicInteger newDictCount = new AtomicInteger(0);
 		AtomicInteger newLinksCount = new AtomicInteger(0);
 
+		// Can substitute project by name : need refer update
+		Map<UUID, Project> substituteProjects = new HashMap<>();
+
 		// Process on each, with right order :
 
 		// #1st The projects (used by other)
-		List<Project> importedProjects = packages.stream().filter(p -> p.getClass() == ProjectPackage.class)
-				.flatMap(p -> ((ProjectPackage) p).streamContent()).map(d -> this.projectService.importProject(d, newProjsCount))
+		List<Project> importedProjects = packages.stream()
+				.filter(p -> p.getClass() == ProjectPackage.class)
+				.flatMap(p -> ((ProjectPackage) p).streamContent())
+				.map(d -> this.projectService.importProject(d, newProjsCount, substituteProjects))
 				.collect(Collectors.toList());
 
 		// #2nd The functional domains (used by other)
-		List<FunctionalDomain> importedDomains = packages.stream().filter(p -> p.getClass() == FunctionalDomainPackage.class)
-				.flatMap(p -> ((FunctionalDomainPackage) p).streamContent()).map(d -> importDomain(d, newDomainsCount))
+		List<FunctionalDomain> importedDomains = packages.stream()
+				.filter(p -> p.getClass() == FunctionalDomainPackage.class)
+				.flatMap(p -> ((FunctionalDomainPackage) p).streamContent())
+				.map(d -> importDomain(d, newDomainsCount, substituteProjects))
 				.collect(Collectors.toList());
 
 		// #3rd The dictionary (referencing domains)
-		List<DictionaryEntry> importedDicts = packages.stream().filter(p -> p.getClass() == DictionaryPackage.class)
-				.flatMap(p -> ((DictionaryPackage) p).streamContent()).map(d -> importDictionaryEntry(d, newDictCount))
+		List<DictionaryEntry> importedDicts = packages.stream()
+				.filter(p -> p.getClass() == DictionaryPackage.class)
+				.flatMap(p -> ((DictionaryPackage) p).streamContent())
+				.map(d -> importDictionaryEntry(d, newDictCount))
 				.collect(Collectors.toList());
 
 		// #4th The links (referencing dictionary entries)
-		List<TableLink> importedLinks = packages.stream().filter(p -> p.getClass() == TableLinkPackage.class)
-				.flatMap(p -> ((TableLinkPackage) p).streamContent()).map(d -> importTableLink(d, newLinksCount))
+		List<TableLink> importedLinks = packages.stream()
+				.filter(p -> p.getClass() == TableLinkPackage.class)
+				.flatMap(p -> ((TableLinkPackage) p).streamContent())
+				.map(d -> importTableLink(d, newLinksCount))
 				.collect(Collectors.toList());
 
 		// Batched save on all imported
@@ -527,6 +547,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		this.domains.saveAll(importedDomains);
 		this.dictionary.saveAll(importedDicts);
 		this.links.saveAll(importedLinks);
+
+		// Add also all imported projects to current User prefered list
+		this.projectService.setPreferedProjectsForCurrentUser(importedProjects.stream()
+				.map(Shared::getUuid)
+				.collect(Collectors.toList()));
 
 		LOGGER.info("Import completed of {} projects, {} domains, {} dictionary entry and {} table links",
 				Integer.valueOf(importedProjects.size()), Integer.valueOf(importedDomains.size()), Integer.valueOf(importedDicts.size()),
@@ -556,12 +581,17 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	}
 
 	/**
-	 * Process one FunctionalDomain
+	 * <p>
+	 * Process one FunctionalDomain. If the associated project was substituted by another
+	 * by name, the substitute will be gathered from given map and applied to domain
+	 * </p>
 	 * 
 	 * @param imported
+	 * @param newCounts
+	 * @param substituteProjects
 	 * @return
 	 */
-	private FunctionalDomain importDomain(FunctionalDomain imported, AtomicInteger newCounts) {
+	private FunctionalDomain importDomain(FunctionalDomain imported, AtomicInteger newCounts, Map<UUID, Project> substituteProjects) {
 
 		Optional<FunctionalDomain> localOpt = this.domains.findById(imported.getUuid());
 
@@ -579,7 +609,19 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
 		local.setName(imported.getName());
-		local.setProject(imported.getProject());
+
+		// Use substitute
+		if (substituteProjects.containsKey(imported.getProject().getUuid())) {
+			Project substitute = substituteProjects.get(imported.getProject().getUuid());
+			LOGGER.info("Imported project {} is used as substitute for domain {} instead of initial project {}", substitute.getUuid(),
+					imported.getUuid(), imported.getProject().getUuid());
+			local.setProject(substitute);
+		}
+
+		// Keep referenced
+		else {
+			local.setProject(imported.getProject());
+		}
 
 		local.setImportedTime(LocalDateTime.now());
 

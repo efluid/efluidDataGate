@@ -6,6 +6,7 @@ import static fr.uem.efluid.utils.ErrorType.PROJECT_NAME_EXIST;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -177,9 +178,11 @@ public class ProjectManagementService extends AbstractApplicationService {
 	 * <p>
 	 * 
 	 * @param imported
+	 * @param newCounts
+	 * @param substituteProjects
 	 * @return
 	 */
-	Project importProject(Project imported, AtomicInteger newCounts) {
+	Project importProject(Project imported, AtomicInteger newCounts, Map<UUID, Project> substituteProjects) {
 
 		Optional<Project> localOpt = this.projects.findById(imported.getUuid());
 
@@ -197,9 +200,12 @@ public class ProjectManagementService extends AbstractApplicationService {
 				loc = new Project(imported.getUuid());
 				newCounts.incrementAndGet();
 			} else {
-				LOGGER.debug("Import exsting project by name \"{}\" : will reuse existing project with uuid {}", imported.getName(),
-						imported.getUuid());
+				LOGGER.debug("Import exsting project by name \"{}\" : will reuse existing project with uuid {} and substitute "
+						+ "for other data associated to project uuid {}", imported.getName(), byName.getUuid(), imported.getUuid());
 				loc = byName;
+
+				// Keep substitute for domain import
+				substituteProjects.put(imported.getUuid(), byName);
 			}
 			return loc;
 		});

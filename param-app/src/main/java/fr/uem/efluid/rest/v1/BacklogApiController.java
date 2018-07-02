@@ -106,7 +106,7 @@ public class BacklogApiController implements BacklogApi {
 		}
 
 		// Finalize preparation
-		this.pilotableCommitService.finalizeInitialCommitPreparation(commitComment);
+		this.pilotableCommitService.finalizeWizzardCommitPreparation(commitComment);
 
 		// Complete and gather result data
 		CommitCreatedResultView result = new CommitCreatedResultView();

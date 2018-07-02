@@ -12,6 +12,9 @@
 			Vous pourrez modifier la liste des projets, ou choisir des projets préférés plus tard.<br/><br/>
 			Un projet est identifié par un nom unique et par une couleur. La couleur est reprise dans les menus de l'application
 			et permet d'identifier plus simplement quel est le projet actif.
+			<br/><br/>Vous pouvez également depuis cet écran spécifier un fichier d'import de projets / dictionnaires. Tous les projets 
+			et leurs données seront alors importées et utilisées dans l'application. Vous pourrez ensuite choisir le projet actif lors de votre première connexion.<br/>
+        	Si vous compter recevoir des packages de paramètrages, <b>il est recommandé de créer les projets et dictionnaires en important un modèle de référence</b>.
         </div>
         
         <form class="form-inline">
@@ -58,6 +61,16 @@
 				</div>
 			</form>
 		</div>
+		<br/>
+		<br/>
+		<form action="#" th:action="@{/wizzard/3/upload}" method="post" enctype="multipart/form-data">
+			<label for="import">Ou importer un package de projets et de dictionnaires existants</label><br/>
+			<label class="btn btn-sm btn-primary">
+				Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
+			</label>
+			<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
+			<input type="submit" class="btn btn-success-outline btn-sm float-right" id="importSubmit" disabled="disabled" value="Importer les données dans le dictionnaire"/>
+		</form>
     </span>
     <script layout:fragment="script">
 
@@ -97,9 +110,26 @@
 				count++;
 		    });
 		};
-    
+		
+		// Display of file 
+		const displayFile = () => {
+			hideDisplays();
+			var file = $("#importInput").val();
+			console.log(file);
+			if(file.endsWith(".zip") || file.endsWith(".par")){
+				$("#displayFile").text(file);
+				$("#importSubmit").prop('disabled', false);
+				$("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
+			} else {
+				showError("Le fichier fourni n'est pas dans un format valide. Seules les archives PAR sont supportées."); 
+				$("#importSubmit").prop('disabled', true);
+				$("#importSubmit").removeClass("btn-success").addClass("btn-outline-success");
+			}
+		};
+        
     	// Init actions
     	$(document).ready(() => {
+			$("#importInput").change(displayFile);
     		$("#projectList").hide();
 			$("#addButton").click(addButtonAction);
 			$("#projectName").on('input',checkProjectAdd);

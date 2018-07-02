@@ -315,20 +315,15 @@ public class CommitService extends AbstractApplicationService {
 	UUID saveAndApplyPreparedCommit(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends List<? extends PreparedIndexEntry>>> prepared) {
 
-		// Requires project
-		this.projectService.assertCurrentUserHasSelectedProject();
-
-		Project project = this.projectService.getCurrentSelectedProjectEntity();
-
 		LOGGER.debug("Process apply and saving of a new commit with state {} into project {}", prepared.getPreparingState(),
-				project.getName());
+				prepared.getProjectUuid());
 
 		Commit newCommit = CommitEditData.toEntity(prepared.getCommitData());
 		newCommit.setCreatedTime(LocalDateTime.now());
 		newCommit.setUser(new User(getCurrentUser().getLogin()));
 		newCommit.setOriginalUserEmail(getCurrentUser().getEmail());
 		newCommit.setState(prepared.getPreparingState());
-		newCommit.setProject(project);
+		newCommit.setProject(new Project(prepared.getProjectUuid()));
 
 		// Prepared commit uuid
 		UUID commitUUID = UUID.randomUUID();

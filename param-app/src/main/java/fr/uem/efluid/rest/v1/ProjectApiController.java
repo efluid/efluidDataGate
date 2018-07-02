@@ -47,8 +47,8 @@ public class ProjectApiController implements ProjectApi {
 	 * @see fr.uem.efluid.rest.v1.ProjectApi#setCurrentActiveProject(java.util.UUID)
 	 */
 	@Override
-	public void setCurrentActiveProject(UUID projectUuid) {
-		this.projectService.selectProject(projectUuid);
+	public void setCurrentActiveProject(String projectUuid) {
+		this.projectService.selectProject(UUID.fromString(projectUuid));
 	}
 
 }

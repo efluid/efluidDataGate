@@ -2,11 +2,13 @@ package fr.uem.efluid.services.types;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.utils.ApplicationException;
@@ -235,10 +237,10 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	 * @return
 	 */
 	public Collection<String> getSelectedFunctionalDomainNames() {
-		return this.preparedContent.stream()
+		return this.preparedContent != null ? this.preparedContent.stream()
 				.filter(d -> d.getDiff().stream().anyMatch(PreparedIndexEntry::isSelected))
 				.map(DiffDisplay::getDomainName)
-				.collect(Collectors.toSet());
+				.collect(Collectors.toSet()) : Collections.emptyList();
 	}
 
 	/**
@@ -252,7 +254,8 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	 * @return
 	 */
 	public long getTotalCount() {
-		return this.preparedContent.stream().flatMap(d -> d.getDiff().stream()).count();
+		return this.preparedContent != null
+				? this.preparedContent.stream().flatMap(d -> d.getDiff() != null ? d.getDiff().stream() : Stream.of()).count() : 0;
 	}
 
 	/**

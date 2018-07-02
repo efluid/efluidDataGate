@@ -12,18 +12,17 @@
 			Cette opération n'est possible que si un dictionnaire a été configuré. Sinon vous pourrez réaliser cette opération plus tard.
         </div>
         <br/>
-        <div th:if="${!dictionary.isEmpty()}">
-        	<div th:if="${preparation == null}">
+        <div th:if="${dictionaryExists}">
+        	<div th:if="${preResult == null}">
 				<div class="alert alert-secondary" role="alert">
-					Le dictionnaire est configuré avec <span th:text="${dictionary.size()}">2</span> tables de paramétrages connues. Il est possible 
-					de lancer l'analyse sur ces tables.
+					Le dictionnaire est configuré suite à l'import. Il est possible	de lancer l'analyse sur les tables paramétrés, pour tous les projets.
 				</div>
 				<div class="float-right">
-	        		<a href="#" th:href="@{/wizzard/3/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale</a>&nbsp;
+	        		<a href="#" th:href="@{/wizzard/3/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale pour tous les projets</a>&nbsp;
 	        		<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration</a>
 				</div>
         	</div>
-	        <div th:if="${preparation != null and preparation.status.name()=='DIFF_RUNNING'}" class="alert alert-secondary" role="alert">
+	        <div th:if="${preResult != null and preResult.status.name()=='DIFF_RUNNING'}" class="alert alert-secondary" role="alert">
 				<strong>Analyse en cours</strong>. Suivant la volumétrie du paramètrage, l'identification du lot initial peut prendre 
 				un certain temps. Il n'est pas possible d'arrêter un traitement en cours.
 				<div id="floatingCirclesG">
@@ -37,17 +36,18 @@
 					<div class="f_circleG" id="frotateG_08"></div>
 				</div>
 			</div>
-			<div th:if="${preparation != null and preparation.status.name() != 'DIFF_RUNNING'}">
+			<div th:if="${preResult != null and preResult.status.name() != 'DIFF_RUNNING'}">
 				<div class="alert alert-secondary" role="alert">
-					<strong>L'analyse est terminée.</strong> <span th:text="${preparation.totalCount}">134</span> entrées d'index ont été identifiées, 
-					pour <span th:text="${preparation.preparedContent.size()}">12</span> tables de paramètrages et 
-					<span th:text="${preparation.selectedFunctionalDomainNames.size()}">4</span> domaines
-					fonctionnels concernés. Le lot initial a été créé sous le nom "Lot initial".
+					<strong>L'analyse est terminée pour tous les projets.</strong> <span th:text="${preResult.totalDiffSize}">134</span> entrées d'index ont été identifiées en tout, 
+					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramètrages et 
+					<span th:text="${preResult.totalDomainsCount}">4</span> domaines
+					fonctionnels concernés (attention, certaines peuvent être reprises sur plusieurs projet).
+					Le lot initial a été créé sous le nom "Lot initial" sous chacun des <span th:text="${preResult.totalProjectCount}">4</span> projets.
 				</div>
 				<a href="/wizzard_user.html" th:href="@{/wizzard/4}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
 			</div>
 		</div>
-		<div th:if="${dictionary.isEmpty()}" class="alert alert-secondary" role="alert">
+		<div th:if="${!dictionaryExists}" class="alert alert-secondary" role="alert">
 			<strong>Aucun dictionnaire trouvé, le lot initial devra être mis en place ultérieurement</strong>
 			<a href="/wizzard_user.html" th:href="@{/wizzard/4}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
 		</div>
@@ -59,7 +59,7 @@
 		const checkProgress = () => {
 			console.info("start a new check");
 			$.get("/wizzard/3/progress", (data, status) => {
-				console.info("Check with data" + data);
+				console.info("Check with data " + data);
 				if(data === 'DIFF_RUNNING' || data === 'NOT_LAUNCHED'){
 					// Add new timeout 
 					setTimeout(checkProgress, 1000);
@@ -72,7 +72,7 @@
 		
     	// Start loading
     	$(document).ready(() => {
-			var fromType = /*[[${preparation != null and preparation.status.name()=='DIFF_RUNNING'}?'diff_check':'']]*/ 'diff_check';
+			var fromType = /*[[${preResult != null and preResult.status.name()=='DIFF_RUNNING'}?'diff_check':'']]*/ 'diff_check';
 			if(fromType === 'diff_check'){
 				checkProgress();
 			}

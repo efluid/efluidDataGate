@@ -4,6 +4,7 @@ import static fr.uem.efluid.utils.ErrorType.*;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,7 @@ import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
+import fr.uem.efluid.services.types.WizzardCommitPreparationResult;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.FormatUtils;
 
@@ -84,6 +86,41 @@ public class PilotableCommitPreparationService {
 
 	// One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
 	private Map<UUID, PilotedCommitPreparation<?>> currents = new HashMap<>();
+
+	/**
+	 * <p>
+	 * For wizzard, we start a global commit preparation for ALL projects
+	 * </p>
+	 * 
+	 * @return
+	 */
+	public WizzardCommitPreparationResult startWizzardLocalCommitPreparation() {
+
+		LOGGER.info("Request for wizzard commit preparation on all projects");
+
+		// Drop all (shouldn't have active preparation)
+		this.currents.clear();
+
+		// Prepare on all projects in same time
+		return WizzardCommitPreparationResult.fromPreparations(this.projectService.getAllProjects().stream()
+				.filter(p -> {
+					// Process only projects with dictionary
+					Collection<DictionaryEntry> dicEntries = this.dictionary.findByDomainProject(new Project(p.getUuid()));
+					return dicEntries != null && dicEntries.size() > 0;
+				})
+				.map(p -> {
+					// Start preparation for project
+					PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
+					preparation.setProjectUuid(p.getUuid());
+					this.currents.put(p.getUuid(), preparation);
+					CompletableFuture.runAsync(() -> processAllDiff(preparation));
+
+					LOGGER.info("Request for a new commit preparation in wizzard context - starting preparation"
+							+ " {} for project \"{}\"", preparation.getIdentifier(), p.getName());
+
+					return preparation;
+				}).collect(Collectors.toList()));
+	}
 
 	/**
 	 * Start async diff analysis before commit
@@ -135,7 +172,7 @@ public class PilotableCommitPreparationService {
 
 		CompletableFuture.runAsync(() -> processAllDiff(preparation));
 
-		return getCurrentCommitPreparation();
+		return preparation;
 	}
 
 	/**
@@ -221,6 +258,25 @@ public class PilotableCommitPreparationService {
 
 		PilotedCommitPreparation<?> preparation = getCurrentCommitPreparation();
 		return preparation != null ? preparation.getStatus() : PilotedCommitStatus.NOT_LAUNCHED;
+	}
+
+	/**
+	 * <p>
+	 * Merged status for all the commit preparation
+	 * </p>
+	 * 
+	 * @return
+	 */
+	public PilotedCommitStatus getAllCommitPreparationStatus() {
+
+		// None => Not launched
+		if (this.currents.size() == 0) {
+			return PilotedCommitStatus.NOT_LAUNCHED;
+		}
+
+		// Completion needs all completed
+		return this.currents.values().stream().allMatch(p -> p.getStatus() == PilotedCommitStatus.COMMIT_CAN_PREPARE)
+				? PilotedCommitStatus.COMMIT_CAN_PREPARE : PilotedCommitStatus.DIFF_RUNNING;
 	}
 
 	/**
@@ -350,13 +406,67 @@ public class PilotableCommitPreparationService {
 	 * 
 	 * @param comment
 	 */
-	public void finalizeInitialCommitPreparation(String comment) {
+	public void finalizeWizzardCommitPreparation(String comment) {
 
-		// Copy comment
-		setCommitPreparationCommitDataComment(comment);
+		// Shared process on all preparations
+		this.currents.values().stream().forEach(current -> {
 
-		// Mark all items as selecteds
-		getCurrentCommitPreparation().getPreparedContent().stream().flatMap(d -> d.getDiff().stream()).forEach(i -> i.setSelected(true));
+			// If not done yet, init for comment apply
+			if (current.getCommitData() == null) {
+				current.setCommitData(new CommitEditData());
+			}
+
+			// Other editable is the commit comment
+			current.getCommitData().setComment(comment);
+
+			// Mark all items as selecteds
+			current.getPreparedContent().stream().flatMap(d -> d.getDiff().stream()).forEach(i -> i.setSelected(true));
+		});
+	}
+
+	/**
+	 * <p>
+	 * Generic saving process. Declined with fixed type for clean frontend form push
+	 * </p>
+	 * <p>
+	 * Works on current preparation, completed with input "selected / rollbacked items"
+	 * and commit edit data.
+	 * </p>
+	 * 
+	 * @return the created commit UUID
+	 */
+	public WizzardCommitPreparationResult saveWizzardCommitPreparations() {
+
+		WizzardCommitPreparationResult result = WizzardCommitPreparationResult.fromPreparations(this.currents.values().stream()
+				.map(current -> {
+
+					LOGGER.info("Starting saving for preparation in wizzard {}", current.getIdentifier());
+
+					// Check mandatory comment (checked front side also)
+					if (current.getCommitData().getComment() == null) {
+						throw new ApplicationException(COMMIT_MISS_COMMENT,
+								"Commit preparation cannot be saved without a fixed comment");
+					}
+
+					// Save update
+					UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current);
+
+					// Reset cached diff values, if any, for further uses
+					this.diffService.resetDiffCaches();
+
+					// For any ref holder : mark completed
+					current.setStatus(PilotedCommitStatus.COMPLETED);
+
+					LOGGER.info("Saving completed for commit preparation. New commit is {}", commitUUID);
+
+					return current;
+				})
+				.collect(Collectors.toList()));
+
+		// Drop preparations
+		this.currents.clear();
+
+		return result;
 	}
 
 	/**
