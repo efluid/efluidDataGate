@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.IndexAction;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.stubs.DataLoadResult;
@@ -45,18 +46,22 @@ public class PrepareDiffServiceIntegrationTest {
 	private DictionaryRepository dictionary;
 
 	private UUID dictionaryEntryUuid;
+	private UUID projectUuid;
 
 	public void setupDatabase(String diff) {
 		DataLoadResult res = this.loader.setupDatabaseForDiff(diff);
 		this.dictionaryEntryUuid = res.getDicUuid();
+		this.projectUuid = res.getProjectUuid();
 	}
 
 	@Test
 	public void testProcessDiffNoIndex() {
 
 		setupDatabase("diff7");
-		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(this.dictionary.getOne(this.dictionaryEntryUuid),
-				new HashMap<>());
+		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(
+				this.dictionary.getOne(this.dictionaryEntryUuid),
+				new HashMap<>(),
+				new Project(this.projectUuid));
 		Assert.assertEquals(0, index.size());
 	}
 
@@ -64,8 +69,10 @@ public class PrepareDiffServiceIntegrationTest {
 	public void testProcessDiffLargeIndex() {
 
 		setupDatabase("diff8");
-		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(this.dictionary.getOne(this.dictionaryEntryUuid),
-				new HashMap<>());
+		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(
+				this.dictionary.getOne(this.dictionaryEntryUuid),
+				new HashMap<>(),
+				new Project(this.projectUuid));
 		Assert.assertEquals(80 + 100 + 85, index.size());
 		List<PreparedIndexEntry> adds = index.stream()
 				.filter(i -> i.getAction() == IndexAction.ADD)

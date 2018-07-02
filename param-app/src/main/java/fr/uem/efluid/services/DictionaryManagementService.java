@@ -189,7 +189,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// For link building, need other dicts
 		Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName(project);
 
-		return this.dictionary.findAll().stream()
+		return this.dictionary.findByDomainProject(project).stream()
 				.map(e -> DictionaryEntrySummary.fromEntity(e,
 						this.queryGenerator.producesSelectParameterQuery(e, this.links.findByDictionaryEntry(e), allDicts)))
 				.peek(d -> d.setCanDelete(!usedIds.contains(d.getUuid())))
@@ -579,6 +579,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
 		local.setName(imported.getName());
+		local.setProject(imported.getProject());
 
 		local.setImportedTime(LocalDateTime.now());
 

@@ -42,7 +42,7 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 			+ "inner join dictionary t on t.domain_uuid = d.uuid "
 			+ "inner join indexes i on i.dictionary_entry_uuid = t.uuid "
 			+ "inner join commits c on c.uuid = i.commit_uuid "
-			+ "where d.project_uuid = :projectUuid"
+			+ "where d.project_uuid = :projectUuid "
 			+ "group by d.name, c.uuid",
 			nativeQuery = true)
 	List<Object[]> _internal_findAllNamesUsedByCommits(UUID projectUuid);

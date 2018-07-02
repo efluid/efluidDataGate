@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.services.types.CommitEditData;
@@ -441,15 +442,15 @@ public class PilotableCommitPreparationService {
 	 */
 	private void processAllDiff(PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
-		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
-
-		LOGGER.info("Begin diff process on commit preparation {}", current.getIdentifier());
+		LOGGER.info("Begin diff process on commit preparation {}", preparation.getIdentifier());
 
 		try {
 			long startTimeout = System.currentTimeMillis();
 
 			// Process details
-			List<Callable<LocalPreparedDiff>> callables = this.dictionary.findAll().stream().map(this::callDiff)
+			List<Callable<LocalPreparedDiff>> callables = this.dictionary.findByDomainProject(new Project(preparation.getProjectUuid()))
+					.stream()
+					.map(d -> callDiff(d, preparation))
 					.collect(Collectors.toList());
 			preparation.setProcessStarted(callables.size());
 			preparation.setProcessRemaining(new AtomicInteger(callables.size()));
@@ -461,7 +462,7 @@ public class PilotableCommitPreparationService {
 
 			List<LocalPreparedDiff> fullDiff = this.executor
 					.invokeAll(callables).stream()
-					.map(this::gatherResult)
+					.map(c -> gatherResult(c, preparation))
 					.sorted()
 					.collect(Collectors.toList());
 
@@ -473,7 +474,7 @@ public class PilotableCommitPreparationService {
 			preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
 			LOGGER.info("Diff process completed on commit preparation {}. Found {} index entries. Total process duration was {} ms",
-					current.getIdentifier(),
+					preparation.getIdentifier(),
 					Integer.valueOf(fullDiff.size()),
 					Long.valueOf(System.currentTimeMillis() - startTimeout));
 
@@ -482,7 +483,7 @@ public class PilotableCommitPreparationService {
 			throw a;
 		} catch (Throwable e) {
 			LOGGER.error("Error will processing diff", e);
-			current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
+			preparation.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
 	}
 
@@ -498,23 +499,20 @@ public class PilotableCommitPreparationService {
 	 */
 	private void processAllMergeDiff(PilotedCommitPreparation<MergePreparedDiff> preparation) {
 
-		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
-
-		LOGGER.info("Begin diff process on merge-commit preparation {}", current.getIdentifier());
+		LOGGER.info("Begin diff process on merge-commit preparation {}", preparation.getIdentifier());
 
 		try {
 			long startTimeout = System.currentTimeMillis();
 
 			if (preparation.getPreparedContent() != null && preparation.getPreparedContent().size() > 0) {
 
-				Map<UUID, DictionaryEntry> dictByUuid = this.dictionary
-						.findAllMappedByUuid(this.projectService.getCurrentSelectedProjectEntity());
+				Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid(new Project(preparation.getProjectUuid()));
 
 				long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
 
 				// Process details
 				List<Callable<MergePreparedDiff>> callables = preparation.getPreparedContent().stream()
-						.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p))
+						.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p, preparation))
 						.collect(Collectors.toList());
 				preparation.setProcessStarted(callables.size());
 				preparation.setProcessRemaining(new AtomicInteger(callables.size()));
@@ -524,7 +522,7 @@ public class PilotableCommitPreparationService {
 				List<MergePreparedDiff> fullDiff = this.executor
 						.invokeAll(callables)
 						.stream()
-						.map(this::gatherResult)
+						.map(c -> gatherResult(c, preparation))
 						.sorted()
 						.collect(Collectors.toList());
 
@@ -537,7 +535,7 @@ public class PilotableCommitPreparationService {
 
 				LOGGER.info(
 						"Diff process completed on merge commit preparation {}. Found {} index entries. Total process duration was {} ms",
-						current.getIdentifier(),
+						preparation.getIdentifier(),
 						Integer.valueOf(fullDiff.size()),
 						Long.valueOf(System.currentTimeMillis() - startTimeout));
 			} else {
@@ -551,33 +549,7 @@ public class PilotableCommitPreparationService {
 			throw a;
 		} catch (Throwable e) {
 			LOGGER.error("Error will processing diff", e);
-			current.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
-		}
-	}
-
-	/**
-	 * <p>
-	 * Join future execution and gather exception if any
-	 * </p>
-	 * 
-	 * @param future
-	 * @return
-	 */
-	private <T> T gatherResult(Future<T> future) {
-
-		try {
-			return future.get();
-		}
-
-		catch (InterruptedException | ExecutionException e) {
-			LOGGER.error("Error will processing diff", e);
-			PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
-
-			// If already identified, keep going on 1st identified error
-			if (current.getErrorDuringPreparation() != null) {
-				throw current.getErrorDuringPreparation();
-			}
-			return current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
+			preparation.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
 	}
 
@@ -589,13 +561,11 @@ public class PilotableCommitPreparationService {
 	 * @param dict
 	 * @return
 	 */
-	private Callable<LocalPreparedDiff> callDiff(DictionaryEntry dict) {
-
-		final PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+	private Callable<LocalPreparedDiff> callDiff(DictionaryEntry dict, final PilotedCommitPreparation<?> current) {
 
 		return () -> {
 			// Controle if table not yet specified
-			assertDictionaryEntryIsRealTable(dict);
+			assertDictionaryEntryIsRealTable(dict, current);
 
 			// Init table diff
 			LocalPreparedDiff tableDiff = LocalPreparedDiff.initFromDictionaryEntry(dict);
@@ -604,8 +574,12 @@ public class PilotableCommitPreparationService {
 			tableDiff.completeFromEntity(dict);
 
 			// Search diff content
-			tableDiff.setDiff(this.diffService.currentContentDiff(dict, current.getDiffLobs()).stream()
-					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+			tableDiff.setDiff(
+					this.diffService.currentContentDiff(
+							dict,
+							current.getDiffLobs(),
+							new Project(current.getProjectUuid())).stream()
+							.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
 			int rem = current.getProcessRemaining().decrementAndGet();
 			LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", Integer.valueOf(rem),
@@ -626,23 +600,27 @@ public class PilotableCommitPreparationService {
 	 * @param correspondingDiff
 	 * @return
 	 */
-	private Callable<MergePreparedDiff> callMergeDiff(
+	private final Callable<MergePreparedDiff> callMergeDiff(
 			DictionaryEntry dict,
 			long lastLocalCommitTimestamp,
-			MergePreparedDiff correspondingDiff) {
-
-		final PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+			MergePreparedDiff correspondingDiff,
+			final PilotedCommitPreparation<?> current) {
 
 		return () -> {
 			// Controle if table not yet specified
-			assertDictionaryEntryIsRealTable(dict);
+			assertDictionaryEntryIsRealTable(dict, current);
 
 			// Complete dictionary entry
 			correspondingDiff.completeFromEntity(dict);
 
 			// Then run one merge action for dictionaryEntry
 			correspondingDiff.setDiff(this.diffService
-					.mergeIndexDiff(dict, current.getDiffLobs(), lastLocalCommitTimestamp, correspondingDiff.getDiff()).stream()
+					.mergeIndexDiff(
+							dict,
+							current.getDiffLobs(),
+							lastLocalCommitTimestamp, correspondingDiff.getDiff(),
+							new Project(current.getProjectUuid()))
+					.stream()
 					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 
 			int rem = current.getProcessRemaining().decrementAndGet();
@@ -657,9 +635,7 @@ public class PilotableCommitPreparationService {
 	/**
 	 * @param entry
 	 */
-	private void assertDictionaryEntryIsRealTable(DictionaryEntry entry) {
-
-		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+	private void assertDictionaryEntryIsRealTable(DictionaryEntry entry, final PilotedCommitPreparation<?> current) {
 
 		if (entry == null) {
 			current.fail(new ApplicationException(TABLE_WRONG_REF, "Specified table entry is missing in managed DB"));
@@ -668,6 +644,31 @@ public class PilotableCommitPreparationService {
 		else if (!this.managedDesc.isTableExists(entry.getTableName())) {
 			current.fail(new ApplicationException(TABLE_NAME_INVALID, "For dict entry " + entry.getUuid() + " the table name \""
 					+ entry.getTableName() + "\" is not a valid one in managed DB", entry.getTableName()));
+		}
+	}
+
+	/**
+	 * <p>
+	 * Join future execution and gather exception if any
+	 * </p>
+	 * 
+	 * @param future
+	 * @return
+	 */
+	private static <T> T gatherResult(Future<T> future, final PilotedCommitPreparation<?> current) {
+
+		try {
+			return future.get();
+		}
+
+		catch (InterruptedException | ExecutionException e) {
+			LOGGER.error("Error will processing diff", e);
+
+			// If already identified, keep going on 1st identified error
+			if (current.getErrorDuringPreparation() != null) {
+				throw current.getErrorDuringPreparation();
+			}
+			return current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
 		}
 	}
 }

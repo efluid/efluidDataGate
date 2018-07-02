@@ -149,8 +149,8 @@ public class ProjectData {
 		}
 
 		ProjectDetailView view = new ProjectDetailView();
-		view.setName(view.getName());
-		view.setUuid(view.getUuid());
+		view.setName(data.getName());
+		view.setUuid(data.getUuid());
 		view.setColor(ProjectColor.values()[data.getColor()].name());
 
 		return view;

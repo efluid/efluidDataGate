@@ -169,7 +169,12 @@ public class ProjectManagementService extends AbstractApplicationService {
 	}
 
 	/**
+	 * <p>
 	 * Process one Project
+	 * </p>
+	 * <p>
+	 * Project can be identified by uuid or by name during import
+	 * <p>
 	 * 
 	 * @param imported
 	 * @return
@@ -179,19 +184,30 @@ public class ProjectManagementService extends AbstractApplicationService {
 		Optional<Project> localOpt = this.projects.findById(imported.getUuid());
 
 		// Exists already
-		localOpt.ifPresent(d -> LOGGER.debug("Import existing project {} : will update currently owned", imported.getUuid()));
+		localOpt.ifPresent(d -> LOGGER.debug("Import existing project by uuid {} : will update currently owned", imported.getUuid()));
 
-		// Or is a new one
+		// Will try also by name
+		Project byName = this.projects.findByName(imported.getName());
+
+		// Search on existing Or is a new one
 		Project local = localOpt.orElseGet(() -> {
-			LOGGER.debug("Import new project {} : will create currently owned", imported.getUuid());
-			Project loc = new Project(imported.getUuid());
-			newCounts.incrementAndGet();
+			Project loc;
+			if (byName == null) {
+				LOGGER.debug("Import new project {} : will create currently owned", imported.getUuid());
+				loc = new Project(imported.getUuid());
+				newCounts.incrementAndGet();
+			} else {
+				LOGGER.debug("Import exsting project by name \"{}\" : will reuse existing project with uuid {}", imported.getName(),
+						imported.getUuid());
+				loc = byName;
+			}
 			return loc;
 		});
 
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
 		local.setName(imported.getName());
+		local.setColor(imported.getColor());
 
 		local.setImportedTime(LocalDateTime.now());
 

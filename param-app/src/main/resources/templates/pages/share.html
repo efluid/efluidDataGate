@@ -4,12 +4,10 @@
 </head>
 <body>
     <span layout:fragment="content">
-		<h5>Export depuis le dictionnaire</h5>
+		<h5>Export complet pour tous les projets<a href="#" th:href="@{/ui/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines pour tous les projets</a></h5>
+		<br/><br/>
+		<h5>Export pour le projet <b><span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></b> par domaines fonctionnels</h5>
 		<p>
-			<h6>Export complet pour tous les projets <a href="#" th:href="@{/ui/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines pour tous les projets</a></h6>
-		</p>
-		<p>
-			<h6>Export pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h6>
 			<table class="table table-sm">
 			    <thead>
 			        <tr>
@@ -26,6 +24,7 @@
 			        </tr>
 			    </tbody>
 			</table>
+			<br/>
 		</p>
 		<p>
 			<h5>Import depuis le dictionnaire</h5>
@@ -39,7 +38,7 @@
 		    </form>
 		    <div th:if="${result}" id="resultMessage" hidden="true">
 		    	<b>Import dans le dictionnaire réalisé avec succès.</b><br/><br/>
-		    	Les opérations suivantes ont été réalisées :
+		    	<u>Les opérations suivantes ont été réalisées</u> :
 		    	<ul>
 		    		<li th:if="${result.counts['full-projects']}"><span th:text="${result.counts['full-projects'].added}">1</span> création(s) et <span th:text="${result.counts['full-projects'].modified}">1</span> mise(s) à jour de projet(s)</li>
 		    		<li th:if="${result.counts['full-domains']}"><span th:text="${result.counts['full-domains'].added}">1</span> création(s) et <span th:text="${result.counts['full-domains'].modified}">1</span> mise(s) à jour de domaine(s) fonctionnel(s)</li>

@@ -82,19 +82,19 @@ public class PrepareIndexService {
 	@Autowired
 	private IndexRepository indexes;
 
-	@Autowired
-	private ProjectManagementService projectService;
-
 	private boolean useParallelDiff = false;
 
 	/**
-	 * @param dictionaryEntryUuid
+	 * @param entry
+	 *            dictionaryEntry
+	 * @param lobs
+	 * @param project
 	 * @return
 	 */
-	public Collection<PreparedIndexEntry> currentContentDiff(DictionaryEntry entry, Map<String, byte[]> lobs) {
-
-		this.projectService.assertCurrentUserHasSelectedProject();
-		Project project = this.projectService.getCurrentSelectedProjectEntity();
+	public Collection<PreparedIndexEntry> currentContentDiff(
+			DictionaryEntry entry,
+			Map<String, byte[]> lobs,
+			Project project) {
 
 		LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
 
@@ -134,10 +134,8 @@ public class PrepareIndexService {
 			DictionaryEntry entry,
 			Map<String, byte[]> lobs,
 			long timeStampForSearch,
-			List<PreparedMergeIndexEntry> mergeContent) {
-
-		this.projectService.assertCurrentUserHasSelectedProject();
-		Project project = this.projectService.getCurrentSelectedProjectEntity();
+			List<PreparedMergeIndexEntry> mergeContent,
+			Project project) {
 
 		LOGGER.debug("Regenerating values from combined local + specified index for managed table \"{}\", using"
 				+ " timestamp for local index search {}", entry.getTableName(), Long.valueOf(timeStampForSearch));
