@@ -1,6 +1,5 @@
 package fr.uem.efluid.services.types;
 
-import java.util.List;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
@@ -10,7 +9,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
  * @since v0.0.1
  * @version 1
  */
-public class LocalPreparedDiff extends DiffDisplay<List<PreparedIndexEntry>> {
+public class LocalPreparedDiff extends DiffDisplay<PreparedIndexEntry> {
 
 	/**
 	 * @param dict

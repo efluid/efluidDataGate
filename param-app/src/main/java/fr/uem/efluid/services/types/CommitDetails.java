@@ -30,7 +30,7 @@ public class CommitDetails {
 
 	private List<UUID> mergeSources;
 
-	private List<DiffDisplay<List<PreparedIndexEntry>>> content;
+	private List<DiffDisplay<PreparedIndexEntry>> content;
 
 	private CommitState state;
 
@@ -150,7 +150,7 @@ public class CommitDetails {
 	/**
 	 * @return the content
 	 */
-	public List<DiffDisplay<List<PreparedIndexEntry>>> getContent() {
+	public List<DiffDisplay<PreparedIndexEntry>> getContent() {
 		return this.content;
 	}
 
@@ -158,7 +158,7 @@ public class CommitDetails {
 	 * @param content
 	 *            the content to set
 	 */
-	private void setContent(List<DiffDisplay<List<PreparedIndexEntry>>> content) {
+	private void setContent(List<DiffDisplay<PreparedIndexEntry>> content) {
 		this.content = content;
 	}
 
@@ -246,7 +246,7 @@ public class CommitDetails {
 				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
 				.entrySet().stream()
 				.map(e -> {
-					DiffDisplay<List<PreparedIndexEntry>> diff = new DiffDisplay<>();
+					DiffDisplay<PreparedIndexEntry> diff = new DiffDisplay<>();
 					diff.setDictionaryEntryUuid(e.getKey());
 					diff.setDiff(e.getValue());
 					return diff;

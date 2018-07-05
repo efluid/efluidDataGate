@@ -8,7 +8,7 @@ import java.util.UUID;
  * @since v0.0.1
  * @version 1
  */
-public class MergePreparedDiff extends DiffDisplay<List<PreparedMergeIndexEntry>> {
+public class MergePreparedDiff extends DiffDisplay<PreparedMergeIndexEntry> {
 
 	/**
 	 * @param dictionaryEntryUuid
