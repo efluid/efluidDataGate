@@ -20,6 +20,8 @@ public class ParameterDomainDefinition extends ExportAwareFunctionalDomain<Param
 
 	private LocalDateTime createdTime;
 
+	private LocalDateTime updatedTime;
+
 	private ParameterProjectDefinition project;
 
 	/**
@@ -91,6 +93,22 @@ public class ParameterDomainDefinition extends ExportAwareFunctionalDomain<Param
 	@Override
 	public LocalDateTime getImportedTime() {
 		return null;
+	}
+
+	/**
+	 * @return the updatedTime
+	 */
+	@Override
+	public LocalDateTime getUpdatedTime() {
+		return this.updatedTime;
+	}
+
+	/**
+	 * @param updatedTime
+	 *            the updatedTime to set
+	 */
+	public void setUpdatedTime(LocalDateTime updatedTime) {
+		this.updatedTime = updatedTime;
 	}
 
 	/**

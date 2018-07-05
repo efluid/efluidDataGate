@@ -23,6 +23,8 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	private String columnTo;
 
 	private LocalDateTime createdTime;
+	
+	private LocalDateTime updatedTime;
 
 	private ParameterTableDefinition dictionaryEntry;
 
@@ -135,6 +137,21 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	@Override
 	public ParameterTableDefinition getDictionaryEntry() {
 		return this.dictionaryEntry;
+	}
+
+	/**
+	 * @return the updatedTime
+	 */
+	@Override
+	public LocalDateTime getUpdatedTime() {
+		return this.updatedTime;
+	}
+
+	/**
+	 * @param updatedTime the updatedTime to set
+	 */
+	public void setUpdatedTime(LocalDateTime updatedTime) {
+		this.updatedTime = updatedTime;
 	}
 
 	/**

@@ -27,6 +27,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TableLink;
+import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
@@ -34,6 +35,7 @@ import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
+import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
@@ -50,6 +52,9 @@ import fr.uem.efluid.services.types.SelectableTable;
 import fr.uem.efluid.services.types.SharedPackage;
 import fr.uem.efluid.services.types.TableLinkExportPackage;
 import fr.uem.efluid.services.types.TableLinkPackage;
+import fr.uem.efluid.services.types.VersionData;
+import fr.uem.efluid.services.types.VersionExportPackage;
+import fr.uem.efluid.services.types.VersionPackage;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.SelectClauseGenerator;
@@ -72,6 +77,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	private DictionaryRepository dictionary;
 
 	@Autowired
+	private VersionRepository versions;
+
+	@Autowired
 	private DatabaseDescriptionRepository metadatas;
 
 	@Autowired
@@ -88,6 +96,71 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 	@Autowired
 	private ProjectManagementService projectService;
+
+	/**
+	 * @param name
+	 */
+	public void setCurrentVersion(String name) {
+
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		// Search by name
+		Version version = this.versions.findByNameAndProject(name, project);
+
+		// Update
+		if (version != null) {
+			LOGGER.info("Update version {} in current project", name);
+			version.setUpdatedTime(LocalDateTime.now());
+		}
+
+		// Create
+		else {
+			LOGGER.info("Create version {} in current project", name);
+			version = new Version();
+			version.setName(name);
+			version.setCreatedTime(LocalDateTime.now());
+			version.setUpdatedTime(LocalDateTime.now());
+			version.setProject(project);
+		}
+
+		this.versions.save(version);
+	}
+
+	/**
+	 * @return
+	 */
+	public VersionData getLastVersion() {
+
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		return VersionData.fromEntity(this.versions.getLastVersionForProject(project));
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isDictionaryUpdatedAfterLastVersion() {
+
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		return this.versions.hasDictionaryUpdatesAfterLastVersionForProject(project);
+	}
+
+	/**
+	 * @return
+	 */
+	public List<VersionData> getAvailableVersions() {
+
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		return this.versions.findByProject(project).stream()
+				.map(VersionData::fromEntity)
+				.collect(Collectors.toList());
+	}
 
 	/**
 	 * @return
@@ -347,6 +420,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		entry.setParameterName(editData.getName());
 		entry.setSelectClause("- to update -");
 		entry.setWhereClause(editData.getWhere());
+		entry.setUpdatedTime(LocalDateTime.now());
 
 		this.dictionary.save(entry);
 
@@ -378,6 +452,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		domain.setUuid(UUID.randomUUID());
 		domain.setCreatedTime(LocalDateTime.now());
+		domain.setUpdatedTime(LocalDateTime.now());
 		domain.setName(name);
 		domain.setProject(project);
 
@@ -442,6 +517,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, LocalDateTime.now())
 				.initWithContent(Arrays.asList(project));
 
+		// Versions for project
+		VersionPackage vers = new VersionPackage(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.versions.findByProject(project));
+
 		// Will filter by domains from package
 		List<FunctionalDomain> fdoms = this.domains.findByProject(project);
 
@@ -454,7 +533,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.initWithContent(this.links.findByDictionaryEntryDomainIn(fdoms));
 
 		// Easy : just take all
-		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, dict, doms, tl));
+		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, vers, dict, doms, tl));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
@@ -462,6 +541,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
 		result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
 		result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
+		result.addCount(VersionExportPackage.VERSIONS_EXPORT, vers.getContentSize(), 0, 0);
 
 		return result;
 	}
@@ -475,6 +555,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.projects.findAll());
+		VersionPackage vers = new VersionPackage(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.versions.findAll());
 		DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.DICT_EXPORT, LocalDateTime.now())
 				.initWithContent(this.dictionary.findAll());
 		FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalDomainExportPackage.DOMAINS_EXPORT, LocalDateTime.now())
@@ -483,7 +565,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.initWithContent(this.links.findAll());
 
 		// Easy : just take all
-		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, dict, doms, tl));
+		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, vers, dict, doms, tl));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
@@ -491,6 +573,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		result.addCount(DictionaryExportPackage.DICT_EXPORT, dict.getContentSize(), 0, 0);
 		result.addCount(FunctionalDomainExportPackage.DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
 		result.addCount(TableLinkExportPackage.LINKS_EXPORT, tl.getContentSize(), 0, 0);
+		result.addCount(VersionExportPackage.VERSIONS_EXPORT, vers.getContentSize(), 0, 0);
 
 		return result;
 	}
@@ -505,6 +588,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Less easy : need to complete and identify if value is new or not
 		List<SharedPackage<?>> packages = this.ioService.importPackages(file);
 		AtomicInteger newProjsCount = new AtomicInteger(0);
+		AtomicInteger newVersCount = new AtomicInteger(0);
 		AtomicInteger newDomainsCount = new AtomicInteger(0);
 		AtomicInteger newDictCount = new AtomicInteger(0);
 		AtomicInteger newLinksCount = new AtomicInteger(0);
@@ -542,11 +626,19 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.map(d -> importTableLink(d, newLinksCount))
 				.collect(Collectors.toList());
 
+		// #5th The projects (referencing projects)
+		List<Version> importedVersions = packages.stream()
+				.filter(p -> p.getClass() == VersionPackage.class)
+				.flatMap(p -> ((VersionPackage) p).streamContent())
+				.map(d -> importVersion(d, newVersCount, substituteProjects))
+				.collect(Collectors.toList());
+
 		// Batched save on all imported
 		this.projects.saveAll(importedProjects);
 		this.domains.saveAll(importedDomains);
 		this.dictionary.saveAll(importedDicts);
 		this.links.saveAll(importedLinks);
+		this.versions.saveAll(importedVersions);
 
 		// Add also all imported projects to current User prefered list
 		this.projectService.setPreferedProjectsForCurrentUser(importedProjects.stream()
@@ -575,6 +667,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		if (importedLinks.size() > 0) {
 			result.addCount(TableLinkExportPackage.LINKS_EXPORT, newLinksCount.get(), importedLinks.size() - newLinksCount.get(), 0);
+		}
+
+		if (importedVersions.size() > 0) {
+			result.addCount(VersionExportPackage.VERSIONS_EXPORT, newVersCount.get(), importedVersions.size() - newVersCount.get(), 0);
 		}
 
 		return result;
@@ -608,6 +704,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
+		local.setUpdatedTime(imported.getUpdatedTime());
 		local.setName(imported.getName());
 
 		// Use substitute
@@ -622,6 +719,66 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		else {
 			local.setProject(imported.getProject());
 		}
+
+		local.setImportedTime(LocalDateTime.now());
+
+		return local;
+	}
+
+	/**
+	 * <p>
+	 * Process one Project
+	 * </p>
+	 * <p>
+	 * Project can be identified by uuid or by name during import
+	 * <p>
+	 * 
+	 * @param imported
+	 * @param newCounts
+	 * @param substituteProjects
+	 * @return
+	 */
+	Version importVersion(Version imported, AtomicInteger newCounts, Map<UUID, Project> substituteProjects) {
+
+		Optional<Version> localOpt = this.versions.findById(imported.getUuid());
+
+		// Exists already
+		localOpt.ifPresent(d -> LOGGER.debug("Import existing project by uuid {} : will update currently owned", imported.getUuid()));
+
+		// Will try also by name
+		Version byName = this.versions.findByNameAndProject(imported.getName(), imported.getProject());
+
+		// Search on existing Or is a new one
+		Version local = localOpt.orElseGet(() -> {
+			Version loc;
+			if (byName == null) {
+				LOGGER.debug("Import new version {} : will create currently owned", imported.getUuid());
+				loc = new Version(imported.getUuid());
+				loc.setCreatedTime(imported.getCreatedTime());
+				newCounts.incrementAndGet();
+			} else {
+				LOGGER.debug("Import exsting version by name \"{}\"", imported.getName());
+				loc = byName;
+			}
+			return loc;
+		});
+
+		// Use substitute
+		if (substituteProjects.containsKey(imported.getProject().getUuid())) {
+			Project substitute = substituteProjects.get(imported.getProject().getUuid());
+			LOGGER.info("Imported project {} is used as substitute for version {} instead of initial project {}", substitute.getUuid(),
+					imported.getUuid(), imported.getProject().getUuid());
+			local.setProject(substitute);
+		}
+
+		// Keep referenced
+		else {
+			local.setProject(imported.getProject());
+		}
+
+		// Common attrs
+		local.setUpdatedTime(imported.getUpdatedTime());
+		local.setName(imported.getName());
 
 		local.setImportedTime(LocalDateTime.now());
 
@@ -651,6 +808,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
+		local.setUpdatedTime(imported.getUpdatedTime());
 		local.setDomain(new FunctionalDomain(imported.getDomain().getUuid()));
 		local.setKeyName(imported.getKeyName());
 		local.setKeyType(imported.getKeyType());
@@ -687,6 +845,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Common attrs
 		local.setCreatedTime(imported.getCreatedTime());
+		local.setUpdatedTime(imported.getUpdatedTime());
 		local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
 		local.setColumnFrom(imported.getColumnFrom());
 		local.setColumnTo(imported.getColumnTo());
@@ -732,6 +891,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 			// Update
 			if (existing != null) {
+				existing.setUpdatedTime(LocalDateTime.now());
 				existing.setTableTo(link.getTableTo());
 				existing.setColumnTo(link.getColumnTo());
 				updatedLinks.add(existing);
@@ -740,6 +900,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 			// New one
 			else {
 				link.setCreatedTime(LocalDateTime.now());
+				link.setUpdatedTime(LocalDateTime.now());
 				link.setDictionaryEntry(entry);
 				link.setUuid(UUID.randomUUID());
 				createdLinks.add(link);

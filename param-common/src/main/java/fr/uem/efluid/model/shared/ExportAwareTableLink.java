@@ -36,6 +36,12 @@ public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<
 	public abstract LocalDateTime getCreatedTime();
 
 	/**
+	 * @param updatedTime
+	 *            the updatedTime to set
+	 */
+	public abstract LocalDateTime getUpdatedTime();
+
+	/**
 	 * @return the dictionaryEntry
 	 */
 	public abstract D getDictionaryEntry();
@@ -50,6 +56,7 @@ public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<
 		return SharedOutputInputUtils.newJson()
 				.with("uid", getUuid())
 				.with("cre", getCreatedTime())
+				.with("upd", getUpdatedTime())
 				.with("cfr", getColumnFrom())
 				.with("cto", getColumnTo())
 				.with("tto", getTableTo())

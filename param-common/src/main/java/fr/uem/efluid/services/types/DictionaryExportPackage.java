@@ -31,7 +31,7 @@ public abstract class DictionaryExportPackage<D extends ExportAwareDictionaryEnt
 	 */
 	@Override
 	public final String getVersion() {
-		return "1";
+		return "2";
 	}
 
 }

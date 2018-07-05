@@ -35,6 +35,8 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
 
 	private LocalDateTime createdTime;
 
+	private LocalDateTime updatedTime;
+
 	private ParameterDomainDefinition domain;
 
 	/**
@@ -164,6 +166,20 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
 		return null;
 	}
 
+	/**
+	 * @return the updatedTime
+	 */
+	@Override
+	public LocalDateTime getUpdatedTime() {
+		return this.updatedTime;
+	}
+
+	/**
+	 * @param updatedTime the updatedTime to set
+	 */
+	public void setUpdatedTime(LocalDateTime updatedTime) {
+		this.updatedTime = updatedTime;
+	}
 	/**
 	 * @return the domain
 	 */

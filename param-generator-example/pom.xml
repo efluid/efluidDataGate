@@ -36,6 +36,7 @@
 					<uploadToServer>false</uploadToServer>
 					<uploadEntryPointUri>http://127.0.0.1:8080/rest/v1/dictionary</uploadEntryPointUri>
 					<uploadSecurityToken>afc9921811684c7f88062cd47ddf0ff5</uploadSecurityToken>
+					<projectVersion>${project.version}</projectVersion>
 				</configuration>
 			</plugin>
 

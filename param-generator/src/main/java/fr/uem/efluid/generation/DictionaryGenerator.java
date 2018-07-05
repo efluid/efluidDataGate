@@ -44,10 +44,12 @@ import fr.uem.efluid.model.GeneratedDictionaryPackage;
 import fr.uem.efluid.model.GeneratedFunctionalDomainPackage;
 import fr.uem.efluid.model.GeneratedProjectPackage;
 import fr.uem.efluid.model.GeneratedTableLinkPackage;
+import fr.uem.efluid.model.GeneratedVersionPackage;
 import fr.uem.efluid.model.ParameterDomainDefinition;
 import fr.uem.efluid.model.ParameterLinkDefinition;
 import fr.uem.efluid.model.ParameterProjectDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
+import fr.uem.efluid.model.ParameterVersionDefinition;
 import fr.uem.efluid.rest.v1.DictionaryApi;
 import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
 import fr.uem.efluid.services.ExportService;
@@ -105,11 +107,14 @@ public class DictionaryGenerator {
 			/* Then process table values / links using refs */
 			Collection<ParameterLinkDefinition> allLinks = completeParameterValuesAndLinks(reflections, typeTables);
 
-			/* Finally, extract domains */
+			/* Then, extract domains */
 			Collection<ParameterDomainDefinition> allDomains = completeParameterDomains(typeTables, projects, projectDefs);
 
+			/* Finally, prepare a version for each projects */
+			Collection<ParameterVersionDefinition> allVersions = specifyVersionsByProjects(projectDefs.values());
+
 			/* Now can export */
-			export(projectDefs.values(), allDomains, typeTables.values(), allLinks);
+			export(projectDefs.values(), allDomains, typeTables.values(), allLinks, allVersions);
 
 			getLog().info("###### PARAM-GENERATOR VERSION " + VERSION + " - GENERATE COMPLETED IN "
 					+ BigDecimal.valueOf(System.currentTimeMillis() - start, 3).toPlainString()
@@ -380,6 +385,26 @@ public class DictionaryGenerator {
 	 * @param reflections
 	 * @return
 	 */
+	private Collection<ParameterVersionDefinition> specifyVersionsByProjects(
+			Collection<ParameterProjectDefinition> projects) {
+
+		getLog().debug("Init versions for each " + projects.size() + " identified projects");
+
+		// Get all domain values
+		return projects.stream().map(p -> {
+			ParameterVersionDefinition version = new ParameterVersionDefinition();
+			version.setName(this.config.getProjectVersion());
+			version.setCreatedTime(LocalDateTime.now());
+			version.setUpdatedTime(LocalDateTime.now());
+			version.setProject(p);
+			return version;
+		}).collect(Collectors.toList());
+	}
+
+	/**
+	 * @param reflections
+	 * @return
+	 */
 	private Collection<ParameterDomainDefinition> completeParameterDomains(
 			Map<Class<?>, ParameterTableDefinition> defs,
 			Map<String, ParameterProject> projectsByDomains,
@@ -426,16 +451,19 @@ public class DictionaryGenerator {
 			Collection<ParameterProjectDefinition> allProjects,
 			Collection<ParameterDomainDefinition> allDomains,
 			Collection<ParameterTableDefinition> allTables,
-			Collection<ParameterLinkDefinition> allLinks) throws Exception {
+			Collection<ParameterLinkDefinition> allLinks,
+			Collection<ParameterVersionDefinition> allVersions) throws Exception {
 
-		getLog().info("Identified " + allProjects.size() + " projects, " + allDomains.size() + " domains, " + allTables.size()
-				+ " tables and " + allLinks.size() + " links : now export dictionary to " + this.config.getDestinationFolder());
+		getLog().info("Identified " + allProjects.size() + " projects, " + allVersions.size() + " versions, " + allDomains.size()
+				+ " domains, " + allTables.size() + " tables and " + allLinks.size() + " links : now export dictionary to "
+				+ this.config.getDestinationFolder());
 
 		ExportFile file = this.export.exportPackages(Arrays.asList(
 				new GeneratedProjectPackage(allProjects),
 				new GeneratedDictionaryPackage(allTables),
 				new GeneratedFunctionalDomainPackage(allDomains),
-				new GeneratedTableLinkPackage(allLinks)));
+				new GeneratedTableLinkPackage(allLinks),
+				new GeneratedVersionPackage(allVersions)));
 
 		String filename = DictionaryGeneratorConfig.AUTO_GEN_DEST_FILE_DESG.equals(this.config.getDestinationFileDesignation())
 				? file.getFilename()

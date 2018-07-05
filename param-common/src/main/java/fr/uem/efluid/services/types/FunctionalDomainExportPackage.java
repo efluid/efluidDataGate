@@ -30,7 +30,7 @@ public abstract class FunctionalDomainExportPackage<D extends ExportAwareFunctio
 	 */
 	@Override
 	public final String getVersion() {
-		return "2";
+		return "3";
 	}
 
 }

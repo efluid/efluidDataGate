@@ -19,8 +19,10 @@ public class ApplicationDetails {
 	private long dictionaryCount;
 	private long lobsCount;
 	private long projectsCount;
+	private long versionsCount;
 
 	private long domainsCountForProject;
+	private long versionsCountForProject;
 
 	/**
 	 * 
@@ -159,5 +161,35 @@ public class ApplicationDetails {
 	 */
 	public void setProjectsCount(long projectsCount) {
 		this.projectsCount = projectsCount;
+	}
+
+	/**
+	 * @return the versionsCount
+	 */
+	public long getVersionsCount() {
+		return this.versionsCount;
+	}
+
+	/**
+	 * @param versionsCount
+	 *            the versionsCount to set
+	 */
+	public void setVersionsCount(long versionsCount) {
+		this.versionsCount = versionsCount;
+	}
+
+	/**
+	 * @return the versionsCountForProject
+	 */
+	public long getVersionsCountForProject() {
+		return this.versionsCountForProject;
+	}
+
+	/**
+	 * @param versionsCountForProject
+	 *            the versionsCountForProject to set
+	 */
+	public void setVersionsCountForProject(long versionsCountForProject) {
+		this.versionsCountForProject = versionsCountForProject;
 	}
 }

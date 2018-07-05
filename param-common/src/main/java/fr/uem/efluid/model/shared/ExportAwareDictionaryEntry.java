@@ -57,6 +57,12 @@ public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctional
 	public abstract LocalDateTime getCreatedTime();
 
 	/**
+	 * @param updatedTime
+	 *            the updatedTime to set
+	 */
+	public abstract LocalDateTime getUpdatedTime();
+
+	/**
 	 * @param domain
 	 *            the domain to set
 	 */
@@ -78,6 +84,7 @@ public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctional
 		return SharedOutputInputUtils.newJson()
 				.with("uid", getUuid())
 				.with("cre", getCreatedTime())
+				.with("upd", getUpdatedTime())
 				.with("dom", getDomain().getUuid())
 				.with("kna", getKeyName())
 				.with("kty", getKeyType())

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+		<h5>Gestion des versions pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
+        <span class="help">
+        	Les versions sont specifiées pour le dictionnaire courant. Des vérifications sont effectuées dans les imports / exports de lot pour 
+        	vérifier que les versions sont à jour et en place.
+        </span>
+        <span th:if="${checkVersion}" class="remark">
+        	Depuis la dernière mise à jour de version des mises à jour ont eu lieu dans le dictionnaire. Créer une nouvelle version pour les intégrer.
+        </span>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th scope="col" width="70%">Versions</th>
+                    <th scope="col">Création</th>
+                    <th scope="col">Dernière maj</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="version : ${versions}" th:id="${version.name}">
+                     <td th:text="${version.name}">1.2.5-SNAPSHOT</td>
+                     <td th:text="${version.createdTime}">Lundi</td>
+                     <td th:text="${version.updatedTime}">Mardi</td>
+			     </tr>
+			     <tr id="versionListInjectBefore">
+			         <td><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
+			         <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+			     </tr>
+			</tbody>
+		</table>
+    </span>
+    <script layout:fragment="script">
+
+		// Add row button
+		const addButtonAction = () => {
+			hideDisplays();
+			var inputName = $("#versionName");
+			var name = inputName.val();
+			if(name == null || name === ''){
+				setInvalid("#versionName","Le nom de la version est obligatoire");
+			}
+			$.post("/ui/versions/" + inputName.val(), null, (data, status) => {
+				showSuccess("Version ajoutée avec succès");
+		        var newVersionRow = '<tr id="' + data.name + '"><td>' + data.name + '</td><td>A l''instant</td><td>A l''instant</td></tr>';
+				$("#versionListInjectBefore").before(newVersionRow);
+				inputName.val("");
+		    });
+		};
+    
+    	// Init actions
+    	$(document).ready(() => {
+			$("#addButton").click(addButtonAction);
+		}); 
+    </script>
+</body>
+</html>

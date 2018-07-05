@@ -25,6 +25,8 @@ public interface DictionaryGeneratorConfig {
 	
 	String getUploadSecurityToken();
 	
+	String getProjectVersion();
+	
 	/**
 	 * <p>
 	 * For shared logging using source logger. As in maven plugin process we have to use a

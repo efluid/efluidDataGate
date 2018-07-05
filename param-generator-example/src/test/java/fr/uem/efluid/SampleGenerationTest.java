@@ -74,6 +74,11 @@ public class SampleGenerationTest {
 			public String getUploadSecurityToken() {
 				return "afc9921811684c7f88062cd47ddf0ff5";
 			}
+
+			@Override
+			public String getProjectVersion() {
+				return "1.2.3";
+			}
 		});
 
 		generator.generateDictionaryExport(getClass().getClassLoader());

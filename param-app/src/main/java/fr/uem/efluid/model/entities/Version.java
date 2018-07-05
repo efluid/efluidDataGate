@@ -9,17 +9,21 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
+import fr.uem.efluid.model.shared.ExportAwareVersion;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
+ * <p>
+ * Identified versions in a project. Associated to dictionary data
+ * </p>
+ * 
  * @author elecomte
- * @since v0.0.1
+ * @since v0.2.0
  * @version 1
  */
 @Entity
-@Table(name = "domain")
-public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
+@Table(name = "versions")
+public class Version extends ExportAwareVersion<Project> {
 
 	@Id
 	private UUID uuid;
@@ -41,7 +45,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	/**
 	 * @param uuid
 	 */
-	public FunctionalDomain(UUID uuid) {
+	public Version(UUID uuid) {
 		super();
 		this.uuid = uuid;
 	}
@@ -49,7 +53,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	/**
 	 * 
 	 */
-	public FunctionalDomain() {
+	public Version() {
 		super();
 	}
 
@@ -102,22 +106,6 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	}
 
 	/**
-	 * @return the importedTime
-	 */
-	@Override
-	public LocalDateTime getImportedTime() {
-		return this.importedTime;
-	}
-
-	/**
-	 * @param importedTime
-	 *            the importedTime to set
-	 */
-	public void setImportedTime(LocalDateTime importedTime) {
-		this.importedTime = importedTime;
-	}
-
-	/**
 	 * @return the updatedTime
 	 */
 	@Override
@@ -131,6 +119,22 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	 */
 	public void setUpdatedTime(LocalDateTime updatedTime) {
 		this.updatedTime = updatedTime;
+	}
+
+	/**
+	 * @return the importedTime
+	 */
+	@Override
+	public LocalDateTime getImportedTime() {
+		return this.importedTime;
+	}
+
+	/**
+	 * @param importedTime
+	 *            the importedTime to set
+	 */
+	public void setImportedTime(LocalDateTime importedTime) {
+		this.importedTime = importedTime;
 	}
 
 	/**

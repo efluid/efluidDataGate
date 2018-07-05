@@ -19,6 +19,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.services.CommitService;
+import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
@@ -37,7 +38,7 @@ import fr.uem.efluid.utils.WebUtils;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Controller
 @RequestMapping("/ui")
@@ -48,6 +49,9 @@ public class BacklogController extends CommonController {
 
 	@Autowired
 	private PilotableCommitPreparationService pilotableCommitService;
+
+	@Autowired
+	private DictionaryManagementService dictService;
 
 	/**
 	 * <p>
@@ -171,6 +175,7 @@ public class BacklogController extends CommonController {
 
 		// Get updated commits
 		model.addAttribute("commits", this.commitService.getAvailableCommits());
+		model.addAttribute("checkVersion", Boolean.valueOf(this.dictService.isDictionaryUpdatedAfterLastVersion()));
 
 		return "pages/push";
 	}

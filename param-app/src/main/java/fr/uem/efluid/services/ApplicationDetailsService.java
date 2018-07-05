@@ -19,6 +19,7 @@ import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.LobPropertyRepository;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.ApplicationDetails;
 import fr.uem.efluid.services.types.ProjectData;
 
@@ -57,6 +58,9 @@ public class ApplicationDetailsService {
 	private ProjectRepository projects;
 
 	@Autowired
+	private VersionRepository versions;
+
+	@Autowired
 	private ProjectManagementService projectService;
 
 	@Value("${param-efluid.managed-datasource.url}")
@@ -93,11 +97,12 @@ public class ApplicationDetailsService {
 		details.setLobsCount(this.lobs.count());
 		details.setIndexSize(getEstimatedIndexSize());
 		details.setProjectsCount(this.projects.count());
-
+		details.setVersionsCount(this.versions.count());
 		ProjectData project = this.projectService.getCurrentSelectedProject();
 
 		if (project != null) {
 			details.setDomainsCountForProject(this.domains.countForProject(project.getUuid()));
+			details.setVersionsCountForProject(this.versions.countForProject(project.getUuid()));
 		}
 
 		return details;

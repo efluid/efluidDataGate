@@ -58,6 +58,9 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	@NotNull
 	private LocalDateTime createdTime;
 
+	@NotNull
+	private LocalDateTime updatedTime;
+
 	private LocalDateTime importedTime;
 
 	@ManyToOne(optional = false)
@@ -207,6 +210,22 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	}
 
 	/**
+	 * @return the updatedTime
+	 */
+	@Override
+	public LocalDateTime getUpdatedTime() {
+		return this.updatedTime;
+	}
+
+	/**
+	 * @param updatedTime
+	 *            the updatedTime to set
+	 */
+	public void setUpdatedTime(LocalDateTime updatedTime) {
+		this.updatedTime = updatedTime;
+	}
+
+	/**
 	 * @return the domain
 	 */
 	@Override
@@ -248,6 +267,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 		SharedOutputInputUtils.fromJson(raw)
 				.applyUUID("uid", v -> setUuid(v))
 				.applyLdt("cre", v -> setCreatedTime(v))
+				.applyLdt("upd", v -> setUpdatedTime(v))
 				.applyUUID("dom", v -> setDomain(new FunctionalDomain(v)))
 				.applyString("kna", v -> setKeyName(v))
 				.applyString("kty", v -> setKeyType(ColumnType.valueOf(v)))

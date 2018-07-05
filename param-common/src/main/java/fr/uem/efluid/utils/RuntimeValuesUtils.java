@@ -1,6 +1,9 @@
 package fr.uem.efluid.utils;
 
 import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.UUID;
 
 /**
@@ -9,6 +12,15 @@ import java.util.UUID;
  * @version 1
  */
 public class RuntimeValuesUtils {
+
+	/**
+	 *
+	 * @param date
+	 * @return
+	 */
+	public static LocalDateTime localDateTime(Date date) {
+		return date != null ? LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()) : null;
+	}
 
 	/**
 	 * @param o

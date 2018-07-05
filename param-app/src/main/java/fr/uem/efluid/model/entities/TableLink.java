@@ -34,6 +34,9 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
 	@NotNull
 	private LocalDateTime createdTime;
 
+	@NotNull
+	private LocalDateTime updatedTime;
+
 	private LocalDateTime importedTime;
 
 	@ManyToOne(optional = false)
@@ -151,6 +154,22 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
 	}
 
 	/**
+	 * @return the updatedTime
+	 */
+	@Override
+	public LocalDateTime getUpdatedTime() {
+		return this.updatedTime;
+	}
+
+	/**
+	 * @param updatedTime
+	 *            the updatedTime to set
+	 */
+	public void setUpdatedTime(LocalDateTime updatedTime) {
+		this.updatedTime = updatedTime;
+	}
+
+	/**
 	 * @return the dictionaryEntry
 	 */
 	@Override
@@ -176,6 +195,7 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
 		SharedOutputInputUtils.fromJson(raw)
 				.applyUUID("uid", v -> setUuid(v))
 				.applyLdt("cre", v -> setCreatedTime(v))
+				.applyLdt("upd", v -> setUpdatedTime(v))
 				.applyString("cfr", v -> setColumnFrom(v))
 				.applyString("cto", v -> setColumnTo(v))
 				.applyString("tto", v -> setTableTo(v))

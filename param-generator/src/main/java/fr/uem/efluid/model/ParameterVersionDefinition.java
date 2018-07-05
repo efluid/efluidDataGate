@@ -1,47 +1,33 @@
-package fr.uem.efluid.model.entities;
+package fr.uem.efluid.model;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
-import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
-import fr.uem.efluid.utils.SharedOutputInputUtils;
+import fr.uem.efluid.ParameterDomain;
+import fr.uem.efluid.model.shared.ExportAwareVersion;
 
 /**
  * @author elecomte
  * @since v0.0.1
  * @version 1
  */
-@Entity
-@Table(name = "domain")
-public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
+@SpecifiedWith(ParameterDomain.class)
+public class ParameterVersionDefinition extends ExportAwareVersion<ParameterProjectDefinition> {
 
-	@Id
 	private UUID uuid;
 
-	@NotNull
 	private String name;
 
-	@NotNull
 	private LocalDateTime createdTime;
 
-	@NotNull
 	private LocalDateTime updatedTime;
 
-	private LocalDateTime importedTime;
-
-	@ManyToOne(optional = false)
-	private Project project;
+	private ParameterProjectDefinition project;
 
 	/**
 	 * @param uuid
 	 */
-	public FunctionalDomain(UUID uuid) {
+	public ParameterVersionDefinition(UUID uuid) {
 		super();
 		this.uuid = uuid;
 	}
@@ -49,7 +35,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	/**
 	 * 
 	 */
-	public FunctionalDomain() {
+	public ParameterVersionDefinition() {
 		super();
 	}
 
@@ -106,15 +92,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	 */
 	@Override
 	public LocalDateTime getImportedTime() {
-		return this.importedTime;
-	}
-
-	/**
-	 * @param importedTime
-	 *            the importedTime to set
-	 */
-	public void setImportedTime(LocalDateTime importedTime) {
-		this.importedTime = importedTime;
+		return null;
 	}
 
 	/**
@@ -137,7 +115,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	 * @return the project
 	 */
 	@Override
-	public Project getProject() {
+	public ParameterProjectDefinition getProject() {
 		return this.project;
 	}
 
@@ -145,7 +123,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	 * @param project
 	 *            the project to set
 	 */
-	public void setProject(Project project) {
+	public void setProject(ParameterProjectDefinition project) {
 		this.project = project;
 	}
 
@@ -155,13 +133,6 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
 	 */
 	@Override
 	public void deserialize(String raw) {
-
-		SharedOutputInputUtils.fromJson(raw)
-				.applyUUID("uid", v -> setUuid(v))
-				.applyLdt("cre", v -> setCreatedTime(v))
-				.applyLdt("upd", v -> setUpdatedTime(v))
-				.applyString("nam", v -> setName(v))
-				.applyUUID("pro", v -> setProject(new Project(v)));
+		// Not implemented
 	}
-
 }

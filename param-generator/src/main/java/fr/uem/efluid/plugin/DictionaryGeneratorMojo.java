@@ -52,6 +52,9 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
 	@Parameter(required = false, readonly = true)
 	private String uploadSecurityToken;
 
+	@Parameter(required = true, readonly = true)
+	private String projectVersion;
+
 	/**
 	 * @throws MojoExecutionException
 	 * @throws MojoFailureException
@@ -180,6 +183,14 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
 	@Override
 	public String getUploadSecurityToken() {
 		return this.uploadSecurityToken;
+	}
+
+	/**
+	 * @return the projectVersion
+	 */
+	@Override
+	public String getProjectVersion() {
+		return this.projectVersion;
 	}
 
 	/**

@@ -28,7 +28,7 @@ public abstract class TableLinkExportPackage<D extends ExportAwareTableLink<?>> 
 	 */
 	@Override
 	public final String getVersion() {
-		return "1";
+		return "2";
 	}
 
 }
