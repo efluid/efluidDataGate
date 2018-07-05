@@ -356,7 +356,7 @@ public class PilotableCommitPreparationService {
 			// Use basic global iterate on both current and changed
 			for (int i = 0; i < endContent; i++) {
 
-				DiffDisplay<? extends PreparedIndexEntry> currentDiff = this.current.getPreparedContent().get(i);
+				DiffDisplay<? extends PreparedIndexEntry> currentDiff = getCurrentCommitPreparation().getPreparedContent().get(i);
 				DiffDisplay<? extends PreparedIndexEntry> changedDiff = changedPreparation.getPreparedContent().get(i);
 
 				if (changedDiff != null && changedDiff.getDiff() != null) {
