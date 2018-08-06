@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import fr.uem.efluid.services.types.ProjectExportPackage;
-import fr.uem.efluid.services.types.TableLinkExportPackage;
 
 /**
  * @author elecomte
@@ -22,7 +21,7 @@ public class GeneratedProjectPackage extends ProjectExportPackage<ParameterProje
 	 * @param exportDate
 	 */
 	public GeneratedProjectPackage(Collection<ParameterProjectDefinition> allProjects) {
-		super(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now());
+		super(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now());
 		initWithContent(allProjects.stream().sorted(Comparator.comparing(ParameterProjectDefinition::getName))
 				.collect(Collectors.toList()));
 	}

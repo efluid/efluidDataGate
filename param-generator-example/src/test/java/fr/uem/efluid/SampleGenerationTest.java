@@ -62,7 +62,7 @@ public class SampleGenerationTest {
 
 			@Override
 			public boolean isUploadToServer() {
-				return true;
+				return false;
 			}
 
 			@Override

@@ -2,6 +2,7 @@ package fr.uem.efluid.stubs;
 
 import static fr.uem.efluid.utils.DataGenerationUtils.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -154,6 +155,12 @@ public class TestDataLoader {
 	 */
 	public void dropAllDictionary() {
 
+		this.users.findAll().stream().forEach(u -> {
+			u.setSelectedProject(null);
+			u.setPreferedProjects(Collections.emptySet());
+			this.users.save(u);
+		});
+		
 		this.links.deleteAll();
 		this.dictionary.deleteAll();
 		this.domains.deleteAll();
