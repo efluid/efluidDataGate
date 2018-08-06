@@ -4,20 +4,15 @@ param-efluid:
 
    managed-datasource:
        driverClassName: oracle.jdbc.OracleDriver
-       url: jdbc:oracle:thin:@small-server:49161:xe
-       ##url: jdbc:oracle:thin:@small-server:49161:xe
-       ##url: jdbc:oracle:thin:@LDBDDEDT2:2483/DE13EDT5
-       username: demo
-       password: demo
-       ##username: NB_ERDF_DEV
-       ##password: Its4bdd_NB_ERDF_DEV
+       url: jdbc:oracle:thin:@CHANGE_ME:49161:xe
+       username: CHANGE_ME
+       password: CHANGE_ME
        connectionTestQuery: SELECT 1 from DUAL
        minimumIdle: 5
        maxPoolSize: 20
        timeout: 60000
        meta:
-           filterSchema: DEMO
-           ##filterSchema: NB_ERDF_DEV
+           filterSchema: CHANGE_ME
            search-fk-type: oracle-by-name
            preload: false
            fixed-cached: true
@@ -56,17 +51,11 @@ spring:
        mode: HTML
        enabled: true
    
-#   datasource:
-#       url: jdbc:h2:~\h2-param-app;DB_CLOSE_ON_EXIT=FALSE
-#       username: sa
-#       password: 
-#       driver-class-name: org.h2.Driver
-   
    datasource:
-       url: jdbc:postgresql://small-server/demo
+       url: jdbc:postgresql://CHANGE_ME/MANAGED
        driver-class-name: org.postgresql.Driver
-       username: user
-       password: user
+       username: CHANGE_ME
+       password: CHANGE_ME
    
    servlet:
        multipart:

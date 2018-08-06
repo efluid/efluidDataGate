@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
@@ -15,7 +16,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.0.RELEASE</version>
+		<version>2.0.4.RELEASE</version>
 	</parent>
 
 	<modules>
@@ -28,23 +29,25 @@
 
 	<properties>
 
-		<java.version>1.8</java.version>
+		<java.version>10</java.version>
 
 		<!-- dependencies - libs -->
 		<dependency.zip4j.version>1.3.2</dependency.zip4j.version>
 		<dependency.ojdbc8.version>12.2.0.1</dependency.ojdbc8.version>
 		<dependency.plexus.version>0.0.7</dependency.plexus.version>
-		<dependency.maven-plugin-api.version>3.5.2</dependency.maven-plugin-api.version>
-		<dependency.maven-plugin-annotations.version>3.5</dependency.maven-plugin-annotations.version>
-		<dependency.maven-core.version>3.3.9</dependency.maven-core.version>
+		<dependency.maven-plugin-api.version>3.5.4</dependency.maven-plugin-api.version>
+		<dependency.maven-plugin-annotations.version>3.5.2</dependency.maven-plugin-annotations.version>
+		<dependency.maven-core.version>3.5.4</dependency.maven-core.version>
 		<dependency.reflections-utils.version>0.9.11</dependency.reflections-utils.version>
-        <dependency.spring-webmvc-pac4j.version>2.2.0</dependency.spring-webmvc-pac4j.version>
+		<dependency.spring-webmvc-pac4j.version>2.2.0</dependency.spring-webmvc-pac4j.version>
 		<dependency.pac4j-jee.version>3.0.0</dependency.pac4j-jee.version>
-        <dependency.pac4j.version>2.3.0</dependency.pac4j.version>
-        
+		<dependency.pac4j.version>2.3.0</dependency.pac4j.version>
+		<dependency.jaxb.version>2.3.0</dependency.jaxb.version>
+		<dependency.activation.version>1.1.1</dependency.activation.version>
 		<dependency.swagger-api.version>1.5.18</dependency.swagger-api.version>
 		<dependency.springfox-swagger.version>2.8.0</dependency.springfox-swagger.version>
 		<dependency.classmate.version>1.3.1</dependency.classmate.version>
+		<dependency.thymeleaf-layout.version>2.3.0</dependency.thymeleaf-layout.version>
 
 		<!-- dependencies - webjars -->
 		<dependency.bootstrap.version>4.0.0-2</dependency.bootstrap.version>
@@ -53,7 +56,7 @@
 		<dependency.swagger-ui.version>2.2.10</dependency.swagger-ui.version>
 
 		<!-- Fixed plugins -->
-		<plugin.maven-plugin.version>3.4</plugin.maven-plugin.version>
+		<plugin.maven-plugin.version>3.5.2</plugin.maven-plugin.version>
 
 	</properties>
 
@@ -106,7 +109,29 @@
 				<artifactId>ojdbc8</artifactId>
 				<version>${dependency.ojdbc8.version}</version>
 			</dependency>
-			
+
+			<!-- JEE dependencies need to be specified since JDK9 -->
+			<dependency>
+				<groupId>javax.xml.bind</groupId>
+				<artifactId>jaxb-api</artifactId>
+				<version>${dependency.jaxb.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.sun.xml.bind</groupId>
+				<artifactId>jaxb-core</artifactId>
+				<version>${dependency.jaxb.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.sun.xml.bind</groupId>
+				<artifactId>jaxb-impl</artifactId>
+				<version>${dependency.jaxb.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.activation</groupId>
+				<artifactId>activation</artifactId>
+				<version>${dependency.activation.version}</version>
+			</dependency>
+
 			<!-- Web Features -->
 
 			<dependency>
@@ -135,12 +160,12 @@
 			</dependency>
 
 			<!-- Pac4j related libraries -->
-			
-	        <dependency>
-	            <groupId>org.pac4j</groupId>
-	            <artifactId>spring-webmvc-pac4j</artifactId>
-	            <version>${dependency.spring-webmvc-pac4j.version}</version>
-	        </dependency>
+
+			<dependency>
+				<groupId>org.pac4j</groupId>
+				<artifactId>spring-webmvc-pac4j</artifactId>
+				<version>${dependency.spring-webmvc-pac4j.version}</version>
+			</dependency>
 
 			<!-- For basic Servlet integration of PAC4J -->
 			<dependency>
@@ -148,7 +173,7 @@
 				<artifactId>j2e-pac4j</artifactId>
 				<version>${dependency.pac4j-jee.version}</version>
 			</dependency>
-		
+
 			<dependency>
 				<groupId>org.pac4j</groupId>
 				<artifactId>pac4j-http</artifactId>
