@@ -62,7 +62,7 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
 
 	protected static final String[] TABLES_TYPES = { "TABLE"/* , "VIEW" */ };
 
-	@Value("${param-efluid.managed-datasource.meta.filterSchema}")
+	@Value("${param-efluid.managed-datasource.meta.filter-schema}")
 	protected String filterSchema;
 
 	@Value("${param-efluid.managed-datasource.meta.fixed-cached}")

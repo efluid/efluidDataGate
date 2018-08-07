@@ -2,72 +2,72 @@
 ## PARAMETER MANAGER CONFIG
 param-efluid:
 
-   managed-datasource:
-       driverClassName: oracle.jdbc.OracleDriver
-       url: jdbc:oracle:thin:@CHANGE_ME:49161:xe
-       username: CHANGE_ME
-       password: CHANGE_ME
-       connectionTestQuery: SELECT 1 from DUAL
-       minimumIdle: 5
-       maxPoolSize: 20
-       timeout: 60000
-       meta:
-           filterSchema: CHANGE_ME
-           search-fk-type: oracle-by-name
-           preload: false
-           fixed-cached: true
-       query: 
-           tableNamesProtected: true
-           columnNamesProtected: true
-           databaseDateFormat: dd-MM-yyyy HH:mm:ss
-       value:
-           keep-empty: false
-   
-   managed-updates:
-       check-update-missing-ids: true
-       check-delete-missing-ids: true
-
-   display:
-       details-index-max: 10000
-       combine-similar-diff-after: 10
-       
-   security:
-       salt: 12345678901234567890123456789012
-                  
-   details:
-       version: 1.1.1
+    managed-datasource:
+        driver-class-name: oracle.jdbc.OracleDriver
+        url: jdbc:oracle:thin:@CHANGE_ME:49161:xe
+        username: CHANGE_ME
+        password: CHANGE_ME
+        connection-test-query: SELECT 1 from DUAL
+        minimum-idle: 5
+        max-pool-size: 20
+        timeout: 60000
+        meta:
+            filter-schema: CHANGE_ME
+            search-fk-type: oracle-by-name
+            preload: false
+            fixed-cached: true
+        query: 
+            table-names-protected: true
+            column-names-protected: true
+            database-date-format: dd-MM-yyyy HH:mm:ss
+        value:
+            keep-empty: false
+    
+    managed-updates:
+        check-update-missing-ids: true
+        check-delete-missing-ids: true
+ 
+    display:
+        details-index-max: 10000
+        combine-similar-diff-after: 10
+        
+    security:
+        salt: 12345678901234567890123456789012
+                   
+    details:
+        version: @project.version@
 
 ## TECH FEATURES CUSTOM
 spring:
-   profiles:
-       active: prod
-
-   thymeleaf:
-       cache: false
-       check-template: true
-       check-template-location: true
-       content-type: text/html
-       encoding: UTF-8
-       mode: HTML
-       enabled: true
-   
-   datasource:
-       url: jdbc:postgresql://CHANGE_ME/MANAGED
-       driver-class-name: org.postgresql.Driver
-       username: CHANGE_ME
-       password: CHANGE_ME
-   
-   servlet:
-       multipart:
-           max-request-size: 51MB
-           max-file-size: 50MB
-   
-   jpa:
-       open-in-view: false
-       show-sql: true
-       hibernate:
-           ddl-auto: none
+    profiles:
+        active: prod
+ 
+    thymeleaf:
+        cache: false
+        check-template: true
+        check-template-location: true
+        content-type: text/html
+        encoding: UTF-8
+        mode: HTML
+        enabled: true
     
+    datasource:
+        url: jdbc:postgresql://CHANGE_ME/MANAGED
+        driver-class-name: org.postgresql.Driver
+        username: CHANGE_ME
+        password: CHANGE_ME
+    
+    servlet:
+        multipart:
+            max-request-size: 51MB
+            max-file-size: 50MB
+    
+    jpa:
+        open-in-view: false
+        show-sql: true
+        hibernate:
+            ddl-auto: none
+     
 ## WEB SERVER CONFIG
 server:
     contextPath:

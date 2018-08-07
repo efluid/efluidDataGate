@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -16,6 +17,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import fr.uem.efluid.config.ManagedDatasourceConfig.DataSourceProperties;
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
@@ -27,19 +29,22 @@ import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
  */
 @Configuration
 @Order(10)
-@ConfigurationProperties(prefix = "param-efluid.managed-datasource")
+@EnableConfigurationProperties(DataSourceProperties.class)
 @Profile("!test")
-public class ManagedDatasourceConfig extends CustomDataSourceParameters {
+public class ManagedDatasourceConfig {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ManagedDatasourceConfig.class);
+
+	@Autowired
+	private DataSourceProperties props;
 
 	@Autowired
 	private EntityManagerFactory defaultEntityManagerFactory;
 
 	@Bean
 	public JdbcTemplate managedDatabaseJdbcTemplate() {
-		LOGGER.info("[MANAGED DB] Init access to managed DB {}", this.getUrl());
-		return DatasourceUtils.createJdbcTemplate(this);
+		LOGGER.info("[MANAGED DB] Init access to managed DB {}", this.props.getUrl());
+		return DatasourceUtils.createJdbcTemplate(this.props);
 	}
 
 	/**
@@ -62,9 +67,19 @@ public class ManagedDatasourceConfig extends CustomDataSourceParameters {
 	@Bean
 	public QueryGenerationRules managedQueryGenerationRules() {
 		// Use local query config directly
-		QueryGenerationRules rules = this.getQuery();
+		QueryGenerationRules rules = this.props.getQuery();
 		LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
 				Boolean.valueOf(rules.isColumnNamesProtected()), Boolean.valueOf(rules.isTableNamesProtected()));
 		return rules;
+	}
+
+	/**
+	 * @author elecomte
+	 * @since v0.0.8
+	 * @version 1
+	 */
+	@ConfigurationProperties(prefix = "param-efluid.managed-datasource")
+	public static class DataSourceProperties extends CustomDataSourceParameters {
+		// No more entries
 	}
 }

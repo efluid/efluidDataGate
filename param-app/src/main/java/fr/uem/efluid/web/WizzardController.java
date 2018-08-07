@@ -38,6 +38,9 @@ import fr.uem.efluid.utils.WebUtils;
 public class WizzardController {
 
 	@Autowired
+	private ApplicationDetailsService applicationDetailsService;
+	
+	@Autowired
 	private DictionaryManagementService dictionaryManagementService;
 
 	@Autowired
@@ -56,7 +59,9 @@ public class WizzardController {
 	 * @return
 	 */
 	@RequestMapping(path = "/", method = GET)
-	public String welcome() {
+	public String welcome(Model model) {
+
+		model.addAttribute("info", this.applicationDetailsService.getInfo());
 
 		return "wizzard/welcome";
 	}

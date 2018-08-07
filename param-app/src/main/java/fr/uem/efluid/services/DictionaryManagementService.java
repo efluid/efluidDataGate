@@ -578,7 +578,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.projects.findAll());
-		VersionPackage vers = new VersionPackage(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now())
+		VersionPackage vers = new VersionPackage(VersionExportPackage.VERSIONS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.versions.findAll());
 		DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.DICT_EXPORT, LocalDateTime.now())
 				.initWithContent(this.dictionary.findAll());

@@ -7,9 +7,11 @@ package fr.uem.efluid.services.types;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public class ApplicationDetails {
+
+	private ApplicationInfo info;
 
 	private String dbUrl;
 	private long domainsCount;
@@ -191,5 +193,20 @@ public class ApplicationDetails {
 	 */
 	public void setVersionsCountForProject(long versionsCountForProject) {
 		this.versionsCountForProject = versionsCountForProject;
+	}
+
+	/**
+	 * @return the info
+	 */
+	public ApplicationInfo getInfo() {
+		return this.info;
+	}
+
+	/**
+	 * @param info
+	 *            the info to set
+	 */
+	public void setInfo(ApplicationInfo info) {
+		this.info = info;
 	}
 }

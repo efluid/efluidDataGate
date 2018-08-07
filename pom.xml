@@ -74,6 +74,19 @@
 					</configuration>
 				</plugin>
 
+				<!-- Resource filtering syntax compliant with spring EL -->
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<configuration>
+						<encoding>UTF-8</encoding>
+						<delimiters>
+							<delimiter>@</delimiter>
+						</delimiters>
+						<useDefaultDelimiters>false</useDefaultDelimiters>
+					</configuration>
+				</plugin>
+				
 				<!-- For maven plugin build -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -89,6 +102,14 @@
 
 			</plugins>
 		</pluginManagement>
+
+		<!-- Always filter resources for build stamping -->
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
 
 	</build>
 

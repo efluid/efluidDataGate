@@ -21,6 +21,7 @@ import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.ApplicationDetails;
+import fr.uem.efluid.services.types.ApplicationInfo;
 import fr.uem.efluid.services.types.ProjectData;
 
 /**
@@ -63,6 +64,9 @@ public class ApplicationDetailsService {
 	@Autowired
 	private ProjectManagementService projectService;
 
+	@Autowired
+	private ApplicationInfo info;
+
 	@Value("${param-efluid.managed-datasource.url}")
 	private String managedDbUrl;
 
@@ -89,6 +93,7 @@ public class ApplicationDetailsService {
 
 		ApplicationDetails details = new ApplicationDetails();
 
+		details.setInfo(this.getInfo());
 		details.setCommitsCount(this.commits.count());
 		details.setDbUrl(this.managedDbUrl);
 		details.setIndexCount(this.index.count());
@@ -116,6 +121,13 @@ public class ApplicationDetailsService {
 		if (!this.wizzardCompleted) {
 			LOGGER.info("Application is started in wizzard mode : no data found localy");
 		}
+	}
+
+	/**
+	 * @return
+	 */
+	public ApplicationInfo getInfo() {
+		return this.info;
 	}
 
 	/**

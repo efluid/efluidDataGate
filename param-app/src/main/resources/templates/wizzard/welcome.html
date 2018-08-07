@@ -4,7 +4,7 @@
 </head>
 <body>
 	<span layout:fragment="content">
-		<h3>L'application n'a actuellement aucune configuration en place.</h3>
+		<h3>L'application (instance <span th:text="${info.instanceName}">SOURCE</span>, version applicative v<span th:text="${info.version}">1</span>) n'a actuellement aucune configuration en place.</h3>
 		<br/>
 		<div class="alert alert-primary" role="alert">
 			Ce wizzard va vous permettre de préparer les réglages nécessaires.

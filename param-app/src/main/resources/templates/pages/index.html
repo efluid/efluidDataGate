@@ -4,6 +4,8 @@
 </head>
 <body>
 	<span layout:fragment="content">
+		<h3>Instance <span th:text="${details.info.instanceName}">SOURCE</span>, version applicative v<span th:text="${details.info.version}">1</span></h3>
+		<hr/>
 		<h5>Détails techniques</h5>
 		<ul>
 			<li>Base de données source : <span th:text="${details.dbUrl}">ORACLE_DB_SERVER_123, schéma ABCDEF</span></li>
