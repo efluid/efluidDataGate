@@ -1,6 +1,10 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import static fr.uem.efluid.utils.ErrorType.DIC_ENTRY_NOT_FOUND;
+import static fr.uem.efluid.utils.ErrorType.DIC_KEY_NOT_UNIQ;
+import static fr.uem.efluid.utils.ErrorType.DIC_NOT_REMOVABLE;
+import static fr.uem.efluid.utils.ErrorType.DIC_NO_KEY;
+import static fr.uem.efluid.utils.ErrorType.DOMAIN_NOT_REMOVABLE;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -118,6 +122,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		else {
 			LOGGER.info("Create version {} in current project", name);
 			version = new Version();
+			version.setUuid(UUID.randomUUID());
 			version.setName(name);
 			version.setCreatedTime(LocalDateTime.now());
 			version.setUpdatedTime(LocalDateTime.now());
@@ -134,8 +139,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		this.projectService.assertCurrentUserHasSelectedProject();
 		Project project = this.projectService.getCurrentSelectedProjectEntity();
+		Version last = this.versions.getLastVersionForProject(project);
 
-		return VersionData.fromEntity(this.versions.getLastVersionForProject(project));
+		return VersionData.fromEntity(last, this.versions.isVersionUpdatable(last.getUuid()));
 	}
 
 	/**
@@ -156,10 +162,27 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		this.projectService.assertCurrentUserHasSelectedProject();
 		Project project = this.projectService.getCurrentSelectedProjectEntity();
+		Version last = this.versions.getLastVersionForProject(project);
 
 		return this.versions.findByProject(project).stream()
-				.map(VersionData::fromEntity)
+				.map(v -> getCompletedVersion(v, last))
 				.collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>
+	 * For a given version entity, get completed data, regarding "last version" of current
+	 * project for some rules
+	 * </p>
+	 * 
+	 * @param version
+	 * @param lastProjectVersion
+	 * @return <code>version</code> populated as a <tt>VersionData</tt>
+	 */
+	private VersionData getCompletedVersion(Version version, Version lastProjectVersion) {
+
+		boolean isLastVersion = version.getUuid().equals(lastProjectVersion.getUuid());
+		return VersionData.fromEntity(version, isLastVersion ? this.versions.isVersionUpdatable(lastProjectVersion.getUuid()) : false);
 	}
 
 	/**
@@ -518,7 +541,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.initWithContent(Arrays.asList(project));
 
 		// Versions for project
-		VersionPackage vers = new VersionPackage(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now())
+		VersionPackage vers = new VersionPackage(VersionExportPackage.PARTIAL_VERSIONS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.versions.findByProject(project));
 
 		// Will filter by domains from package

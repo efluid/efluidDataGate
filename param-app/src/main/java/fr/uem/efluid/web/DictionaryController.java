@@ -52,7 +52,10 @@ public class DictionaryController extends CommonController {
 			return REDIRECT_SELECT;
 		}
 
-		model.addAttribute("version", this.dictionaryManagementService.getAvailableVersions());
+		// For formatting
+		WebUtils.addTools(model);
+		
+		model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
 		model.addAttribute("checkVersion", Boolean.valueOf(this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion()));
 
 		return "pages/versions";

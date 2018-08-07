@@ -9,7 +9,8 @@
 	        	<h5>Identification du lot de modifications</h5>
 	        	
                 <div class="form-group">
-	        		<span>Projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></span>
+	        		<span>Projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span>, 
+	        		pour la version <span class="version-name" th:text="${version.name}"></span>
 				</div>
 	        	
                 <table class="table">

@@ -12,15 +12,18 @@ public class VersionView {
 	private final String name;
 
 	private final LocalDateTime updatedTime;
+	
+	private final boolean canUpdate;
 
 	/**
 	 * @param name
 	 * @param createdTime
 	 */
-	public VersionView(String name, LocalDateTime updatedTime) {
+	public VersionView(String name, LocalDateTime updatedTime, boolean canUpdate) {
 		super();
 		this.name = name;
 		this.updatedTime = updatedTime;
+		this.canUpdate = canUpdate;
 	}
 
 	/**
@@ -35,6 +38,10 @@ public class VersionView {
 	 */
 	public LocalDateTime getUpdatedTime() {
 		return this.updatedTime;
+	}
+
+	public boolean isCanUpdate() {
+		return this.canUpdate;
 	}
 
 }

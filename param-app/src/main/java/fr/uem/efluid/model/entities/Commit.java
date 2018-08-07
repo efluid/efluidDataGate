@@ -69,6 +69,9 @@ public class Commit implements Shared {
 	@ManyToOne(optional = false)
 	private Project project;
 
+	@ManyToOne(optional = false)
+	private Version version;
+
 	@Transient
 	private transient boolean refOnly = false;
 
@@ -255,6 +258,20 @@ public class Commit implements Shared {
 	}
 
 	/**
+	 * @return
+	 */
+	public Version getVersion() {
+		return this.version;
+	}
+
+	/**
+	 * @param version
+	 */
+	public void setVersion(Version version) {
+		this.version = version;
+	}
+
+	/**
 	 * @return the refOnly
 	 */
 	public boolean isRefOnly() {
@@ -284,6 +301,7 @@ public class Commit implements Shared {
 					.with("has", getHash())
 					.with("ema", getOriginalUserEmail())
 					.with("pro", getProject().getUuid())
+					.with("ver", getVersion().getUuid())
 					.toString();
 		}
 
@@ -331,7 +349,8 @@ public class Commit implements Shared {
 						}).collect(Collectors.toList()));
 					}
 				})
-				.applyUUID("pro", v -> setProject(new Project(v)));
+				.applyUUID("pro", v -> setProject(new Project(v)))
+				.applyUUID("ver", v -> setVersion(new Version(v)));
 	}
 
 	/**

@@ -40,7 +40,7 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 	 * @param projectUuid
 	 * @return
 	 */
-	@Query(value = "select uuid from versions where created_time = "
+	@Query(value = "select concat(uuid,'') from versions where created_time = "
 			+ " (select max(created_time) from versions where project_uuid = :projectUuid) "
 			+ " and project_uuid = :projectUuid", nativeQuery = true)
 	Object _internal_findLastVersionUuidForProject(@Param("projectUuid") UUID projectUuid);
@@ -89,7 +89,10 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 
 		List<Object[]> res = _internal_findLastDictionaryUpdateForProject(project.getUuid());
 
-		return res.stream().map(a -> RuntimeValuesUtils.localDateTime((Date) a[1])).anyMatch(d -> d.isAfter(ver.getUpdatedTime()));
+		return res.stream()
+				.filter(a -> a[1] != null)
+				.map(a -> RuntimeValuesUtils.localDateTime((Date) a[1]))
+				.anyMatch(d -> d.isAfter(ver.getUpdatedTime()));
 	}
 
 	/**
@@ -98,4 +101,11 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 	 */
 	@Query(value = "select count(*) from versions d where d.project_uuid = :projectUuid", nativeQuery = true)
 	int countForProject(@Param("projectUuid") UUID projectUuid);
+
+	/**
+	 * @param versionUuid
+	 * @return
+	 */
+	@Query(value = "select count(*) = 0 from commits where version_uuid = :versionUuid", nativeQuery = true)
+	boolean isVersionUpdatable(@Param("versionUuid") UUID versionUuid);
 }

@@ -79,6 +79,16 @@
 						Il existe déjà un projet avec le nom "<span th:text="${payload}">projet</span>". Merci de choisir un nom unique pour chaque
 						nouveau projet
 					</p>
+					<p th:case="'VERSION_NOT_EXIST'">
+						Aucune version n'a été définie pour le dictionnaire actuel. La préparation d'un lot n'est pas possible en l'absence de version : 
+						créez une version pour le dictionnaire actuel <a href="./versions.html" th:href="@{/ui/versions}">ici</a> puis recommencez la préparation du lot.
+					</p>
+					<p th:case="'VERSION_NOT_UP_TO_DATE'">
+						La dernière version <span class="version-name" th:text="${payload}">0.1.2</span> n'embarque pas certaines opérations réalisées 
+						sur le dictionnaire. Pour pouvoir préparer un lot, la dernière version spécifiée doit être à jour avec toutes les modifications
+						du dictionnaire. Vous pouvez mettre à jour les versions pour le dictionnaire actuel 
+						<a href="./versions.html" th:href="@{/ui/versions}">ici</a>, puis relancer une préparation de lot.
+					</p>
 					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
 				</span>
 			</span>

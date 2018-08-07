@@ -38,6 +38,8 @@ public class CommitDetails {
 
 	private long size;
 
+	private String versionName;
+
 	private CommitDetails() {
 		super();
 	}
@@ -214,6 +216,14 @@ public class CommitDetails {
 		this.size = size;
 	}
 
+	public String getVersionName() {
+		return this.versionName;
+	}
+
+	public void setVersionName(String versionName) {
+		this.versionName = versionName;
+	}
+
 	/**
 	 * @param commit
 	 * @return
@@ -230,6 +240,7 @@ public class CommitDetails {
 		details.setOriginalUserEmail(commit.getOriginalUserEmail());
 		details.setUuid(commit.getUuid());
 		details.setMergeSources(commit.getMergeSources());
+		details.setVersionName(commit.getVersion().getName());
 
 		return details;
 	}

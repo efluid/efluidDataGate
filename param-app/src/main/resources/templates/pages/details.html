@@ -18,6 +18,7 @@
 					<li><b>Créé par</b> : <span th:text="${details.originalUserEmail}">perso@email.com</span></li>
 					<li><b>Créé le</b> : <span th:text="${details.createdTime}">jeudi</span></li>
 					<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>
+					<li><b>Version du dictionnaire</b> : <span class="version-name" th:text="${details.versionName}">0.1.2</span></li>
 					<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${details.importedTime}">vendredi</span></li>
 				</ul>
 			</p>

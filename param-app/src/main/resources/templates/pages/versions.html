@@ -6,29 +6,41 @@
     <span layout:fragment="content">
 		<h5>Gestion des versions pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
         <span class="help">
-        	Les versions sont specifiées pour le dictionnaire courant. Des vérifications sont effectuées dans les imports / exports de lot pour 
-        	vérifier que les versions sont à jour et en place.
+        	Les versions sont specifiées pour le dictionnaire courant. Les lots de modifications sont associés à une version du dictionnaire, et des
+        	vérifications sont effectuées dans les imports / exports de lot pour vérifier que les versions sont à jour et en place.
+        	Une version peut être mise à jour tant qu'aucun lot n'y est associé.
         </span>
-        <span th:if="${checkVersion}" class="remark">
+        <span th:if="${versions == null || versions.isEmpty()}" class="important-remark" id="versRemark">
+        	Aucune version n'a encore été définie pour le projet courant. Les echanges de lots de modifications ne sont pour l'instant pas possibles.
+        	<br/><br/>
+        </span>
+        <span th:if="${versions != null && !versions.isEmpty() && checkVersion}" class="important-remark" id="versRemark">
         	Depuis la dernière mise à jour de version des mises à jour ont eu lieu dans le dictionnaire. Créer une nouvelle version pour les intégrer.
+        	<br/><br/>
         </span>
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th scope="col" width="70%">Versions</th>
+                    <th scope="col" width="50%">Versions</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
+                    <th scope="col" width="10%">&nbsp;</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="version : ${versions}" th:id="${version.name}">
-                     <td th:text="${version.name}">1.2.5-SNAPSHOT</td>
-                     <td th:text="${version.createdTime}">Lundi</td>
-                     <td th:text="${version.updatedTime}">Mardi</td>
+                     <td class="version-name" th:text="${version.name}">
+                     	1.2.5-SNAPSHOT
+                     </td>
+                     <td th:text="${custom.format(version.createdTime)}">Lundi</td>
+                     <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
+                     <td>
+                     	<button th:if="${version.isCanUpdate()}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
+                     </td>
 			     </tr>
 			     <tr id="versionListInjectBefore">
 			         <td><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
-			         <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+			         <td colspan="3"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
 			     </tr>
 			</tbody>
 		</table>
@@ -45,15 +57,27 @@
 			}
 			$.post("/ui/versions/" + inputName.val(), null, (data, status) => {
 				showSuccess("Version ajoutée avec succès");
-		        var newVersionRow = '<tr id="' + data.name + '"><td>' + data.name + '</td><td>A l''instant</td><td>A l''instant</td></tr>';
+				// Remove other update buttons
+				$("button.updateButton").remove();
+		        var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
 				$("#versionListInjectBefore").before(newVersionRow);
 				inputName.val("");
+				$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.parentElement.id)); // Refresh updates
 		    });
 		};
     
+		// Update row button
+		const updateButtonAction = (versionName) => {
+			hideDisplays();
+			$.post("/ui/versions/" + versionName, null, (data, status) => {
+				window.location.replace("/ui/versions"); // Refresh page
+		    });
+		};
+		
     	// Init actions
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);
+			$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.id));
 		}); 
     </script>
 </body>

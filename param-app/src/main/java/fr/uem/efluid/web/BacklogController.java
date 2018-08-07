@@ -49,7 +49,7 @@ public class BacklogController extends CommonController {
 
 	@Autowired
 	private PilotableCommitPreparationService pilotableCommitService;
-
+	
 	@Autowired
 	private DictionaryManagementService dictService;
 
@@ -106,6 +106,9 @@ public class BacklogController extends CommonController {
 		// Get updated preparation
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
 
+		// Get current version
+		model.addAttribute("version", this.dictService.getLastVersion());
+		
 		return "pages/commit";
 	}
 

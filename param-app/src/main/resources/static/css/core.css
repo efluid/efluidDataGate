@@ -148,6 +148,11 @@ select.select-column {
     font-weight: bold;
 }
 
+.version-name {
+	color: Maroon;
+    font-weight: bold;
+}
+
 .action-line {
     font-weight: normal;
     color: black;

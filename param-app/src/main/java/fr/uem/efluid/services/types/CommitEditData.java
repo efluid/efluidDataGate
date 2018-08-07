@@ -33,6 +33,8 @@ public class CommitEditData {
 
 	private String domainNames;
 
+	private String versionName;
+	
 	private LocalDateTime rangeStartTime;
 
 	/**
@@ -148,6 +150,20 @@ public class CommitEditData {
 	}
 
 	/**
+	 * @return
+	 */
+	public String getVersionName() {
+		return this.versionName;
+	}
+
+	/**
+	 * @param versionName
+	 */
+	public void setVersionName(String versionName) {
+		this.versionName = versionName;
+	}
+
+	/**
 	 * @return the mergeSources
 	 */
 	public List<UUID> getMergeSources() {
@@ -191,6 +207,7 @@ public class CommitEditData {
 		edit.setMergeSources(commit.getMergeSources());
 		edit.setOriginalUserEmail(commit.getOriginalUserEmail());
 		edit.setUuid(commit.getUuid());
+		edit.setVersionName(commit.getVersion().getName());
 
 		return edit;
 	}

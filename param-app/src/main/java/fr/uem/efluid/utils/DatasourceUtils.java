@@ -7,6 +7,8 @@ import java.sql.SQLException;
 
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -20,6 +22,8 @@ import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
  * @version 1
  */
 public final class DatasourceUtils {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(DatasourceUtils.class);
 
 	public static final String MANAGED_TRANSACTION_MANAGER = "managedTransactionManager";
 
@@ -55,18 +59,22 @@ public final class DatasourceUtils {
 			kc.setMinimumIdle(params.getMinimumIdle());
 			kc.setMaximumPoolSize(params.getMaxPoolSize());
 
+			LOGGER.debug("[DATASOURCE] Datasource initialized with driver {}, url {}, username {}",
+					params.getDriverClassName(), params.getUrl(), params.getUsername());
+
 			return kc;
 		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | SQLException
 				| IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+			LOGGER.error("[DATASOURCE] Error on datasource init. Check configuration properties from param-efluid.managed-datasource", e);
 			throw new ApplicationException(ErrorType.WRONG_DS_TYPE,
-					"Cannot init Driver " + params.getDriverClassName());
+					"Cannot init Driver " + params.getDriverClassName(), e);
 		}
 	}
 
 	/**
 	 * <p>
-	 * A basic definition for a datasource spec. App needs 2 : one "core" DB for own
-	 * data (using standard spring boot config), and one "parameters" DB for managed
+	 * A basic definition for a datasource spec. App needs 2 : one "core" DB for own data
+	 * (using standard spring boot config), and one "parameters" DB for managed
 	 * application, built from this configuration model.
 	 * 
 	 * @author elecomte
@@ -100,7 +108,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param driverClassName the driverClassName to set
+		 * @param driverClassName
+		 *            the driverClassName to set
 		 */
 		public void setDriverClassName(String driverClassName) {
 			this.driverClassName = driverClassName;
@@ -114,7 +123,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param url the url to set
+		 * @param url
+		 *            the url to set
 		 */
 		public void setUrl(String url) {
 			this.url = url;
@@ -128,7 +138,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param connectionTestQuery the connectionTestQuery to set
+		 * @param connectionTestQuery
+		 *            the connectionTestQuery to set
 		 */
 		public void setConnectionTestQuery(String connectionTestQuery) {
 			this.connectionTestQuery = connectionTestQuery;
@@ -142,7 +153,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param minimumIdle the minimumIdle to set
+		 * @param minimumIdle
+		 *            the minimumIdle to set
 		 */
 		public void setMinimumIdle(int minimumIdle) {
 			this.minimumIdle = minimumIdle;
@@ -156,7 +168,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param maxPoolSize the maxPoolSize to set
+		 * @param maxPoolSize
+		 *            the maxPoolSize to set
 		 */
 		public void setMaxPoolSize(int maxPoolSize) {
 			this.maxPoolSize = maxPoolSize;
@@ -170,7 +183,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param timeout the timeout to set
+		 * @param timeout
+		 *            the timeout to set
 		 */
 		public void setTimeout(int timeout) {
 			this.timeout = timeout;
@@ -184,7 +198,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param username the username to set
+		 * @param username
+		 *            the username to set
 		 */
 		public void setUsername(String username) {
 			this.username = username;
@@ -198,7 +213,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param password the password to set
+		 * @param password
+		 *            the password to set
 		 */
 		public void setPassword(String password) {
 			this.password = password;
@@ -212,7 +228,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param query the query to set
+		 * @param query
+		 *            the query to set
 		 */
 		public void setQuery(CustomQueryGenerationRules query) {
 			this.query = query;
@@ -253,7 +270,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param columnNamesProtected the columnNamesProtected to set
+		 * @param columnNamesProtected
+		 *            the columnNamesProtected to set
 		 */
 		public void setColumnNamesProtected(boolean columnNamesProtected) {
 			this.columnNamesProtected = columnNamesProtected;
@@ -268,7 +286,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param tableNamesProtected the tableNamesProtected to set
+		 * @param tableNamesProtected
+		 *            the tableNamesProtected to set
 		 */
 		public void setTableNamesProtected(boolean tableNamesProtected) {
 			this.tableNamesProtected = tableNamesProtected;
@@ -283,7 +302,8 @@ public final class DatasourceUtils {
 		}
 
 		/**
-		 * @param databaseDateFormat the databaseDateFormat to set
+		 * @param databaseDateFormat
+		 *            the databaseDateFormat to set
 		 */
 		public void setDatabaseDateFormat(String databaseDateFormat) {
 			this.databaseDateFormat = databaseDateFormat;

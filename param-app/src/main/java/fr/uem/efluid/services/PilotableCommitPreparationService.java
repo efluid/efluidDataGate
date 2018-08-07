@@ -1,6 +1,14 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import static fr.uem.efluid.utils.ErrorType.COMMIT_MISS_COMMENT;
+import static fr.uem.efluid.utils.ErrorType.IMPORT_RUNNING;
+import static fr.uem.efluid.utils.ErrorType.PREPARATION_BIZ_FAILURE;
+import static fr.uem.efluid.utils.ErrorType.PREPARATION_CANNOT_START;
+import static fr.uem.efluid.utils.ErrorType.PREPARATION_INTERRUPTED;
+import static fr.uem.efluid.utils.ErrorType.TABLE_NAME_INVALID;
+import static fr.uem.efluid.utils.ErrorType.TABLE_WRONG_REF;
+import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_EXIST;
+import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_UP_TO_DATE;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -24,12 +32,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Project;
+import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.ExportFile;
@@ -61,6 +72,7 @@ import fr.uem.efluid.utils.FormatUtils;
  * @since v0.0.1
  * @version 1
  */
+@Transactional
 @Service
 public class PilotableCommitPreparationService {
 
@@ -71,6 +83,9 @@ public class PilotableCommitPreparationService {
 
 	@Autowired
 	private DictionaryRepository dictionary;
+
+	@Autowired
+	private VersionRepository versions;
 
 	@Autowired
 	private CommitService commitService;
@@ -159,6 +174,11 @@ public class PilotableCommitPreparationService {
 				// Default will provides existing if still running
 				return getCurrentCommitPreparation();
 			}
+		}
+
+		// For new commit, check versions
+		else {
+			assertDictionaryVersionIsOkForProject(projectUuid);
 		}
 
 		LOGGER.info("Request for a new commit preparation - start a new one");
@@ -276,7 +296,8 @@ public class PilotableCommitPreparationService {
 
 		// Completion needs all completed
 		return this.currents.values().stream().allMatch(p -> p.getStatus() == PilotedCommitStatus.COMMIT_CAN_PREPARE)
-				? PilotedCommitStatus.COMMIT_CAN_PREPARE : PilotedCommitStatus.DIFF_RUNNING;
+				? PilotedCommitStatus.COMMIT_CAN_PREPARE
+				: PilotedCommitStatus.DIFF_RUNNING;
 	}
 
 	/**
@@ -753,6 +774,33 @@ public class PilotableCommitPreparationService {
 		else if (!this.managedDesc.isTableExists(entry.getTableName())) {
 			current.fail(new ApplicationException(TABLE_NAME_INVALID, "For dict entry " + entry.getUuid() + " the table name \""
 					+ entry.getTableName() + "\" is not a valid one in managed DB", entry.getTableName()));
+		}
+	}
+
+	/**
+	 * <p>
+	 * Check that required version details for project dictionary are specified and valid.
+	 * Version is associated to commit definition, so a valid and up-to-date version is
+	 * required *
+	 * </p>
+	 * 
+	 * @param projectUuid
+	 */
+	private void assertDictionaryVersionIsOkForProject(UUID projectUuid) {
+
+		Project project = new Project(projectUuid);
+
+		Version last = this.versions.getLastVersionForProject(project);
+
+		// At least one version
+		if (last == null) {
+			throw new ApplicationException(VERSION_NOT_EXIST,
+					"Project " + projectUuid + " has no specified version. Commit cannot be created");
+		}
+
+		if (this.versions.hasDictionaryUpdatesAfterLastVersionForProject(project)) {
+			throw new ApplicationException(VERSION_NOT_UP_TO_DATE, "Project " + projectUuid + " has a version (" + last.getName()
+					+ ") not up-to-date with last updates. Commit cannot be created", last.getName());
 		}
 	}
 

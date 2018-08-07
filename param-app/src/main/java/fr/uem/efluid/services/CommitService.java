@@ -30,11 +30,13 @@ import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.LobPropertyRepository;
+import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.CommitPackage;
@@ -104,6 +106,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private ProjectManagementService projectService;
+
+	@Autowired
+	private VersionRepository versions;
 
 	/**
 	 * <p>
@@ -226,7 +231,7 @@ public class CommitService extends AbstractApplicationService {
 
 		this.projectService.assertCurrentUserHasSelectedProject();
 		Project project = this.projectService.getCurrentSelectedProjectEntity();
-		
+
 		LOGGER.debug("Request for details on existing commit {}", commitUUID);
 
 		// Must exist
@@ -318,65 +323,52 @@ public class CommitService extends AbstractApplicationService {
 		LOGGER.debug("Process apply and saving of a new commit with state {} into project {}", prepared.getPreparingState(),
 				prepared.getProjectUuid());
 
-		Commit newCommit = CommitEditData.toEntity(prepared.getCommitData());
-		newCommit.setCreatedTime(LocalDateTime.now());
-		newCommit.setUser(new User(getCurrentUser().getLogin()));
-		newCommit.setOriginalUserEmail(getCurrentUser().getEmail());
-		newCommit.setState(prepared.getPreparingState());
-		newCommit.setProject(new Project(prepared.getProjectUuid()));
-
-		// Prepared commit uuid
-		UUID commitUUID = UUID.randomUUID();
-
-		// UUID generate (not done by HBM / DB)
-		newCommit.setUuid(commitUUID);
-
 		// Init commit
-		this.commits.save(newCommit);
+		final Commit commit = createCommit(prepared);
 
-		LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commitUUID);
+		LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commit.getUuid());
 
 		List<IndexEntry> entries = prepared.getPreparedContent().stream()
 				.flatMap(l -> this.diffs.splitCombinedSimilar(l.getDiff()).stream())
 				.filter(PreparedIndexEntry::isSelected)
 				.map(PreparedIndexEntry::toEntity)
-				.peek(e -> e.setCommit(newCommit))
+				.peek(e -> e.setCommit(commit))
 				.collect(Collectors.toList());
 
-		LOGGER.info("Prepared index with {} items for new commit {}", Integer.valueOf(entries.size()), commitUUID);
+		LOGGER.info("Prepared index with {} items for new commit {}", Integer.valueOf(entries.size()), commit.getUuid());
 
 		LOGGER.debug("New commit {} of state {} with comment {} prepared with {} index lines",
-				newCommit.getUuid(), prepared.getPreparingState(), newCommit.getComment(), Integer.valueOf(entries.size()));
+				commit.getUuid(), prepared.getPreparingState(), commit.getComment(), Integer.valueOf(entries.size()));
 
 		// Prepare used lobs
 		List<LobProperty> newLobs = this.diffs.prepareUsedLobsForIndex(entries, prepared.getDiffLobs());
 
-		LOGGER.info("Start saving {} index items for new commit {}", Integer.valueOf(entries.size()), commitUUID);
+		LOGGER.info("Start saving {} index items for new commit {}", Integer.valueOf(entries.size()), commit.getUuid());
 
 		// Save index and set back to commit with bi-directional link
-		newCommit.setIndex(this.indexes.saveAll(entries));
+		commit.setIndex(this.indexes.saveAll(entries));
 
-		LOGGER.info("Start saving {} lobs items for new commit {}", Integer.valueOf(newLobs.size()), commitUUID);
+		LOGGER.info("Start saving {} lobs items for new commit {}", Integer.valueOf(newLobs.size()), commit.getUuid());
 
 		// Add commit to lobs and save
-		newLobs.forEach(l -> l.setCommit(newCommit));
+		newLobs.forEach(l -> l.setCommit(commit));
 		this.lobs.saveAll(newLobs);
 
 		// Updated commit link
-		this.commits.save(newCommit);
+		this.commits.save(commit);
 
 		// For merge : apply (will rollback previous steps if error found)
 		if (prepared.getPreparingState() == CommitState.MERGED) {
 			LOGGER.info("Processing merge commit {} : now apply all {} modifications prepared from imported values",
-					commitUUID, Integer.valueOf(entries.size()));
+					commit.getUuid(), Integer.valueOf(entries.size()));
 			this.applyDiffService.applyDiff(entries, prepared.getDiffLobs());
-			LOGGER.debug("Processing merge commit {} : diff applied with success", commitUUID);
+			LOGGER.debug("Processing merge commit {} : diff applied with success", commit.getUuid());
 		}
 
-		LOGGER.info("Commit {} saved with {} items and {} lobs", commitUUID, Integer.valueOf(entries.size()),
+		LOGGER.info("Commit {} saved with {} items and {} lobs", commit.getUuid(), Integer.valueOf(entries.size()),
 				Integer.valueOf(newLobs.size()));
 
-		return commitUUID;
+		return commit.getUuid();
 	}
 
 	/**
@@ -487,6 +479,36 @@ public class CommitService extends AbstractApplicationService {
 
 		return result;
 
+	}
+
+	/**
+	 * @param prepared
+	 * @return
+	 */
+	private Commit createCommit(PilotedCommitPreparation<?> prepared) {
+
+		Project project = new Project(prepared.getProjectUuid());
+		Version version = this.versions.getLastVersionForProject(project);
+
+		LOGGER.debug("Current project version is \"{}\" ({}). Will not check if dictionnary was modified", version.getName(),
+				version.getUuid());
+
+		Commit newCommit = CommitEditData.toEntity(prepared.getCommitData());
+		newCommit.setCreatedTime(LocalDateTime.now());
+		newCommit.setUser(new User(getCurrentUser().getLogin()));
+		newCommit.setOriginalUserEmail(getCurrentUser().getEmail());
+		newCommit.setState(prepared.getPreparingState());
+		newCommit.setProject(project);
+		newCommit.setVersion(version);
+
+		// Prepared commit uuid
+		UUID commitUUID = UUID.randomUUID();
+
+		// UUID generate (not done by HBM / DB)
+		newCommit.setUuid(commitUUID);
+
+		// Init commit
+		return this.commits.save(newCommit);
 	}
 
 	/**
