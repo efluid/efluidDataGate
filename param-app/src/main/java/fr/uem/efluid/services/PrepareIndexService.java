@@ -431,10 +431,10 @@ public class PrepareIndexService {
 
 		// For each merge result (Only one possible for each keyValue)
 		preparingMergeIndexToComplete.stream().forEach(mergeEntry -> {
-
-			if (mergeEntry.getKeyValue().equals("JJ00013")) {
-				LOGGER.info("GOTCHA !");
-			}
+//
+//			if (mergeEntry.getKeyValue().equals("JJ00011")) {
+//				LOGGER.info("GOTCHA !");
+//			}
 
 			// Adapt auto-resolution of entry
 			mergeResolution(
@@ -514,17 +514,23 @@ public class PrepareIndexService {
 
 		String previousPayload = localPrevious != null && !localPrevious.equals(foundMine) ? localPrevious.getPayload() : null;
 
+		// For clean HR, need to mark it precisely on addition
+		boolean localInitOnly = foundMine != null && foundMine.getAction() == IndexAction.ADD && foundMine.getPayload() != null
+				&& foundMine.getPayload().equals(previousPayload);
+
 		// Complete current entry HR payload for rendering
-		String currentHrPayload = getConverter().convertToHrPayload(mergeEntry.getPayload(), previousPayload);
+		String currentHrPayload = getConverter().convertToHrPayload(mergeEntry.getPayload(), localInitOnly ? null : previousPayload);
 		mergeEntry.setHrPayload(currentHrPayload);
 
 		// If mine is there, complete payload and add combined
 		if (foundMine != null) {
-			// For clean HR, need to mark it precisely on addition
-			boolean localInitOnly = foundMine.getAction() == IndexAction.ADD && foundMine.getPayload() != null
-					&& foundMine.getPayload().equals(previousPayload);
-			String mineHrPayload = getConverter().convertToHrPayload(foundMine.getPayload(), localInitOnly ? previousPayload : null);
+			String mineHrPayload = getConverter().convertToHrPayload(foundMine.getPayload(), localInitOnly ? null : previousPayload);
 			mergeEntry.setMine(PreparedIndexEntry.fromCombined(foundMine, mineHrPayload));
+
+			// Special case : Added on mine, nothing on their => Propose deletion of mine
+			if (foundTheir == null) {
+				mergeEntry.setAction(IndexAction.REMOVE);
+			}
 		}
 
 		// Else copy proposition (case if current diff entry not yet commited)
