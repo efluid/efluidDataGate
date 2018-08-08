@@ -40,7 +40,7 @@ import fr.uem.efluid.utils.ApplicationException;
  * @version 1
  * @param <T>
  */
-public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
+public final class PilotedCommitPreparation {
 
 	private final UUID identifier;
 
@@ -56,8 +56,6 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 
 	private ApplicationException errorDuringPreparation;
 
-	private List<T> preparedContent;
-
 	private CommitEditData commitData;
 
 	private AtomicInteger processRemaining;
@@ -67,6 +65,8 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	private Map<String, byte[]> diffLobs;
 
 	private UUID projectUuid;
+	
+	private List<DomainDiffDisplay<?>> domains;
 
 	/**
 	 * For pushed form only

@@ -14,10 +14,6 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 
 	private UUID dictionaryEntryUuid;
 
-	private UUID domainUuid;
-
-	private String domainName;
-
 	private String dictionaryEntryName;
 
 	private String dictionaryEntryKeyName;
@@ -94,36 +90,6 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	}
 
 	/**
-	 * @return the domainUuid
-	 */
-	public UUID getDomainUuid() {
-		return this.domainUuid;
-	}
-
-	/**
-	 * @param domainUuid
-	 *            the domainUuid to set
-	 */
-	public void setDomainUuid(UUID domainUuid) {
-		this.domainUuid = domainUuid;
-	}
-
-	/**
-	 * @return the domainName
-	 */
-	public String getDomainName() {
-		return this.domainName;
-	}
-
-	/**
-	 * @param domainName
-	 *            the domainName to set
-	 */
-	public void setDomainName(String domainName) {
-		this.domainName = domainName;
-	}
-
-	/**
 	 * @return the dictionaryEntryName
 	 */
 	public String getDictionaryEntryName() {
@@ -164,11 +130,6 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 		setDictionaryEntryName(entity.getParameterName());
 		setDictionaryEntryKeyName(entity.getKeyName());
 		setDictionaryEntryTableName(entity.getTableName());
-
-		if (entity.getDomain() != null) {
-			setDomainName(entity.getDomain().getName());
-			setDomainUuid(entity.getDomain().getUuid());
-		}
 	}
 
 	/**
@@ -178,12 +139,6 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	 */
 	@Override
 	public int compareTo(DiffDisplay<?> o) {
-
-		int dom = this.getDomainName().compareTo(o.getDomainName());
-
-		if (dom != 0) {
-			return dom;
-		}
 
 		return this.getDictionaryEntryName().compareTo(o.getDictionaryEntryName());
 	}
