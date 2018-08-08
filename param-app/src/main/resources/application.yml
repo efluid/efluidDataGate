@@ -26,6 +26,8 @@ param-efluid:
     managed-updates:
         check-update-missing-ids: true
         check-delete-missing-ids: true
+        output-failed-query-set: true
+        output-failed-query-set-file: update-errors.out
  
     display:
         details-index-max: 10000

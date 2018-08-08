@@ -456,8 +456,10 @@ public class CommitService extends AbstractApplicationService {
 		}
 
 		// #5 Get all lobs
-		currentPreparation
-				.setDiffLobs(lobsPckg.getContent().stream().collect(Collectors.toConcurrentMap(l -> l.getHash(), l -> l.getData())));
+		currentPreparation.setDiffLobs(
+				lobsPckg.getContent().stream()
+						.distinct()
+						.collect(Collectors.toConcurrentMap(l -> l.getHash(), l -> l.getData())));
 
 		// Create the future merge commit info
 		currentPreparation.setCommitData(new CommitEditData());

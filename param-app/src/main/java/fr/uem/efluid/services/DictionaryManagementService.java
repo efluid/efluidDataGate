@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
@@ -64,9 +63,44 @@ import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.SelectClauseGenerator;
 
 /**
+ * <p>
+ * For the management of everything included in a "dictionary" :
+ * <ul>
+ * <li>The dictionary entries (parameter table)</li>
+ * <li>The functional Domains</li>
+ * <li>The links</li>
+ * <li>The versions</li>
+ * </ul>
+ * The dictionary is associated to a project.
+ * </p>
+ * <p>
+ * Entity hierarchy is :
+ * <ul>
+ * <li><b>Project</b></li>
+ * <ul>
+ * <li>-&gt; Versions</li>
+ * <li>-&gt; FunctionalDomain</li>
+ * <ul>
+ * <li>DictionaryEntry</li>
+ * <ul>
+ * <li>Links</li>
+ * </ul>
+ * </ul>
+ * </ul>
+ * </ul>
+ * </p>
+ * <p>
+ * Features includes :
+ * <ul>
+ * <li>Basic CRUD</li>
+ * <li>Import / export features (full / For one project / for one domaine)</li>
+ * <li>Some specific features related to business rules shared with user ui</li>
+ * </ul>
+ * </p>
+ * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 5
  */
 @Service
 @Transactional
@@ -430,7 +464,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		entry.setKeyType(key.getType());
 
 		// Shouldn't use PK as parameter key
-		if (key.getType() == ColumnType.PK) {
+		if (key.getType().isPk()) {
 			LOGGER.warn("Using the PK \"{}\" as parameter key on table \"{}\" : it may cause wrong conflict if"
 					+ " the id is not a real valid business identifier for the parameter table !!!", key.getName(), editData.getTable());
 		}

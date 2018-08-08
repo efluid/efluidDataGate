@@ -1,8 +1,16 @@
 package fr.uem.efluid.model.repositories.impls;
 
 import static fr.uem.efluid.utils.ErrorType.APPLY_FAILED;
+import static fr.uem.efluid.utils.ErrorType.OUTPUT_ERROR;
 import static fr.uem.efluid.utils.ErrorType.VERIFIED_APPLY_NOT_FOUND;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -35,6 +43,7 @@ import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.DatasourceUtils;
+import fr.uem.efluid.utils.FormatUtils;
 
 /**
  * <p>
@@ -52,7 +61,7 @@ import fr.uem.efluid.utils.DatasourceUtils;
 public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedUpdateRepository.class);
-
+	private static final Charset ERROR_OUT_CHARSET = Charset.forName("utf8");
 	@Autowired
 	private JdbcTemplate managedSource;
 
@@ -79,6 +88,12 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	@Value("${param-efluid.managed-updates.check-delete-missing-ids}")
 	private boolean checkDeleteMissingIds;
 
+	@Value("${param-efluid.managed-updates.output-failed-query-set}")
+	private boolean outputFailedQuerySet;
+
+	@Value("${param-efluid.managed-updates.output-failed-query-set-file}")
+	private String outputFile;
+
 	/**
 	 * @param entry
 	 * @param lines
@@ -103,11 +118,14 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 		TransactionStatus status = this.managedDbTransactionManager.getTransaction(paramTransactionDefinition);
 		List<Object[]> lobArgs = new ArrayList<>();
 
+		String currentQuery = null;
+		String[] queries = null;
+
 		try {
 			checkUpdatesAndDeleteMissingIds(lines, dictEntries);
 
 			// Prepare all queries, ordered by dictionary entry and action regarding links
-			String[] queries = lines.stream()
+			queries = lines.stream()
 					.sorted(sortedByLinks())
 					.map(e -> queryFor(dictEntries.get(e.getDictionaryEntryUuid()), e, allLobs, mappedLinks, dictByTab, lobArgs))
 					.toArray(String[]::new);
@@ -128,14 +146,15 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 			// Use one-by-one update
 			for (int i = 0; i < queries.length; i++) {
 				Object[] args = lobArgs.get(i);
+				currentQuery = queries[i];
 				if (args.length > 0) {
-					this.managedSource.update(queries[i], args);
+					this.managedSource.update(currentQuery, args);
 				} else {
-					this.managedSource.update(queries[i]);
+					this.managedSource.update(currentQuery);
 				}
 			}
 
-			// Commit immediately the update if successfull
+			// Commit immediately the update if successful
 			this.managedDbTransactionManager.commit(status);
 
 			// For history saving
@@ -146,14 +165,27 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 		catch (DataAccessException e) {
 			this.managedDbTransactionManager.rollback(status);
 
-			LOGGER.error("Error on batched updated for diff content. Top message was \"{}\".", e.getMessage());
+			String details = getDataAccessExceptionDetails(currentQuery, e);
+			LOGGER.error("Error on batched updated for diff content. Top message was \"{}\", will share details \"{}\".",
+					e.getMessage(), details);
+
 			if (LOGGER.isDebugEnabled()) {
 				LOGGER.debug("Content of diffline processed for this error :");
 				lines.forEach(l -> LOGGER.debug("Dict[{}] : {} [{}] => {}", l.getDictionaryEntryUuid(), l.getAction(), l.getKeyValue(),
 						l.getPayload()));
 			}
-			throw new ApplicationException(APPLY_FAILED, "Error on batched updated for diff content. Check process model", e);
+
+			// Output query set if required
+			if (this.outputFailedQuerySet) {
+				outputErrorQuerySet(details, currentQuery, queries);
+			}
+
+			throw new ApplicationException(APPLY_FAILED, "Error on batched updated for diff content. Check process model", e, details);
 		}
+	}
+
+	private static String getDataAccessExceptionDetails(String currentQuery, DataAccessException e) {
+		return currentQuery + " ==> " + e.getCause().getMessage();
 	}
 
 	/**
@@ -292,5 +324,50 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 
 			return -1;
 		};
+	}
+
+	/**
+	 * <p>
+	 * When required, can ouptut the full processed query set when an error occurs. Write
+	 * it into a file
+	 * </p>
+	 * 
+	 * @param path
+	 * @param errorDetails
+	 * @param currentQuery
+	 * @param queries
+	 */
+	private void outputErrorQuerySet(String errorDetails, String currentQuery, String[] queries) {
+
+		Path output = new File(this.outputFile).toPath();
+
+		try {
+			if (!output.toFile().exists()) {
+				Files.createFile(output);
+			}
+
+			StringBuilder content = new StringBuilder();
+
+			content
+					.append("######################################################################################################\n")
+					.append("Fatal error on update at ").append(FormatUtils.format(LocalDateTime.now())).append("\n")
+					.append("######################################################################################################\n")
+					.append(errorDetails)
+					.append("######################################################################################################\n")
+					.append("All ordered queries for this update : \n");
+
+			for (String query : queries) {
+				if (query.equals(currentQuery)) {
+					content.append("==> ");
+				}
+				content.append("    ").append(query).append("\n");
+			}
+
+			content.append("\n\n");
+
+			Files.write(output, content.toString().getBytes(ERROR_OUT_CHARSET), StandardOpenOption.APPEND);
+		} catch (IOException e) {
+			throw new ApplicationException(OUTPUT_ERROR, "Cannot append to file " + output, e);
+		}
 	}
 }

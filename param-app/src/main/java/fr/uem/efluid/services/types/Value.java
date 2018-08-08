@@ -59,7 +59,7 @@ public interface Value {
 	 */
 	default String getTyped(List<String> lobKeys, DateTimeFormatter dbTemporalFormater) {
 
-		if (getType() == ColumnType.STRING) {
+		if (getType() == ColumnType.STRING || getType() == ColumnType.PK_STRING) {
 			return TYPED_STRING_PROTECT + getValueAsString() + TYPED_STRING_PROTECT;
 		}
 
@@ -83,7 +83,7 @@ public interface Value {
 	 */
 	default String getTypedForDisplay() {
 
-		if (getType() == ColumnType.STRING) {
+		if (getType() == ColumnType.STRING || getType() == ColumnType.PK_STRING) {
 			return TYPED_STRING_PROTECT + getValueAsString() + TYPED_STRING_PROTECT;
 		}
 

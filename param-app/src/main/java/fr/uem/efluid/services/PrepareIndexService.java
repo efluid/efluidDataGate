@@ -432,6 +432,10 @@ public class PrepareIndexService {
 		// For each merge result (Only one possible for each keyValue)
 		preparingMergeIndexToComplete.stream().forEach(mergeEntry -> {
 
+			if (mergeEntry.getKeyValue().equals("JJ00013")) {
+				LOGGER.info("GOTCHA !");
+			}
+
 			// Adapt auto-resolution of entry
 			mergeResolution(
 					mergeEntry,
@@ -516,7 +520,10 @@ public class PrepareIndexService {
 
 		// If mine is there, complete payload and add combined
 		if (foundMine != null) {
-			String mineHrPayload = getConverter().convertToHrPayload(foundMine.getPayload(), previousPayload);
+			// For clean HR, need to mark it precisely on addition
+			boolean localInitOnly = foundMine.getAction() == IndexAction.ADD && foundMine.getPayload() != null
+					&& foundMine.getPayload().equals(previousPayload);
+			String mineHrPayload = getConverter().convertToHrPayload(foundMine.getPayload(), localInitOnly ? previousPayload : null);
 			mergeEntry.setMine(PreparedIndexEntry.fromCombined(foundMine, mineHrPayload));
 		}
 
@@ -533,7 +540,8 @@ public class PrepareIndexService {
 			// Case : their was modified after mine => Default resolution became "their"
 			if (foundMine == null || foundMine.getTimestamp() < foundTheir.getTimestamp()) {
 				String combinedHrPayload = localPrevious != null
-						? getConverter().convertToHrPayload(foundTheir.getPayload(), localPrevious.getPayload()) : theirHrPayload;
+						? getConverter().convertToHrPayload(foundTheir.getPayload(), localPrevious.getPayload())
+						: theirHrPayload;
 				mergeEntry.applyResolution(foundTheir, combinedHrPayload);
 			}
 
