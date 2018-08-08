@@ -17,3 +17,6 @@ buildNumber.properties
 /param-gest.iml
 
 /param-app/src/main/resources/config/application.yml
+param-app/update-errors.out
+param-app/src/main/resources/config/application-dest.yml
+param-app/src/main/resources/config/application-marie.yml

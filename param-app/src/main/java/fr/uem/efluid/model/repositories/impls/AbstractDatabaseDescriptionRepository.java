@@ -342,6 +342,19 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
 	protected abstract void assertVendorSupport(DatabaseMetaData md) throws SQLException;
 
 	/**
+	 * @param desc
+	 */
+	protected static void setColumnAsPk(ColumnDescription desc) {
+
+		// Distinct PK type for clean query building
+		if (desc.getType() == ColumnType.STRING) {
+			desc.setType(ColumnType.PK_STRING);
+		} else {
+			desc.setType(ColumnType.PK_ATOMIC);
+		}
+	}
+
+	/**
 	 * @param md
 	 * @throws SQLException
 	 */

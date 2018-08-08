@@ -352,3 +352,9 @@ select.select-column {
 .project-theme-bg-5 {
     background-color:Lavender !important;
 }
+
+.query-error {
+    padding: 3px;
+    font-style: italic;
+    font-size: 14px;
+}

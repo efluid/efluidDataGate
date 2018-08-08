@@ -222,7 +222,7 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 							desc.getColumns().stream()
 									.filter(c -> c.getName().equals(columnName))
 									.findFirst()
-									.ifPresent(c -> c.setType(ColumnType.PK));
+									.ifPresent(AbstractDatabaseDescriptionRepository::setColumnAsPk);
 
 							if (LOGGER.isDebugEnabled()) {
 								processedTables.add(tableName);
@@ -422,7 +422,7 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 
 							// Search for the PK on the dest table
 							destDesc.getColumns().stream()
-									.filter(c -> c.getType() == ColumnType.PK)
+									.filter(c -> c.getType().isPk())
 									.findFirst() // Then apply FK if found
 									.ifPresent(c -> setForeignKey(desc, columnName, destTable, c.getName()));
 						}

@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
-import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.utils.ApplicationException;
 
@@ -82,7 +81,7 @@ public class PureJdbcDatabaseDescriptionRepository extends AbstractDatabaseDescr
 						desc.getColumns().stream()
 								.filter(c -> c.getName().equals(columnName))
 								.findFirst()
-								.ifPresent(c -> c.setType(ColumnType.PK));
+								.ifPresent(AbstractDatabaseDescriptionRepository::setColumnAsPk);
 					}
 				}
 			}

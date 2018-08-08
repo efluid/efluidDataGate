@@ -296,11 +296,11 @@ public class DictionaryEntryEditData {
 
 			// Priority on columns of type generated
 
-			if (this.getType() == ColumnType.PK && o.getType() != ColumnType.PK) {
+			if (this.getType().isPk() && !o.getType().isPk()) {
 				return -1;
 			}
 
-			if (this.getType() != ColumnType.PK && o.getType() == ColumnType.PK) {
+			if (!this.getType().isPk() && o.getType().isPk()) {
 				return 1;
 			}
 

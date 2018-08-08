@@ -29,37 +29,42 @@ import java.time.temporal.Temporal;
  * extraction with format : date are formated internaly in ISO string format, then
  * provided in user-specified database-related format in query
  * generation).<b><font color="green">Tested OK for SQL TIMESTAMP</font></b></li>
- * <li>{@link #PK} means <i>"something with a generated value I shouldn't share with other
- * database instances"</i>. Used to identify the internal PK, which is generaly NOT
- * selected for dictionary entry managing. Identification is not based on type but on
+ * <li>{@link #PK_ATOMIC} means <i>"something with a generated value I shouldn't share
+ * with other database instances"</i>. Used to identify the internal PK, which is generaly
+ * NOT selected for dictionary entry managing. Identification is not based on type but on
  * METADATA</li>
+ * <li>{@link #PK_STRING} is a distinction on PK_ATOMIC when value is managed
+ * string-like</li>
  * </ul>
  * </p>
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public enum ColumnType {
 
 	// TODO : If CLOB and BLOB cannot be managed the same way, use a dedicated type "TEXT"
-	BINARY('B', "LOB"),
-	ATOMIC('O', "Variable"),
-	STRING('S', "Litteral"),
-	BOOLEAN('1', "Booleen"),
-	TEMPORAL('T', "Temporal"),
-	UNKNOWN('U', "Unknown"),
-	PK('!', "Identifiant");
+	BINARY('B', "LOB", false),
+	ATOMIC('O', "Variable", false),
+	STRING('S', "Litteral", false),
+	BOOLEAN('1', "Booleen", false),
+	TEMPORAL('T', "Temporal", false),
+	UNKNOWN('U', "Unknown", false),
+	PK_ATOMIC('!', "Identifiant", true),
+	PK_STRING('§', "Identifiant", true);
 
 	private final char represent;
 	private final String displayName;
+	private final boolean pk;
 
 	/**
 	 * @param represent
 	 */
-	private ColumnType(char represent, String displayName) {
+	private ColumnType(char represent, String displayName, boolean pk) {
 		this.represent = represent;
 		this.displayName = displayName;
+		this.pk = pk;
 	}
 
 	/**
@@ -74,6 +79,13 @@ public enum ColumnType {
 	 */
 	public String getDisplayName() {
 		return this.displayName;
+	}
+
+	/**
+	 * @return the pk
+	 */
+	public boolean isPk() {
+		return this.pk;
 	}
 
 	/**

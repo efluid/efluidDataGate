@@ -20,7 +20,10 @@
 					<p th:case="'METADATA_FAILED'">La lecture des métadonnées n'est pas possible sur la base de donnée gérée</p>
 					<p th:case="'VALUE_CHECK_FAILED'">Le contrôle des données n'est pas possible sur la base de donnée gérée</p>
 					<p th:case="'VALUE_SHA_UNSUP'">Le format de hashage prévu n'est pas supporté sur l'environnement actuel</p>
-					<p th:case="'APPLY_FAILED'">L'application des changements rencontre une erreur. Merci de contacter le support technique</p>
+					<p th:case="'APPLY_FAILED'">
+						L'application des modifications sélectionnées rencontre une l'erreur critique suivante au niveau de la base de données :
+						<span th:text="${payload}" class="query-error">details</span>. Merci de contacter le support technique
+					</p>
 					<p th:case="'DIC_NO_KEY'">La clé est obligatoire dans la spécification d'une table de paramètrage</p>
 					<p th:case="'DIC_ENTRY_NOT_FOUND'">Aucune entrée de dictionnaire trouvée pour l'identifiant donné</p>
 					<p th:case="'IMPORT_FAIL_FILE'">Le fichier importé ne peut pas être stocké localement</p>
