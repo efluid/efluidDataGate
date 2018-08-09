@@ -66,7 +66,19 @@ public final class FormatUtils {
 	 * @return
 	 */
 	public static String encodeAsString(String raw) {
-		return new String(B64_ENCODER.encode(raw.getBytes(CONTENT_ENCODING)), CONTENT_ENCODING);
+		return new String(B64_ENCODER.encode(toBytes(raw)), CONTENT_ENCODING);
+	}
+
+	/**
+	 * <p>
+	 * Value with clean encoding
+	 * </p>
+	 * 
+	 * @param value
+	 * @return
+	 */
+	public static byte[] toBytes(String value) {
+		return value.getBytes(CONTENT_ENCODING);
 	}
 
 	/**

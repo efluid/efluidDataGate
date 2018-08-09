@@ -110,7 +110,7 @@ select.select-column {
     background-color: #F4F4F4;
 }
 
-.dictionary-summary .reducer {
+.dictionary-summary .reducer, .diff-remarks .reducer {
     display: block;
     width: 16px;
     height: 16px;
@@ -361,4 +361,8 @@ select.select-column {
 
 .diff-remarks {
     padding: 3px;
+}
+
+.diff-remarks ul {
+    padding-top: 10px;
 }

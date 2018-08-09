@@ -34,6 +34,19 @@ public interface ManagedExtractRepository {
 
 	/**
 	 * <p>
+	 * Get the content which should be extracted if unchecked joins was valid
+	 * </p>
+	 * 
+	 * @param parameterEntry
+	 *            table identifier for extraction
+	 * @param project
+	 *            working project
+	 * @return extracted missing content (key - payload map)
+	 */
+	Map<String, String> extractCurrentMissingContentWithUncheckedJoins(DictionaryEntry parameterEntry, Project project);
+
+	/**
+	 * <p>
 	 * For the specified table, get the current count of result with standard select
 	 * criteria and with unchecked join. This allows to compare if their is count
 	 * differences between extraction and existing values, to check if their is some

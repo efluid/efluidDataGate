@@ -31,7 +31,7 @@ public class SelectClauseGenerator {
 
 	protected static final String LINK_TAB_ALIAS = "ln";
 
-	protected static final String LINK_TAB_REFLAP = LINK_TAB_ALIAS.toUpperCase() + "_";
+	public static final String LINK_TAB_REFLAP = LINK_TAB_ALIAS.toUpperCase() + "_";
 
 	protected static final String LINK_VAL_ALIAS_START = " as " + LINK_TAB_ALIAS + "_";
 

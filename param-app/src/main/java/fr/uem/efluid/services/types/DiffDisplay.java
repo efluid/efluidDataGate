@@ -27,7 +27,7 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 
 	private List<T> diff;
 
-	private List<DiffRemark> remarks;
+	private List<DiffRemark<?>> remarks;
 
 	/**
 	 * 
@@ -69,7 +69,7 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	/**
 	 * @return the remarks
 	 */
-	public List<DiffRemark> getRemarks() {
+	public List<DiffRemark<?>> getRemarks() {
 		return this.remarks;
 	}
 
@@ -77,7 +77,7 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	 * @param remark
 	 *            the remark to add on managed remarks. Inits the holder list on demand
 	 */
-	public void addRemark(DiffRemark remark) {
+	public void addRemark(DiffRemark<?> remark) {
 		if (this.remarks == null) {
 			this.remarks = new ArrayList<>();
 		}

@@ -10,19 +10,19 @@ package fr.uem.efluid.services.types;
  * @since v0.0.8
  * @version 1
  */
-public class DiffRemark {
+public class DiffRemark<T> {
 
 	private final String location;
 
 	private final RemarkType type;
 
-	private final String payload;
+	private final T payload;
 
 	/**
 	 * @param type
 	 * @param payload
 	 */
-	public DiffRemark(String location, RemarkType type, String payload) {
+	public DiffRemark(RemarkType type, String location, T payload) {
 		super();
 		this.location = location;
 		this.type = type;
@@ -46,7 +46,7 @@ public class DiffRemark {
 	/**
 	 * @return the payload
 	 */
-	public String getPayload() {
+	public T getPayload() {
 		return this.payload;
 	}
 

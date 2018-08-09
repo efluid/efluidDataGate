@@ -38,6 +38,9 @@ param-efluid:
                    
     details:
         version: @project.version@
+        
+    extractor:
+        show-sql: true
 
 ## TECH FEATURES CUSTOM
 spring:

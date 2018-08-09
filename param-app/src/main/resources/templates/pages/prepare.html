@@ -21,13 +21,19 @@
 		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/ui/prepare/commit}" method="post">
 			<div th:if="${preparation.hasSomeDiffRemarks}" class="alert alert-danger" role="alert">
 				<div class="diff-remarks" th:each="remark, estat : ${preparation.allDiffRemarks}" th:id="|common_remark_${estat.index}|">
-					<p><b>Des avertissements ont été identifiés suite à la recherche de différences :</b></p>
-					<ul th:switch="${remark.type.name()}">
+					<div id="diffRemarkAreaButton" class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</div>
+					<span><b>Des avertissements ont été identifiés suite à la recherche de différences :</b></span>
+					<ul id="diffRemarkArea" th:switch="${remark.type.name()}">
 						<li th:case="'MISSING_ON_UNCHECKED_JOIN'">
 							La <span th:text="${remark.location}">table TABLE</span> possède un ou plusieurs liens vers d'autres tables, et des entités
-							 référencées n'existent pas. Un total de <span th:text="${remark.payload}">12</span> ligne(s) sont ainsi incorrectement remontées,
+							 référencées n'existent pas. Un total de <span th:text="${remark.payload.size()}">12</span> ligne(s) sont ainsi incorrectement remontées,
 							 et sont actuellement ignorées dans le résultat. Dans certains cas, cela peut induire des identifications de modifications fausses
-							 sur la <span th:text="${remark.location}">table TABLE</span>.
+							 pour la <span th:text="${remark.location}">table TABLE</span>.<br/><u>Entrées manquantes identifiées</u> :
+							 <ul>
+							 	<li th:each="missing, mstat : ${remark.payload}" th:id="${mstat.index}">
+							 		<span th:text="${missing.key}" class="table-key">KEY</span> - <span th:text="${missing.hrPayload}">payload</span>
+							 	</li>
+							 </ul>
 						</li>
 					</ul>
 				</div>
@@ -159,6 +165,20 @@
 			}
         };
         
+		// For remarks hidding
+		const hideAndShowDiffRemarksAction = () => {
+			hideDisplays();
+			var area = $("#diffRemarkArea");
+			var button = $("#diffRemarkAreaButton");
+			if(button.attr("class").indexOf('reducer-close') !== -1){
+				area.hide();
+				button.removeClass("reducer-close").addClass("reducer-open");
+			} else {
+				area.show();
+				button.removeClass("reducer-open").addClass("reducer-close");
+			}
+		};
+		
 		// For table hidding
 		const hideAndShowTableAction = (tableUuid) => {
 			hideDisplays();
@@ -211,6 +231,7 @@
 			$("#ignoreAllButton").click((e) => $("button.ignore-button").click());
 			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
 			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
+			$("#diffRemarkAreaButton").click((e) => hideAndShowDiffRemarksAction());
 		}); 
 		
     </script>

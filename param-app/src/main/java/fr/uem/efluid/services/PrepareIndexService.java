@@ -1,5 +1,7 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.services.types.DiffRemark.RemarkType.MISSING_ON_UNCHECKED_JOIN;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,8 +32,9 @@ import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.CombinedSimilar;
+import fr.uem.efluid.services.types.ContentLineDisplay;
+import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.DiffRemark;
-import fr.uem.efluid.services.types.DiffRemark.RemarkType;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
@@ -127,18 +130,9 @@ public class PrepareIndexService {
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
 
-		// If parameter table has links, check also the count with unchecked joins
-		if (this.links.hasLinksForDictionaryEntry(entry)) {
-			LOGGER.info("Start checking count of entries with unchecked joins for table \"{}\"", entry.getTableName());
-
-			int uncheckedCount = this.rawParameters.countCurrentContentWithUncheckedJoins(entry, project);
-
-			// If difference identified in content size with unchecked join, add a remark
-			if (uncheckedCount > actualContent.size()) {
-				diffToComplete.addRemark(new DiffRemark("table " + entry.getTableName(), RemarkType.MISSING_ON_UNCHECKED_JOIN,
-						String.valueOf(uncheckedCount - actualContent.size())));
-			}
-		}
+		// Some diffs may add remarks
+		LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
+		processOptionalCurrentContendDiffRemarks(diffToComplete, entry, project, actualContent);
 
 		// Completed diff
 		Collection<PreparedIndexEntry> index = generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
@@ -205,6 +199,10 @@ public class PrepareIndexService {
 
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
+
+		// Some diffs may add remarks on local contents
+		LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
+		processOptionalCurrentContendDiffRemarks(diffToComplete, entry, project, actualContent);
 
 		Collection<PreparedMergeIndexEntry> diff = generateDiffIndexFromContent(PreparedMergeIndexEntry::new, knewContent, actualContent,
 				entry);
@@ -359,6 +357,55 @@ public class PrepareIndexService {
 	 */
 	protected void applyParallelMode(boolean parallel) {
 		this.useParallelDiff = parallel;
+	}
+
+	/**
+	 * <p>
+	 * Process detection and completion of some business rules on diff process. Will
+	 * create remarks if required.
+	 * </p>
+	 * <p>
+	 * <b>The currently supported checks are</b> :
+	 * <ul>
+	 * <li>Check if some content are missing because of unchecked link references, and add
+	 * details on missing data in the remark</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param diffToComplete
+	 * @param entry
+	 * @param project
+	 * @param actualContent
+	 */
+	private void processOptionalCurrentContendDiffRemarks(
+			DiffDisplay<?> diffToComplete,
+			DictionaryEntry entry,
+			Project project,
+			Map<String, String> actualContent) {
+
+		// If parameter table has links, check also the count with unchecked joins
+		if (this.links.hasLinksForDictionaryEntry(entry)) {
+			LOGGER.debug("Start checking count of entries with unchecked joins for table \"{}\"", entry.getTableName());
+
+			// If difference identified in content size with unchecked join, add a remark
+			if (this.rawParameters.countCurrentContentWithUncheckedJoins(entry, project) > actualContent.size()) {
+
+				// Get the missign payloads as display list
+				List<ContentLineDisplay> missingContent = this.rawParameters.extractCurrentMissingContentWithUncheckedJoins(entry, project)
+						.entrySet().stream()
+						.map(e -> new ContentLineDisplay(e.getKey(), e.getValue()))
+						.collect(Collectors.toList());
+
+				// Prepare the corresponding remark
+				DiffRemark<List<ContentLineDisplay>> remark = new DiffRemark<>(
+						MISSING_ON_UNCHECKED_JOIN, "table " + entry.getTableName(), missingContent);
+
+				diffToComplete.addRemark(remark);
+
+				LOGGER.info("Found a count of {} missing entries with unchecked joins for table \"{}\"",
+						Integer.valueOf(missingContent.size()), entry.getTableName());
+			}
+		}
 	}
 
 	/**

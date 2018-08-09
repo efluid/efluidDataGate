@@ -306,7 +306,7 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	/**
 	 * @return
 	 */
-	public List<DiffRemark> getAllDiffRemarks() {
+	public List<DiffRemark<?>> getAllDiffRemarks() {
 
 		return this.preparedContent.stream()
 				.filter(d -> d.getRemarks() != null)
