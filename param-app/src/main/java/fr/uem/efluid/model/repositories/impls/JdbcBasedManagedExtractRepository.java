@@ -30,7 +30,7 @@ import fr.uem.efluid.tools.ManagedValueConverter;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Repository
 public class JdbcBasedManagedExtractRepository implements ManagedExtractRepository {
@@ -54,8 +54,11 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 	/**
 	 * @param parameterEntry
+	 * @param lobs
+	 * @param project
 	 * @return
-	 * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#extractCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry)
+	 * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#extractCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry,
+	 *      java.util.Map, fr.uem.efluid.model.entities.Project)
 	 */
 	@Override
 	public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project) {
@@ -74,6 +77,31 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 				Integer.valueOf(payloads.size()));
 
 		return payloads;
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @param project
+	 * @return
+	 * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#countCurrentContentWithUncheckedJoins(fr.uem.efluid.model.entities.DictionaryEntry,
+	 *      fr.uem.efluid.model.entities.Project)
+	 */
+	@Override
+	public int countCurrentContentWithUncheckedJoins(DictionaryEntry parameterEntry, Project project) {
+
+		String query = this.queryGenerator.producesTestJoinParameterQuery(
+				parameterEntry,
+				this.links.findByDictionaryEntry(parameterEntry),
+				this.dictionary.findAllMappedByTableName(project));
+
+		LOGGER.debug("Checking values from managed table {} on unchecked Join with query \"{}\"", parameterEntry.getTableName(), query);
+
+		Integer res = this.managedSource.queryForObject(query, Integer.class);
+
+		LOGGER.debug("Counted values from managed table {} on unchecked join with query \"{}\". Found {} results",
+				parameterEntry.getTableName(), query, res);
+
+		return res == null ? 0 : res.intValue();
 	}
 
 	/**

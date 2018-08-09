@@ -19,6 +19,19 @@
 			<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-dark btn-sm">Annuler la préparation</a>
 		</span>
 		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/ui/prepare/commit}" method="post">
+			<div th:if="${preparation.hasSomeDiffRemarks}" class="alert alert-danger" role="alert">
+				<div class="diff-remarks" th:each="remark, estat : ${preparation.allDiffRemarks}" th:id="|common_remark_${estat.index}|">
+					<p><b>Des avertissements ont été identifiés suite à la recherche de différences :</b></p>
+					<ul th:switch="${remark.type.name()}">
+						<li th:case="'MISSING_ON_UNCHECKED_JOIN'">
+							La <span th:text="${remark.location}">table TABLE</span> possède un ou plusieurs liens vers d'autres tables, et des entités
+							 référencées n'existent pas. Un total de <span th:text="${remark.payload}">12</span> ligne(s) sont ainsi incorrectement remontées,
+							 et sont actuellement ignorées dans le résultat. Dans certains cas, cela peut induire des identifications de modifications fausses
+							 sur la <span th:text="${remark.location}">table TABLE</span>.
+						</li>
+					</ul>
+				</div>
+			</div> 
 			<span th:if="${not preparation.emptyDiff}">
 				<p>
 					<h5>Ensemble des modifications identifiées

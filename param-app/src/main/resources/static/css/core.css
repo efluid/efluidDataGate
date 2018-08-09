@@ -358,3 +358,7 @@ select.select-column {
     font-style: italic;
     font-size: 14px;
 }
+
+.diff-remarks {
+    padding: 3px;
+}

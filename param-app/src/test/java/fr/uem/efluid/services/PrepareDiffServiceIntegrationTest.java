@@ -1,6 +1,5 @@
 package fr.uem.efluid.services;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +20,7 @@ import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.stubs.DataLoadResult;
 import fr.uem.efluid.stubs.TestDataLoader;
@@ -58,29 +58,33 @@ public class PrepareDiffServiceIntegrationTest {
 	public void testProcessDiffNoIndex() {
 
 		setupDatabase("diff7");
-		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(
+		LocalPreparedDiff diffToComplete = new LocalPreparedDiff(this.dictionaryEntryUuid);
+		this.service.completeCurrentContentDiff(
+				diffToComplete,
 				this.dictionary.getOne(this.dictionaryEntryUuid),
 				new HashMap<>(),
 				new Project(this.projectUuid));
-		Assert.assertEquals(0, index.size());
+		Assert.assertEquals(0, diffToComplete.getDiff().size());
 	}
 
 	@Test
 	public void testProcessDiffLargeIndex() {
 
 		setupDatabase("diff8");
-		Collection<PreparedIndexEntry> index = this.service.currentContentDiff(
+		LocalPreparedDiff diffToComplete = new LocalPreparedDiff(this.dictionaryEntryUuid);
+		this.service.completeCurrentContentDiff(
+				diffToComplete,
 				this.dictionary.getOne(this.dictionaryEntryUuid),
 				new HashMap<>(),
 				new Project(this.projectUuid));
-		Assert.assertEquals(80 + 100 + 85, index.size());
-		List<PreparedIndexEntry> adds = index.stream()
+		Assert.assertEquals(80 + 100 + 85, diffToComplete.getDiff().size());
+		List<PreparedIndexEntry> adds = diffToComplete.getDiff().stream()
 				.filter(i -> i.getAction() == IndexAction.ADD)
 				.collect(Collectors.toList());
-		List<PreparedIndexEntry> removes = index.stream()
+		List<PreparedIndexEntry> removes = diffToComplete.getDiff().stream()
 				.filter(i -> i.getAction() == IndexAction.REMOVE)
 				.collect(Collectors.toList());
-		List<PreparedIndexEntry> updates = index.stream()
+		List<PreparedIndexEntry> updates = diffToComplete.getDiff().stream()
 				.filter(i -> i.getAction() == IndexAction.UPDATE)
 				.collect(Collectors.toList());
 		Assert.assertEquals(85, adds.size());

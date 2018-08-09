@@ -1,5 +1,6 @@
 package fr.uem.efluid.services.types;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +26,8 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	private String dictionaryEntryTableName;
 
 	private List<T> diff;
+
+	private List<DiffRemark> remarks;
 
 	/**
 	 * 
@@ -61,6 +64,24 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	 */
 	public void setDiff(List<T> diff) {
 		this.diff = diff;
+	}
+
+	/**
+	 * @return the remarks
+	 */
+	public List<DiffRemark> getRemarks() {
+		return this.remarks;
+	}
+
+	/**
+	 * @param remark
+	 *            the remark to add on managed remarks. Inits the holder list on demand
+	 */
+	public void addRemark(DiffRemark remark) {
+		if (this.remarks == null) {
+			this.remarks = new ArrayList<>();
+		}
+		this.remarks.add(remark);
 	}
 
 	/**
@@ -151,6 +172,13 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	 */
 	public void setDictionaryEntryKeyName(String dictionaryEntryKeyName) {
 		this.dictionaryEntryKeyName = dictionaryEntryKeyName;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isHasRemarks() {
+		return this.remarks != null && this.remarks.size() > 0;
 	}
 
 	/**
