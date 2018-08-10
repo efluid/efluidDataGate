@@ -286,7 +286,8 @@ public class CommitService extends AbstractApplicationService {
 	/**
 	 * <p>
 	 * From the prepared commit, rollback in local managed DB everything which was
-	 * rejected. Generic enough for compatibility with both local and merge commits
+	 * rejected. Must be used only for local commit preparation : on merge commit, the
+	 * "ignored" items are not rollbacked : they are simply not run
 	 * </p>
 	 */
 	void applyExclusionsFromLocalCommit(

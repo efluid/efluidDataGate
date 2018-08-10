@@ -1,7 +1,10 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.services.types.DiffRemark.RemarkType.MISSING_ON_UNCHECKED_JOIN;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +30,13 @@ import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
+import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.CombinedSimilar;
+import fr.uem.efluid.services.types.ContentLineDisplay;
+import fr.uem.efluid.services.types.DiffDisplay;
+import fr.uem.efluid.services.types.DiffRemark;
+import fr.uem.efluid.services.types.LocalPreparedDiff;
+import fr.uem.efluid.services.types.MergePreparedDiff;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.services.types.Rendered;
@@ -82,16 +91,30 @@ public class PrepareIndexService {
 	@Autowired
 	private IndexRepository indexes;
 
+	@Autowired
+	private TableLinkRepository links;
+
 	private boolean useParallelDiff = false;
 
 	/**
+	 * <p>
+	 * Prepare the diff content, by extracting current content and building value to value
+	 * diff regarding the actual index content
+	 * </p>
+	 * <p>
+	 * Apply also some "remarks" to diff if required
+	 * </p>
+	 * 
+	 * @param diffToComplete
+	 *            the specified <tt>LocalPreparedDiff</tt> to complete with content and
+	 *            remarks
 	 * @param entry
 	 *            dictionaryEntry
 	 * @param lobs
 	 * @param project
-	 * @return
 	 */
-	public Collection<PreparedIndexEntry> currentContentDiff(
+	public void completeCurrentContentDiff(
+			LocalPreparedDiff diffToComplete,
 			DictionaryEntry entry,
 			Map<String, byte[]> lobs,
 			Project project) {
@@ -107,14 +130,25 @@ public class PrepareIndexService {
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
 
+		// Some diffs may add remarks
+		LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
+		processOptionalCurrentContendDiffRemarks(diffToComplete, entry, project, actualContent);
+
 		// Completed diff
 		Collection<PreparedIndexEntry> index = generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
 
 		// Detect and process similar entries for display
-		return combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar);
+		diffToComplete.setDiff(
+				combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar)
+						.stream()
+						.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 	}
 
 	/**
+	 * <p>
+	 * Prepare the diff content, by extracting current content and building value to value
+	 * diff regarding the actual index content
+	 * </p>
 	 * <p>
 	 * For merge diff, we run basically the standard process, but building the "knew
 	 * content" as a combination of local knew content "until last imported commit" and
@@ -122,15 +156,23 @@ public class PrepareIndexService {
 	 * should have if the imported diff was present". This way we produce the exact result
 	 * of the merge for an import.
 	 * </p>
+	 * <p>
+	 * Apply also some "remarks" to diff if required
+	 * </p>
 	 * 
+	 * @param diffToComplete
+	 *            the specified <tt>MergePreparedDiff</tt> to complete with content and
+	 *            remarks
 	 * @param entry
+	 *            dictionaryEntry
 	 * @param lobs
 	 *            for any extracted lobs
 	 * @param timeStampForSearch
 	 * @param mergeContent
-	 * @return
+	 * @param project
 	 */
-	public Collection<PreparedMergeIndexEntry> mergeIndexDiff(
+	public void completeMergeIndexDiff(
+			MergePreparedDiff diffToComplete,
 			DictionaryEntry entry,
 			Map<String, byte[]> lobs,
 			long timeStampForSearch,
@@ -158,6 +200,10 @@ public class PrepareIndexService {
 		LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 		Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
 
+		// Some diffs may add remarks on local contents
+		LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
+		processOptionalCurrentContendDiffRemarks(diffToComplete, entry, project, actualContent);
+
 		Collection<PreparedMergeIndexEntry> diff = generateDiffIndexFromContent(PreparedMergeIndexEntry::new, knewContent, actualContent,
 				entry);
 
@@ -166,7 +212,9 @@ public class PrepareIndexService {
 		// Then apply from local and from import to identify diff changes
 		completeMergeIndexes(entry, localIndexToTimeStamp, mergeContent, diff);
 
-		return combineSimilarDiffEntries(diff, SimilarPreparedMergeIndexEntry::fromSimilar);
+		diffToComplete.setDiff(
+				combineSimilarDiffEntries(diff, SimilarPreparedMergeIndexEntry::fromSimilar).stream()
+						.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
 	}
 
 	/**
@@ -312,6 +360,55 @@ public class PrepareIndexService {
 	}
 
 	/**
+	 * <p>
+	 * Process detection and completion of some business rules on diff process. Will
+	 * create remarks if required.
+	 * </p>
+	 * <p>
+	 * <b>The currently supported checks are</b> :
+	 * <ul>
+	 * <li>Check if some content are missing because of unchecked link references, and add
+	 * details on missing data in the remark</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param diffToComplete
+	 * @param entry
+	 * @param project
+	 * @param actualContent
+	 */
+	private void processOptionalCurrentContendDiffRemarks(
+			DiffDisplay<?> diffToComplete,
+			DictionaryEntry entry,
+			Project project,
+			Map<String, String> actualContent) {
+
+		// If parameter table has links, check also the count with unchecked joins
+		if (this.links.hasLinksForDictionaryEntry(entry)) {
+			LOGGER.debug("Start checking count of entries with unchecked joins for table \"{}\"", entry.getTableName());
+
+			// If difference identified in content size with unchecked join, add a remark
+			if (this.rawParameters.countCurrentContentWithUncheckedJoins(entry, project) > actualContent.size()) {
+
+				// Get the missign payloads as display list
+				List<ContentLineDisplay> missingContent = this.rawParameters.extractCurrentMissingContentWithUncheckedJoins(entry, project)
+						.entrySet().stream()
+						.map(e -> new ContentLineDisplay(e.getKey(), e.getValue()))
+						.collect(Collectors.toList());
+
+				// Prepare the corresponding remark
+				DiffRemark<List<ContentLineDisplay>> remark = new DiffRemark<>(
+						MISSING_ON_UNCHECKED_JOIN, "table " + entry.getTableName(), missingContent);
+
+				diffToComplete.addRemark(remark);
+
+				LOGGER.info("Found a count of {} missing entries with unchecked joins for table \"{}\"",
+						Integer.valueOf(missingContent.size()), entry.getTableName());
+			}
+		}
+	}
+
+	/**
 	 * @param source
 	 * @return
 	 */
@@ -431,10 +528,10 @@ public class PrepareIndexService {
 
 		// For each merge result (Only one possible for each keyValue)
 		preparingMergeIndexToComplete.stream().forEach(mergeEntry -> {
-
-			if (mergeEntry.getKeyValue().equals("JJ00013")) {
-				LOGGER.info("GOTCHA !");
-			}
+			//
+			// if (mergeEntry.getKeyValue().equals("JJ00011")) {
+			// LOGGER.info("GOTCHA !");
+			// }
 
 			// Adapt auto-resolution of entry
 			mergeResolution(
@@ -514,17 +611,23 @@ public class PrepareIndexService {
 
 		String previousPayload = localPrevious != null && !localPrevious.equals(foundMine) ? localPrevious.getPayload() : null;
 
+		// For clean HR, need to mark it precisely on addition
+		boolean localInitOnly = foundMine != null && foundMine.getAction() == IndexAction.ADD && foundMine.getPayload() != null
+				&& foundMine.getPayload().equals(previousPayload);
+
 		// Complete current entry HR payload for rendering
-		String currentHrPayload = getConverter().convertToHrPayload(mergeEntry.getPayload(), previousPayload);
+		String currentHrPayload = getConverter().convertToHrPayload(mergeEntry.getPayload(), localInitOnly ? null : previousPayload);
 		mergeEntry.setHrPayload(currentHrPayload);
 
 		// If mine is there, complete payload and add combined
 		if (foundMine != null) {
-			// For clean HR, need to mark it precisely on addition
-			boolean localInitOnly = foundMine.getAction() == IndexAction.ADD && foundMine.getPayload() != null
-					&& foundMine.getPayload().equals(previousPayload);
-			String mineHrPayload = getConverter().convertToHrPayload(foundMine.getPayload(), localInitOnly ? previousPayload : null);
+			String mineHrPayload = getConverter().convertToHrPayload(foundMine.getPayload(), localInitOnly ? null : previousPayload);
 			mergeEntry.setMine(PreparedIndexEntry.fromCombined(foundMine, mineHrPayload));
+
+			// Special case : Added on mine, nothing on their => Propose deletion of mine
+			if (foundTheir == null) {
+				mergeEntry.setAction(IndexAction.REMOVE);
+			}
 		}
 
 		// Else copy proposition (case if current diff entry not yet commited)

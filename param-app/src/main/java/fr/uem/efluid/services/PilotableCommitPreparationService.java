@@ -13,7 +13,6 @@ import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_UP_TO_DATE;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -513,8 +512,10 @@ public class PilotableCommitPreparationService {
 
 		current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
 
-		// Apply rollbacks
-		this.commitService.applyExclusionsFromLocalCommit(current);
+		// Apply rollbacks on local commits only
+		if (current.getPreparingState() == CommitState.LOCAL) {
+			this.commitService.applyExclusionsFromLocalCommit(current);
+		}
 
 		current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
 
@@ -704,12 +705,7 @@ public class PilotableCommitPreparationService {
 			tableDiff.completeFromEntity(dict);
 
 			// Search diff content
-			tableDiff.setDiff(
-					this.diffService.currentContentDiff(
-							dict,
-							current.getDiffLobs(),
-							new Project(current.getProjectUuid())).stream()
-							.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+			this.diffService.completeCurrentContentDiff(tableDiff, dict, current.getDiffLobs(), new Project(current.getProjectUuid()));
 
 			int rem = current.getProcessRemaining().decrementAndGet();
 			LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", Integer.valueOf(rem),
@@ -744,14 +740,8 @@ public class PilotableCommitPreparationService {
 			correspondingDiff.completeFromEntity(dict);
 
 			// Then run one merge action for dictionaryEntry
-			correspondingDiff.setDiff(this.diffService
-					.mergeIndexDiff(
-							dict,
-							current.getDiffLobs(),
-							lastLocalCommitTimestamp, correspondingDiff.getDiff(),
-							new Project(current.getProjectUuid()))
-					.stream()
-					.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+			this.diffService.completeMergeIndexDiff(correspondingDiff, dict, current.getDiffLobs(), lastLocalCommitTimestamp,
+					correspondingDiff.getDiff(), new Project(current.getProjectUuid()));
 
 			int rem = current.getProcessRemaining().decrementAndGet();
 			LOGGER.info("Completed 1 merge Diff. Remaining : {} / {}", Integer.valueOf(rem),

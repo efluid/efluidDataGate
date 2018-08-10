@@ -9,13 +9,20 @@
 			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
 		</encoder>
 	</appender>
+	
+	<!-- Log onto console only, with default format -->
+	<appender name="STDOUT_QUERY" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%msg%n</pattern>
+		</encoder>
+	</appender>
 
 	<!-- Log loaded config file at spring startup-->
-	<logger name="org.springframework.boot.context.config.ConfigFileApplicationListener" additivity="false">
+<!-- 	<logger name="org.springframework.boot.context.config.ConfigFileApplicationListener" additivity="false">
 		<level value="DEBUG" />
 		<appender-ref ref="STDOUT" />
 	</logger>
-
+ -->
 	<!-- Default INFO enabled logs for application -->
 	<logger name="fr.uem.efluid" additivity="false">
 		<level value="INFO" />
@@ -34,12 +41,13 @@
 	</logger>
  -->
  
-	<!-- Explicit logger for DIFF MERGE processes. Log it here into current console -->
-<!-- <logger name="merge.analysis" additivity="false">
-		<level value="DEBUG" />
-		<appender-ref ref="STDOUT" />
+	<!-- Explicit logger for Extractor queries. Log it here into current console on custom format -->
+ 	<logger name="extractor.queries" additivity="false">
+		<level value="INFO" />
+		<appender-ref ref="STDOUT_QUERY" />
 	</logger>
- -->	
+	
+ 
 	<!-- Default level for every logged resources -->
 	<root level="WARN">
 		<appender-ref ref="STDOUT" />

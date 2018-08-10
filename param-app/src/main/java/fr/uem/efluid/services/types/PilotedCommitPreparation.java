@@ -255,7 +255,8 @@ public final class PilotedCommitPreparation {
 	 */
 	public long getTotalCount() {
 		return this.preparedContent != null
-				? this.preparedContent.stream().flatMap(d -> d.getDiff() != null ? d.getDiff().stream() : Stream.of()).count() : 0;
+				? this.preparedContent.stream().flatMap(d -> d.getDiff() != null ? d.getDiff().stream() : Stream.of()).count()
+				: 0;
 	}
 
 	/**
@@ -286,6 +287,31 @@ public final class PilotedCommitPreparation {
 	 */
 	public void setProjectUuid(UUID projectUuid) {
 		this.projectUuid = projectUuid;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isHasSomeDiffRemarks() {
+
+		for (DiffDisplay<?> diff : this.preparedContent) {
+			if (diff.isHasRemarks()) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @return
+	 */
+	public List<DiffRemark<?>> getAllDiffRemarks() {
+
+		return this.preparedContent.stream()
+				.filter(d -> d.getRemarks() != null)
+				.flatMap(d -> d.getRemarks().stream())
+				.collect(Collectors.toList());
 	}
 
 	/**

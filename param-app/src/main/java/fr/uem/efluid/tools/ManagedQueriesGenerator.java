@@ -9,6 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -45,15 +47,19 @@ import fr.uem.efluid.utils.SelectClauseGenerator;
 @Component
 public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(ManagedQueriesGenerator.class);
+
 	private static final String AFFECT = "=";
 
 	private final String selectQueryModel;
+	private final String countQueryModel;
 	private final String insertQueryModel;
 	private final String updateQueryModel;
 	private final String deleteQueryModel;
 	private final String unicityQueryModel;
-	private final String selectJoinSubQueryModel;
+	private final String joinSubQueryModel;
 	private final String updateOrInsertLinkedSubQueryModel;
+	private final String missingLinkClauseModel;
 	private final DateTimeFormatter dbDateFormater;
 
 	/**
@@ -62,15 +68,33 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 */
 	public ManagedQueriesGenerator(@Autowired QueryGenerationRules rules) {
+
 		super(rules.isColumnNamesProtected());
+
+		// Prepare templates for query generation
+		this.countQueryModel = generateCountQueryTemplate(rules);
 		this.selectQueryModel = generateSelectQueryTemplate(rules);
 		this.insertQueryModel = generateInsertQueryTemplate(rules);
 		this.updateQueryModel = generateUpdateQueryTemplate(rules);
 		this.deleteQueryModel = generateDeleteQueryTemplate(rules);
 		this.unicityQueryModel = generateUnicityQueryTemplate(rules);
-		this.selectJoinSubQueryModel = generateSelectJoinSubQueryTemplate(rules);
+		this.joinSubQueryModel = generateJoinSubQueryTemplate(rules);
 		this.updateOrInsertLinkedSubQueryModel = generateUpdateOrInsertLinkedSubQueryTemplate(rules);
+		this.missingLinkClauseModel = generateSelectMissingLinkWhereClausePartTemplate(rules);
 		this.dbDateFormater = DateTimeFormatter.ofPattern(rules.getDatabaseDateFormat());
+
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("Initialized query generator with models :");
+			LOGGER.debug(" -> countQueryModel =>", this.countQueryModel);
+			LOGGER.debug(" -> selectQueryModel =>", this.selectQueryModel);
+			LOGGER.debug(" -> insertQueryModel =>", this.insertQueryModel);
+			LOGGER.debug(" -> updateQueryModel =>", this.updateQueryModel);
+			LOGGER.debug(" -> deleteQueryModel =>", this.deleteQueryModel);
+			LOGGER.debug(" -> unicityQueryModel =>", this.unicityQueryModel);
+			LOGGER.debug(" -> joinSubQueryModel =>", this.joinSubQueryModel);
+			LOGGER.debug(" -> updateOrInsertLinkedSubQueryModel =>", this.updateOrInsertLinkedSubQueryModel);
+			LOGGER.debug(" -> missingLinkClauseModel =>", this.missingLinkClauseModel);
+		}
 	}
 
 	/**
@@ -84,13 +108,54 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 		String selectClause = consolidateSelectClause(parameterEntry);
 
 		// For inner linked (select contains them already)
-		String joinClauses = prepareJoinLinks(links, allEntries);
+		String joinClauses = prepareJoinLinks(links, allEntries, JoinType.INCLUDE);
 
 		return String.format(this.selectQueryModel,
 				selectClause,
 				parameterEntry.getTableName(),
 				joinClauses,
 				parameterEntry.getWhereClause(),
+				parameterEntry.getKeyName());
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @return
+	 */
+	public String producesTestJoinParameterQuery(DictionaryEntry parameterEntry, List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+
+		// For inner linked (select contains them already)
+		String joinClauses = prepareJoinLinks(links, allEntries, JoinType.MISSING);
+
+		return String.format(this.countQueryModel,
+				parameterEntry.getTableName(),
+				joinClauses,
+				parameterEntry.getWhereClause(),
+				parameterEntry.getKeyName());
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @return
+	 */
+	public String producesSelectMissingParameterQuery(DictionaryEntry parameterEntry, List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries) {
+
+		// Need clean select for uses
+		String selectClause = consolidateSelectClauseForMissingLinks(parameterEntry, links);
+
+		// For inner linked (select contains them already)
+		String joinClauses = prepareJoinLinks(links, allEntries, JoinType.MISSING);
+
+		// Custom where clause with reversed select
+		String whereClause = prepareReverseJoinLinksWhereClause(parameterEntry.getWhereClause(), links, allEntries);
+
+		return String.format(this.selectQueryModel,
+				selectClause,
+				parameterEntry.getTableName(),
+				joinClauses,
+				whereClause,
 				parameterEntry.getKeyName());
 	}
 
@@ -332,21 +397,75 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	}
 
 	/**
+	 * @param parameterEntry
+	 * @return
+	 */
+	private String consolidateSelectClauseForMissingLinks(DictionaryEntry parameterEntry, List<TableLink> links) {
+
+		StringBuilder consolidate = new StringBuilder(consolidateSelectClause(parameterEntry));
+
+		consolidate.append(", ").append(links.stream().map(l -> {
+			if (this.protectColumns) {
+				return CURRENT_TAB_ALIAS + ITEM_PROTECT + l.getColumnFrom() + ITEM_PROTECT;
+			}
+			return CURRENT_TAB_ALIAS + l.getColumnFrom();
+		}).collect(Collectors.joining(", "))).append(" ");
+
+		return consolidate.toString();
+	}
+
+	/**
 	 * @param links
 	 * @param allEntries
 	 * @return
 	 */
 	private String prepareJoinLinks(List<TableLink> links,
+			Map<String, DictionaryEntry> allEntries, JoinType type) {
+
+		AtomicInteger pos = new AtomicInteger(0);
+
+		return links.stream()
+				.filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder())
+				.map(l -> {
+					DictionaryEntry dic = allEntries.get(l.getTableTo());
+					String alias = LINK_TAB_ALIAS + pos.incrementAndGet();
+					// INNER JOIN "%s" %s on %s."%s" = cur."%s"
+					// or for test : LEFT OUTER JOIN ....
+					// or whatever join type is required
+					return String.format(this.joinSubQueryModel, type.getValue(), dic.getTableName(), alias, alias, l.getColumnTo(),
+							l.getColumnFrom());
+				}).collect(Collectors.joining(" "));
+	}
+
+	/**
+	 * @param links
+	 * @param allEntries
+	 * @return
+	 */
+	private String prepareReverseJoinLinksWhereClause(
+			String existingWhereClause,
+			List<TableLink> links,
 			Map<String, DictionaryEntry> allEntries) {
 
 		AtomicInteger pos = new AtomicInteger(0);
 
-		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).map(l -> {
-			DictionaryEntry dic = allEntries.get(l.getTableTo());
-			String alias = LINK_TAB_ALIAS + pos.incrementAndGet();
-			// INNER JOIN "%s" %s on %s."%s" = cur."%s"
-			return String.format(this.selectJoinSubQueryModel, dic.getTableName(), alias, alias, l.getColumnTo(), l.getColumnFrom());
-		}).collect(Collectors.joining(" "));
+		return existingWhereClause + " AND (" + links.stream()
+				.filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).map(l -> {
+					String alias = LINK_TAB_ALIAS + pos.incrementAndGet();
+					return String.format(this.missingLinkClauseModel, alias, l.getColumnTo());
+				}).collect(Collectors.joining(" OR ")) + ")";
+	}
+
+	/**
+	 * Generate the template regarding the rules on protect / not protected
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateCountQueryTemplate(QueryGenerationRules rules) {
+		return new StringBuilder("SELECT count(*) FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
+				.append(" cur %s WHERE %s ORDER BY cur.")
+				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
 	}
 
 	/**
@@ -387,8 +506,9 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateSelectJoinSubQueryTemplate(QueryGenerationRules rules) {
-		return new StringBuilder("INNER JOIN ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" %s ON %s.")
+	private static final String generateJoinSubQueryTemplate(QueryGenerationRules rules) {
+		// Join type specified on call
+		return new StringBuilder("%s JOIN ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" %s ON %s.")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").append(" = cur.")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
 	}
@@ -426,6 +546,40 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	private static final String generateInsertQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("INSERT INTO ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" (%s) VALUES (%s)").toString();
+	}
+
+	/**
+	 * <p>
+	 * For select on excluded content on missing ref
+	 * </p>
+	 * 
+	 * @param rules
+	 * @return
+	 */
+	private static final String generateSelectMissingLinkWhereClausePartTemplate(QueryGenerationRules rules) {
+		return new StringBuilder(" %s.").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
+				.append(" IS NULL ").toString();
+	}
+
+	/**
+	 * @author elecomte
+	 * @since v0.0.8
+	 * @version 1
+	 */
+	private static enum JoinType {
+
+		INCLUDE("INNER"),
+		MISSING("LEFT OUTER");
+
+		private final String value;
+
+		private JoinType(String value) {
+			this.value = value;
+		}
+
+		String getValue() {
+			return this.value;
+		}
 	}
 
 	/**

@@ -1,6 +1,12 @@
 package fr.uem.efluid.stubs;
 
-import static fr.uem.efluid.utils.DataGenerationUtils.*;
+import static fr.uem.efluid.utils.DataGenerationUtils.commit;
+import static fr.uem.efluid.utils.DataGenerationUtils.domain;
+import static fr.uem.efluid.utils.DataGenerationUtils.entry;
+import static fr.uem.efluid.utils.DataGenerationUtils.link;
+import static fr.uem.efluid.utils.DataGenerationUtils.project;
+import static fr.uem.efluid.utils.DataGenerationUtils.user;
+import static fr.uem.efluid.utils.DataGenerationUtils.version;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +32,7 @@ import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
@@ -33,6 +40,7 @@ import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -74,6 +82,9 @@ public class TestDataLoader {
 
 	@Autowired
 	private ProjectRepository projects;
+
+	@Autowired
+	private VersionRepository versions;
 
 	@Autowired
 	private ManagedValueConverter converter;
@@ -128,6 +139,7 @@ public class TestDataLoader {
 		this.links.deleteAll();
 		this.dictionary.deleteAll();
 		this.domains.deleteAll();
+		this.versions.deleteAll();
 		this.projects.deleteAll();
 
 		Project proj = this.projects.save(project("Default"));
@@ -141,12 +153,14 @@ public class TestDataLoader {
 						ColumnType.ATOMIC));
 
 		this.links.save(link(child, "PARENT", TestUtils.SOURCE_TABLE_NAME));
+		this.versions.save(version("1.0.0", proj));
 
 		this.projects.flush();
+		this.versions.flush();
 		this.domains.flush();
 		this.dictionary.flush();
 		this.links.flush();
-		
+
 		return proj;
 	}
 
@@ -160,13 +174,15 @@ public class TestDataLoader {
 			u.setPreferedProjects(Collections.emptySet());
 			this.users.save(u);
 		});
-		
+
 		this.links.deleteAll();
 		this.dictionary.deleteAll();
 		this.domains.deleteAll();
+		this.versions.deleteAll();
 		this.projects.deleteAll();
 
 		this.projects.flush();
+		this.versions.flush();
 		this.domains.flush();
 		this.dictionary.flush();
 		this.links.flush();
@@ -195,6 +211,7 @@ public class TestDataLoader {
 	public DataLoadResult setupDictionnaryForDiff() {
 		this.dictionary.deleteAll();
 		this.domains.deleteAll();
+		this.versions.deleteAll();
 		this.projects.deleteAll();
 
 		Project proj = this.projects.save(project("Default"));
@@ -204,7 +221,10 @@ public class TestDataLoader {
 				.save(entry("Sources de données", dom1, "VALUE, PRESET, SOMETHING", TestUtils.SOURCE_TABLE_NAME, "1=1", "KEY",
 						ColumnType.ATOMIC));
 
+		this.versions.save(version("1.0.0", proj));
+
 		this.projects.flush();
+		this.versions.flush();
 		this.domains.flush();
 		this.dictionary.flush();
 		return new DataLoadResult(cmat.getUuid(), proj.getUuid());
@@ -239,24 +259,31 @@ public class TestDataLoader {
 		// Prepare data - core items
 		DataLoadResult res = setupDictionnaryForDiff();
 
+		// Reference data
+		Project proj = new Project(res.getProjectUuid());
 		User tester = this.users.getOne("testeur");
+		Version version = this.versions.getLastVersionForProject(proj);
+
 		// Prepare existing commits
-		Commit com1 = this.commits.save(commit("Commit initial de création", tester, 15, new Project(res.getProjectUuid())));
-		Commit com2 = this.commits.save(commit("Commit de mise à jour", tester, 7,new Project(res.getProjectUuid())));
+		Commit com1 = this.commits.save(commit("Commit initial de création", tester, 15, proj, version));
+		Commit com2 = this.commits.save(commit("Commit de mise à jour", tester, 7, proj, version));
 
 		// Prepare index entries for batch init
 		List<IndexEntry> indexesCom1 = readDataset(diffName + "/knew-add.csv")
 				.entrySet().stream()
-				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.ADD, d.getValue(), new DictionaryEntry(res.getDicUuid()), com1))
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.ADD, d.getValue(), new DictionaryEntry(res.getDicUuid()),
+						com1))
 				.collect(Collectors.toList());
 
 		List<IndexEntry> indexesCom2 = readDataset(diffName + "/knew-remove.csv")
 				.entrySet().stream()
-				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.REMOVE, d.getValue(), new DictionaryEntry(res.getDicUuid()), com2))
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.REMOVE, d.getValue(), new DictionaryEntry(res.getDicUuid()),
+						com2))
 				.collect(Collectors.toList());
 		indexesCom2.addAll(readDataset(diffName + "/knew-update.csv")
 				.entrySet().stream()
-				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.UPDATE, d.getValue(), new DictionaryEntry(res.getDicUuid()), com2))
+				.map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.UPDATE, d.getValue(), new DictionaryEntry(res.getDicUuid()),
+						com2))
 				.collect(Collectors.toList()));
 
 		// Batch init of data
@@ -389,8 +416,8 @@ public class TestDataLoader {
 	public void addTestUser() {
 		this.userHolder.setWizzardUser(this.users.save(user("testeur")));
 	}
-	
-	public void setActiveProject(Project pro){
+
+	public void setActiveProject(Project pro) {
 		User user = this.userHolder.getCurrentUser();
 		user.setSelectedProject(pro);
 		this.users.save(user);

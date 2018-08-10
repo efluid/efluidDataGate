@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
@@ -20,6 +21,17 @@ import fr.uem.efluid.model.entities.TableLink;
  * @version 1
  */
 public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
+
+	/**
+	 * <p>
+	 * Check if some links are specified for a parameter table
+	 * </p>
+	 * 
+	 * @param dictionaryEntry
+	 * @return
+	 */
+	@Query("select count(t) > 0 from TableLink t where t.dictionaryEntry = :dictionaryEntry")
+	boolean hasLinksForDictionaryEntry(@Param("dictionaryEntry") DictionaryEntry dictionaryEntry);
 
 	/**
 	 * @param dictionaryEntry
@@ -38,7 +50,7 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 	 * @return
 	 */
 	List<TableLink> findByDictionaryEntryDomainIn(List<FunctionalDomain> domains);
-	
+
 	/**
 	 * <b><font color="red">Query for internal use only</font></b>
 	 * 
