@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.*;
 
 /**
  * <p>
@@ -25,6 +25,8 @@ public class CommitEditData {
 
 	private String comment;
 
+  private CommitState state;
+  
 	private LocalDateTime createdTime;
 
 	private LocalDateTime importedTime;
@@ -103,6 +105,21 @@ public class CommitEditData {
 	public void setOriginalUserEmail(String originalUserEmail) {
 		this.originalUserEmail = originalUserEmail;
 	}
+	
+	/**
+   * @return the state
+   */
+  public CommitState getState() {
+    return this.state;
+  }
+
+  /**
+   * @param state
+   *            the state to set
+   */
+  public void setState(CommitState state) {
+    this.state = state;
+  }
 
 	/**
 	 * @return the comment
@@ -204,6 +221,7 @@ public class CommitEditData {
 		edit.setComment(commit.getComment());
 		edit.setCreatedTime(commit.getCreatedTime());
 		edit.setImportedTime(commit.getImportedTime());
+		edit.setState(commit.getState());
 		edit.setMergeSources(commit.getMergeSources());
 		edit.setOriginalUserEmail(commit.getOriginalUserEmail());
 		edit.setUuid(commit.getUuid());
