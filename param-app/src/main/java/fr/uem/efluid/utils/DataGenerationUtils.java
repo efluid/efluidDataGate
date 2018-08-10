@@ -16,6 +16,7 @@ import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
@@ -38,6 +39,22 @@ public class DataGenerationUtils {
 		user.setToken(login);
 
 		return user;
+	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	public static Version version(String name, Project project) {
+
+		Version version = new Version(UUID.randomUUID());
+
+		version.setCreatedTime(LocalDateTime.now());
+		version.setUpdatedTime(version.getCreatedTime());
+		version.setName(name);
+		version.setProject(project);
+
+		return version;
 	}
 
 	/**
@@ -64,6 +81,7 @@ public class DataGenerationUtils {
 		FunctionalDomain domain = new FunctionalDomain();
 
 		domain.setCreatedTime(LocalDateTime.now().minusDays(name.length()));
+		domain.setUpdatedTime(domain.getCreatedTime().plusMinutes(1));
 		domain.setUuid(UUID.randomUUID());
 		domain.setName(name);
 		domain.setProject(project);
@@ -86,6 +104,7 @@ public class DataGenerationUtils {
 		DictionaryEntry entry = new DictionaryEntry();
 
 		entry.setCreatedTime(LocalDateTime.now().minusDays(name.length()));
+		entry.setUpdatedTime(entry.getCreatedTime().plusMinutes(1));
 		entry.setUuid(UUID.randomUUID());
 		entry.setParameterName(name);
 		entry.setDomain(domain);
@@ -141,7 +160,7 @@ public class DataGenerationUtils {
 	 * @param proj
 	 * @return
 	 */
-	public static Commit commit(String detail, User user, int daysOld, Project proj) {
+	public static Commit commit(String detail, User user, int daysOld, Project proj, Version version) {
 
 		Commit commit = new Commit();
 
@@ -153,6 +172,7 @@ public class DataGenerationUtils {
 		commit.setOriginalUserEmail(user.getEmail());
 		commit.setUser(user);
 		commit.setProject(proj);
+		commit.setVersion(version);
 
 		return commit;
 	}
@@ -175,6 +195,7 @@ public class DataGenerationUtils {
 		link.setColumnTo("KEY");
 		link.setTableTo(table);
 		link.setCreatedTime(LocalDateTime.now());
+		link.setUpdatedTime(link.getCreatedTime().plusMinutes(1));
 		link.setDictionaryEntry(entry);
 
 		return link;
