@@ -87,11 +87,9 @@ public class WizzardCommitPreparationResult {
 
 		preps.stream().forEach(p -> {
 			totalDiffSize.addAndGet(p.getTotalCount());
-			if (p.getPreparedContent() != null) {
-				totalTableCount.addAndGet(p.getPreparedContent().size());
-			}
+			totalTableCount.addAndGet(p.getTotalTableCount());
 			totalProjectCount.incrementAndGet();
-			totalDomainsCount.addAndGet(p.getSelectedFunctionalDomainNames().size());
+			totalDomainsCount.addAndGet(p.getTotalDomainCount());
 
 			if (p.getStatus() != PilotedCommitStatus.COMPLETED) {
 				allCompleted.set(false);

@@ -1,12 +1,14 @@
 package fr.uem.efluid.services.types;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,7 +42,7 @@ import fr.uem.efluid.utils.ApplicationException;
  * @version 1
  * @param <T>
  */
-public final class PilotedCommitPreparation {
+public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 
 	private final UUID identifier;
 
@@ -65,8 +67,8 @@ public final class PilotedCommitPreparation {
 	private Map<String, byte[]> diffLobs;
 
 	private UUID projectUuid;
-	
-	private List<DomainDiffDisplay<?>> domains;
+
+	private List<DomainDiffDisplay<T>> domains;
 
 	/**
 	 * For pushed form only
@@ -186,21 +188,6 @@ public final class PilotedCommitPreparation {
 	}
 
 	/**
-	 * @return the preparedContent
-	 */
-	public List<T> getPreparedContent() {
-		return this.preparedContent;
-	}
-
-	/**
-	 * @param preparedContent
-	 *            the preparedContent to set
-	 */
-	public void setPreparedContent(List<T> preparedContent) {
-		this.preparedContent = preparedContent;
-	}
-
-	/**
 	 * @return the commitData
 	 */
 	public CommitEditData getCommitData() {
@@ -231,32 +218,93 @@ public final class PilotedCommitPreparation {
 	}
 
 	/**
+	 * @return the domains
+	 */
+	public List<DomainDiffDisplay<T>> getDomains() {
+		return this.domains;
+	}
+
+	/**
+	 * 
+	 */
+	public void resetDiffDisplayContent() {
+		this.domains.stream().forEach(d -> d.setPreparedContent(null));
+	}
+
+	/**
+	 * <p>
+	 * Applies the diff to corresponding domain display, and provides the top level domain
+	 * DiffDisplay with a diff
+	 * </p>
+	 * 
+	 * @param domainDisplayByDictUuid
+	 * @param fullDiff
+	 * @return
+	 */
+	public void applyDiffDisplayContent(Collection<T> fullDiff) {
+
+		Map<UUID, DomainDiffDisplay<T>> domainsByUuid = this.domains.stream()
+				.collect(Collectors.toMap(DomainDiffDisplay::getDomainUuid, d -> d));
+
+		fullDiff.stream().forEach(d -> {
+			DomainDiffDisplay<T> domain = domainsByUuid.get(d.getDomainUuid());
+
+			// Init domain diff content holder
+			if (domain.getPreparedContent() == null) {
+				domain.setPreparedContent(new ArrayList<>());
+			}
+
+			domain.getPreparedContent().add(d);
+		});
+	}
+
+	/**
+	 * @param domains
+	 *            the domains to set
+	 */
+	public void setDomains(List<DomainDiffDisplay<T>> domains) {
+		this.domains = domains;
+	}
+
+	/**
 	 * Quick access to covered Functional domains in preparation (used for commit detail
 	 * page)
 	 * 
 	 * @return
 	 */
 	public Collection<String> getSelectedFunctionalDomainNames() {
-		return this.preparedContent != null ? this.preparedContent.stream()
-				.filter(d -> d.getDiff().stream().anyMatch(PreparedIndexEntry::isSelected))
-				.map(DiffDisplay::getDomainName)
-				.collect(Collectors.toSet()) : Collections.emptyList();
-	}
-
-	/**
-	 * @return
-	 */
-	public boolean isEmptyDiff() {
-		return this.preparedContent.stream().allMatch(d -> d.getDiff().isEmpty());
+		return this.domains != null && this.domains.size() > 0
+				? this.domains.stream()
+						.filter(DomainDiffDisplay::isHasSelectedItems)
+						.map(DomainDiffDisplay::getDomainName)
+						.collect(Collectors.toSet())
+				: Collections.emptyList();
 	}
 
 	/**
 	 * @return
 	 */
 	public long getTotalCount() {
-		return this.preparedContent != null
-				? this.preparedContent.stream().flatMap(d -> d.getDiff() != null ? d.getDiff().stream() : Stream.of()).count()
+		return this.domains != null && this.domains.size() > 0
+				? this.domains.stream().mapToLong(DomainDiffDisplay::getTotalCount).sum()
 				: 0;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getTotalTableCount() {
+		return this.domains != null && this.domains.size() > 0
+				? this.domains.stream().filter(d -> d.getPreparedContent() != null)
+						.mapToInt(d -> d.getPreparedContent().size()).sum()
+				: 0;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getTotalDomainCount() {
+		return this.domains != null ? this.domains.size() : 0;
 	}
 
 	/**
@@ -290,28 +338,66 @@ public final class PilotedCommitPreparation {
 	}
 
 	/**
+	 * <p>
+	 * For easy control on diff content regarding domain + DiffDisplay tree content
+	 * </p>
+	 * 
+	 * @param pred
+	 * @return
+	 */
+	public boolean isAnyDiffValidate(Predicate<T> pred) {
+		return this.domains != null && this.domains.size() > 0
+				? this.domains.stream()
+						.filter(d -> d.getPreparedContent() != null && d.getPreparedContent().size() > 0)
+						.map(DomainDiffDisplay::getPreparedContent)
+						.flatMap(Collection::stream)
+						.anyMatch(pred)
+				: false;
+	}
+
+	/**
 	 * @return
 	 */
 	public boolean isHasSomeDiffRemarks() {
+		return isAnyDiffValidate(DiffDisplay::isHasRemarks);
+	}
 
-		for (DiffDisplay<?> diff : this.preparedContent) {
-			if (diff.isHasRemarks()) {
-				return true;
-			}
-		}
+	/**
+	 * @return
+	 */
+	public boolean isEmptyDiff() {
+		return !isAnyDiffValidate(DiffDisplay::isHasContent);
+	}
 
-		return false;
+	/**
+	 * @return
+	 */
+	public boolean isHasDiffDisplay() {
+		return this.domains != null && this.domains.size() > 0
+				? this.domains.stream().filter(d -> d.getPreparedContent() != null)
+						.anyMatch(d -> d.getPreparedContent().size() > 0)
+				: false;
+	}
+
+	/**
+	 * @return
+	 */
+	public Stream<T> streamDiffDisplay() {
+		return this.domains.stream()
+				.map(DomainDiffDisplay::getPreparedContent)
+				.flatMap(Collection::stream);
 	}
 
 	/**
 	 * @return
 	 */
 	public List<DiffRemark<?>> getAllDiffRemarks() {
-
-		return this.preparedContent.stream()
-				.filter(d -> d.getRemarks() != null)
-				.flatMap(d -> d.getRemarks().stream())
-				.collect(Collectors.toList());
+		return this.domains != null && this.domains.size() > 0
+				? this.domains.stream()
+						.map(DomainDiffDisplay::getAllDiffRemarks)
+						.flatMap(Collection::stream)
+						.collect(Collectors.toList())
+				: Collections.emptyList();
 	}
 
 	/**

@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -295,7 +296,7 @@ public class CommitService extends AbstractApplicationService {
 
 		LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
-		List<RollbackLine> rollbacked = prepared.getPreparedContent().stream().flatMap(this::streamDiffRollbacks)
+		List<RollbackLine> rollbacked = prepared.streamDiffDisplay().flatMap(this::streamDiffRollbacks)
 				.collect(Collectors.toList());
 
 		if (rollbacked.size() > 0) {
@@ -329,7 +330,7 @@ public class CommitService extends AbstractApplicationService {
 
 		LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commit.getUuid());
 
-		List<IndexEntry> entries = prepared.getPreparedContent().stream()
+		List<IndexEntry> entries = prepared.streamDiffDisplay()
 				.flatMap(l -> this.diffs.splitCombinedSimilar(l.getDiff()).stream())
 				.filter(PreparedIndexEntry::isSelected)
 				.map(PreparedIndexEntry::toEntity)
@@ -469,7 +470,7 @@ public class CommitService extends AbstractApplicationService {
 		currentPreparation.getCommitData().setComment(generateMergeCommitComment(toProcess));
 
 		// Init prepared merge with imported index
-		currentPreparation.setPreparedContent(importedCommitIndexes(toProcess));
+		currentPreparation.applyDiffDisplayContent(importedCommitIndexes(toProcess));
 
 		// Result for direct display (with ref to preparation)
 		ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> result = new ExportImportResult<>(currentPreparation);
@@ -576,22 +577,31 @@ public class CommitService extends AbstractApplicationService {
 	 *            Lobs organized by dictionaryEntries
 	 * @return
 	 */
-	private static List<MergePreparedDiff> importedCommitIndexes(List<Commit> importedSources) {
+	private Collection<MergePreparedDiff> importedCommitIndexes(List<Commit> importedSources) {
 
-		if (importedSources == null || importedSources.isEmpty()) {
-			return new ArrayList<>();
+		Map<UUID, MergePreparedDiff> groupedByDicEntry = new HashMap<>();
+
+		if (importedSources != null) {
+
+			for (Commit commit : importedSources) {
+
+				for (IndexEntry indexEntry : commit.getIndex()) {
+
+					MergePreparedDiff diff = groupedByDicEntry.get(indexEntry.getDictionaryEntryUuid());
+
+					if (diff == null) {
+						DictionaryEntry dicEntry = this.dictionary.getOne(indexEntry.getDictionaryEntryUuid());
+						diff = new MergePreparedDiff(dicEntry.getUuid(), dicEntry.getDomain().getUuid(), new ArrayList<>());
+						groupedByDicEntry.put(indexEntry.getDictionaryEntryUuid(), diff);
+					}
+
+					diff.getDiff().add(PreparedMergeIndexEntry.fromImportedEntity(indexEntry));
+				}
+
+			}
 		}
 
-		// Organized by DictionaryEntries
-		Map<UUID, List<PreparedMergeIndexEntry>> organized = importedSources.stream()
-				.flatMap(c -> c.getIndex().stream())
-				.map(PreparedMergeIndexEntry::fromImportedEntity)
-				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid));
-
-		// And specified as MergePreparedDiff for complete compatibility with prepare
-		return organized.entrySet().stream()
-				.map(e -> new MergePreparedDiff(e.getKey(), e.getValue()))
-				.collect(Collectors.toList());
+		return groupedByDicEntry.values();
 	}
 
 	/**

@@ -2,6 +2,7 @@ package fr.uem.efluid.services.types;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import fr.uem.efluid.model.entities.FunctionalDomain;
@@ -65,10 +66,30 @@ public class DomainDiffDisplay<T extends DiffDisplay<?>> implements Comparable<D
 	}
 
 	/**
+	 * Quick access to covered Functional domains in preparation (used for commit detail
+	 * page)
+	 * 
 	 * @return
 	 */
-	public boolean isEmptyDiff() {
-		return this.preparedContent.stream().allMatch(d -> d.getDiff().isEmpty());
+	public boolean isHasContent() {
+		return this.preparedContent != null
+				? this.preparedContent.stream()
+						.anyMatch(p -> p.getDiff() != null && p.getDiff().size() > 0)
+				: false;
+	}
+
+	/**
+	 * Quick access to covered Functional domains in preparation (used for commit detail
+	 * page)
+	 * 
+	 * @return
+	 */
+	public boolean isHasSelectedItems() {
+		return this.preparedContent != null
+				? this.preparedContent.stream()
+						.flatMap(d -> d.getDiff().stream())
+						.anyMatch(PreparedIndexEntry::isSelected)
+				: false;
 	}
 
 	/**
@@ -78,6 +99,29 @@ public class DomainDiffDisplay<T extends DiffDisplay<?>> implements Comparable<D
 		return this.preparedContent != null
 				? this.preparedContent.stream().flatMap(d -> d.getDiff() != null ? d.getDiff().stream() : Stream.of()).count()
 				: 0;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getTablesWithContentCount() {
+		return this.preparedContent != null
+				? this.preparedContent.stream()
+						.filter(DiffDisplay::isHasContent)
+						.mapToInt(t -> 1)
+						.sum()
+				: 0;
+	}
+
+	/**
+	 * @return
+	 */
+	public List<DiffRemark<?>> getAllDiffRemarks() {
+
+		return this.preparedContent.stream()
+				.filter(d -> d.getRemarks() != null)
+				.flatMap(d -> d.getRemarks().stream())
+				.collect(Collectors.toList());
 	}
 
 	/**

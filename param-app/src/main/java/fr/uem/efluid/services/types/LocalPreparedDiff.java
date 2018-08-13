@@ -25,8 +25,6 @@ public class LocalPreparedDiff extends DiffDisplay<PreparedIndexEntry> {
 	public static LocalPreparedDiff initFromDictionaryEntrySummary(DictionaryEntrySummary sum) {
 		LocalPreparedDiff diff = new LocalPreparedDiff(sum.getUuid());
 		diff.setDictionaryEntryName(sum.getName());
-		diff.setDomainName(sum.getDomainName());
-		diff.setDomainUuid(sum.getDomainUuid());
 		return diff;
 	}
 
@@ -37,10 +35,6 @@ public class LocalPreparedDiff extends DiffDisplay<PreparedIndexEntry> {
 	public static LocalPreparedDiff initFromDictionaryEntry(DictionaryEntry entity) {
 		LocalPreparedDiff diff = new LocalPreparedDiff(entity.getUuid());
 		diff.setDictionaryEntryName(entity.getParameterName());
-		if (entity.getDomain() != null) {
-			diff.setDomainName(entity.getDomain().getName());
-			diff.setDomainUuid(entity.getDomain().getUuid());
-		}
 		return diff;
 	}
 }

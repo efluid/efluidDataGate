@@ -42,6 +42,7 @@ import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.DiffDisplay;
+import fr.uem.efluid.services.types.DomainDiffDisplay;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
@@ -69,7 +70,7 @@ import fr.uem.efluid.utils.FormatUtils;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 5
  */
 @Transactional
 @Service
@@ -186,6 +187,9 @@ public class PilotableCommitPreparationService {
 		PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
 		preparation.setProjectUuid(projectUuid);
 
+		// Init domain data
+		preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
+		
 		// Specify as active one
 		this.currents.put(projectUuid, preparation);
 
@@ -216,6 +220,9 @@ public class PilotableCommitPreparationService {
 		// For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
 		PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
 		preparation.setProjectUuid(projectUuid);
+
+		// Init domain data
+		preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
 
 		// First step is NOT async : load the package and identify the appliable index
 		ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> importResult = this.commitService.importCommits(file,
@@ -254,8 +261,8 @@ public class PilotableCommitPreparationService {
 				&& current.getPreparingState() == CommitState.MERGED) {
 
 			// Check if at least one content needs action
-			boolean result = ((PilotedCommitPreparation<MergePreparedDiff>) current).getPreparedContent().stream()
-					.anyMatch(p -> p.isDiffNeedAction());
+			boolean result = ((PilotedCommitPreparation<MergePreparedDiff>) current)
+					.isAnyDiffValidate(MergePreparedDiff::isDiffNeedAction);
 
 			LOGGER.debug("Checking if current merge commit needs action. Found {}", Boolean.valueOf(result));
 
@@ -359,6 +366,10 @@ public class PilotableCommitPreparationService {
 	 * and all of its content is already managed localy. So will simply copy "values than
 	 * can change" into current preparation.
 	 * </p>
+	 * <p>
+	 * Process iteration and copy by domain / table (<tt>DomainDiffDisplay</tt> /
+	 * <tt>DiffDisplay</tt>)
+	 * </p>
 	 * 
 	 * @param changedPreparation
 	 */
@@ -367,30 +378,44 @@ public class PilotableCommitPreparationService {
 
 		// Can be empty if no content was selected (ex : import a commit when everything
 		// is already managed locally)
-		if (changedPreparation != null && changedPreparation.getPreparedContent() != null) {
+		if (changedPreparation.isHasDiffDisplay()) {
 
-			int endContent = changedPreparation.getPreparedContent().size();
+			int endDomain = changedPreparation.getTotalDomainCount();
 
-			LOGGER.debug("Process copy of preparation selection for {} commit index contents", Integer.valueOf(endContent));
+			LOGGER.debug("Process copy of preparation selection for {} domains", Integer.valueOf(endDomain));
 
-			// Use basic global iterate on both current and changed
-			for (int i = 0; i < endContent; i++) {
+			// Iterate domains
+			for (int i = 0; i < endDomain; i++) {
 
-				DiffDisplay<? extends PreparedIndexEntry> currentDiff = getCurrentCommitPreparation().getPreparedContent().get(i);
-				DiffDisplay<? extends PreparedIndexEntry> changedDiff = changedPreparation.getPreparedContent().get(i);
+				DomainDiffDisplay<A> changedDomain = changedPreparation.getDomains().get(i);
+				DomainDiffDisplay<?> preparedDomain = getCurrentCommitPreparation().getDomains().get(i);
 
-				if (changedDiff != null && changedDiff.getDiff() != null) {
+				// Process copy on current domain
+				if (changedDomain.getPreparedContent() != null && changedDomain.getPreparedContent().size() > 0) {
 
-					int endDiff = changedDiff.getDiff().size();
+					int endContent = changedDomain.getPreparedContent().size();
+					LOGGER.debug("Processing selection for {} contents in current domain", Integer.valueOf(endContent));
 
-					for (int j = 0; j < endDiff; j++) {
+					// Use basic global iterate on both current and changed, for content
+					for (int j = 0; j < endContent; j++) {
 
-						PreparedIndexEntry currentEntry = currentDiff.getDiff().get(j);
-						PreparedIndexEntry changedEntry = changedDiff.getDiff().get(j);
+						DiffDisplay<? extends PreparedIndexEntry> currentDiff = preparedDomain.getPreparedContent().get(j);
+						DiffDisplay<? extends PreparedIndexEntry> changedDiff = changedDomain.getPreparedContent().get(j);
 
-						// Editable values are "selected" and "rollbacked"
-						currentEntry.setRollbacked(changedEntry.isRollbacked());
-						currentEntry.setSelected(changedEntry.isSelected());
+						if (changedDiff != null && changedDiff.getDiff() != null) {
+
+							int endDiff = changedDiff.getDiff().size();
+
+							for (int k = 0; k < endDiff; k++) {
+
+								PreparedIndexEntry currentEntry = currentDiff.getDiff().get(k);
+								PreparedIndexEntry changedEntry = changedDiff.getDiff().get(k);
+
+								// Editable values are "selected" and "rollbacked"
+								currentEntry.setRollbacked(changedEntry.isRollbacked());
+								currentEntry.setSelected(changedEntry.isSelected());
+							}
+						}
 					}
 				}
 			}
@@ -439,7 +464,11 @@ public class PilotableCommitPreparationService {
 			current.getCommitData().setComment(comment);
 
 			// Mark all items as selecteds
-			current.getPreparedContent().stream().flatMap(d -> d.getDiff().stream()).forEach(i -> i.setSelected(true));
+			current.getDomains().stream()
+					.map(DomainDiffDisplay::getPreparedContent)
+					.flatMap(Collection::stream)
+					.flatMap(d -> d.getDiff().stream())
+					.forEach(i -> i.setSelected(true));
 		});
 	}
 
@@ -554,6 +583,11 @@ public class PilotableCommitPreparationService {
 	}
 
 	/**
+	 * <p>
+	 * Assert also that a project is specified, so result cannot be null. Will throw an
+	 * exception if user has not selected a project
+	 * </p>
+	 * 
 	 * @return
 	 */
 	private UUID getActiveProjectUuid() {
@@ -578,11 +612,14 @@ public class PilotableCommitPreparationService {
 		try {
 			long startTimeout = System.currentTimeMillis();
 
+			List<DictionaryEntry> dictEntries = this.dictionary.findByDomainProject(new Project(preparation.getProjectUuid()));
+
 			// Process details
-			List<Callable<LocalPreparedDiff>> callables = this.dictionary.findByDomainProject(new Project(preparation.getProjectUuid()))
+			List<Callable<LocalPreparedDiff>> callables = dictEntries
 					.stream()
 					.map(d -> callDiff(d, preparation))
 					.collect(Collectors.toList());
+
 			preparation.setProcessStarted(callables.size());
 			preparation.setProcessRemaining(new AtomicInteger(callables.size()));
 
@@ -598,7 +635,7 @@ public class PilotableCommitPreparationService {
 					.collect(Collectors.toList());
 
 			// Keep in preparation for commit build
-			preparation.setPreparedContent(fullDiff);
+			preparation.applyDiffDisplayContent(fullDiff);
 
 			// Mark preparation as completed
 			preparation.setEnd(LocalDateTime.now());
@@ -635,14 +672,14 @@ public class PilotableCommitPreparationService {
 		try {
 			long startTimeout = System.currentTimeMillis();
 
-			if (preparation.getPreparedContent() != null && preparation.getPreparedContent().size() > 0) {
+			if (preparation.isHasDiffDisplay()) {
 
 				Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid(new Project(preparation.getProjectUuid()));
 
 				long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
 
 				// Process details
-				List<Callable<MergePreparedDiff>> callables = preparation.getPreparedContent().stream()
+				List<Callable<MergePreparedDiff>> callables = preparation.streamDiffDisplay()
 						.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p, preparation))
 						.collect(Collectors.toList());
 				preparation.setProcessStarted(callables.size());
@@ -657,8 +694,9 @@ public class PilotableCommitPreparationService {
 						.sorted()
 						.collect(Collectors.toList());
 
-				// Keep in preparation for commit build, once completed
-				preparation.setPreparedContent(fullDiff);
+				// Reset content in preparation for commit build, once completed
+				preparation.resetDiffDisplayContent();
+				preparation.applyDiffDisplayContent(fullDiff);
 
 				// Mark preparation as completed
 				preparation.setEnd(LocalDateTime.now());
@@ -792,6 +830,32 @@ public class PilotableCommitPreparationService {
 			throw new ApplicationException(VERSION_NOT_UP_TO_DATE, "Project " + projectUuid + " has a version (" + last.getName()
 					+ ") not up-to-date with last updates. Commit cannot be created", last.getName());
 		}
+	}
+
+	/**
+	 * <p>
+	 * Prepare the Domain organized diffsplay for diff result content.
+	 * </p>
+	 * <p>
+	 * Now the diffDisplays are managed in DomainDiffDisplay (one for each functional
+	 * Domain), but the diffDisplay process is not processed domain after domain but table
+	 * after table, so we have a flat list of table associated DiffDisplay, and we need to
+	 * apply them in their corresponding Domain diff display
+	 * </p>
+	 * 
+	 * @param dicEntries
+	 * @return
+	 */
+	private <T extends DiffDisplay<?>> List<DomainDiffDisplay<T>> prepareDomainDiffDisplays(UUID projectUuid) {
+
+		return this.dictionary.findByDomainProject(new Project(projectUuid)).stream()
+				.map(DictionaryEntry::getDomain)
+				.distinct()
+				.map(d -> {
+					DomainDiffDisplay<T> domainDiffDisplay = new DomainDiffDisplay<>();
+					domainDiffDisplay.completeFromEntity(d);
+					return domainDiffDisplay;
+				}).collect(Collectors.toList());
 	}
 
 	/**

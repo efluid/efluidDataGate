@@ -14,8 +14,9 @@ public class MergePreparedDiff extends DiffDisplay<PreparedMergeIndexEntry> {
 	 * @param dictionaryEntryUuid
 	 * @param importedDiff
 	 */
-	public MergePreparedDiff(UUID dictionaryEntryUuid, List<PreparedMergeIndexEntry> importedDiff) {
+	public MergePreparedDiff(UUID dictionaryEntryUuid, UUID domainUuid, List<PreparedMergeIndexEntry> importedDiff) {
 		super(dictionaryEntryUuid);
+		setDomainUuid(domainUuid);
 		setDiff(importedDiff);
 	}
 

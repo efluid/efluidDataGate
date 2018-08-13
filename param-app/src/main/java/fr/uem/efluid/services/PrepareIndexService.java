@@ -396,14 +396,16 @@ public class PrepareIndexService {
 						.map(e -> new ContentLineDisplay(e.getKey(), e.getValue()))
 						.collect(Collectors.toList());
 
-				// Prepare the corresponding remark
-				DiffRemark<List<ContentLineDisplay>> remark = new DiffRemark<>(
-						MISSING_ON_UNCHECKED_JOIN, "table " + entry.getTableName(), missingContent);
+				if (missingContent.size() > 0) {
+					// Prepare the corresponding remark
+					DiffRemark<List<ContentLineDisplay>> remark = new DiffRemark<>(
+							MISSING_ON_UNCHECKED_JOIN, "table " + entry.getTableName(), missingContent);
 
-				diffToComplete.addRemark(remark);
+					diffToComplete.addRemark(remark);
 
-				LOGGER.info("Found a count of {} missing entries with unchecked joins for table \"{}\"",
-						Integer.valueOf(missingContent.size()), entry.getTableName());
+					LOGGER.info("Found a count of {} missing entries with unchecked joins for table \"{}\"",
+							Integer.valueOf(missingContent.size()), entry.getTableName());
+				}
 			}
 		}
 	}
@@ -550,14 +552,20 @@ public class PrepareIndexService {
 		// Add references to remaining "theirs"
 		theirsByKey.entrySet().stream().forEach(r -> {
 
-			// Create "nothing to do" MergeEntry
-			PreparedMergeIndexEntry merge = mergeAutoApplyTheir(previouses.get(r.getKey()),
-					DiffLine.combinedOnSameTableAndKey(r.getValue()));
+			IndexEntry localPrevious = previouses.get(r.getKey());
+			DiffLine foundTheir = DiffLine.combinedOnSameTableAndKey(r.getValue());
 
-			// If not found in the diff : was already imported
-			merge.setNeedAction(false);
+			// Ignore when no "mine" and "auto-erased" import
+			if (localPrevious != null && foundTheir != null) {
 
-			preparingMergeIndexToComplete.add(merge);
+				// Create "nothing to do" MergeEntry
+				PreparedMergeIndexEntry merge = mergeAutoApplyTheir(localPrevious, foundTheir);
+
+				// If not found in the diff : was already imported
+				merge.setNeedAction(false);
+
+				preparingMergeIndexToComplete.add(merge);
+			}
 		});
 	}
 
@@ -573,8 +581,8 @@ public class PrepareIndexService {
 			DiffLine foundTheir) {
 
 		// Prepare payload for "their" regarding local previous (if any)
-		String theirHrPayload = getConverter().convertToHrPayload(foundTheir.getPayload(),
-				localPrevious != null ? localPrevious.getPayload() : null);
+		String theirHrPayload = foundTheir != null ? getConverter().convertToHrPayload(foundTheir.getPayload(),
+				localPrevious != null ? localPrevious.getPayload() : null) : null;
 
 		// Corresponding details for the "their"
 		PreparedIndexEntry theirEntry = PreparedIndexEntry.fromCombined(foundTheir, theirHrPayload);
@@ -583,13 +591,18 @@ public class PrepareIndexService {
 		PreparedMergeIndexEntry their = PreparedMergeIndexEntry.fromExistingTheir(theirEntry);
 
 		if (MERGE_LOGGER.isDebugEnabled()) {
-			MERGE_LOGGER.debug(
-					"Auto applied \"their\" on Entry {}, entry key {} (no resolution needed): localPrevious={}/{}, foundTheir={}/{}, preparedTheir={}/{}/{}",
-					foundTheir.getDictionaryEntryUuid(), foundTheir.getKeyValue(),
-					localPrevious != null ? localPrevious.getAction() : "?",
-					localPrevious != null ? localPrevious.getPayload() : " - N/A - ",
-					foundTheir.getAction(), foundTheir.getPayload(),
-					their.getAction(), their.getPayload(), their.getHrPayload());
+
+			if (foundTheir == null) {
+				MERGE_LOGGER.debug("Auto applied \"their\" on one Entry, but without specified foundTheir");
+			} else {
+				MERGE_LOGGER.debug(
+						"Auto applied \"their\" on Entry {}, entry key {} (no resolution needed): localPrevious={}/{}, foundTheir={}/{}, preparedTheir={}/{}/{}",
+						foundTheir.getDictionaryEntryUuid(), foundTheir.getKeyValue(),
+						localPrevious != null ? localPrevious.getAction() : "?",
+						localPrevious != null ? localPrevious.getPayload() : " - N/A - ",
+						foundTheir.getAction(), foundTheir.getPayload(),
+						their.getAction(), their.getPayload(), their.getHrPayload());
+			}
 		}
 
 		return their;

@@ -75,15 +75,21 @@ public class BacklogApiController implements BacklogApi {
 		CommitPrepareDetailsView result = new CommitPrepareDetailsView();
 
 		// Details on content by table
-		result.setDetails(
-				preparation.getPreparedContent().stream().map(d -> {
-					CommitPrepareTableView table = new CommitPrepareTableView();
-					table.setDomain(d.getDomainName());
-					table.setTable(d.getDictionaryEntryTableName());
-					table.setIndexRowCount(d.getDiff().size());
-					table.setParameter(d.getDictionaryEntryName());
-					return table;
-				}).collect(Collectors.toList()));
+		if (preparation.getDomains() != null) {
+			result.setDetails(
+					preparation.getDomains().stream()
+							.filter(d -> d.getPreparedContent() != null)
+							.flatMap(d -> d.getPreparedContent().stream()
+									.map(c -> {
+										CommitPrepareTableView table = new CommitPrepareTableView();
+										table.setDomain(d.getDomainName());
+										table.setTable(c.getDictionaryEntryTableName());
+										table.setIndexRowCount(c.getDiff().size());
+										table.setParameter(c.getDictionaryEntryName());
+										return table;
+									}))
+							.collect(Collectors.toList()));
+		}
 
 		// Total count for quick checking
 		result.setIndexRowCount(preparation.getTotalCount());
