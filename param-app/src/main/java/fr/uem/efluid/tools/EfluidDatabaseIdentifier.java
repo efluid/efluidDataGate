@@ -40,7 +40,7 @@ public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
 
 		return new ManagedModelDescription(
 				lineResultSet.getString("VERSION"),
-				FormatUtils.toLdt(lineResultSet.getDate("DATECREATION")),
+				FormatUtils.toLdt(lineResultSet.getTimestamp("DATECREATION")),
 				lineResultSet.getString("DETAILS"));
 	}
 

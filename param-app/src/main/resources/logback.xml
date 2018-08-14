@@ -47,6 +47,12 @@
 		<appender-ref ref="STDOUT_QUERY" />
 	</logger>
 	
+	<!-- Explicit logger for Identifier queries. Log it here into current console on custom format -->
+ 	<logger name="identifier.queries" additivity="false">
+		<level value="INFO" />
+		<appender-ref ref="STDOUT_QUERY" />
+	</logger>
+	
  
 	<!-- Default level for every logged resources -->
 	<root level="WARN">

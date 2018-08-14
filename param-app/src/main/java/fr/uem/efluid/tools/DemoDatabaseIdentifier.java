@@ -40,7 +40,7 @@ public class DemoDatabaseIdentifier implements ManagedModelIdentifier {
 
 		return new ManagedModelDescription(
 				lineResultSet.getString("VERSION"),
-				FormatUtils.toLdt(lineResultSet.getDate("UPDATE_TIME")),
+				FormatUtils.toLdt(lineResultSet.getTimestamp("UPDATE_TIME")),
 				lineResultSet.getString("DETAIL"));
 	}
 

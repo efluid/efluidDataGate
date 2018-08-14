@@ -45,6 +45,7 @@ param-efluid:
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.tools.DemoDatabaseIdentifier
+        show-sql: true
         
 ## TECH FEATURES CUSTOM
 spring:

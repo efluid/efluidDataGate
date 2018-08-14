@@ -31,7 +31,8 @@ import fr.uem.efluid.tools.ManagedModelIdentifier;
 public class JdbcBasedManagedModelDescriptionRepository implements ManagedModelDescriptionRepository {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedModelDescriptionRepository.class);
-
+	protected static final Logger QUERRY_LOGGER = LoggerFactory.getLogger("identifier.queries");
+	
 	@Autowired
 	private JdbcTemplate managedSource;
 
@@ -41,6 +42,9 @@ public class JdbcBasedManagedModelDescriptionRepository implements ManagedModelD
 	@Value("${param-efluid.model-identifier.enabled}")
 	private boolean checkEnabled;
 
+	@Value("${param-efluid.model-identifier.show-sql}")
+	private boolean showSql;
+	
 	/**
 	 * @return
 	 * @see fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository#getModelDescriptions()
@@ -49,7 +53,7 @@ public class JdbcBasedManagedModelDescriptionRepository implements ManagedModelD
 	public List<ManagedModelDescription> getModelDescriptions() {
 
 		String query = this.identifier.getAllModelDescriptionQuery();
-
+		postProcessQuery(query);
 		LOGGER.debug("Extracting Managed Model descriptions using query \"{}\"", query);
 
 		// Get columns for all table
@@ -126,6 +130,17 @@ public class JdbcBasedManagedModelDescriptionRepository implements ManagedModelD
 		return IdentifierType.UNKNOWN;
 	}
 
+	/**
+	 * @param query
+	 */
+	private void postProcessQuery(String query) {
+
+		// Can output query (using a similar logger than the one from Hibernate on
+		// show-sql configuration parameter)
+		if (this.showSql) {
+			QUERRY_LOGGER.info(query);
+		}
+	}
 	/**
 	 * <p>
 	 * Processing component for description query result. Process the result set and call

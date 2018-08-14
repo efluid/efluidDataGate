@@ -9,7 +9,8 @@
         	Les versions sont specifiées pour le dictionnaire courant. Les lots de modifications sont associés à une version du dictionnaire, et des
         	vérifications sont effectuées dans les imports / exports de lot pour vérifier que les versions sont à jour et en place.
         	Une version peut être mise à jour tant qu'aucun lot n'y est associé.
-        	<span th:if="${modelDesc != null}" th:text="|La version du modèle de l'application actuelle est ${modelDesc.identity}|">Model</span>
+        	<b><span th:if="${modelDesc != null}" th:text="|
+La version du modèle de l'application actuelle est ${modelDesc.identity}|">Model</span></b>
 			</li>
         </span>
         <span th:if="${versions == null || versions.isEmpty()}" class="important-remark" id="versRemark">
@@ -23,7 +24,7 @@
         <table class="table table-sm">
             <thead>
                 <tr>
-                    <th scope="col" width="50%">Versions</th>
+                    <th scope="col" width="35%">Versions</th>
                     <th scope="col">App. Modèle</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
