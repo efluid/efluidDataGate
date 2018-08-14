@@ -40,6 +40,8 @@ public class CommitDetails {
 
 	private String versionName;
 
+	private String versionModelId;
+
 	private CommitDetails() {
 		super();
 	}
@@ -216,12 +218,33 @@ public class CommitDetails {
 		this.size = size;
 	}
 
+	/**
+	 * @return
+	 */
 	public String getVersionName() {
 		return this.versionName;
 	}
 
+	/**
+	 * @param versionName
+	 */
 	public void setVersionName(String versionName) {
 		this.versionName = versionName;
+	}
+
+	/**
+	 * @return the versionModelId
+	 */
+	public String getVersionModelId() {
+		return this.versionModelId;
+	}
+
+	/**
+	 * @param versionModelId
+	 *            the versionModelId to set
+	 */
+	public void setVersionModelId(String versionModelId) {
+		this.versionModelId = versionModelId;
 	}
 
 	/**
@@ -241,6 +264,7 @@ public class CommitDetails {
 		details.setUuid(commit.getUuid());
 		details.setMergeSources(commit.getMergeSources());
 		details.setVersionName(commit.getVersion().getName());
+		details.setVersionModelId(commit.getVersion().getModelIdentity());
 
 		return details;
 	}

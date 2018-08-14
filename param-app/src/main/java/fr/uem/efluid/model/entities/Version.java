@@ -42,6 +42,8 @@ public class Version extends ExportAwareVersion<Project> {
 	@ManyToOne(optional = false)
 	private Project project;
 
+	private String modelIdentity;
+
 	/**
 	 * @param uuid
 	 */
@@ -154,6 +156,22 @@ public class Version extends ExportAwareVersion<Project> {
 	}
 
 	/**
+	 * @return the modelIdentity
+	 */
+	@Override
+	public String getModelIdentity() {
+		return this.modelIdentity;
+	}
+
+	/**
+	 * @param modelIdentity
+	 *            the modelIdentity to set
+	 */
+	public void setModelIdentity(String modelIdentity) {
+		this.modelIdentity = modelIdentity;
+	}
+
+	/**
 	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
@@ -165,7 +183,8 @@ public class Version extends ExportAwareVersion<Project> {
 				.applyLdt("cre", v -> setCreatedTime(v))
 				.applyLdt("upd", v -> setUpdatedTime(v))
 				.applyString("nam", v -> setName(v))
-				.applyUUID("pro", v -> setProject(new Project(v)));
+				.applyUUID("pro", v -> setProject(new Project(v)))
+				.applyString("idn", v -> setModelIdentity(v));
 	}
 
 }

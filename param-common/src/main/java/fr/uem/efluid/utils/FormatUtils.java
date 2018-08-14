@@ -2,10 +2,12 @@ package fr.uem.efluid.utils;
 
 import java.nio.charset.Charset;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
+import java.util.Date;
 
 /**
  * @author elecomte
@@ -89,6 +91,14 @@ public final class FormatUtils {
 	 */
 	public static String format(LocalDateTime date) {
 		return LDT_FORMATTER.format(date);
+	}
+
+	/**
+	 * @param date
+	 * @return
+	 */
+	public static LocalDateTime toLdt(Date date) {
+		return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
 	}
 
 }

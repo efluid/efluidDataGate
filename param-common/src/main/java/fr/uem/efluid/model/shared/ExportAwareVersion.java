@@ -40,6 +40,11 @@ public abstract class ExportAwareVersion<D extends ExportAwareProject> implement
 
 	/**
 	 * @return
+	 */
+	public abstract String getModelIdentity();
+
+	/**
+	 * @return
 	 * @see fr.uem.efluid.model.Shared#serialize()
 	 */
 	@Override
@@ -51,6 +56,7 @@ public abstract class ExportAwareVersion<D extends ExportAwareProject> implement
 				.with("upd", getUpdatedTime())
 				.with("nam", getName())
 				.with("pro", getProject().getUuid())
+				.with("idn", getModelIdentity())
 				.toString();
 	}
 

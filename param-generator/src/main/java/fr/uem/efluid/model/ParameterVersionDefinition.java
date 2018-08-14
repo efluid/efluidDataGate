@@ -24,6 +24,8 @@ public class ParameterVersionDefinition extends ExportAwareVersion<ParameterProj
 
 	private ParameterProjectDefinition project;
 
+	private String modelIdentity;
+
 	/**
 	 * @param uuid
 	 */
@@ -125,6 +127,22 @@ public class ParameterVersionDefinition extends ExportAwareVersion<ParameterProj
 	 */
 	public void setProject(ParameterProjectDefinition project) {
 		this.project = project;
+	}
+
+	/**
+	 * @return the modelIdentity
+	 */
+	@Override
+	public String getModelIdentity() {
+		return this.modelIdentity;
+	}
+
+	/**
+	 * @param modelIdentity
+	 *            the modelIdentity to set
+	 */
+	public void setModelIdentity(String modelIdentity) {
+		this.modelIdentity = modelIdentity;
 	}
 
 	/**

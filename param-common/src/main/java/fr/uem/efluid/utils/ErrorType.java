@@ -9,6 +9,8 @@ public enum ErrorType {
 
 	OTHER,
 	
+	INIT_FAILED,
+	
 	WRONG_DS_TYPE,
 	
 	WRONG_CLIENT_CALL,
@@ -69,6 +71,8 @@ public enum ErrorType {
 	
 	VERSION_NOT_EXIST,
 	VERSION_NOT_UP_TO_DATE,
+	VERSION_NOT_IMPORTED,
+	VERSION_NOT_MODEL_ID,
 	OUTPUT_ERROR
 	;
 

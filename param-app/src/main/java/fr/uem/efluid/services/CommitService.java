@@ -2,6 +2,7 @@ package fr.uem.efluid.services;
 
 import static fr.uem.efluid.utils.ErrorType.COMMIT_EXISTS;
 import static fr.uem.efluid.utils.ErrorType.COMMIT_IMPORT_INVALID;
+import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_IMPORTED;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -421,6 +423,9 @@ public class CommitService extends AbstractApplicationService {
 		// #4 Process commits, one by one
 		for (Commit imported : commitPckg.getContent()) {
 
+			// Referenced version must exist locally
+			assertImportedCommitHasExpectedVersion(imported);
+
 			// Check if already stored localy (in "local" or "merged")
 			boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());
 
@@ -568,6 +573,16 @@ public class CommitService extends AbstractApplicationService {
 	private void assertCommitExists(UUID commitUUID) {
 		if (!this.commits.existsById(commitUUID)) {
 			throw new ApplicationException(COMMIT_EXISTS, "Specified commit " + commitUUID + " doesn't exist");
+		}
+	}
+
+	private void assertImportedCommitHasExpectedVersion(Commit refCommit) {
+
+		Optional<Version> vers = this.versions.findById(refCommit.getVersion().getUuid());
+
+		if (!vers.isPresent()) {
+			throw new ApplicationException(VERSION_NOT_IMPORTED,
+					"Referenced version " + refCommit.getVersion().getUuid() + " is not managed locally");
 		}
 	}
 

@@ -18,6 +18,8 @@ public class VersionData {
 
 	private final String name;
 
+	private final String modelId;
+
 	private final LocalDateTime createdTime;
 
 	private final LocalDateTime updatedTime;
@@ -29,9 +31,10 @@ public class VersionData {
 	 * @param createdTime
 	 * @param updatedTime
 	 */
-	public VersionData(String name, LocalDateTime createdTime, LocalDateTime updatedTime, boolean canUpdate) {
+	public VersionData(String name, String modelId, LocalDateTime createdTime, LocalDateTime updatedTime, boolean canUpdate) {
 		super();
 		this.name = name;
+		this.modelId = modelId;
 		this.createdTime = createdTime;
 		this.updatedTime = updatedTime;
 		this.canUpdate = canUpdate;
@@ -42,6 +45,13 @@ public class VersionData {
 	 */
 	public String getName() {
 		return this.name;
+	}
+
+	/**
+	 * @return the modelId
+	 */
+	public String getModelId() {
+		return this.modelId;
 	}
 
 	/**
@@ -70,7 +80,12 @@ public class VersionData {
 	 * @return
 	 */
 	public static VersionData fromEntity(Version version, boolean canUpdate) {
-		return new VersionData(version.getName(), version.getCreatedTime(), version.getUpdatedTime(), canUpdate);
+		return new VersionData(
+				version.getName(),
+				version.getModelIdentity() != null ? version.getModelIdentity() : " n/a ",
+				version.getCreatedTime(),
+				version.getUpdatedTime(),
+				canUpdate);
 	}
 
 	/**
@@ -78,6 +93,6 @@ public class VersionData {
 	 * @return
 	 */
 	public static VersionView toView(VersionData data) {
-		return data != null ? new VersionView(data.getName(), data.getUpdatedTime(), data.isCanUpdate()) : null;
+		return data != null ? new VersionView(data.getName(), data.getModelId(), data.getUpdatedTime(), data.isCanUpdate()) : null;
 	}
 }
