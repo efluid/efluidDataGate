@@ -9,14 +9,14 @@ import fr.uem.efluid.utils.FormatUtils;
 
 /**
  * <p>
- * The identifier implementation for <b>Efluid</b>
+ * A demo identifier implementation using table "TDEMO_VERSION" for version search
  * </p>
  * 
  * @author elecomte
  * @since v0.0.8
  * @version 1
  */
-public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
+public class DemoDatabaseIdentifier implements ManagedModelIdentifier {
 
 	/**
 	 * @return
@@ -24,7 +24,7 @@ public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
 	 */
 	@Override
 	public String getAllModelDescriptionQuery() {
-		return "SELECT \"VERSION\", \"DATECREATION\", concat(\"PROJET\",' ', \"MESSAGEINFO\") as \"DETAILS\" FROM \"TAPPLICATIONINFO\" ORDER BY \"DATECREATION\" ASC";
+		return "SELECT \"VERSION\", \"UPDATE_TIME\", \"DETAIL\" FROM \"TDEMO_VERSION\" ORDER BY \"UPDATE_TIME\" ASC";
 	}
 
 	/**
@@ -40,8 +40,8 @@ public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
 
 		return new ManagedModelDescription(
 				lineResultSet.getString("VERSION"),
-				FormatUtils.toLdt(lineResultSet.getDate("DATECREATION")),
-				lineResultSet.getString("DETAILS"));
+				FormatUtils.toLdt(lineResultSet.getDate("UPDATE_TIME")),
+				lineResultSet.getString("DETAIL"));
 	}
 
 	/**
@@ -53,8 +53,8 @@ public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
 	 */
 	@Override
 	public boolean isValidPastModelIdentifier(String identity, List<ManagedModelDescription> existingDescriptions) {
-		// As we cannot check past versions, old ones are supposed valid ...
-		return true;
+		// All the valid versions are always provided, so must be in here
+		return existingDescriptions.stream().anyMatch(d -> d.getIdentity().equals(identity));
 	}
 
 }

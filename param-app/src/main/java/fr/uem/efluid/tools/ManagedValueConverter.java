@@ -4,8 +4,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -159,8 +157,8 @@ public class ManagedValueConverter {
 				builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT);
 			} else {
 				// Formated date
-				builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT).append(FormatUtils.encodeAsString(LDT_FORMATTER
-						.format(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()))));
+				builder.append(ColumnType.TEMPORAL.getRepresent()).append(TYPE_IDENT)
+						.append(FormatUtils.encodeAsString(LDT_FORMATTER.format(FormatUtils.toLdt(date))));
 			}
 
 			builder.append(SEPARATOR);

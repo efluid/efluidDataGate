@@ -11,17 +11,20 @@ public class VersionView {
 
 	private final String name;
 
+	private final String modelId;
+
 	private final LocalDateTime updatedTime;
-	
+
 	private final boolean canUpdate;
 
 	/**
 	 * @param name
 	 * @param createdTime
 	 */
-	public VersionView(String name, LocalDateTime updatedTime, boolean canUpdate) {
+	public VersionView(String name, String modelId, LocalDateTime updatedTime, boolean canUpdate) {
 		super();
 		this.name = name;
+		this.modelId = modelId;
 		this.updatedTime = updatedTime;
 		this.canUpdate = canUpdate;
 	}
@@ -34,12 +37,22 @@ public class VersionView {
 	}
 
 	/**
+	 * @return the modelId
+	 */
+	public String getModelId() {
+		return this.modelId;
+	}
+
+	/**
 	 * @return the updatedTime
 	 */
 	public LocalDateTime getUpdatedTime() {
 		return this.updatedTime;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean isCanUpdate() {
 		return this.canUpdate;
 	}

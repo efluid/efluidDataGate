@@ -9,6 +9,8 @@
         	Les versions sont specifiées pour le dictionnaire courant. Les lots de modifications sont associés à une version du dictionnaire, et des
         	vérifications sont effectuées dans les imports / exports de lot pour vérifier que les versions sont à jour et en place.
         	Une version peut être mise à jour tant qu'aucun lot n'y est associé.
+        	<span th:if="${modelDesc != null}" th:text="|La version du modèle de l'application actuelle est ${modelDesc.identity}|">Model</span>
+			</li>
         </span>
         <span th:if="${versions == null || versions.isEmpty()}" class="important-remark" id="versRemark">
         	Aucune version n'a encore été définie pour le projet courant. Les echanges de lots de modifications ne sont pour l'instant pas possibles.
@@ -22,6 +24,7 @@
             <thead>
                 <tr>
                     <th scope="col" width="50%">Versions</th>
+                    <th scope="col">App. Modèle</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
                     <th scope="col" width="10%">&nbsp;</th>
@@ -32,6 +35,7 @@
                      <td class="version-name" th:text="${version.name}">
                      	1.2.5-SNAPSHOT
                      </td>
+                     <td th:text="${version.modelId}">1.2.3</td>
                      <td th:text="${custom.format(version.createdTime)}">Lundi</td>
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
@@ -59,7 +63,7 @@
 				showSuccess("Version ajoutée avec succès");
 				// Remove other update buttons
 				$("button.updateButton").remove();
-		        var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
+		        var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>' + data.modelId + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
 				$("#versionListInjectBefore").before(newVersionRow);
 				inputName.val("");
 				$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.parentElement.id)); // Refresh updates

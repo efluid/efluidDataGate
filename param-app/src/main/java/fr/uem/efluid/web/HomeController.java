@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import fr.uem.efluid.services.ApplicationDetailsService;
+import fr.uem.efluid.utils.WebUtils;
 
 /**
  * <p>
@@ -59,6 +60,8 @@ public class HomeController extends CommonController {
 			return REDIRECT_SELECT;
 		}
 
+		WebUtils.addTools(model);
+		
 		model.addAttribute("details", this.applicationDetailsService.getCurrentDetails());
 
 		return "pages/index";

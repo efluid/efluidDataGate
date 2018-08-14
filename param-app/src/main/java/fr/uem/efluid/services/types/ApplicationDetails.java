@@ -1,5 +1,7 @@
 package fr.uem.efluid.services.types;
 
+import fr.uem.efluid.model.metas.ManagedModelDescription;
+
 /**
  * <p>
  * Basic container of running application details, displayed in home page
@@ -25,6 +27,8 @@ public class ApplicationDetails {
 
 	private long domainsCountForProject;
 	private long versionsCountForProject;
+
+	private ManagedModelDescription modelDesc;
 
 	/**
 	 * 
@@ -208,5 +212,20 @@ public class ApplicationDetails {
 	 */
 	public void setInfo(ApplicationInfo info) {
 		this.info = info;
+	}
+
+	/**
+	 * @return the modelDesc
+	 */
+	public ManagedModelDescription getModelDesc() {
+		return this.modelDesc;
+	}
+
+	/**
+	 * @param modelDesc
+	 *            the modelDesc to set
+	 */
+	public void setModelDesc(ManagedModelDescription modelDesc) {
+		this.modelDesc = modelDesc;
 	}
 }

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.FunctionalDomainData;
@@ -45,6 +46,9 @@ public class DictionaryController extends CommonController {
 	@Autowired
 	private DictionaryManagementService dictionaryManagementService;
 
+	@Autowired
+	private ApplicationDetailsService applicationDetailsService;
+	
 	@RequestMapping("/versions")
 	public String versionsPage(Model model) {
 
@@ -55,6 +59,7 @@ public class DictionaryController extends CommonController {
 		// For formatting
 		WebUtils.addTools(model);
 		
+		model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
 		model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
 		model.addAttribute("checkVersion", Boolean.valueOf(this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion()));
 

@@ -9,15 +9,24 @@ public class ApplicationInfoView {
 
 	private final String version;
 	private final String instanceName;
+	private final String modelId;
 
 	/**
 	 * @param version
 	 * @param instanceName
 	 */
-	public ApplicationInfoView(String version, String instanceName) {
+	public ApplicationInfoView(String version, String instanceName, String modelId) {
 		super();
 		this.version = version;
 		this.instanceName = instanceName;
+		this.modelId = modelId != null ? modelId : " - not available - ";
+	}
+
+	/**
+	 * @return the modelId
+	 */
+	public String getModelId() {
+		return this.modelId;
 	}
 
 	/**

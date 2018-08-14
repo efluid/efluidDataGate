@@ -41,7 +41,11 @@ param-efluid:
         
     extractor:
         show-sql: true
-
+        
+    model-identifier:
+        enabled: true
+        class-name: fr.uem.efluid.tools.DemoDatabaseIdentifier
+        
 ## TECH FEATURES CUSTOM
 spring:
     profiles:

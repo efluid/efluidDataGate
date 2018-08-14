@@ -5,12 +5,14 @@ import static fr.uem.efluid.utils.ErrorType.DIC_KEY_NOT_UNIQ;
 import static fr.uem.efluid.utils.ErrorType.DIC_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.DIC_NO_KEY;
 import static fr.uem.efluid.utils.ErrorType.DOMAIN_NOT_REMOVABLE;
+import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_MODEL_ID;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,8 @@ import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
+import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository;
+import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository.IdentifierType;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
@@ -135,6 +139,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	@Autowired
 	private ProjectManagementService projectService;
 
+	@Autowired
+	private ManagedModelDescriptionRepository modelDescs;
+
 	/**
 	 * @param name
 	 */
@@ -146,21 +153,27 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Search by name
 		Version version = this.versions.findByNameAndProject(name, project);
 
-		// Update
-		if (version != null) {
-			LOGGER.info("Update version {} in current project", name);
-			version.setUpdatedTime(LocalDateTime.now());
-		}
+		// Search ref identifier if enabled
+		String modelId = this.modelDescs.getCurrentModelIdentifier();
 
 		// Create
-		else {
+		if (version == null) {
 			LOGGER.info("Create version {} in current project", name);
 			version = new Version();
 			version.setUuid(UUID.randomUUID());
 			version.setName(name);
 			version.setCreatedTime(LocalDateTime.now());
-			version.setUpdatedTime(LocalDateTime.now());
 			version.setProject(project);
+		} else {
+			LOGGER.info("Update version {} in current project", name);
+		}
+
+		// Always init
+		version.setUpdatedTime(LocalDateTime.now());
+
+		// Never erase existing. Can create or update only
+		if (modelId != null) {
+			version.setModelIdentity(modelId);
 		}
 
 		this.versions.save(version);
@@ -688,7 +701,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.filter(p -> p.getClass() == VersionPackage.class)
 				.flatMap(p -> ((VersionPackage) p).streamContent())
 				.map(d -> importVersion(d, newVersCount, substituteProjects))
+				.sorted(Comparator.comparing(Version::getUpdatedTime))
 				.collect(Collectors.toList());
+
+		// Check all versions
+		assertVersionModelsAreValid(importedVersions);
 
 		// Batched save on all imported
 		this.projects.saveAll(importedProjects);
@@ -795,7 +812,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 * @param substituteProjects
 	 * @return
 	 */
-	Version importVersion(Version imported, AtomicInteger newCounts, Map<UUID, Project> substituteProjects) {
+	private Version importVersion(Version imported, AtomicInteger newCounts, Map<UUID, Project> substituteProjects) {
 
 		Optional<Version> localOpt = this.versions.findById(imported.getUuid());
 
@@ -937,7 +954,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 					return link;
 				}).collect(Collectors.toList());
 
-		// Get existing to update / removoe
+		// Get existing to update / remove
 		Map<String, TableLink> existingLinks = this.links.findByDictionaryEntry(entry).stream().distinct()
 				.collect(Collectors.toMap(TableLink::getColumnFrom, l -> l));
 
@@ -1046,6 +1063,38 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	private void assertDictionaryEntryExists(UUID uuid) {
 		if (!this.dictionary.existsById(uuid)) {
 			throw new ApplicationException(DIC_ENTRY_NOT_FOUND, "Dictionary entry doesn't exist for uuid " + uuid);
+		}
+	}
+
+	/**
+	 * <p>
+	 * Control from model Id
+	 * </p>
+	 * 
+	 * @param importedVersions
+	 */
+	private void assertVersionModelsAreValid(List<Version> importedVersions) {
+
+		if (this.modelDescs.hasToCheckDescriptions()) {
+
+			for (int i = 0; i < importedVersions.size(); i++) {
+
+				Version version = importedVersions.get(i);
+				boolean last = (i == (importedVersions.size() - 1));
+
+				if (version.getModelIdentity() == null) {
+					LOGGER.warn("[VERSION-ID] Uncheckable model id for version \"{}\"", version.getName());
+				} else {
+
+					IdentifierType type = this.modelDescs.getModelIdentifierType(version.getModelIdentity());
+
+					if ((last && type != IdentifierType.CURRENT) || type != IdentifierType.OLD_ONE) {
+						throw new ApplicationException(VERSION_NOT_MODEL_ID, "Model id " + version.getModelIdentity()
+								+ " is not of the required type in version \"" + version.getName() + "\"", version.getModelIdentity());
+					}
+				}
+			}
+
 		}
 	}
 }

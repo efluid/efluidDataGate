@@ -2,6 +2,7 @@ package fr.uem.efluid.services;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
@@ -12,11 +13,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.LobPropertyRepository;
+import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
@@ -65,6 +68,9 @@ public class ApplicationDetailsService {
 	private ProjectManagementService projectService;
 
 	@Autowired
+	private ManagedModelDescriptionRepository modelDescs;
+
+	@Autowired
 	private ApplicationInfo info;
 
 	@Value("${param-efluid.managed-datasource.url}")
@@ -110,7 +116,30 @@ public class ApplicationDetailsService {
 			details.setVersionsCountForProject(this.versions.countForProject(project.getUuid()));
 		}
 
+		// Can be null / empty
+		if (this.modelDescs.hasToCheckDescriptions()) {
+			List<ManagedModelDescription> descs = this.modelDescs.getModelDescriptions();
+			if (descs.size() > 0) {
+				details.setModelDesc(descs.get(descs.size() - 1));
+			}
+		}
+
 		return details;
+	}
+
+	/**
+	 * @return null if not found / not enabled
+	 */
+	public ManagedModelDescription getCurrentModelId() {
+
+		if (this.modelDescs.hasToCheckDescriptions()) {
+			List<ManagedModelDescription> descs = this.modelDescs.getModelDescriptions();
+			if (descs.size() > 0) {
+				return descs.get(descs.size() - 1);
+			}
+		}
+
+		return null;
 	}
 
 	@PostConstruct
