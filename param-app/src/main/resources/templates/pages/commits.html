@@ -10,7 +10,7 @@
 		        <tr>
 		            <th scope="col">Lots de modifications</th>
 		            <th scope="col">Domains couverts</th>
-		            <th scope="col">Version dict.</th>
+		            <th scope="col">Version dict. / Model</th>
 		            <th scope="col">Créé par</th>
 		            <th scope="col">Le</th>
 		            <th scope="col"></th>
@@ -20,7 +20,7 @@
 		        <tr th:each="commit, cstat : ${commits}">
 		            <td th:text="${commit.comment}">Préchargement configuration</td>
 		            <td th:text="${commit.domainNames}">Fonct domains</td>
-		            <td th:text="${commit.versionName}">1.0.0</td>
+		            <td th:text="|${commit.versionName} / ${commit.versionModelId}|">1.0.0</td>
 		            <td th:text="${commit.originalUserEmail}">System</td>
 		            <td th:text="${custom.format(commit.createdTime)}">01/11/2017</td>
 		            <td>

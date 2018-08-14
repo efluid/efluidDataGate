@@ -158,6 +158,7 @@ public class Version extends ExportAwareVersion<Project> {
 	/**
 	 * @return the modelIdentity
 	 */
+	@Override
 	public String getModelIdentity() {
 		return this.modelIdentity;
 	}

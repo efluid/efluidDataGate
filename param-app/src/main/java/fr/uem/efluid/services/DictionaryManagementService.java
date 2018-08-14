@@ -853,6 +853,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Common attrs
 		local.setUpdatedTime(imported.getUpdatedTime());
 		local.setName(imported.getName());
+		local.setModelIdentity(imported.getModelIdentity());
 
 		local.setImportedTime(LocalDateTime.now());
 
@@ -1088,7 +1089,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 					IdentifierType type = this.modelDescs.getModelIdentifierType(version.getModelIdentity());
 
-					if ((last && type != IdentifierType.CURRENT) || type != IdentifierType.OLD_ONE) {
+					if ((last && type != IdentifierType.CURRENT) || (!last && type != IdentifierType.OLD_ONE)) {
 						throw new ApplicationException(VERSION_NOT_MODEL_ID, "Model id " + version.getModelIdentity()
 								+ " is not of the required type in version \"" + version.getName() + "\"", version.getModelIdentity());
 					}

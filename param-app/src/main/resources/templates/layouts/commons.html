@@ -98,8 +98,8 @@
 						<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-secondary btn-sm">Abandonner l'import en cours</a>
 					</p>
 					<p th:case="'VERSION_NOT_MODEL_ID'">
-						La ou les versions du dictionnaire importé sont associées à une version du modèle différente (<span th:text="${payload}">1.2.3</span>) 
-						de celle de l'application actuellement gérée. Le dictionnaire doit être mis à jour après application des changements dans le modèle
+						La ou les versions du dictionnaire importé sont associées à une version du modèle différente de celle de l'application actuellement 
+						gérée (<span th:text="${payload}">1.2.3</span>). Le dictionnaire doit être mis à jour <b>après</b> application des changements dans le modèle
 						de base de données de l'application gérée.
 					</p>
 					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>

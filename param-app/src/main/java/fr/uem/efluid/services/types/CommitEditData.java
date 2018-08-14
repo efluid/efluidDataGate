@@ -37,6 +37,8 @@ public class CommitEditData {
 	
 	private LocalDateTime rangeStartTime;
 
+	private String versionModelId;
+	
 	/**
 	 * 
 	 */
@@ -194,6 +196,21 @@ public class CommitEditData {
 	}
 
 	/**
+	 * @return the versionModelId
+	 */
+	public String getVersionModelId() {
+		return this.versionModelId;
+	}
+
+	/**
+	 * @param versionModelId
+	 *            the versionModelId to set
+	 */
+	public void setVersionModelId(String versionModelId) {
+		this.versionModelId = versionModelId;
+	}
+
+	/**
 	 * @param commit
 	 * @return
 	 */
@@ -208,6 +225,7 @@ public class CommitEditData {
 		edit.setOriginalUserEmail(commit.getOriginalUserEmail());
 		edit.setUuid(commit.getUuid());
 		edit.setVersionName(commit.getVersion().getName());
+		edit.setVersionModelId(commit.getVersion().getModelIdentity());
 
 		return edit;
 	}
