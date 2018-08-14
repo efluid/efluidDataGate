@@ -212,6 +212,8 @@ public class PrepareIndexService {
 		// Then apply from local and from import to identify diff changes
 		completeMergeIndexes(entry, localIndexToTimeStamp, mergeContent, diff);
 
+		diff.stream().forEach(line->{line.setSelected(true);});
+		
 		diffToComplete.setDiff(
 				combineSimilarDiffEntries(diff, SimilarPreparedMergeIndexEntry::fromSimilar).stream()
 						.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));

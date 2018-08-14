@@ -20,22 +20,24 @@
 		</span>
 		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/ui/prepare/commit}" method="post">
 			<div th:if="${preparation.hasSomeDiffRemarks}" class="alert alert-danger" role="alert">
-				<div class="diff-remarks" th:each="remark, estat : ${preparation.allDiffRemarks}" th:id="|common_remark_${estat.index}|">
+				<div class="diff-remarks">
 					<div id="diffRemarkAreaButton" class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</div>
 					<span><b>Des avertissements ont été identifiés suite à la recherche de différences :</b></span>
-					<ul id="diffRemarkArea" th:switch="${remark.type.name()}">
-						<li th:case="'MISSING_ON_UNCHECKED_JOIN'">
-							La <span th:text="${remark.location}">table TABLE</span> possède un ou plusieurs liens vers d'autres tables, et des entités
-							 référencées n'existent pas. Un total de <span th:text="${remark.payload.size()}">12</span> ligne(s) sont ainsi incorrectement remontées,
-							 et sont actuellement ignorées dans le résultat. Dans certains cas, cela peut induire des identifications de modifications fausses
-							 pour la <span th:text="${remark.location}">table TABLE</span>.<br/><u>Entrées manquantes identifiées</u> :
-							 <ul>
-							 	<li th:each="missing, mstat : ${remark.payload}" th:id="${mstat.index}">
-							 		<span th:text="${missing.key}" class="table-key">KEY</span> - <span th:text="${missing.hrPayload}">payload</span>
-							 	</li>
-							 </ul>
-						</li>
-					</ul>
+					<span id="diffRemarkArea">
+						<ul th:each="remark, estat : ${preparation.allDiffRemarks}" th:id="|common_remark_${estat.index}|" th:switch="${remark.type.name()}">
+							<li th:case="'MISSING_ON_UNCHECKED_JOIN'">
+								La <span th:text="${remark.location}">table TABLE</span> possède un ou plusieurs liens vers d'autres tables, et des entités
+								 référencées n'existent pas. Un total de <span th:text="${remark.payload.size()}">12</span> ligne(s) sont ainsi incorrectement remontées,
+								 et sont actuellement ignorées dans le résultat. Dans certains cas, cela peut induire des identifications de modifications fausses
+								 pour la <span th:text="${remark.location}">table TABLE</span>.<br/><u>Entrées manquantes identifiées</u> :
+								 <ul>
+								 	<li th:each="missing, mstat : ${remark.payload}" th:id="${mstat.index}">
+								 		<span th:text="${missing.key}" class="table-key">KEY</span> - <span th:text="${missing.hrPayload}">payload</span>
+								 	</li>
+								 </ul>
+							</li>
+						</ul>
+					</span>
 				</div>
 			</div> 
 			<span th:if="${not preparation.emptyDiff}">
