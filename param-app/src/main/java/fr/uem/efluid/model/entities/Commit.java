@@ -312,6 +312,8 @@ public class Commit implements Shared {
 				.with("cre", getCreatedTime())
 				.with("has", getHash())
 				.with("ema", getOriginalUserEmail())
+				.with("pro", getProject().getUuid())
+				.with("ver", getVersion().getUuid())
 				.with("idx", getIndex().stream().map(IndexEntry::serialize).collect(Collectors.joining("\n")))
 				.toString();
 	}
