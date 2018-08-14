@@ -152,7 +152,7 @@
 														</span>
 														<span class="merged change-display-none" th:if="!${entry.action}">Modifications identiques, rien à changer</span>
 													</td>
-													<td th:if="${entry.needAction}">
+													<td th:if="${entry.needAction && preparation!= null}">
 														<input type="hidden" th:id="|selectFor${dstat.index}_${tstat.index}_${estat.index}|" th:field="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
 														<input type="hidden" th:id="|rollbackFor${dstat.index}_${tstat.index}_${estat.index}|" th:field="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
 														<div class="btn-group float-right" role="group">
@@ -245,7 +245,7 @@
 			hideDisplays();
 			var content = $("#content_" + domainUuid);
 			var button = $("#reducer_" + domainUuid);
-			console.info("#reducer_" + domainUuid");
+			console.info("#reducer_" + domainUuid);
 			if(button.attr("class").indexOf('reducer-close') !== -1){
 				content.hide();
 				button.removeClass("reducer-close").addClass("reducer-open");
@@ -287,7 +287,7 @@
 		const hideAndShowAllDomainAction = (domainUuid, force) => {
 
 			// Hide / Show tables
-			$("#content_" + domainUuid + " span.table-reducer").each((index, e) => {
+			$("#" + domainUuid + " span.table-reducer").each((index, e) => {
 				var tableUuid = e.parentElement.parentElement.parentElement.id;
 				var table = $("#" + tableUuid + " table");
 				var button = $("#" + tableUuid + " span.reducer");
@@ -348,7 +348,7 @@
     	// Init actions
     	$(document).ready(() => {
 			var defaultShow = /*[[${showAll}?'show':'hide']]*/ 'hide';
-			hideAndShowAllTablesAction(defaultShow);
+			hideAndShowAllAction(defaultShow);
 			$("span.change-details").hide();
 			
 			$("span.domain-reducer").click((e) => hideAndShowDomainAction(e.target.parentElement.parentElement.parentElement.id));
