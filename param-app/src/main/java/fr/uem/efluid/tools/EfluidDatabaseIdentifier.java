@@ -24,7 +24,7 @@ public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
 	 */
 	@Override
 	public String getAllModelDescriptionQuery() {
-		return "SELECT \"VERSION\", \"DATECREATION\", concat(\"PROJET\",' ', \"MESSAGEINFO\") as \"DETAILS\" FROM \"TAPPLICATIONINFO\" ORDER BY \"DATECREATION\" ASC";
+		return "SELECT \"VERSION\", \"DATECREATION\", concat(\"PROJET\",concat(' ', \"MESSAGEINFO\")) as \"DETAILS\" FROM \"TAPPLICATIONINFO\" ORDER BY \"DATECREATION\" ASC";
 	}
 
 	/**
