@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 
 import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
 import fr.uem.efluid.model.shared.ExportAwareTableLink;
+import fr.uem.efluid.model.shared.ExportAwareTableMapping;
 
 /**
  * <p>
@@ -105,10 +106,17 @@ public class SelectClauseGenerator {
 	 *            the filtered selected column names
 	 * @param availableColumnNumber
 	 *            the total number of column available for current managed source table
+	 * @param links
+	 * @param mappings
+	 *            to be used in query building
+	 * @param allEntries
 	 * @return the select part of the query, ready to be saved
 	 */
-	public String mergeSelectClause(List<String> selectedColumnNames, int availableColumnNumber,
+	public String mergeSelectClause(
+			List<String> selectedColumnNames,
+			int availableColumnNumber,
 			List<? extends ExportAwareTableLink<?>> links,
+			List<? extends ExportAwareTableMapping<?>> mappings, // TODO : use this
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
 
 		if (selectedColumnNames.size() == availableColumnNumber) {
@@ -203,8 +211,8 @@ public class SelectClauseGenerator {
 		return new StringBuilder(LINK_TAB_ALIAS + "%s.").append(columnNamesProtected ? "\"%s\"" : "%s")
 				.append(LINK_VAL_ALIAS_START + "%s ").toString();
 	}
-	
-	protected static <T extends ExportAwareTableLink<?>> Comparator<T> linkOrder(){
+
+	protected static <T extends ExportAwareTableLink<?>> Comparator<T> linkOrder() {
 		return Comparator.comparing(ExportAwareTableLink::getTableTo);
 	}
 }

@@ -39,9 +39,9 @@ import java.lang.annotation.Target;
  * @version 1
  */
 @Documented
-@Inherited
 @Retention(RUNTIME)
 @Target({ ANNOTATION_TYPE, PACKAGE })
+@Inherited
 public @interface ParameterDomain {
 
 	/**

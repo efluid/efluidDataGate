@@ -32,6 +32,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TableLink;
+import fr.uem.efluid.model.entities.TableMapping;
 import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.TableDescription;
@@ -42,6 +43,7 @@ import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository;
 import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository.IdentifierType;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
+import fr.uem.efluid.model.repositories.TableMappingRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
@@ -104,7 +106,7 @@ import fr.uem.efluid.utils.SelectClauseGenerator;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 5
+ * @version 6
  */
 @Service
 @Transactional
@@ -123,6 +125,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 	@Autowired
 	private DatabaseDescriptionRepository metadatas;
+
+	@Autowired
+	private TableMappingRepository mappings;
 
 	@Autowired
 	private TableLinkRepository links;
@@ -498,7 +503,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		updateLinks(entry, editData.getColumns());
 
 		// Now update select clause using validated tableLinks
-		entry.setSelectClause(columnsAsSelectClause(editData.getColumns(), this.links.findByDictionaryEntry(entry),
+		entry.setSelectClause(columnsAsSelectClause(editData.getColumns(),
+				this.links.findByDictionaryEntry(entry),
+				this.mappings.findByDictionaryEntry(entry),
 				this.dictionary.findAllMappedByTableName(project)));
 
 		// And refresh dict Entry
@@ -1048,11 +1055,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 * @param columns
 	 * @return
 	 */
-	private String columnsAsSelectClause(List<ColumnEditData> columns, List<TableLink> tabLinks, Map<String, DictionaryEntry> allEntries) {
+	private String columnsAsSelectClause(List<ColumnEditData> columns, List<TableLink> tabLinks, List<TableMapping> tabMappings,
+			Map<String, DictionaryEntry> allEntries) {
 		return this.queryGenerator.mergeSelectClause(
 				columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName).collect(Collectors.toList()),
 				columns.size(),
 				tabLinks,
+				tabMappings,
 				allEntries);
 	}
 

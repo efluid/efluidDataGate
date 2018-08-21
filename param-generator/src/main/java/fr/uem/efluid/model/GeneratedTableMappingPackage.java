@@ -6,23 +6,23 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import fr.uem.efluid.services.types.TableLinkExportPackage;
+import fr.uem.efluid.services.types.TableMappingExportPackage;
 
 /**
  * @author elecomte
  * @since v0.0.1
  * @version 1
  */
-public class GeneratedTableMappingPackage extends TableLinkExportPackage<ParameterLinkDefinition> {
+public class GeneratedTableMappingPackage extends TableMappingExportPackage<ParameterMappingDefinition> {
 
-	private static final String RELOADABLE_TYPE = "fr.uem.efluid.services.types.TableLinkPackage";
+	private static final String RELOADABLE_TYPE = "fr.uem.efluid.services.types.TableMappingPackage";
 
 	/**
-	 * @param name
-	 * @param exportDate
+	 * @param allMappings
 	 */
-	public GeneratedTableMappingPackage(Collection<ParameterLinkDefinition> allLinks) {
+	public GeneratedTableMappingPackage(Collection<ParameterMappingDefinition> allMappings) {
 		super(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now());
-		initWithContent(allLinks.stream().sorted(Comparator.comparing(ParameterLinkDefinition::getTableTo))
+		initWithContent(allMappings.stream().sorted(Comparator.comparing(ParameterMappingDefinition::getTableTo))
 				.collect(Collectors.toList()));
 	}
 
@@ -31,8 +31,8 @@ public class GeneratedTableMappingPackage extends TableLinkExportPackage<Paramet
 	 * @see fr.uem.efluid.services.types.SharedPackage#initContent()
 	 */
 	@Override
-	protected ParameterLinkDefinition initContent() {
-		return new ParameterLinkDefinition();
+	protected ParameterMappingDefinition initContent() {
+		return new ParameterMappingDefinition();
 	}
 
 	/**
