@@ -10,13 +10,14 @@ import java.lang.annotation.Target;
 
 /**
  * <p>
- * Specification of a <b>dictionnary entry</b> <b>value</b> from a component class. Can be
- * specified on a field or on a getter method. The column name must be specified.
+ * Specification of a <b>dictionary entry</b> <b>value</b> from a component class. Can be
+ * specified on a field or on a getter method. The column name can be specified, or a
+ * default name will be set (field name or extracted property name from method name).
  * </p>
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Documented
 @Retention(RUNTIME)
@@ -25,10 +26,11 @@ public @interface ParameterValue {
 
 	/**
 	 * <p>
-	 * Name of a column mapped by the current {@link ParameterValue}. Mandatory
+	 * Name of a column mapped by the current {@link ParameterValue}. If not set, will use
+	 * the field name
 	 * </p>
 	 * 
 	 * @return
 	 */
-	String value();
+	String value() default "";
 }

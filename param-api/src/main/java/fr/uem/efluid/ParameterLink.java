@@ -27,7 +27,7 @@ import java.lang.annotation.Target;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Documented
 @Retention(RUNTIME)
@@ -58,10 +58,11 @@ public @interface ParameterLink {
 	 * <p>
 	 * Name of a column linked by the current {@link ParameterValue}. Can be any column,
 	 * not necessary a mapped column : for example it can be a technical id, when the link
-	 * if defined on a foreign key
+	 * if defined on a foreign key. If not specified, will use the identified KEY from the
+	 * mapped parameter table.
 	 * </p>
 	 * 
 	 * @return
 	 */
-	String toColumn();
+	String toColumn() default "";
 }

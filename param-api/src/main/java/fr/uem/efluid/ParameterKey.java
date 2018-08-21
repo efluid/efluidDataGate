@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 
 /**
  * <p>
- * Specification of the <b>dictionnary entry</b> <b>key</b> from a component class. Can be
+ * Specification of the <b>dictionary entry</b> <b>key</b> from a component class. Can be
  * specified on a field or on a getter method. The column name must be specified.
  * </p>
  * <p>
@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Documented
 @Retention(RUNTIME)
@@ -29,12 +29,13 @@ public @interface ParameterKey {
 
 	/**
 	 * <p>
-	 * Mandatory column name for the key
+	 * Non default column name for the key. If not set, will use the field name as column
+	 * name
 	 * </p>
 	 * 
 	 * @return
 	 */
-	String value();
+	String value() default "";
 
 	/**
 	 * <p>

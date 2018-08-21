@@ -47,6 +47,7 @@ import fr.uem.efluid.model.GeneratedTableLinkPackage;
 import fr.uem.efluid.model.GeneratedVersionPackage;
 import fr.uem.efluid.model.ParameterDomainDefinition;
 import fr.uem.efluid.model.ParameterLinkDefinition;
+import fr.uem.efluid.model.ParameterMappingDefinition;
 import fr.uem.efluid.model.ParameterProjectDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
 import fr.uem.efluid.model.ParameterVersionDefinition;
@@ -452,6 +453,7 @@ public class DictionaryGenerator {
 			Collection<ParameterDomainDefinition> allDomains,
 			Collection<ParameterTableDefinition> allTables,
 			Collection<ParameterLinkDefinition> allLinks,
+			Collection<ParameterMappingDefinition> allMappings,
 			Collection<ParameterVersionDefinition> allVersions) throws Exception {
 
 		getLog().info("Identified " + allProjects.size() + " projects, " + allVersions.size() + " versions, " + allDomains.size()

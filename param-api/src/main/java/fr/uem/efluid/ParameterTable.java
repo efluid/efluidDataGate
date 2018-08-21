@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 /**
  * <p>
- * Definition of a <b>dictionnary entry</b>. Specified on any component which can be
+ * Definition of a <b>dictionary entry</b>. Specified on any component which can be
  * represented as a parameter <b>table</b>. The table name and functional name must be
  * specified for the <tt>ParameterTable</tt> annotation
  * </p>
@@ -39,7 +39,7 @@ import java.lang.annotation.Target;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Documented
 @Retention(RUNTIME)
@@ -49,21 +49,22 @@ public @interface ParameterTable {
 	/**
 	 * <p>
 	 * Specify the business name for the parameter table (how it will be identified in
-	 * Dictionnary management). Mandatory and unique : if the value is not unique, the
-	 * dictionary build will fail
+	 * Dictionnary management). Unique : if the value is not unique, the dictionary build
+	 * will fail. If not set, will use the annotated type name as parameter name
 	 * </p>
 	 * 
 	 * @return a specified business name for the parameter table in the dictionary
 	 */
-	String name();
+	String name() default "";
 
 	/**
 	 * <p>
-	 * Specify the technical table name for the parameter table. Mandatory. Please use
-	 * UPPERCASE value only
+	 * Specify the technical table name for the parameter table. Please use UPPERCASE
+	 * value only. If not set, will use the parameter name (as specified with
+	 * {@link #name()} or from annotated type name), UPPERCASE.
 	 * </p>
 	 */
-	String tableName();
+	String tableName() default "";
 
 	/**
 	 * <p>
@@ -87,4 +88,47 @@ public @interface ParameterTable {
 	 */
 	String domainName() default "";
 
+	/**
+	 * <p>
+	 * Allows to set the <tt>ParameterKey</tt> at table definition level, using a fixed
+	 * field name. If the field doesn't exist, dictionary definition will fail. The key
+	 * specified at table level can be overridden by a directly set <tt>ParameterKey</tt>
+	 * </p>
+	 * <p>
+	 * If the key type cannot be found from the field definition, then the generation will
+	 * fail. Non identifiable key type must be defined with property {@link #keyType()} or
+	 * by definition of <tt>ParameterKey</tt>
+	 * </p>
+	 * 
+	 * @return
+	 */
+	String keyField() default "";
+
+	/**
+	 * <p>
+	 * When the type for the table-specified key cannot be defined automatically, specify
+	 * it directly with this parameter. Useful for "non standard" property types. If not
+	 * set, will define it using rules specified in {@link ColumnType#forClass(Class)}
+	 * </p>
+	 * 
+	 * @return
+	 */
+	ColumnType keyType() default ColumnType.UNKNOWN;
+
+	/**
+	 * <p>
+	 * If set to true, all the fields of the annotated table definition class are
+	 * identified as <tt>ParameterValue</tt> with the field name as column name. The
+	 * <tt>ParameterKey</tt> can be specified
+	 * </p>
+	 * <p>
+	 * Default is true : all fields are automatically mapped. Specified
+	 * <tt>ParameterValue</tt> add specific features. The annotation
+	 * <tt>ParameterIgnored</tt> can also be used to ignore some specific fields from
+	 * automatic use as property value
+	 * </p>
+	 * 
+	 * @return
+	 */
+	boolean useAllFields() default true;
 }
