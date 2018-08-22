@@ -75,8 +75,8 @@ public @interface ParameterMapping {
 	/**
 	 * <p>
 	 * In the N-N mapping table, specify the name of the associated "from" column if
-	 * different than the current property column name. If not set, will use current
-	 * property value rules for column naming
+	 * different than the current property column name. If not set, will use
+	 * {@link #fromColumn()} content or current <tt>ParameterTable</tt> key column
 	 * </p>
 	 * 
 	 * @return
@@ -117,4 +117,14 @@ public @interface ParameterMapping {
 	 * @return
 	 */
 	String toColumn() default "";
+
+	/**
+	 * <p>
+	 * Name of the local column used for mapping. If not specified, will use the
+	 * <tt>ParameterTable</tt> key column
+	 * </p>
+	 * 
+	 * @return
+	 */
+	String fromColumn() default "";
 }

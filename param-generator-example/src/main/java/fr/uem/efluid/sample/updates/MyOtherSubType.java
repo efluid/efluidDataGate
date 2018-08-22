@@ -3,7 +3,6 @@ package fr.uem.efluid.sample.updates;
 import java.util.Collection;
 
 import fr.uem.efluid.ParameterMapping;
-import fr.uem.efluid.ParameterValue;
 
 /**
  * @author elecomte
@@ -16,9 +15,12 @@ public class MyOtherSubType extends MyType {
 
 	private Long otherAttribute;
 
-	@ParameterValue
-	@ParameterMapping(mapTableName = "t_oth_links")
+	@ParameterMapping(mapTableName = "T_OTH_LINKS")
 	private Collection<AnotherLinkedType> linkedTypes;
+
+	@ParameterMapping(mapTableName = "T_OTH_LAST_LINKS", fromColumn = "ID", toColumn = "ID", mapColumnFrom = "SUB_ID",
+			mapColumnTo = "LIN_ID")
+	private Collection<LastLinkedType> lastLinkedTypes;
 
 	/**
 	 * @return the customKey

@@ -30,6 +30,11 @@ public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEnt
 	/**
 	 * @return
 	 */
+	public abstract String getName();
+
+	/**
+	 * @return
+	 */
 	public abstract String getColumnFrom();
 
 	/**
@@ -72,6 +77,7 @@ public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEnt
 				.with("uid", getUuid())
 				.with("cre", getCreatedTime())
 				.with("upd", getUpdatedTime())
+				.with("nam", getName())
 				.with("cfr", getColumnFrom())
 				.with("cto", getColumnTo())
 				.with("tto", getTableTo())

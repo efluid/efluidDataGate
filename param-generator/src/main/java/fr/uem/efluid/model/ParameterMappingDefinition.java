@@ -16,6 +16,8 @@ public class ParameterMappingDefinition extends ExportAwareTableMapping<Paramete
 
 	private UUID uuid;
 
+	private String name;
+
 	private String columnFrom;
 
 	private String tableTo;
@@ -63,6 +65,22 @@ public class ParameterMappingDefinition extends ExportAwareTableMapping<Paramete
 	 */
 	public void setUuid(UUID uuid) {
 		this.uuid = uuid;
+	}
+
+	/**
+	 * @return the name
+	 */
+	@Override
+	public String getName() {
+		return this.name;
+	}
+
+	/**
+	 * @param name
+	 *            the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	/**

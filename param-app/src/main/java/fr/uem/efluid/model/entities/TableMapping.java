@@ -29,12 +29,19 @@ public class TableMapping extends ExportAwareTableMapping<DictionaryEntry> {
 	@NotNull
 	private String tableTo;
 
+	@NotNull
+	private String name;
+
+	@NotNull
 	private String columnTo;
 
+	@NotNull
 	private String mapTable;
 
+	@NotNull
 	private String mapTableColumnTo;
 
+	@NotNull
 	private String mapTableColumnFrom;
 
 	@NotNull
@@ -93,6 +100,22 @@ public class TableMapping extends ExportAwareTableMapping<DictionaryEntry> {
 	 */
 	public void setColumnFrom(String columnFrom) {
 		this.columnFrom = columnFrom;
+	}
+
+	/**
+	 * @return the name
+	 */
+	@Override
+	public String getName() {
+		return this.name;
+	}
+
+	/**
+	 * @param name
+	 *            the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	/**
@@ -250,6 +273,7 @@ public class TableMapping extends ExportAwareTableMapping<DictionaryEntry> {
 				.applyUUID("uid", v -> setUuid(v))
 				.applyLdt("cre", v -> setCreatedTime(v))
 				.applyLdt("upd", v -> setUpdatedTime(v))
+				.applyString("nam", v -> setName(v))
 				.applyString("cfr", v -> setColumnFrom(v))
 				.applyString("cto", v -> setColumnTo(v))
 				.applyString("tto", v -> setTableTo(v))

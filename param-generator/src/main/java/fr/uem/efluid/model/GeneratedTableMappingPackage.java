@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-import fr.uem.efluid.services.types.TableLinkExportPackage;
 import fr.uem.efluid.services.types.TableMappingExportPackage;
 
 /**
@@ -21,7 +20,7 @@ public class GeneratedTableMappingPackage extends TableMappingExportPackage<Para
 	 * @param allMappings
 	 */
 	public GeneratedTableMappingPackage(Collection<ParameterMappingDefinition> allMappings) {
-		super(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now());
+		super(TableMappingExportPackage.MAPPINGS_EXPORT, LocalDateTime.now());
 		initWithContent(allMappings.stream().sorted(Comparator.comparing(ParameterMappingDefinition::getTableTo))
 				.collect(Collectors.toList()));
 	}
