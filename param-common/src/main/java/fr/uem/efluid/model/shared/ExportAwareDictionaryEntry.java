@@ -13,10 +13,15 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * friendly rendering, and some technical datas used to select the right parameters value
  * from managed database.
  * </p>
+ * <p>
+ * For composite key support a basic set of "extension" of key is supported. The specified
+ * ext keys are added to ref key for composite definition. Support limited to 5 used
+ * properties for key composition (standard key + 4 ext keys)
+ * </p>
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctionalDomain<?>> implements Shared {
 
@@ -76,6 +81,46 @@ public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctional
 
 	/**
 	 * @return
+	 */
+	public abstract String getExt1KeyName();
+
+	/**
+	 * @return
+	 */
+	public abstract ColumnType getExt1KeyType();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt2KeyName();
+
+	/**
+	 * @return
+	 */
+	public abstract ColumnType getExt2KeyType();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt3KeyName();
+
+	/**
+	 * @return
+	 */
+	public abstract ColumnType getExt3KeyType();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt4KeyName();
+
+	/**
+	 * @return
+	 */
+	public abstract ColumnType getExt4KeyType();
+
+	/**
+	 * @return
 	 * @see fr.uem.efluid.model.Shared#serialize()
 	 */
 	@Override
@@ -88,6 +133,14 @@ public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctional
 				.with("dom", getDomain().getUuid())
 				.with("kna", getKeyName())
 				.with("kty", getKeyType())
+				.with("k1n", getExt1KeyName())
+				.with("k1t", getExt1KeyType())
+				.with("k2n", getExt2KeyName())
+				.with("k2t", getExt2KeyType())
+				.with("k3n", getExt3KeyName())
+				.with("k3t", getExt3KeyType())
+				.with("k4n", getExt4KeyName())
+				.with("k4t", getExt4KeyType())
 				.with("nam", getParameterName())
 				.with("sel", getSelectClause())
 				.with("tab", getTableName())

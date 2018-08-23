@@ -30,6 +30,46 @@ public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<
 	public abstract String getColumnTo();
 
 	/**
+	 * @return
+	 */
+	public abstract String getExt1ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt2ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt3ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt4ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt1ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt2ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt3ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt4ColumnFrom();
+
+	/**
 	 * @param createdTime
 	 *            the createdTime to set
 	 */
@@ -59,6 +99,14 @@ public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<
 				.with("upd", getUpdatedTime())
 				.with("cfr", getColumnFrom())
 				.with("cto", getColumnTo())
+				.with("cf1", getExt1ColumnFrom())
+				.with("cf2", getExt2ColumnFrom())
+				.with("cf3", getExt3ColumnFrom())
+				.with("cf4", getExt4ColumnFrom())
+				.with("ct1", getExt1ColumnTo())
+				.with("ct2", getExt2ColumnTo())
+				.with("ct3", getExt3ColumnTo())
+				.with("ct4", getExt4ColumnTo())
 				.with("tto", getTableTo())
 				.with("dic", getDictionaryEntry().getUuid())
 				.toString();

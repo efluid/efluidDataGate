@@ -68,6 +68,91 @@ public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEnt
 
 	/**
 	 * @return
+	 */
+	public abstract String getWhereClause();
+
+	/**
+	 * @return
+	 */
+	public abstract String getMapTableExt1ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getMapTableExt2ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getMapTableExt3ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getMapTableExt4ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getMapTableExt1ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getMapTableExt2ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getMapTableExt3ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getMapTableExt4ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt1ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt2ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt3ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt4ColumnTo();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt1ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt2ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt3ColumnFrom();
+
+	/**
+	 * @return
+	 */
+	public abstract String getExt4ColumnFrom();
+
+	/**
+	 * @return
 	 * @see fr.uem.efluid.model.Shared#serialize()
 	 */
 	@Override
@@ -84,6 +169,23 @@ public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEnt
 				.with("mta", getMapTable())
 				.with("mto", getMapTableColumnTo())
 				.with("mfr", getMapTableColumnFrom())
+				.with("cf1", getExt1ColumnFrom())
+				.with("cf2", getExt2ColumnFrom())
+				.with("cf3", getExt3ColumnFrom())
+				.with("cf4", getExt4ColumnFrom())
+				.with("ct1", getExt1ColumnTo())
+				.with("ct2", getExt2ColumnTo())
+				.with("ct3", getExt3ColumnTo())
+				.with("ct4", getExt4ColumnTo())
+				.with("mf1", getMapTableExt1ColumnFrom())
+				.with("mf2", getMapTableExt2ColumnFrom())
+				.with("mf3", getMapTableExt3ColumnFrom())
+				.with("mf4", getMapTableExt4ColumnFrom())
+				.with("mt1", getMapTableExt1ColumnTo())
+				.with("mt2", getMapTableExt2ColumnTo())
+				.with("mt3", getMapTableExt3ColumnTo())
+				.with("mt4", getMapTableExt4ColumnTo())
+				.with("whe", getWhereClause())
 				.with("dic", getDictionaryEntry().getUuid())
 				.toString();
 	}

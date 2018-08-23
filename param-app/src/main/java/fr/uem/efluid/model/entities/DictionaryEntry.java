@@ -23,10 +23,15 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * friendly rendering, and some technical datas used to select the right parameters value
  * from managed database.
  * </p>
+ * <p>
+ * For composite key support a basic set of "extension" of key is supported. The specified
+ * ext keys are added to ref key for composite definition. Support limited to 5 used
+ * properties for key composition (standard key + 4 ext keys)
+ * </p>
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 @Entity
 @Table(name = "dictionary")
@@ -54,6 +59,26 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	@Enumerated(EnumType.STRING)
 	@NotNull
 	private ColumnType keyType;
+
+	private String ext1KeyName;
+
+	@Enumerated(EnumType.STRING)
+	private ColumnType ext1KeyType;
+
+	private String ext2KeyName;
+
+	@Enumerated(EnumType.STRING)
+	private ColumnType ext2KeyType;
+
+	private String ext3KeyName;
+
+	@Enumerated(EnumType.STRING)
+	private ColumnType ext3KeyType;
+
+	private String ext4KeyName;
+
+	@Enumerated(EnumType.STRING)
+	private ColumnType ext4KeyType;
 
 	@NotNull
 	private LocalDateTime createdTime;
@@ -226,6 +251,134 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	}
 
 	/**
+	 * @return the ext1KeyName
+	 */
+	@Override
+	public String getExt1KeyName() {
+		return this.ext1KeyName;
+	}
+
+	/**
+	 * @param ext1KeyName
+	 *            the ext1KeyName to set
+	 */
+	public void setExt1KeyName(String ext1KeyName) {
+		this.ext1KeyName = ext1KeyName;
+	}
+
+	/**
+	 * @return the ext1KeyType
+	 */
+	@Override
+	public ColumnType getExt1KeyType() {
+		return this.ext1KeyType;
+	}
+
+	/**
+	 * @param ext1KeyType
+	 *            the ext1KeyType to set
+	 */
+	public void setExt1KeyType(ColumnType ext1KeyType) {
+		this.ext1KeyType = ext1KeyType;
+	}
+
+	/**
+	 * @return the ext2KeyName
+	 */
+	@Override
+	public String getExt2KeyName() {
+		return this.ext2KeyName;
+	}
+
+	/**
+	 * @param ext2KeyName
+	 *            the ext2KeyName to set
+	 */
+	public void setExt2KeyName(String ext2KeyName) {
+		this.ext2KeyName = ext2KeyName;
+	}
+
+	/**
+	 * @return the ext2KeyType
+	 */
+	@Override
+	public ColumnType getExt2KeyType() {
+		return this.ext2KeyType;
+	}
+
+	/**
+	 * @param ext2KeyType
+	 *            the ext2KeyType to set
+	 */
+	public void setExt2KeyType(ColumnType ext2KeyType) {
+		this.ext2KeyType = ext2KeyType;
+	}
+
+	/**
+	 * @return the ext3KeyName
+	 */
+	@Override
+	public String getExt3KeyName() {
+		return this.ext3KeyName;
+	}
+
+	/**
+	 * @param ext3KeyName
+	 *            the ext3KeyName to set
+	 */
+	public void setExt3KeyName(String ext3KeyName) {
+		this.ext3KeyName = ext3KeyName;
+	}
+
+	/**
+	 * @return the ext3KeyType
+	 */
+	@Override
+	public ColumnType getExt3KeyType() {
+		return this.ext3KeyType;
+	}
+
+	/**
+	 * @param ext3KeyType
+	 *            the ext3KeyType to set
+	 */
+	public void setExt3KeyType(ColumnType ext3KeyType) {
+		this.ext3KeyType = ext3KeyType;
+	}
+
+	/**
+	 * @return the ext4KeyName
+	 */
+	@Override
+	public String getExt4KeyName() {
+		return this.ext4KeyName;
+	}
+
+	/**
+	 * @param ext4KeyName
+	 *            the ext4KeyName to set
+	 */
+	public void setExt4KeyName(String ext4KeyName) {
+		this.ext4KeyName = ext4KeyName;
+	}
+
+	/**
+	 * @return the ext4KeyType
+	 */
+	@Override
+	public ColumnType getExt4KeyType() {
+		return this.ext4KeyType;
+	}
+
+	/**
+	 * @param ext4KeyType
+	 *            the ext4KeyType to set
+	 */
+	public void setExt4KeyType(ColumnType ext4KeyType) {
+		this.ext4KeyType = ext4KeyType;
+	}
+
+	/**
 	 * @return the domain
 	 */
 	@Override
@@ -271,6 +424,14 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 				.applyUUID("dom", v -> setDomain(new FunctionalDomain(v)))
 				.applyString("kna", v -> setKeyName(v))
 				.applyString("kty", v -> setKeyType(ColumnType.valueOf(v)))
+				.applyString("k1n", v -> setExt1KeyName(v))
+				.applyString("k1t", v -> setExt1KeyType(ColumnType.valueOf(v)))
+				.applyString("k2n", v -> setExt2KeyName(v))
+				.applyString("k2t", v -> setExt2KeyType(ColumnType.valueOf(v)))
+				.applyString("k3n", v -> setExt3KeyName(v))
+				.applyString("k3t", v -> setExt3KeyType(ColumnType.valueOf(v)))
+				.applyString("k4n", v -> setExt4KeyName(v))
+				.applyString("k4t", v -> setExt4KeyType(ColumnType.valueOf(v)))
 				.applyString("nam", v -> setParameterName(v))
 				.applyString("sel", v -> setSelectClause(v))
 				.applyString("tab", v -> setTableName(v))
