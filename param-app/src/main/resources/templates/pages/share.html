@@ -44,7 +44,8 @@
 		    		<li th:if="${result.counts['full-versions']}"><span th:text="${result.counts['full-versions'].added}">1</span> création(s) et <span th:text="${result.counts['full-versions'].modified}">1</span> mise(s) à jour de version(s)</li>
 		    		<li th:if="${result.counts['full-domains']}"><span th:text="${result.counts['full-domains'].added}">1</span> création(s) et <span th:text="${result.counts['full-domains'].modified}">1</span> mise(s) à jour de domaine(s) fonctionnel(s)</li>
 		    		<li th:if="${result.counts['full-dictionary']}"><span th:text="${result.counts['full-dictionary'].added}">1</span> création(s) et <span th:text="${result.counts['full-dictionary'].modified}">1</span> mise(s) à jour de table(s) de paramètres dans le dictionnaire</li>
-		    		<li th:if="${result.counts['full-links']}"><span th:text="${result.counts['full-links'].added}">1</span> création(s) et <span th:text="${result.counts['full-links'].modified}">1</span> mise(s) à jour des lien(s) entre tables</li>
+		    		<li th:if="${result.counts['full-links']}"><span th:text="${result.counts['full-links'].added}">1</span> création(s) et <span th:text="${result.counts['full-links'].modified}">1</span> mise(s) à jour des liens entre tables</li>
+		    		<li th:if="${result.counts['full-mappings']}"><span th:text="${result.counts['full-mappings'].added}">1</span> création(s) et <span th:text="${result.counts['full-mappings'].modified}">1</span> mise(s) à jour des mappings N-N entre tables</li>
 		    	</ul>
 		    </div>
 	    </p>

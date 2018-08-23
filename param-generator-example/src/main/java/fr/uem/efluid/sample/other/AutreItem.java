@@ -11,12 +11,12 @@ import fr.uem.efluid.ParameterValue;
  * @since v0.0.1
  * @version 1
  */
-@ParameterTable(name = "Autre table", tableName = "TOTHER", filterClause = "1=1")
+@ParameterTable(name = "Autre table", tableName = "TOTHER", filterClause = "1=1", useAllFields = false)
 public class AutreItem {
 
 	private Long id;
 
-	private String code;
+	private Long code;
 
 	private LocalDateTime when;
 
@@ -50,7 +50,7 @@ public class AutreItem {
 	 * @return the code
 	 */
 	@ParameterKey("CODE")
-	public String getCode() {
+	public Long getCode() {
 		return this.code;
 	}
 
@@ -58,7 +58,7 @@ public class AutreItem {
 	 * @param code
 	 *            the code to set
 	 */
-	public void setCode(String code) {
+	public void setCode(Long code) {
 		this.code = code;
 	}
 

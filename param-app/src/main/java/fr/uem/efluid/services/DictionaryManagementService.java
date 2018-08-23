@@ -61,6 +61,8 @@ import fr.uem.efluid.services.types.SelectableTable;
 import fr.uem.efluid.services.types.SharedPackage;
 import fr.uem.efluid.services.types.TableLinkExportPackage;
 import fr.uem.efluid.services.types.TableLinkPackage;
+import fr.uem.efluid.services.types.TableMappingExportPackage;
+import fr.uem.efluid.services.types.TableMappingPackage;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.services.types.VersionExportPackage;
 import fr.uem.efluid.services.types.VersionPackage;
@@ -566,9 +568,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				LocalDateTime.now()).initWithContent(Collections.singletonList(domain));
 		TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.links.findByDictionaryEntryDomain(domain));
+		TableMappingPackage tm = new TableMappingPackage(TableMappingExportPackage.MAPPINGS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.mappings.findByDictionaryEntryDomain(domain));
 
 		// Easy : just take all
-		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, dict, doms, tl));
+		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, dict, doms, tl, tm));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
@@ -576,6 +580,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
 		result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
 		result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
+		result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getContentSize(), 0, 0);
 
 		return result;
 	}
@@ -608,9 +613,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.initWithContent(this.dictionary.findByDomainIn(fdoms));
 		TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.links.findByDictionaryEntryDomainIn(fdoms));
+		TableMappingPackage tm = new TableMappingPackage(TableMappingExportPackage.MAPPINGS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.mappings.findByDictionaryEntryDomainIn(fdoms));
 
 		// Easy : just take all
-		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, vers, dict, doms, tl));
+		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, vers, dict, doms, tl, tm));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
@@ -618,6 +625,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
 		result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
 		result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
+		result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getContentSize(), 0, 0);
 		result.addCount(VersionExportPackage.VERSIONS_EXPORT, vers.getContentSize(), 0, 0);
 
 		return result;
@@ -640,9 +648,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.initWithContent(this.domains.findAll());
 		TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now())
 				.initWithContent(this.links.findAll());
+		TableMappingPackage tm = new TableMappingPackage(TableMappingExportPackage.MAPPINGS_EXPORT, LocalDateTime.now())
+				.initWithContent(this.mappings.findAll());
 
 		// Easy : just take all
-		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, vers, dict, doms, tl));
+		ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, vers, dict, doms, tl, tm));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
@@ -650,6 +660,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		result.addCount(DictionaryExportPackage.DICT_EXPORT, dict.getContentSize(), 0, 0);
 		result.addCount(FunctionalDomainExportPackage.DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
 		result.addCount(TableLinkExportPackage.LINKS_EXPORT, tl.getContentSize(), 0, 0);
+		result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getContentSize(), 0, 0);
 		result.addCount(VersionExportPackage.VERSIONS_EXPORT, vers.getContentSize(), 0, 0);
 
 		return result;
@@ -669,6 +680,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		AtomicInteger newDomainsCount = new AtomicInteger(0);
 		AtomicInteger newDictCount = new AtomicInteger(0);
 		AtomicInteger newLinksCount = new AtomicInteger(0);
+		AtomicInteger newMappingsCount = new AtomicInteger(0);
 
 		// Can substitute project by name : need refer update
 		Map<UUID, Project> substituteProjects = new HashMap<>();
@@ -703,7 +715,14 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.map(d -> importTableLink(d, newLinksCount))
 				.collect(Collectors.toList());
 
-		// #5th The projects (referencing projects)
+		// #5th The mappings (referencing dictionary entries)
+		List<TableMapping> importedMappings = packages.stream()
+				.filter(p -> p.getClass() == TableMappingPackage.class)
+				.flatMap(p -> ((TableMappingPackage) p).streamContent())
+				.map(d -> importTableMapping(d, newMappingsCount))
+				.collect(Collectors.toList());
+
+		// #6th The projects (referencing projects)
 		List<Version> importedVersions = packages.stream()
 				.filter(p -> p.getClass() == VersionPackage.class)
 				.flatMap(p -> ((VersionPackage) p).streamContent())
@@ -719,6 +738,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		this.domains.saveAll(importedDomains);
 		this.dictionary.saveAll(importedDicts);
 		this.links.saveAll(importedLinks);
+		this.mappings.saveAll(importedMappings);
 		this.versions.saveAll(importedVersions);
 
 		// Add also all imported projects to current User prefered list
@@ -726,15 +746,16 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				.map(Shared::getUuid)
 				.collect(Collectors.toList()));
 
-		LOGGER.info("Import completed of {} projects, {} domains, {} dictionary entry and {} table links",
+		LOGGER.info("Import completed of {} projects, {} domains, {} dictionary entry, {} table links and {} table mappings",
 				Integer.valueOf(importedProjects.size()), Integer.valueOf(importedDomains.size()), Integer.valueOf(importedDicts.size()),
-				Integer.valueOf(importedLinks.size()));
+				Integer.valueOf(importedLinks.size()), Integer.valueOf(importedMappings.size()));
 
 		ExportImportResult<Void> result = ExportImportResult.newVoid();
 
 		// Details on imported counts (add vs updated items)
 		if (importedProjects.size() > 0) {
-			result.addCount(ProjectExportPackage.PROJECTS_EXPORT, newProjsCount.get(), importedProjects.size() - newProjsCount.get(), 0);
+			result.addCount(ProjectExportPackage.PROJECTS_EXPORT, newProjsCount.get(),
+					importedProjects.size() - newProjsCount.get(), 0);
 		}
 
 		if (importedDomains.size() > 0) {
@@ -743,15 +764,23 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		}
 
 		if (importedDicts.size() > 0) {
-			result.addCount(DictionaryExportPackage.DICT_EXPORT, newDictCount.get(), importedDicts.size() - newDictCount.get(), 0);
+			result.addCount(DictionaryExportPackage.DICT_EXPORT, newDictCount.get(),
+					importedDicts.size() - newDictCount.get(), 0);
 		}
 
 		if (importedLinks.size() > 0) {
-			result.addCount(TableLinkExportPackage.LINKS_EXPORT, newLinksCount.get(), importedLinks.size() - newLinksCount.get(), 0);
+			result.addCount(TableLinkExportPackage.LINKS_EXPORT, newLinksCount.get(),
+					importedLinks.size() - newLinksCount.get(), 0);
+		}
+
+		if (importedMappings.size() > 0) {
+			result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, newMappingsCount.get(),
+					importedMappings.size() - newMappingsCount.get(), 0);
 		}
 
 		if (importedVersions.size() > 0) {
-			result.addCount(VersionExportPackage.VERSIONS_EXPORT, newVersCount.get(), importedVersions.size() - newVersCount.get(), 0);
+			result.addCount(VersionExportPackage.VERSIONS_EXPORT, newVersCount.get(),
+					importedVersions.size() - newVersCount.get(), 0);
 		}
 
 		return result;
@@ -779,12 +808,12 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		FunctionalDomain local = localOpt.orElseGet(() -> {
 			LOGGER.debug("Import new domain {} : will create currently owned", imported.getUuid());
 			FunctionalDomain loc = new FunctionalDomain(imported.getUuid());
+			loc.setCreatedTime(imported.getCreatedTime());
 			newCounts.incrementAndGet();
 			return loc;
 		});
 
 		// Common attrs
-		local.setCreatedTime(imported.getCreatedTime());
 		local.setUpdatedTime(imported.getUpdatedTime());
 		local.setName(imported.getName());
 
@@ -884,12 +913,12 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		DictionaryEntry local = localOpt.orElseGet(() -> {
 			LOGGER.debug("Import new dictionary entry {} : will create currently owned", imported.getUuid());
 			DictionaryEntry loc = new DictionaryEntry(imported.getUuid());
+			loc.setCreatedTime(imported.getCreatedTime());
 			newCounts.incrementAndGet();
 			return loc;
 		});
 
 		// Common attrs
-		local.setCreatedTime(imported.getCreatedTime());
 		local.setUpdatedTime(imported.getUpdatedTime());
 		local.setDomain(new FunctionalDomain(imported.getDomain().getUuid()));
 		local.setKeyName(imported.getKeyName());
@@ -921,17 +950,55 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		TableLink local = localOpt.orElseGet(() -> {
 			LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
 			TableLink loc = new TableLink(imported.getUuid());
+			loc.setCreatedTime(imported.getCreatedTime());
 			newCounts.incrementAndGet();
 			return loc;
 		});
 
 		// Common attrs
-		local.setCreatedTime(imported.getCreatedTime());
 		local.setUpdatedTime(imported.getUpdatedTime());
 		local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
 		local.setColumnFrom(imported.getColumnFrom());
 		local.setColumnTo(imported.getColumnTo());
 		local.setTableTo(imported.getTableTo());
+
+		local.setImportedTime(LocalDateTime.now());
+
+		return local;
+	}
+
+	/**
+	 * Process one TableMapping
+	 * 
+	 * @param imported
+	 * @return
+	 */
+	private TableMapping importTableMapping(TableMapping imported, AtomicInteger newCounts) {
+
+		Optional<TableMapping> localOpt = this.mappings.findById(imported.getUuid());
+
+		// Exists already
+		localOpt.ifPresent(d -> LOGGER.debug("Import existing TableMapping {} : will update currently owned", imported.getUuid()));
+
+		// Or is a new one
+		TableMapping local = localOpt.orElseGet(() -> {
+			LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
+			TableMapping loc = new TableMapping(imported.getUuid());
+			loc.setCreatedTime(imported.getCreatedTime());
+			newCounts.incrementAndGet();
+			return loc;
+		});
+
+		// Common attrs
+		local.setUpdatedTime(imported.getUpdatedTime());
+		local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
+		local.setName(imported.getName());
+		local.setColumnFrom(imported.getColumnFrom());
+		local.setColumnTo(imported.getColumnTo());
+		local.setTableTo(imported.getTableTo());
+		local.setMapTable(imported.getMapTable());
+		local.setMapTableColumnFrom(imported.getMapTableColumnFrom());
+		local.setMapTableColumnTo(imported.getMapTableColumnTo());
 
 		local.setImportedTime(LocalDateTime.now());
 

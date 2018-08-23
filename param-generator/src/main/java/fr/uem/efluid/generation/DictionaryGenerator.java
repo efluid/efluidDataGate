@@ -225,6 +225,7 @@ public class DictionaryGenerator {
 
 				ParameterTableDefinition def = new ParameterTableDefinition();
 				def.setCreatedTime(LocalDateTime.now());
+				def.setUpdatedTime(def.getCreatedTime());
 				def.setDomain(new ParameterDomainDefinition()); // Will be merged later
 
 				// Found domain name
@@ -240,10 +241,11 @@ public class DictionaryGenerator {
 				}
 
 				// Init table def
-				def.setParameterName(paramTable.name());
+				def.setParameterName(
+						paramTable.name() == null || "".equals(paramTable.name()) ? tableType.getSimpleName() : paramTable.name());
 				def.setTableName("".equals(paramTable.tableName()) ? tableType.getSimpleName().toUpperCase() : paramTable.tableName());
 				def.setWhereClause(paramTable.filterClause());
-				def.setUuid(generateFixedUUID(paramTable.tableName(), ParameterTableDefinition.class));
+				def.setUuid(generateFixedUUID(def.getTableName(), ParameterTableDefinition.class));
 
 				getLog().debug("Found mapped parameter type " + tableType.getName() + " with table " + def.getTableName()
 						+ " and generated UUID " + def.getUuid().toString());
@@ -270,46 +272,38 @@ public class DictionaryGenerator {
 		Set<Field> foundFields = ReflectionUtils.getAllFields(tableType, f -> f.isAnnotationPresent(ParameterKey.class));
 		Set<Method> foundMethods = ReflectionUtils.getAllMethods(tableType, f -> f.isAnnotationPresent(ParameterKey.class));
 
+		// As a list of identified PossibleKeyAnnotation
 		List<PossibleKeyAnnotation> keys = Stream.concat(foundFields.stream().map(f -> new PossibleKeyAnnotation(f)),
 				foundMethods.stream().map(m -> new PossibleKeyAnnotation(m))).collect(Collectors.toList());
 
-		String keyName;
-		ColumnType keyType;
+		// The clean PossibleKeyAnnotation to keep
+		PossibleKeyAnnotation foundKeySpec;
 
-		// Found specified key annotation
+		// Found specified key annotation - use first
 		if (keys.size() != 0) {
-
-			// Use first
-			PossibleKeyAnnotation key = keys.get(0);
-
-			keyName = key.getValidName();
-			keyType = key.getValidType();
+			foundKeySpec = keys.get(0);
 		}
 
 		// Found key specified in table def
 		else if (!paramTable.keyField().equals("")) {
-			keyName = paramTable.keyField();
 
 			// Not specified : search on field def
 			if (ColumnType.UNKNOWN.equals(paramTable.keyType())) {
 				try {
-					Field field = tableType.getField(keyName);
-					keyType = ColumnType.forClass(field.getType());
-					getLog().debug("Found key type from specified field " + keyName + " of type " + keyType + " for ParameterTable "
-							+ tableType.getSimpleName());
+					foundKeySpec = new PossibleKeyAnnotation(tableType.getField(paramTable.keyField()));
+					getLog().debug("Found key type from specified field " + foundKeySpec.getValidName() + " of type "
+							+ foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
 				}
 
 				// Field not found, search getter method
 				catch (NoSuchFieldException n) {
 
-					String getterName = "get" + keyName.substring(0, 1).toUpperCase() + keyName.substring(1);
+					String getterName = "get" + paramTable.keyField().substring(0, 1).toUpperCase() + paramTable.keyField().substring(1);
 
 					try {
-						Method method = tableType.getMethod(getterName);
-						keyType = ColumnType.forClass(method.getReturnType());
-						getLog().debug("Found key type from specified method " +
-								keyName + " (getter \"" + getterName + "\") of type " + keyType + " for ParameterTable "
-								+ tableType.getSimpleName());
+						foundKeySpec = new PossibleKeyAnnotation(tableType.getMethod(getterName));
+						getLog().debug("Found key type from specified method " + foundKeySpec.getValidName() + " (getter \"" + getterName
+								+ "\") of type " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
 					}
 
 					// Still not found : failure
@@ -324,8 +318,8 @@ public class DictionaryGenerator {
 							+ " doesn't match with the class fields. Check if the field is specified correctly", e);
 				}
 			} else {
-				keyType = paramTable.keyType();
-				getLog().debug("Specified keytype " + keyType + " for ParameterTable " + tableType.getSimpleName());
+				foundKeySpec = new PossibleKeyAnnotation(paramTable);
+				getLog().debug("Specified keytype " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
 			}
 		}
 
@@ -336,8 +330,8 @@ public class DictionaryGenerator {
 		}
 
 		// Init key def
-		def.setKeyName(keyName);
-		def.setKeyType(keyType);
+		def.setKeyName(foundKeySpec.getValidName());
+		def.setKeyType(foundKeySpec.getValidType());
 
 		getLog().debug("Found key " + def.getKeyName() + " of type " + def.getKeyType() + " for type " + tableType.getName());
 	}
@@ -368,14 +362,10 @@ public class DictionaryGenerator {
 			ParameterTableDefinition def = defs.get(tableType);
 
 			// Valid fields (regarding anot / table def)
-			Set<Field> foundFields = ReflectionUtils.getAllFields(tableType, f -> (paramTable.useAllFields()
-					&& !f.isAnnotationPresent(ParameterIgnored.class))
-					|| f.isAnnotationPresent(ParameterValue.class));
+			Set<Field> foundFields = ReflectionUtils.getAllFields(tableType, f -> isFieldValue(f, paramTable));
 
 			// Valid methods (regarding anot)
-			Set<Method> foundMethods = ReflectionUtils.getAllMethods(tableType, m -> (m.isAnnotationPresent(ParameterValue.class)
-					|| m.isAnnotationPresent(ParameterLink.class)
-					|| m.isAnnotationPresent(ParameterTable.class)) && !m.isAnnotationPresent(ParameterIgnored.class));
+			Set<Method> foundMethods = ReflectionUtils.getAllMethods(tableType, m -> isMethodValue(m));
 
 			// Mixed all values + associated links, on both field and methods
 			List<PossibleValueAnnotation> values = Stream.concat(foundFields.stream().map(f -> new PossibleValueAnnotation(f, ccl)),
@@ -429,6 +419,7 @@ public class DictionaryGenerator {
 					ParameterLink annot = a.getLinkAnnot();
 					ParameterLinkDefinition link = new ParameterLinkDefinition();
 					link.setCreatedTime(LocalDateTime.now());
+					link.setUpdatedTime(link.getCreatedTime());
 					link.setDictionaryEntry(currentTableDef);
 
 					// If not specified directly, search table to by param
@@ -491,6 +482,7 @@ public class DictionaryGenerator {
 					ParameterMapping annot = a.getMappingAnnot();
 					ParameterMappingDefinition mapping = new ParameterMappingDefinition();
 					mapping.setCreatedTime(LocalDateTime.now());
+					mapping.setUpdatedTime(mapping.getCreatedTime());
 					mapping.setDictionaryEntry(currentTableDef);
 					mapping.setMapTable(annot.mapTableName());
 
@@ -591,6 +583,7 @@ public class DictionaryGenerator {
 			version.setCreatedTime(LocalDateTime.now());
 			version.setUpdatedTime(LocalDateTime.now());
 			version.setProject(p);
+			version.setUuid(generateFixedUUID(version.getName() + "-###-" + p.getName(), ParameterVersionDefinition.class));
 			return version;
 		}).collect(Collectors.toList());
 	}
@@ -610,8 +603,8 @@ public class DictionaryGenerator {
 		Map<String, ParameterDomainDefinition> domains = defs.values().stream().map(d -> d.getDomain().getName()).distinct().map(n -> {
 			ParameterDomainDefinition def = new ParameterDomainDefinition();
 			def.setCreatedTime(LocalDateTime.now());
+			def.setUpdatedTime(def.getCreatedTime());
 			def.setName(n);
-			def.setUuid(generateFixedUUID(n, ParameterDomainDefinition.class));
 
 			// linking to project
 			ParameterProject projectPar = projectsByDomains.get(n);
@@ -619,6 +612,8 @@ public class DictionaryGenerator {
 			// If none found, set default project
 			def.setProject(projectPar != null ? projectsByName.get(projectPar.name())
 					: projectsByName.get(ParameterProjectDefinition.DEFAULT_PROJECT));
+
+			def.setUuid(generateFixedUUID(n + "-###-" + def.getProject().getName(), ParameterDomainDefinition.class));
 
 			getLog().debug("Identified distinct domain \"" + n + "\" with generated UUID " + def.getUuid() + " onto project "
 					+ def.getProject().getName());
@@ -723,6 +718,49 @@ public class DictionaryGenerator {
 		return this.config.getLogger();
 	}
 
+	/**
+	 * <p>
+	 * Select clause for fields used as value properties in a <tt>ParameterTable</tt>
+	 * </p>
+	 * 
+	 * @param paramTable
+	 * @return
+	 */
+	private static boolean isFieldValue(Field field, ParameterTable paramTable) {
+
+		// All fields When the table is enabled "useAllFields"
+		return (paramTable.useAllFields()
+
+				// If not "useAllFields", keep only @ParameterValue fields or link or
+				// mappings
+				|| (field.isAnnotationPresent(ParameterValue.class) || field.isAnnotationPresent(ParameterLink.class)
+						|| field.isAnnotationPresent(ParameterMapping.class)))
+
+				// Exclude ignored with @ParameterIgnored or specified as key with
+				// @ParameterKey
+				&& !(field.isAnnotationPresent(ParameterIgnored.class) || field.isAnnotationPresent(ParameterKey.class));
+	}
+
+	/**
+	 * <p>
+	 * Select clause for methods used as value properties in a <tt>ParameterTable</tt>
+	 * </p>
+	 * 
+	 * @param paramTable
+	 * @return
+	 */
+	private static boolean isMethodValue(Method method) {
+		return
+		/*
+		 * All methods specified as values, link or mappings, and not ignored or key
+		 */
+		(method.isAnnotationPresent(ParameterValue.class)
+				|| method.isAnnotationPresent(ParameterLink.class)
+				|| method.isAnnotationPresent(ParameterMapping.class))
+				&& !(method.isAnnotationPresent(ParameterIgnored.class)
+						|| method.isAnnotationPresent(ParameterKey.class));
+	}
+
 	// 565c1448-6c74-4580-9595-6ee58817d985
 	// 8 4 4 4 12
 	// 32
@@ -765,7 +803,7 @@ public class DictionaryGenerator {
 			// If not set on ParameterValue annotation, uses method name
 			this.validName = this.keyAnnot != null && !"".equals(this.keyAnnot.value()) ? this.keyAnnot.value()
 					: method.getName().toUpperCase();
-			this.validType = this.keyAnnot != null && ColumnType.UNKNOWN == this.keyAnnot.type() ? this.keyAnnot.type()
+			this.validType = this.keyAnnot != null && ColumnType.UNKNOWN != this.keyAnnot.type() ? this.keyAnnot.type()
 					: ColumnType.forClass(method.getReturnType());
 		}
 
@@ -775,8 +813,14 @@ public class DictionaryGenerator {
 			this.validName = this.keyAnnot != null && !"".equals(this.keyAnnot.value()) ? this.keyAnnot.value()
 					: field.getName().toUpperCase();
 			// Type must be found from generic collection
-			this.validType = this.keyAnnot != null && ColumnType.UNKNOWN == this.keyAnnot.type() ? this.keyAnnot.type()
+			this.validType = this.keyAnnot != null && ColumnType.UNKNOWN != this.keyAnnot.type() ? this.keyAnnot.type()
 					: ColumnType.forClass(field.getType());
+		}
+
+		PossibleKeyAnnotation(ParameterTable paramTable) {
+			this.keyAnnot = null;
+			this.validName = paramTable.keyField().toUpperCase();
+			this.validType = paramTable.keyType();
 		}
 
 		/**
