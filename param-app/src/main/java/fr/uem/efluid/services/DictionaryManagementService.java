@@ -1222,7 +1222,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
 					}
 				}
 			}
-
 		}
 	}
 

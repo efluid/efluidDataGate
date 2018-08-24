@@ -5,6 +5,8 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,7 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.utils.IntSet;
 
 /**
  * <p>
@@ -54,20 +57,20 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<Str
 		int totalSize = 1;
 		Map<String, String> extraction = new HashMap<>();
 
-		final String keyName = this.parameterEntry.getKeyName().toUpperCase();
+		final Set<String> keyNames = this.parameterEntry.keyNames().map(String::toUpperCase).collect(Collectors.toSet());
 		ResultSetMetaData meta = rs.getMetaData();
 
 		// Prepare data definition from meta
 		final int count = meta.getColumnCount();
 		String[] columnNames = new String[count];
 		ColumnType[] columnType = new ColumnType[count];
-		int keyPos = 1;
+		IntSet keyPos = new IntSet();
 
 		// Identify columns
 		for (int i = 0; i < count; i++) {
 			String colname = meta.getColumnName(i + 1).toUpperCase();
-			if (colname.equals(keyName)) {
-				keyPos = i;
+			if (keyNames.contains(colname)) {
+				keyPos.add(i);
 			}
 			columnNames[i] = colname;
 			columnType[i] = ColumnType.forJdbcType(meta.getColumnType(i + 1));
@@ -76,19 +79,19 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<Str
 		// Process content
 		while (rs.next()) {
 			T payload = initLineHolder();
-			String keyValue = null;
+			StringBuilder keyValue = new StringBuilder();
 			for (int i = 0; i < count; i++) {
-				if (i != keyPos) {
+				if (!keyPos.contains(i)) {
 					// Internally specified extractor process
 					appendProcessValue(this.valueConverter, payload, columnType[i], columnNames[i], i + 1, rs);
 
 				} else {
-					keyValue = rs.getString(i + 1);
+					this.valueConverter.appendExtractedKeyValue(keyValue, rs.getString(i + 1));
 				}
 
 			}
 
-			extraction.put(keyValue, getFinalizedPayload(this.valueConverter, payload));
+			extraction.put(keyValue.toString(), getFinalizedPayload(this.valueConverter, payload));
 
 			// Only on debug : alert on large data load
 			if (LOGGER.isDebugEnabled()) {

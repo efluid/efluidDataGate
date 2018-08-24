@@ -1,7 +1,11 @@
 package fr.uem.efluid.model.entities;
 
 import java.time.LocalDateTime;
+import java.util.Iterator;
+import java.util.Spliterators;
 import java.util.UUID;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -411,6 +415,15 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	}
 
 	/**
+	 * @return
+	 */
+	public Stream<String> keyNames() {
+
+		// For composite, use advanced building from iterator
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new EntryKeyNameIterator(this), 0), false);
+	}
+
+	/**
 	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
@@ -438,4 +451,84 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 				.applyString("whe", v -> setWhereClause(v));
 	}
 
+	/**
+	 * <p>
+	 * For easy use of composite key model
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.8
+	 * @version 1
+	 */
+	private static final class EntryKeyNameIterator implements Iterator<String> {
+
+		private int remain = 0;
+
+		private final DictionaryEntry dic;
+
+		/**
+		 * @param dic
+		 */
+		public EntryKeyNameIterator(DictionaryEntry dic) {
+			super();
+			this.dic = dic;
+
+			// Standard key - not composite
+			if (dic.getExt1KeyName() == null) {
+				this.remain = 1;
+			}
+
+			// Composite, search for key defs
+			else {
+				if (dic.getExt4KeyName() != null) {
+					this.remain = 5;
+				} else if (dic.getExt3KeyName() != null) {
+					this.remain = 4;
+				} else if (dic.getExt3KeyName() != null) {
+					this.remain = 3;
+				} else {
+					this.remain = 2;
+				}
+			}
+		}
+
+		/**
+		 * @return
+		 * @see java.util.Iterator#hasNext()
+		 */
+		@Override
+		public boolean hasNext() {
+			return this.remain > 0;
+		}
+
+		/**
+		 * @return
+		 * @see java.util.Iterator#next()
+		 */
+		@Override
+		public String next() {
+
+			switch (this.remain) {
+			case 0:
+				return null;
+			case 1:
+				this.remain--;
+				return this.dic.getKeyName();
+			case 2:
+				this.remain--;
+				return this.dic.getExt1KeyName();
+			case 3:
+				this.remain--;
+				return this.dic.getExt2KeyName();
+			case 4:
+				this.remain--;
+				return this.dic.getExt3KeyName();
+			case 5:
+			default:
+				this.remain--;
+				return this.dic.getExt4KeyName();
+			}
+		}
+
+	}
 }

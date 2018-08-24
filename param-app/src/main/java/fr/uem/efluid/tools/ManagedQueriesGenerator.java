@@ -384,9 +384,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 		}
 
 		// Clean search for key
-		String keyRef = this.protectColumns
-				? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
-				: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP;
+		String keyRef = createKeysRef(parameterEntry);
 
 		// If keyname not in select clause, need to add it
 		if (!parameterEntry.getSelectClause().contains(keyRef)) {
@@ -394,6 +392,27 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 		}
 
 		return parameterEntry.getSelectClause();
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @return
+	 */
+	private String createKeysRef(DictionaryEntry parameterEntry) {
+
+		// For most case, use simple key build
+		if (!isDicEntryWithCompositeKey(parameterEntry)) {
+			return this.protectColumns
+					? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
+					: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP;
+		}
+
+		// For composite, use advanced building from iterator
+		return parameterEntry.keyNames()
+				.map(k -> this.protectColumns
+						? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
+						: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP)
+				.collect(Collectors.joining(", "));
 	}
 
 	/**
@@ -559,6 +578,14 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	private static final String generateSelectMissingLinkWhereClausePartTemplate(QueryGenerationRules rules) {
 		return new StringBuilder(" %s.").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" IS NULL ").toString();
+	}
+
+	/**
+	 * @param dic
+	 * @return
+	 */
+	private static boolean isDicEntryWithCompositeKey(DictionaryEntry dic) {
+		return dic.getExt1KeyName() != null;
 	}
 
 	/**

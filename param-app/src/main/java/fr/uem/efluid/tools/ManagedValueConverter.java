@@ -46,6 +46,9 @@ public class ManagedValueConverter {
 	private final static char SEPARATOR = ',';
 	private final static char TYPE_IDENT = '/';
 
+	// For composite key support
+	private final static String KEY_JOIN = " / ";
+
 	// For content rendering
 	private final static String RENDERING_AFFECT = ":";
 	private final static String RENDERING_SEPARATOR = ", ";
@@ -64,6 +67,26 @@ public class ManagedValueConverter {
 
 	@org.springframework.beans.factory.annotation.Value("${param-efluid.managed-datasource.value.keep-empty}")
 	private boolean keepEmptyValues;
+
+	/**
+	 * <p>
+	 * As the key value can reference various column (for composite key support) a
+	 * specific append process is required
+	 * </p>
+	 * 
+	 * @param builder
+	 * @param keyValue
+	 */
+	public void appendExtractedKeyValue(
+			final StringBuilder builder,
+			final String keyValue) {
+
+		if (builder.length() > 0) {
+			builder.append(KEY_JOIN);
+		}
+
+		builder.append(keyValue);
+	}
 
 	/**
 	 * <p>
