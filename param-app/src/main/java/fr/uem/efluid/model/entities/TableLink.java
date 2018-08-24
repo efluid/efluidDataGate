@@ -31,7 +31,6 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
 
 	private String columnTo;
 
-	@NotNull
 	private String name;
 
 	private String ext1ColumnTo;

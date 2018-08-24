@@ -479,7 +479,8 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	 */
 	private static final class EntryKeyNameIterator implements Iterator<String> {
 
-		private int remain = 0;
+		private int max = 0;
+		private int pos = 0;
 
 		private final DictionaryEntry dic;
 
@@ -491,20 +492,20 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 			this.dic = dic;
 
 			// Standard key - not composite
-			if (dic.getExt1KeyName() == null) {
-				this.remain = 1;
+			if (!dic.isCompositeKey()) {
+				this.max = 1;
 			}
 
 			// Composite, search for key defs
 			else {
 				if (dic.getExt4KeyName() != null) {
-					this.remain = 5;
+					this.max = 5;
 				} else if (dic.getExt3KeyName() != null) {
-					this.remain = 4;
+					this.max = 4;
 				} else if (dic.getExt3KeyName() != null) {
-					this.remain = 3;
+					this.max = 3;
 				} else {
-					this.remain = 2;
+					this.max = 2;
 				}
 			}
 		}
@@ -515,7 +516,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 		 */
 		@Override
 		public boolean hasNext() {
-			return this.remain > 0;
+			return this.pos < this.max;
 		}
 
 		/**
@@ -525,24 +526,22 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 		@Override
 		public String next() {
 
-			switch (this.remain) {
+			switch (this.pos) {
 			case 0:
-				return null;
-			case 1:
-				this.remain--;
+				this.pos++;
 				return this.dic.getKeyName();
-			case 2:
-				this.remain--;
+			case 1:
+				this.pos++;
 				return this.dic.getExt1KeyName();
-			case 3:
-				this.remain--;
+			case 2:
+				this.pos++;
 				return this.dic.getExt2KeyName();
-			case 4:
-				this.remain--;
+			case 3:
+				this.pos++;
 				return this.dic.getExt3KeyName();
-			case 5:
+			case 4:
 			default:
-				this.remain--;
+				this.pos++;
 				return this.dic.getExt4KeyName();
 			}
 		}
@@ -560,7 +559,8 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	 */
 	private static final class EntryKeyTypeIterator implements Iterator<ColumnType> {
 
-		private int remain = 0;
+		private int max = 0;
+		private int pos = 0;
 
 		private final DictionaryEntry dic;
 
@@ -573,19 +573,19 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 
 			// Standard key - not composite
 			if (dic.getExt1KeyName() == null) {
-				this.remain = 1;
+				this.max = 1;
 			}
 
 			// Composite, search for key defs
 			else {
 				if (dic.getExt4KeyName() != null) {
-					this.remain = 5;
+					this.max = 5;
 				} else if (dic.getExt3KeyName() != null) {
-					this.remain = 4;
+					this.max = 4;
 				} else if (dic.getExt3KeyName() != null) {
-					this.remain = 3;
+					this.max = 3;
 				} else {
-					this.remain = 2;
+					this.max = 2;
 				}
 			}
 		}
@@ -596,7 +596,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 		 */
 		@Override
 		public boolean hasNext() {
-			return this.remain > 0;
+			return this.pos < this.max;
 		}
 
 		/**
@@ -606,24 +606,22 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 		@Override
 		public ColumnType next() {
 
-			switch (this.remain) {
+			switch (this.pos) {
 			case 0:
-				return null;
-			case 1:
-				this.remain--;
+				this.pos++;
 				return this.dic.getKeyType();
-			case 2:
-				this.remain--;
+			case 1:
+				this.pos++;
 				return this.dic.getExt1KeyType();
-			case 3:
-				this.remain--;
+			case 2:
+				this.pos++;
 				return this.dic.getExt2KeyType();
-			case 4:
-				this.remain--;
+			case 3:
+				this.pos++;
 				return this.dic.getExt3KeyType();
-			case 5:
+			case 4:
 			default:
-				this.remain--;
+				this.pos++;
 				return this.dic.getExt4KeyType();
 			}
 		}

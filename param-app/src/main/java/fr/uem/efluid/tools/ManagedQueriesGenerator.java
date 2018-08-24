@@ -195,44 +195,6 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	}
 
 	/**
-	 * @param keyValue
-	 * @return
-	 */
-	private static List<String> revertCombinedKeyValue(String combinedKeyValue) {
-
-		return Stream.of(combinedKeyValue.split(KEY_JOIN_SPLITER)).collect(Collectors.toList());
-	}
-
-	/**
-	 * <p>
-	 * Produces the keys for a <tt>DictionaryEntry</tt> as item <tt>KeyValue</tt>
-	 * </p>
-	 * <p>
-	 * Not optimized, should be used only for composite key tables (which is a rare
-	 * condition)
-	 * </p>
-	 * 
-	 * @param parameterEntry
-	 * @param combinedKeyValue
-	 * @return
-	 */
-	private static List<KeyValue> prepareKeyValues(DictionaryEntry parameterEntry, String combinedKeyValue) {
-
-		// 3 ordered source of data for key items
-		List<String> values = revertCombinedKeyValue(combinedKeyValue);
-		List<String> keyNames = parameterEntry.keyNames().collect(Collectors.toList());
-		List<ColumnType> keyTypes = parameterEntry.keyTypes().collect(Collectors.toList());
-
-		List<KeyValue> result = new ArrayList<>();
-
-		for (int i = 0; i < keyNames.size(); i++) {
-			result.add(new KeyValue(keyNames.get(0), keyTypes.get(0), values.get(0)));
-		}
-
-		return result;
-	}
-
-	/**
 	 * @param parameterEntry
 	 * @param keyValue
 	 * @return
@@ -516,7 +478,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	private String createKeysRef(DictionaryEntry parameterEntry) {
 
 		// For most case, use simple key build
-		if (!isDicEntryWithCompositeKey(parameterEntry)) {
+		if (!parameterEntry.isCompositeKey()) {
 			return this.protectColumns
 					? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
 					: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP;
@@ -525,9 +487,9 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 		// For composite, use advanced building from iterator
 		return parameterEntry.keyNames()
 				.map(k -> this.protectColumns
-						? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
-						: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP)
-				.collect(Collectors.joining(", "));
+						? CURRENT_TAB_ALIAS + ITEM_PROTECT + k + ITEM_PROTECT
+						: CURRENT_TAB_ALIAS + k)
+				.collect(Collectors.joining(SELECT_CLAUSE_SEP)) + SELECT_CLAUSE_SEP;
 	}
 
 	/**
@@ -591,12 +553,50 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	}
 
 	/**
+	 * @param keyValue
+	 * @return
+	 */
+	private static List<String> revertCombinedKeyValue(String combinedKeyValue) {
+
+		return Stream.of(combinedKeyValue.split(KEY_JOIN_SPLITER)).collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>
+	 * Produces the keys for a <tt>DictionaryEntry</tt> as item <tt>KeyValue</tt>
+	 * </p>
+	 * <p>
+	 * Not optimized, should be used only for composite key tables (which is a rare
+	 * condition)
+	 * </p>
+	 * 
+	 * @param parameterEntry
+	 * @param combinedKeyValue
+	 * @return
+	 */
+	private static List<KeyValue> prepareKeyValues(DictionaryEntry parameterEntry, String combinedKeyValue) {
+
+		// 3 ordered source of data for key items
+		List<String> values = revertCombinedKeyValue(combinedKeyValue);
+		List<String> keyNames = parameterEntry.keyNames().collect(Collectors.toList());
+		List<ColumnType> keyTypes = parameterEntry.keyTypes().collect(Collectors.toList());
+
+		List<KeyValue> result = new ArrayList<>();
+
+		for (int i = 0; i < keyNames.size(); i++) {
+			result.add(new KeyValue(keyNames.get(0), keyTypes.get(0), values.get(0)));
+		}
+
+		return result;
+	}
+
+	/**
 	 * Generate the template regarding the rules on protect / not protected
 	 * 
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateCountQueryTemplate(QueryGenerationRules rules) {
+	private static String generateCountQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("SELECT count(*) FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" cur %s WHERE %s ORDER BY cur.")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
@@ -608,7 +608,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateSelectQueryTemplate(QueryGenerationRules rules) {
+	private static String generateSelectQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("SELECT %s FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" cur %s WHERE %s ORDER BY cur.")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
@@ -620,7 +620,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateUpdateQueryTemplate(QueryGenerationRules rules) {
+	private static String generateUpdateQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("UPDATE ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" SET %s WHERE %s").toString();
 	}
 
@@ -630,7 +630,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateDeleteQueryTemplate(QueryGenerationRules rules) {
+	private static String generateDeleteQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("DELETE FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s ").toString();
 	}
 
@@ -640,7 +640,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateJoinSubQueryTemplate(QueryGenerationRules rules) {
+	private static String generateJoinSubQueryTemplate(QueryGenerationRules rules) {
 		// Join type specified on call
 		return new StringBuilder("%s JOIN ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" %s ON %s.")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").append(" = cur.")
@@ -654,7 +654,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateUpdateOrInsertLinkedSubQueryTemplate(QueryGenerationRules rules) {
+	private static String generateUpdateOrInsertLinkedSubQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("(SELECT ").append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").append(" FROM ")
 				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s)").toString();
 	}
@@ -665,7 +665,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateUnicityQueryTemplate(QueryGenerationRules rules) {
+	private static String generateUnicityQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("SELECT 1 FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" GROUP BY ")
 				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" HAVING COUNT(")
 				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(") > 1").toString();
@@ -677,7 +677,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateInsertQueryTemplate(QueryGenerationRules rules) {
+	private static String generateInsertQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("INSERT INTO ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" (%s) VALUES (%s)").toString();
 	}
@@ -690,17 +690,9 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateSelectMissingLinkWhereClausePartTemplate(QueryGenerationRules rules) {
+	private static String generateSelectMissingLinkWhereClausePartTemplate(QueryGenerationRules rules) {
 		return new StringBuilder(" %s.").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" IS NULL ").toString();
-	}
-
-	/**
-	 * @param dic
-	 * @return
-	 */
-	private static boolean isDicEntryWithCompositeKey(DictionaryEntry dic) {
-		return dic.getExt1KeyName() != null;
 	}
 
 	/**
