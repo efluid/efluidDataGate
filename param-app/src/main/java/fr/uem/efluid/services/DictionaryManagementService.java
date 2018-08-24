@@ -379,26 +379,28 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		Map<String, TableLink> mappedLinks = dicLinks.stream().distinct()
 				.collect(Collectors.toMap(TableLink::getColumnFrom, v -> v));
 
+		List<String> keyNames = entry.keyNames().collect(Collectors.toList());
+
 		// Dedicated case : missing table, pure simulated content
 		if (desc == TableDescription.MISSING) {
 
 			// Avoid immutable lists
 			Collection<String> editableSelecteds = new ArrayList<>(selecteds);
 
-			// On missing, add key column
+			// On missing, add key column(s)
 			if (!editableSelecteds.contains(entry.getKeyName())) {
-				editableSelecteds.add(entry.getKeyName());
+				editableSelecteds.addAll(keyNames);
 			}
 
 			edit.setMissingTable(true);
 			edit.setColumns(editableSelecteds.stream()
-					.map(c -> ColumnEditData.fromSelecteds(c, entry.getKeyName(), entry.getKeyType(), mappedLinks.get(c)))
+					.map(c -> ColumnEditData.fromSelecteds(c, keyNames, entry.keyTypes().collect(Collectors.toList()), mappedLinks.get(c)))
 					.sorted()
 					.collect(Collectors.toList()));
 		} else {
 			// Add metadata to use for edit
 			edit.setColumns(desc.getColumns().stream()
-					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, entry.getKeyName(), mappedLinks.get(c.getName())))
+					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, keyNames, mappedLinks.get(c.getName())))
 					.sorted()
 					.collect(Collectors.toList()));
 		}

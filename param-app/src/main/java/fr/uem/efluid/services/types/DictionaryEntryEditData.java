@@ -206,7 +206,8 @@ public class DictionaryEntryEditData {
 		}
 
 		/**
-		 * @param displayName the displayName to set
+		 * @param displayName
+		 *            the displayName to set
 		 */
 		public void setDisplayName(String displayName) {
 			this.displayName = displayName;
@@ -330,11 +331,12 @@ public class DictionaryEntryEditData {
 		 * 
 		 * @param col
 		 * @param selecteds
-		 * @param linkedTable
+		 * @param keyNames
+		 * @param link
 		 *            from existing link has priority over col foreignKeyTable
 		 * @return
 		 */
-		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds, String keyValue,
+		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds, List<String> keyNames,
 				TableLink link) {
 			ColumnEditData editData = new ColumnEditData();
 			if (link == null) {
@@ -348,7 +350,7 @@ public class DictionaryEntryEditData {
 			editData.setType(col.getType());
 			if (selecteds != null) {
 				// Excludes selected from name
-				if (col.getName().equals(keyValue)) {
+				if (keyNames.contains(col.getName())) {
 					editData.setKey(true);
 				} else {
 					editData.setSelected(selecteds.contains(col.getName()));
@@ -369,15 +371,20 @@ public class DictionaryEntryEditData {
 		 *            from existing link
 		 * @return
 		 */
-		public static ColumnEditData fromSelecteds(String selected, String keyname, ColumnType keyType, TableLink link) {
+		public static ColumnEditData fromSelecteds(String selected, List<String> keyNames, List<ColumnType> keyTypes, TableLink link) {
 			ColumnEditData editData = new ColumnEditData();
 			editData.setName(selected);
-			if (selected.equals(keyname)) {
-				editData.setKey(true);
-				editData.setType(keyType);
-			} else {
+
+			// Specify if key
+			for (int i = 0; i < keyNames.size(); i++) {
+				if (selected.equals(keyNames.get(i))) {
+					editData.setKey(true);
+					editData.setType(keyTypes.get(i));
+					break;
+				}
 				editData.setSelected(true);
 			}
+
 			if (link != null) {
 				editData.setForeignKeyTable(link.getTableTo());
 				editData.setForeignKeyColumn(link.getColumnTo());

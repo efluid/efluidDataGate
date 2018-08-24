@@ -69,7 +69,7 @@ public interface Value {
 			return TYPED_STRING_PROTECT + dbTemporalFormater.format(internal) + TYPED_STRING_PROTECT;
 		}
 
-		if (getType() == ColumnType.BINARY) {
+		if (lobKeys != null && getType() == ColumnType.BINARY) {
 			lobKeys.add(getValueAsString());
 			return INJECT_OF_LOB;
 		}

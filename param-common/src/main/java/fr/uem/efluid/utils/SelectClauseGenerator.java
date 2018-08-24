@@ -46,6 +46,8 @@ public class SelectClauseGenerator {
 
 	protected static final String DEFAULT_SELECT_CLAUSE = "*";
 
+	protected static final String KEY_JOIN_SPLITER = " \\/ ";
+
 	protected static final int SELECT_CLAUSE_FIRST_COL_PROTECT = 1 + CURRENT_TAB_ALIAS.length();
 	protected static final int SELECT_CLAUSE_FIRST_COL_NO_PROTECT = CURRENT_TAB_ALIAS.length();
 

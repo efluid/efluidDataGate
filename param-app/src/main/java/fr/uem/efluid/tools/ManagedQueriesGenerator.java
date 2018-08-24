@@ -51,6 +51,10 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
 	private static final String AFFECT = "=";
 
+	private static final String WHERE_CLAUSE_SEP = " AND ";
+	private static final String WHERE_CLAUSE_SUB_START = " ( ";
+	private static final String WHERE_CLAUSE_SUB_END = " ) ";
+
 	private final String selectQueryModel;
 	private final String countQueryModel;
 	private final String insertQueryModel;
@@ -174,10 +178,58 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 			Map<String, DictionaryEntry> allEntries) {
 		// INSERT INTO %s (%) VALUES (%)
 		List<Value> combined = new ArrayList<>();
-		combined.add(new KeyValue(parameterEntry, keyValue));
+
+		// Custom behavior for composite
+		if (parameterEntry.isCompositeKey()) {
+			combined.addAll(prepareKeyValues(parameterEntry, keyValue));
+		}
+
+		// Else use standard direct key set
+		else {
+			combined.add(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue));
+		}
+
 		combined.addAll(values);
 		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined, links, allEntries),
 				allValues(combined, referedLobs, links, allEntries));
+	}
+
+	/**
+	 * @param keyValue
+	 * @return
+	 */
+	private static List<String> revertCombinedKeyValue(String combinedKeyValue) {
+
+		return Stream.of(combinedKeyValue.split(KEY_JOIN_SPLITER)).collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>
+	 * Produces the keys for a <tt>DictionaryEntry</tt> as item <tt>KeyValue</tt>
+	 * </p>
+	 * <p>
+	 * Not optimized, should be used only for composite key tables (which is a rare
+	 * condition)
+	 * </p>
+	 * 
+	 * @param parameterEntry
+	 * @param combinedKeyValue
+	 * @return
+	 */
+	private static List<KeyValue> prepareKeyValues(DictionaryEntry parameterEntry, String combinedKeyValue) {
+
+		// 3 ordered source of data for key items
+		List<String> values = revertCombinedKeyValue(combinedKeyValue);
+		List<String> keyNames = parameterEntry.keyNames().collect(Collectors.toList());
+		List<ColumnType> keyTypes = parameterEntry.keyTypes().collect(Collectors.toList());
+
+		List<KeyValue> result = new ArrayList<>();
+
+		for (int i = 0; i < keyNames.size(); i++) {
+			result.add(new KeyValue(keyNames.get(0), keyTypes.get(0), values.get(0)));
+		}
+
+		return result;
 	}
 
 	/**
@@ -186,9 +238,22 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @return
 	 */
 	public String producesApplyRemoveQuery(DictionaryEntry parameterEntry, String keyValue) {
+
 		// DELETE FROM %s WHERE %s
-		return String.format(this.deleteQueryModel, parameterEntry.getTableName(),
-				valueAffect(new KeyValue(parameterEntry, keyValue), null));
+
+		String keyWhere = null;
+
+		// Dedicated "heavy" process for composite
+		if (parameterEntry.isCompositeKey()) {
+			keyWhere = combinedKeyWhere(prepareKeyValues(parameterEntry, keyValue));
+		}
+
+		// Standard process for single (common) key
+		else {
+			keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+		}
+
+		return String.format(this.deleteQueryModel, parameterEntry.getTableName(), keyWhere);
 	}
 
 	/**
@@ -203,9 +268,23 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 			List<String> referedLobs,
 			List<TableLink> links,
 			Map<String, DictionaryEntry> allEntries) {
+
 		// UPDATE %s SET %s WHERE %s
-		return String.format(this.updateQueryModel, parameterEntry.getTableName(), allValuesAffect(values, referedLobs, links, allEntries),
-				valueAffect(new KeyValue(parameterEntry, keyValue), null));
+
+		String keyWhere = null;
+
+		// Dedicated "heavy" process for composite
+		if (parameterEntry.isCompositeKey()) {
+			keyWhere = combinedKeyWhere(prepareKeyValues(parameterEntry, keyValue));
+		}
+
+		// Standard process for single (common) key
+		else {
+			keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+		}
+
+		return String.format(this.updateQueryModel, parameterEntry.getTableName(),
+				allValuesAffect(values, referedLobs, links, allEntries), keyWhere);
 	}
 
 	/**
@@ -214,10 +293,23 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @return
 	 */
 	public String producesGetOneQuery(DictionaryEntry parameterEntry, String keyValue) {
+
 		// SELECT %s FROM %s WHERE %s ORDER BY %s (reused query)
-		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), "",
-				valueAffect(new KeyValue(parameterEntry, keyValue), null),
-				parameterEntry.getKeyName());
+
+		String keyWhere = null;
+
+		// Dedicated "heavy" process for composite
+		if (parameterEntry.isCompositeKey()) {
+			keyWhere = combinedKeyWhere(prepareKeyValues(parameterEntry, keyValue));
+		}
+
+		// Standard process for single (common) key
+		else {
+			keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+		}
+
+		// Ordering by 1st key only
+		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), "", keyWhere, parameterEntry.getKeyName());
 	}
 
 	/**
@@ -235,6 +327,8 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
 	/**
 	 * @param value
+	 * @param lobsKey
+	 *            for affect of binary (LOB). Can be null if LOB is not used in value
 	 * @return
 	 */
 	private String valueAffect(Value value, List<String> lobsKey) {
@@ -322,6 +416,16 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param values
 	 * @return
 	 */
+	private String combinedKeyWhere(List<KeyValue> keys) {
+		return WHERE_CLAUSE_SUB_START
+				+ keys.stream().map(v -> valueAffect(v, null)).collect(Collectors.joining(WHERE_CLAUSE_SEP))
+				+ WHERE_CLAUSE_SUB_END;
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
 	private String allValues(
 			List<Value> values,
 			List<String> lobKeys,
@@ -367,9 +471,20 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
 		DictionaryEntry dic = allEntries.get(link.getTableTo());
 
+		String keyWhere = null;
+
+		// Dedicated "heavy" process for composite
+		if (dic.isCompositeKey()) {
+			keyWhere = combinedKeyWhere(prepareKeyValues(dic, value));
+		}
+
+		// Standard process for single (common) key
+		else {
+			keyWhere = valueAffect(new KeyValue(dic.getKeyName(), dic.getKeyType(), value), null);
+		}
+
 		// (SELECT "%s" FROM "%s" WHERE %s)
-		return String.format(this.updateOrInsertLinkedSubQueryModel, link.getColumnTo(),
-				dic.getTableName(), valueAffect(new KeyValue(dic, value), null));
+		return String.format(this.updateOrInsertLinkedSubQueryModel, link.getColumnTo(), dic.getTableName(), keyWhere);
 	}
 
 	/**
@@ -621,19 +736,18 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 */
 	private static class KeyValue implements Value {
 		private final String keyName;
-		private final String keyValue;
 		private final ColumnType keyType;
+		private final String keyValue;
 
 		/**
-		 * Key definition is from dict, key value is associated to currently applied
-		 * values
-		 * 
-		 * @param parameterEntry
+		 * @param keyName
+		 * @param keyType
 		 * @param keyValue
 		 */
-		KeyValue(DictionaryEntry parameterEntry, String keyValue) {
-			this.keyName = parameterEntry.getKeyName();
-			this.keyType = parameterEntry.getKeyType();
+		public KeyValue(String keyName, ColumnType keyType, String keyValue) {
+			super();
+			this.keyName = keyName;
+			this.keyType = keyType;
 			this.keyValue = keyValue;
 		}
 

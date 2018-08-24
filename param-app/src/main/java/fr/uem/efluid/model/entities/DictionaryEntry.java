@@ -424,6 +424,23 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	}
 
 	/**
+	 * @return
+	 */
+	public Stream<ColumnType> keyTypes() {
+
+		// For composite, use advanced building from iterator
+		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new EntryKeyTypeIterator(this), 0), false);
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isCompositeKey() {
+		// If at least ext1 is set => composite
+		return this.ext1KeyName != null;
+	}
+
+	/**
 	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
@@ -527,6 +544,87 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 			default:
 				this.remain--;
 				return this.dic.getExt4KeyName();
+			}
+		}
+
+	}
+
+	/**
+	 * <p>
+	 * Like for keyName
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.8
+	 * @version 1
+	 */
+	private static final class EntryKeyTypeIterator implements Iterator<ColumnType> {
+
+		private int remain = 0;
+
+		private final DictionaryEntry dic;
+
+		/**
+		 * @param dic
+		 */
+		public EntryKeyTypeIterator(DictionaryEntry dic) {
+			super();
+			this.dic = dic;
+
+			// Standard key - not composite
+			if (dic.getExt1KeyName() == null) {
+				this.remain = 1;
+			}
+
+			// Composite, search for key defs
+			else {
+				if (dic.getExt4KeyName() != null) {
+					this.remain = 5;
+				} else if (dic.getExt3KeyName() != null) {
+					this.remain = 4;
+				} else if (dic.getExt3KeyName() != null) {
+					this.remain = 3;
+				} else {
+					this.remain = 2;
+				}
+			}
+		}
+
+		/**
+		 * @return
+		 * @see java.util.Iterator#hasNext()
+		 */
+		@Override
+		public boolean hasNext() {
+			return this.remain > 0;
+		}
+
+		/**
+		 * @return
+		 * @see java.util.Iterator#next()
+		 */
+		@Override
+		public ColumnType next() {
+
+			switch (this.remain) {
+			case 0:
+				return null;
+			case 1:
+				this.remain--;
+				return this.dic.getKeyType();
+			case 2:
+				this.remain--;
+				return this.dic.getExt1KeyType();
+			case 3:
+				this.remain--;
+				return this.dic.getExt2KeyType();
+			case 4:
+				this.remain--;
+				return this.dic.getExt3KeyType();
+			case 5:
+			default:
+				this.remain--;
+				return this.dic.getExt4KeyType();
 			}
 		}
 

@@ -47,7 +47,7 @@ public class ManagedValueConverter {
 	private final static char TYPE_IDENT = '/';
 
 	// For composite key support
-	private final static String KEY_JOIN = " / ";
+	final static String KEY_JOIN = " / ";
 
 	// For content rendering
 	private final static String RENDERING_AFFECT = ":";
