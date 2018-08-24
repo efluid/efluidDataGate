@@ -178,6 +178,8 @@ public class DictionaryEntryEditData {
 		@NotNull
 		private String name;
 
+		private String displayName;
+
 		@NotNull
 		private ColumnType type;
 
@@ -194,6 +196,20 @@ public class DictionaryEntryEditData {
 		 */
 		public ColumnEditData() {
 			super();
+		}
+
+		/**
+		 * @return the displayName
+		 */
+		public String getDisplayName() {
+			return this.displayName;
+		}
+
+		/**
+		 * @param displayName the displayName to set
+		 */
+		public void setDisplayName(String displayName) {
+			this.displayName = displayName;
 		}
 
 		/**
@@ -368,6 +384,12 @@ public class DictionaryEntryEditData {
 			}
 			return editData;
 		}
+
+		public static enum ReferenceType {
+			LINK,
+			MAPPING;
+		}
+
 	}
 
 }

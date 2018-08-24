@@ -98,6 +98,30 @@ public class SelectClauseGenerator {
 
 	/**
 	 * <p>
+	 * Includes link alias set with support for composite keys
+	 * </p>
+	 * 
+	 * @param link
+	 * @return
+	 */
+	protected String createLinkAlias(ExportAwareTableLink<?> link) {
+		return null;
+	}
+
+	/**
+	 * <p>
+	 * Includes mapping alias set with support for composite keys
+	 * </p>
+	 * 
+	 * @param mapping
+	 * @return
+	 */
+	protected String createMappingAlias(ExportAwareTableMapping<?> mapping) {
+		return null;
+	}
+
+	/**
+	 * <p>
 	 * Produces the select part of the query when updating the column selection. Switchs
 	 * automatically between "identified select", or "*"
 	 * </p>

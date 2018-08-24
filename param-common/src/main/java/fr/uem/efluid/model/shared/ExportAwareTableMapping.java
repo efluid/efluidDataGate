@@ -2,7 +2,6 @@ package fr.uem.efluid.model.shared;
 
 import java.time.LocalDateTime;
 
-import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
@@ -10,7 +9,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @since v0.0.1
  * @version 1
  */
-public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEntry<?>> implements Shared {
+public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEntry<?>> implements CompositeRefSupport<D> {
 
 	/**
 	 * @return
@@ -28,28 +27,6 @@ public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEnt
 	public abstract String getMapTableColumnTo();
 
 	/**
-	 * @return
-	 */
-	public abstract String getName();
-
-	/**
-	 * @return
-	 */
-	public abstract String getColumnFrom();
-
-	/**
-	 * @param tableTo
-	 *            the tableTo to set
-	 */
-	public abstract String getTableTo();
-
-	/**
-	 * @param columnTo
-	 *            the columnTo to set
-	 */
-	public abstract String getColumnTo();
-
-	/**
 	 * @param createdTime
 	 *            the createdTime to set
 	 */
@@ -60,11 +37,6 @@ public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEnt
 	 *            the updatedTime to set
 	 */
 	public abstract LocalDateTime getUpdatedTime();
-
-	/**
-	 * @return the dictionaryEntry
-	 */
-	public abstract D getDictionaryEntry();
 
 	/**
 	 * @return
@@ -110,46 +82,6 @@ public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEnt
 	 * @return
 	 */
 	public abstract String getMapTableExt4ColumnFrom();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt1ColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt2ColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt3ColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt4ColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt1ColumnFrom();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt2ColumnFrom();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt3ColumnFrom();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt4ColumnFrom();
 
 	/**
 	 * @return

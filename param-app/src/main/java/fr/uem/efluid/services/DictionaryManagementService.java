@@ -1,6 +1,6 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.DIC_ENTRY_NOT_FOUND;
+import static fr.uem.efluid.utils.ErrorType.*;
 import static fr.uem.efluid.utils.ErrorType.DIC_KEY_NOT_UNIQ;
 import static fr.uem.efluid.utils.ErrorType.DIC_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.DIC_NO_KEY;
@@ -221,22 +221,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		return this.versions.findByProject(project).stream()
 				.map(v -> getCompletedVersion(v, last))
 				.collect(Collectors.toList());
-	}
-
-	/**
-	 * <p>
-	 * For a given version entity, get completed data, regarding "last version" of current
-	 * project for some rules
-	 * </p>
-	 * 
-	 * @param version
-	 * @param lastProjectVersion
-	 * @return <code>version</code> populated as a <tt>VersionData</tt>
-	 */
-	private VersionData getCompletedVersion(Version version, Version lastProjectVersion) {
-
-		boolean isLastVersion = version.getUuid().equals(lastProjectVersion.getUuid());
-		return VersionData.fromEntity(version, isLastVersion ? this.versions.isVersionUpdatable(lastProjectVersion.getUuid()) : false);
 	}
 
 	/**
@@ -477,20 +461,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 			entry.setCreatedTime(LocalDateTime.now());
 		}
 
-		// Specify key from columns
-		ColumnEditData key = editData.getColumns().stream().filter(ColumnEditData::isKey).findFirst()
-				.orElseThrow(() -> new ApplicationException(DIC_NO_KEY, "The key is mandatory"));
-		entry.setKeyName(key.getName());
-		entry.setKeyType(key.getType());
+		// Specified keys from columns
+		List<ColumnEditData> keys = editData.getColumns().stream().filter(ColumnEditData::isKey).sorted().collect(Collectors.toList());
 
-		// Shouldn't use PK as parameter key
-		if (key.getType().isPk()) {
-			LOGGER.warn("Using the PK \"{}\" as parameter key on table \"{}\" : it may cause wrong conflict if"
-					+ " the id is not a real valid business identifier for the parameter table !!!", key.getName(), editData.getTable());
-		}
-
-		// Controle also that the key is unique (heavy load)
-		assertKeyIsUniqueValue(entry);
+		// Apply keys, with support for composite keys
+		applyEditedKeys(entry, keys);
 
 		// Other common edited properties
 		entry.setDomain(this.domains.getOne(editData.getDomainUuid()));
@@ -784,6 +759,77 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		}
 
 		return result;
+	}
+
+	/**
+	 * <p>
+	 * For a given version entity, get completed data, regarding "last version" of current
+	 * project for some rules
+	 * </p>
+	 * 
+	 * @param version
+	 * @param lastProjectVersion
+	 * @return <code>version</code> populated as a <tt>VersionData</tt>
+	 */
+	private VersionData getCompletedVersion(Version version, Version lastProjectVersion) {
+
+		boolean isLastVersion = version.getUuid().equals(lastProjectVersion.getUuid());
+		return VersionData.fromEntity(version, isLastVersion ? this.versions.isVersionUpdatable(lastProjectVersion.getUuid()) : false);
+	}
+
+	/**
+	 * <p>
+	 * Using a flat switch with fall-through, process key validation and specification in
+	 * provided <tt>DictionaryEntry</tt> from all the selected keys. Support composite
+	 * keys (max 5 key columns)
+	 * </p>
+	 * 
+	 * @param entry
+	 * @param keys
+	 */
+	private void applyEditedKeys(DictionaryEntry entry, List<ColumnEditData> keys) {
+
+		// Assert key count (1-5)
+		assertKeysSelection(keys);
+
+		// Always use first as "normal" key, then ext for others.
+		ColumnEditData first = keys.get(0);
+
+		warnKeyIsPk(entry, first);
+
+		entry.setKeyName(first.getName());
+		entry.setKeyType(first.getType());
+		switch (keys.size()) {
+		case 5:
+			ColumnEditData key4 = keys.get(4);
+			warnKeyIsPk(entry, key4);
+			entry.setExt4KeyName(key4.getName());
+			entry.setExt4KeyType(key4.getType());
+			//$FALL-THROUGH$
+		case 4:
+			ColumnEditData key3 = keys.get(3);
+			warnKeyIsPk(entry, key3);
+			entry.setExt3KeyName(key3.getName());
+			entry.setExt3KeyType(key3.getType());
+			//$FALL-THROUGH$
+		case 3:
+			ColumnEditData key2 = keys.get(2);
+			warnKeyIsPk(entry, key2);
+			entry.setExt2KeyName(key2.getName());
+			entry.setExt2KeyType(key2.getType());
+			//$FALL-THROUGH$
+		case 2:
+			ColumnEditData key1 = keys.get(1);
+			warnKeyIsPk(entry, key1);
+			entry.setExt1KeyName(key1.getName());
+			entry.setExt1KeyType(key1.getType());
+			//$FALL-THROUGH$
+		default:
+			break;
+		}
+
+		// Controle also that the key is unique (heavy load)
+		assertKeyIsUniqueValue(entry);
 	}
 
 	/**
@@ -1111,11 +1157,16 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 * @param dict
 	 */
 	private void assertKeyIsUniqueValue(DictionaryEntry dict) {
-		if (!this.metadatas.isColumnHasUniqueValue(dict.getTableName(), dict.getKeyName())) {
-			throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() + " with key "
-					+ dict.getKeyName() + " has its values are not unique", dict.getTableName() + "." + dict.getKeyName());
+
+		// Unique key check
+		if (dict.getExt1KeyName() == null && !this.metadatas.isColumnHasUniqueValue(dict.getTableName(), dict.getKeyName())) {
+			throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() +
+					" with unique key " + dict.getKeyName() + " has its values are not unique",
+					dict.getTableName() + "." + dict.getKeyName());
 
 		}
+
+		// TODO : add check on composite key
 	}
 
 	/**
@@ -1174,4 +1225,36 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		}
 	}
+
+	/**
+	 * <p>
+	 * Check rules for column key selection : minimum 1, maximum 5 (for composite keys)
+	 * </p>
+	 * 
+	 * @param keys
+	 */
+	private static void assertKeysSelection(List<ColumnEditData> keys) {
+
+		if (keys == null || keys.size() == 0) {
+			throw new ApplicationException(DIC_NO_KEY, "The key is mandatory");
+		}
+
+		if (keys.size() > 5) {
+			throw new ApplicationException(DIC_TOO_MANY_KEYS, "Too much selected columns for composite key definition");
+		}
+	}
+
+	/**
+	 * @param entry
+	 * @param key
+	 */
+	private static void warnKeyIsPk(DictionaryEntry entry, ColumnEditData key) {
+
+		// Shouldn't use PK as parameter key
+		if (key.getType().isPk()) {
+			LOGGER.warn("Using the PK \"{}\" as parameter key on table \"{}\" : it may cause wrong conflict if"
+					+ " the id is not a real valid business identifier for the parameter table !!!", key.getName(), entry.getTableName());
+		}
+	}
+
 }

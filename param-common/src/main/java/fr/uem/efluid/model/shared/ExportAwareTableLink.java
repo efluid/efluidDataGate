@@ -2,7 +2,6 @@ package fr.uem.efluid.model.shared;
 
 import java.time.LocalDateTime;
 
-import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
@@ -10,64 +9,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @since v0.0.1
  * @version 1
  */
-public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<?>> implements Shared {
-
-	/**
-	 * @return
-	 */
-	public abstract String getColumnFrom();
-
-	/**
-	 * @param tableTo
-	 *            the tableTo to set
-	 */
-	public abstract String getTableTo();
-
-	/**
-	 * @param columnTo
-	 *            the columnTo to set
-	 */
-	public abstract String getColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt1ColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt2ColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt3ColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt4ColumnTo();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt1ColumnFrom();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt2ColumnFrom();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt3ColumnFrom();
-
-	/**
-	 * @return
-	 */
-	public abstract String getExt4ColumnFrom();
+public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<?>> implements CompositeRefSupport<D> {
 
 	/**
 	 * @param createdTime
@@ -82,11 +24,6 @@ public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<
 	public abstract LocalDateTime getUpdatedTime();
 
 	/**
-	 * @return the dictionaryEntry
-	 */
-	public abstract D getDictionaryEntry();
-
-	/**
 	 * @return
 	 * @see fr.uem.efluid.model.Shared#serialize()
 	 */
@@ -97,6 +34,7 @@ public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<
 				.with("uid", getUuid())
 				.with("cre", getCreatedTime())
 				.with("upd", getUpdatedTime())
+				.with("nam", getName())
 				.with("cfr", getColumnFrom())
 				.with("cto", getColumnTo())
 				.with("cf1", getExt1ColumnFrom())
