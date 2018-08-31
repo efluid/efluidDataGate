@@ -19,7 +19,7 @@ import fr.uem.efluid.model.metas.ColumnDescription;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public class DictionaryEntryEditData {
 
@@ -336,15 +336,21 @@ public class DictionaryEntryEditData {
 		 *            from existing link has priority over col foreignKeyTable
 		 * @return
 		 */
-		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds, List<String> keyNames,
-				TableLink link) {
+		public static ColumnEditData fromColumnDescription(
+				ColumnDescription col,
+				Collection<String> selecteds,
+				List<String> keyNames,
+				TableLink link,
+				int linkIndex) {
+
 			ColumnEditData editData = new ColumnEditData();
+
 			if (link == null) {
 				editData.setForeignKeyTable(col.getForeignKeyTable());
 				editData.setForeignKeyColumn(col.getForeignKeyColumn());
 			} else {
 				editData.setForeignKeyTable(link.getTableTo());
-				editData.setForeignKeyColumn(link.getColumnTo());
+				editData.setForeignKeyColumn(link.getColumnTo(linkIndex));
 			}
 			editData.setName(col.getName());
 			editData.setType(col.getType());
@@ -371,7 +377,13 @@ public class DictionaryEntryEditData {
 		 *            from existing link
 		 * @return
 		 */
-		public static ColumnEditData fromSelecteds(String selected, List<String> keyNames, List<ColumnType> keyTypes, TableLink link) {
+		public static ColumnEditData fromSelecteds(
+				String selected,
+				List<String> keyNames,
+				List<ColumnType> keyTypes,
+				TableLink link,
+				int linkIndex) {
+
 			ColumnEditData editData = new ColumnEditData();
 			editData.setName(selected);
 
@@ -387,7 +399,7 @@ public class DictionaryEntryEditData {
 
 			if (link != null) {
 				editData.setForeignKeyTable(link.getTableTo());
-				editData.setForeignKeyColumn(link.getColumnTo());
+				editData.setForeignKeyColumn(link.getColumnTo(linkIndex));
 			}
 			return editData;
 		}

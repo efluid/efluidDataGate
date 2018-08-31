@@ -437,7 +437,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 	 */
 	public boolean isCompositeKey() {
 		// If at least ext1 is set => composite
-		return this.ext1KeyName != null;
+		return this.getExt1KeyName() != null;
 	}
 
 	/**

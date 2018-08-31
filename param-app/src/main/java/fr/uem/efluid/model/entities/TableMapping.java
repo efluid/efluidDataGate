@@ -569,6 +569,102 @@ public class TableMapping extends ExportAwareTableMapping<DictionaryEntry> {
 	}
 
 	/**
+	 * @return the columnFrom for indexed position
+	 */
+	public String getColumnFrom(int index) {
+
+		switch (index) {
+		case 0:
+			return getColumnFrom();
+
+		case 1:
+			return getExt1ColumnFrom();
+
+		case 2:
+			return getExt2ColumnFrom();
+
+		case 3:
+			return getExt3ColumnFrom();
+
+		case 4:
+		default:
+			return getExt4ColumnFrom();
+		}
+	}
+
+	/**
+	 * @return the columnTo for indexed position
+	 */
+	public String getColumnTo(int index) {
+
+		switch (index) {
+		case 0:
+			return getColumnTo();
+
+		case 1:
+			return getExt1ColumnTo();
+
+		case 2:
+			return getExt2ColumnTo();
+
+		case 3:
+			return getExt3ColumnTo();
+
+		case 4:
+		default:
+			return getExt4ColumnTo();
+		}
+	}
+
+	/**
+	 * @return the columnFrom for indexed position
+	 */
+	public String getMapTableColumnFrom(int index) {
+
+		switch (index) {
+		case 0:
+			return getMapTableColumnFrom();
+
+		case 1:
+			return getMapTableExt1ColumnFrom();
+
+		case 2:
+			return getMapTableExt2ColumnFrom();
+
+		case 3:
+			return getMapTableExt3ColumnFrom();
+
+		case 4:
+		default:
+			return getMapTableExt4ColumnFrom();
+		}
+	}
+
+	/**
+	 * @return the columnTo for indexed position
+	 */
+	public String getMapTableColumnTo(int index) {
+
+		switch (index) {
+		case 0:
+			return getMapTableColumnTo();
+
+		case 1:
+			return getMapTableExt1ColumnTo();
+
+		case 2:
+			return getMapTableExt2ColumnTo();
+
+		case 3:
+			return getMapTableExt3ColumnTo();
+
+		case 4:
+		default:
+			return getMapTableExt4ColumnTo();
+		}
+	}
+
+	/**
 	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */

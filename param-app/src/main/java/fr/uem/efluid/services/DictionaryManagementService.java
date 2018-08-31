@@ -1,9 +1,10 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import static fr.uem.efluid.utils.ErrorType.DIC_ENTRY_NOT_FOUND;
 import static fr.uem.efluid.utils.ErrorType.DIC_KEY_NOT_UNIQ;
 import static fr.uem.efluid.utils.ErrorType.DIC_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.DIC_NO_KEY;
+import static fr.uem.efluid.utils.ErrorType.DIC_TOO_MANY_KEYS;
 import static fr.uem.efluid.utils.ErrorType.DOMAIN_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_MODEL_ID;
 
@@ -20,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,23 +94,26 @@ import fr.uem.efluid.utils.SelectClauseGenerator;
  * <li>DictionaryEntry</li>
  * <ul>
  * <li>Links</li>
+ * <li>Mappings</li>
  * </ul>
  * </ul>
  * </ul>
  * </ul>
  * </p>
  * <p>
- * Features includes :
+ * <b>Features included</b> :
  * <ul>
  * <li>Basic CRUD</li>
  * <li>Import / export features (full / For one project / for one domaine)</li>
  * <li>Some specific features related to business rules shared with user ui</li>
+ * <li>Support for composite key in dictionary entries</li>
+ * <li>Use of composite keys for links</li>
  * </ul>
  * </p>
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 6
+ * @version 7
  */
 @Service
 @Transactional
@@ -374,12 +379,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				: Collections.emptyList();
 
 		TableDescription desc = getTableDescription(edit.getTable());
-		// dicLinks.get(0).equals(dicLinks.get(1))
-		// Keep links
-		Map<String, TableLink> mappedLinks = dicLinks.stream().distinct()
-				.collect(Collectors.toMap(TableLink::getColumnFrom, v -> v));
 
 		List<String> keyNames = entry.keyNames().collect(Collectors.toList());
+
+		// Keep links
+		Map<String, LinkUpdateFollow> mappedLinks = dicLinks.stream().flatMap(
+				l -> LinkUpdateFollow.flatMapFromColumn(l, l.columnFroms()))
+				.collect(Collectors.toMap(LinkUpdateFollow::getColumn, v -> v));
 
 		// Dedicated case : missing table, pure simulated content
 		if (desc == TableDescription.MISSING) {
@@ -394,13 +400,20 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 			edit.setMissingTable(true);
 			edit.setColumns(editableSelecteds.stream()
-					.map(c -> ColumnEditData.fromSelecteds(c, keyNames, entry.keyTypes().collect(Collectors.toList()), mappedLinks.get(c)))
+					.map(c -> {
+						LinkUpdateFollow f = mappedLinks.get(c);
+						return ColumnEditData.fromSelecteds(c, keyNames, entry.keyTypes().collect(Collectors.toList()), f.getLink(),
+								f.getIndexAndIncr());
+					})
 					.sorted()
 					.collect(Collectors.toList()));
 		} else {
 			// Add metadata to use for edit
 			edit.setColumns(desc.getColumns().stream()
-					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, keyNames, mappedLinks.get(c.getName())))
+					.map(c -> {
+						LinkUpdateFollow f = mappedLinks.get(c.getName());
+						return ColumnEditData.fromColumnDescription(c, selecteds, keyNames, f.getLink(), f.getIndexAndIncr());
+					})
 					.sorted()
 					.collect(Collectors.toList()));
 		}
@@ -427,7 +440,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// Add metadata to use for edit
 		edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
-				.map(c -> ColumnEditData.fromColumnDescription(c, null, null, null))
+				.map(c -> ColumnEditData.fromColumnDescription(c, null, null, null, 0))
 				.peek(c -> c.setSelected(true)) // Default : select all
 				.sorted()
 				.collect(Collectors.toList()));
@@ -1065,32 +1078,67 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		Collection<TableLink> updatedLinks = new ArrayList<>();
 		Collection<TableLink> createdLinks = new ArrayList<>();
 
+		Map<String, TableLink> editedLinksByTableTo = new HashMap<>();
+
 		// Produces links from col foreign key
-		List<TableLink> editedLinks = cols.stream()
-				.filter(c -> isNotEmpty(c.getForeignKeyTable()))
-				.map(c -> {
-					TableLink link = new TableLink();
-					link.setColumnFrom(c.getName());
-					link.setTableTo(c.getForeignKeyTable());
-					link.setColumnTo(c.getForeignKeyColumn());
+		for (ColumnEditData col : cols) {
+
+			// When FK is set
+			if (isNotEmpty(col.getForeignKeyTable())) {
+
+				// Mix on same table to for composites
+				TableLink link = editedLinksByTableTo.get(col.getForeignKeyTable());
+
+				// Not set yet (common case - single key)
+				if (link == null) {
+					link = new TableLink();
+					link.setColumnFrom(col.getName());
+					link.setTableTo(col.getForeignKeyTable());
+					link.setColumnTo(col.getForeignKeyColumn());
 					link.setDictionaryEntry(entry);
-					return link;
-				}).collect(Collectors.toList());
+					editedLinksByTableTo.put(col.getForeignKeyTable(), link);
+				}
+
+				// Already set - composite key - rare
+				else {
+					int next = (int) link.columnFroms().count();
+					link.setColumnFrom(next, col.getName());
+					link.setColumnTo(next, col.getForeignKeyColumn());
+				}
+			}
+		}
 
 		// Get existing to update / remove
-		Map<String, TableLink> existingLinks = this.links.findByDictionaryEntry(entry).stream().distinct()
-				.collect(Collectors.toMap(TableLink::getColumnFrom, l -> l));
+		Map<String, TableLink> existingLinksByTableTo = this.links.findByDictionaryEntry(entry).stream().distinct()
+				.collect(Collectors.toMap(TableLink::getTableTo, l -> l));
+
+		int compositeCount = 0;
 
 		// And prepare 3 sets of links
-		for (TableLink link : editedLinks) {
+		for (TableLink link : editedLinksByTableTo.values()) {
 
-			TableLink existing = existingLinks.remove(link.getColumnFrom());
+			TableLink existing = existingLinksByTableTo.remove(link.getTableTo());
 
 			// Update
 			if (existing != null) {
 				existing.setUpdatedTime(LocalDateTime.now());
 				existing.setTableTo(link.getTableTo());
 				existing.setColumnTo(link.getColumnTo());
+				existing.setColumnFrom(link.getColumnFrom());
+
+				// Copy other if composite
+				if (link.isCompositeKey() || existing.isCompositeKey()) {
+					existing.setExt1ColumnFrom(link.getExt1ColumnFrom());
+					existing.setExt2ColumnFrom(link.getExt2ColumnFrom());
+					existing.setExt3ColumnFrom(link.getExt3ColumnFrom());
+					existing.setExt4ColumnFrom(link.getExt4ColumnFrom());
+					existing.setExt1ColumnTo(link.getExt1ColumnTo());
+					existing.setExt2ColumnTo(link.getExt2ColumnTo());
+					existing.setExt3ColumnTo(link.getExt3ColumnTo());
+					existing.setExt4ColumnTo(link.getExt4ColumnTo());
+					compositeCount++;
+				}
+
 				updatedLinks.add(existing);
 			}
 
@@ -1105,10 +1153,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		}
 
 		// Remaining are deleted
-		Collection<TableLink> deletedLinks = existingLinks.values();
+		Collection<TableLink> deletedLinks = existingLinksByTableTo.values();
 
-		LOGGER.info("Links updated for dictionary Entry {}. {} links added, {} links updated and {} deleted", entry.getUuid(),
-				Integer.valueOf(createdLinks.size()), Integer.valueOf(updatedLinks.size()), Integer.valueOf(deletedLinks.size()));
+		LOGGER.info("Links updated for dictionary Entry {}. {} links added, {} links updated and {} deleted, including "
+				+ "{} links with composite keys", entry.getUuid(), Integer.valueOf(createdLinks.size()),
+				Integer.valueOf(updatedLinks.size()), Integer.valueOf(deletedLinks.size()), Integer.valueOf(compositeCount));
 
 		// Process DB updates
 		if (createdLinks.size() > 0)
@@ -1267,4 +1316,86 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		}
 	}
 
+	/**
+	 * <p>
+	 * Intermediate type for easy management of composite keys in TableLink update. We
+	 * want to identify the columns which are used as "from" in an associated link. So we
+	 * need to :
+	 * <ul>
+	 * <li>Get all the from columns from the tablelink</li>
+	 * <li>Map the tableLink to column name for easy access during the data update</li>
+	 * <li>Get the corresponding index in link for the "from" column to get the
+	 * corresponding "to"</li>
+	 * </ul>
+	 * </p>
+	 * <p>
+	 * All this complexity is related to composite key support
+	 * </p>
+	 * <p>
+	 * The same item is supposed to be also used for link "to" columns
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.8
+	 * @version 1
+	 */
+	private static final class LinkUpdateFollow {
+
+		private int index = 0;
+		private final TableLink link;
+		private final String column;
+
+		/**
+		 * <p>
+		 * Should build only with <code>flatMapFromColumn</code>
+		 * </p>
+		 * 
+		 * @param link
+		 * @param column
+		 */
+		private LinkUpdateFollow(TableLink link, String column) {
+			this.link = link;
+			this.column = column;
+		}
+
+		/**
+		 * <p>
+		 * For flat map + follow item init from selectionned "from" or "to" column names
+		 * </p>
+		 * 
+		 * @param link
+		 *            current TableLink
+		 * @param col
+		 *            selected "to" or "from" column name stream
+		 * @return
+		 */
+		static Stream<LinkUpdateFollow> flatMapFromColumn(TableLink link, Stream<String> col) {
+			return col.map(c -> new LinkUpdateFollow(link, c));
+		}
+
+		/**
+		 * @return the index
+		 */
+		public int getIndexAndIncr() {
+			int ret = this.index;
+
+			this.index++;
+
+			return ret;
+		}
+
+		/**
+		 * @return the link
+		 */
+		public TableLink getLink() {
+			return this.link;
+		}
+
+		/**
+		 * @return the column
+		 */
+		public String getColumn() {
+			return this.column;
+		}
+	}
 }
