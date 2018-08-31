@@ -37,7 +37,6 @@ public interface Value {
 	 */
 	byte[] getValue();
 
-	// TODO : need to decide if typed or not
 	/**
 	 * @return true if value is a natural string representation (depends on database
 	 *         column type)
