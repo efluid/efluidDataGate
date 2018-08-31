@@ -1161,14 +1161,23 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	private void assertKeyIsUniqueValue(DictionaryEntry dict) {
 
 		// Unique key check
-		if (dict.getExt1KeyName() == null && !this.metadatas.isColumnHasUniqueValue(dict.getTableName(), dict.getKeyName())) {
-			throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() +
-					" with unique key " + dict.getKeyName() + " has its values are not unique",
-					dict.getTableName() + "." + dict.getKeyName());
-
+		if (dict.getExt1KeyName() == null) {
+			if (!this.metadatas.isColumnSetHasUniqueValue(dict.getTableName(), Arrays.asList(dict.getKeyName()))) {
+				throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() +
+						" with unique key " + dict.getKeyName() + " has not unique values",
+						dict.getTableName() + "." + dict.getKeyName());
+			}
 		}
 
-		// TODO : add check on composite key
+		// Check on composite key
+		else {
+			Collection<String> keys = dict.keyNames().collect(Collectors.toSet());
+			if (!this.metadatas.isColumnSetHasUniqueValue(dict.getTableName(), keys)) {
+				throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() +
+						" with composite key on columns " + keys + " has not unique values",
+						keys.stream().map(s -> (dict.getTableName() + "." + s)).collect(Collectors.joining(" / ")));
+			}
+		}
 	}
 
 	/**

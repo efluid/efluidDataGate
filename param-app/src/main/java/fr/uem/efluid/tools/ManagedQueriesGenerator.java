@@ -2,6 +2,7 @@ package fr.uem.efluid.tools;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -275,16 +276,16 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	}
 
 	/**
-	 * To check unicity on parameter key
+	 * To check unicity on parameter key (support for composite)
 	 * 
 	 * @param tablename
 	 * @param columnName
 	 * @return
 	 */
-	public String producesUnicityQuery(String tablename, String columnName) {
+	public String producesUnicityQuery(String tablename, Collection<String> columnNames) {
 
 		// select 1 from "TTABLEOTHERTEST2" group by "ID" HAVING COUNT("ID") > 1
-		return String.format(this.unicityQueryModel, tablename, columnName, columnName);
+		return String.format(this.unicityQueryModel, tablename, prepareSimpleSelectPart(columnNames));
 	}
 
 	/**
@@ -666,9 +667,8 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @return
 	 */
 	private static String generateUnicityQueryTemplate(QueryGenerationRules rules) {
-		return new StringBuilder("SELECT 1 FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" GROUP BY ")
-				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" HAVING COUNT(")
-				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(") > 1").toString();
+		return new StringBuilder("SELECT 1 FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
+				.append(" GROUP BY %s HAVING COUNT(*) > 1").toString();
 	}
 
 	/**

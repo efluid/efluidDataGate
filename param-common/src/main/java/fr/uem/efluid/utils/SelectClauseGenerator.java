@@ -193,6 +193,22 @@ public class SelectClauseGenerator {
 
 	/**
 	 * <p>
+	 * Join columns as simple select, without alias, and with support for "protectColumn".
+	 * For example, values {aaa,bbb,ccc} becames <code>"aaa", "bbb", "ccc"</code>
+	 * </p>
+	 * 
+	 * @param columnNames
+	 * @return
+	 */
+	protected String prepareSimpleSelectPart(Collection<String> columnNames) {
+
+		return columnNames.stream()
+				.map(s -> this.protectColumns ? "\"" + s + "\"" : s)
+				.collect(Collectors.joining(SELECT_CLAUSE_SEP));
+	}
+
+	/**
+	 * <p>
 	 * For the dic entry links, check if some are mapped as dictionary entries : if true,
 	 * needs to use refered table key instead of internal id
 	 * </p>
