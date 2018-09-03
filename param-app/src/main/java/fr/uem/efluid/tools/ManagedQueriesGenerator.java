@@ -529,9 +529,47 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 					// INNER JOIN "%s" %s on %s."%s" = cur."%s"
 					// or for test : LEFT OUTER JOIN ....
 					// or whatever join type is required
-					return String.format(this.joinSubQueryModel, type.getValue(), dic.getTableName(), alias, alias, l.getColumnTo(),
-							l.getColumnFrom());
+					return String.format(this.joinSubQueryModel, type.getValue(), dic.getTableName(), alias, linkJoinOn(alias, l));
 				}).collect(Collectors.joining(" "));
+	}
+
+	/**
+	 * <p>
+	 * Inner part of join, with support for composite key links
+	 * </p>
+	 * 
+	 * @param alias
+	 * @param link
+	 * @return
+	 */
+	private String linkJoinOn(String alias, TableLink link) {
+
+		// Default - standard single key
+		if (!link.isCompositeKey()) {
+			return this.protectColumns
+					? alias + ".\"" + link.getColumnTo() + "\" = cur.\"" + link.getColumnFrom() + "\""
+					: alias + "." + link.getColumnTo() + " = cur." + link.getColumnFrom();
+		}
+
+		// Rare - composite key link
+		int max = (int) link.columnFroms().count();
+
+		StringBuilder joinOn = new StringBuilder();
+
+		for (int i = 0; i < max; i++) {
+			if (this.protectColumns) {
+				joinOn.append(alias).append(".\"").append(link.getColumnTo(i)).append("\" = cur.\"").append(link.getColumnFrom(i))
+						.append("\"");
+			} else {
+				joinOn.append(alias).append(".").append(link.getColumnTo(i)).append(" = cur.").append(link.getColumnFrom(i));
+			}
+
+			if (i < max - 1) {
+				joinOn.append(" AND ");
+			}
+		}
+
+		return joinOn.toString();
 	}
 
 	/**
@@ -643,9 +681,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 */
 	private static String generateJoinSubQueryTemplate(QueryGenerationRules rules) {
 		// Join type specified on call
-		return new StringBuilder("%s JOIN ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" %s ON %s.")
-				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").append(" = cur.")
-				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
+		return new StringBuilder("%s JOIN ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" %s ON %s").toString();
 	}
 
 	/**

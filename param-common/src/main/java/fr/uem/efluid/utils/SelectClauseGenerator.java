@@ -3,6 +3,7 @@ package fr.uem.efluid.utils;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -232,15 +233,48 @@ public class SelectClauseGenerator {
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
 
 		AtomicInteger pos = new AtomicInteger(0);
+		Map<String, String> prepared = new HashMap<>();
 
-		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).collect(Collectors.toMap(
-				ExportAwareTableLink::getColumnFrom,
+		links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).forEach(
 				l -> {
+
+					// Referenced table
 					ExportAwareDictionaryEntry<?> dic = allEntries.get(l.getTableTo());
-					// ln%s."%s" as ln_%s
-					return String.format(this.selectLinkValueModel, String.valueOf(pos.incrementAndGet()), dic.getKeyName(),
-							l.getColumnFrom());
-				}));
+
+					// Special case (rare) - composite
+					if (l.isCompositeKey()) {
+
+						int linkPos = pos.incrementAndGet();
+						// Mark as aliased for each column From
+						l.columnFroms().forEach(c -> {
+							prepared.put(c, prepareSelectLinkColumnAlias(dic, linkPos, c));
+						});
+					}
+
+					// Standard case
+					else {
+						prepared.put(l.getColumnFrom(), prepareSelectLinkColumnAlias(dic, pos.incrementAndGet(), l.getColumnFrom()));
+					}
+				});
+
+		return prepared;
+	}
+
+	/**
+	 * <p>
+	 * For one column ref in a link. Repeated for each column keys in case of composite
+	 * keys
+	 * </p>
+	 * 
+	 * @param dic
+	 * @param pos
+	 * @param columnFrom
+	 * @return
+	 */
+	private String prepareSelectLinkColumnAlias(ExportAwareDictionaryEntry<?> dic, int pos, String columnFrom) {
+		// ln%s."%s" as ln_%s
+		return String.format(this.selectLinkValueModel, String.valueOf(pos), dic.getKeyName(),
+				columnFrom);
 	}
 
 	/**

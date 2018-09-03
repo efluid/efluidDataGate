@@ -9,7 +9,6 @@ import javax.validation.constraints.NotNull;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.metas.ColumnDescription;
 
 /**
@@ -340,17 +339,16 @@ public class DictionaryEntryEditData {
 				ColumnDescription col,
 				Collection<String> selecteds,
 				List<String> keyNames,
-				TableLink link,
-				int linkIndex) {
+				LinkUpdateFollow linkUpdate) {
 
 			ColumnEditData editData = new ColumnEditData();
 
-			if (link == null) {
+			if (linkUpdate == null) {
 				editData.setForeignKeyTable(col.getForeignKeyTable());
 				editData.setForeignKeyColumn(col.getForeignKeyColumn());
 			} else {
-				editData.setForeignKeyTable(link.getTableTo());
-				editData.setForeignKeyColumn(link.getColumnTo(linkIndex));
+				editData.setForeignKeyTable(linkUpdate.getLink().getTableTo());
+				editData.setForeignKeyColumn(linkUpdate.getLink().getColumnTo(linkUpdate.getIndexAndIncr()));
 			}
 			editData.setName(col.getName());
 			editData.setType(col.getType());
@@ -381,8 +379,7 @@ public class DictionaryEntryEditData {
 				String selected,
 				List<String> keyNames,
 				List<ColumnType> keyTypes,
-				TableLink link,
-				int linkIndex) {
+				LinkUpdateFollow linkUpdate) {
 
 			ColumnEditData editData = new ColumnEditData();
 			editData.setName(selected);
@@ -397,9 +394,9 @@ public class DictionaryEntryEditData {
 				editData.setSelected(true);
 			}
 
-			if (link != null) {
-				editData.setForeignKeyTable(link.getTableTo());
-				editData.setForeignKeyColumn(link.getColumnTo(linkIndex));
+			if (linkUpdate != null) {
+				editData.setForeignKeyTable(linkUpdate.getLink().getTableTo());
+				editData.setForeignKeyColumn(linkUpdate.getLink().getColumnTo(linkUpdate.getIndexAndIncr()));
 			}
 			return editData;
 		}
