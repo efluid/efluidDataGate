@@ -35,4 +35,9 @@ public @interface ParameterValue {
 	 * @return
 	 */
 	String value() default "";
+
+	/**
+	 * @return
+	 */
+	String[] forTable() default {};
 }

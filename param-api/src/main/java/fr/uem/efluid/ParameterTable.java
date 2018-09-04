@@ -133,4 +133,9 @@ public @interface ParameterTable {
 	 * @return
 	 */
 	boolean useAllFields() default true;
+
+	/**
+	 * @return
+	 */
+	ParameterValue[] values() default {};
 }

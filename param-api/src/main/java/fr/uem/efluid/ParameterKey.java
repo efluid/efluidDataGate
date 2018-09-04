@@ -49,4 +49,9 @@ public @interface ParameterKey {
 	 * @return
 	 */
 	ColumnType type() default ColumnType.UNKNOWN;
+
+	/**
+	 * @return
+	 */
+	String[] forTable() default {};
 }
