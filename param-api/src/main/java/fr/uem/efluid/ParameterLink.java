@@ -62,15 +62,19 @@ public @interface ParameterLink {
 
 	/**
 	 * <p>
-	 * Name of a column linked by the current {@link ParameterValue}. Can be any column,
-	 * not necessary a mapped column : for example it can be a technical id, when the link
-	 * if defined on a foreign key. If not specified, will use the identified KEY from the
-	 * mapped parameter table.
+	 * Name of a columns linked by the current {@link ParameterValue} or
+	 * {@link ParameterCompositeValue}. Can be any column, not necessary a mapped column :
+	 * for example it can be a technical id, when the link if defined on a foreign key. If
+	 * not specified, will use the identified KEY from the mapped parameter table.
+	 * </p>
+	 * <p>
+	 * In case of composite key with <tt>ParameterCompositeValue</tt>, the referenced
+	 * column names must be in the same order than the composite ref
 	 * </p>
 	 * 
 	 * @return
 	 */
-	String toColumn() default "";
+	String[] toColumn() default {};
 
 	/**
 	 * <p>

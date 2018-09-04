@@ -350,30 +350,6 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
 	/**
 	 * @return the columnFrom for indexed position
 	 */
-	public String getColumnFrom(int index) {
-
-		switch (index) {
-		case 0:
-			return getColumnFrom();
-
-		case 1:
-			return getExt1ColumnFrom();
-
-		case 2:
-			return getExt2ColumnFrom();
-
-		case 3:
-			return getExt3ColumnFrom();
-
-		case 4:
-		default:
-			return getExt4ColumnFrom();
-		}
-	}
-
-	/**
-	 * @return the columnFrom for indexed position
-	 */
 	public void setColumnFrom(int index, String col) {
 
 		switch (index) {
@@ -418,30 +394,6 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
 		default:
 			setExt4ColumnTo(col);
 			break;
-		}
-	}
-
-	/**
-	 * @return the columnTo for indexed position
-	 */
-	public String getColumnTo(int index) {
-
-		switch (index) {
-		case 0:
-			return getColumnTo();
-
-		case 1:
-			return getExt1ColumnTo();
-
-		case 2:
-			return getExt2ColumnTo();
-
-		case 3:
-			return getExt3ColumnTo();
-
-		case 4:
-		default:
-			return getExt4ColumnTo();
 		}
 	}
 

@@ -359,6 +359,56 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
 	}
 
 	/**
+	 * set the keyName for indexed position
+	 */
+	public void setKeyName(int index, String keyName) {
+
+		switch (index) {
+		case 0:
+			setKeyName(keyName);
+			break;
+		case 1:
+			setExt1KeyName(keyName);
+			break;
+		case 2:
+			setExt2KeyName(keyName);
+			break;
+		case 3:
+			setExt3KeyName(keyName);
+			break;
+		case 4:
+		default:
+			setExt4KeyName(keyName);
+			break;
+		}
+	}
+
+	/**
+	 * set the keyType for indexed position
+	 */
+	public void setKeyType(int index, ColumnType keyType) {
+
+		switch (index) {
+		case 0:
+			setKeyType(keyType);
+			break;
+		case 1:
+			setExt1KeyType(keyType);
+			break;
+		case 2:
+			setExt2KeyType(keyType);
+			break;
+		case 3:
+			setExt3KeyType(keyType);
+			break;
+		case 4:
+		default:
+			setExt4KeyType(keyType);
+			break;
+		}
+	}
+
+	/**
 	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */

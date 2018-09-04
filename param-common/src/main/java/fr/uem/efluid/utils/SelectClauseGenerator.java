@@ -256,15 +256,19 @@ public class SelectClauseGenerator {
 					if (l.isCompositeKey()) {
 
 						int linkPos = pos.incrementAndGet();
+						int refCount = (int) l.columnFroms().count();
+
 						// Mark as aliased for each column From
-						l.columnFroms().forEach(c -> {
-							prepared.put(c, prepareSelectLinkColumnAlias(dic, linkPos, c));
-						});
+						for (int i = 0; i < refCount; i++) {
+							String columnFrom = l.getColumnFrom(i);
+							prepared.put(columnFrom, prepareSelectLinkColumnAlias(l.getColumnTo(i), linkPos, columnFrom));
+						}
 					}
 
 					// Standard case
 					else {
-						prepared.put(l.getColumnFrom(), prepareSelectLinkColumnAlias(dic, pos.incrementAndGet(), l.getColumnFrom()));
+						prepared.put(l.getColumnFrom(),
+								prepareSelectLinkColumnAlias(dic.getKeyName(), pos.incrementAndGet(), l.getColumnFrom()));
 					}
 				});
 
@@ -282,9 +286,9 @@ public class SelectClauseGenerator {
 	 * @param columnFrom
 	 * @return
 	 */
-	private String prepareSelectLinkColumnAlias(ExportAwareDictionaryEntry<?> dic, int pos, String columnFrom) {
+	private String prepareSelectLinkColumnAlias(String keyName, int pos, String columnFrom) {
 		// ln%s."%s" as ln_%s
-		return String.format(this.selectLinkValueModel, String.valueOf(pos), dic.getKeyName(),
+		return String.format(this.selectLinkValueModel, String.valueOf(pos), keyName,
 				columnFrom);
 	}
 
