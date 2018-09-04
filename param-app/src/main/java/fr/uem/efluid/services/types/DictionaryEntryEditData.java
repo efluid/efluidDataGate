@@ -310,6 +310,12 @@ public class DictionaryEntryEditData {
 		@Override
 		public int compareTo(ColumnEditData o) {
 
+			// Avoid error on imported dic without real ref
+
+			if (this.getType() == null || o.getType() == null) {
+				return -1;
+			}
+
 			// Priority on columns of type generated
 
 			if (this.getType().isPk() && !o.getType().isPk()) {
