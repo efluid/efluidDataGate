@@ -23,6 +23,10 @@ import java.lang.annotation.Target;
  * with {@link ParameterValue} to be used.
  * </p>
  * <p>
+ * In case of "composite-key" used for link association, you simply have to annotate each
+ * "from" column field with a link referencing the same table / entity
+ * </p>
+ * <p>
  * See dictionary management rules for details on links
  * </p>
  * 
@@ -67,4 +71,14 @@ public @interface ParameterLink {
 	 * @return
 	 */
 	String toColumn() default "";
+
+	/**
+	 * <p>
+	 * Optional link name to use
+	 * </p>
+	 * 
+	 * @return
+	 */
+	String name() default "";
+
 }

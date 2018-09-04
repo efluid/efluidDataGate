@@ -22,6 +22,8 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 
 	private String columnTo;
 
+	private String name;
+
 	private String ext1ColumnTo;
 
 	private String ext2ColumnTo;
@@ -92,6 +94,22 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	}
 
 	/**
+	 * @return the name
+	 */
+	@Override
+	public String getName() {
+		return this.name;
+	}
+
+	/**
+	 * @param name
+	 *            the name to set
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	/**
 	 * @return the tableTo
 	 */
 	@Override
@@ -105,22 +123,6 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	 */
 	public void setTableTo(String tableTo) {
 		this.tableTo = tableTo;
-	}
-
-	/**
-	 * @return the columnTo
-	 */
-	@Override
-	public String getColumnTo() {
-		return this.columnTo;
-	}
-
-	/**
-	 * @param columnTo
-	 *            the columnTo to set
-	 */
-	public void setColumnTo(String columnTo) {
-		this.columnTo = columnTo;
 	}
 
 	/**
@@ -252,6 +254,22 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	}
 
 	/**
+	 * @return the columnTo
+	 */
+	@Override
+	public String getColumnTo() {
+		return this.columnTo;
+	}
+
+	/**
+	 * @param columnTo
+	 *            the columnTo to set
+	 */
+	public void setColumnTo(String columnTo) {
+		this.columnTo = columnTo;
+	}
+
+	/**
 	 * @return the createdTime
 	 */
 	@Override
@@ -308,6 +326,104 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	}
 
 	/**
+	 * @return the columnFrom for indexed position
+	 */
+	public String getColumnFrom(int index) {
+
+		switch (index) {
+		case 0:
+			return getColumnFrom();
+
+		case 1:
+			return getExt1ColumnFrom();
+
+		case 2:
+			return getExt2ColumnFrom();
+
+		case 3:
+			return getExt3ColumnFrom();
+
+		case 4:
+		default:
+			return getExt4ColumnFrom();
+		}
+	}
+
+	/**
+	 * @return the columnFrom for indexed position
+	 */
+	public void setColumnFrom(int index, String col) {
+
+		switch (index) {
+		case 0:
+			setColumnFrom(col);
+			break;
+		case 1:
+			setExt1ColumnFrom(col);
+			break;
+		case 2:
+			setExt2ColumnFrom(col);
+			break;
+		case 3:
+			setExt3ColumnFrom(col);
+			break;
+		case 4:
+		default:
+			setExt4ColumnFrom(col);
+			break;
+		}
+	}
+
+	/**
+	 * @return the columnTo for indexed position
+	 */
+	public void setColumnTo(int index, String col) {
+
+		switch (index) {
+		case 0:
+			setColumnTo(col);
+			break;
+		case 1:
+			setExt1ColumnTo(col);
+			break;
+		case 2:
+			setExt2ColumnTo(col);
+			break;
+		case 3:
+			setExt3ColumnTo(col);
+			break;
+		case 4:
+		default:
+			setExt4ColumnTo(col);
+			break;
+		}
+	}
+
+	/**
+	 * @return the columnTo for indexed position
+	 */
+	public String getColumnTo(int index) {
+
+		switch (index) {
+		case 0:
+			return getColumnTo();
+
+		case 1:
+			return getExt1ColumnTo();
+
+		case 2:
+			return getExt2ColumnTo();
+
+		case 3:
+			return getExt3ColumnTo();
+
+		case 4:
+		default:
+			return getExt4ColumnTo();
+		}
+	}
+
+	/**
 	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
@@ -315,4 +431,5 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	public void deserialize(String raw) {
 		// Not implemented
 	}
+
 }

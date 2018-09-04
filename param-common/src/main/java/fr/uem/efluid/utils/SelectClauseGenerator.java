@@ -101,30 +101,6 @@ public class SelectClauseGenerator {
 
 	/**
 	 * <p>
-	 * Includes link alias set with support for composite keys
-	 * </p>
-	 * 
-	 * @param link
-	 * @return
-	 */
-	protected String createLinkAlias(ExportAwareTableLink<?> link) {
-		return null;
-	}
-
-	/**
-	 * <p>
-	 * Includes mapping alias set with support for composite keys
-	 * </p>
-	 * 
-	 * @param mapping
-	 * @return
-	 */
-	protected String createMappingAlias(ExportAwareTableMapping<?> mapping) {
-		return null;
-	}
-
-	/**
-	 * <p>
 	 * Produces the select part of the query when updating the column selection. Switchs
 	 * automatically between "identified select", or "*"
 	 * </p>
@@ -142,8 +118,8 @@ public class SelectClauseGenerator {
 	public String mergeSelectClause(
 			List<String> selectedColumnNames,
 			int availableColumnNumber,
-			List<? extends ExportAwareTableLink<?>> links,
-			List<? extends ExportAwareTableMapping<?>> mappings, // TODO : use this
+			Collection<? extends ExportAwareTableLink<?>> links,
+			Collection<? extends ExportAwareTableMapping<?>> mappings, // TODO : use this
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
 
 		if (selectedColumnNames.size() == availableColumnNumber) {
@@ -194,6 +170,30 @@ public class SelectClauseGenerator {
 
 	/**
 	 * <p>
+	 * Includes link alias set with support for composite keys
+	 * </p>
+	 * 
+	 * @param link
+	 * @return
+	 */
+	protected String createLinkAlias(ExportAwareTableLink<?> link) {
+		return null;
+	}
+
+	/**
+	 * <p>
+	 * Includes mapping alias set with support for composite keys
+	 * </p>
+	 * 
+	 * @param mapping
+	 * @return
+	 */
+	protected String createMappingAlias(ExportAwareTableMapping<?> mapping) {
+		return null;
+	}
+
+	/**
+	 * <p>
 	 * Join columns as simple select, without alias, and with support for "protectColumn".
 	 * For example, values {aaa,bbb,ccc} becames <code>"aaa", "bbb", "ccc"</code>
 	 * </p>
@@ -219,17 +219,28 @@ public class SelectClauseGenerator {
 	 *            mapped to table name
 	 * @return
 	 */
-	protected static boolean hasMappedLinks(List<? extends ExportAwareTableLink<?>> links,
+	protected static boolean hasMappedLinks(Collection<? extends ExportAwareTableLink<?>> links,
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
 		return links != null && links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
 	}
 
 	/**
+	 * @return
+	 */
+	protected static <T extends ExportAwareTableLink<?>> Comparator<T> linkOrder() {
+		return Comparator.comparing(ExportAwareTableLink::getTableTo);
+	}
+
+	/**
+	 * <p>
+	 * Prepare link cols with their alias (using indexed alias like "ln1", "ln2" ...)
+	 * </p>
+	 * 
 	 * @param links
 	 * @param allEntries
 	 * @return
 	 */
-	private Map<String, String> prepareSelectLinks(List<? extends ExportAwareTableLink<?>> links,
+	private Map<String, String> prepareSelectLinks(Collection<? extends ExportAwareTableLink<?>> links,
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
 
 		AtomicInteger pos = new AtomicInteger(0);
@@ -286,9 +297,5 @@ public class SelectClauseGenerator {
 	private static final String generateSelectLinkValue(boolean columnNamesProtected) {
 		return new StringBuilder(LINK_TAB_ALIAS + "%s.").append(columnNamesProtected ? "\"%s\"" : "%s")
 				.append(LINK_VAL_ALIAS_START + "%s ").toString();
-	}
-
-	protected static <T extends ExportAwareTableLink<?>> Comparator<T> linkOrder() {
-		return Comparator.comparing(ExportAwareTableLink::getTableTo);
 	}
 }
