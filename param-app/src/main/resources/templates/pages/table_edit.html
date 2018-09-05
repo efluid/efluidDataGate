@@ -7,7 +7,8 @@
 		<form action="#" th:action="@{/ui/dictionary/save}" method="post">
 			<h5>Edition d'une table de paramètrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
 			<span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramètrage.
-			La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel</span>
+			La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel. Les dépendances sont prises en compte et validées
+			lors de la préparation d'un lot. Si plusieurs dépendances sont créées vers la même table cible alors le lien sera traité comme une clé composite</span>
 			<div class="form-group">
 				<label for="name">Nom du paramètrage correspondant</label>
 				<input id="name" type="text" class="form-control" th:field="${entry.name}" value="Programmation" size="50"/>
@@ -133,7 +134,7 @@
 			// Keys are identified also
 			var keys = cols.filter(col => $("#keyFor" + col).val()  === 'true');
 			
-			var key = (keys.length === 0)? cols[0] : keys[0];
+			var key = (keys.length === 0)? cols[0] : keys.join('", cur."');
 
 			// Composed query - Order by 1st key = first in columns
 			var query = 'SELECT cur."' + key + '", cur."' + (selecteds.length == cols.length?'*':selecteds.join('", cur."')) + '" FROM "' + $("#table").val() + '" cur WHERE ' +   $("#whereCriteria").val() + ' ORDER BY cur."' + keys[0] + '"';
@@ -219,7 +220,7 @@
         	var keyInput = $("#keyFor" + colName);
 			if(keyInput.val() === 'false'){
 				unselectAction(colName); // Cannot be selected in same time
-				$("tbody tr").each((i,e) => unkeyAction(e.id)); // Unkey all others
+				//$("tbody tr").each((i,e) => unkeyAction(e.id)); // Unkey all others
 				console.info("specify as key " + colName);
 				keyInput.val("true");
 				$("#" + colName + " td button.key-button").removeClass("btn-outline-dark").addClass("btn-dark");

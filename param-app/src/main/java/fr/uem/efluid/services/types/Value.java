@@ -37,7 +37,6 @@ public interface Value {
 	 */
 	byte[] getValue();
 
-	// TODO : need to decide if typed or not
 	/**
 	 * @return true if value is a natural string representation (depends on database
 	 *         column type)
@@ -69,7 +68,7 @@ public interface Value {
 			return TYPED_STRING_PROTECT + dbTemporalFormater.format(internal) + TYPED_STRING_PROTECT;
 		}
 
-		if (getType() == ColumnType.BINARY) {
+		if (lobKeys != null && getType() == ColumnType.BINARY) {
 			lobKeys.add(getValueAsString());
 			return INJECT_OF_LOB;
 		}

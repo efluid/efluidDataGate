@@ -36,7 +36,7 @@ public final class FormatUtils {
 	 * 
 	 */
 	private FormatUtils() {
-		// TODO Auto-generated constructor stub
+		super();
 	}
 
 	/**

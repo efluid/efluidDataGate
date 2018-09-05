@@ -3,6 +3,7 @@ package fr.uem.efluid.services.types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
 
@@ -21,7 +22,7 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 
 	private String dictionaryEntryName;
 
-	private String dictionaryEntryKeyName;
+	private String dictionaryEntryDisplayKeyName;
 
 	private String dictionaryEntryTableName;
 
@@ -160,18 +161,18 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	}
 
 	/**
-	 * @return the dictionaryEntryKeyName
+	 * @return the dictionaryEntryDisplayKeyName
 	 */
-	public String getDictionaryEntryKeyName() {
-		return this.dictionaryEntryKeyName;
+	public String getDictionaryEntryDisplayKeyName() {
+		return this.dictionaryEntryDisplayKeyName;
 	}
 
 	/**
-	 * @param dictionaryEntryKeyName
-	 *            the dictionaryEntryKeyName to set
+	 * @param dictionaryEntryDisplayKeyName
+	 *            the dictionaryEntryDisplayKeyName to set
 	 */
-	public void setDictionaryEntryKeyName(String dictionaryEntryKeyName) {
-		this.dictionaryEntryKeyName = dictionaryEntryKeyName;
+	public void setDictionaryEntryDisplayKeyName(String dictionaryEntryDisplayKeyName) {
+		this.dictionaryEntryDisplayKeyName = dictionaryEntryDisplayKeyName;
 	}
 
 	/**
@@ -197,7 +198,7 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
 	public void completeFromEntity(DictionaryEntry entity) {
 
 		setDictionaryEntryName(entity.getParameterName());
-		setDictionaryEntryKeyName(entity.getKeyName());
+		setDictionaryEntryDisplayKeyName(entity.keyNames().collect(Collectors.joining("/")));
 		setDictionaryEntryTableName(entity.getTableName());
 
 		if (entity.getDomain() != null) {

@@ -493,7 +493,6 @@ public class PrepareIndexService {
 		// But for human readability, need a custom display payload (not saved)
 		entry.setHrPayload(getConverter().convertToHrPayload(currentPayload, previousPayload));
 
-		// TODO : other source of timestamp ?
 		entry.setTimestamp(System.currentTimeMillis());
 
 		// Complete from dict

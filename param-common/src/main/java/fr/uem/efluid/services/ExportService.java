@@ -91,7 +91,6 @@ public class ExportService {
 				packFiles.addAll(pckg.getComplementaryFiles());
 			}
 
-			// TODO : define CType
 			return new ExportFile(compress(packFiles), "PCKG");
 
 		} catch (IOException e) {

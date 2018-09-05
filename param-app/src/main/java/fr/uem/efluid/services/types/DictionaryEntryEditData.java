@@ -9,7 +9,6 @@ import javax.validation.constraints.NotNull;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.metas.ColumnDescription;
 
 /**
@@ -19,7 +18,7 @@ import fr.uem.efluid.model.metas.ColumnDescription;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public class DictionaryEntryEditData {
 
@@ -178,6 +177,8 @@ public class DictionaryEntryEditData {
 		@NotNull
 		private String name;
 
+		private String displayName;
+
 		@NotNull
 		private ColumnType type;
 
@@ -194,6 +195,21 @@ public class DictionaryEntryEditData {
 		 */
 		public ColumnEditData() {
 			super();
+		}
+
+		/**
+		 * @return the displayName
+		 */
+		public String getDisplayName() {
+			return this.displayName;
+		}
+
+		/**
+		 * @param displayName
+		 *            the displayName to set
+		 */
+		public void setDisplayName(String displayName) {
+			this.displayName = displayName;
 		}
 
 		/**
@@ -294,6 +310,12 @@ public class DictionaryEntryEditData {
 		@Override
 		public int compareTo(ColumnEditData o) {
 
+			// Avoid error on imported dic without real ref
+
+			if (this.getType() == null || o.getType() == null) {
+				return -1;
+			}
+
 			// Priority on columns of type generated
 
 			if (this.getType().isPk() && !o.getType().isPk()) {
@@ -314,25 +336,31 @@ public class DictionaryEntryEditData {
 		 * 
 		 * @param col
 		 * @param selecteds
-		 * @param linkedTable
+		 * @param keyNames
+		 * @param link
 		 *            from existing link has priority over col foreignKeyTable
 		 * @return
 		 */
-		public static ColumnEditData fromColumnDescription(ColumnDescription col, Collection<String> selecteds, String keyValue,
-				TableLink link) {
+		public static ColumnEditData fromColumnDescription(
+				ColumnDescription col,
+				Collection<String> selecteds,
+				List<String> keyNames,
+				LinkUpdateFollow linkUpdate) {
+
 			ColumnEditData editData = new ColumnEditData();
-			if (link == null) {
+
+			if (linkUpdate == null) {
 				editData.setForeignKeyTable(col.getForeignKeyTable());
 				editData.setForeignKeyColumn(col.getForeignKeyColumn());
 			} else {
-				editData.setForeignKeyTable(link.getTableTo());
-				editData.setForeignKeyColumn(link.getColumnTo());
+				editData.setForeignKeyTable(linkUpdate.getLink().getTableTo());
+				editData.setForeignKeyColumn(linkUpdate.getLink().getColumnTo(linkUpdate.getIndexAndIncr()));
 			}
 			editData.setName(col.getName());
 			editData.setType(col.getType());
 			if (selecteds != null) {
 				// Excludes selected from name
-				if (col.getName().equals(keyValue)) {
+				if (keyNames.contains(col.getName())) {
 					editData.setKey(true);
 				} else {
 					editData.setSelected(selecteds.contains(col.getName()));
@@ -353,21 +381,37 @@ public class DictionaryEntryEditData {
 		 *            from existing link
 		 * @return
 		 */
-		public static ColumnEditData fromSelecteds(String selected, String keyname, ColumnType keyType, TableLink link) {
+		public static ColumnEditData fromSelecteds(
+				String selected,
+				List<String> keyNames,
+				List<ColumnType> keyTypes,
+				LinkUpdateFollow linkUpdate) {
+
 			ColumnEditData editData = new ColumnEditData();
 			editData.setName(selected);
-			if (selected.equals(keyname)) {
-				editData.setKey(true);
-				editData.setType(keyType);
-			} else {
+
+			// Specify if key
+			for (int i = 0; i < keyNames.size(); i++) {
+				if (selected.equals(keyNames.get(i))) {
+					editData.setKey(true);
+					editData.setType(keyTypes.get(i));
+					break;
+				}
 				editData.setSelected(true);
 			}
-			if (link != null) {
-				editData.setForeignKeyTable(link.getTableTo());
-				editData.setForeignKeyColumn(link.getColumnTo());
+
+			if (linkUpdate != null) {
+				editData.setForeignKeyTable(linkUpdate.getLink().getTableTo());
+				editData.setForeignKeyColumn(linkUpdate.getLink().getColumnTo(linkUpdate.getIndexAndIncr()));
 			}
 			return editData;
 		}
+
+		public static enum ReferenceType {
+			LINK,
+			MAPPING;
+		}
+
 	}
 
 }

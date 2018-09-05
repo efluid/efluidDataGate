@@ -4,6 +4,7 @@ import static fr.uem.efluid.utils.ErrorType.DIC_ENTRY_NOT_FOUND;
 import static fr.uem.efluid.utils.ErrorType.DIC_KEY_NOT_UNIQ;
 import static fr.uem.efluid.utils.ErrorType.DIC_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.DIC_NO_KEY;
+import static fr.uem.efluid.utils.ErrorType.DIC_TOO_MANY_KEYS;
 import static fr.uem.efluid.utils.ErrorType.DOMAIN_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_MODEL_ID;
 
@@ -55,6 +56,7 @@ import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 import fr.uem.efluid.services.types.FunctionalDomainExportPackage;
 import fr.uem.efluid.services.types.FunctionalDomainPackage;
+import fr.uem.efluid.services.types.LinkUpdateFollow;
 import fr.uem.efluid.services.types.ProjectExportPackage;
 import fr.uem.efluid.services.types.ProjectPackage;
 import fr.uem.efluid.services.types.SelectableTable;
@@ -92,23 +94,26 @@ import fr.uem.efluid.utils.SelectClauseGenerator;
  * <li>DictionaryEntry</li>
  * <ul>
  * <li>Links</li>
+ * <li>Mappings</li>
  * </ul>
  * </ul>
  * </ul>
  * </ul>
  * </p>
  * <p>
- * Features includes :
+ * <b>Features included</b> :
  * <ul>
  * <li>Basic CRUD</li>
  * <li>Import / export features (full / For one project / for one domaine)</li>
  * <li>Some specific features related to business rules shared with user ui</li>
+ * <li>Support for composite key in dictionary entries</li>
+ * <li>Use of composite keys for links</li>
  * </ul>
  * </p>
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 6
+ * @version 7
  */
 @Service
 @Transactional
@@ -221,22 +226,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		return this.versions.findByProject(project).stream()
 				.map(v -> getCompletedVersion(v, last))
 				.collect(Collectors.toList());
-	}
-
-	/**
-	 * <p>
-	 * For a given version entity, get completed data, regarding "last version" of current
-	 * project for some rules
-	 * </p>
-	 * 
-	 * @param version
-	 * @param lastProjectVersion
-	 * @return <code>version</code> populated as a <tt>VersionData</tt>
-	 */
-	private VersionData getCompletedVersion(Version version, Version lastProjectVersion) {
-
-		boolean isLastVersion = version.getUuid().equals(lastProjectVersion.getUuid());
-		return VersionData.fromEntity(version, isLastVersion ? this.versions.isVersionUpdatable(lastProjectVersion.getUuid()) : false);
 	}
 
 	/**
@@ -390,10 +379,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
 				: Collections.emptyList();
 
 		TableDescription desc = getTableDescription(edit.getTable());
-		// dicLinks.get(0).equals(dicLinks.get(1))
+
+		List<String> keyNames = entry.keyNames().collect(Collectors.toList());
+
 		// Keep links
-		Map<String, TableLink> mappedLinks = dicLinks.stream().distinct()
-				.collect(Collectors.toMap(TableLink::getColumnFrom, v -> v));
+		Map<String, LinkUpdateFollow> mappedLinks = dicLinks.stream().flatMap(
+				l -> LinkUpdateFollow.flatMapFromColumn(l, l.columnFroms()))
+				.collect(Collectors.toMap(LinkUpdateFollow::getColumn, v -> v));
 
 		// Dedicated case : missing table, pure simulated content
 		if (desc == TableDescription.MISSING) {
@@ -401,21 +393,21 @@ public class DictionaryManagementService extends AbstractApplicationService {
 			// Avoid immutable lists
 			Collection<String> editableSelecteds = new ArrayList<>(selecteds);
 
-			// On missing, add key column
+			// On missing, add key column(s)
 			if (!editableSelecteds.contains(entry.getKeyName())) {
-				editableSelecteds.add(entry.getKeyName());
+				editableSelecteds.addAll(keyNames);
 			}
 
 			edit.setMissingTable(true);
 			edit.setColumns(editableSelecteds.stream()
-					.map(c -> ColumnEditData.fromSelecteds(c, entry.getKeyName(), entry.getKeyType(), mappedLinks.get(c)))
+					.map(c -> ColumnEditData.fromSelecteds(c, keyNames, entry.keyTypes().collect(Collectors.toList()), mappedLinks.get(c)))
 					.sorted()
 					.collect(Collectors.toList()));
 		} else {
 			// Add metadata to use for edit
-			edit.setColumns(desc.getColumns().stream()
-					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, entry.getKeyName(), mappedLinks.get(c.getName())))
+			edit.setColumns(desc.getColumns().stream()					
 					.sorted()
+					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, keyNames, mappedLinks.get(c.getName())))
 					.collect(Collectors.toList()));
 		}
 
@@ -477,20 +469,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 			entry.setCreatedTime(LocalDateTime.now());
 		}
 
-		// Specify key from columns
-		ColumnEditData key = editData.getColumns().stream().filter(ColumnEditData::isKey).findFirst()
-				.orElseThrow(() -> new ApplicationException(DIC_NO_KEY, "The key is mandatory"));
-		entry.setKeyName(key.getName());
-		entry.setKeyType(key.getType());
+		// Specified keys from columns
+		List<ColumnEditData> keys = editData.getColumns().stream().filter(ColumnEditData::isKey).sorted().collect(Collectors.toList());
 
-		// Shouldn't use PK as parameter key
-		if (key.getType().isPk()) {
-			LOGGER.warn("Using the PK \"{}\" as parameter key on table \"{}\" : it may cause wrong conflict if"
-					+ " the id is not a real valid business identifier for the parameter table !!!", key.getName(), editData.getTable());
-		}
-
-		// Controle also that the key is unique (heavy load)
-		assertKeyIsUniqueValue(entry);
+		// Apply keys, with support for composite keys
+		applyEditedKeys(entry, keys);
 
 		// Other common edited properties
 		entry.setDomain(this.domains.getOne(editData.getDomainUuid()));
@@ -788,6 +771,77 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 	/**
 	 * <p>
+	 * For a given version entity, get completed data, regarding "last version" of current
+	 * project for some rules
+	 * </p>
+	 * 
+	 * @param version
+	 * @param lastProjectVersion
+	 * @return <code>version</code> populated as a <tt>VersionData</tt>
+	 */
+	private VersionData getCompletedVersion(Version version, Version lastProjectVersion) {
+
+		boolean isLastVersion = version.getUuid().equals(lastProjectVersion.getUuid());
+		return VersionData.fromEntity(version, isLastVersion ? this.versions.isVersionUpdatable(lastProjectVersion.getUuid()) : false);
+	}
+
+	/**
+	 * <p>
+	 * Using a flat switch with fall-through, process key validation and specification in
+	 * provided <tt>DictionaryEntry</tt> from all the selected keys. Support composite
+	 * keys (max 5 key columns)
+	 * </p>
+	 * 
+	 * @param entry
+	 * @param keys
+	 */
+	private void applyEditedKeys(DictionaryEntry entry, List<ColumnEditData> keys) {
+
+		// Assert key count (1-5)
+		assertKeysSelection(keys);
+
+		// Always use first as "normal" key, then ext for others.
+		ColumnEditData first = keys.get(0);
+
+		warnKeyIsPk(entry, first);
+
+		entry.setKeyName(first.getName());
+		entry.setKeyType(first.getType());
+		switch (keys.size()) {
+		case 5:
+			ColumnEditData key4 = keys.get(4);
+			warnKeyIsPk(entry, key4);
+			entry.setExt4KeyName(key4.getName());
+			entry.setExt4KeyType(key4.getType());
+			//$FALL-THROUGH$
+		case 4:
+			ColumnEditData key3 = keys.get(3);
+			warnKeyIsPk(entry, key3);
+			entry.setExt3KeyName(key3.getName());
+			entry.setExt3KeyType(key3.getType());
+			//$FALL-THROUGH$
+		case 3:
+			ColumnEditData key2 = keys.get(2);
+			warnKeyIsPk(entry, key2);
+			entry.setExt2KeyName(key2.getName());
+			entry.setExt2KeyType(key2.getType());
+			//$FALL-THROUGH$
+		case 2:
+			ColumnEditData key1 = keys.get(1);
+			warnKeyIsPk(entry, key1);
+			entry.setExt1KeyName(key1.getName());
+			entry.setExt1KeyType(key1.getType());
+			//$FALL-THROUGH$
+		default:
+			break;
+		}
+
+		// Controle also that the key is unique (heavy load)
+		assertKeyIsUniqueValue(entry);
+	}
+
+	/**
+	 * <p>
 	 * Process one FunctionalDomain. If the associated project was substituted by another
 	 * by name, the substitute will be gathered from given map and applied to domain
 	 * </p>
@@ -1017,32 +1071,67 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		Collection<TableLink> updatedLinks = new ArrayList<>();
 		Collection<TableLink> createdLinks = new ArrayList<>();
 
+		Map<String, TableLink> editedLinksByTableTo = new HashMap<>();
+
 		// Produces links from col foreign key
-		List<TableLink> editedLinks = cols.stream()
-				.filter(c -> isNotEmpty(c.getForeignKeyTable()))
-				.map(c -> {
-					TableLink link = new TableLink();
-					link.setColumnFrom(c.getName());
-					link.setTableTo(c.getForeignKeyTable());
-					link.setColumnTo(c.getForeignKeyColumn());
+		for (ColumnEditData col : cols) {
+
+			// When FK is set
+			if (isNotEmpty(col.getForeignKeyTable())) {
+
+				// Mix on same table to for composites
+				TableLink link = editedLinksByTableTo.get(col.getForeignKeyTable());
+
+				// Not set yet (common case - single key)
+				if (link == null) {
+					link = new TableLink();
+					link.setColumnFrom(col.getName());
+					link.setTableTo(col.getForeignKeyTable());
+					link.setColumnTo(col.getForeignKeyColumn());
 					link.setDictionaryEntry(entry);
-					return link;
-				}).collect(Collectors.toList());
+					editedLinksByTableTo.put(col.getForeignKeyTable(), link);
+				}
+
+				// Already set - composite key - rare
+				else {
+					int next = (int) link.columnFroms().count();
+					link.setColumnFrom(next, col.getName());
+					link.setColumnTo(next, col.getForeignKeyColumn());
+				}
+			}
+		}
 
 		// Get existing to update / remove
-		Map<String, TableLink> existingLinks = this.links.findByDictionaryEntry(entry).stream().distinct()
-				.collect(Collectors.toMap(TableLink::getColumnFrom, l -> l));
+		Map<String, TableLink> existingLinksByTableTo = this.links.findByDictionaryEntry(entry).stream().distinct()
+				.collect(Collectors.toMap(TableLink::getTableTo, l -> l));
+
+		int compositeCount = 0;
 
 		// And prepare 3 sets of links
-		for (TableLink link : editedLinks) {
+		for (TableLink link : editedLinksByTableTo.values()) {
 
-			TableLink existing = existingLinks.remove(link.getColumnFrom());
+			TableLink existing = existingLinksByTableTo.remove(link.getTableTo());
 
 			// Update
 			if (existing != null) {
 				existing.setUpdatedTime(LocalDateTime.now());
 				existing.setTableTo(link.getTableTo());
 				existing.setColumnTo(link.getColumnTo());
+				existing.setColumnFrom(link.getColumnFrom());
+
+				// Copy other if composite
+				if (link.isCompositeKey() || existing.isCompositeKey()) {
+					existing.setExt1ColumnFrom(link.getExt1ColumnFrom());
+					existing.setExt2ColumnFrom(link.getExt2ColumnFrom());
+					existing.setExt3ColumnFrom(link.getExt3ColumnFrom());
+					existing.setExt4ColumnFrom(link.getExt4ColumnFrom());
+					existing.setExt1ColumnTo(link.getExt1ColumnTo());
+					existing.setExt2ColumnTo(link.getExt2ColumnTo());
+					existing.setExt3ColumnTo(link.getExt3ColumnTo());
+					existing.setExt4ColumnTo(link.getExt4ColumnTo());
+					compositeCount++;
+				}
+
 				updatedLinks.add(existing);
 			}
 
@@ -1057,10 +1146,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		}
 
 		// Remaining are deleted
-		Collection<TableLink> deletedLinks = existingLinks.values();
+		Collection<TableLink> deletedLinks = existingLinksByTableTo.values();
 
-		LOGGER.info("Links updated for dictionary Entry {}. {} links added, {} links updated and {} deleted", entry.getUuid(),
-				Integer.valueOf(createdLinks.size()), Integer.valueOf(updatedLinks.size()), Integer.valueOf(deletedLinks.size()));
+		LOGGER.info("Links updated for dictionary Entry {}. {} links added, {} links updated and {} deleted, including "
+				+ "{} links with composite keys", entry.getUuid(), Integer.valueOf(createdLinks.size()),
+				Integer.valueOf(updatedLinks.size()), Integer.valueOf(deletedLinks.size()), Integer.valueOf(compositeCount));
 
 		// Process DB updates
 		if (createdLinks.size() > 0)
@@ -1111,10 +1201,24 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 * @param dict
 	 */
 	private void assertKeyIsUniqueValue(DictionaryEntry dict) {
-		if (!this.metadatas.isColumnHasUniqueValue(dict.getTableName(), dict.getKeyName())) {
-			throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() + " with key "
-					+ dict.getKeyName() + " has its values are not unique", dict.getTableName() + "." + dict.getKeyName());
 
+		// Unique key check
+		if (dict.getExt1KeyName() == null) {
+			if (!this.metadatas.isColumnSetHasUniqueValue(dict.getTableName(), Arrays.asList(dict.getKeyName()))) {
+				throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() +
+						" with unique key " + dict.getKeyName() + " has not unique values",
+						dict.getTableName() + "." + dict.getKeyName());
+			}
+		}
+
+		// Check on composite key
+		else {
+			Collection<String> keys = dict.keyNames().collect(Collectors.toSet());
+			if (!this.metadatas.isColumnSetHasUniqueValue(dict.getTableName(), keys)) {
+				throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() +
+						" with composite key on columns " + keys + " has not unique values",
+						keys.stream().map(s -> (dict.getTableName() + "." + s)).collect(Collectors.joining(" / ")));
+			}
 		}
 	}
 
@@ -1171,7 +1275,37 @@ public class DictionaryManagementService extends AbstractApplicationService {
 					}
 				}
 			}
+		}
+	}
 
+	/**
+	 * <p>
+	 * Check rules for column key selection : minimum 1, maximum 5 (for composite keys)
+	 * </p>
+	 * 
+	 * @param keys
+	 */
+	private static void assertKeysSelection(List<ColumnEditData> keys) {
+
+		if (keys == null || keys.size() == 0) {
+			throw new ApplicationException(DIC_NO_KEY, "The key is mandatory");
+		}
+
+		if (keys.size() > 5) {
+			throw new ApplicationException(DIC_TOO_MANY_KEYS, "Too much selected columns for composite key definition");
+		}
+	}
+
+	/**
+	 * @param entry
+	 * @param key
+	 */
+	private static void warnKeyIsPk(DictionaryEntry entry, ColumnEditData key) {
+
+		// Shouldn't use PK as parameter key
+		if (key.getType().isPk()) {
+			LOGGER.warn("Using the PK \"{}\" as parameter key on table \"{}\" : it may cause wrong conflict if"
+					+ " the id is not a real valid business identifier for the parameter table !!!", key.getName(), entry.getTableName());
 		}
 	}
 }

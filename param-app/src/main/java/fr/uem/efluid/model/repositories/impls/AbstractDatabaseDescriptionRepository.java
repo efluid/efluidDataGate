@@ -170,13 +170,13 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
 	 * @return
 	 */
 	@Override
-	public boolean isColumnHasUniqueValue(String tableName, String colName) {
+	public boolean isColumnSetHasUniqueValue(String tableName, Collection<String> colNames) {
 
 		try {
-			return !this.managedSource.queryForRowSet(this.generator.producesUnicityQuery(tableName, colName)).next();
+			return !this.managedSource.queryForRowSet(this.generator.producesUnicityQuery(tableName, colNames)).next();
 		} catch (InvalidResultSetAccessException e) {
 			throw new ApplicationException(VALUE_CHECK_FAILED,
-					"Cannot extract resultset for column unicity on table " + tableName + ", column " + colName, e);
+					"Cannot extract resultset for column unicity on table " + tableName + ", columns " + colNames, e);
 		}
 	}
 

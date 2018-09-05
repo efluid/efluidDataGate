@@ -33,6 +33,22 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
 
 	private ColumnType keyType;
 
+	private String ext1KeyName;
+
+	private ColumnType ext1KeyType;
+
+	private String ext2KeyName;
+
+	private ColumnType ext2KeyType;
+
+	private String ext3KeyName;
+
+	private ColumnType ext3KeyType;
+
+	private String ext4KeyName;
+
+	private ColumnType ext4KeyType;
+
 	private LocalDateTime createdTime;
 
 	private LocalDateTime updatedTime;
@@ -143,6 +159,134 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
 	}
 
 	/**
+	 * @return the ext1KeyName
+	 */
+	@Override
+	public String getExt1KeyName() {
+		return this.ext1KeyName;
+	}
+
+	/**
+	 * @param ext1KeyName
+	 *            the ext1KeyName to set
+	 */
+	public void setExt1KeyName(String ext1KeyName) {
+		this.ext1KeyName = ext1KeyName;
+	}
+
+	/**
+	 * @return the ext1KeyType
+	 */
+	@Override
+	public ColumnType getExt1KeyType() {
+		return this.ext1KeyType;
+	}
+
+	/**
+	 * @param ext1KeyType
+	 *            the ext1KeyType to set
+	 */
+	public void setExt1KeyType(ColumnType ext1KeyType) {
+		this.ext1KeyType = ext1KeyType;
+	}
+
+	/**
+	 * @return the ext2KeyName
+	 */
+	@Override
+	public String getExt2KeyName() {
+		return this.ext2KeyName;
+	}
+
+	/**
+	 * @param ext2KeyName
+	 *            the ext2KeyName to set
+	 */
+	public void setExt2KeyName(String ext2KeyName) {
+		this.ext2KeyName = ext2KeyName;
+	}
+
+	/**
+	 * @return the ext2KeyType
+	 */
+	@Override
+	public ColumnType getExt2KeyType() {
+		return this.ext2KeyType;
+	}
+
+	/**
+	 * @param ext2KeyType
+	 *            the ext2KeyType to set
+	 */
+	public void setExt2KeyType(ColumnType ext2KeyType) {
+		this.ext2KeyType = ext2KeyType;
+	}
+
+	/**
+	 * @return the ext3KeyName
+	 */
+	@Override
+	public String getExt3KeyName() {
+		return this.ext3KeyName;
+	}
+
+	/**
+	 * @param ext3KeyName
+	 *            the ext3KeyName to set
+	 */
+	public void setExt3KeyName(String ext3KeyName) {
+		this.ext3KeyName = ext3KeyName;
+	}
+
+	/**
+	 * @return the ext3KeyType
+	 */
+	@Override
+	public ColumnType getExt3KeyType() {
+		return this.ext3KeyType;
+	}
+
+	/**
+	 * @param ext3KeyType
+	 *            the ext3KeyType to set
+	 */
+	public void setExt3KeyType(ColumnType ext3KeyType) {
+		this.ext3KeyType = ext3KeyType;
+	}
+
+	/**
+	 * @return the ext4KeyName
+	 */
+	@Override
+	public String getExt4KeyName() {
+		return this.ext4KeyName;
+	}
+
+	/**
+	 * @param ext4KeyName
+	 *            the ext4KeyName to set
+	 */
+	public void setExt4KeyName(String ext4KeyName) {
+		this.ext4KeyName = ext4KeyName;
+	}
+
+	/**
+	 * @return the ext4KeyType
+	 */
+	@Override
+	public ColumnType getExt4KeyType() {
+		return this.ext4KeyType;
+	}
+
+	/**
+	 * @param ext4KeyType
+	 *            the ext4KeyType to set
+	 */
+	public void setExt4KeyType(ColumnType ext4KeyType) {
+		this.ext4KeyType = ext4KeyType;
+	}
+
+	/**
 	 * @return the createdTime
 	 */
 	@Override
@@ -175,11 +319,13 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
 	}
 
 	/**
-	 * @param updatedTime the updatedTime to set
+	 * @param updatedTime
+	 *            the updatedTime to set
 	 */
 	public void setUpdatedTime(LocalDateTime updatedTime) {
 		this.updatedTime = updatedTime;
 	}
+
 	/**
 	 * @return the domain
 	 */
@@ -210,6 +356,56 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
 	 */
 	public void setKeyType(ColumnType keyType) {
 		this.keyType = keyType;
+	}
+
+	/**
+	 * set the keyName for indexed position
+	 */
+	public void setKeyName(int index, String keyName) {
+
+		switch (index) {
+		case 0:
+			setKeyName(keyName);
+			break;
+		case 1:
+			setExt1KeyName(keyName);
+			break;
+		case 2:
+			setExt2KeyName(keyName);
+			break;
+		case 3:
+			setExt3KeyName(keyName);
+			break;
+		case 4:
+		default:
+			setExt4KeyName(keyName);
+			break;
+		}
+	}
+
+	/**
+	 * set the keyType for indexed position
+	 */
+	public void setKeyType(int index, ColumnType keyType) {
+
+		switch (index) {
+		case 0:
+			setKeyType(keyType);
+			break;
+		case 1:
+			setExt1KeyType(keyType);
+			break;
+		case 2:
+			setExt2KeyType(keyType);
+			break;
+		case 3:
+			setExt3KeyType(keyType);
+			break;
+		case 4:
+		default:
+			setExt4KeyType(keyType);
+			break;
+		}
 	}
 
 	/**
