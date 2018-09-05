@@ -51,6 +51,12 @@ public @interface ParameterKey {
 	ColumnType type() default ColumnType.UNKNOWN;
 
 	/**
+	 * <p>
+	 * When using a "splitted" entity definition (when a single class is mapped to
+	 * multiple tables in database), then the "forTable" can refer the corresponding table
+	 * as specified in top level <tt>ParameterTableSet</tt>
+	 * </p>
+	 * 
 	 * @return
 	 */
 	String[] forTable() default {};
