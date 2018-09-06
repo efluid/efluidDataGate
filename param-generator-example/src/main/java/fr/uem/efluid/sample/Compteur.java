@@ -10,7 +10,7 @@ import fr.uem.efluid.ParameterValue;
  * @version 1
  */
 @GestionDuMateriel
-@ParameterTable(name = "Compteur", tableName = "TCOMPTEUR", filterClause = "cur.\"ACTIF\"=1")
+@ParameterTable(name = "Compteur", tableName = "TCOMPTEUR", useAllFields = false, filterClause = "cur.\"ACTIF\"=1")
 public class Compteur extends Materiel {
 
 	@ParameterValue("NOM")

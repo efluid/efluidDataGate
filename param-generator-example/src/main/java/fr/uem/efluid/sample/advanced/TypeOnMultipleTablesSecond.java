@@ -10,23 +10,23 @@ import fr.uem.efluid.ParameterValue;
  * @since v0.0.8
  * @version 1
  */
-@ParameterTableSet({
-		@ParameterTable(tableName = "T_TABLE_MUTSECOND_ONE", keyField = "keyOne", useAllFields = false, values = {
+@ParameterTableSet(tables = {
+		@ParameterTable(tableName = "T_TABLE_MUTSECOND_ONE", keyField = "keyOne", values = {
 				@ParameterValue("valueOnAll"),
 				@ParameterValue("valueA"),
 				@ParameterValue("valueB")
 		}),
-		@ParameterTable(tableName = "T_TABLE_MUTSECOND_TWO", keyField = "keyTwo", keyType = ColumnType.ATOMIC, useAllFields = false, values = {
+		@ParameterTable(tableName = "T_TABLE_MUTSECOND_TWO", keyField = "keyTwo", keyType = ColumnType.ATOMIC, values = {
 				@ParameterValue("valueOnAll"),
 				@ParameterValue("valueC"),
 				@ParameterValue("valueD")
 		}),
-		@ParameterTable(tableName = "T_TABLE_MUTSECOND_THREE", keyField = "keyThree", useAllFields = false, values = {
+		@ParameterTable(tableName = "T_TABLE_MUTSECOND_THREE", keyField = "keyThree", values = {
 				@ParameterValue("valueOnAll"),
 				@ParameterValue("valueE"),
 				@ParameterValue("valueF")
 		})
-})
+}, useAllFields = false)
 public class TypeOnMultipleTablesSecond {
 
 	private Long keyOne;
