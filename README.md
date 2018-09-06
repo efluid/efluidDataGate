@@ -2,17 +2,6 @@
 
 Prototype d'application dédiée à l'identification, au packaging et au déploiement de paramètrage pour une instance Efluid.
 
-## Avancement général
-
-*Mise à jour au 21/03/2018* : Sécurité + Services REST pour pilotage de l'extérieur
-
-**Nouvelle organisation des projets**
-* Projet réorganisé pour distinguer l'application elle même de l'API de définition du dictionnaire depuis du code java
-* Ajout d'un sous projet générateur
-* Ajout d'un sous projet API
-
-**Doc à mettre à jour**
-
 ## Utilisation de l'application
 
 Le prototype est basé sur Spring-boot. Il n'y a rien à installer pour l'exécuter _par défaut_ :
