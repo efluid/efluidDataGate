@@ -18,12 +18,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import fr.uem.efluid.model.entities.CommitState;
+import fr.uem.efluid.services.ApplyDiffService;
 import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.SearchHistoryPage;
 import fr.uem.efluid.utils.WebUtils;
 
 /**
@@ -49,9 +51,80 @@ public class BacklogController extends CommonController {
 
 	@Autowired
 	private PilotableCommitPreparationService pilotableCommitService;
-	
+
 	@Autowired
 	private DictionaryManagementService dictService;
+
+	@Autowired
+	private ApplyDiffService diffService;
+
+	/**
+	 * <p>
+	 * For history navigate default rendering
+	 * </p>
+	 * 
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping("/history")
+	public String historyPage(Model model) {
+
+		return historySearchPageNav(model, 0, null);
+	}
+
+	/**
+	 * <p>
+	 * For new search
+	 * </p>
+	 * 
+	 * @param model
+	 * @param search
+	 * @return
+	 */
+	@RequestMapping(path = "/history", method = POST)
+	public String historySearchPage(Model model, @RequestParam("search") String search) {
+
+		return historySearchPageNav(model, 0, search);
+	}
+
+	/**
+	 * @param model
+	 * @param page
+	 * @param search
+	 * @return
+	 */
+	@RequestMapping(path = "/history/{page}", method = GET)
+	public String historySearchPageNav(Model model, @PathVariable("page") int pageNbr) {
+
+		return historySearchPageNav(model, pageNbr, null);
+	}
+
+	/**
+	 * @param model
+	 * @param page
+	 * @param search
+	 * @return
+	 */
+	@RequestMapping(path = "/history/{page}/{search}", method = GET)
+	public String historySearchPageNav(Model model, @PathVariable("page") int pageNbr, @PathVariable("search") String search) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
+		SearchHistoryPage page = this.diffService.getHistory(pageNbr, search);
+
+		// For formatting
+		WebUtils.addTools(model);
+
+		// For search nav
+		WebUtils.addPageNavBarItems(model, "/ui/history", search, pageNbr, page.getPageCount());
+
+		// Get updated preparation
+		model.addAttribute("history", page);
+
+		return "pages/history";
+	}
 
 	/**
 	 * <p>
@@ -108,7 +181,7 @@ public class BacklogController extends CommonController {
 
 		// Get current version
 		model.addAttribute("version", this.dictService.getLastVersion());
-		
+
 		return "pages/commit";
 	}
 

@@ -3,6 +3,7 @@ package fr.uem.efluid.utils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.pac4j.core.context.Pac4jConstants;
@@ -33,7 +34,11 @@ public class WebUtils {
 
 	public static final String TH_FORMATTER = "custom";
 
+	public static final String NAV_BAR = "navBar";
+
 	public static final String PROFIL_TOKEN = "_token_";
+
+	public static final int MAX_BEFORE_SPACER = 8;
 
 	/**
 	 * <p>
@@ -136,6 +141,55 @@ public class WebUtils {
 
 	/**
 	 * <p>
+	 * Add items for producing a clean pagination bar : create items to display as links
+	 * of each available page
+	 * </p>
+	 * 
+	 * @param model
+	 */
+	public static void addPageNavBarItems(Model model, String pageUri, String search, int currentPage, int pageCount) {
+
+		List<NavBarItem> items = new ArrayList<>();
+
+		String pattern = pageUri + "/%s" + (search != null ? "/" + search : "");
+
+		// No spacer (few pages)
+		if (pageCount < MAX_BEFORE_SPACER) {
+			NavBarItem.addItems(items, pattern, 0, pageCount, currentPage);
+		}
+
+		// With spacer
+		else {
+
+			// Current at the beginning : 1 spacer
+			if (currentPage < 4) {
+				NavBarItem.addItems(items, pattern, 0, 4, currentPage);
+				items.add(NavBarItem.spacer());
+				NavBarItem.addItems(items, pattern, pageCount - 2, pageCount, currentPage);
+			}
+
+			// Current at the end : 1 spacer
+			else if (currentPage > pageCount - 4) {
+				NavBarItem.addItems(items, pattern, 0, 2, currentPage);
+				items.add(NavBarItem.spacer());
+				NavBarItem.addItems(items, pattern, pageCount - 4, pageCount, currentPage);
+			}
+
+			// Current elsewhere : 2 spacers around
+			else {
+				NavBarItem.addItems(items, pattern, 0, 2, currentPage);
+				items.add(NavBarItem.spacer());
+				NavBarItem.addItems(items, pattern, currentPage - 1, currentPage + 2, currentPage);
+				items.add(NavBarItem.spacer());
+				NavBarItem.addItems(items, pattern, pageCount - 2, pageCount, currentPage);
+			}
+		}
+
+		model.addAttribute(NAV_BAR, items);
+	}
+
+	/**
+	 * <p>
 	 * Prepare a Pac4j CommonProfile for specified authenticated user during web
 	 * authentication
 	 * </p>
@@ -152,6 +206,97 @@ public class WebUtils {
 		profile.addAttribute(PROFIL_TOKEN, user.getToken());
 
 		return profile;
+	}
+
+	/**
+	 * <p>
+	 * For paginated search nav bar
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.8
+	 * @version 1
+	 */
+	public static class NavBarItem {
+
+		public final String title;
+		public final String uri;
+		public final boolean spacer;
+		public final boolean selected;
+
+		/**
+		 * @param title
+		 * @param uri
+		 * @param spacer
+		 * @param selected
+		 */
+		private NavBarItem(String title, String uri, boolean spacer, boolean selected) {
+			super();
+			this.title = title;
+			this.uri = uri;
+			this.spacer = spacer;
+			this.selected = selected;
+		}
+
+		/**
+		 * @return the title
+		 */
+		public String getTitle() {
+			return this.title;
+		}
+
+		/**
+		 * @return the uri
+		 */
+		public String getUri() {
+			return this.uri;
+		}
+
+		/**
+		 * @return the spacer
+		 */
+		public boolean isSpacer() {
+			return this.spacer;
+		}
+
+		/**
+		 * @return the selected
+		 */
+		public boolean isSelected() {
+			return this.selected;
+		}
+
+		/**
+		 * @return
+		 */
+		static NavBarItem spacer() {
+			return new NavBarItem(null, null, true, false);
+		}
+
+		/**
+		 * @param title
+		 * @param uri
+		 * @param selected
+		 * @return
+		 */
+		static NavBarItem item(String title, String uri, boolean selected) {
+			return new NavBarItem(title, uri, false, selected);
+		}
+
+		/**
+		 * @param items
+		 * @param pattern
+		 * @param start
+		 * @param end
+		 * @param currentPage
+		 */
+		static void addItems(List<NavBarItem> items, String pattern, int start, int end, int currentPage) {
+
+			for (int i = start; i < end; i++) {
+				items.add(NavBarItem.item(String.valueOf(i + 1), String.format(pattern, Integer.valueOf(i)), currentPage == i));
+			}
+
+		}
 	}
 
 	/**
