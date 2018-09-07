@@ -34,12 +34,14 @@ import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.entities.Version;
+import fr.uem.efluid.model.repositories.AttachmentRepository;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.LobPropertyRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
+import fr.uem.efluid.services.types.AttachmentPackage;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.CommitPackage;
@@ -75,6 +77,7 @@ public class CommitService extends AbstractApplicationService {
 	private static final String PCKG_AFTER = "commits-part";
 
 	private static final String PCKG_LOBS = "lobs";
+	private static final String PCKG_ATTACHS = "attachs";
 
 	private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
@@ -112,6 +115,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private VersionRepository versions;
+
+	@Autowired
+	private AttachmentRepository attachments;
 
 	/**
 	 * <p>
@@ -156,7 +162,9 @@ public class CommitService extends AbstractApplicationService {
 		// Then export :
 		ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
 				new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
-				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport)));
+				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport),
+				new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now())
+						.initWithContent(this.attachments.findByCommitIn(commitsToExport))));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
@@ -189,7 +197,8 @@ public class CommitService extends AbstractApplicationService {
 		// Then export :
 		ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
 				new CommitPackage(PCKG_CHERRY_PICK, LocalDateTime.now()).initWithContent(Collections.singletonList(exported)),
-				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(this.lobs.findByCommit(exported))));
+				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(this.lobs.findByCommit(exported)),
+				new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now()).initWithContent(this.attachments.findByCommit(exported))));
 
 		LOGGER.info("Export package for commit {} is ready. Size is {}b", commitUuid, Integer.valueOf(file.getSize()));
 
@@ -405,6 +414,11 @@ public class CommitService extends AbstractApplicationService {
 				.findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
 						"Import of commits doens't contains the expected package types"));
 
+		// Get package files - attachments
+		AttachmentPackage attachsPckg = (AttachmentPackage) commitPackages.stream().filter(p -> p.getClass() == AttachmentPackage.class)
+				.findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
+						"Import of commits doens't contains the expected package types"));
+
 		LOGGER.debug("Import of commits from package {} initiated", commitPckg);
 
 		// #3 Extract local data to merge with
@@ -467,6 +481,9 @@ public class CommitService extends AbstractApplicationService {
 				lobsPckg.getContent().stream()
 						.distinct()
 						.collect(Collectors.toConcurrentMap(l -> l.getHash(), l -> l.getData())));
+
+		// #6 Add attachment - managed in temporary version first
+		// TODO : manage attachments
 
 		// Create the future merge commit info
 		currentPreparation.setCommitData(new CommitEditData());
@@ -576,6 +593,9 @@ public class CommitService extends AbstractApplicationService {
 		}
 	}
 
+	/**
+	 * @param refCommit
+	 */
 	private void assertImportedCommitHasExpectedVersion(Commit refCommit) {
 
 		Optional<Version> vers = this.versions.findById(refCommit.getVersion().getUuid());
@@ -612,7 +632,6 @@ public class CommitService extends AbstractApplicationService {
 
 					diff.getDiff().add(PreparedMergeIndexEntry.fromImportedEntity(indexEntry));
 				}
-
 			}
 		}
 
@@ -634,12 +653,14 @@ public class CommitService extends AbstractApplicationService {
 	 * @param commitPackages
 	 */
 	private static void assertImportPackageIsValid(List<SharedPackage<?>> commitPackages) {
-		if (commitPackages.size() != 2) {
+		if (commitPackages.size() != 3) {
 			throw new ApplicationException(COMMIT_IMPORT_INVALID,
-					"Import of commits can contain only commit package file + lobs package file");
+					"Import of commits can contain only commit package file + lobs package + attachment package file");
 		}
 
-		if (commitPackages.stream().noneMatch(p -> p instanceof CommitPackage || p instanceof LobPropertyPackage)) {
+		if (commitPackages.stream().noneMatch(p -> p instanceof CommitPackage
+				|| p instanceof LobPropertyPackage
+				|| p instanceof AttachmentPackage)) {
 			throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types");
 		}
 	}

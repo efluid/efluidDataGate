@@ -145,18 +145,19 @@ public class Attachment implements Shared {
 	@Override
 	public String serialize() {
 
+		String file = serializeDataAsTmpFile(
+				new String[] { this.commit.getUuid().toString(), encodeB64ForFilename(this.getUuid().toString()) }, this.data)
+						.getFileName().toString();
+
 		String content = newJson()
 				.with("uid", getUuid())
 				.with("com", getCommit().getUuid())
 				.with("typ", getType().name())
 				.with("nam", getName())
+				.with("fil", file)
 				.toString();
 
-		String file = serializeDataAsTmpFile(
-				new String[] { this.commit.getUuid().toString(), encodeB64ForFilename(this.getUuid().toString()) }, this.data)
-						.getFileName().toString();
-
-		return mergeValues(content, file);
+		return mergeValues(file, content);
 	}
 
 	/**
@@ -164,24 +165,26 @@ public class Attachment implements Shared {
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
 	@Override
-	public void deserialize(String raw) {
+	public void deserialize(String mixedContent) {
 
-		String[] rawParts = splitValues(raw);
+		// For Attachment the file is associated to the content in "mixed" form
+		String[] rawParts = splitValues(mixedContent);
 
-		String content = rawParts[0];
-		String file = rawParts[1];
+		String folder = rawParts[0];
+		String content = rawParts[1];
 
 		SharedOutputInputUtils.fromJson(content)
 				.applyUUID("uid", u -> setUuid(u))
 				.applyUUID("com", c -> setCommit(new Commit(c)))
 				.applyString("typ", c -> setType(AttachmentType.valueOf(c)))
-				.applyString("name", n -> setName(n));
+				.applyString("nam", n -> setName(n))
+				.applyString("fil", f -> {
+					// Raw data is temp file path
+					Path path = despecializePath(folder + "/" + f);
 
-		// Raw data is temp file path
-		Path path = despecializePath(file);
-
-		// Get from file content
-		this.data = deserializeDataFromTmpFile(path);
+					// Get from file content
+					setData(deserializeDataFromTmpFile(path));
+				});
 	}
 
 	/**
