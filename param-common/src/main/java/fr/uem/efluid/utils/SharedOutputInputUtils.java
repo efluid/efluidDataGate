@@ -52,9 +52,37 @@ public class SharedOutputInputUtils {
 
 	private static final String BACKSLASH_CHAR_REPLACE = "_B_";
 
+	private static final String MERGER = "£;£";
+
 	static final ObjectMapper MAPPER = preparedObjectMapper();
 
 	static final DateTimeFormatter DATE_TIME_FORMATER = DateTimeFormatter.ofPattern(FormatUtils.DATE_TIME_FORMAT);
+
+	/**
+	 * <p>
+	 * For serialization, we some time have to manage a combination of 2 values instead of
+	 * 1 single string value. This method merge values with a common reversible separator
+	 * </p>
+	 * 
+	 * @param valueOne
+	 * @param valueTwo
+	 * @return
+	 */
+	public static String mergeValues(String valueOne, String valueTwo) {
+		return valueOne + MERGER + valueTwo;
+	}
+
+	/**
+	 * <p>
+	 * Revert {@link #mergeValues(String, String)}
+	 * </p>
+	 * 
+	 * @param value
+	 * @return
+	 */
+	public static String[] splitValues(String merged) {
+		return merged.split(MERGER);
+	}
 
 	/**
 	 * @param properties
