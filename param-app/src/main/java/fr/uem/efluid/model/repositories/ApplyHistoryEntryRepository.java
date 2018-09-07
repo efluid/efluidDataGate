@@ -1,5 +1,7 @@
 package fr.uem.efluid.model.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import fr.uem.efluid.model.entities.ApplyHistoryEntry;
@@ -11,5 +13,15 @@ import fr.uem.efluid.model.entities.ApplyHistoryEntry;
  */
 public interface ApplyHistoryEntryRepository extends JpaRepository<ApplyHistoryEntry, Long> {
 
-	// Use only basic crud
+	/**
+	 * <p>
+	 * Search for query content, paginated
+	 * </p>
+	 * 
+	 * @param query
+	 * @param pageable
+	 * @return
+	 */
+	Page<ApplyHistoryEntry> findByQueryLikeOrderByTimestampAsc(String query, Pageable pageable);
+
 }
