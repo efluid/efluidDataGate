@@ -28,7 +28,7 @@ param-efluid:
         check-delete-missing-ids: true
         output-failed-query-set: true
         output-failed-query-set-file: update-errors.out
- 
+    
     display:
         details-index-max: 10000
         combine-similar-diff-after: 10
@@ -39,7 +39,7 @@ param-efluid:
                    
     details:
         version: @project.version@
-        
+    
     extractor:
         show-sql: false
         
@@ -52,7 +52,7 @@ param-efluid:
 spring:
     profiles:
         active: prod
- 
+    
     thymeleaf:
         cache: false
         check-template: true
@@ -78,7 +78,7 @@ spring:
         show-sql: true
         hibernate:
             ddl-auto: none
-     
+    
 ## WEB SERVER CONFIG
 server:
     contextPath:

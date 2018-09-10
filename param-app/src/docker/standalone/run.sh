@@ -13,7 +13,7 @@ app_cfg="/cfg/application.yml"
 
 ## OPTIONS FOR DEBUG
 activate_debug_param="-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=y"
-java_option="-Xmx$xmx -Xms$xms -jar /app/param-gest.jar --spring.config.location=file:$app_cfg"
+java_option="-Xmx$xmx -Xms$xms -jar /app/param-app.jar --spring.config.location=classpath:/application.yml,file:$app_cfg"
 
 echo "STARTING EFLUID PARAM MANAGER"
 

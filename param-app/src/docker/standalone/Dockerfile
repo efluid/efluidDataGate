@@ -1,28 +1,17 @@
-FROM postgres:10.2
+FROM postgres:10.5
 
 RUN apt-get update
-RUN apt-get -y install dos2unix aptitude
+RUN apt-get -y install dos2unix wget
 
-RUN echo "deb http://archive.ubuntu.com/ubuntu trusty main universe" > /etc/apt/sources.list
-RUN apt-get -y update
+RUN cd /tmp && \
+    wget https://download.java.net/java/GA/jdk10/10/binaries/openjdk-10_linux-x64_bin.tar.gz && \
+    tar xvf openjdk-10*_bin.tar.gz && \
+    mkdir -p /usr/lib/jvm/jdk-10 && \
+    mv jdk-10 /usr/lib/jvm && \
+    rm openjdk-10_linux-x64_bin.tar.gz
 
-RUN DEBIAN_FRONTEND=noninteractive aptitude install -y -f python-software-properties software-properties-common
-
-ENV JAVA_VER 8
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
-
-RUN echo 'deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main' >> /etc/apt/sources.list && \
-    echo 'deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main' >> /etc/apt/sources.list && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C2518248EEA14886 && \
-    apt-get update && \
-    echo oracle-java${JAVA_VER}-installer shared/accepted-oracle-license-v1-1 select true | /usr/bin/debconf-set-selections && \
-    apt-get install -y --force-yes --no-install-recommends oracle-java${JAVA_VER}-installer oracle-java${JAVA_VER}-set-default && \
-    apt-get clean && \
-    rm -rf /var/cache/oracle-jdk${JAVA_VER}-installer
-    
-RUN update-java-alternatives -s java-8-oracle
-RUN echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> ~/.bashrc
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+ENV JAVA_HOME /usr/lib/jvm/jdk-10
+ENV PATH $PATH:$JAVA_HOME/bin
 
 EXPOSE 8080
 
@@ -31,7 +20,7 @@ ENV xmx=256m
 
 RUN mkdir /app
 
-COPY param-gest.jar /app/param-gest.jar
+COPY param-app.jar /app/param-app.jar
 COPY init-database.sql /docker-entrypoint-initdb.d
 COPY run.sh /app/run.sh
 COPY application.yml /cfg/application.yml

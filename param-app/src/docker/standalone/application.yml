@@ -2,42 +2,33 @@
 ## PARAMETER MANAGER CONFIG
 param-efluid:
 
-   managed-datasource:
-       driverClassName: org.postgresql.Driver
-       url: jdbc:postgresql://127.0.0.1/demo?searchpath=public
-       username: docker
-       password: docker
-       query: 
-           tableNamesProtected: true
-           columnNamesProtected: true
-   
-   managed-updates:
-       check-update-missing-ids: true
-       check-delete-missing-ids: true
-           
-   details:
-       version: 1.1.1
-
+    managed-datasource:
+        driver-class-name: org.postgresql.Driver
+        url: jdbc:postgresql://127.0.0.1/demo?searchpath=public
+        username: docker
+        password: docker
+        meta:
+            filter-schema: DEMO
+    
+    details:
+        instance-name: SOURCE-DOCKER
+    
 ## TECH FEATURES CUSTOM
 spring:
-   profiles:
-       active: prod
-
-   thymeleaf:
-       cache: false
-
-   datasource:
-       url: jdbc:postgresql://127.0.0.1/app
-       username: docker
-       password: docker
-       driver-class-name: org.postgresql.Driver
-
-   jpa:
-       show-sql: false
-       hibernate:
-           ddl-auto: create
-
+    profiles:
+        active: prod
+    
+    datasource:
+        url: jdbc:postgresql://127.0.0.1/app
+        driver-class-name: org.postgresql.Driver
+        username: docker
+        password: docker
+    
+    jpa:
+        show-sql: false
+        hibernate:
+            ddl-auto: create
+    
 ## WEB SERVER CONFIG
 server:
-   contextPath:
-   port: 8080
+    port: 8080
