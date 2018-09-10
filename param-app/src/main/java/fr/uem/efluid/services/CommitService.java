@@ -482,15 +482,15 @@ public class CommitService extends AbstractApplicationService {
 						.distinct()
 						.collect(Collectors.toConcurrentMap(l -> l.getHash(), l -> l.getData())));
 
-		// #6 Add attachment - managed in temporary version first
-		// TODO : manage attachments
-
 		// Create the future merge commit info
 		currentPreparation.setCommitData(new CommitEditData());
 		currentPreparation.getCommitData().setMergeSources(toProcess.stream().map(Commit::getUuid).collect(Collectors.toList()));
 		currentPreparation.getCommitData().setRangeStartTime(timeProcessStart);
 		currentPreparation.getCommitData().setComment(generateMergeCommitComment(toProcess));
 
+		// Add attachment - managed in temporary version first
+		currentPreparation.getCommitData().setAttachments(attachsPckg.toAttachmentLines());
+		
 		// Init prepared merge with imported index
 		currentPreparation.applyDiffDisplayContent(importedCommitIndexes(toProcess));
 

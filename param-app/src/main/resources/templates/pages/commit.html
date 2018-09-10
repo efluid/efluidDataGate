@@ -27,6 +27,28 @@
 					<textarea id="commitComment" th:field="${preparation.commitData.comment}" class="form-control" rows="10"></textarea>
 					<small class="form-text text-muted">Champs obligatoire</small>
 				</div>
+				
+                <div  th:if="${preparation.commitData.attachments} != null and ${preparation.commitData.attachments.size()} > 0" class="form-group">
+                	<label for="pj"><b>Pièces jointes intégrées au lot</b></label>
+					<table class="table table-sm">
+					    <thead>
+					        <tr>
+					            <th scope="col">Nom</th>
+					            <th scope="col">Type</th>
+					            <th scope="col">&nbsp;</th>
+					        </tr>
+					    </thead>
+					    <tbody>
+					        <tr th:each="attachment, cstat : ${preparation.commitData.attachments}">
+					            <td th:text="${attachment.name}">test.sql</td>
+					            <td th:text="${attachment.type}">SQL</td>
+		           				<td>
+		            				<a href="./commit.html" th:href="@{/ui/attachment/remove?name={name}(name=${attachment.name})}" class="btn btn-sm btn-secondary float-right">Retirer</a>
+		            			</td>
+					        </tr>
+					    </tbody>
+					</table>
+				</div>
 			</p>
 			<p>
 				<div class="float-right">
@@ -35,6 +57,13 @@
 					<input type="submit" id="commitSubmit" class="btn btn-success btn-sm" title="Le commentaire est obligatoire" value="Confirmer les opérations"/><br/><br/>
 				</div>
 			</p>
+		</form>
+		<form action="#" th:action="@{/ui/attachment/upload}" method="post" enctype="multipart/form-data">
+			<label class="btn btn-sm btn-primary">
+				Spécifier une pièce jointe à ajouter <input name="import" id="importInput" type="file" hidden="true"/>
+			</label>
+			<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
+			<input type="submit" class="btn btn-success-outline btn-sm float-right" id="importSubmit" disabled="disabled" value="Ajouter la pièce jointe"/>
 		</form>
 	</span>
 	 <script layout:fragment="script" th:inline="javascript">
@@ -54,11 +83,22 @@
 				$("#commitSubmit").removeClass("btn-success").addClass("btn-outline-success");
     		}
     	};
+
+		// Display of file 
+		const displayFile = () => {
+			hideDisplays();
+			var file = $("#importInput").val();
+			console.log(file);
+			$("#displayFile").text(file);
+			$("#importSubmit").prop('disabled', false);
+			$("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
+		};
         
     	// Init actions
     	$(document).ready(() => {
 			$("#commitComment").on('input',checkCommitComment);
 			checkCommitComment();
+			$("#importInput").change(displayFile);
 		}); 
 		
         /*]]>*/

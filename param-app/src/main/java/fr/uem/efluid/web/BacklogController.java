@@ -339,6 +339,54 @@ public class BacklogController extends CommonController {
 
 	/**
 	 * @param model
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping(value = "/attachment/remove", method = GET)
+	public String removeAttachment(Model model, @RequestParam("name") String name) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
+		// Update current preparation with selected attributes
+		this.pilotableCommitService.removeAttachmentOnCurrentCommitPreparation(name);
+
+		// Get updated preparation
+		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
+
+		// Get current version
+		model.addAttribute("version", this.dictService.getLastVersion());
+
+		return "pages/commit";
+	}
+
+	/**
+	 * @param model
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/attachment/upload", method = POST)
+	public String uploadAttachment(Model model, MultipartHttpServletRequest request) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
+		// Update current preparation with selected attributes
+		this.pilotableCommitService.addAttachmentOnCurrentCommitPreparation(WebUtils.inputExportImportFile(request));
+
+		// Get updated preparation
+		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
+
+		// Get current version
+		model.addAttribute("version", this.dictService.getLastVersion());
+
+		return "pages/commit";
+	}
+
+	/**
+	 * @param model
 	 * @param request
 	 * @return
 	 */

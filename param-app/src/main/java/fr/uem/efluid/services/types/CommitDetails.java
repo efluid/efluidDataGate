@@ -42,6 +42,8 @@ public class CommitDetails {
 
 	private String versionModelId;
 
+	private List<AttachmentLine> attachments;
+
 	private CommitDetails() {
 		super();
 	}
@@ -245,6 +247,21 @@ public class CommitDetails {
 	 */
 	public void setVersionModelId(String versionModelId) {
 		this.versionModelId = versionModelId;
+	}
+
+	/**
+	 * @return the attachments
+	 */
+	public List<AttachmentLine> getAttachments() {
+		return this.attachments;
+	}
+
+	/**
+	 * @param attachments
+	 *            the attachments to set
+	 */
+	public void setAttachments(List<AttachmentLine> attachments) {
+		this.attachments = attachments;
 	}
 
 	/**

@@ -1,9 +1,12 @@
 package fr.uem.efluid.services.types;
 
+import static fr.uem.efluid.utils.SharedOutputInputUtils.encodeB64ForFilename;
+
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import fr.uem.efluid.model.entities.Attachment;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
@@ -85,5 +88,18 @@ public class AttachmentPackage extends SharedPackage<Attachment> {
 	@Override
 	public List<Path> getComplementaryFiles() {
 		return this.attFiles;
+	}
+
+	/**
+	 * @return
+	 */
+	public List<AttachmentLine> toAttachmentLines() {
+		return getContent().stream().map(c -> {
+			AttachmentLine line = new AttachmentLine();
+			line.setName(c.getName());
+			line.setType(c.getType());
+			line.setTmpPath(getUncompressPath() + "/" + encodeB64ForFilename(c.getUuid().toString()));
+			return line;
+		}).collect(Collectors.toList());
 	}
 }

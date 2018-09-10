@@ -1,19 +1,26 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.utils.ErrorType.ATTACHMENT_ERROR;
 import static fr.uem.efluid.utils.ErrorType.COMMIT_MISS_COMMENT;
 import static fr.uem.efluid.utils.ErrorType.IMPORT_RUNNING;
 import static fr.uem.efluid.utils.ErrorType.PREPARATION_BIZ_FAILURE;
 import static fr.uem.efluid.utils.ErrorType.PREPARATION_CANNOT_START;
 import static fr.uem.efluid.utils.ErrorType.PREPARATION_INTERRUPTED;
+import static fr.uem.efluid.utils.ErrorType.PREPARATION_NOT_READY;
 import static fr.uem.efluid.utils.ErrorType.TABLE_NAME_INVALID;
 import static fr.uem.efluid.utils.ErrorType.TABLE_WRONG_REF;
 import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_EXIST;
 import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_UP_TO_DATE;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -40,6 +47,7 @@ import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
+import fr.uem.efluid.services.types.AttachmentLine;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.DomainDiffDisplay;
@@ -53,6 +61,7 @@ import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.WizzardCommitPreparationResult;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.FormatUtils;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * <p>
@@ -77,6 +86,10 @@ import fr.uem.efluid.utils.FormatUtils;
 public class PilotableCommitPreparationService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PilotableCommitPreparationService.class);
+
+	protected static final String ATTACH_EXT = ".att";
+
+	protected static final String ATTACH_FILE_ID = "attachment";
 
 	@Autowired
 	private PrepareIndexService diffService;
@@ -189,13 +202,81 @@ public class PilotableCommitPreparationService {
 
 		// Init domain data
 		preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
-		
+
 		// Specify as active one
 		this.currents.put(projectUuid, preparation);
 
 		CompletableFuture.runAsync(() -> processAllDiff(preparation));
 
 		return preparation;
+	}
+
+	/**
+	 * <p>
+	 * For commit preparation, we can add attachment files on last step of commit
+	 * preparation. This service add ONE attachment file to current commit preparation to
+	 * store once commit is completed
+	 * </p>
+	 * <p>
+	 * Uses a tmp file and refers it. Data is loaded only at commit completion
+	 * </p>
+	 * 
+	 * @param file
+	 */
+	public void addAttachmentOnCurrentCommitPreparation(ExportFile file) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		// Must be on existing preparation
+		if (current == null || current.getStatus() != PilotedCommitStatus.COMMIT_CAN_PREPARE) {
+
+			// Can process attachment only after diff prepare
+			LOGGER.error("Cannot proceed to add attachment if diff is not complete.");
+			throw new ApplicationException(PREPARATION_NOT_READY,
+					"Cannot proceed to add attachment if diff is not complete.");
+		}
+
+		try {
+			// Store attachment into a tmp file
+			Path path = SharedOutputInputUtils.initTmpFile(ATTACH_FILE_ID, ATTACH_EXT, true);
+			Files.write(path, file.getData());
+
+			// Init on demand attachment list only
+			if (current.getCommitData().getAttachments() == null) {
+				current.getCommitData().setAttachments(new ArrayList<>());
+			}
+
+			// Add attachment tmp info, using tmp file
+			current.getCommitData().getAttachments().add(AttachmentLine.fromUpload(file, path));
+
+		} catch (IOException e) {
+			throw new ApplicationException(ATTACHMENT_ERROR, "Cannot process attachment file " + file.getFilename(), e);
+		}
+	}
+
+	/**
+	 * @param name
+	 */
+	public void removeAttachmentOnCurrentCommitPreparation(String name) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		// Must be on existing preparation
+		if (current == null || current.getStatus() != PilotedCommitStatus.COMMIT_CAN_PREPARE) {
+
+			// Can process attachment only after diff prepare
+			LOGGER.error("Cannot proceed to add attachment if diff is not complete.");
+			throw new ApplicationException(PREPARATION_NOT_READY,
+					"Cannot proceed to add attachment if diff is not complete.");
+		}
+
+		Iterator<AttachmentLine> it = current.getCommitData().getAttachments().iterator();
+		while (it.hasNext()) {
+			AttachmentLine line = it.next();
+			if (line.getName().equals(name)) {
+				it.remove();
+			}
+		}
 	}
 
 	/**

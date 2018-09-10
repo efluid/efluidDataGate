@@ -70,6 +70,27 @@ public class ExportFile {
 	}
 
 	/**
+	 * <p>
+	 * Try to search for shortname = real file name (not full path)
+	 * </p>
+	 * 
+	 * @return
+	 */
+	public String getShortName() {
+
+		int idx = this.filename.lastIndexOf('/');
+		if (idx <= 0) {
+			idx = this.filename.lastIndexOf('\\');
+		}
+
+		if (idx >= 0) {
+			return this.filename.substring(idx);
+		}
+
+		return this.filename;
+	}
+
+	/**
 	 * @return
 	 */
 	public int getSize() {
