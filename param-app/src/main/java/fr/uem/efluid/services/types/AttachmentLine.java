@@ -4,6 +4,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+import fr.uem.efluid.model.entities.Attachment;
 import fr.uem.efluid.model.entities.AttachmentType;
 import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
@@ -92,6 +93,22 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 	 * @param tmpPath
 	 * @return
 	 */
+	public static AttachmentLine fromEntity(Attachment att) {
+
+		AttachmentLine line = new AttachmentLine();
+
+		line.setName(att.getName());
+		line.setUuid(att.getUuid());
+		line.setType(att.getType());
+
+		return line;
+	}
+
+	/**
+	 * @param file
+	 * @param tmpPath
+	 * @return
+	 */
 	public static AttachmentLine fromUpload(ExportFile file, Path tmpPath) {
 
 		AttachmentLine line = new AttachmentLine();
@@ -105,11 +122,27 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 	}
 
 	/**
+	 * @param line
+	 * @return
+	 */
+	public static Attachment toEntity(AttachmentLine line) {
+
+		Attachment att = new Attachment();
+
+		att.setData(line.getData());
+		att.setName(line.getName());
+		att.setType(line.getType());
+		att.setUuid(line.getUuid());
+
+		return att;
+	}
+
+	/**
 	 * @return
 	 * @see fr.uem.efluid.tools.AttachmentProcessor.Compliant#getData()
 	 */
 	@Override
 	public byte[] getData() {
-		return SharedOutputInputUtils.deserializeDataFromTmpFile(Paths.get(getTmpPath()));
+		return getTmpPath() != null ? SharedOutputInputUtils.deserializeDataFromTmpFile(Paths.get(getTmpPath())) : null;
 	}
 }

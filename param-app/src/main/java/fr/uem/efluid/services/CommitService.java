@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.entities.Attachment;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
@@ -41,6 +42,7 @@ import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.LobPropertyRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
+import fr.uem.efluid.services.types.AttachmentLine;
 import fr.uem.efluid.services.types.AttachmentPackage;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.services.types.CommitEditData;
@@ -55,6 +57,7 @@ import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.services.types.RollbackLine;
 import fr.uem.efluid.services.types.SharedPackage;
+import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.FormatUtils;
@@ -118,6 +121,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private AttachmentRepository attachments;
+
+	@Autowired
+	private AttachmentProcessor.Provider attachProcs;
 
 	/**
 	 * <p>
@@ -277,6 +283,15 @@ public class CommitService extends AbstractApplicationService {
 			details.setSize(size);
 		}
 
+		List<Attachment> commitAtt = this.attachments.findByCommit(new Commit(commitUUID));
+
+		// Attachment data if any
+		if (commitAtt != null && commitAtt.size() > 0) {
+
+			// Prepare and set for display (not content for now)
+			details.setAttachments(commitAtt.stream().map(AttachmentLine::fromEntity).collect(Collectors.toList()));
+		}
+
 		return details;
 	}
 
@@ -293,6 +308,17 @@ public class CommitService extends AbstractApplicationService {
 		LobProperty lob = this.lobs.findByHash(decHash);
 
 		return lob.getData();
+	}
+
+	/**
+	 * @param encodedLobHash
+	 * @return
+	 */
+	public byte[] getExistingAttachmentData(UUID uuid) {
+
+		LOGGER.debug("Request for binary content from attachment \"{}\"", uuid);
+
+		return this.attachProcs.display(this.attachments.getOne(uuid));
 	}
 
 	/**
@@ -369,6 +395,9 @@ public class CommitService extends AbstractApplicationService {
 
 		// Updated commit link
 		this.commits.save(commit);
+
+		// Update commit attachments
+		this.attachments.saveAll(prepareAttachments(prepared.getCommitData().getAttachments(), commit));
 
 		// For merge : apply (will rollback previous steps if error found)
 		if (prepared.getPreparingState() == CommitState.MERGED) {
@@ -490,7 +519,7 @@ public class CommitService extends AbstractApplicationService {
 
 		// Add attachment - managed in temporary version first
 		currentPreparation.getCommitData().setAttachments(attachsPckg.toAttachmentLines());
-		
+
 		// Init prepared merge with imported index
 		currentPreparation.applyDiffDisplayContent(importedCommitIndexes(toProcess));
 
@@ -636,6 +665,20 @@ public class CommitService extends AbstractApplicationService {
 		}
 
 		return groupedByDicEntry.values();
+	}
+
+	/**
+	 * @param source
+	 * @param commit
+	 * @return
+	 */
+	private static Collection<Attachment> prepareAttachments(Collection<AttachmentLine> source, Commit commit) {
+		return source.stream().map(AttachmentLine::toEntity).peek(a -> {
+			a.setCommit(commit);
+			if(a.getUuid() == null) {
+				a.setUuid(UUID.randomUUID());
+			}
+		}).collect(Collectors.toList());
 	}
 
 	/**

@@ -391,7 +391,14 @@ public class BacklogController extends CommonController {
 	 */
 	@RequestMapping(path = "/attachment/content", method = GET)
 	@ResponseBody
-	public ResponseEntity<InputStreamResource> downloadAttachmentContent(@RequestParam("name") String name) {
+	public ResponseEntity<InputStreamResource> downloadAttachmentContent(
+			@RequestParam(name = "name", required = false) String name,
+			@RequestParam(name = "uuid", required = false) UUID uuid) {
+
+		// Provides existing content
+		if (name == null && uuid != null) {
+			return WebUtils.outputData(this.commitService.getExistingAttachmentData(uuid));
+		}
 
 		// Search by name from current temp files
 		return WebUtils.outputData(this.pilotableCommitService.getAttachmentContentFromCurrentCommitPreparation(name));

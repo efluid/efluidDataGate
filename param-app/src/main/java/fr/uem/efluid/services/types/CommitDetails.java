@@ -282,7 +282,7 @@ public class CommitDetails {
 		details.setMergeSources(commit.getMergeSources());
 		details.setVersionName(commit.getVersion().getName());
 		details.setVersionModelId(commit.getVersion().getModelIdentity());
-
+		
 		return details;
 	}
 

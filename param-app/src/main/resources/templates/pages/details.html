@@ -24,6 +24,31 @@
 				</ul>
 			</p>
 			
+			<div  th:if="${details.attachments} != null and ${details.attachments.size()} > 0" class="form-group">
+					<table class="table table-sm">
+					    <thead>
+					        <tr>
+					            <th scope="col">Pièces jointes intégrées au lot</th>
+					            <th scope="col">&nbsp;</th>
+					        </tr>
+					    </thead>
+					    <tbody>
+					        <tr th:each="attachment, cstat : ${details.attachments}">
+					            <td>
+					            	<img src="/ico.png" th:src="|/ico-${attachment.type}.png|" width="18" height="24" th:title="${attachment.type}"/>
+					            	&nbsp;
+					            	<span th:text="${attachment.name}">test.sql</span>
+					            </td>
+					            <td>
+									<div class="float-right">
+		           						<button th:if="${attachment.type.editable && preparation.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#contentModal" th:id="${attachment.uuid}">Consulter</button>
+									</div>
+		            			</td>
+					        </tr>
+					    </tbody>
+					</table>
+				</div>
+			
 		</div>
 		<div th:if="${not details.emptyDiff}" th:each="diffDisplay, tstat : ${details.content}" th:id="${tstat.index}">
 			<div th:if="${!diffDisplay.diff.isEmpty()}" class="dictionary-content" >
@@ -94,6 +119,17 @@
 			});
 		};
 		
+        // For attachment read in modal
+        const readAttach = (e) => {
+        	hideDisplays();
+			var uuid = e.relatedTarget.id;
+			console.log("id = " + uuid);
+			$.get("/ui/attachment/content?uuid=" + uuid, null, (data, status) => {
+				$("#modalContent").html(data);
+				$("#contentModalLabel").html("Fichier <b>" + name + "</b>");
+			}); 
+        };
+        
     	// Init actions
     	$(document).ready(() => {
 			// Default : hide all
@@ -102,6 +138,7 @@
 			$("span.reducer").click((e) => hideAndShowTableAction(e.target.parentElement.parentElement.parentElement.id));
 			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
 			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
+			$('#contentModal').on('show.bs.modal', readAttach); 
 		}); 
 		
     </script>
