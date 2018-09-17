@@ -70,6 +70,10 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 
 	private List<DomainDiffDisplay<T>> domains;
 
+	// For attachments
+	private boolean attachmentDisplaySupport;
+	private boolean attachmentExecuteSupport;
+
 	/**
 	 * For pushed form only
 	 */
@@ -88,6 +92,36 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 		this.status = PilotedCommitStatus.DIFF_RUNNING;
 		this.start = LocalDateTime.now();
 		this.preparingState = preparingState;
+	}
+
+	/**
+	 * @return the attachmentDisplaySupport
+	 */
+	public boolean isAttachmentDisplaySupport() {
+		return this.attachmentDisplaySupport;
+	}
+
+	/**
+	 * @param attachmentDisplaySupport
+	 *            the attachmentDisplaySupport to set
+	 */
+	public void setAttachmentDisplaySupport(boolean attachmentDisplaySupport) {
+		this.attachmentDisplaySupport = attachmentDisplaySupport;
+	}
+
+	/**
+	 * @return the attachmentExecuteSupport
+	 */
+	public boolean isAttachmentExecuteSupport() {
+		return this.attachmentExecuteSupport;
+	}
+
+	/**
+	 * @param attachmentExecuteSupport
+	 *            the attachmentExecuteSupport to set
+	 */
+	public void setAttachmentExecuteSupport(boolean attachmentExecuteSupport) {
+		this.attachmentExecuteSupport = attachmentExecuteSupport;
 	}
 
 	/**

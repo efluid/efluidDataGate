@@ -44,8 +44,8 @@ param-efluid:
         show-sql: false
         
     attachments:
-        enable-sql-execute: false
-        enable-display: false
+        enable-sql-execute: true
+        enable-display: true
     
     model-identifier:
         enabled: true

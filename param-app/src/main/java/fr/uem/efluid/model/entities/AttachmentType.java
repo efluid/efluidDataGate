@@ -65,6 +65,8 @@ public enum AttachmentType {
 			return MD_FILE;
 		case "par":
 			return PAR_FILE;
+		case "txt":
+			return TEXT_FILE;
 		case "zip":
 			return ZIP_FILE;
 		default:

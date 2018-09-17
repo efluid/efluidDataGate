@@ -144,6 +144,10 @@ public class PilotableCommitPreparationService {
 					// Start preparation for project
 					PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
 					preparation.setProjectUuid(p.getUuid());
+
+					// Init feature support for attachments
+					setAttachmentFeatureSupports(preparation);
+					
 					this.currents.put(p.getUuid(), preparation);
 					CompletableFuture.runAsync(() -> processAllDiff(preparation));
 
@@ -206,6 +210,9 @@ public class PilotableCommitPreparationService {
 
 		// Init domain data
 		preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
+		
+		// Init feature support for attachments
+		setAttachmentFeatureSupports(preparation);
 
 		// Specify as active one
 		this.currents.put(projectUuid, preparation);
@@ -335,6 +342,9 @@ public class PilotableCommitPreparationService {
 		// Init domain data
 		preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
 
+		// Init feature support for attachments
+		setAttachmentFeatureSupports(preparation);
+		
 		// First step is NOT async : load the package and identify the appliable index
 		ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> importResult = this.commitService.importCommits(file,
 				preparation);
@@ -831,6 +841,19 @@ public class PilotableCommitPreparationService {
 			LOGGER.error("Error will processing diff", e);
 			preparation.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
 		}
+	}
+
+	/**
+	 * <p>
+	 * Add details on features related to attachment management : enable / disable access
+	 * to feature regarding the spec of current AttachmentProcessor.Provider
+	 * </p>
+	 * 
+	 * @param prep
+	 */
+	private void setAttachmentFeatureSupports(PilotedCommitPreparation<?> prep) {
+		prep.setAttachmentDisplaySupport(this.attachProcs.isDisplaySupport());
+		prep.setAttachmentExecuteSupport(this.attachProcs.isExecuteSupport());
 	}
 
 	/**

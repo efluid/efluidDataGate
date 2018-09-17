@@ -44,8 +44,11 @@
 					            	<span th:text="${attachment.name}">test.sql</span>
 					            </td>
 					            <td>
-		           					<button th:if="${attachment.type.editable}" type="button" class="btn btn-primary" data-toggle="modal" data-target="#contentModal" th:id="${attachment.name}">Consulter</button>
-		           					<a href="./commit.html" th:href="@{/ui/attachment/remove?name={name}(name=${attachment.name})}" class="btn btn-sm btn-secondary float-right">Retirer</a>
+									<div class="float-right">
+		           						<button th:if="${attachment.type.editable && preparation.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#contentModal" th:id="${attachment.name}">Consulter</button>
+		           						&nbsp;
+		           						<a href="./commit.html" th:href="@{/ui/attachment/remove?name={name}(name=${attachment.name})}" class="btn btn-sm btn-secondary float-right">Retirer</a>
+		           					</div>
 		            			</td>
 					        </tr>
 					    </tbody>

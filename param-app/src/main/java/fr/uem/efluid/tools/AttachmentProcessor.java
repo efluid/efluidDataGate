@@ -67,15 +67,18 @@ public abstract class AttachmentProcessor {
 		};
 
 		private final boolean displaySupport;
+		private final boolean executeSupport;
 
 		private final Map<AttachmentType, AttachmentProcessor> byType = new HashMap<>();
 
 		/**
 		 * @param displaySupport
+		 * @param executeSupport
 		 */
-		public Provider(boolean displaySupport) {
+		public Provider(boolean displaySupport, boolean executeSupport) {
 			super();
 			this.displaySupport = displaySupport;
+			this.executeSupport = executeSupport;
 		}
 
 		/**
@@ -108,6 +111,13 @@ public abstract class AttachmentProcessor {
 		 */
 		public boolean isDisplaySupport() {
 			return this.displaySupport;
+		}
+
+		/**
+		 * @return the executeSupport
+		 */
+		public boolean isExecuteSupport() {
+			return this.executeSupport;
 		}
 
 		/**

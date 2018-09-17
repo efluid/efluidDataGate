@@ -40,7 +40,9 @@ public class AttachmentConfig {
 	@Bean
 	public AttachmentProcessor.Provider attchProcProvider() {
 
-		AttachmentProcessor.Provider provider = new AttachmentProcessor.Provider(this.properties.isEnableDisplay());
+		AttachmentProcessor.Provider provider = new AttachmentProcessor.Provider(
+				this.properties.isEnableDisplay(),
+				this.properties.isEnableSqlExecute());
 
 		// Init display processors only if needed
 		if (provider.isDisplaySupport()) {
