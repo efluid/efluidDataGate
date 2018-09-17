@@ -75,10 +75,10 @@ public class AttachmentPackage extends SharedPackage<Attachment> {
 		String[] mixedContent = SharedOutputInputUtils.splitValues(super.serializeOne(content));
 
 		// Move generated file to TMP folder for inclusion in zip
-		this.attFiles.add(SharedOutputInputUtils.repatriateTmpFile(mixedContent[1], getUncompressPath()));
+		this.attFiles.add(SharedOutputInputUtils.repatriateTmpFile(mixedContent[0], getUncompressPath()));
 
 		// In pak file will use only json part
-		return mixedContent[0];
+		return mixedContent[1];
 	}
 
 	/**

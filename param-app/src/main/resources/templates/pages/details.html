@@ -12,6 +12,8 @@
 					<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
 				</div>
 			</h5>
+			
+			<!-- Commit summary -->
 			<p>
 				<ul>
 					<li><b>Détails</b> : <span th:text="${details.comment}">mon lot</span></li>
@@ -23,33 +25,35 @@
 					<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${details.importedTime}">vendredi</span></li>
 				</ul>
 			</p>
-			
-			<div  th:if="${details.attachments} != null and ${details.attachments.size()} > 0" class="form-group">
-					<table class="table table-sm">
-					    <thead>
-					        <tr>
-					            <th scope="col">Pièces jointes intégrées au lot</th>
-					            <th scope="col">&nbsp;</th>
-					        </tr>
-					    </thead>
-					    <tbody>
-					        <tr th:each="attachment, cstat : ${details.attachments}">
-					            <td>
-					            	<img src="/ico.png" th:src="|/ico-${attachment.type}.png|" width="18" height="24" th:title="${attachment.type}"/>
-					            	&nbsp;
-					            	<span th:text="${attachment.name}">test.sql</span>
-					            </td>
-					            <td>
-									<div class="float-right">
-		           						<button th:if="${attachment.type.editable && preparation.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#contentModal" th:id="${attachment.uuid}">Consulter</button>
-									</div>
-		            			</td>
-					        </tr>
-					    </tbody>
-					</table>
-				</div>
-			
 		</div>
+		
+		<!-- Commit attachment files -->
+		<div th:if="${details.attachments} != null and ${details.attachments.size()} > 0" class="form-group">
+			<table class="table table-sm">
+			    <thead>
+			        <tr>
+			            <th scope="col">Pièces jointes intégrées au lot</th>
+			            <th scope="col">&nbsp;</th>
+			        </tr>
+			    </thead>
+			    <tbody>
+			        <tr th:each="attachment, cstat : ${details.attachments}">
+			            <td>
+			            	<img src="/ico.png" th:src="|/ico-${attachment.type}.png|" width="18" height="24" th:title="${attachment.type}"/>
+			            	&nbsp;
+			            	<span th:text="${attachment.name}">test.sql</span>
+			            </td>
+			            <td>
+							<div class="float-right">
+		   						<button th:if="${attachment.type.editable && details.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#contentModal" th:id="${attachment.uuid}">Consulter</button>
+							</div>
+		      			</td>
+			        </tr>
+			    </tbody>
+			</table>
+		</div>
+		
+		<!-- Diff content details -->
 		<div th:if="${not details.emptyDiff}" th:each="diffDisplay, tstat : ${details.content}" th:id="${tstat.index}">
 			<div th:if="${!diffDisplay.diff.isEmpty()}" class="dictionary-content" >
 				<div class="dictionary-summary">
@@ -77,15 +81,41 @@
 				</table>
 			</div>
 		</div>
+		
+		<!-- Empty content -->
 		<div th:if="${details.emptyDiff && !details.tooMuchData}">
 			<p>Ce lot de modification ne comportait pas de modifications de paramètrage</p>
 		</div>
+		
+		<!-- Too much content -->
 		<div th:if="${details.tooMuchData}">
 			<p>Ce lot de modification comporte un nombre de modifications de paramètrage trop volumineux (<span th:text="${details.size}">19998</span> lignes) pour être affiché</p>
 		</div>
+
+		<!-- Bottom button -->
 		<p>
 			<div class="float-right"><a href="/commits.html" th:href="@{/ui/commits}" class="btn btn-dark btn-sm">Revenir à la liste</a><br/><br/></div>
 		</p>
+		
+		<!-- File content display modal -->
+		<div class="modal fade" id="contentModal" tabindex="-1" role="dialog" aria-labelledby="contentModalLabel" aria-hidden="true">
+		  <div class="modal-dialog modal-lg">
+		    <div class="modal-content">
+				<div class="modal-header">
+			        <h5 class="modal-title" id="contentModalLabel">New message</h5>
+			        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			          <span aria-hidden="true">&times;</span>
+			        </button>
+			      </div>
+			      <div class="modal-body" id="modalContent">
+			      </div>
+			      <div class="modal-footer">
+			        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+			      </div>
+		    </div>
+		  </div>
+		</div>
+	
 	</span>
     <script layout:fragment="script">
 		

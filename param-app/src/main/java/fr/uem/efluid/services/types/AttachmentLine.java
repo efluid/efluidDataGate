@@ -24,7 +24,8 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 	private String tmpPath;
 	private String name;
 	private AttachmentType type;
-
+	private boolean executed;
+	
 	/**
 	 * @param uuid
 	 *            the uuid to set
@@ -89,6 +90,20 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 	}
 
 	/**
+	 * @return the executed
+	 */
+	public boolean isExecuted() {
+		return this.executed;
+	}
+
+	/**
+	 * @param executed the executed to set
+	 */
+	public void setExecuted(boolean executed) {
+		this.executed = executed;
+	}
+
+	/**
 	 * @param file
 	 * @param tmpPath
 	 * @return
@@ -100,6 +115,7 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 		line.setName(att.getName());
 		line.setUuid(att.getUuid());
 		line.setType(att.getType());
+		line.setExecuted(att.getExecuteTime() != null);
 
 		return line;
 	}

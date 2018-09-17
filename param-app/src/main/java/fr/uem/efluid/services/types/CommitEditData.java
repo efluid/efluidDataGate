@@ -26,7 +26,7 @@ public class CommitEditData {
 	private String comment;
 
 	private CommitState state;
-
+	
 	private LocalDateTime createdTime;
 
 	private LocalDateTime importedTime;
@@ -35,14 +35,14 @@ public class CommitEditData {
 
 	private String domainNames;
 
-	private String versionName;
-
 	private LocalDateTime rangeStartTime;
+
+	private String versionName;
 
 	private String versionModelId;
 
 	private List<AttachmentLine> attachments;
-
+	
 	/**
 	 * 
 	 */

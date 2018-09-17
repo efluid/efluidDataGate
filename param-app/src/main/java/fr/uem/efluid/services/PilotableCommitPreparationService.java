@@ -147,7 +147,7 @@ public class PilotableCommitPreparationService {
 
 					// Init feature support for attachments
 					setAttachmentFeatureSupports(preparation);
-					
+
 					this.currents.put(p.getUuid(), preparation);
 					CompletableFuture.runAsync(() -> processAllDiff(preparation));
 
@@ -210,7 +210,7 @@ public class PilotableCommitPreparationService {
 
 		// Init domain data
 		preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
-		
+
 		// Init feature support for attachments
 		setAttachmentFeatureSupports(preparation);
 
@@ -344,7 +344,7 @@ public class PilotableCommitPreparationService {
 
 		// Init feature support for attachments
 		setAttachmentFeatureSupports(preparation);
-		
+
 		// First step is NOT async : load the package and identify the appliable index
 		ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> importResult = this.commitService.importCommits(file,
 				preparation);
@@ -560,7 +560,7 @@ public class PilotableCommitPreparationService {
 	public void copyCommitPreparationCommitData(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends PreparedIndexEntry>> changedPreparation) {
 
-		setCommitPreparationCommitDataComment(changedPreparation.getCommitData().getComment());
+		setCommitPreparationCommitData(changedPreparation.getCommitData());
 	}
 
 	/**
@@ -690,7 +690,7 @@ public class PilotableCommitPreparationService {
 	 * 
 	 * @param comment
 	 */
-	private void setCommitPreparationCommitDataComment(String comment) {
+	private void setCommitPreparationCommitData(CommitEditData data) {
 
 		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
 
@@ -700,7 +700,16 @@ public class PilotableCommitPreparationService {
 		}
 
 		// Other editable is the commit comment
-		current.getCommitData().setComment(comment);
+		current.getCommitData().setComment(data.getComment());
+		
+		// Works only on edit
+		if(current.getCommitData().getAttachments() != null && current.getCommitData().getAttachments().size() == data.getAttachments().size()) {
+			
+			// Copy only "executed" status which says if the script needs run
+			for(int i = 0; i < data.getAttachments().size() ; i++) {
+				current.getCommitData().getAttachments().get(i).setExecuted(data.getAttachments().get(i).isExecuted());
+			}
+		}
 	}
 
 	/**
@@ -852,8 +861,16 @@ public class PilotableCommitPreparationService {
 	 * @param prep
 	 */
 	private void setAttachmentFeatureSupports(PilotedCommitPreparation<?> prep) {
+
+		// Support display if enabled in support items
 		prep.setAttachmentDisplaySupport(this.attachProcs.isDisplaySupport());
-		prep.setAttachmentExecuteSupport(this.attachProcs.isExecuteSupport());
+
+		// Can execute only on merge
+		if (prep.getPreparingState() == CommitState.MERGED) {
+
+			// And if configured for support
+			prep.setAttachmentExecuteSupport(this.attachProcs.isExecuteSupport());
+		}
 	}
 
 	/**

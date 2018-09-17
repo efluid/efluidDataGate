@@ -47,6 +47,8 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
 
 	private LocalDateTime importedTime;
 
+	private LocalDateTime executeTime;
+
 	/**
 	 * @return the uuid
 	 */
@@ -124,6 +126,21 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
 	 */
 	public void setData(byte[] data) {
 		this.data = data;
+	}
+
+	/**
+	 * @return the executeTime
+	 */
+	public LocalDateTime getExecuteTime() {
+		return this.executeTime;
+	}
+
+	/**
+	 * @param executeTime
+	 *            the executeTime to set
+	 */
+	public void setExecuteTime(LocalDateTime executeTime) {
+		this.executeTime = executeTime;
 	}
 
 	/**

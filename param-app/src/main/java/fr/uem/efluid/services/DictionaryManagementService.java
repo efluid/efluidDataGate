@@ -405,7 +405,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 					.collect(Collectors.toList()));
 		} else {
 			// Add metadata to use for edit
-			edit.setColumns(desc.getColumns().stream()					
+			edit.setColumns(desc.getColumns().stream()
 					.sorted()
 					.map(c -> ColumnEditData.fromColumnDescription(c, selecteds, keyNames, mappedLinks.get(c.getName())))
 					.collect(Collectors.toList()));
@@ -1269,10 +1269,29 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 					IdentifierType type = this.modelDescs.getModelIdentifierType(version.getModelIdentity());
 
-					if ((last && type != IdentifierType.CURRENT) || (!last && type != IdentifierType.OLD_ONE)) {
-						throw new ApplicationException(VERSION_NOT_MODEL_ID, "Model id " + version.getModelIdentity()
-								+ " is not of the required type in version \"" + version.getName() + "\"", version.getModelIdentity());
+					// Last must not be on current model
+					if (last) {
+						if (type != IdentifierType.CURRENT) {
+							throw new ApplicationException(VERSION_NOT_MODEL_ID, "Model id " + version.getModelIdentity()
+									+ " is not of the required type in version \"" + version.getName() + "\"", version.getModelIdentity());
+						}
 					}
+
+//					// If not yet last
+//					else {
+//
+//						String nextModelIdentity = importedVersions.get(i + 1).getModelIdentity();
+//
+//						// If it's not a reuse of current model identity on new version, a
+//						// version is then missing
+//						if (type != IdentifierType.OLD_ONE && version.getModelIdentity() != null
+//								&& !version.getModelIdentity().equals(nextModelIdentity)) {
+//							throw new ApplicationException(VERSION_NOT_MODEL_ID, "Model id " + version.getModelIdentity()
+//									+ " is not of the required intermediate type in version \"" + version.getName() + "\"",
+//									version.getModelIdentity());
+//						}
+//					}
+
 				}
 			}
 		}

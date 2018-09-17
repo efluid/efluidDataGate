@@ -419,6 +419,13 @@ select.select-column {
     padding-top: 10px;
 }
 
+.file-runnable-com {
+    font-style: italic;
+    font-size: 14px;
+    font-weight: bold;
+    color:Purple;
+}
+
 .file-ico {    
 	display: block;
     width: 18px;

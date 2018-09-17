@@ -292,6 +292,9 @@ public class CommitService extends AbstractApplicationService {
 			details.setAttachments(commitAtt.stream().map(AttachmentLine::fromEntity).collect(Collectors.toList()));
 		}
 
+		// Add support for display if any
+		details.setAttachmentDisplaySupport(this.attachProcs.isDisplaySupport());
+
 		return details;
 	}
 
@@ -396,15 +399,40 @@ public class CommitService extends AbstractApplicationService {
 		// Updated commit link
 		this.commits.save(commit);
 
-		// Update commit attachments
-		this.attachments.saveAll(prepareAttachments(prepared.getCommitData().getAttachments(), commit));
-
 		// For merge : apply (will rollback previous steps if error found)
 		if (prepared.getPreparingState() == CommitState.MERGED) {
 			LOGGER.info("Processing merge commit {} : now apply all {} modifications prepared from imported values",
 					commit.getUuid(), Integer.valueOf(entries.size()));
 			this.applyDiffService.applyDiff(entries, prepared.getDiffLobs());
 			LOGGER.debug("Processing merge commit {} : diff applied with success", commit.getUuid());
+
+			// And execute attachments if needed
+			if (this.attachProcs.isExecuteSupport()) {
+				List<AttachmentLine> runnableAtts = prepared.getCommitData().getAttachments().stream()
+						.filter(a -> a.getType().isRunnable() && a.isExecuted()).collect(Collectors.toList());
+
+				// Process only if some found
+				if (runnableAtts.size() > 0) {
+
+					LOGGER.info("Processing merge commit {} : now run {} executable scripts",
+							commit.getUuid(), Integer.valueOf(runnableAtts.size()));
+
+					User user = getCurrentUser();
+
+					// Run each with identified processor. Processor keep history if
+					// needed
+					runnableAtts.forEach(a -> {
+						AttachmentProcessor proc = this.attachProcs.getFor(a);
+						proc.execute(user, a);
+						LOGGER.debug("Processing merge commit {} : attachements {} executed with success", commit.getUuid());
+					});
+				}
+			}
+		}
+
+		// Update commit attachments
+		if (prepared.getCommitData().getAttachments() != null) {
+			this.attachments.saveAll(prepareAttachments(prepared.getCommitData().getAttachments(), commit));
 		}
 
 		LOGGER.info("Commit {} saved with {} items and {} lobs", commit.getUuid(), Integer.valueOf(entries.size()),
@@ -673,12 +701,26 @@ public class CommitService extends AbstractApplicationService {
 	 * @return
 	 */
 	private static Collection<Attachment> prepareAttachments(Collection<AttachmentLine> source, Commit commit) {
-		return source.stream().map(AttachmentLine::toEntity).peek(a -> {
-			a.setCommit(commit);
-			if(a.getUuid() == null) {
-				a.setUuid(UUID.randomUUID());
-			}
-		}).collect(Collectors.toList());
+		return source.stream()
+				.map(l -> {
+					Attachment at = AttachmentLine.toEntity(l);
+
+					at.setCommit(commit);
+
+					// Create uuid if required (new item)
+					if (at.getUuid() == null) {
+						at.setUuid(UUID.randomUUID());
+					}
+
+					// If selected for executed => Update exec time
+					else if (l.isExecuted()) {
+						at.setExecuteTime(LocalDateTime.now());
+
+					}
+
+					return at;
+				})
+				.collect(Collectors.toList());
 	}
 
 	/**
