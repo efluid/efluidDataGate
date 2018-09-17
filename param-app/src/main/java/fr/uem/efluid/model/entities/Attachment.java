@@ -20,6 +20,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
@@ -29,7 +30,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  */
 @Entity
 @Table(name = "attachments")
-public class Attachment implements Shared {
+public class Attachment implements Shared, AttachmentProcessor.Compliant {
 
 	@Id
 	private UUID uuid;
@@ -65,6 +66,7 @@ public class Attachment implements Shared {
 	/**
 	 * @return the type
 	 */
+	@Override
 	public AttachmentType getType() {
 		return this.type;
 	}
@@ -80,6 +82,7 @@ public class Attachment implements Shared {
 	/**
 	 * @return the name
 	 */
+	@Override
 	public String getName() {
 		return this.name;
 	}
@@ -110,6 +113,7 @@ public class Attachment implements Shared {
 	/**
 	 * @return the data
 	 */
+	@Override
 	public byte[] getData() {
 		return this.data;
 	}

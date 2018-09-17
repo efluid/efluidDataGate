@@ -48,6 +48,7 @@
 		<dependency.springfox-swagger.version>2.8.0</dependency.springfox-swagger.version>
 		<dependency.classmate.version>1.3.1</dependency.classmate.version>
 		<dependency.thymeleaf-layout.version>2.3.0</dependency.thymeleaf-layout.version>
+		<dependency.txtmark.version>0.13</dependency.txtmark.version>
 
 		<!-- dependencies - webjars -->
 		<dependency.bootstrap.version>4.0.0-2</dependency.bootstrap.version>
@@ -86,7 +87,7 @@
 						<useDefaultDelimiters>false</useDefaultDelimiters>
 					</configuration>
 				</plugin>
-				
+
 				<!-- For maven plugin build -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -205,6 +206,13 @@
 				<groupId>org.pac4j</groupId>
 				<artifactId>pac4j-jwt</artifactId>
 				<version>${dependency.pac4j.version}</version>
+			</dependency>
+
+			<!-- For formated MD files -->
+			<dependency>
+				<groupId>com.github.rjeschke</groupId>
+				<artifactId>txtmark</artifactId>
+				<version>${dependency.txtmark.version}</version>
 			</dependency>
 
 			<!-- WebJars (Web libraries managed as java artifacts) -->

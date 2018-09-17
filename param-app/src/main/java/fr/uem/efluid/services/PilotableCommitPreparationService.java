@@ -59,6 +59,7 @@ import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.WizzardCommitPreparationResult;
+import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.FormatUtils;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
@@ -108,6 +109,9 @@ public class PilotableCommitPreparationService {
 
 	@Autowired
 	private ProjectManagementService projectService;
+
+	@Autowired
+	private AttachmentProcessor.Provider attachProcs;
 
 	// TODO : use cfg entry.
 	private ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -252,6 +256,32 @@ public class PilotableCommitPreparationService {
 		} catch (IOException e) {
 			throw new ApplicationException(ATTACHMENT_ERROR, "Cannot process attachment file " + file.getFilename(), e);
 		}
+	}
+
+	/**
+	 * @param encodedLobHash
+	 * @return
+	 */
+	public byte[] getAttachmentContentFromCurrentCommitPreparation(String name) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		// Must be on existing preparation
+		if (current == null || current.getStatus() != PilotedCommitStatus.COMMIT_CAN_PREPARE) {
+
+			// Can process attachment only after diff prepare
+			LOGGER.error("Cannot proceed to add attachment if diff is not complete.");
+			throw new ApplicationException(PREPARATION_NOT_READY,
+					"Cannot proceed to add attachment if diff is not complete.");
+		}
+
+		LOGGER.debug("Request for binary content from attachment \"{}\"", name);
+
+		AttachmentLine line = current.getCommitData().getAttachments().stream()
+				.filter(a -> a.getName().equals(name))
+				.findFirst().orElseThrow(() -> new ApplicationException(ATTACHMENT_ERROR, "Cannot process attachment file " + name));
+
+		return this.attachProcs.display(line);
 	}
 
 	/**

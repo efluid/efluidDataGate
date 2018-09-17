@@ -59,6 +59,14 @@ public final class FormatUtils {
 	 * @param raw
 	 * @return
 	 */
+	public static String toString(byte[] raw) {
+		return new String(raw, CONTENT_ENCODING);
+	}
+
+	/**
+	 * @param raw
+	 * @return
+	 */
 	public static String encode(byte[] raw) {
 		return new String(B64_ENCODER.encode(raw), CONTENT_ENCODING);
 	}

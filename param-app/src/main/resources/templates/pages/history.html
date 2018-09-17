@@ -55,7 +55,7 @@
 		    </thead>
 		    <tbody>
 		        <tr th:each="line, cstat : ${history.page}">
-		            <td class="history-state"><span th:class="${line.rollback}?'history-rollback':'history-update'" class="history-update">&nbsp;</span></td>
+		            <td class="history-state"><span th:class="${line.rollback}?'history-rollback':(${line.attachmentSourceUuid} != null?'history-attachment':'history-update')" class="history-update">&nbsp;</span></td>
 		            <td><span class="query-display" th:text="${line.query}">select * ...</span></td>
 		            <td th:text="${line.user}">Fonct domains</td>
 		            <td th:text="${custom.format(line.processedTime)}">01/11/2017</td>

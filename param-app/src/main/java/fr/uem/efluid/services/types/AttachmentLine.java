@@ -1,8 +1,12 @@
 package fr.uem.efluid.services.types;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 import fr.uem.efluid.model.entities.AttachmentType;
+import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * <p>
@@ -13,11 +17,28 @@ import fr.uem.efluid.model.entities.AttachmentType;
  * @since v0.0.8
  * @version 1
  */
-public class AttachmentLine {
+public class AttachmentLine implements AttachmentProcessor.Compliant {
 
+	private UUID uuid;
 	private String tmpPath;
 	private String name;
 	private AttachmentType type;
+
+	/**
+	 * @param uuid
+	 *            the uuid to set
+	 */
+	public void setUuid(UUID uuid) {
+		this.uuid = uuid;
+	}
+
+	/**
+	 * @return the uuid
+	 */
+	@Override
+	public UUID getUuid() {
+		return this.uuid;
+	}
 
 	/**
 	 * @return the tmpPath
@@ -37,6 +58,7 @@ public class AttachmentLine {
 	/**
 	 * @return the name
 	 */
+	@Override
 	public String getName() {
 		return this.name;
 	}
@@ -52,6 +74,7 @@ public class AttachmentLine {
 	/**
 	 * @return the type
 	 */
+	@Override
 	public AttachmentType getType() {
 		return this.type;
 	}
@@ -79,5 +102,14 @@ public class AttachmentLine {
 		line.setTmpPath(tmpPath.toString());
 
 		return line;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.tools.AttachmentProcessor.Compliant#getData()
+	 */
+	@Override
+	public byte[] getData() {
+		return SharedOutputInputUtils.deserializeDataFromTmpFile(Paths.get(getTmpPath()));
 	}
 }

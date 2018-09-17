@@ -3,6 +3,7 @@ package fr.uem.efluid.services.types;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -94,6 +95,7 @@ public class SearchHistoryPage {
 		private final String query;
 		private final String user;
 		private final boolean rollback;
+		private final UUID attachmentSourceUuid;
 		private final LocalDateTime processedTime;
 
 		/**
@@ -102,11 +104,12 @@ public class SearchHistoryPage {
 		 * @param rollback
 		 * @param processedTime
 		 */
-		private HistoryDetails(String query, String user, boolean rollback, LocalDateTime processedTime) {
+		private HistoryDetails(String query, String user, boolean rollback, UUID attachmentSourceUuid, LocalDateTime processedTime) {
 			super();
 			this.query = query;
 			this.user = user;
 			this.rollback = rollback;
+			this.attachmentSourceUuid = attachmentSourceUuid;
 			this.processedTime = processedTime;
 		}
 
@@ -132,6 +135,13 @@ public class SearchHistoryPage {
 		}
 
 		/**
+		 * @return the attachmentSourceUuid
+		 */
+		public UUID getAttachmentSourceUuid() {
+			return this.attachmentSourceUuid;
+		}
+
+		/**
 		 * @return the processedTime
 		 */
 		public LocalDateTime getProcessedTime() {
@@ -141,7 +151,8 @@ public class SearchHistoryPage {
 		static HistoryDetails fromEntity(ApplyHistoryEntry histo) {
 
 			Timestamp ts = new Timestamp(histo.getTimestamp().longValue());
-			return new HistoryDetails(histo.getQuery(), histo.getUser().getEmail(), histo.isRollback(), ts.toLocalDateTime());
+			return new HistoryDetails(histo.getQuery(), histo.getUser().getEmail(), histo.isRollback(), histo.getAttachmentSourceUuid(),
+					ts.toLocalDateTime());
 		}
 	}
 }

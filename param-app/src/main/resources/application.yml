@@ -43,6 +43,10 @@ param-efluid:
     extractor:
         show-sql: false
         
+    attachments:
+        enable-sql-execute: false
+        enable-display: false
+    
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier

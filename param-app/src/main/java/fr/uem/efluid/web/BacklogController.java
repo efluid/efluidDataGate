@@ -386,6 +386,18 @@ public class BacklogController extends CommonController {
 	}
 
 	/**
+	 * @param hash
+	 * @return
+	 */
+	@RequestMapping(path = "/attachment/content", method = GET)
+	@ResponseBody
+	public ResponseEntity<InputStreamResource> downloadAttachmentContent(@RequestParam("name") String name) {
+
+		// Search by name from current temp files
+		return WebUtils.outputData(this.pilotableCommitService.getAttachmentContentFromCurrentCommitPreparation(name));
+	}
+
+	/**
 	 * @param model
 	 * @param request
 	 * @return

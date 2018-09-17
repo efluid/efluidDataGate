@@ -84,7 +84,7 @@ public class ExportFile {
 		}
 
 		if (idx >= 0) {
-			return this.filename.substring(idx);
+			return this.filename.substring(idx + 1);
 		}
 
 		return this.filename;

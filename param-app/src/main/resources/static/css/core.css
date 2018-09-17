@@ -167,6 +167,13 @@ select.select-column {
 	display: block;
 }
 
+.history-attachment {
+    background-image: url("/attachment.png");
+	width: 24px;
+	height: 18px;
+	display: block;
+}
+
 .inline-block {
 	display: inline-block!important;
 }
@@ -410,4 +417,11 @@ select.select-column {
 
 .diff-remarks ul {
     padding-top: 10px;
+}
+
+.file-ico {    
+	display: block;
+    width: 18px;
+    height: 24px;
+    cursor: pointer;
 }
