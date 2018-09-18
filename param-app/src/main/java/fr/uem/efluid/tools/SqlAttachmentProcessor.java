@@ -147,7 +147,6 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 				CallableStatement cs = con.prepareCall(script);) {
 
 			cs.execute();
-			con.commit();
 
 			LOGGER.debug("[ATTACH-SQL] Store an history entry for SQL update \"{}\" from attachment {}", script, attUuid);
 
