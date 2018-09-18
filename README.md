@@ -16,33 +16,44 @@ Aucun autre pré-requis que la présence de docker sur le poste de build n'est n
 
 **Pour builder la version standalone**
 
-Sous linux (avec Docker CE) :
+Pour utiliser le build sur un poste de dev windows, par exemple pour la version avec postgres embarqué : 
 
-    ./standalone-build.sh
+    ## être dans le dossier racine du projet
+    cd GestionParamEfluid
+    ## lancer le script de build depuis le dossier racine
+    ./param-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
 
-Sous windows (Win 10 min avec Docker CE) :
+Pour builder une version avec H2 sur un serveur efluid :
 
-    .\standalone-build.ps1
+    ## être dans le dossier racine du projet
+    cd GestionParamEfluid
+    ## lancer le script de build depuis le dossier racine
+    ./param-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
 
 L'instance est déployée dans le répo local docker sous le nom **paramethor**:*latest*
 
 **Pour démarrer la version standalone**
 
-Sous linux / windows : 
+Sous linux / windows, par exemple pour la version avec h2 : 
 
-    docker run -it --rm -p 8080:8080 paramethor:latest
+    docker run -it --rm -p 8080:8080 paramethor:latest-h2
 
 Pour utiliser un fichier de configuration spécifique, le monter sous *"/cfg/application.yml"*. Par exemple : 
 
 Sous linux :
 
-    docker run -it --rm -p 8080:8080 -v $pwd/param-app/src/main/resources/config/application.yml:/cfg/application.yml paramethor:latest
+    docker run -it --rm -p 8080:8080 -v $pwd/param-app/src/main/resources/config/application.yml:/cfg/application.yml paramethor:latest-h2
 
 Ou sous windows : 
 
-    docker run -it --rm -p 8080:8080 -v ${pwd}\param-app\src\main\resources\config\application.yml:/cfg/application.yml paramethor:latest
+    docker run -it --rm -p 8080:8080 -v ${pwd}\param-app\src\main\resources\config\application.yml:/cfg/application.yml paramethor:latest-h2
 
 Les BDD sont initialisées, puis l'application démarre. Elle est ensuite accessible sur [http://localhost:8080](http://localhost:8080) Elle démarre en mode Wizzard avec en BDD gérée par défault l'instance local PGSQL
+
+Il existe 2 variantes à ce stade pour la version standalone :
+
+* paramethor:latest-h2 : avec BDD H2 embarquée
+* paramethor:latest-pgsql : avec BDD Postgres complète embarquée dans le même container
 
 ### Version struff
 
