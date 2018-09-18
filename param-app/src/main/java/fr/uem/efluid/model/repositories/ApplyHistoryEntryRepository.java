@@ -22,6 +22,6 @@ public interface ApplyHistoryEntryRepository extends JpaRepository<ApplyHistoryE
 	 * @param pageable
 	 * @return
 	 */
-	Page<ApplyHistoryEntry> findByQueryLikeOrderByTimestampAsc(String query, Pageable pageable);
+	Page<ApplyHistoryEntry> findByQueryLikeOrderByTimestampDesc(String query, Pageable pageable);
 
 }

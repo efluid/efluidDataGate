@@ -1,7 +1,5 @@
 package fr.uem.efluid.services.types;
 
-import static fr.uem.efluid.utils.SharedOutputInputUtils.encodeB64ForFilename;
-
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -96,9 +94,11 @@ public class AttachmentPackage extends SharedPackage<Attachment> {
 	public List<AttachmentLine> toAttachmentLines() {
 		return getContent().stream().map(c -> {
 			AttachmentLine line = new AttachmentLine();
+			line.setUuid(c.getUuid());
 			line.setName(c.getName());
 			line.setType(c.getType());
-			line.setTmpPath(getUncompressPath() + "/" + encodeB64ForFilename(c.getUuid().toString()));
+			line.setTmpPath(getUncompressPath() + "/" + c.getTmpPath());
+			line.setImportedTime(LocalDateTime.now());
 			return line;
 		}).collect(Collectors.toList());
 	}

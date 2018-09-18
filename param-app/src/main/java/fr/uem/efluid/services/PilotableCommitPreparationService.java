@@ -701,12 +701,13 @@ public class PilotableCommitPreparationService {
 
 		// Other editable is the commit comment
 		current.getCommitData().setComment(data.getComment());
-		
+
 		// Works only on edit
-		if(current.getCommitData().getAttachments() != null && current.getCommitData().getAttachments().size() == data.getAttachments().size()) {
-			
+		if (current.getCommitData().getAttachments() != null && data.getAttachments() != null
+				&& current.getCommitData().getAttachments().size() >= data.getAttachments().size()) {
+
 			// Copy only "executed" status which says if the script needs run
-			for(int i = 0; i < data.getAttachments().size() ; i++) {
+			for (int i = 0; i < data.getAttachments().size(); i++) {
 				current.getCommitData().getAttachments().get(i).setExecuted(data.getAttachments().get(i).isExecuted());
 			}
 		}
@@ -810,6 +811,7 @@ public class PilotableCommitPreparationService {
 
 				// Process details
 				List<Callable<MergePreparedDiff>> callables = preparation.streamDiffDisplay()
+						.filter(d -> d != null)
 						.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p, preparation))
 						.collect(Collectors.toList());
 				preparation.setProcessStarted(callables.size());

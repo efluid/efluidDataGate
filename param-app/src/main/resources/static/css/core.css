@@ -421,14 +421,20 @@ select.select-column {
 
 .file-runnable-com {
     font-style: italic;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: bold;
-    color:Purple;
+    color: Purple;
 }
 
 .file-ico {    
+	margin-top: 5px;
 	display: block;
     width: 18px;
     height: 24px;
     cursor: pointer;
+}
+
+.sql-comment {
+	color: DarkGreen;
+    font-style: italic;
 }

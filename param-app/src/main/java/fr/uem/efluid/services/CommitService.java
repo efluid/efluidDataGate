@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -417,7 +418,7 @@ public class CommitService extends AbstractApplicationService {
 					LOGGER.info("Processing merge commit {} : now run {} executable scripts",
 							commit.getUuid(), Integer.valueOf(runnableAtts.size()));
 
-					User user = getCurrentUser();
+					User user = new User(getCurrentUser().getLogin());
 
 					// Run each with identified processor. Processor keep history if
 					// needed
@@ -548,6 +549,9 @@ public class CommitService extends AbstractApplicationService {
 		// Add attachment - managed in temporary version first
 		currentPreparation.getCommitData().setAttachments(attachsPckg.toAttachmentLines());
 
+		// Remove the already imported attachments
+		removeAlreadyImportedAttachments(currentPreparation);
+
 		// Init prepared merge with imported index
 		currentPreparation.applyDiffDisplayContent(importedCommitIndexes(toProcess));
 
@@ -562,6 +566,28 @@ public class CommitService extends AbstractApplicationService {
 
 		return result;
 
+	}
+
+	/**
+	 * <p>
+	 * Simple search for existing attachments (imported by uuid). Remove the ones we
+	 * already have processed
+	 * </p>
+	 * 
+	 * @param prepa
+	 */
+	private void removeAlreadyImportedAttachments(PilotedCommitPreparation<?> prepa) {
+		if (prepa.getCommitData().getAttachments() != null) {
+			Iterator<AttachmentLine> atts = prepa.getCommitData().getAttachments().iterator();
+
+			while (atts.hasNext()) {
+				AttachmentLine line = atts.next();
+
+				if (this.attachments.existsById(line.getUuid())) {
+					atts.remove();
+				}
+			}
+		}
 	}
 
 	/**
@@ -715,7 +741,6 @@ public class CommitService extends AbstractApplicationService {
 					// If selected for executed => Update exec time
 					else if (l.isExecuted()) {
 						at.setExecuteTime(LocalDateTime.now());
-
 					}
 
 					return at;

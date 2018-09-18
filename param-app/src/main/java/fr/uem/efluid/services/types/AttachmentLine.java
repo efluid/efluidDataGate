@@ -2,6 +2,7 @@ package fr.uem.efluid.services.types;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.Attachment;
@@ -24,6 +25,7 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 	private String tmpPath;
 	private String name;
 	private AttachmentType type;
+	private LocalDateTime importedTime;
 	private boolean executed;
 	
 	/**
@@ -74,6 +76,20 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 	}
 
 	/**
+	 * @return the importedTime
+	 */
+	public LocalDateTime getImportedTime() {
+		return this.importedTime;
+	}
+
+	/**
+	 * @param importedTime the importedTime to set
+	 */
+	public void setImportedTime(LocalDateTime importedTime) {
+		this.importedTime = importedTime;
+	}
+
+	/**
 	 * @return the type
 	 */
 	@Override
@@ -116,6 +132,7 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 		line.setUuid(att.getUuid());
 		line.setType(att.getType());
 		line.setExecuted(att.getExecuteTime() != null);
+		line.setImportedTime(att.getImportedTime());
 
 		return line;
 	}
@@ -149,7 +166,8 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 		att.setName(line.getName());
 		att.setType(line.getType());
 		att.setUuid(line.getUuid());
-
+		att.setImportedTime(line.getImportedTime());
+		
 		return att;
 	}
 

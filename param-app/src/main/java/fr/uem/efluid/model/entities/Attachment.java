@@ -18,6 +18,7 @@ import javax.persistence.Id;
 import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.tools.AttachmentProcessor;
@@ -48,6 +49,9 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
 	private LocalDateTime importedTime;
 
 	private LocalDateTime executeTime;
+
+	@Transient
+	private transient String tmpPath;
 
 	/**
 	 * @return the uuid
@@ -160,6 +164,21 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
 	}
 
 	/**
+	 * @return the tmpPath
+	 */
+	public String getTmpPath() {
+		return this.tmpPath;
+	}
+
+	/**
+	 * @param tmpPath
+	 *            the tmpPath to set
+	 */
+	public void setTmpPath(String tmpPath) {
+		this.tmpPath = tmpPath;
+	}
+
+	/**
 	 * @return
 	 * @see fr.uem.efluid.model.Shared#serialize()
 	 */
@@ -205,6 +224,9 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
 
 					// Get from file content
 					setData(deserializeDataFromTmpFile(path));
+
+					// Keep ref to tmp file
+					setTmpPath(f);
 				});
 	}
 

@@ -419,6 +419,7 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	public Stream<T> streamDiffDisplay() {
 		return this.domains.stream()
 				.map(DomainDiffDisplay::getPreparedContent)
+				.filter(d -> d != null)
 				.flatMap(Collection::stream);
 	}
 

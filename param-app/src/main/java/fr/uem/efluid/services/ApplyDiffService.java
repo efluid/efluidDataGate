@@ -106,7 +106,7 @@ public class ApplyDiffService extends AbstractApplicationService {
 		String validSearch = search == null || "".equals(search.trim()) || "*".equals(search.trim()) ? DEFAULT_HISTORY_SEARCH : DEFAULT_HISTORY_SEARCH+search+DEFAULT_HISTORY_SEARCH;
 
 		return SearchHistoryPage.fromPage(pageIndex, search,
-				this.history.findByQueryLikeOrderByTimestampAsc(validSearch, PageRequest.of(pageIndex, this.historyPageSize)));
+				this.history.findByQueryLikeOrderByTimestampDesc(validSearch, PageRequest.of(pageIndex, this.historyPageSize)));
 	}
 
 	/**
