@@ -23,6 +23,7 @@
 		<module>param-common</module>
 		<module>param-api</module>
 		<module>param-app</module>
+		<module>param-app-tests</module>
 		<module>param-generator</module>
 		<module>param-generator-example</module>
 	</modules>
@@ -49,6 +50,7 @@
 		<dependency.classmate.version>1.3.1</dependency.classmate.version>
 		<dependency.thymeleaf-layout.version>2.3.0</dependency.thymeleaf-layout.version>
 		<dependency.txtmark.version>0.13</dependency.txtmark.version>
+		<dependency.cucumber.version>1.2.4</dependency.cucumber.version>
 
 		<!-- dependencies - webjars -->
 		<dependency.bootstrap.version>4.0.0-2</dependency.bootstrap.version>
@@ -215,6 +217,25 @@
 				<version>${dependency.txtmark.version}</version>
 			</dependency>
 
+			<!-- For system tests using cucumber -->
+			<dependency>
+				<groupId>info.cukes</groupId>
+				<artifactId>cucumber-java</artifactId>
+				<version>${dependency.cucumber.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>info.cukes</groupId>
+				<artifactId>cucumber-junit</artifactId>
+				<version>${dependency.cucumber.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>info.cukes</groupId>
+				<artifactId>cucumber-spring</artifactId>
+				<version>${dependency.cucumber.version}</version>
+			</dependency>
+
 			<!-- WebJars (Web libraries managed as java artifacts) -->
 
 			<dependency>
@@ -290,6 +311,12 @@
 			<dependency>
 				<groupId>${project.groupId}</groupId>
 				<artifactId>param-generator</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>param-app</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 

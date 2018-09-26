@@ -1,0 +1,17 @@
+{
+  "any" : {
+    "login" : "any",
+    "email" : "any@test.fr",
+    "password" : "pwd"
+  },
+  "admin" : {
+    "login" : "admin",
+    "email" : "admin@test.fr",
+    "password" : "pwd"
+  },  
+  "demo" : {
+    "login" : "demo",
+    "email" : "test@email.fr",
+    "password" : "test"
+  }
+}
