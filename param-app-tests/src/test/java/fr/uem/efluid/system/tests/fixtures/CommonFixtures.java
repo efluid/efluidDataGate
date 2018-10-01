@@ -54,13 +54,34 @@ public class CommonFixtures extends SystemTest {
 
 		String template = getCorrespondingTemplateForName(name);
 
-		currentAction = currentAction.andExpect(status().isOk()).andExpect(view().name(template));
+		currentAction = currentAction.andExpect(view().name(template));
 	}
 
 	@Given("^the user is currently on (.*)$")
 	public void the_user_is_currently_on_page(String page) throws Throwable {
 
 		currentStartPage = getCorrespondingLinkForPageName(page);
+	}
+
+	/**
+	 * <p>
+	 * A common test step with :
+	 * <ul>
+	 * <li>Wizzard init with default data</li>
+	 * <li>A default "any" user is authenticated</li>
+	 * <li>The user is already on home page</li>
+	 * </p>
+	 * <p>
+	 * Can be reused as default process spec
+	 * </p>
+	 * 
+	 * @param page
+	 * @throws Throwable
+	 */
+	@Given("^from (.*)$")
+	public void from_page(String page) throws Throwable {
+
+		implicitlyAuthenticatedAndOnPage(page);
 	}
 
 }

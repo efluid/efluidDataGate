@@ -22,6 +22,8 @@ public class LoginFixtures extends SystemTest {
 	public void the_user_specify_credential_from_login(String user) throws Throwable {
 		currentLogin = cleanUserParameter(user);
 
+		getCurrentUserLogin();
+		
 		User data = user(currentLogin);
 
 		post(getCorrespondingLinkForPageName("login callback"),
@@ -39,5 +41,15 @@ public class LoginFixtures extends SystemTest {
 
 		Assert.assertNotNull(auth);
 		Assert.assertEquals(currentLogin, auth);
+	}
+	
+	@Then("^the authentication is failed$")
+	public void the_authentication_is_failed() throws Throwable {
+
+		currentAction = currentAction.andExpect(status().is3xxRedirection());
+
+		String auth = getCurrentUserLogin();
+
+		Assert.assertNull(auth);
 	}
 }

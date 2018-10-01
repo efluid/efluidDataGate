@@ -1,6 +1,8 @@
 package fr.uem.efluid.system.common;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +21,9 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.ApplicationDetailsService;
-import fr.uem.efluid.services.SecurityService;
+import fr.uem.efluid.services.ProjectManagementService;
 import fr.uem.efluid.system.stubs.ModelDatabaseInitializer;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -48,18 +51,24 @@ public abstract class SystemTest {
 	private ModelDatabaseInitializer model;
 
 	@Autowired
-	private SecurityService sec;
+	private ApplicationDetailsService dets;
 
 	@Autowired
-	private ApplicationDetailsService dets;
+	private UserHolder userHolder;
+
+	@Autowired
+	private ProjectManagementService projectMgmt;
 
 	/**
 	 * 
 	 */
 	@Before
 	public void setup() {
+
 		currentAction = null;
 		currentStartPage = null;
+
+		resetAuthentication();
 	}
 
 	/**
@@ -71,16 +80,64 @@ public abstract class SystemTest {
 		Project newProject = project("Default");
 		FunctionalDomain newDomain = domain("Test domain", newProject);
 
-		this.model.initWizzardData(user, Arrays.asList(newProject), newDomain);
+		this.model.initWizzardData(user, Arrays.asList(newProject), Arrays.asList(newDomain));
 
 		this.dets.completeWizzard();
+	}
+
+	/**
+	 * 
+	 */
+	protected void initMinimalWizzardDataWithDomains(List<String> domainNames) {
+
+		User user = user("any");
+		Project newProject = project("Default");
+
+		this.model.initWizzardData(user, Arrays.asList(newProject),
+				domainNames.stream().map(n -> domain(n, newProject)).collect(Collectors.toList()));
+
+		this.dets.completeWizzard();
+	}
+
+	/**
+	 * 
+	 */
+	protected void implicitlyAuthenticatedAndOnPage(String page) {
+
+		// Initialized
+		initMinimalWizzardData();
+
+		// Authenticated as "any"
+		this.userHolder.setCurrentUser(user("any"));
+
+		// On home page
+		currentStartPage = getCorrespondingLinkForPageName(page);
 	}
 
 	/**
 	 * @return
 	 */
 	protected String getCurrentUserLogin() {
-		return this.sec.getCurrentUserDetails().getLogin();
+		
+		User user = this.userHolder.getCurrentUser();
+		
+		return user != null ? user.getLogin() : null;
+	}
+
+	/**
+	 * @return
+	 */
+	protected Project getCurrentUserProject() {
+		return new Project(this.projectMgmt.getCurrentSelectedProject().getUuid());
+	}
+
+	protected void resetAuthentication() {
+
+		// Reset auth
+		this.userHolder.setCurrentUser(null);
+		
+		this.getCurrentUserLogin();
+		this.userHolder.setWizzardUser(null);
 	}
 
 	/**
@@ -96,7 +153,7 @@ public abstract class SystemTest {
 	 * @param params
 	 * @throws Exception
 	 */
-	protected void get(String url, Object... args) throws Exception {
+	protected final void get(String url, Object... args) throws Exception {
 
 		MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get(url, args);
 
@@ -150,10 +207,12 @@ public abstract class SystemTest {
 	 */
 	protected static String getCorrespondingLinkForPageName(String pageName) {
 
-		String link = DataSetHelper.REV_SITEMAP.get(pageName);
+		String cleaned = pageName.replace("the ", "").trim();
+
+		String link = DataSetHelper.REV_SITEMAP.get(cleaned);
 
 		if (link == null) {
-			throw new AssertionFailedError("No specified link for page name " + pageName + ". Check fixtures / gherkin");
+			throw new AssertionFailedError("No specified link for page name " + cleaned + ". Check fixtures / gherkin");
 		}
 
 		return link;
@@ -238,7 +297,7 @@ public abstract class SystemTest {
 	 * @return
 	 */
 	protected static String cleanUserParameter(String param) {
-		String cleaned = param.replace("the", "").replace("user", "").trim();
+		String cleaned = param.replace("the ", "").replace("user ", "").trim();
 
 		if (cleaned.equals("any unauthenticated")) {
 			return null;
@@ -260,4 +319,5 @@ public abstract class SystemTest {
 	protected static Associate<String, String> p(String name, String value) {
 		return Associate.of(name, value);
 	}
+
 }

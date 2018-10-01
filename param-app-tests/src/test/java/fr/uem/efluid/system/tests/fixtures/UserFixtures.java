@@ -21,7 +21,7 @@ public class UserFixtures extends SystemTest {
 
 	@Given("^the user is not authenticated$")
 	public void the_user_is_not_authenticated() throws Throwable {
-		// Nothing ?
+		resetAuthentication();
 	}
 	
 	@Then("^the current user is (.*)$")

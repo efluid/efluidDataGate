@@ -13,5 +13,10 @@
     "login" : "demo",
     "email" : "test@email.fr",
     "password" : "test"
+  },
+  "other" : {
+    "login" : "other",
+    "email" : "other@test.fr",
+    "password" : "pwotherd"
   }
 }

@@ -1,6 +1,10 @@
 package fr.uem.efluid.system.stubs;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.slf4j.Logger;
@@ -51,19 +55,28 @@ public class ModelDatabaseInitializer {
 	 * @param initProject
 	 * @param domain
 	 */
-	public void initWizzardData(User user, List<Project> initProject, FunctionalDomain domain) {
+	public void initWizzardData(final User user, final List<Project> initProject, final List<FunctionalDomain> addDomains) {
 
 		LOGGER.info("[MODEL-INIT] Setup wizzard resulting data");
+
+		this.projects.saveAll(initProject);
+
+		// Like wizzard, preset default project
+		user.setPreferedProjects(initProject.stream().collect(Collectors.toSet()));
+		user.setSelectedProject(initProject.get(0));
 
 		// User pwd is encoded
 		user.setPassword(this.encoder.encode(user.getPassword()));
 
 		this.holder.setWizzardUser(this.users.save(user));
-		this.projects.saveAll(initProject);
-		this.domains.save(domain);
+		this.domains.saveAll(addDomains);
 	}
 
+	/**
+	 * @param project
+	 */
 	public void initDictionary(Project project) {
 		// TODO
 	}
+
 }
