@@ -1,12 +1,9 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
-
-import org.springframework.http.MediaType;
 
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
@@ -18,7 +15,7 @@ import fr.uem.efluid.system.common.SystemTest;
  * @since v0.0.8
  * @version 1
  */
-public class CommonFixture extends SystemTest {
+public class CommonFixtures extends SystemTest {
 
 	@Given("^the application is after a fresh install$")
 	public void the_application_is_after_a_fresh_install() throws Throwable {
@@ -37,7 +34,7 @@ public class CommonFixture extends SystemTest {
 		// Then go to page
 		String link = getCorrespondingLinkForPageName(page);
 
-		currentAction = this.mockMvc.perform(get(link).accept(MediaType.APPLICATION_JSON_UTF8));
+		get(link);
 	}
 
 	@Then("^the user is (.+) to (.+)$")
@@ -59,4 +56,11 @@ public class CommonFixture extends SystemTest {
 
 		currentAction = currentAction.andExpect(status().isOk()).andExpect(view().name(template));
 	}
+
+	@Given("^the user is currently on (.*)$")
+	public void the_user_is_currently_on_page(String page) throws Throwable {
+
+		currentStartPage = getCorrespondingLinkForPageName(page);
+	}
+
 }

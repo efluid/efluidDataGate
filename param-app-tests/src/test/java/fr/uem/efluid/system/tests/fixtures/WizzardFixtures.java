@@ -1,7 +1,5 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.When;
 import fr.uem.efluid.system.common.SystemTest;
@@ -11,7 +9,7 @@ import fr.uem.efluid.system.common.SystemTest;
  * @since v0.0.8
  * @version 1
  */
-public class WizzardFixture extends SystemTest {
+public class WizzardFixtures extends SystemTest {
 
 	private static int currentStep = 0;
 
@@ -31,14 +29,16 @@ public class WizzardFixture extends SystemTest {
 	}
 
 	@When("the login \"(.*)\", the email \"(.*)\" and the password \"(.*)\" are specified")
-	public void the_login_the_email_and_the_password_are_specified(String login, String email, String password) throws Throwable {
+	public void the_login_the_email_and_the_password_are_specified(
+			String login,
+			String email,
+			String password)
+			throws Throwable {
 
-		String link = "/wizzard/" + currentStep;
-
-		currentAction = this.mockMvc.perform(post(link)
-				.param("login", login)
-				.param("email", email)
-				.param("password", password));
+		post("/wizzard/" + currentStep,
+				p("login", login),
+				p("email", email),
+				p("password", password));
 	}
 
 }

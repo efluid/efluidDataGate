@@ -2,15 +2,19 @@ package fr.uem.efluid.system.common;
 
 import java.util.Arrays;
 
+import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.Project;
@@ -18,6 +22,7 @@ import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.SecurityService;
 import fr.uem.efluid.system.stubs.ModelDatabaseInitializer;
+import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import junit.framework.AssertionFailedError;
 
@@ -34,6 +39,8 @@ public abstract class SystemTest {
 
 	protected static ResultActions currentAction;
 
+	protected static String currentStartPage;
+
 	@Autowired
 	protected MockMvc mockMvc;
 
@@ -45,18 +52,27 @@ public abstract class SystemTest {
 
 	@Autowired
 	private ApplicationDetailsService dets;
-	
+
+	/**
+	 * 
+	 */
+	@Before
+	public void setup() {
+		currentAction = null;
+		currentStartPage = null;
+	}
+
 	/**
 	 * 
 	 */
 	protected void initMinimalWizzardData() {
 
-		User user = initNewUser("any");
-		Project newProject = initNewProject("Default");
-		FunctionalDomain newDomain = initNewDomain("Test domain", newProject);
+		User user = user("any");
+		Project newProject = project("Default");
+		FunctionalDomain newDomain = domain("Test domain", newProject);
 
 		this.model.initWizzardData(user, Arrays.asList(newProject), newDomain);
-		
+
 		this.dets.completeWizzard();
 	}
 
@@ -65,6 +81,63 @@ public abstract class SystemTest {
 	 */
 	protected String getCurrentUserLogin() {
 		return this.sec.getCurrentUserDetails().getLogin();
+	}
+
+	/**
+	 * <p>
+	 * Simplified post process with common rules :
+	 * <ul>
+	 * <li>Set the currentAction</li>
+	 * <li>Take care of currentStartPage if any is set</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param url
+	 * @param params
+	 * @throws Exception
+	 */
+	protected void get(String url, Object... args) throws Exception {
+
+		MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get(url, args);
+
+		if (currentStartPage != null) {
+			builder.header("Referer", currentStartPage);
+		}
+
+		builder.accept(MediaType.APPLICATION_JSON_UTF8);
+
+		currentAction = this.mockMvc.perform(builder);
+	}
+
+	/**
+	 * <p>
+	 * Simplified post process with common rules :
+	 * <ul>
+	 * <li>Set the currentAction</li>
+	 * <li>Take care of currentStartPage if any is set</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param url
+	 * @param params
+	 * @throws Exception
+	 */
+	@SafeVarargs
+	protected final void post(String url, final Associate<String, String>... params) throws Exception {
+
+		MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post(url);
+
+		for (Associate<String, String> param : params) {
+			builder.param(param.getOne(), param.getTwo());
+		}
+
+		if (currentStartPage != null) {
+			builder.header("Referer", currentStartPage);
+		}
+
+		builder.accept(MediaType.APPLICATION_JSON_UTF8);
+
+		currentAction = this.mockMvc.perform(builder);
 	}
 
 	/**
@@ -113,7 +186,7 @@ public abstract class SystemTest {
 	 * @param login
 	 * @return
 	 */
-	protected static User initNewUser(String login) {
+	protected static User user(String login) {
 
 		DataSetHelper.UserDef def = DataSetHelper.USERDEF.get(login);
 
@@ -134,7 +207,7 @@ public abstract class SystemTest {
 	 * @param project
 	 * @return
 	 */
-	protected static FunctionalDomain initNewDomain(String domain, Project project) {
+	protected static FunctionalDomain domain(String domain, Project project) {
 		return DataGenerationUtils.domain(domain, project);
 	}
 
@@ -142,17 +215,49 @@ public abstract class SystemTest {
 	 * @param project
 	 * @return
 	 */
-	protected static Project initNewProject(String project) {
+	protected static Project project(String project) {
 		return DataGenerationUtils.project(project);
 	}
 
+	/**
+	 * <p>
+	 * Get the cleaned parameter where a user spec can be specified. Remove some key
+	 * words, to make it available to detect the login name if any, or null.
+	 * </p>
+	 * <p>
+	 * <b>Here some supported use-cases for this method</b> :
+	 * <ul>
+	 * <li>"the user" => null</li>
+	 * <li>"any unauthenticated user" => null</li>
+	 * <li>"the user toto" => "toto"</li>
+	 * <li>"any user" => "any"</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param param
+	 * @return
+	 */
 	protected static String cleanUserParameter(String param) {
-		String cleaned = param.replace("user", "").trim();
+		String cleaned = param.replace("the", "").replace("user", "").trim();
 
 		if (cleaned.equals("any unauthenticated")) {
 			return null;
 		}
 
-		return cleaned;
+		// Nullify empty
+		return cleaned.length() == 0 ? null : cleaned;
+	}
+
+	/**
+	 * <p>
+	 * Shortcut for post param init
+	 * </p>
+	 * 
+	 * @param name
+	 * @param value
+	 * @return
+	 */
+	protected static Associate<String, String> p(String name, String value) {
+		return Associate.of(name, value);
 	}
 }

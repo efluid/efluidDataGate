@@ -2,6 +2,7 @@ package fr.uem.efluid.system.stubs;
 
 import java.util.List;
 
+import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,9 @@ public class ModelDatabaseInitializer {
 	@Autowired
 	private FunctionalDomainRepository domains;
 
+	@Autowired
+	private PasswordEncoder encoder;
+
 	/**
 	 * @param user
 	 * @param initProject
@@ -50,6 +54,9 @@ public class ModelDatabaseInitializer {
 	public void initWizzardData(User user, List<Project> initProject, FunctionalDomain domain) {
 
 		LOGGER.info("[MODEL-INIT] Setup wizzard resulting data");
+
+		// User pwd is encoded
+		user.setPassword(this.encoder.encode(user.getPassword()));
 
 		this.holder.setWizzardUser(this.users.save(user));
 		this.projects.saveAll(initProject);

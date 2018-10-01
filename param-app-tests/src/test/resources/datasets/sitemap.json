@@ -5,5 +5,6 @@
   "/wizzard/": ["wizzard welcome page"],
   "/wizzard/1": ["wizzard step one"],
   "/wizzard/2": ["wizzard step two"],
-  "/wizzard/user": ["wizzard user creation"]
+  "/wizzard/user": ["wizzard user creation"],
+  "/callback": ["login callback"]
 }
