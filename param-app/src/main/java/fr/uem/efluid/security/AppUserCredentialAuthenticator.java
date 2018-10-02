@@ -1,6 +1,7 @@
 package fr.uem.efluid.security;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpSession;
 
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.credentials.UsernamePasswordCredentials;
@@ -49,6 +50,11 @@ public class AppUserCredentialAuthenticator implements Authenticator<UsernamePas
 	@Override
 	public void validate(final UsernamePasswordCredentials credentials, final WebContext context) throws HttpAction, CredentialsException {
 
+		
+		@SuppressWarnings("unchecked")
+		HttpSession ses = (HttpSession) context.getSessionStore().getTrackableSession(context);
+		
+		
 		LOGGER.debug("Begin web (form) authentication");
 
 		if (credentials == null) {

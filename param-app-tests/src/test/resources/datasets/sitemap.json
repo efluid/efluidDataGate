@@ -2,6 +2,7 @@
   "/": ["home page", "home"],
   "/ui": ["default page"],
   "/login" : ["login page"],
+  "/login?username=other&error=CredentialsException" : ["login error page"],
   "/wizzard/": ["wizzard welcome page"],
   "/wizzard/1": ["wizzard step one"],
   "/wizzard/2": ["wizzard step two"],

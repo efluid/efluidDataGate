@@ -1,7 +1,10 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.*;
 
+import org.hamcrest.Matchers;
+import org.hamcrest.core.IsNull;
 import org.junit.Assert;
 
 import cucumber.api.java.en.Then;
@@ -23,11 +26,11 @@ public class LoginFixtures extends SystemTest {
 		currentLogin = cleanUserParameter(user);
 
 		getCurrentUserLogin();
-		
+
 		User data = user(currentLogin);
 
 		post(getCorrespondingLinkForPageName("login callback"),
-				p("client_name","web"),
+				p("client_name", "web"),
 				p("username", data.getLogin()),
 				p("password", data.getPassword()));
 	}
@@ -35,21 +38,16 @@ public class LoginFixtures extends SystemTest {
 	@Then("^the authentication is successful$")
 	public void the_authentication_is_successful() throws Throwable {
 
-		currentAction = currentAction.andExpect(status().is3xxRedirection());
-
-		String auth = getCurrentUserLogin();
-
-		Assert.assertNotNull(auth);
-		Assert.assertEquals(currentLogin, auth);
+		currentAction = currentAction
+				.andExpect(request().sessionAttribute("pac4jUserProfiles", hasKey("web")))
+				.andExpect(status().is3xxRedirection());
 	}
-	
+
 	@Then("^the authentication is failed$")
 	public void the_authentication_is_failed() throws Throwable {
 
-		currentAction = currentAction.andExpect(status().is3xxRedirection());
-
-		String auth = getCurrentUserLogin();
-
-		Assert.assertNull(auth);
+		currentAction = currentAction
+				.andExpect(request().sessionAttribute("pac4jUserProfiles", nullValue()))
+				.andExpect(status().is3xxRedirection());
 	}
 }

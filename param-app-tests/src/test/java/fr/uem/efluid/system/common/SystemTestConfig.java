@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Primary;
@@ -87,5 +88,21 @@ public class SystemTestConfig extends CustomDataSourceParameters {
 		LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
 				Boolean.valueOf(rules.isColumnNamesProtected()), Boolean.valueOf(rules.isTableNamesProtected()));
 		return rules;
+	}
+
+	/**
+	 * @return
+	 */
+	@Bean
+	public FilterRegistrationBean<InspectSessionFilter> inspectSessionFilter() {
+
+		LOGGER.info("[INSPECT] Add session filter");
+
+		FilterRegistrationBean<InspectSessionFilter> registration = new FilterRegistrationBean<>();
+		registration.setFilter(new InspectSessionFilter());
+		registration.setName("inspectSessionFilter");
+		registration.setOrder(2);
+
+		return registration;
 	}
 }

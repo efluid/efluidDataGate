@@ -20,5 +20,5 @@ Feature: Access to the application is possible only for registered users after l
     And the user is currently on login page
     When the user specify invalid credentials from "other"
     Then the authentication is failed
-    Then the user is redirected to login page
+    Then the user is redirected to login error page
  
