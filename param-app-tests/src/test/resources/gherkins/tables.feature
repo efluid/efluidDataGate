@@ -8,6 +8,6 @@ Feature: The managed parameters are specified by table in the dictionary
   Scenario: Adding a new parameter table lists the available tables from managed database
     Given a managed database with two tables
     When the user access to new parameter table page
-    Then the 2 available tables are displayed
+    Then the existing tables are displayed
     
     
