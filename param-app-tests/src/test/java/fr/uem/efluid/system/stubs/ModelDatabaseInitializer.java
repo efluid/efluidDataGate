@@ -60,7 +60,8 @@ public class ModelDatabaseInitializer {
 		LOGGER.info("[MODEL-INIT] Setup wizzard resulting data");
 
 		this.projects.saveAll(initProject);
-
+		this.projects.flush();
+		
 		// Like wizzard, preset default project
 		user.setPreferedProjects(initProject.stream().collect(Collectors.toSet()));
 		user.setSelectedProject(initProject.get(0));
@@ -69,7 +70,10 @@ public class ModelDatabaseInitializer {
 		user.setPassword(this.encoder.encode(user.getPassword()));
 
 		this.holder.setWizzardUser(this.users.save(user));
-		this.domains.saveAll(addDomains);
+		this.users.flush();
+		
+		addDomains.forEach(this.domains::save);
+		this.domains.flush();
 	}
 
 	/**

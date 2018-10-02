@@ -1,11 +1,9 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.hamcrest.Matchers.*;
-
-import org.hamcrest.Matchers;
-import org.hamcrest.core.IsNull;
-import org.junit.Assert;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.nullValue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;

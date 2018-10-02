@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.junit.Before;
+import org.pac4j.core.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -59,6 +60,9 @@ public abstract class SystemTest {
 	@Autowired
 	private ProjectManagementService projectMgmt;
 
+	@Autowired
+	private Config securityConfig;
+
 	/**
 	 * 
 	 */
@@ -108,7 +112,7 @@ public abstract class SystemTest {
 		initMinimalWizzardData();
 
 		// Authenticated as "any"
-		this.userHolder.setCurrentUser(user("any"));
+		this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, "any"));
 
 		// On home page
 		currentStartPage = getCorrespondingLinkForPageName(page);
@@ -118,9 +122,9 @@ public abstract class SystemTest {
 	 * @return
 	 */
 	protected String getCurrentUserLogin() {
-		
+
 		User user = this.userHolder.getCurrentUser();
-		
+
 		return user != null ? user.getLogin() : null;
 	}
 
@@ -135,9 +139,11 @@ public abstract class SystemTest {
 
 		// Reset auth
 		this.userHolder.setCurrentUser(null);
-		
+
 		this.getCurrentUserLogin();
 		this.userHolder.setWizzardUser(null);
+
+		this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, null));
 	}
 
 	/**

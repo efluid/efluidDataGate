@@ -52,16 +52,6 @@ public class IntegrationTestConfig extends CustomDataSourceParameters {
 	@Autowired
 	private EntityManagerFactory defaultEntityManagerFactory;
 
-	/**
-	 * @return
-	 * @throws SQLException
-	 */
-	@Bean(initMethod = "start", destroyMethod = "stop")
-	public Server h2WebConsole() throws SQLException {
-		LOGGER.info("H2 CONSOLE activated on http://localhost:8082");
-		return new Server(new WebServer(), "-web", "-webAllowOthers", "-webPort", "8082");
-	}
-
 	@Bean
 	public JdbcTemplate managedDatabaseJdbcTemplate() {
 		return new JdbcTemplate(this.defaultDataSource);

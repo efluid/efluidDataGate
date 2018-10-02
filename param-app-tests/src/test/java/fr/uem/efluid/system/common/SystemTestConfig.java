@@ -10,9 +10,13 @@ import static fr.uem.efluid.Application.Packages.SERVICES;
 import static fr.uem.efluid.Application.Packages.TOOLS;
 import static fr.uem.efluid.system.common.SystemTestConfig.SYS_TEST_ROOT;
 
+import java.sql.SQLException;
+
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
+import org.h2.server.web.WebServer;
+import org.h2.tools.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +66,16 @@ public class SystemTestConfig extends CustomDataSourceParameters {
 	@Bean
 	public JdbcTemplate managedDatabaseJdbcTemplate() {
 		return new JdbcTemplate(this.defaultDataSource);
+	}
+
+	/**
+	 * @return
+	 * @throws SQLException
+	 */
+	@Bean(initMethod = "start", destroyMethod = "stop")
+	public Server h2WebConsole() throws SQLException {
+		LOGGER.info("H2 CONSOLE activated on http://localhost:8082");
+		return new Server(new WebServer(), "-web", "-webAllowOthers", "-webPort", "8082");
 	}
 
 	/**
