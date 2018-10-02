@@ -25,7 +25,8 @@ import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.ProjectManagementService;
-import fr.uem.efluid.system.stubs.ModelDatabaseInitializer;
+import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
+import fr.uem.efluid.system.stubs.ModelDatabaseAccess;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import junit.framework.AssertionFailedError;
@@ -49,7 +50,10 @@ public abstract class SystemTest {
 	protected MockMvc mockMvc;
 
 	@Autowired
-	private ModelDatabaseInitializer model;
+	private ManagedDatabaseAccess managed;
+
+	@Autowired
+	private ModelDatabaseAccess model;
 
 	@Autowired
 	private ApplicationDetailsService dets;
@@ -76,6 +80,24 @@ public abstract class SystemTest {
 	}
 
 	/**
+	 * <p>
+	 * Entry point for model database (preloaded queries ...)
+	 * </p>
+	 * 
+	 * @return
+	 */
+	protected final ModelDatabaseAccess modelDatabase() {
+		return this.model;
+	}
+
+	/**
+	 * @return
+	 */
+	protected final ManagedDatabaseAccess managedDatabase() {
+		return this.managed;
+	}
+
+	/**
 	 * 
 	 */
 	protected void initMinimalWizzardData() {
@@ -84,7 +106,7 @@ public abstract class SystemTest {
 		Project newProject = project("Default");
 		FunctionalDomain newDomain = domain("Test domain", newProject);
 
-		this.model.initWizzardData(user, Arrays.asList(newProject), Arrays.asList(newDomain));
+		modelDatabase().initWizzardData(user, newProject, Arrays.asList(newDomain));
 
 		this.dets.completeWizzard();
 	}
@@ -97,7 +119,7 @@ public abstract class SystemTest {
 		User user = user("any");
 		Project newProject = project("Default");
 
-		this.model.initWizzardData(user, Arrays.asList(newProject),
+		modelDatabase().initWizzardData(user, newProject,
 				domainNames.stream().map(n -> domain(n, newProject)).collect(Collectors.toList()));
 
 		this.dets.completeWizzard();
@@ -107,9 +129,6 @@ public abstract class SystemTest {
 	 * 
 	 */
 	protected void implicitlyAuthenticatedAndOnPage(String page) {
-
-		// Initialized
-		initMinimalWizzardData();
 
 		// Authenticated as "any"
 		this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, "any"));

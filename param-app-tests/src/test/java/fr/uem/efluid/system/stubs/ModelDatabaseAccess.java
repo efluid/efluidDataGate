@@ -22,7 +22,7 @@ import fr.uem.efluid.security.UserHolder;
 
 /**
  * <p>
- * A common component for init of app model (the database used for behaviors of the app)
+ * A common component for init and use of app model (the database used for behaviors of the app)
  * </p>
  * 
  * @author elecomte
@@ -31,9 +31,9 @@ import fr.uem.efluid.security.UserHolder;
  */
 @Component
 @SuppressWarnings("unused")
-public class ModelDatabaseInitializer {
+public class ModelDatabaseAccess {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ModelDatabaseInitializer.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ModelDatabaseAccess.class);
 
 	@Autowired
 	private UserRepository users;
@@ -55,24 +55,29 @@ public class ModelDatabaseInitializer {
 	 * @param initProject
 	 * @param domain
 	 */
-	public void initWizzardData(final User user, final List<Project> initProject, final List<FunctionalDomain> addDomains) {
+	public void initWizzardData(final User user, final Project initProject, final List<FunctionalDomain> addDomains) {
 
 		LOGGER.info("[MODEL-INIT] Setup wizzard resulting data");
 
-		this.projects.saveAll(initProject);
+		Project project = this.projects.save(initProject);
 		this.projects.flush();
-		
+
+		Set<Project> prefered = new HashSet<>();
+		prefered.add(project);
 		// Like wizzard, preset default project
-		user.setPreferedProjects(initProject.stream().collect(Collectors.toSet()));
-		user.setSelectedProject(initProject.get(0));
+		user.setPreferedProjects(prefered);
+		user.setSelectedProject(project);
 
 		// User pwd is encoded
 		user.setPassword(this.encoder.encode(user.getPassword()));
 
 		this.holder.setWizzardUser(this.users.save(user));
 		this.users.flush();
-		
-		addDomains.forEach(this.domains::save);
+
+		addDomains.forEach(d -> {
+			d.setProject(project);
+			this.domains.save(d);
+		});
 		this.domains.flush();
 	}
 
@@ -81,6 +86,14 @@ public class ModelDatabaseInitializer {
 	 */
 	public void initDictionary(Project project) {
 		// TODO
+	}
+
+	/**
+	 * @param name
+	 * @return
+	 */
+	public FunctionalDomain findDomainByName(String name) {
+		return this.domains.findByName(name);
 	}
 
 }

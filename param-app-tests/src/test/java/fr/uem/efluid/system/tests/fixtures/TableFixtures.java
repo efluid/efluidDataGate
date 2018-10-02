@@ -25,20 +25,20 @@ import fr.uem.efluid.system.common.SystemTest;
  * @since v0.0.8
  * @version 1
  */
-public class DomainFixtures extends SystemTest {
+public class TableFixtures extends SystemTest {
 
-	private static List<String> specifiedDomainNames;
+	private static List<String> specifiedTables;
 
 	@Before
 	public void resetFixture() {
-		specifiedDomainNames = null;
+		specifiedTables = null;
 	}
 
-	@Given("^the existing functional domains (.*)$")
-	public void the_following_functional_domains_exist(@Delimiter(",") List<String> domainNames) throws Throwable {
+	@Given("^A managed database with two tables$")
+	public void a_managed_database_with_two_tables() throws Throwable {
 
-		// Implicit init with domains
-		initMinimalWizzardDataWithDomains(domainNames);
+		// Implicit init with default domain
+		initMinimalWizzardData();
 
 		// Implicit authentication and on page
 		implicitlyAuthenticatedAndOnPage("functional domain edit page");

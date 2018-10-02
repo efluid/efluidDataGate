@@ -1,7 +1,6 @@
 package fr.uem.efluid.system.stubs.entities;
 
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -13,23 +12,20 @@ import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
  * @version 1
  */
 @Entity
-@Table(name = ManagedDatabaseAccess.TABLE_ONE)
-public class SimulatedTableOne {
+@Table(name = ManagedDatabaseAccess.TABLE_TWO)
+public class SimulatedTableTwo {
 
 	@Id
-	@GeneratedValue
-	private Long key;
+	private String key;
 
 	private String value;
 
-	private String preset;
-
-	private String something;
+	private String other;
 
 	/**
 	 * @return the key
 	 */
-	public Long getKey() {
+	public String getKey() {
 		return this.key;
 	}
 
@@ -37,7 +33,7 @@ public class SimulatedTableOne {
 	 * @param key
 	 *            the key to set
 	 */
-	public void setKey(Long key) {
+	public void setKey(String key) {
 		this.key = key;
 	}
 
@@ -57,33 +53,18 @@ public class SimulatedTableOne {
 	}
 
 	/**
-	 * @return the preset
+	 * @return the other
 	 */
-	public String getPreset() {
-		return this.preset;
+	public String getOther() {
+		return this.other;
 	}
 
 	/**
-	 * @param preset
-	 *            the preset to set
+	 * @param other
+	 *            the other to set
 	 */
-	public void setPreset(String preset) {
-		this.preset = preset;
-	}
-
-	/**
-	 * @return the something
-	 */
-	public String getSomething() {
-		return this.something;
-	}
-
-	/**
-	 * @param something
-	 *            the something to set
-	 */
-	public void setSomething(String something) {
-		this.something = something;
+	public void setOther(String other) {
+		this.other = other;
 	}
 
 	/**
@@ -111,11 +92,11 @@ public class SimulatedTableOne {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SimulatedTableOne other = (SimulatedTableOne) obj;
+		SimulatedTableTwo _other = (SimulatedTableTwo) obj;
 		if (this.key == null) {
-			if (other.key != null)
+			if (_other.key != null)
 				return false;
-		} else if (!this.key.equals(other.key))
+		} else if (!this.key.equals(_other.key))
 			return false;
 		return true;
 	}

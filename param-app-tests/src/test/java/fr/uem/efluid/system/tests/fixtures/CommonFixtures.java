@@ -81,6 +81,10 @@ public class CommonFixtures extends SystemTest {
 	@Given("^from (.*)$")
 	public void from_page(String page) throws Throwable {
 
+		// Implicit wizzard init
+		initMinimalWizzardData();
+
+		// Implicit authentication
 		implicitlyAuthenticatedAndOnPage(page);
 	}
 

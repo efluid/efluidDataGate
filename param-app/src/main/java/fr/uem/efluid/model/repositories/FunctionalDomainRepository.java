@@ -64,4 +64,10 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 	 */
 	@Query(value = "select count(*) from domain d where d.project_uuid = :projectUuid", nativeQuery = true)
 	int countForProject(UUID projectUuid);
+	
+	/**
+	 * @param name
+	 * @return
+	 */
+	FunctionalDomain findByName(String name);
 }
