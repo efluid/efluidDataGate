@@ -460,7 +460,11 @@ public class PilotableCommitPreparationService {
 		UUID projectUuid = getActiveProjectUuid();
 
 		// For any ref holder : mark canceled and dropped
-		this.currents.get(projectUuid).setStatus(PilotedCommitStatus.CANCEL);
+		PilotedCommitPreparation<?> prep = this.currents.get(projectUuid);
+
+		if (prep != null) {
+			prep.setStatus(PilotedCommitStatus.CANCEL);
+		}
 
 		// Null = COMPLETED / CANCEL from local service pov
 		this.currents.remove(projectUuid);
