@@ -61,6 +61,8 @@ import fr.uem.efluid.utils.FormatUtils;
 public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedUpdateRepository.class);
+	protected static final Logger QUERRY_LOGGER = LoggerFactory.getLogger("update.queries");
+	
 	private static final Charset ERROR_OUT_CHARSET = Charset.forName("utf8");
 	@Autowired
 	private JdbcTemplate managedSource;
@@ -151,6 +153,11 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 					this.managedSource.update(currentQuery, args);
 				} else {
 					this.managedSource.update(currentQuery);
+				}
+				
+				// Log from file spec
+				if(QUERRY_LOGGER.isDebugEnabled()) {
+					QUERRY_LOGGER.debug(currentQuery);
 				}
 			}
 

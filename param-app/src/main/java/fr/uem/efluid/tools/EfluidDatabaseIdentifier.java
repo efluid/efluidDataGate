@@ -2,6 +2,7 @@ package fr.uem.efluid.tools;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
@@ -38,9 +39,11 @@ public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
 	@Override
 	public ManagedModelDescription extractFromLine(ResultSet lineResultSet, int index) throws SQLException {
 
+		java.sql.Timestamp dateCreation = lineResultSet.getTimestamp("DATECREATION");
+
 		return new ManagedModelDescription(
 				lineResultSet.getString("VERSION"),
-				FormatUtils.toLdt(lineResultSet.getTimestamp("DATECREATION")),
+				dateCreation != null ? FormatUtils.toLdt(dateCreation) : LocalDateTime.now(),
 				lineResultSet.getString("DETAILS"));
 	}
 
