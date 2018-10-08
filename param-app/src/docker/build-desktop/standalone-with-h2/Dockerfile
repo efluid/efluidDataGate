@@ -11,6 +11,9 @@ ENV xms=256m
 ENV xmx=256m
 
 RUN mkdir /app
+RUN mkdir /logs
+RUN mkdir /cfg
+RUN mkdir /data
 
 COPY param-app.jar /app/param-app.jar
 COPY run.sh /app/run.sh
@@ -19,8 +22,6 @@ COPY logback.xml /cfg/logback.xml
 
 RUN dos2unix /app/run.sh && chmod +x /app/run.sh
 
-VOLUME /tmp
-VOLUME /logs	
-VOLUME /cfg
+VOLUME  ["/tmp", "/logs", "/cfg", "/data"]
 
 CMD ["/app/run.sh"]

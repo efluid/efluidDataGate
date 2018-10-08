@@ -32,7 +32,24 @@ Pour builder une version avec H2 sur un serveur efluid :
 
 L'instance est déployée dans le répo local docker sous le nom **paramethor**:*latest*
 
-**Pour démarrer la version standalone**
+**Pour démarrer la version standalone server avec les scripts fournis**
+
+S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de paramethor, comme ``/opt/server/paramethor``
+
+Après build, faire : 
+    
+    cp ./param-app/src/docker/start-paramethor.sh /opt/server/paramethor/
+
+Copier éventuellement la configuration désirée dans ``/opt/server/paramethor/dest/cfg/application.yml`` et ``/opt/server/paramethor/src/cfg/application.yml`` et lancer avec :
+
+    ## Exemple de création / lancement d'une instance "src" sur le port 8080
+    sudo /opt/server/paramethor/start-paramethor.sh src 8080
+
+    ## Exemple de création / lancement d'une instance "dest" sur le port 808&
+    sudo /opt/server/paramethor/start-paramethor.sh dest 8081
+
+
+**Pour démarrer la version standalone - A LA MAIN**
 
 Sous linux / windows, par exemple pour la version avec h2 : 
 
