@@ -45,17 +45,22 @@
  
 	<!-- Explicit logger for Extractor queries. Log it here into current console on custom format -->
  	<logger name="extractor.queries" additivity="false">
-		<level value="INFO" />
+		<level value="DEBUG" />
 		<appender-ref ref="FILE_QUERY" />
 	</logger>
 	
 	<!-- Explicit logger for Identifier queries. Log it here into current console on custom format -->
  	<logger name="identifier.queries" additivity="false">
-		<level value="INFO" />
+		<level value="DEBUG" />
 		<appender-ref ref="FILE_QUERY" />
 	</logger>
 	
- 
+	<!-- Explicit logger for update queries. Log it here into current console on custom format -->
+ 	<logger name="update.queries" additivity="false">
+		<level value="DEBUG" />
+		<appender-ref ref="FILE_QUERY" />
+	</logger>
+	
 	<!-- Default level for every logged resources -->
 	<root level="WARN">
 		<appender-ref ref="STDOUT" />
