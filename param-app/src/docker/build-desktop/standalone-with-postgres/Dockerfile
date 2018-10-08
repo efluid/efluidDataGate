@@ -24,6 +24,7 @@ COPY param-app.jar /app/param-app.jar
 COPY init-database.sql /docker-entrypoint-initdb.d
 COPY run.sh /app/run.sh
 COPY application.yml /cfg/application.yml
+COPY logback.xml /cfg/logback.xml
 
 RUN dos2unix /app/run.sh && chmod +x /app/run.sh && chown -R postgres:postgres /app
 

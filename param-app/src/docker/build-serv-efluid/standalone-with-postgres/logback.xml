@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<statusListener class="ch.qos.logback.core.status.NopStatusListener" />
+	
+	<!-- Log onto console only, with default format -->
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
+	
+	<!-- Rolling File Log output syntax - rotate file every day, keeps 30 days -->
+	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    	<file>/logs/app.log</file>
+    	<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      		<fileNamePattern>/logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>
+      		<maxHistory>30</maxHistory>
+    	</rollingPolicy>
+    	<append>true</append>
+    	<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    	</encoder>
+  	</appender>
+    
+	<!-- Rolling File Log output syntax - rotate file every day, keeps 30 days -->
+	<appender name="FILE_QUERY" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    	<file>/logs/queries.log</file>
+    	<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      		<fileNamePattern>/logs/queries.%d{yyyy-MM-dd}.log</fileNamePattern>
+      		<maxHistory>30</maxHistory>
+    	</rollingPolicy>
+    	<append>true</append>
+    	<encoder>
+			<pattern>%msg%n</pattern>
+    	</encoder>
+  	</appender>
+    
+	<!-- Default INFO enabled logs for application -->
+	<logger name="fr.uem.efluid" additivity="false">
+		<level value="INFO" />
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
+	</logger>
+ 
+	<!-- Explicit logger for Extractor queries. Log it here into current console on custom format -->
+ 	<logger name="extractor.queries" additivity="false">
+		<level value="INFO" />
+		<appender-ref ref="FILE_QUERY" />
+	</logger>
+	
+	<!-- Explicit logger for Identifier queries. Log it here into current console on custom format -->
+ 	<logger name="identifier.queries" additivity="false">
+		<level value="INFO" />
+		<appender-ref ref="FILE_QUERY" />
+	</logger>
+	
+ 
+	<!-- Default level for every logged resources -->
+	<root level="WARN">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
+	</root>
+
+</configuration>

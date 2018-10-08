@@ -26,4 +26,13 @@ public interface ApplicationApi {
 	@ResponseBody
 	@ApiOperation("Get name and application version for current instance")
 	ApplicationInfoView getCurrentInfo();
+	
+
+	/**
+	 * @return current app state (RUNNING)
+	 */
+	@RequestMapping(path = { "/state" }, method = GET)
+	@ResponseBody
+	@ApiOperation("Get running state of application")
+	String getCurrentState();
 }
