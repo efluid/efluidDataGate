@@ -8,7 +8,7 @@ docker run -it --rm \
     -v /data/EDT/mavenRepository:/data/EDT/mavenRepository \
     -v $(pwd):/usr/src/mymaven \
     -w /usr/src/mymaven maven:3.5-jdk-10 /bin/bash \
-    -c "mvn --global-settings /root/.m2/settings.xml --batch-mode install -DskipTests; cp /usr/src/mymaven/param-app/src/docker/build-serv-efluid/standalone-with-h2/* /usr/src/mymaven/param-app/target"
+    -c "mvn --global-settings /root/.m2/settings.xml --batch-mode -pl '!param-app-tests' install -DskipTests; cp /usr/src/mymaven/param-app/src/docker/build-serv-efluid/standalone-with-h2/* /usr/src/mymaven/param-app/target"
 
 ## Docker build
 docker build -t paramethor:latest-h2 ./param-app/target

@@ -11,9 +11,6 @@ ENV xms=256m
 ENV xmx=256m
 
 RUN mkdir /app
-RUN mkdir /logs
-RUN mkdir /cfg
-RUN mkdir /data
 
 COPY param-app.jar /app/param-app.jar
 COPY run.sh /app/run.sh

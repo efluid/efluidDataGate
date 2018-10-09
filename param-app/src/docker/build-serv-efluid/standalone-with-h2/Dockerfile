@@ -22,8 +22,6 @@ COPY logback.xml /cfg/logback.xml
 
 RUN dos2unix /app/run.sh && chmod +x /app/run.sh
 
-VOLUME /tmp
-VOLUME /logs	
-VOLUME /cfg
+VOLUME  ["/tmp", "/logs", "/cfg", "/data"]
 
 CMD ["/app/run.sh"]
