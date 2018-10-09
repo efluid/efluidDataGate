@@ -1,6 +1,12 @@
 package fr.uem.efluid.system.common;
 
+import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.*;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,9 +25,12 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.ProjectManagementService;
@@ -30,17 +39,37 @@ import fr.uem.efluid.system.stubs.ModelDatabaseAccess;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import junit.framework.AssertionFailedError;
+import static fr.uem.efluid.ColumnType.*;
 
 /**
  * @author elecomte
  * @version 1
  * @since v0.0.8
  */
+/**
+ * @author elecomte
+ * @since v0.0.8
+ * @version 1
+ */
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = { SystemTestConfig.class }, webEnvironment = WebEnvironment.DEFINED_PORT)
 @ContextConfiguration
 @AutoConfigureMockMvc
 public abstract class SystemTest {
+
+	private static final String DEFAULT_USER = "any";
+
+	private static final String DEFAULT_PROJECT = "Default";
+
+	private static final String DEFAULT_DOMAIN = "Test domain";
+
+	private static final String DEFAULT_VERSION = "vDefault";
+
+	private static final String DEFAULT_TABLE_ONE = "Table One";
+	private static final String DEFAULT_TABLE_TWO = "Table Two";
+	private static final String DEFAULT_TABLE_THREE = "Table Three";
+
+	private static final String DEFAULT_WHERE = "1=1";
 
 	protected static ResultActions currentAction;
 
@@ -67,6 +96,9 @@ public abstract class SystemTest {
 	@Autowired
 	private Config securityConfig;
 
+	@Autowired
+	private SystemTestAsyncDriver asyncDriver;
+
 	/**
 	 * 
 	 */
@@ -77,6 +109,7 @@ public abstract class SystemTest {
 		currentStartPage = null;
 
 		resetAuthentication();
+		resetAsyncProcess();
 	}
 
 	/**
@@ -102,9 +135,11 @@ public abstract class SystemTest {
 	 */
 	protected void initMinimalWizzardData() {
 
-		User user = user("any");
-		Project newProject = project("Default");
-		FunctionalDomain newDomain = domain("Test domain", newProject);
+		resetAsyncProcess();
+
+		User user = initDefaultUser();
+		Project newProject = initDefaultProject();
+		FunctionalDomain newDomain = initDefaultDomain(newProject);
 
 		modelDatabase().initWizzardData(user, newProject, Arrays.asList(newDomain));
 
@@ -116,8 +151,10 @@ public abstract class SystemTest {
 	 */
 	protected void initMinimalWizzardDataWithDomains(List<String> domainNames) {
 
-		User user = user("any");
-		Project newProject = project("Default");
+		resetAsyncProcess();
+
+		User user = initDefaultUser();
+		Project newProject = initDefaultProject();
 
 		modelDatabase().initWizzardData(user, newProject,
 				domainNames.stream().map(n -> domain(n, newProject)).collect(Collectors.toList()));
@@ -128,10 +165,28 @@ public abstract class SystemTest {
 	/**
 	 * 
 	 */
+	protected void initCompleteDictionaryWith3Tables() {
+
+		resetAsyncProcess();
+
+		User user = initDefaultUser();
+		Project newProject = initDefaultProject();
+		FunctionalDomain newDomain = initDefaultDomain(newProject);
+
+		modelDatabase().initWizzardData(user, newProject, Arrays.asList(newDomain));
+
+		this.dets.completeWizzard();
+
+		modelDatabase().initDictionary(initDefaultTables(newDomain), initDefaultVersion(newProject));
+	}
+
+	/**
+	 * 
+	 */
 	protected void implicitlyAuthenticatedAndOnPage(String page) {
 
 		// Authenticated as "any"
-		this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, "any"));
+		this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, DEFAULT_USER));
 
 		// On home page
 		currentStartPage = getCorrespondingLinkForPageName(page);
@@ -154,6 +209,16 @@ public abstract class SystemTest {
 		return new Project(this.projectMgmt.getCurrentSelectedProject().getUuid());
 	}
 
+	/**
+	 * @return
+	 */
+	protected FunctionalDomain getDefaultDomainFromCurrentProject() {
+		return modelDatabase().findDomainByProjectAndName(getCurrentUserProject(), DEFAULT_DOMAIN);
+	}
+
+	/**
+	 * 
+	 */
 	protected void resetAuthentication() {
 
 		// Reset auth
@@ -163,6 +228,24 @@ public abstract class SystemTest {
 		this.userHolder.setWizzardUser(null);
 
 		this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, null));
+	}
+
+	/**
+	 * 
+	 */
+	protected void resetAsyncProcess() {
+		this.asyncDriver.reset();
+	}
+
+	/**
+	 * <p>
+	 * For test on async process, allows to make the run "perpetual". Can be used for
+	 * example when checking the Diff generation, for validation of "exclusivity" of a
+	 * diff run
+	 * </p>
+	 */
+	protected void mockEternalAsyncProcess() {
+		this.asyncDriver.setLocked();
 	}
 
 	/**
@@ -206,6 +289,24 @@ public abstract class SystemTest {
 	 */
 	@SafeVarargs
 	protected final void post(String url, final Associate<String, String>... params) throws Exception {
+		post(url, Arrays.asList(params));
+	}
+
+	/**
+	 * @param url
+	 * @param params
+	 * @throws Exception
+	 */
+	protected final void post(String url, final PostParamSet params) throws Exception {
+		post(url, params.getParams());
+	}
+
+	/**
+	 * @param url
+	 * @param params
+	 * @throws Exception
+	 */
+	private final void post(String url, Collection<Associate<String, String>> params) throws Exception {
 
 		MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post(url);
 
@@ -287,6 +388,47 @@ public abstract class SystemTest {
 	}
 
 	/**
+	 * @return
+	 */
+	private static User initDefaultUser() {
+		return user(DEFAULT_USER);
+	}
+
+	/**
+	 * @return
+	 */
+	private static Project initDefaultProject() {
+		return project(DEFAULT_PROJECT);
+	}
+
+	/**
+	 * @param newProject
+	 * @return
+	 */
+	private static FunctionalDomain initDefaultDomain(Project newProject) {
+		return domain(DEFAULT_DOMAIN, newProject);
+	}
+
+	/**
+	 * @param newProject
+	 * @return
+	 */
+	private static Version initDefaultVersion(Project newProject) {
+		return version(DEFAULT_VERSION, newProject);
+	}
+
+	/**
+	 * @param domain
+	 * @return
+	 */
+	private static List<DictionaryEntry> initDefaultTables(FunctionalDomain domain) {
+		return Arrays.asList(
+				table(DEFAULT_TABLE_ONE, TABLE_ONE, domain, "\"PRESET\", \"SOMETHING\"", DEFAULT_WHERE, "VALUE", STRING),
+				table(DEFAULT_TABLE_TWO, TABLE_TWO, domain, "\"VALUE\", \"OTHER\"", DEFAULT_WHERE, "KEY", PK_STRING),
+				table(DEFAULT_TABLE_THREE, TABLE_THREE, domain, "\"OTHER\"", DEFAULT_WHERE, "VALUE", STRING));
+	}
+
+	/**
 	 * @param domain
 	 * @param project
 	 * @return
@@ -296,11 +438,35 @@ public abstract class SystemTest {
 	}
 
 	/**
+	 * @param name
+	 * @param project
+	 * @return
+	 */
+	protected static Version version(String name, Project project) {
+		return DataGenerationUtils.version(name, project);
+	}
+
+	/**
 	 * @param project
 	 * @return
 	 */
 	protected static Project project(String project) {
 		return DataGenerationUtils.project(project);
+	}
+
+	/**
+	 * @param name
+	 * @param tableName
+	 * @param domain
+	 * @param select
+	 * @param where
+	 * @param key
+	 * @param keyType
+	 * @return
+	 */
+	protected static DictionaryEntry table(String name, String tableName, FunctionalDomain domain, String select, String where, String key,
+			ColumnType keyType) {
+		return DataGenerationUtils.entry(name, domain, select, tableName, where, key, keyType);
 	}
 
 	/**
@@ -345,4 +511,82 @@ public abstract class SystemTest {
 		return Associate.of(name, value);
 	}
 
+	protected static PostParamSet postParams() {
+		return new PostParamSet();
+	}
+
+	protected static final class PostParamSet {
+
+		private List<Associate<String, String>> params = new ArrayList<>();
+
+		/**
+		 * <p>
+		 * Can convert a property of type list to a clean HTTP POST compliant attribute
+		 * </p>
+		 * 
+		 * @param toParams
+		 * @throws InvocationTargetException
+		 * @throws IllegalArgumentException
+		 * @throws Exception
+		 */
+		public PostParamSet with(String propertyName, List<?> toParams) throws InternalTestException {
+			int pos = 0;
+			for (Object item : toParams) {
+				Method[] methods = item.getClass().getMethods();
+
+				for (Method method : methods) {
+					if (method.getName().startsWith("get") || method.getName().startsWith("is")) {
+						try {
+							Object res = method.invoke(item);
+							String partName = propertyName + "[" + pos + "]." + propName(method);
+							if (res instanceof List) {
+								// Inner list
+								with(partName, (List<?>) res);
+							} else {
+								with(partName, res);
+							}
+						} catch (IllegalAccessException | InvocationTargetException e) {
+							throw new InternalTestException("Cannot extract data from method " + method.getName() + " in object of type "
+									+ item.getClass().getName(), e);
+						}
+					}
+				}
+				pos++;
+			}
+
+			return this;
+		}
+
+		/**
+		 * @param propertyName
+		 * @param toParam
+		 */
+		public PostParamSet with(String propertyName, Object toParam) {
+			this.params.add(Associate.of(propertyName, toParam.toString()));
+			return this;
+		}
+
+		/**
+		 * @return the params
+		 */
+		List<Associate<String, String>> getParams() {
+			return this.params;
+		}
+
+		/**
+		 * <p>
+		 * Get corresponding property name from a method
+		 * </p>
+		 * 
+		 * @param method
+		 * @return
+		 */
+		private static final String propName(Method method) {
+			if (method.getName().startsWith("get")) {
+				return method.getName().substring(2, 3).toLowerCase() + method.getName().substring(3);
+			}
+			return method.getName().substring(1, 2).toLowerCase() + method.getName().substring(2);
+
+		}
+	}
 }

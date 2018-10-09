@@ -67,7 +67,7 @@ public class DomainFixtures extends SystemTest {
 	@When("^the user remove functional domain (.*)$")
 	public void the_user_remove_functional_domain(String name) throws Throwable {
 
-		UUID domainUuid = modelDatabase().findDomainByName(name).getUuid();
+		UUID domainUuid = modelDatabase().findDomainByProjectAndName(getCurrentUserProject(), name).getUuid();
 
 		post("/ui/domains/remove/" + domainUuid);
 

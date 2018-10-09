@@ -1,14 +1,17 @@
 package fr.uem.efluid;
 
-import static fr.uem.efluid.Application.Packages.*;
-
-import java.sql.SQLException;
+import static fr.uem.efluid.Application.Packages.CONFIG;
+import static fr.uem.efluid.Application.Packages.CONVERTERS;
+import static fr.uem.efluid.Application.Packages.ENTITIES;
+import static fr.uem.efluid.Application.Packages.REPOSITORIES;
+import static fr.uem.efluid.Application.Packages.REPOSITORIES_IMPLS;
+import static fr.uem.efluid.Application.Packages.ROOT;
+import static fr.uem.efluid.Application.Packages.SERVICES;
+import static fr.uem.efluid.Application.Packages.TOOLS;
 
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
-import org.h2.server.web.WebServer;
-import org.h2.tools.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +27,8 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import fr.uem.efluid.tools.AsyncDriver;
+import fr.uem.efluid.tools.FutureAsyncDriver;
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
@@ -81,5 +86,17 @@ public class IntegrationTestConfig extends CustomDataSourceParameters {
 		LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
 				Boolean.valueOf(rules.isColumnNamesProtected()), Boolean.valueOf(rules.isTableNamesProtected()));
 		return rules;
+	}
+
+	/**
+	 * <p>
+	 * For integration tests, use standard async model
+	 * </p>
+	 * 
+	 * @return
+	 */
+	@Bean
+	public AsyncDriver futureAsyncDriver() {
+		return new FutureAsyncDriver(4);
 	}
 }

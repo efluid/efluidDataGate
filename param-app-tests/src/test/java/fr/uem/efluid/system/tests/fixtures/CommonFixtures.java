@@ -22,6 +22,11 @@ public class CommonFixtures extends SystemTest {
 		// Nothing : no database init
 	}
 
+	@Given("^the dictionary is fully initialized with tables 1, 2 and 3$")
+	public void the_dictionary_is_fully_initialized_with_tables() throws Throwable {
+		initCompleteDictionaryWith3Tables();
+	}
+
 	@When("^(.+) access to (.+)$")
 	public void user_access_to_page(String user, String page) throws Throwable {
 

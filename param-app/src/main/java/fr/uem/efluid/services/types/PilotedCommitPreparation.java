@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import fr.uem.efluid.model.entities.CommitState;
+import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.utils.ApplicationException;
 
 /**
@@ -42,7 +43,7 @@ import fr.uem.efluid.utils.ApplicationException;
  * @version 1
  * @param <T>
  */
-public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
+public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements AsyncDriver.SourceErrorAware {
 
 	private final UUID identifier;
 
@@ -164,10 +165,29 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	/**
 	 * @param error
 	 */
+	@Override
 	public <F> F fail(ApplicationException error) {
 		this.errorDuringPreparation = error;
 		setStatus(PilotedCommitStatus.FAILED);
 		throw error;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.tools.AsyncDriver.SourceErrorAware#hasSourceFailure()
+	 */
+	@Override
+	public boolean hasSourceFailure() {
+		return getErrorDuringPreparation() != null;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.tools.AsyncDriver.SourceErrorAware#getSourceFailure()
+	 */
+	@Override
+	public ApplicationException getSourceFailure() {
+		return getErrorDuringPreparation();
 	}
 
 	/**

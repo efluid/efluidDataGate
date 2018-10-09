@@ -19,11 +19,18 @@ public class UserFixtures extends SystemTest {
 	@Autowired
 	private UserRepository users;
 
+	@Given("^the user is authenticated$")
+	public void the_user_is_authenticated() throws Throwable {
+
+		// Implicit authentication and on page
+		implicitlyAuthenticatedAndOnPage("home page");
+	}
+
 	@Given("^the user is not authenticated$")
 	public void the_user_is_not_authenticated() throws Throwable {
 		resetAuthentication();
 	}
-	
+
 	@Then("^the current user is (.*)$")
 	public void the_current_user_is_user(String user) throws Throwable {
 		Assert.assertEquals(user, getCurrentUserLogin());

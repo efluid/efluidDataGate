@@ -3,7 +3,6 @@ package fr.uem.efluid.services;
 import static fr.uem.efluid.utils.ErrorType.ATTACHMENT_ERROR;
 import static fr.uem.efluid.utils.ErrorType.COMMIT_MISS_COMMENT;
 import static fr.uem.efluid.utils.ErrorType.IMPORT_RUNNING;
-import static fr.uem.efluid.utils.ErrorType.PREPARATION_BIZ_FAILURE;
 import static fr.uem.efluid.utils.ErrorType.PREPARATION_CANNOT_START;
 import static fr.uem.efluid.utils.ErrorType.PREPARATION_INTERRUPTED;
 import static fr.uem.efluid.utils.ErrorType.PREPARATION_NOT_READY;
@@ -25,12 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -59,6 +53,7 @@ import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.WizzardCommitPreparationResult;
+import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.FormatUtils;
@@ -113,8 +108,8 @@ public class PilotableCommitPreparationService {
 	@Autowired
 	private AttachmentProcessor.Provider attachProcs;
 
-	// TODO : use cfg entry.
-	private ExecutorService executor = Executors.newFixedThreadPool(4);
+	@Autowired
+	private AsyncDriver async;
 
 	// One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
 	private Map<UUID, PilotedCommitPreparation<?>> currents = new HashMap<>();
@@ -148,8 +143,7 @@ public class PilotableCommitPreparationService {
 					// Init feature support for attachments
 					setAttachmentFeatureSupports(preparation);
 
-					this.currents.put(p.getUuid(), preparation);
-					CompletableFuture.runAsync(() -> processAllDiff(preparation));
+					this.async.start(preparation, this::processAllDiff);
 
 					LOGGER.info("Request for a new commit preparation in wizzard context - starting preparation"
 							+ " {} for project \"{}\"", preparation.getIdentifier(), p.getName());
@@ -217,7 +211,7 @@ public class PilotableCommitPreparationService {
 		// Specify as active one
 		this.currents.put(projectUuid, preparation);
 
-		CompletableFuture.runAsync(() -> processAllDiff(preparation));
+		this.async.start(preparation, this::processAllDiff);
 
 		return preparation;
 	}
@@ -352,7 +346,7 @@ public class PilotableCommitPreparationService {
 		// Specify as active one
 		this.currents.put(projectUuid, preparation);
 
-		CompletableFuture.runAsync(() -> processAllMergeDiff(preparation));
+		this.async.start(preparation, this::processAllMergeDiff);
 
 		return importResult;
 	}
@@ -763,11 +757,7 @@ public class PilotableCommitPreparationService {
 
 			LOGGER.info("Diff LOCAL process starting with {} diff to run", Integer.valueOf(callables.size()));
 
-			List<LocalPreparedDiff> fullDiff = this.executor
-					.invokeAll(callables).stream()
-					.map(c -> gatherResult(c, preparation))
-					.sorted()
-					.collect(Collectors.toList());
+			List<LocalPreparedDiff> fullDiff = this.async.processSteps(callables, preparation);
 
 			// Keep in preparation for commit build
 			preparation.applyDiffDisplayContent(fullDiff);
@@ -823,12 +813,8 @@ public class PilotableCommitPreparationService {
 
 				LOGGER.info("Diff MERGE process starting with {} diff to run", Integer.valueOf(callables.size()));
 
-				List<MergePreparedDiff> fullDiff = this.executor
-						.invokeAll(callables)
-						.stream()
-						.map(c -> gatherResult(c, preparation))
-						.sorted()
-						.collect(Collectors.toList());
+				// Run all callables in parallel exec
+				List<MergePreparedDiff> fullDiff = this.async.processSteps(callables, preparation);
 
 				// Reset content in preparation for commit build, once completed
 				preparation.resetDiffDisplayContent();
@@ -1015,28 +1001,4 @@ public class PilotableCommitPreparationService {
 				}).collect(Collectors.toList());
 	}
 
-	/**
-	 * <p>
-	 * Join future execution and gather exception if any
-	 * </p>
-	 * 
-	 * @param future
-	 * @return
-	 */
-	private static <T> T gatherResult(Future<T> future, final PilotedCommitPreparation<?> current) {
-
-		try {
-			return future.get();
-		}
-
-		catch (InterruptedException | ExecutionException e) {
-			LOGGER.error("Error will processing diff", e);
-
-			// If already identified, keep going on 1st identified error
-			if (current.getErrorDuringPreparation() != null) {
-				throw current.getErrorDuringPreparation();
-			}
-			return current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
-		}
-	}
 }

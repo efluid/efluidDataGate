@@ -14,5 +14,8 @@
   "/ui/user/new": ["new user page"],
   "/ui/domains": ["functional domain edit page"],
   "/ui/dictionary": ["parameter table main page", "list of parameter tables page"],
-  "/ui/dictionary/new": ["new parameter table page"]
+  "/ui/dictionary/new": ["new parameter table page"],
+  "/ui/versions": ["list of versions"],
+  "/ui/dictionary/save" : ["save parameter table"],
+  "/ui/prepare" : ["diff launch page"]
 }

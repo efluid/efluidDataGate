@@ -1,5 +1,7 @@
 package fr.uem.efluid.system.stubs;
 
+import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,17 +14,22 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.entities.Version;
+import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.security.UserHolder;
 
 /**
  * <p>
- * A common component for init and use of app model (the database used for behaviors of the app)
+ * A common component for init and use of app model (the database used for behaviors of
+ * the app)
  * </p>
  * 
  * @author elecomte
@@ -46,6 +53,12 @@ public class ModelDatabaseAccess {
 
 	@Autowired
 	private FunctionalDomainRepository domains;
+
+	@Autowired
+	private DictionaryRepository entries;
+
+	@Autowired
+	private VersionRepository versions;
 
 	@Autowired
 	private PasswordEncoder encoder;
@@ -84,16 +97,58 @@ public class ModelDatabaseAccess {
 	/**
 	 * @param project
 	 */
-	public void initDictionary(Project project) {
-		// TODO
+	public void initDictionary(List<DictionaryEntry> tables, Version version) {
+
+		LOGGER.info("[MODEL-INIT] Setup some dictionary data");
+
+		this.entries.saveAll(tables);
+		this.versions.save(version);
+
+		this.entries.flush();
+		this.versions.flush();
 	}
 
 	/**
+	 * @param project
+	 */
+	public void initVersions(Project project, Collection<String> versionNames) {
+		this.versions.saveAll(versionNames.stream().map(n -> {
+			Version ver = new Version();
+			ver.setCreatedTime(LocalDateTime.now().minusDays(90));
+			ver.setUuid(UUID.randomUUID());
+			ver.setModelIdentity("iii");
+			ver.setName(n);
+			ver.setProject(project);
+			return ver;
+		}).collect(Collectors.toList()));
+		this.versions.flush();
+	}
+
+	/**
+	 * @param project
 	 * @param name
 	 * @return
 	 */
-	public FunctionalDomain findDomainByName(String name) {
-		return this.domains.findByName(name);
+	public Version findVersionByProjectAndName(Project project, String name) {
+		return this.versions.findByNameAndProject(name, project);
 	}
 
+	/**
+	 * @param project
+	 * @param name
+	 * @return
+	 */
+	public FunctionalDomain findDomainByProjectAndName(Project project, String name) {
+		return this.domains.findByProjectAndName(project, name);
+	}
+
+	/**
+	 * @param project
+	 * @param tablename
+	 * @return
+	 */
+	public DictionaryEntry findDictionaryEntryByProjectAndTableName(Project project, String tablename) throws Throwable {
+		return this.entries.findByDomainProject(project).stream().filter(e -> e.getTableName().equals(tablename)).findFirst()
+				.orElseThrow(() -> new AssertionError("Cannot find entry for table name " + tablename));
+	}
 }
