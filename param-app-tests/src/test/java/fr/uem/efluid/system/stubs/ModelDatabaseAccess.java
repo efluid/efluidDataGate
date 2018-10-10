@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.pac4j.core.credentials.password.PasswordEncoder;
@@ -109,15 +110,28 @@ public class ModelDatabaseAccess {
 	}
 
 	/**
+	 * <p>
+	 * Set versions. Will create them at startDaysBefore days before now. If more than
+	 * one, each will be created one day after previous, starting to startDaysBefore. So
+	 * for 3 versions, if startDaysBefore = 10, first is created 10 days ago, second 9
+	 * days ago, third 8 days ago
+	 * </p>
+	 * 
 	 * @param project
+	 * @param versionNames
+	 * @param startDaysBefore
 	 */
-	public void initVersions(Project project, Collection<String> versionNames) {
+	public void initVersions(Project project, Collection<String> versionNames, int startDaysBefore) {
+
+		AtomicInteger idx = new AtomicInteger(0);
+
 		this.versions.saveAll(versionNames.stream().map(n -> {
 			Version ver = new Version();
-			ver.setCreatedTime(LocalDateTime.now().minusDays(90));
+			ver.setCreatedTime(LocalDateTime.now().minusDays(startDaysBefore - idx.getAndIncrement()));
+			ver.setUpdatedTime(ver.getCreatedTime());
 			ver.setUuid(UUID.randomUUID());
 			ver.setModelIdentity("iii");
-			ver.setName(n);
+			ver.setName(n.trim());
 			ver.setProject(project);
 			return ver;
 		}).collect(Collectors.toList()));
@@ -130,7 +144,7 @@ public class ModelDatabaseAccess {
 	 * @return
 	 */
 	public Version findVersionByProjectAndName(Project project, String name) {
-		return this.versions.findByNameAndProject(name, project);
+		return this.versions.findByNameAndProject(name.trim(), project);
 	}
 
 	/**

@@ -1,6 +1,10 @@
 package fr.uem.efluid.system.common;
 
-import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.*;
+import static fr.uem.efluid.ColumnType.PK_STRING;
+import static fr.uem.efluid.ColumnType.STRING;
+import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.TABLE_ONE;
+import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.TABLE_THREE;
+import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.TABLE_TWO;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -36,10 +40,11 @@ import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.ProjectManagementService;
 import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
 import fr.uem.efluid.system.stubs.ModelDatabaseAccess;
+import fr.uem.efluid.system.stubs.TweakedAsyncDriver;
+import fr.uem.efluid.system.stubs.TweakedDatabaseIdentifier;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import junit.framework.AssertionFailedError;
-import static fr.uem.efluid.ColumnType.*;
 
 /**
  * @author elecomte
@@ -97,7 +102,10 @@ public abstract class SystemTest {
 	private Config securityConfig;
 
 	@Autowired
-	private SystemTestAsyncDriver asyncDriver;
+	private TweakedAsyncDriver asyncDriver;
+
+	@Autowired
+	private TweakedDatabaseIdentifier databaseIdentifier;
 
 	/**
 	 * 
@@ -110,6 +118,7 @@ public abstract class SystemTest {
 
 		resetAuthentication();
 		resetAsyncProcess();
+		resetDatabaseIdentifier();
 	}
 
 	/**
@@ -136,6 +145,7 @@ public abstract class SystemTest {
 	protected void initMinimalWizzardData() {
 
 		resetAsyncProcess();
+		resetDatabaseIdentifier();
 
 		User user = initDefaultUser();
 		Project newProject = initDefaultProject();
@@ -152,6 +162,7 @@ public abstract class SystemTest {
 	protected void initMinimalWizzardDataWithDomains(List<String> domainNames) {
 
 		resetAsyncProcess();
+		resetDatabaseIdentifier();
 
 		User user = initDefaultUser();
 		Project newProject = initDefaultProject();
@@ -168,6 +179,7 @@ public abstract class SystemTest {
 	protected void initCompleteDictionaryWith3Tables() {
 
 		resetAsyncProcess();
+		resetDatabaseIdentifier();
 
 		User user = initDefaultUser();
 		Project newProject = initDefaultProject();
@@ -237,6 +249,10 @@ public abstract class SystemTest {
 		this.asyncDriver.reset();
 	}
 
+	protected void resetDatabaseIdentifier() {
+		this.databaseIdentifier.reset();
+	}
+
 	/**
 	 * <p>
 	 * For test on async process, allows to make the run "perpetual". Can be used for
@@ -246,6 +262,19 @@ public abstract class SystemTest {
 	 */
 	protected void mockEternalAsyncProcess() {
 		this.asyncDriver.setLocked();
+	}
+
+	/**
+	 * <p>
+	 * Fix for testing the valid version provided by the database identifier. Allows also
+	 * to specify if the identifier table have an history or not
+	 * </p>
+	 * 
+	 * @param version
+	 */
+	protected void mockDatabaseIdentifierWithVersion(String version, boolean hasHistory) {
+		this.databaseIdentifier.setFixedVersion(version);
+		this.databaseIdentifier.setHasHistory(hasHistory);
 	}
 
 	/**
@@ -562,7 +591,7 @@ public abstract class SystemTest {
 		 * @param toParam
 		 */
 		public PostParamSet with(String propertyName, Object toParam) {
-			this.params.add(Associate.of(propertyName, toParam.toString()));
+			this.params.add(Associate.of(propertyName, toParam != null ? toParam.toString() : null));
 			return this;
 		}
 
@@ -583,9 +612,9 @@ public abstract class SystemTest {
 		 */
 		private static final String propName(Method method) {
 			if (method.getName().startsWith("get")) {
-				return method.getName().substring(2, 3).toLowerCase() + method.getName().substring(3);
+				return method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
 			}
-			return method.getName().substring(1, 2).toLowerCase() + method.getName().substring(2);
+			return method.getName().substring(2, 3).toLowerCase() + method.getName().substring(3);
 
 		}
 	}

@@ -33,6 +33,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import fr.uem.efluid.system.stubs.TweakedAsyncDriver;
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.utils.DatasourceUtils;
@@ -130,6 +131,6 @@ public class SystemTestConfig extends CustomDataSourceParameters {
 	 */
 	@Bean
 	public AsyncDriver futureAsyncDriver() {
-		return new SystemTestAsyncDriver();
+		return new TweakedAsyncDriver();
 	}
 }

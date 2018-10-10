@@ -1,4 +1,4 @@
-package fr.uem.efluid.system.common;
+package fr.uem.efluid.system.stubs;
 
 import java.util.Arrays;
 import java.util.List;
@@ -21,9 +21,9 @@ import fr.uem.efluid.utils.ApplicationException;
  * @since v0.0.8
  * @version 1
  */
-class SystemTestAsyncDriver extends FutureAsyncDriver {
+public class TweakedAsyncDriver extends FutureAsyncDriver {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(SystemTestAsyncDriver.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(TweakedAsyncDriver.class);
 
 	private boolean lockedRun;
 
@@ -32,23 +32,29 @@ class SystemTestAsyncDriver extends FutureAsyncDriver {
 	/**
 	 * @param poolSize
 	 */
-	SystemTestAsyncDriver() {
+	public TweakedAsyncDriver() {
 		super(4); // Fixed pool
 	}
 
 	/**
 	 * 
 	 */
-	void reset() {
+	public void reset() {
 		this.lockedRun = false;
 		this.forcedError = null;
 	}
 
-	void setLocked() {
+	/**
+	 * 
+	 */
+	public void setLocked() {
 		this.lockedRun = true;
 	}
 
-	void setForcedError(ApplicationException ex) {
+	/**
+	 * @param ex
+	 */
+	public void setForcedError(ApplicationException ex) {
 		this.forcedError = ex;
 	}
 
@@ -63,7 +69,7 @@ class SystemTestAsyncDriver extends FutureAsyncDriver {
 		// Add a delay to allow testing (else to fast to check running state)
 		CompletableFuture.runAsync(() -> {
 			try {
-				Thread.sleep(30);
+				Thread.sleep(250);
 			} catch (InterruptedException e) {
 				LOGGER.debug("Interrupted delay in test");
 			}

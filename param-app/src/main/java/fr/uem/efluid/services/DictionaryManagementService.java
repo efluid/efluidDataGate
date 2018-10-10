@@ -1,6 +1,6 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.DIC_ENTRY_NOT_FOUND;
+import static fr.uem.efluid.utils.ErrorType.*;
 import static fr.uem.efluid.utils.ErrorType.DIC_KEY_NOT_UNIQ;
 import static fr.uem.efluid.utils.ErrorType.DIC_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.DIC_NO_KEY;
@@ -424,12 +424,23 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		LOGGER.info("Init new content of dictionary entry for table {}", tableName);
 
+		List<FunctionalDomainData> domainDatas = this.getAvailableFunctionalDomains();
+
+		// Must have domain
+		if (domainDatas == null || domainDatas.size() == 0) {
+			throw new ApplicationException(DOMAIN_NOT_EXIST,
+					"No domain specified yet for current project. Cannot init entry for table " + tableName);
+		}
+
 		DictionaryEntryEditData edit = new DictionaryEntryEditData();
 
 		// Prepare minimal values
 		edit.setTable(tableName);
 		edit.setName(tableName);
 		edit.setWhere(SelectClauseGenerator.DEFAULT_WHERE_CLAUSE);
+
+		// Pre-select first domain
+		edit.setDomainUuid(domainDatas.get(0).getUuid());
 
 		// Add metadata to use for edit
 		edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
@@ -1277,20 +1288,24 @@ public class DictionaryManagementService extends AbstractApplicationService {
 						}
 					}
 
-//					// If not yet last
-//					else {
-//
-//						String nextModelIdentity = importedVersions.get(i + 1).getModelIdentity();
-//
-//						// If it's not a reuse of current model identity on new version, a
-//						// version is then missing
-//						if (type != IdentifierType.OLD_ONE && version.getModelIdentity() != null
-//								&& !version.getModelIdentity().equals(nextModelIdentity)) {
-//							throw new ApplicationException(VERSION_NOT_MODEL_ID, "Model id " + version.getModelIdentity()
-//									+ " is not of the required intermediate type in version \"" + version.getName() + "\"",
-//									version.getModelIdentity());
-//						}
-//					}
+					// // If not yet last
+					// else {
+					//
+					// String nextModelIdentity = importedVersions.get(i +
+					// 1).getModelIdentity();
+					//
+					// // If it's not a reuse of current model identity on new version, a
+					// // version is then missing
+					// if (type != IdentifierType.OLD_ONE && version.getModelIdentity() !=
+					// null
+					// && !version.getModelIdentity().equals(nextModelIdentity)) {
+					// throw new ApplicationException(VERSION_NOT_MODEL_ID, "Model id " +
+					// version.getModelIdentity()
+					// + " is not of the required intermediate type in version \"" +
+					// version.getName() + "\"",
+					// version.getModelIdentity());
+					// }
+					// }
 
 				}
 			}

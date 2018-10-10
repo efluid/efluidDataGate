@@ -46,7 +46,7 @@ param-efluid:
     attachments:
         enable-sql-execute: true
         enable-display: true
-    
+        
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
