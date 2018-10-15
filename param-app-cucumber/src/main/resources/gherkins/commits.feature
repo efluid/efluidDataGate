@@ -22,4 +22,3 @@ Feature: The update on parameter tables can be followed, checked and stored as c
     And a diff has already been launched
     When the user access to diff launch page
     Then an alert says that the diff is still running
-      

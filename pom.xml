@@ -10,7 +10,7 @@
 
 	<groupId>fr.uem.efluid</groupId>
 	<artifactId>param-parent</artifactId>
-	<version>0.2.0-SNAPSHOT</version>
+	<version>0.2.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<parent>
@@ -23,7 +23,7 @@
 		<module>param-common</module>
 		<module>param-api</module>
 		<module>param-app</module>
-		<module>param-app-tests</module>
+		<module>param-app-cucumber</module>
 		<module>param-generator</module>
 		<module>param-generator-example</module>
 	</modules>
@@ -319,6 +319,7 @@
 				<artifactId>param-app</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+			
 
 		</dependencies>
 	</dependencyManagement>

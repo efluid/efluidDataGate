@@ -1,12 +1,5 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.isIn;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +11,7 @@ import cucumber.api.Delimiter;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import fr.uem.efluid.services.types.FunctionalDomainData;
 import fr.uem.efluid.system.common.SystemTest;
 
 /**
@@ -83,13 +77,9 @@ public class DomainFixtures extends SystemTest {
 		get(getCorrespondingLinkForPageName("functional domain edit page"));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Then("^the (\\d+) \\w+ functional domains are displayed$")
 	public void the_x_functional_domains_are_displayed(int nbr) throws Throwable {
 
-		currentAction = currentAction.andExpect(model().attribute("domains", allOf(
-				hasSize(nbr), // List size ok
-				hasItems(hasProperty("name", isIn(specifiedDomainNames)))// Values
-		)));
+		assertModelIsSpecifiedListWithProperties(FunctionalDomainData.class, nbr, FunctionalDomainData::getName, specifiedDomainNames);
 	}
 }

@@ -1,12 +1,5 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.isIn;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,6 +13,7 @@ import cucumber.api.Delimiter;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.system.common.SystemTest;
 
 /**
@@ -93,16 +87,10 @@ public class VersionFixtures extends SystemTest {
 		get(getCorrespondingLinkForPageName("list of versions"));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Then("^the (\\d+) \\w+ versions are displayed$")
 	public void the_x_versions_are_displayed(int nbr) throws Throwable {
 
-		currentAction.andReturn().getModelAndView().getModel();
-		
-		currentAction = currentAction.andExpect(model().attribute("versions", allOf(
-				hasSize(nbr), // List size ok
-				hasItems(hasProperty("name", isIn(specifiedVersions)))// Values
-		)));
+		assertModelIsSpecifiedListWithProperties(VersionData.class, nbr, VersionData::getName, specifiedVersions);
 	}
 
 	@Then("^the update date of version (.*) is updated$")

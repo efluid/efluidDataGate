@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import java.util.Arrays;
 import java.util.List;
 
+import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import org.hamcrest.Matcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -123,7 +124,7 @@ public class ManagedDatabaseAccess {
 	 * 
 	 * @return
 	 */
-	public <T> List<Matcher<? extends T>> getColumnMatchersForTableOne() {
+	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableOne() {
 		return Arrays.asList(
 				columnMatcher("KEY", ColumnType.PK_ATOMIC),
 				columnMatcher("VALUE", ColumnType.STRING),
@@ -139,7 +140,7 @@ public class ManagedDatabaseAccess {
 	 * 
 	 * @return
 	 */
-	public <T> List<Matcher<? extends T>> getColumnMatchersForTableTwo() {
+	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableTwo() {
 		return Arrays.asList(
 				columnMatcher("KEY", ColumnType.PK_STRING),
 				columnMatcher("VALUE", ColumnType.STRING),
@@ -154,7 +155,7 @@ public class ManagedDatabaseAccess {
 	 * 
 	 * @return
 	 */
-	public <T> List<Matcher<? extends T>> getColumnMatchersForTableThree() {
+	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableThree() {
 		return Arrays.asList(
 				columnMatcher("KEY", ColumnType.PK_STRING),
 				columnMatcher("VALUE", ColumnType.STRING),
@@ -166,7 +167,7 @@ public class ManagedDatabaseAccess {
 	 * @param type
 	 * @return
 	 */
-	private static <T> Matcher<? extends T> columnMatcher(String name, ColumnType type) {
+	private static Matcher<DictionaryEntryEditData.ColumnEditData> columnMatcher(String name, ColumnType type) {
 		return allOf(hasProperty("name", equalTo(name)), hasProperty("type", equalTo(type)));
 	}
 }

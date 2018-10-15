@@ -10,7 +10,7 @@
 	<parent>
 		<groupId>fr.uem.efluid</groupId>
 		<artifactId>param-parent</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
+		<version>0.2.1-SNAPSHOT</version>
 	</parent>
 
 	<build>
@@ -28,6 +28,7 @@
 					</execution>
 				</executions>
 				<configuration>
+					<classifier>exec</classifier>
 					<mainClass>fr.uem.efluid.Application</mainClass>
 				</configuration>
 			</plugin>
@@ -152,12 +153,6 @@
 		<dependency>
 			<groupId>com.oracle</groupId>
 			<artifactId>ojdbc8</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.apache.xmlgraphics</groupId>
-			<artifactId>fop</artifactId>
-			<version>2.2</version>
 		</dependency>
 
 		<!-- For formated MD files -->

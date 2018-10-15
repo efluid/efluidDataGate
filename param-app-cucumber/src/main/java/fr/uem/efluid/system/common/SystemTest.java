@@ -12,8 +12,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.pac4j.core.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -287,7 +289,7 @@ public abstract class SystemTest {
 	 * </p>
 	 * 
 	 * @param url
-	 * @param params
+	 * @param args
 	 * @throws Exception
 	 */
 	protected final void get(String url, Object... args) throws Exception {
@@ -542,6 +544,25 @@ public abstract class SystemTest {
 
 	protected static PostParamSet postParams() {
 		return new PostParamSet();
+	}
+
+	/**
+	 * @param type
+	 * @param size
+	 * @param propertyAccess
+	 * @param properties
+	 */
+	protected static <T, K> void assertModelIsSpecifiedListWithProperties(
+			@SuppressWarnings("unused") Class<T> type,
+			int size,
+			Function<T, K> propertyAccess,
+			Collection<K> properties) {
+
+		@SuppressWarnings("unchecked")
+		Collection<T> datas = (Collection<T>) currentAction.andReturn().getModelAndView().getModel();
+
+		Assert.assertEquals(size, datas.size());
+		Assert.assertTrue(datas.stream().map(propertyAccess).allMatch(properties::contains));
 	}
 
 	protected static final class PostParamSet {
