@@ -37,9 +37,12 @@ param-efluid:
         enabled: true
         class-name: fr.uem.efluid.tools.DemoDatabaseIdentifier
     
+    imports:
+        check-model-version: true;
+        
     details:
         version: 1.1.1
-
+        
 ## TECH FEATURES CUSTOM
 spring:
     profiles:
@@ -71,3 +74,4 @@ spring:
 server:
     contextPath:
     port: 8080
+    

@@ -39,6 +39,7 @@ import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.model.repositories.AttachmentRepository;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.model.repositories.FeatureManager;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.LobPropertyRepository;
@@ -125,6 +126,9 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private AttachmentProcessor.Provider attachProcs;
+
+	@Autowired
+	private FeatureManager features;
 
 	/**
 	 * <p>
@@ -492,11 +496,16 @@ public class CommitService extends AbstractApplicationService {
 		// Need to be sorted by create time
 		Collections.sort(commitPckg.getContent(), Comparator.comparing(Commit::getCreatedTime));
 
+		// Version checking is a dynamic feature
+		boolean checkVersion = this.features.isEnabled(Feature.VALIDATE_VERSION_FOR_IMPORT);
+
 		// #4 Process commits, one by one
 		for (Commit imported : commitPckg.getContent()) {
 
-			// Referenced version must exist locally
-			assertImportedCommitHasExpectedVersion(imported);
+			// Referenced version must exist locally if feature enable
+			if (checkVersion) {
+				assertImportedCommitHasExpectedVersion(imported);
+			}
 
 			// Check if already stored localy (in "local" or "merged")
 			boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());

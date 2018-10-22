@@ -1,6 +1,5 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
