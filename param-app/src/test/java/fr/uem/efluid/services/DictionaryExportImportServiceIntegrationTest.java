@@ -35,8 +35,8 @@ public class DictionaryExportImportServiceIntegrationTest {
 	private static final String D = "import domain";
 	private static final String T = "IMPORT_TABLE";
 
-	private static final String TTESTSOURCE_UUID_IMPORT = "e9a0c749-19e6-4f1e-bcaa-e4a869bf25c0";
-	private static final String IMPORT_TABLE_UUID_IMPORT = "49f142ab-4fe6-4115-b6d8-bf2d4bcb34a5";
+	private static final String TTESTSOURCE_UUID_IMPORT = "d0bfeac8-9cec-4962-839b-c7fed7025c25";
+	private static final String IMPORT_TABLE_UUID_IMPORT = "29bc9e4e-f767-4e05-beef-b0266e800889";
 	
 	@Autowired
 	private DictionaryManagementService dictService;

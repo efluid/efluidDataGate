@@ -29,7 +29,7 @@ public class DomainFixtures extends SystemTest {
 	}
 
 	@Given("^the existing functional domains (.*)$")
-	public void the_following_functional_domains_exist(@Delimiter(",") List<String> domainNames) throws Throwable {
+	public void the_following_functional_domains_exist(@Delimiter(", ") List<String> domainNames) throws Throwable {
 
 		// Implicit init with domains
 		initMinimalWizzardDataWithDomains(domainNames);
@@ -44,7 +44,7 @@ public class DomainFixtures extends SystemTest {
 	@When("^the user add functional domain (.*)$")
 	public void the_user_add_functional_domain(String name) throws Throwable {
 
-		post("/ui/domains/add/" + URLEncoder.encode(name, "UTF-8"));
+		post("/ui/domains/add/" + name); // URLEncoder.encode(name, "UTF-8"));
 
 		// List can be unmodifiable, reset it
 		List<String> updatedDomainNames = new ArrayList<>();
@@ -80,6 +80,10 @@ public class DomainFixtures extends SystemTest {
 	@Then("^the (\\d+) \\w+ functional domains are displayed$")
 	public void the_x_functional_domains_are_displayed(int nbr) throws Throwable {
 
-		assertModelIsSpecifiedListWithProperties(FunctionalDomainData.class, nbr, FunctionalDomainData::getName, specifiedDomainNames);
+		assertModelIsSpecifiedListWithProperties(
+				"domains",
+				nbr,
+				FunctionalDomainData::getName,
+				specifiedDomainNames);
 	}
 }

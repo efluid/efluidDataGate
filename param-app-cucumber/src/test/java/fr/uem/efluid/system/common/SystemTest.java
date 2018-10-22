@@ -553,14 +553,15 @@ public abstract class SystemTest {
 	 * @param properties
 	 */
 	protected static <T, K> void assertModelIsSpecifiedListWithProperties(
-			@SuppressWarnings("unused") Class<T> type,
+			String property,
 			int size,
 			Function<T, K> propertyAccess,
 			Collection<K> properties) {
 
 		@SuppressWarnings("unchecked")
-		Collection<T> datas = (Collection<T>) currentAction.andReturn().getModelAndView().getModel();
+		Collection<T> datas = (Collection<T>) currentAction.andReturn().getModelAndView().getModel().get(property);
 
+		Assert.assertNotNull(datas);
 		Assert.assertEquals(size, datas.size());
 		Assert.assertTrue(datas.stream().map(propertyAccess).allMatch(properties::contains));
 	}

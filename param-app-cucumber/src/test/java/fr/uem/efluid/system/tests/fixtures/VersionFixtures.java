@@ -34,7 +34,7 @@ public class VersionFixtures extends SystemTest {
 	}
 
 	@Given("^the existing versions (.*)$")
-	public void the_existing_versions(@Delimiter(",") List<String> versions) throws Throwable {
+	public void the_existing_versions(@Delimiter(", ") List<String> versions) throws Throwable {
 
 		// Implicit init with default domain / project
 		initMinimalWizzardData();
@@ -90,7 +90,11 @@ public class VersionFixtures extends SystemTest {
 	@Then("^the (\\d+) \\w+ versions are displayed$")
 	public void the_x_versions_are_displayed(int nbr) throws Throwable {
 
-		assertModelIsSpecifiedListWithProperties(VersionData.class, nbr, VersionData::getName, specifiedVersions);
+		assertModelIsSpecifiedListWithProperties(
+				"versions",
+				nbr,
+				VersionData::getName,
+				specifiedVersions);
 	}
 
 	@Then("^the update date of version (.*) is updated$")
