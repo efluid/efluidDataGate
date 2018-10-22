@@ -105,18 +105,22 @@
 		</dependency>
 
 		<!-- JEE dependencies need to be specified since JDK9 -->
+
 		<dependency>
 			<groupId>javax.xml.bind</groupId>
 			<artifactId>jaxb-api</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>com.sun.xml.bind</groupId>
 			<artifactId>jaxb-core</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>com.sun.xml.bind</groupId>
 			<artifactId>jaxb-impl</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>javax.activation</groupId>
 			<artifactId>activation</artifactId>
@@ -158,6 +162,7 @@
 		</dependency>
 
 		<!-- For formated MD files -->
+
 		<dependency>
 			<groupId>com.github.rjeschke</groupId>
 			<artifactId>txtmark</artifactId>

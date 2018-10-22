@@ -57,6 +57,8 @@
 		<dependency.thymeleaf-layout.version>2.3.0</dependency.thymeleaf-layout.version>
 		<dependency.txtmark.version>0.13</dependency.txtmark.version>
 		<dependency.cucumber.version>1.2.4</dependency.cucumber.version>
+		<dependency.togglz.version>2.6.1.Final</dependency.togglz.version>
+		<dependency.togglz-thymeleaf.version>1.0.1.RELEASE</dependency.togglz-thymeleaf.version>
 
 		<!-- dependencies - webjars -->
 		<dependency.bootstrap.version>4.0.0-2</dependency.bootstrap.version>
@@ -134,7 +136,7 @@
 							</execution>
 						</executions>
 					</plugin>
-					
+
 				</plugins>
 			</build>
 		</profile>
@@ -204,7 +206,6 @@
 		<dependencies>
 
 			<!-- Basic common tools -->
-
 			<dependency>
 				<groupId>net.lingala.zip4j</groupId>
 				<artifactId>zip4j</artifactId>
@@ -223,16 +224,31 @@
 				<artifactId>jaxb-api</artifactId>
 				<version>${dependency.jaxb.version}</version>
 			</dependency>
+
 			<dependency>
 				<groupId>com.sun.xml.bind</groupId>
 				<artifactId>jaxb-core</artifactId>
 				<version>${dependency.jaxb.version}</version>
 			</dependency>
+
 			<dependency>
 				<groupId>com.sun.xml.bind</groupId>
 				<artifactId>jaxb-impl</artifactId>
 				<version>${dependency.jaxb.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>org.togglz</groupId>
+				<artifactId>togglz-spring-boot-starter</artifactId>
+				<version>${dependency.togglz.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.github.heneke.thymeleaf</groupId>
+				<artifactId>thymeleaf-extras-togglz</artifactId>
+				<version>${dependency.togglz-thymeleaf.version}</version>
+			</dependency>
+
 			<dependency>
 				<groupId>javax.activation</groupId>
 				<artifactId>activation</artifactId>
