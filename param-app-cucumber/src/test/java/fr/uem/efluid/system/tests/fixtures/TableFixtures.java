@@ -1,7 +1,6 @@
 package fr.uem.efluid.system.tests.fixtures;
 
 import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasProperty;
@@ -69,19 +68,25 @@ public class TableFixtures extends SystemTest {
 		a_managed_database_with_two_tables();
 
 		// Implicit select
-		the_user_select_one_table_to_create();
+		get(getCorrespondingLinkForPageName("new parameter table page") + "/" + ManagedDatabaseAccess.TABLE_ONE);
 
-		params = postParams();
+		// Get provided data to post them updated
+		DictionaryEntryEditData data = (DictionaryEntryEditData) currentAction.andReturn()
+				.getModelAndView().getModel().get("entry");
 
-		// Current data
-		currentAction.andDo(v -> {
-			DictionaryEntryEditData data = (DictionaryEntryEditData) v.getModelAndView().getModel().get("entry");
-			params.with("name", name)
-					.with("domainUuid", data.getDomainUuid())
-					.with("table", data.getTable())
-					.with("where", data.getWhere())
-					.with("columns", data.getColumns());
+		data.getColumns().forEach(c -> {
+			if (c.getName().equals("VALUE")) {
+				c.setKey(true);
+			} else {
+				c.setSelected(true);
+			}
 		});
+
+		params = postParams().with("name", name)
+				.with("domainUuid", data.getDomainUuid())
+				.with("table", data.getTable())
+				.with("where", data.getWhere())
+				.with("columns", data.getColumns());
 	}
 
 	@When("^the user select one table to create$")
@@ -108,15 +113,18 @@ public class TableFixtures extends SystemTest {
 		)));
 	}
 
-	@Then("^ the selected table data are initialized$")
+	@Then("^the selected table data are initialized$")
 	public void the_selected_table_data_are_initialized() throws Throwable {
 
 		// Check edit entry details
 		currentAction = currentAction.andExpect(model()
 				.attribute("entry", allOf(// Values
 						hasProperty("name", equalTo(ManagedDatabaseAccess.TABLE_ONE)),
-						hasProperty("table", equalTo(ManagedDatabaseAccess.TABLE_ONE)),
-						hasProperty("columns", contains(managedDatabase().getColumnMatchersForTableOne())))));
+						hasProperty("table", equalTo(ManagedDatabaseAccess.TABLE_ONE)))));
+
+		DictionaryEntryEditData data = (DictionaryEntryEditData) currentAction.andReturn().getModelAndView().getModel().get("entry");
+
+		data.getColumns().stream().allMatch(c -> managedDatabase().getColumnMatchersForTableOne().stream().anyMatch(m -> m.matches(c)));
 	}
 
 	@Then("^the default domain is automatically selected$")

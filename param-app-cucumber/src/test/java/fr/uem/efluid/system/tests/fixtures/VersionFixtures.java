@@ -1,12 +1,5 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.isIn;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,6 +13,7 @@ import cucumber.api.Delimiter;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.system.common.SystemTest;
 
 /**
@@ -40,7 +34,7 @@ public class VersionFixtures extends SystemTest {
 	}
 
 	@Given("^the existing versions (.*)$")
-	public void the_following_versions_exist(@Delimiter(",") List<String> versions) throws Throwable {
+	public void the_existing_versions(@Delimiter(", ") List<String> versions) throws Throwable {
 
 		// Implicit init with default domain / project
 		initMinimalWizzardData();
@@ -49,7 +43,7 @@ public class VersionFixtures extends SystemTest {
 		implicitlyAuthenticatedAndOnPage("list of versions");
 
 		// Init with specified versions
-		modelDatabase().initVersions(getCurrentUserProject(), versions);
+		modelDatabase().initVersions(getCurrentUserProject(), versions, 1);
 
 		// Keep version for update check
 		specifiedVersions = versions;
@@ -59,7 +53,7 @@ public class VersionFixtures extends SystemTest {
 	public void a_version_x_is_defined(String name) throws Throwable {
 
 		// Just setup a new update version
-		modelDatabase().initVersions(getCurrentUserProject(), Arrays.asList(name));
+		modelDatabase().initVersions(getCurrentUserProject(), Arrays.asList(name), 50);
 	}
 
 	@When("^the user add new version (.*)$")
@@ -93,14 +87,14 @@ public class VersionFixtures extends SystemTest {
 		get(getCorrespondingLinkForPageName("list of versions"));
 	}
 
-	@SuppressWarnings("unchecked")
 	@Then("^the (\\d+) \\w+ versions are displayed$")
 	public void the_x_versions_are_displayed(int nbr) throws Throwable {
 
-		currentAction = currentAction.andExpect(model().attribute("versions", allOf(
-				hasSize(nbr), // List size ok
-				hasItems(hasProperty("name", isIn(specifiedVersions)))// Values
-		)));
+		assertModelIsSpecifiedListWithProperties(
+				"versions",
+				nbr,
+				VersionData::getName,
+				specifiedVersions);
 	}
 
 	@Then("^the update date of version (.*) is updated$")

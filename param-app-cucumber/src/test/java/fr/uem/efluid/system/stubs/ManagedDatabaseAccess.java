@@ -7,6 +7,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import java.util.Arrays;
 import java.util.List;
 
+import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import org.hamcrest.Matcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -123,12 +124,12 @@ public class ManagedDatabaseAccess {
 	 * 
 	 * @return
 	 */
-	public List<Matcher<?>> getColumnMatchersForTableOne() {
+	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableOne() {
 		return Arrays.asList(
-				columnMatcher("key", ColumnType.PK_ATOMIC),
-				columnMatcher("value", ColumnType.STRING),
-				columnMatcher("preset", ColumnType.STRING),
-				columnMatcher("something", ColumnType.STRING));
+				columnMatcher("KEY", ColumnType.PK_ATOMIC),
+				columnMatcher("VALUE", ColumnType.STRING),
+				columnMatcher("PRESET", ColumnType.STRING),
+				columnMatcher("SOMETHING", ColumnType.STRING));
 	}
 
 	/**
@@ -139,11 +140,26 @@ public class ManagedDatabaseAccess {
 	 * 
 	 * @return
 	 */
-	public List<Matcher<?>> getColumnMatchersForTableTwo() {
+	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableTwo() {
 		return Arrays.asList(
-				columnMatcher("key", ColumnType.PK_STRING),
-				columnMatcher("value", ColumnType.STRING),
-				columnMatcher("other", ColumnType.STRING));
+				columnMatcher("KEY", ColumnType.PK_STRING),
+				columnMatcher("VALUE", ColumnType.STRING),
+				columnMatcher("OTHER", ColumnType.STRING));
+	}
+
+	/**
+	 * <p>
+	 * Matcher spec for the columns for TABLE_THREE. Allows to check Column /
+	 * ColumnEditData content in an assertion
+	 * </p>
+	 * 
+	 * @return
+	 */
+	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableThree() {
+		return Arrays.asList(
+				columnMatcher("KEY", ColumnType.PK_STRING),
+				columnMatcher("VALUE", ColumnType.STRING),
+				columnMatcher("OTHER", ColumnType.STRING));
 	}
 
 	/**
@@ -151,7 +167,7 @@ public class ManagedDatabaseAccess {
 	 * @param type
 	 * @return
 	 */
-	private static Matcher<?> columnMatcher(String name, ColumnType type) {
+	private static Matcher<DictionaryEntryEditData.ColumnEditData> columnMatcher(String name, ColumnType type) {
 		return allOf(hasProperty("name", equalTo(name)), hasProperty("type", equalTo(type)));
 	}
 }

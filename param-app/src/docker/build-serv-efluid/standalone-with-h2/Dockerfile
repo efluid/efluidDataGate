@@ -15,7 +15,7 @@ ENV xmx=256m
 
 RUN mkdir /app
 
-COPY param-app.jar /app/param-app.jar
+COPY param-app-exec.jar /app/param-app-exec.jar
 COPY run.sh /app/run.sh
 COPY application.yml /cfg/application.yml
 COPY logback.xml /cfg/logback.xml

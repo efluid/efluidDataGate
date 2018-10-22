@@ -6,7 +6,7 @@
   "pages/domains" : ["functional domain"],
   "pages/dictionary" : ["parameter table list"],
   "pages/table_init" : ["new parameter table"],
-  "pages/table_edit" : ["parameter table edit"],
+  "pages/table_edit" : ["parameter table edit","parameter table create"],
   "pages/versions" : ["list of versions"],
   "pages/diff" : ["diff running"]
 }
