@@ -1,3 +1,4 @@
+## Build temp folder / cfg files
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -7,18 +8,18 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
-
-# Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
 .project
 .classpath
 .idea/
 .settings/
-/param-gest.iml
+.vscode/
+**/*.iml
+.sonar/
 
-/param-app/src/main/resources/config/application.yml
+## App resources
+param-app/src/main/resources/config/application.yml
 param-app/update-errors.out
 param-app/src/main/resources/config/application-dest.yml
 param-app/src/main/resources/config/application-marie.yml
-.vscode
 param-app/src/main/resources/config/application-small-server.yml

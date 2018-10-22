@@ -30,6 +30,12 @@
 
 	<properties>
 
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+		<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
+		<sonar.report.export.path>sonar-report.json</sonar.report.export.path>
+
 		<java.version>10</java.version>
 
 		<!-- dependencies - libs -->
@@ -61,12 +67,89 @@
 		<!-- Fixed plugins -->
 		<plugin.maven-plugin.version>3.5.2</plugin.maven-plugin.version>
 
+		<!-- Plugins for Sonar / Gerrit integration -->
+		<plugin.efluid-sonar-review.version>3.0.0-revf</plugin.efluid-sonar-review.version>
+		<plugin.sonar-scanner.version>3.5.0.1254</plugin.sonar-scanner.version>
+
 	</properties>
 
+	<profiles>
+		<profile>
+			<id>preview-sonar-gerrit</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<profile.description>permet de verifier les nouvelles violations
+					sonar, lors de la validation d'un change</profile.description>
+
+				<!-- Behaviors -->
+				<sonar.analysis.mode>preview</sonar.analysis.mode>
+				<sonar.gerrit.mode>preview</sonar.gerrit.mode>
+
+				<!-- For preview parsing -->
+				<sonar.gerrit.reviewFiles>
+					param-app/src/main/java/fr/uem/efluid/model/entities/Commit.java;
+					param-app/src/main/java/fr/uem/efluid/model/entities/DictionaryEntry.java;
+					param-app:src/main/java/fr/uem/efluid/security/ShaPasswordEncoder.java
+				</sonar.gerrit.reviewFiles>
+			</properties>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.sonarsource.scanner.maven</groupId>
+						<artifactId>sonar-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sonar-scan</id>
+								<phase>process-sources</phase>
+								<goals>
+									<goal>sonar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>com.efluid.utils</groupId>
+						<artifactId>sonar-review-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>preview-sonar-gerrit</id>
+								<phase>process-resources</phase>
+								<goals>
+									<goal>preview</goal>
+								</goals>
+								<configuration>
+									<changeId>1111</changeId>
+									<revisionId>22222</revisionId>
+									<scoreLabel>Code-Review</scoreLabel>
+									<scoreSeverities>-2: BLOCKER; -1: CRITICAL, MAJOR, MINOR, INFO</scoreSeverities>
+									<sonarHost>${sonar.host.url}</sonarHost>
+									<sonarUseHttps>false</sonarUseHttps>
+									<existingViolationStrategy>ALL</existingViolationStrategy>
+									<filesToReview>${sonar.gerrit.reviewFiles}</filesToReview>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<build>
 
 		<pluginManagement>
 			<plugins>
+
+				<plugin>
+					<groupId>com.efluid.utils</groupId>
+					<artifactId>sonar-review-maven-plugin</artifactId>
+					<version>${plugin.efluid-sonar-review.version}</version>
+				</plugin>
+
 				<!-- Complete default informations about used source code -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -319,7 +402,7 @@
 				<artifactId>param-app</artifactId>
 				<version>${project.version}</version>
 			</dependency>
-			
+
 
 		</dependencies>
 	</dependencyManagement>

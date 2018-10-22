@@ -16,6 +16,7 @@
 	<build>
 
 		<plugins>
+
 			<!-- Setup spring boot plugin fat-jar as standard -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -32,6 +33,7 @@
 					<mainClass>fr.uem.efluid.Application</mainClass>
 				</configuration>
 			</plugin>
+
 		</plugins>
 		<finalName>${project.artifactId}</finalName>
 
