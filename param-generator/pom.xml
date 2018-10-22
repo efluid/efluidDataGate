@@ -55,6 +55,7 @@
 		</plugins>
 
 	</build>
+	
 	<dependencies>
 
 		<!-- Application libs -->
