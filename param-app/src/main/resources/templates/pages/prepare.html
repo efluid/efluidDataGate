@@ -108,22 +108,26 @@
 													</th>
 												</tr>
 											</thead>
-											<tbody>
-												<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${dstat.index}_${tstat.index}_${estat.index}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
-													<td th:if="${!entry.displayOnly}" th:text="${entry.keyValue}">XAZER5555 - 22</td>
-													<td th:if="${entry.displayOnly}" class="similar-display" th:text="|${entry.keyValues.size()} entrées similaires|" th:title="|clées : ${entry.combinedKey}|">34 entrées similaires</td>
-													<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
-													<td><span class="change-display" th:utext="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
-													<td>
-														<input type="hidden" th:id="|selectFor${dstat.index}_${tstat.index}_${estat.index}|" th:field="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
-														<input type="hidden" th:id="|rollbackFor${dstat.index}_${tstat.index}_${estat.index}|" th:field="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
-														<div class="btn-group float-right" role="group">
-															<button type="button" th:class="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Garder</button>
-															<button type="button" th:class="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Annuler</button>
-															<button type="button" th:class="!${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected or preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-secondary btn-sm ignore-button':'btn btn-outline-secondary btn-sm ignore-button'" class="btn btn-secondary btn-sm ignore-button">Ignorer</button>
+											<tbody class="pageHolder" th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}|">
+												
+			     								<tr th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_searchBar|">
+			     									<td colspan="100%">
+			     										<div class="form-row">
+														    <div class="form-group col-md-8">
+																<input th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_searchField|" type="text" class="form-control" name="search" size="50" placeholder="Filtre"/>
+														    </div>
+														    <div class="col col-md-2">
+																<button class="btn btn-outline-success btn-sm float-right filterButton" >Filtrer par clés</button>
+														    </div>
 														</div>
 													</td>
-												</tr>
+			     								</tr>
+												<tr th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBar|">
+													<td colspan="100%">
+														<span th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBarContent|">
+														</span>
+													</td>
+			     								</tr>
 											</tbody>
 										</table>
 									</div>
@@ -159,6 +163,62 @@
 	</span>
     <script layout:fragment="script" th:inline="javascript">
 		 /*<![CDATA[*/
+		
+		/* For pagination */
+		
+		const getPageContent = (id, page) => {
+			
+			var parts = id.split("_"); 
+			var diffId = parts[1];
+			
+			var searchField = $("#" + id + "_searchField");
+			var search = searchField.val();
+			
+			$.get("/ui/prepare/page/" + diffId + "/" + page + "?search=" + search, (data, status) => {
+				
+				// Remove current page
+				$("#" + id + "_added").remove();
+				
+				var navBar = $("#" + id + "_navBar");
+				
+				// Put new items
+				data.page.each((index, e) => {
+				
+					var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
+					var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée' + e.keyValue;
+					var actionDisplay = e.action.name() === 'ADD' ? 'Ajout' : e.action.name() === 'REMOVE' ? 'Suppression' : 'Modification';
+				
+					var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
+					var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
+					var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
+				
+					var itemRow = 
+						'<tr id="item_' + e.indexForDiff + '" class="action-line ' + e.action + '">' +
+						 	'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
+						 	'<td class="action-display">' + actionDisplay + '</td>' +
+						 	'<td><span class="change-display" title="payload technique=' + e.payload + '">' + e.hrPayload + '</span></td>' + 
+						 	'<td>' +
+							 	'<div class="btn-group float-right" role="group">' +
+									'<button type="button" class="' + butSelecClass + '">Garder</button>' +
+									'<button type="button" class="' + butRollbackClass + '">Annuler</button>' +
+									'<button type="button" class="' + butIgnoreClass + '">Ignorer</button>' +
+								'</div>' +
+							'</td>' +
+						'</tr>';
+							
+					 navBar.before(itemRow);
+				}); 
+				
+				// Update navBar
+				$("#" + id + "_navBarContent").text('pageIndex : ' + data.pageIndex + ', pageCount : ' + data.pageCount + ',  totalCount : ' + data.totalCount);
+		    });
+		};
+		
+		const initPageData = (holder) => {
+			getPageContent(holder.id, 0);
+		};
+		
+		/* End pagination */
 		
         // When selecting
         const selectAction = (item) => {
@@ -322,6 +382,7 @@
 			$("button.all-hide-domain").click((e) => hideAndShowAllDomainAction(e.target.parentElement.parentElement.parentElement.id, 'hide'));
 			$("button.all-show-domain").click((e) => hideAndShowAllDomainAction(e.target.parentElement.parentElement.parentElement.id, 'show'));
 			$("#diffRemarkAreaButton").click((e) => hideAndShowDiffRemarksAction());
+			$(".pageHolder").each((index, e) => initPageData(e));
 		}); 
 		
     </script>

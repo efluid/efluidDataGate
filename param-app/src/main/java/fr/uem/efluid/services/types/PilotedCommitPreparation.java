@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -290,6 +291,10 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
 	 * Applies the diff to corresponding domain display, and provides the top level domain
 	 * DiffDisplay with a diff
 	 * </p>
+	 * <p>
+	 * Affect also an index for each diff line for the whole preparation (for quick access
+	 * / reference)
+	 * </p>
 	 * 
 	 * @param domainDisplayByDictUuid
 	 * @param fullDiff
@@ -300,6 +305,8 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
 		Map<UUID, DomainDiffDisplay<T>> domainsByUuid = this.domains.stream()
 				.collect(Collectors.toMap(DomainDiffDisplay::getDomainUuid, d -> d));
 
+		AtomicLong indexInPreparation = new AtomicLong(0);
+
 		fullDiff.stream().forEach(d -> {
 			DomainDiffDisplay<T> domain = domainsByUuid.get(d.getDomainUuid());
 
@@ -309,6 +316,9 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
 			}
 
 			domain.getPreparedContent().add(d);
+
+			// Apply index for the item
+			d.getDiff().stream().forEach(l -> l.setIndexForDiff(indexInPreparation.getAndIncrement()));
 		});
 	}
 

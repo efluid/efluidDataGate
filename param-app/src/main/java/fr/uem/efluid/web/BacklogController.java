@@ -22,6 +22,7 @@ import fr.uem.efluid.services.ApplyDiffService;
 import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
+import fr.uem.efluid.services.types.DiffDisplayPage;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
@@ -159,6 +160,79 @@ public class BacklogController extends CommonController {
 	@ResponseBody
 	public PilotedCommitStatus preparationGetStatus() {
 		return this.pilotableCommitService.getCurrentCommitPreparationStatus();
+	}
+
+	/**
+	 * @return content for paginated diffDisplay rendering
+	 */
+	@RequestMapping(path = { "/prepare/page/{uuid}/{page}", "/merge/page/{uuid}/{page}" }, method = GET)
+	@ResponseBody
+	public DiffDisplayPage preparationGetDiffDisplayPage(@PathVariable("uuid") UUID uuid, @PathVariable("page") int page,
+			@RequestParam(required = false) String search) {
+		
+		return this.pilotableCommitService.getPaginatedDiffDisplay(uuid, page, search);
+	}
+
+	/**
+	 * <p>
+	 * Update selection for the whole diff
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 */
+	@RequestMapping(path = { "/prepare/selection/all", "/merge/selection/all" }, method = POST)
+	public void preparationSelectionUpdateAll(@RequestParam boolean selected, @RequestParam boolean rollbacked) {
+
+		this.pilotableCommitService.updateAllPreparationSelections(selected, rollbacked);
+	}
+
+	/**
+	 * <p>
+	 * Update selection for a selected domain
+	 * </p>
+	 * 
+	 * @param domainUUID
+	 * @param selected
+	 * @param rollbacked
+	 */
+	@RequestMapping(path = { "/prepare/selection/domain/{domain}", "/merge/selection/domain/{domain}" }, method = POST)
+	public void preparationSelectionUpdateDomain(@PathVariable("domain") UUID domainUUID, @RequestParam boolean selected,
+			@RequestParam boolean rollbacked) {
+
+		this.pilotableCommitService.updateDomainPreparationSelections(selected, rollbacked, domainUUID);
+	}
+
+	/**
+	 * <p>
+	 * Update selection for one diffDisplay
+	 * </p>
+	 * 
+	 * @param dictUUID
+	 * @param selected
+	 * @param rollbacked
+	 */
+	@RequestMapping(path = { "/prepare/selection/dict/{dict}", "/merge/selection/dict/{dict}" }, method = POST)
+	public void preparationSelectionUpdateDiffDisplay(@PathVariable("dict") UUID dictUUID, @RequestParam boolean selected,
+			@RequestParam boolean rollbacked) {
+
+		this.pilotableCommitService.updateDiffDisplayPreparationSelections(selected, rollbacked, dictUUID);
+	}
+
+	/**
+	 * <p>
+	 * Update selection for one item
+	 * </p>
+	 * 
+	 * @param index
+	 * @param selected
+	 * @param rollbacked
+	 */
+	@RequestMapping(path = { "/prepare/selection/line/{index}", "/merge/selection/line/{index}" }, method = POST)
+	public void preparationSelectionUpdateItem(@PathVariable("index") long itemIndex, @RequestParam boolean selected,
+			@RequestParam boolean rollbacked) {
+
+		this.pilotableCommitService.updateDiffLinePreparationSelections(selected, rollbacked, itemIndex);
 	}
 
 	/**

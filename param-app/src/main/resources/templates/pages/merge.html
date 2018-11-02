@@ -116,8 +116,8 @@
 													</th>
 												</tr>
 											</thead>
-											<tbody>
-												<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${dstat.index}_${tstat.index}_${estat.index}|" th:if="${showAll or entry.needAction}">
+											<tbody class="pageHolder" th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}|">
+												<tr class="pageHolder" th:each="entry, estat : ${diffDisplay.diff}" th:id="|${dstat.index}_${tstat.index}_${estat.index}|" th:if="${showAll or entry.needAction}">
 													<td th:if="${!entry.displayOnly}" th:text="${entry.keyValue}">XAZER5555 - 22</td>
 													<td th:if="${entry.displayOnly}" class="similar-display" th:text="|${entry.keyValues.size()} entrées similaires|" th:title="|clées : ${entry.combinedKey}|">34 entrées similaires</td>
 													<td width="72%">
@@ -201,6 +201,12 @@
 	</span>
     <script layout:fragment="script" th:inline="javascript">
 		 /*<![CDATA[*/
+		 
+		 /* For pagination */
+		 
+		 const getPage = (
+		 
+		 /* End for pagination */
 		
         // When selecting
         const selectAction = (item) => {

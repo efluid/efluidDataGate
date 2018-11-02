@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,7 @@ import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.AttachmentLine;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.DiffDisplay;
+import fr.uem.efluid.services.types.DiffDisplayPage;
 import fr.uem.efluid.services.types.DomainDiffDisplay;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
@@ -86,6 +89,9 @@ public class PilotableCommitPreparationService {
 	protected static final String ATTACH_EXT = ".att";
 
 	protected static final String ATTACH_FILE_ID = "attachment";
+
+	@Value("${param-efluid.display.diff-page-size}")
+	private int diffDisplayPageSize;
 
 	@Autowired
 	private PrepareIndexService diffService;
@@ -356,6 +362,141 @@ public class PilotableCommitPreparationService {
 	 */
 	public PilotedCommitPreparation<?> getCurrentCommitPreparation() {
 		return this.currents.get(getActiveProjectUuid());
+	}
+
+	/**
+	 * <p>
+	 * Content of diffDisplay is rendered by paginated page. This method provides 1 page
+	 * for one diffDisplay content list. A search on key values can be specified (default
+	 * is null)
+	 * </p>
+	 * 
+	 * @param dictUUID
+	 * @param pageIndex
+	 * @param search
+	 * @return
+	 */
+	public DiffDisplayPage getPaginatedDiffDisplay(UUID dictUUID, int pageIndex, String search) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		if (current != null) {
+
+			Optional<? extends DiffDisplay<?>> searchDiffDisplay = current.getDomains().stream()
+					.flatMap(d -> d.getPreparedContent().stream())
+					.filter(c -> c.getDictionaryEntryUuid().equals(dictUUID))
+					.findFirst();
+
+			if (searchDiffDisplay.isPresent()) {
+
+				DiffDisplay<?> diffDisplay = searchDiffDisplay.get();
+
+				// If required, filter content
+				List<? extends PreparedIndexEntry> diffDisplayContent = search == null
+						? diffDisplay.getDiff()
+						: diffDisplay.getDiff().stream().filter(i -> i.getKeyValue().contains(search)).collect(Collectors.toList());
+
+				int pageCount = (diffDisplayContent.size() % this.diffDisplayPageSize) + 1;
+
+				List<? extends PreparedIndexEntry> pageContent;
+
+				// No pagination needed
+				if (pageCount == 1) {
+					pageContent = diffDisplayContent;
+				}
+
+				// Paginated
+				else if (pageIndex < pageCount) {
+					pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize + 1,
+							(pageIndex + 1) * this.diffDisplayPageSize);
+				}
+
+				// Special paginated case : last page
+				else {
+					pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize + 1, diffDisplayContent.size() - 1);
+				}
+
+				return new DiffDisplayPage(pageIndex, pageCount, diffDisplayContent.size(), pageContent, search);
+			}
+		}
+
+		throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation with dict " + dictUUID);
+	}
+
+	/**
+	 * <p>
+	 * Update one line in preparation, for paginated navigation
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 * @param indexForDiff
+	 */
+	public void updateDiffLinePreparationSelections(boolean selected, boolean rollbacked, long indexForDiff) {
+
+		getPreparationContentForSelection().streamDiffDisplay()
+				.flatMap(d -> d.getDiff().stream())
+				.filter(i -> i.getIndexForDiff() == indexForDiff).findFirst()
+				.ifPresent(i -> {
+					i.setRollbacked(rollbacked);
+					i.setSelected(selected);
+				});
+	}
+
+	/**
+	 * <p>
+	 * Update all preparation
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 */
+	public void updateAllPreparationSelections(boolean selected, boolean rollbacked) {
+		getPreparationContentForSelection().streamDiffDisplay()
+				.flatMap(d -> d.getDiff().stream())
+				.forEach(i -> {
+					i.setRollbacked(rollbacked);
+					i.setSelected(selected);
+				});
+	}
+
+	/**
+	 * <p>
+	 * Update preparation content for one domain
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 * @param domainUUID
+	 */
+	public void updateDomainPreparationSelections(boolean selected, boolean rollbacked, UUID domainUUID) {
+		getPreparationContentForSelection().getDomains().stream()
+				.filter(d -> d.getDomainUuid().equals(domainUUID))
+				.flatMap(d -> d.getPreparedContent().stream())
+				.flatMap(t -> t.getDiff().stream())
+				.forEach(i -> {
+					i.setRollbacked(rollbacked);
+					i.setSelected(selected);
+				});
+	}
+
+	/**
+	 * <p>
+	 * Update preparation content for one diffDisplay (dict page)
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 * @param dictUUID
+	 */
+	public void updateDiffDisplayPreparationSelections(boolean selected, boolean rollbacked, UUID dictUUID) {
+		getPreparationContentForSelection().streamDiffDisplay()
+				.filter(d -> d.getDictionaryEntryUuid().equals(dictUUID))
+				.flatMap(d -> d.getDiff().stream())
+				.forEach(i -> {
+					i.setRollbacked(rollbacked);
+					i.setSelected(selected);
+				});
 	}
 
 	/**
@@ -679,6 +820,20 @@ public class PilotableCommitPreparationService {
 		LOGGER.info("Saving completed for commit preparation. New commit is {}", commitUUID);
 
 		return commitUUID;
+	}
+
+	/**
+	 * @return
+	 */
+	private PilotedCommitPreparation<?> getPreparationContentForSelection() {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		if (current == null) {
+			throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation");
+		}
+
+		return current;
 	}
 
 	/**

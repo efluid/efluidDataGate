@@ -14,6 +14,8 @@ import fr.uem.efluid.model.entities.IndexEntry;
  */
 public class PreparedIndexEntry implements DiffLine, Rendered {
 
+	private long indexForDiff;
+
 	private Long id;
 
 	private UUID dictionaryEntryUuid;
@@ -39,6 +41,21 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
 	 */
 	public PreparedIndexEntry() {
 		super();
+	}
+
+	/**
+	 * @return the indexForDiff
+	 */
+	public long getIndexForDiff() {
+		return this.indexForDiff;
+	}
+
+	/**
+	 * @param indexForDiff
+	 *            the indexForDiff to set
+	 */
+	public void setIndexForDiff(long indexForDiff) {
+		this.indexForDiff = indexForDiff;
 	}
 
 	/**
@@ -262,7 +279,6 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
 
 		return data;
 	}
-
 
 	/**
 	 * Used when reading an index content

@@ -33,6 +33,7 @@ param-efluid:
         details-index-max: 10000
         combine-similar-diff-after: 10
         history-page-size: 20
+        diff-page-size: 10
         
     security:
         salt: 12345678901234567890123456789012
