@@ -5,6 +5,7 @@ import static fr.uem.efluid.ColumnType.STRING;
 import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.TABLE_ONE;
 import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.TABLE_THREE;
 import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.TABLE_TWO;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -219,6 +220,16 @@ public abstract class SystemTest {
 	/**
 	 * @return
 	 */
+	protected String getCurrentUserApiToken() {
+
+		User user = this.userHolder.getCurrentUser();
+
+		return user != null ? user.getToken() : null;
+	}
+
+	/**
+	 * @return
+	 */
 	protected Project getCurrentUserProject() {
 		return new Project(this.projectMgmt.getCurrentSelectedProject().getUuid());
 	}
@@ -298,6 +309,11 @@ public abstract class SystemTest {
 
 		if (currentStartPage != null) {
 			builder.header("Referer", currentStartPage);
+		}
+
+		// Add user token anyway
+		if (url.startsWith("/rest/")) {
+			builder.header("token", getCurrentUserApiToken());
 		}
 
 		builder.accept(MediaType.APPLICATION_JSON_UTF8);
@@ -544,6 +560,16 @@ public abstract class SystemTest {
 
 	protected static PostParamSet postParams() {
 		return new PostParamSet();
+	}
+
+	protected static void assertRequestWasOk() {
+		try {
+			currentAction.andExpect(status().isOk());
+		} catch (Throwable e) {
+			throw new AssertionError("Request process failed. Expect code 200, get " +
+					currentAction.andReturn().getResponse().getStatus(),
+					currentAction.andReturn().getResolvedException());
+		}
 	}
 
 	/**

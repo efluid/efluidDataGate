@@ -33,9 +33,6 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-		<sonar.jacoco.itReportPath>${project.basedir}/../target/jacoco-it.exec</sonar.jacoco.itReportPath>
-		<sonar.report.export.path>sonar-report.json</sonar.report.export.path>
-
 		<java.version>10</java.version>
 
 		<!-- dependencies - libs -->
@@ -72,8 +69,11 @@
 		<!-- Plugins for Sonar / Gerrit integration -->
 		<plugin.efluid-sonar-review.version>3.0.0-revf</plugin.efluid-sonar-review.version>
 		<plugin.sonar-scanner.version>3.5.0.1254</plugin.sonar-scanner.version>
+		<plugin.jacoco.version>0.8.2</plugin.jacoco.version>
 
 	</properties>
+
+	<!-- ###################### TESTING SONAR UPDATE / START ####################### -->
 
 	<profiles>
 		<profile>
@@ -86,8 +86,12 @@
 					sonar, lors de la validation d'un change</profile.description>
 
 				<!-- Behaviors -->
-				<sonar.analysis.mode>preview</sonar.analysis.mode>
+				<!-- <sonar.analysis.mode>preview</sonar.analysis.mode> -->
 				<sonar.gerrit.mode>preview</sonar.gerrit.mode>
+				<sonar.jacoco.reportPaths>${project.build.directory}/jacoco.exec</sonar.jacoco.reportPaths>
+				<sonar.issuesReport.json.enable>true</sonar.issuesReport.json.enable>
+				<sonar.report.export.path>sonar-report.json</sonar.report.export.path>
+				<sonar.working.directory>.sonar</sonar.working.directory>
 
 				<!-- For preview parsing -->
 				<sonar.gerrit.reviewFiles>
@@ -99,40 +103,76 @@
 
 			<build>
 				<plugins>
+					<!-- <plugin> <groupId>com.efluid.utils</groupId> <artifactId>sonar-review-maven-plugin</artifactId> 
+						<executions> <execution> <id>preview-sonar-gerrit</id> <phase>process-resources</phase> 
+						<goals> <goal>preview</goal> </goals> <configuration> <changeId>1111</changeId> 
+						<revisionId>22222</revisionId> <scoreLabel>Code-Review</scoreLabel> <scoreSeverities>-2: 
+						BLOCKER; -1: CRITICAL, MAJOR, MINOR, INFO</scoreSeverities> <sonarHost>${sonar.host.url}</sonarHost> 
+						<sonarUseHttps>false</sonarUseHttps> <existingViolationStrategy>ALL</existingViolationStrategy> 
+						<filesToReview>${sonar.gerrit.reviewFiles}</filesToReview> </configuration> 
+						</execution> </executions> </plugin> -->
+
 					<plugin>
-						<groupId>org.sonarsource.scanner.maven</groupId>
-						<artifactId>sonar-maven-plugin</artifactId>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+					
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<configuration>
+							<append>true</append>
+						</configuration>
 						<executions>
 							<execution>
-								<id>sonar-scan</id>
-								<phase>process-sources</phase>
+								<id>agent-for-ut</id>
 								<goals>
-									<goal>sonar</goal>
+									<goal>prepare-agent</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>agent-for-it</id>
+								<goals>
+									<goal>prepare-agent-integration</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>jacoco-report</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>report</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>default-instrument</id>
+								<goals>
+									<goal>instrument</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>default-restore-instrumented-classes</id>
+								<goals>
+									<goal>restore-instrumented-classes</goal>
 								</goals>
 							</execution>
 						</executions>
 					</plugin>
 
 					<plugin>
-						<groupId>com.efluid.utils</groupId>
-						<artifactId>sonar-review-maven-plugin</artifactId>
+						<groupId>org.sonarsource.scanner.maven</groupId>
+						<artifactId>sonar-maven-plugin</artifactId>
 						<executions>
 							<execution>
-								<id>preview-sonar-gerrit</id>
-								<phase>process-resources</phase>
+								<id>sonar-scan</id>
+								<phase>verify</phase>
 								<goals>
-									<goal>preview</goal>
+									<goal>sonar</goal>
 								</goals>
-								<configuration>
-									<changeId>1111</changeId>
-									<revisionId>22222</revisionId>
-									<scoreLabel>Code-Review</scoreLabel>
-									<scoreSeverities>-2: BLOCKER; -1: CRITICAL, MAJOR, MINOR, INFO</scoreSeverities>
-									<sonarHost>${sonar.host.url}</sonarHost>
-									<sonarUseHttps>false</sonarUseHttps>
-									<existingViolationStrategy>ALL</existingViolationStrategy>
-									<filesToReview>${sonar.gerrit.reviewFiles}</filesToReview>
-								</configuration>
 							</execution>
 						</executions>
 					</plugin>
@@ -141,16 +181,31 @@
 			</build>
 		</profile>
 	</profiles>
+
+	<!-- ###################### END / TESTING SONAR UPDATE ####################### -->
+
 	<build>
 
 		<pluginManagement>
 			<plugins>
 
+				<!-- ###################### TESTING SONAR UPDATE / START ####################### -->
+
+				<!-- -->
 				<plugin>
 					<groupId>com.efluid.utils</groupId>
 					<artifactId>sonar-review-maven-plugin</artifactId>
 					<version>${plugin.efluid-sonar-review.version}</version>
 				</plugin>
+
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>${plugin.jacoco.version}</version>
+				</plugin>
+
+				<!-- ###################### END / TESTING SONAR UPDATE ####################### -->
+
 
 				<!-- Complete default informations about used source code -->
 				<plugin>
@@ -182,6 +237,7 @@
 					<version>${plugin.maven-plugin.version}</version>
 				</plugin>
 
+				<!-- Inter-dependency - param dic generator -->
 				<plugin>
 					<groupId>${project.groupId}</groupId>
 					<artifactId>param-generator</artifactId>
