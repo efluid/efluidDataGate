@@ -25,7 +25,6 @@ import fr.uem.efluid.services.Feature;
  * @since v0.0.8
  * @version 1
  */
-@Repository
 public class PreSpecifiedFeatureManager implements FeatureManager {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PreSpecifiedFeatureManager.class);
