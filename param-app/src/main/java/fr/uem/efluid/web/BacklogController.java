@@ -182,6 +182,7 @@ public class BacklogController extends CommonController {
 	 * @param rollbacked
 	 */
 	@RequestMapping(path = { "/prepare/selection/all", "/merge/selection/all" }, method = POST)
+	@ResponseBody
 	public void preparationSelectionUpdateAll(@RequestParam boolean selected, @RequestParam boolean rollbacked) {
 
 		this.pilotableCommitService.updateAllPreparationSelections(selected, rollbacked);
@@ -197,6 +198,7 @@ public class BacklogController extends CommonController {
 	 * @param rollbacked
 	 */
 	@RequestMapping(path = { "/prepare/selection/domain/{domain}", "/merge/selection/domain/{domain}" }, method = POST)
+	@ResponseBody
 	public void preparationSelectionUpdateDomain(@PathVariable("domain") UUID domainUUID, @RequestParam boolean selected,
 			@RequestParam boolean rollbacked) {
 
@@ -213,6 +215,7 @@ public class BacklogController extends CommonController {
 	 * @param rollbacked
 	 */
 	@RequestMapping(path = { "/prepare/selection/dict/{dict}", "/merge/selection/dict/{dict}" }, method = POST)
+	@ResponseBody
 	public void preparationSelectionUpdateDiffDisplay(@PathVariable("dict") UUID dictUUID, @RequestParam boolean selected,
 			@RequestParam boolean rollbacked) {
 
@@ -229,6 +232,7 @@ public class BacklogController extends CommonController {
 	 * @param rollbacked
 	 */
 	@RequestMapping(path = { "/prepare/selection/line/{index}", "/merge/selection/line/{index}" }, method = POST)
+	@ResponseBody
 	public void preparationSelectionUpdateItem(@PathVariable("index") long itemIndex, @RequestParam boolean selected,
 			@RequestParam boolean rollbacked) {
 

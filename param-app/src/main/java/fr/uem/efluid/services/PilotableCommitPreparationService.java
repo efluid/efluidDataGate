@@ -396,7 +396,7 @@ public class PilotableCommitPreparationService {
 						? diffDisplay.getDiff()
 						: diffDisplay.getDiff().stream().filter(i -> i.getKeyValue().contains(search)).collect(Collectors.toList());
 
-				int pageCount = (diffDisplayContent.size() % this.diffDisplayPageSize) + 1;
+				int pageCount = (int) Math.round(Math.ceil((double) diffDisplayContent.size() / this.diffDisplayPageSize));
 
 				List<? extends PreparedIndexEntry> pageContent;
 
@@ -406,14 +406,14 @@ public class PilotableCommitPreparationService {
 				}
 
 				// Paginated
-				else if (pageIndex < pageCount) {
-					pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize + 1,
+				else if (pageIndex < pageCount - 1) {
+					pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize,
 							(pageIndex + 1) * this.diffDisplayPageSize);
 				}
 
 				// Special paginated case : last page
 				else {
-					pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize + 1, diffDisplayContent.size() - 1);
+					pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize, diffDisplayContent.size());
 				}
 
 				return new DiffDisplayPage(pageIndex, pageCount, diffDisplayContent.size(), pageContent, search);
