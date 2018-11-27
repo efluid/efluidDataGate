@@ -16,6 +16,7 @@ buildNumber.properties
 .vscode/
 **/*.iml
 .sonar/
+.scannerwork/
 
 ## App resources
 param-app/src/main/resources/config/application.yml
@@ -23,3 +24,4 @@ param-app/update-errors.out
 param-app/src/main/resources/config/application-dest.yml
 param-app/src/main/resources/config/application-marie.yml
 param-app/src/main/resources/config/application-small-server.yml
+param-generator-example/sonar-project.properties

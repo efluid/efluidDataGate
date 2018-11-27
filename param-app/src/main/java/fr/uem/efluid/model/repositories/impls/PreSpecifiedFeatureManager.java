@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Repository;
 
 import fr.uem.efluid.model.entities.ManagedFeature;
 import fr.uem.efluid.model.repositories.FeatureManager;
