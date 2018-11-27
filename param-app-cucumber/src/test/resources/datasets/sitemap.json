@@ -16,7 +16,8 @@
   "/ui/dictionary": ["parameter table main page", "list of parameter tables page"],
   "/ui/dictionary/new": ["new parameter table page"],
   "/ui/versions": ["list of versions"],
-  "/ui/dictionary/save" : ["save parameter table"],
+  "/ui/dictionary/save" : ["save parameter table", "saved parameter table"],
+  "/ui/dictionary/test" : ["test parameter table", "tested parameter table"],
   "/ui/prepare" : ["diff launch page"],
   "/rest/v1/features/" : ["feature listing rest service"]
 }

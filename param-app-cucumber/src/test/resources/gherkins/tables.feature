@@ -19,14 +19,14 @@ Feature: The managed parameters are specified by table in the dictionary
     And the default domain is automatically selected
     
   Scenario: An initialized parameter table is added to the project dictionary
-    Given a prepared parameter table data with name "My Table"
+    Given a prepared parameter table data with name "My Table" for managed table "TTAB_ONE"
     When the parameter table is saved by user
     Then the parameter table is added to the current user's project dictionary
     And the provided template is parameter table list
     
   Scenario: A dictionary entry table content is available for testing. The result is provided from stale table details
-    Given a prepared parameter table data with name "My Table"
-    When the user request a test on parameter table content
-    Then the parameter table query result is provided
+    Given a prepared parameter table data with name "My Table" for managed table "TTAB_TWO"
+    When the parameter table is tested by user
+    Then the parameter table query result is provided with 10 detailled lines from managed table "TTAB_TWO"
     
     

@@ -9,8 +9,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -449,22 +452,37 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 			final int colCount = meta.getColumnCount();
 			long totalCount = 0;
 			String[] columnNames = new String[colCount];
+			Set<String> existingColumns = new HashSet<>();
 			ColumnType[] columnType = new ColumnType[colCount];
 
 			// Identify columns
 			for (int i = 0; i < colCount; i++) {
+
 				String colname = meta.getColumnName(i + 1).toUpperCase();
-				columnNames[i] = colname;
-				columnType[i] = ColumnType.forJdbcType(meta.getColumnType(i + 1));
+
+				// Avoid duplicates
+				if (!existingColumns.contains(colname)) {
+					columnNames[i] = colname;
+					columnType[i] = ColumnType.forJdbcType(meta.getColumnType(i + 1));
+					existingColumns.add(colname);
+				}
 			}
 
-			this.holder.add(Arrays.asList(columnNames));
+			// With removed duplicates empty columns ...
+			this.holder.add(
+					Arrays.asList(columnNames).stream()
+							.filter(v -> v != null)
+							.collect(Collectors.toList()));
 
 			// Process content - limited details
 			while (rs.next() && totalCount < this.count) {
 				List<String> line = new ArrayList<>();
 				for (int i = 0; i < colCount; i++) {
-					extractValue(line, columnType[i], i + 1, rs);
+
+					// Avoid duplicates
+					if (columnNames[i] != null) {
+						extractValue(line, columnType[i], i + 1, rs);
+					}
 				}
 				this.holder.add(line);
 				totalCount++;
@@ -472,6 +490,11 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 			// Bad count ...
 			while (rs.next()) {
+				totalCount++;
+			}
+
+			// Remaining line
+			if (totalCount > this.count) {
 				totalCount++;
 			}
 

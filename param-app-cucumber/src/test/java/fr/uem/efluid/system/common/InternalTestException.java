@@ -7,6 +7,8 @@ package fr.uem.efluid.system.common;
  */
 public class InternalTestException extends RuntimeException {
 
+	private static final long serialVersionUID = 20181127;
+
 	/**
 	 * @param message
 	 * @param cause

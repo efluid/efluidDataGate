@@ -1,6 +1,6 @@
 package fr.uem.efluid.system.stubs.repositories;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import fr.uem.efluid.system.stubs.entities.SimulatedTableTwo;
 
@@ -9,7 +9,7 @@ import fr.uem.efluid.system.stubs.entities.SimulatedTableTwo;
  * @since v0.0.8
  * @version 1
  */
-public interface SimulatedTableTwoRepository extends CrudRepository<SimulatedTableTwo, String> {
+public interface SimulatedTableTwoRepository extends JpaRepository<SimulatedTableTwo, String> {
 
 	// Standard repo
 }

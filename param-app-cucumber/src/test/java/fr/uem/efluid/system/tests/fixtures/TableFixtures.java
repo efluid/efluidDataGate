@@ -9,15 +9,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Before;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
+import fr.uem.efluid.services.types.TestQueryData;
 import fr.uem.efluid.system.common.SystemTest;
 import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
 
@@ -61,14 +66,14 @@ public class TableFixtures extends SystemTest {
 		currentStartPage = getCorrespondingLinkForPageName("new parameter table page");
 	}
 
-	@Given("^a prepared parameter table data with name \"(.*)\"$")
-	public void a_prepared_parameter_table_data(String name) throws Throwable {
+	@Given("^a prepared parameter table data with name \"(.*)\" for managed table \"(.*)\"$")
+	public void a_prepared_parameter_table_data(String name, String table) throws Throwable {
 
 		// Implicit init with tables
 		a_managed_database_with_two_tables();
 
 		// Implicit select
-		get(getCorrespondingLinkForPageName("new parameter table page") + "/" + ManagedDatabaseAccess.TABLE_ONE);
+		get(getCorrespondingLinkForPageName("new parameter table page") + "/" + table);
 
 		// Get provided data to post them updated
 		DictionaryEntryEditData data = (DictionaryEntryEditData) currentAction.andReturn()
@@ -91,10 +96,10 @@ public class TableFixtures extends SystemTest {
 
 	@When("^the user request a test on parameter table content$")
 	public void when_user_request_test_content() throws Throwable {
-		
+
 		throw new AssertionError("Todo : get serialized content and post 'as this' ");
 	}
-	
+
 	@When("^the user select one table to create$")
 	public void the_user_select_one_table_to_create() throws Throwable {
 
@@ -102,11 +107,11 @@ public class TableFixtures extends SystemTest {
 		get(currentStartPage + "/" + ManagedDatabaseAccess.TABLE_ONE);
 	}
 
-	@When("^the parameter table is saved by user$")
-	public void the_parameter_table_is_saved_by_user() throws Throwable {
+	@When("^the parameter table is (.*) by user$")
+	public void the_parameter_table_is_saved_by_user(String type) throws Throwable {
 
 		// Post prepared data
-		post(getCorrespondingLinkForPageName("save parameter table"), params);
+		post(getCorrespondingLinkForPageName(type + " parameter table"), params);
 
 	}
 
@@ -147,5 +152,48 @@ public class TableFixtures extends SystemTest {
 	public void the_parameter_table_is_added_to_the_current_user_project_dictionary() throws Throwable {
 		Assert.assertNotNull(
 				modelDatabase().findDictionaryEntryByProjectAndTableName(getCurrentUserProject(), ManagedDatabaseAccess.TABLE_ONE));
+	}
+
+	@Then("^the parameter table query result is provided with (.*) detailled lines from managed table \"(.*)\"$")
+	public void the_parameter_table_query_result_is_provided(int detailCount, String tableName) throws Throwable {
+
+		ObjectMapper mapper = new ObjectMapper();
+		TestQueryData data = mapper.readValue(currentAction.andReturn().getResponse().getContentAsString(), TestQueryData.class);
+
+		// Contains column names
+		Assert.assertEquals("Should have specified number of detail items", detailCount, data.getTable().size() - 1);
+
+		Assert.assertEquals("Should have all the content with specified where clause", this.managedDatabase().countTable(tableName),
+				data.getTotalCount());
+
+		List<Map<String, String>> allTable = managedDatabase().getAllContentForTable(tableName);
+
+		// Same order for columns
+		List<String> names = managedDatabase().getColumnNamesForTable(tableName).stream().sorted().collect(Collectors.toList());
+
+		boolean first = true;
+		int linePos = 0;
+		for (List<String> line : data.getTable()) {
+
+			List<String> sorted = line.stream().sorted().collect(Collectors.toList());
+
+			// First : check headers
+			if (first) {
+				for (int i = 0; i < sorted.size(); i++) {
+					Assert.assertTrue(names.contains(sorted.get(i)));
+				}
+				first = false;
+			}
+
+			// Other : check content
+			else {
+				Map<String, String> res = allTable.get(linePos);
+
+				for (int i = 0; i < sorted.size(); i++) {
+					Assert.assertEquals(res.get(names.get(i)), sorted.get(i));
+				}
+				linePos++;
+			}
+		}
 	}
 }
