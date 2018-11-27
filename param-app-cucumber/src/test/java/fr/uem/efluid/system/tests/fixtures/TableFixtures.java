@@ -89,6 +89,12 @@ public class TableFixtures extends SystemTest {
 				.with("columns", data.getColumns());
 	}
 
+	@When("^the user request a test on parameter table content$")
+	public void when_user_request_test_content() throws Throwable {
+		
+		throw new AssertionError("Todo : get serialized content and post 'as this' ");
+	}
+	
 	@When("^the user select one table to create$")
 	public void the_user_select_one_table_to_create() throws Throwable {
 

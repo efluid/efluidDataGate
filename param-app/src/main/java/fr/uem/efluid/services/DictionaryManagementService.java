@@ -1,10 +1,11 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import static fr.uem.efluid.utils.ErrorType.DIC_ENTRY_NOT_FOUND;
 import static fr.uem.efluid.utils.ErrorType.DIC_KEY_NOT_UNIQ;
 import static fr.uem.efluid.utils.ErrorType.DIC_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.DIC_NO_KEY;
 import static fr.uem.efluid.utils.ErrorType.DIC_TOO_MANY_KEYS;
+import static fr.uem.efluid.utils.ErrorType.DOMAIN_NOT_EXIST;
 import static fr.uem.efluid.utils.ErrorType.DOMAIN_NOT_REMOVABLE;
 import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_MODEL_ID;
 
@@ -65,6 +66,7 @@ import fr.uem.efluid.services.types.TableLinkExportPackage;
 import fr.uem.efluid.services.types.TableLinkPackage;
 import fr.uem.efluid.services.types.TableMappingExportPackage;
 import fr.uem.efluid.services.types.TableMappingPackage;
+import fr.uem.efluid.services.types.TestQueryData;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.services.types.VersionExportPackage;
 import fr.uem.efluid.services.types.VersionPackage;
@@ -153,6 +155,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 	@Autowired
 	private ManagedModelDescriptionRepository modelDescs;
+
+	@Autowired
+	private PrepareIndexService indexService;
 
 	/**
 	 * @param name
@@ -484,7 +489,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		List<ColumnEditData> keys = editData.getColumns().stream().filter(ColumnEditData::isKey).sorted().collect(Collectors.toList());
 
 		// Apply keys, with support for composite keys
-		applyEditedKeys(entry, keys);
+		applyEditedKeys(entry, keys, true);
 
 		// Other common edited properties
 		entry.setDomain(this.domains.getOne(editData.getDomainUuid()));
@@ -506,6 +511,51 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
 		// And refresh dict Entry
 		this.dictionary.save(entry);
+	}
+
+	/**
+	 * <p>
+	 * Use details from a dictionary entry edit data to get corresponding result table.
+	 * Content is provided as a list of lines, 1st line (list of string) contains the
+	 * identified query headers, other lines are the corresponding content
+	 * </p>
+	 * <p>
+	 * Ignore all links
+	 * </p>
+	 * 
+	 * @param editData
+	 */
+	public TestQueryData testDictionaryEntryExtract(DictionaryEntryEditData editData) {
+
+		this.projectService.assertCurrentUserHasSelectedProject();
+		Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+		LOGGER.debug("Process testing on dictionary Entry on table {} for project {} (current id : {})",
+				editData.getTable(), project.getName(), editData.getUuid());
+
+		// Use a temporary entry
+		DictionaryEntry tmpEntry = new DictionaryEntry();
+
+		tmpEntry.setTableName(editData.getTable());
+
+		// Specified keys from columns
+		List<ColumnEditData> keys = editData.getColumns().stream().filter(ColumnEditData::isKey).sorted().collect(Collectors.toList());
+
+		// Apply keys, with support for composite keys
+		applyEditedKeys(tmpEntry, keys, false);
+
+		// Other common edited properties
+		tmpEntry.setDomain(this.domains.getOne(editData.getDomainUuid()));
+		tmpEntry.setParameterName(editData.getName());
+		tmpEntry.setWhereClause(editData.getWhere());
+
+		// Now update select clause using validated tableLinks
+		tmpEntry.setSelectClause(columnsAsSelectClause(editData.getColumns(),
+				Collections.emptyList(),
+				Collections.emptyList(),
+				new HashMap<>()));
+
+		return this.indexService.testActualContent(tmpEntry);
 	}
 
 	/**
@@ -802,11 +852,17 @@ public class DictionaryManagementService extends AbstractApplicationService {
 	 * provided <tt>DictionaryEntry</tt> from all the selected keys. Support composite
 	 * keys (max 5 key columns)
 	 * </p>
+	 * <p>
+	 * Do not run validations if <code>validate</code> is false (validation is mandatory
+	 * for dictionary entry edit, but can be ignored when running a simple data extract
+	 * test
+	 * </p>
 	 * 
 	 * @param entry
 	 * @param keys
+	 * @param validate
 	 */
-	private void applyEditedKeys(DictionaryEntry entry, List<ColumnEditData> keys) {
+	private void applyEditedKeys(DictionaryEntry entry, List<ColumnEditData> keys, boolean validate) {
 
 		// Assert key count (1-5)
 		assertKeysSelection(keys);
@@ -814,32 +870,42 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		// Always use first as "normal" key, then ext for others.
 		ColumnEditData first = keys.get(0);
 
-		warnKeyIsPk(entry, first);
+		if (validate) {
+			warnKeyIsPk(entry, first);
+		}
 
 		entry.setKeyName(first.getName());
 		entry.setKeyType(first.getType());
 		switch (keys.size()) {
 		case 5:
 			ColumnEditData key4 = keys.get(4);
-			warnKeyIsPk(entry, key4);
+			if (validate) {
+				warnKeyIsPk(entry, key4);
+			}
 			entry.setExt4KeyName(key4.getName());
 			entry.setExt4KeyType(key4.getType());
 			//$FALL-THROUGH$
 		case 4:
 			ColumnEditData key3 = keys.get(3);
-			warnKeyIsPk(entry, key3);
+			if (validate) {
+				warnKeyIsPk(entry, key3);
+			}
 			entry.setExt3KeyName(key3.getName());
 			entry.setExt3KeyType(key3.getType());
 			//$FALL-THROUGH$
 		case 3:
 			ColumnEditData key2 = keys.get(2);
-			warnKeyIsPk(entry, key2);
+			if (validate) {
+				warnKeyIsPk(entry, key2);
+			}
 			entry.setExt2KeyName(key2.getName());
 			entry.setExt2KeyType(key2.getType());
 			//$FALL-THROUGH$
 		case 2:
 			ColumnEditData key1 = keys.get(1);
-			warnKeyIsPk(entry, key1);
+			if (validate) {
+				warnKeyIsPk(entry, key1);
+			}
 			entry.setExt1KeyName(key1.getName());
 			entry.setExt1KeyType(key1.getType());
 			//$FALL-THROUGH$
@@ -848,7 +914,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 		}
 
 		// Controle also that the key is unique (heavy load)
-		assertKeyIsUniqueValue(entry);
+		if (validate) {
+			assertKeyIsUniqueValue(entry);
+		}
 	}
 
 	/**

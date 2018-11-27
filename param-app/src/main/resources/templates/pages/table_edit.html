@@ -4,7 +4,7 @@
 </head>
 <body>
     <span layout:fragment="content">
-		<form action="#" th:action="@{/ui/dictionary/save}" method="post">
+		<form id="editTableForm" action="#" th:action="@{/ui/dictionary/save}" method="post">
 			<h5>Edition d'une table de paramètrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
 			<span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramètrage.
 			La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel. Les dépendances sont prises en compte et validées
@@ -22,13 +22,20 @@
 				</select>
 				<small class="form-text text-muted">Le domaine fonctionnel ne pourra pas être modifié une fois la table de paramètrage créée</small>
 			</div>
-			<div class="form-group">
-				<label for="whereCriteria">Critère de filtrage des données</label>
-				<input id="whereCriteria" type="text" class="form-control" th:field="${entry.where}" value="1=1" size="50"/>
-				<small class="form-text text-muted">Le critère de filtrage est appliqué par défaut lors de chaque récupération de paramètre. Sa valeur est libre</small>
+			<div class="form-row">
+			   <div class="form-group col-md-11">
+			      	<label class="mr-sm-10" for="whereCriteria">Critère de filtrage des données</label>
+			      	<input id="whereCriteria" type="text" class="form-control mr-sm-10" th:field="${entry.where}" value="1=1" size="40"/>
+					<small class="form-text text-muted">Le critère de filtrage est appliqué par défaut lors de chaque récupération de paramètre. Sa valeur est libre</small>
+			    </div>
+			    <div class="col col-md-1">
+			        <label class="mr-sm-2">&nbsp;</label><br/>
+			      	<button id="testModalOpenButton" type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#queryModal">&nbsp;&nbsp;Tester&nbsp;&nbsp;</button>
+			      	<small class="form-text text-muted">&nbsp;</small>
+			    </div>
 			</div>
 			<div class="form-group">
-				<label for="exampleInputPassword1">Requête de selection obtenue&nbsp;&nbsp;&nbsp;<span class="important-remark">Les jointures sur les tables des dépendances ne sont générées qu'après enregistrement</span></label>
+				<label for="currentQuery">Requête de selection obtenue&nbsp;&nbsp;&nbsp;<span class="important-remark">Les jointures sur les tables des dépendances ne sont générées qu'après enregistrement</span></label>
 				<span class="query-display" id="currentQuery">SELECT COLKEY, COLA, COLB, COLC FROM TPROGRAMMATION WHERE 1=1 ORDER BY COLKEY</span>
 			</div>
 			<span th:if="${entry.missingTable}">
@@ -119,6 +126,48 @@
 			</span>
 		</form>
 		<input type="hidden" th:each="table : ${tables}" th:id="${table.tableName}" th:value="${table.fusedColumnNames}"/>
+		
+		<!-- Test query modal -->
+		<div class="modal fade" id="queryModal" tabindex="-1" role="dialog" aria-labelledby="queryModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+		    	<div class="modal-content">
+			      	<div class="modal-body">
+			      	<form>
+						<div class="form-row">
+						   <div class="form-group col-md-9">
+						      	<label for="whereCriteriaInModal">Tester le critère de filtrage des données</label>
+								<input id="whereCriteriaInModal" type="text" class="form-control" value="" size="40"/>
+						    </div>
+						    <div class="col col-md-1">
+						        <label class="mr-sm-2">&nbsp;</label><br/>
+						      	<button id="testExecInModalButton" type="button" class="btn btn-primary">Tester la requête</button>
+						    </div>
+						</div>
+						<div>
+							Requête de selection obtenue : <span class="query-display" id="currentQueryInModal">SELECT COLKEY, COLA, COLB, COLC FROM TPROGRAMMATION WHERE 1=1 ORDER BY COLKEY</span>
+						</div>
+						<div id="modalContent">
+							<table class="table table-sm">
+								<thead>
+									<tr>
+										<th id="modalHeadSpacer">&nbsp;</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr id="modalTabSpacer"></tr>
+								</tbody>
+							</table>
+						</div>
+					</form>
+					</div>
+			      	<div class="modal-footer">
+			      		<span id="countTestQuerySize"><span id="countTestQueryTableSize" style="font-weight:bold"></span> ligne(s) affichée(s) pour <span id="countTestQueryAllSize" style="font-weight:bold"></span> ligne(s) en tout</span>
+			        	<button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+			      	</div>
+		    	</div>
+		  	</div>
+		</div>
+		
 	</span>
 	<script layout:fragment="script">
 
@@ -140,12 +189,10 @@
 			var query = 'SELECT cur."' + key + '", cur."' + (selecteds.length == cols.length?'*':selecteds.join('", cur."')) + '" FROM "' + $("#table").val() + '" cur WHERE ' +   $("#whereCriteria").val() + ' ORDER BY cur."' + keys[0] + '"';
 			
 			$("#currentQuery").text(query);
-			console.info(query);
 		};
 		
 		// Apply fk column options in select
 		const selectedFkTab = (colName) => {
-			console.info(colName);
 			var selectTab = $("#fkSelectTabFor" + colName)[0];
 			var selectCol = $("#fkSelectColFor" + colName);
 			if(selectTab.selectedIndex > 0){
@@ -167,7 +214,6 @@
 		// Apply selected FK col
 		const selectedFkCol = (colName) => {
 			var val = $("#fkSelectColFor" + colName).val();
-			console.info(val);
 			$("#fkColFor" + colName).val(val);
 		};
 		
@@ -191,7 +237,6 @@
         const selectAction = (colName) => {
         	var selectInput = $("#selectFor" + colName);
 			if(selectInput.val() === 'false'){
-				console.info("selected " + colName);
 				unkeyAction(colName); // Cannot be key 
 				selectInput.val("true");
 				$("#" + colName + " td button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
@@ -205,7 +250,6 @@
         	var selectInput = $("#selectFor" + colName);
         	var keyInput = $("#keyFor" + colName);
 			if(selectInput.val() === 'true' || keyInput.val() === 'true'){
-				console.info("unselected " + colName);
 				selectInput.val("false");
 				$("#" + colName + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
 				$("#" + colName + " td button.unselect-button").removeClass("btn-outline-secondary").addClass("btn-secondary");
@@ -214,14 +258,11 @@
 			}
         };
 		
-        
 		// When specifying as key
 		const keyAction = (colName) => {
         	var keyInput = $("#keyFor" + colName);
 			if(keyInput.val() === 'false'){
 				unselectAction(colName); // Cannot be selected in same time
-				//$("tbody tr").each((i,e) => unkeyAction(e.id)); // Unkey all others
-				console.info("specify as key " + colName);
 				keyInput.val("true");
 				$("#" + colName + " td button.key-button").removeClass("btn-outline-dark").addClass("btn-dark");
 				$("#" + colName + " td button.unselect-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
@@ -229,6 +270,67 @@
 			}
         };
         
+        // Run current query in managed database
+		const updateQueryTestContent = (it) => {
+			
+        	var data = $('form').serialize();
+			$.post("/ui/dictionary/test", data, (result, status) => {
+				
+				// Remove current details
+				$(".test_added").remove();
+				
+				var contentRow = $("#modalTabSpacer");
+				var first = true;
+				
+				// Put new items
+				result.table.forEach(e => {
+				
+					// First row of result contains header titles
+					if(first){
+						var contentHeadCol = $("#modalHeadSpacer");
+						e.forEach(c => {
+							contentHeadCol.before('<th class="test_added">' + c + '</td>');
+						});
+						$("#countTestQueryTableSize").text(result.table.length - 1);
+						$("#countTestQueryAllSize").text(result.totalCount);
+						first = false;
+					} 
+					
+					// Other rows are content
+					else {
+						var row = '<tr class="test_added">';
+						
+						e.forEach(c => {
+							row += '<td>' + c + '</td>';
+						});
+						
+						row += '<td></td></tr>';
+					 	contentRow.before(row);
+					}
+				});
+		    });
+		};
+		
+		const updateQueryInModal = () => {
+			// Copy where from modal to content
+        	$("#whereCriteria").val($("#whereCriteriaInModal").val());
+        	
+        	// Update query in content
+			updateQuery();
+			
+			// Copy query into modal
+			$("#currentQueryInModal").text($("#currentQuery").text());
+		};
+        
+		// Test query model opening
+		const displayTestQueryModal = () => {
+			hideDisplays();
+			$("#whereCriteriaInModal").val( $("#whereCriteria").val());
+			$("#currentQueryInModal").text( $("#currentQuery").text());
+			updateQueryTestContent();
+		};
+		
+		
     	// Init actions
     	$(document).ready(() => {
 			$("button.key-button").click((e) => keyAction(e.target.parentElement.parentElement.parentElement.id));
@@ -239,6 +341,9 @@
 			$("#selectAllButton").click((e) => $("button.select-button").click());
 			$("#unselectAllButton").click((e) => $("button.unselect-button").click());
 			$("#whereCriteria").change(updateQuery);
+			$("#whereCriteriaInModal").change(updateQueryInModal);
+			$("#testExecInModalButton").click(updateQueryTestContent);
+			$('#queryModal').on('show.bs.modal', displayTestQueryModal); 
 			updateQuery();
 			prepareAllSelectedFks();
 		}); 

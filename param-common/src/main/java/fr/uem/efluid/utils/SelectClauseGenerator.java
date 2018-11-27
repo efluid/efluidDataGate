@@ -221,7 +221,7 @@ public class SelectClauseGenerator {
 	 */
 	protected static boolean hasMappedLinks(Collection<? extends ExportAwareTableLink<?>> links,
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
-		return links != null && links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
+		return links != null && links.size() > 0 && links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
 	}
 
 	/**

@@ -109,4 +109,15 @@ public final class FormatUtils {
 		return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
 	}
 
+	/**
+	 * <p>
+	 * Combines convert + format for compliance with internal rendering of datetimes
+	 * </p>
+	 * 
+	 * @param date
+	 * @return
+	 */
+	public static String formatRawDate(Date date) {
+		return format(toLdt(date));
+	}
 }

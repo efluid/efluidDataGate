@@ -22,6 +22,7 @@ import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.FunctionalDomainData;
+import fr.uem.efluid.services.types.TestQueryData;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.utils.WebUtils;
 
@@ -48,7 +49,7 @@ public class DictionaryController extends CommonController {
 
 	@Autowired
 	private ApplicationDetailsService applicationDetailsService;
-	
+
 	@RequestMapping("/versions")
 	public String versionsPage(Model model) {
 
@@ -58,7 +59,7 @@ public class DictionaryController extends CommonController {
 
 		// For formatting
 		WebUtils.addTools(model);
-		
+
 		model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
 		model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
 		model.addAttribute("checkVersion", Boolean.valueOf(this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion()));
@@ -180,6 +181,23 @@ public class DictionaryController extends CommonController {
 		model.addAttribute("from", "success_edit");
 
 		return dictionaryPage(model);
+	}
+
+	/**
+	 * <p>
+	 * Test features of a complete "ingoing" dictionary entry, to validate the
+	 * corresponding result. Help the user to update the where clause to include the
+	 * expected results
+	 * </p>
+	 * 
+	 * @param editData
+	 *            stale DictionaryEntry details.
+	 * @return
+	 */
+	@RequestMapping(path = "/dictionary/test", method = POST)
+	@ResponseBody
+	public TestQueryData dictionaryTestQuery(@Valid DictionaryEntryEditData editData) {
+		return this.dictionaryManagementService.testDictionaryEntryExtract(editData);
 	}
 
 	/**
