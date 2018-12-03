@@ -6,11 +6,12 @@
     <span layout:fragment="content">
 		<h5>Export de lots de modifications pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
 		<span class="help">L'export complet se fait à partir du 1er lot selectionné. Les exports de lots ne comportent que les données du projet courant.</span>
-        <span th:if="${checkVersion}" class="remark">
-        	Attention, l'export va être associé au dernier lot identifié <span th:text="${version.name}">1.2.4</span>, or des mises à jour ont été apportées
-        	au dictionnaire après la création de cette version. L'import pourra être en erreur si la version du dictionnaire cible n'intègre pas ces changements.
-        	Merci de vérifier qu'un import / export de dictionnaire n'est pas nécessaire.
-        </span>
+        <div th:if="${checkVersion}" class="alert alert-danger">
+        	Attention, l'export va être associé à la dernière version identifiée <span th:text="${version.name}">1.2.4</span>, or des mises à jour ont été apportées
+        	au dictionnaire après la création de cette version. 
+	        L'import pourra être en erreur si la version du dictionnaire cible n'intègre pas ces changements.
+	        Merci de vérifier qu'un import / export de dictionnaire n'est pas nécessaire en même temps.
+	    </div>
 		<table class="table table-sm">
 			<thead>
 				<tr>

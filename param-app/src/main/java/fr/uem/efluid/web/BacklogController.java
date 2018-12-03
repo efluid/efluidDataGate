@@ -169,7 +169,7 @@ public class BacklogController extends CommonController {
 	@ResponseBody
 	public DiffDisplayPage preparationGetDiffDisplayPage(@PathVariable("uuid") UUID uuid, @PathVariable("page") int page,
 			@RequestParam(required = false) String search) {
-		
+
 		return this.pilotableCommitService.getPaginatedDiffDisplay(uuid, page, search);
 	}
 
@@ -330,6 +330,7 @@ public class BacklogController extends CommonController {
 		// Get updated commits
 		model.addAttribute("commits", this.commitService.getAvailableCommits());
 		model.addAttribute("checkVersion", Boolean.valueOf(this.dictService.isDictionaryUpdatedAfterLastVersion()));
+		model.addAttribute("version", this.dictService.getLastVersion());
 
 		return "pages/push";
 	}
