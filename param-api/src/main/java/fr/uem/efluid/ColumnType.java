@@ -98,7 +98,7 @@ public enum ColumnType {
 	 */
 	public static ColumnType forClass(Class<?> obj) {
 
-		if (obj == String.class) {
+		if (obj == String.class || obj == char.class) {
 			return ColumnType.STRING;
 		}
 
@@ -200,6 +200,11 @@ public enum ColumnType {
 			return ColumnType.BINARY;
 		}
 
+	  // Explicit range for char
+    if ((type == Types.CHAR)) {
+      return ColumnType.STRING;
+    }
+    
 		// Explicit identification by type range
 		if ((type >= Types.ROWID && type <= Types.DOUBLE)) {
 			return ColumnType.ATOMIC;
