@@ -244,7 +244,9 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 			// Call for binary only if needed
 			if (type == ColumnType.BINARY) {
-				currentValueConverter.appendBinaryValue(lineHolder, columnName, rs.getBytes(colPosition), this.blobs);
+			  System.out.println(rs.getString(colPosition));
+			  System.out.println(rs.toString());
+				currentValueConverter.appendBinaryValue(lineHolder, columnName, rs.getString(colPosition).getBytes(), this.blobs);
 			}
 
 			// Boolean need full represent of boolean
