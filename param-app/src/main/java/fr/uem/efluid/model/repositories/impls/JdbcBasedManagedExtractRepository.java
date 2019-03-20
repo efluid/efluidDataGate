@@ -244,8 +244,6 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 			// Call for binary only if needed
 			if (type == ColumnType.BINARY) {
-			  System.out.println(rs.getString(colPosition));
-			  System.out.println(rs.toString());
 				currentValueConverter.appendBinaryValue(lineHolder, columnName, rs.getString(colPosition).getBytes(), this.blobs);
 			}
 
