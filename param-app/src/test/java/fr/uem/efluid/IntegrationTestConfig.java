@@ -84,7 +84,7 @@ public class IntegrationTestConfig extends CustomDataSourceParameters {
 		// Use local query config directly
 		QueryGenerationRules rules = this.getQuery();
 		LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
-				Boolean.valueOf(rules.isColumnNamesProtected()), Boolean.valueOf(rules.isTableNamesProtected()));
+				rules.isColumnNamesProtected(), rules.isTableNamesProtected());
 		return rules;
 	}
 

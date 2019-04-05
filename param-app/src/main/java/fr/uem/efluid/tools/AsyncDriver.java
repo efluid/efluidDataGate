@@ -1,10 +1,10 @@
 package fr.uem.efluid.tools;
 
+import fr.uem.efluid.utils.ApplicationException;
+
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
-
-import fr.uem.efluid.utils.ApplicationException;
 
 /**
  * <p>
@@ -40,7 +40,7 @@ public interface AsyncDriver {
 	 * @return
 	 * @throws InterruptedException
 	 */
-	public <T> List<T> processSteps(List<Callable<T>> stepCallables, final SourceErrorAware source)
+	<T> List<T> processSteps(List<Callable<T>> stepCallables, final SourceErrorAware source)
 			throws InterruptedException;
 
 	/**
@@ -52,7 +52,7 @@ public interface AsyncDriver {
 	 * @since v0.0.8
 	 * @version 1
 	 */
-	public static interface SourceErrorAware {
+	interface SourceErrorAware {
 
 		boolean hasSourceFailure();
 

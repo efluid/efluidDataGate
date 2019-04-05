@@ -502,7 +502,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 					this.max = 5;
 				} else if (dic.getExt3KeyName() != null) {
 					this.max = 4;
-				} else if (dic.getExt3KeyName() != null) {
+				} else if (dic.getExt2KeyName() != null) {
 					this.max = 3;
 				} else {
 					this.max = 2;
