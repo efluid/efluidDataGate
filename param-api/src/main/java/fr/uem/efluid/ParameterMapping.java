@@ -127,4 +127,12 @@ public @interface ParameterMapping {
 	 * @return
 	 */
 	String fromColumn() default "";
+
+	/**
+	 * <p>
+	 * Link name. Default will use the field / method name where it is found. It will be
+	 * used as ref identifier for mapping property
+	 * </p>
+	 */
+	String name() default "";
 }

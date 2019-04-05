@@ -49,7 +49,7 @@ import fr.uem.efluid.utils.ErrorType;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescriptionRepository {
 
@@ -64,12 +64,13 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 
 	private static final String ORACLE_FK_SEARCH_BY_CONSTRAINT_NAME = "select c.table_name as from_table,"
 			+ " a.column_name as from_col, "
-			+ "c.r_constraint_name as dest_constraint "
+			+ " c.r_constraint_name as dest_constraint, "
+			+ " a.position "
 			+ "from all_constraints c"
 			+ " inner join all_cons_columns a on a.constraint_name = c.constraint_name and a.OWNER = c.OWNER "
 			+ "where c.OWNER = ? and c.constraint_type = 'R'";
 
-	private static final String ORACLE_PK_SEARCH = "select c.table_name, a.column_name from all_constraints c "
+	private static final String ORACLE_PK_SEARCH = "select c.table_name, a.column_name, a.position from all_constraints c "
 			+ " inner join all_cons_columns a on a.constraint_name = c.constraint_name "
 			+ "	where c.OWNER = ? and c.constraint_type = 'P'";
 
@@ -78,7 +79,7 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 	private static final String ORACLE_FK_SEARCH_BY_CONSTRAINT_DETAILS = "select c.table_name as from_table, a.column_name as from_col, p.table_name as dest_table, p.column_name as dest_col "
 			+ "from all_constraints c "
 			+ "inner join all_cons_columns a on a.constraint_name = c.constraint_name and a.OWNER = c.OWNER "
-			+ "inner join all_cons_columns p on p.constraint_name = c.r_constraint_name and p.OWNER = c.OWNER "
+			+ "inner join all_cons_columns p on p.constraint_name = c.r_constraint_name and p.OWNER = c.OWNER and p.position = a.position "
 			+ "where c.OWNER = ? and c.constraint_type = 'R'";
 
 	@Value("${param-efluid.managed-datasource.meta.search-fk-type}")
@@ -219,10 +220,14 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 						TableDescription desc = descs.get(tableName);
 						if (desc != null) {
 							String columnName = rs.getString(2);
+							int columnPosition = rs.getInt(3);
 							desc.getColumns().stream()
 									.filter(c -> c.getName().equals(columnName))
 									.findFirst()
-									.ifPresent(AbstractDatabaseDescriptionRepository::setColumnAsPk);
+									.ifPresent(c -> {
+										setColumnAsPk(c);
+										c.setPosition(columnPosition); // PK position
+									});
 
 							if (LOGGER.isDebugEnabled()) {
 								processedTables.add(tableName);
@@ -371,6 +376,11 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 					TableDescription desc = descs.get(rs.getString(1));
 
 					if (desc != null) {
+
+						if (desc.getName().equals("T_REFERER_WITH_NAT_COMPO")) {
+							System.out.println("gotcha");
+						}
+
 						setForeignKey(desc, rs.getString(2), rs.getString(3), rs.getString(4));
 					}
 				}
@@ -410,8 +420,10 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 					TableDescription desc = descs.get(rs.getString(1));
 
 					if (desc != null) {
+
 						String columnName = rs.getString(2);
 						String destConstraint = rs.getString(3);
+						int position = rs.getInt(4);
 
 						// Use the PK name = 1st part is dest table name.
 						String destTable = destConstraint.substring(0, destConstraint.length() - ORACLE_PK_ENDING_FOR_FK_SEARCH.length());
@@ -420,9 +432,9 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
 
 						if (destDesc != null) {
 
-							// Search for the PK on the dest table
+							// Search for the PK on the dest table (on same position)
 							destDesc.getColumns().stream()
-									.filter(c -> c.getType().isPk())
+									.filter(c -> c.getType().isPk() && c.getPosition() == position)
 									.findFirst() // Then apply FK if found
 									.ifPresent(c -> setForeignKey(desc, columnName, destTable, c.getName()));
 						}

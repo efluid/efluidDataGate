@@ -54,9 +54,12 @@ public class ProjectManagementService extends AbstractApplicationService {
 	 * 
 	 */
 	public ProjectManagementService() {
-		// TODO Auto-generated constructor stub
+		super();
 	}
 
+	/**
+	 * @return
+	 */
 	public ProjectData getCurrentSelectedProject() {
 
 		// For now we are using project data stored in database directly, even if asked at

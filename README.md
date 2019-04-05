@@ -1,50 +1,82 @@
-# Gestion du paramètrage Efluid
+# PARAMETHOR
 
-Prototype d'application dédiée à l'identification, au packaging et au déploiement de paramètrage pour une instance Efluid.
-
-## Avancement général
-
-*Mise à jour au 21/03/2018* : Sécurité + Services REST pour pilotage de l'extérieur
-
-**Nouvelle organisation des projets**
-* Projet réorganisé pour distinguer l'application elle même de l'API de définition du dictionnaire depuis du code java
-* Ajout d'un sous projet générateur
-* Ajout d'un sous projet API
-
-**Doc à mettre à jour**
+Application dédiée à l'identification, au packaging et au déploiement de paramètrage pour une instance Efluid.
 
 ## Utilisation de l'application
 
-Le prototype est basé sur Spring-boot. Il n'y a rien à installer pour l'exécuter _par défaut_ :
-* Il démarre dans un mode "demo" par défaut
-* Il utilise alors une BDD embarquée H2 auto-générée. Attention elle est dropée au moment du stop
-* Plus loin dans ce README sont donnés des infos pour utiliser des BDD Postgres pour aller plus loin en terme de validation du comportement. 
 
-Le fichier de configuration technique de l'application est *src/main/resources/application.yml*
 
-### Quickstart standalone docker
-Deux dockerFiles différents sont proposés dans l'application : 1 pour construire une version simple de l'application, utilisant des BDD externes et un fichier de configuration externe, et 1 standalone permettant d'avoir une version totalement autonome de l'application
+## Build
 
-Dans cette instance Standalone, la BDD postgres est embarquée, et des données initiales sont préchargées. 2 BDD sont créées : celle nécessaire au fonctionnement de l'application, et la BDD "cible" démo. Ainsi le fonctionnement normalement (équivalent à la "production") de l'application peut être testé uniquement en lançant ce container de test.
+### Version Standalone docker
 
-Il peut être créé avec la démarche suivante (cela implique d'avoir uniquement docker installé sur son poste. Il n'est pas nécessaire d'avoir maven car on peut builder via un container docker)
+Une configuration complete "standalone" est intégrée. Elle intègre dans un seul container l'application (fat-jar) et une instance postgres complète pour le fonctionnement et la gestion. La configuration peut être montée depuis un volume.
 
-Soit le projet cloné dans "c:/work/projet" (cas avec Windows - modifier les dossiers si nécessaire), lancer : 
+Aucun autre pré-requis que la présence de docker sur le poste de build n'est nécessaire. Le build est traité par un script, où le build java (maven) est réalisé directement dans un container. Pour windows toutes les commandes sont données avec Powershell.
 
-    ## Build maven via un container docker (attention, pas de précache du .M2 ici donc lent)
-    docker run -it --rm -v c:\work\projet:/usr/src/mymaven -w /usr/src/mymaven maven:3.3-jdk-8 /bin/bash -c "mvn --batch-mode -DskipTests install; cp /usr/src/mymaven/src/docker/standalone/* /usr/src/mymaven/target"
-     
-    ## Si maven est installé sur le poste, utiliser plutôt :
-    mvn --batch-mode -DskipTests install
-    copy .\src\docker\standalone\* .\target
+**Pour builder la version standalone**
+
+Pour utiliser le build sur un poste de dev windows, par exemple pour la version avec postgres embarqué : 
+
+    ## être dans le dossier racine du projet
+    cd GestionParamEfluid
+    ## lancer le script de build depuis le dossier racine
+    ./param-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
+
+Pour builder une version avec H2 sur un serveur efluid :
+
+    ## être dans le dossier racine du projet
+    cd GestionParamEfluid
+    ## lancer le script de build depuis le dossier racine
+    ./param-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
+
+L'instance est déployée dans le répo local docker sous le nom **paramethor**:*latest*
+
+**Pour démarrer la version standalone server avec les scripts fournis**
+
+S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de paramethor, comme ``/opt/server/paramethor``
+
+Après build, faire : 
     
-    ## Préparation du container
-    docker build -t param-gest-standalone:latest c:\work\projet\target
-    
-    ## Démarrage
-    docker run -p 8080:8080 -p 5432:5432 --name param-gest-test param-gest-standalone:latest
+    cp ./param-app/src/docker/start-paramethor.sh /opt/server/paramethor/
 
-Les BDD sont initialisées, puis l'application démarre. Elle est ensuite accessible sur [http://localhost:8080](http://localhost:8080) Elle démarre en mode Wizzard avec en BDD gérée 
+Copier éventuellement la configuration désirée dans ``/opt/server/paramethor/dest/cfg/application.yml`` et ``/opt/server/paramethor/src/cfg/application.yml`` et lancer avec :
+
+    ## Exemple de création / lancement d'une instance "src" sur le port 8080
+    sudo /opt/server/paramethor/start-paramethor.sh src 8080
+
+    ## Exemple de création / lancement d'une instance "dest" sur le port 808&
+    sudo /opt/server/paramethor/start-paramethor.sh dest 8081
+
+
+**Pour démarrer la version standalone - A LA MAIN**
+
+Sous linux / windows, par exemple pour la version avec h2 : 
+
+    docker run -it --rm -p 8080:8080 paramethor:latest-h2
+
+Pour utiliser un fichier de configuration spécifique, le monter sous *"/cfg/application.yml"*. Par exemple : 
+
+Sous linux :
+
+    docker run -it --rm -p 8080:8080 -v $pwd/param-app/src/main/resources/config/application.yml:/cfg/application.yml paramethor:latest-h2
+
+Ou sous windows : 
+
+    docker run -it --rm -p 8080:8080 -v ${pwd}\param-app\src\main\resources\config\application.yml:/cfg/application.yml paramethor:latest-h2
+
+Les BDD sont initialisées, puis l'application démarre. Elle est ensuite accessible sur [http://localhost:8080](http://localhost:8080) Elle démarre en mode Wizzard avec en BDD gérée par défault l'instance local PGSQL
+
+Il existe 2 variantes à ce stade pour la version standalone :
+
+* paramethor:latest-h2 : avec BDD H2 embarquée
+* paramethor:latest-pgsql : avec BDD Postgres complète embarquée dans le même container
+
+### Version struff
+
+La version struff n'est pas à jour. Ne pas l'utiliser pour l'instant
+
+## Utilisation en développement
 
 ### Quickstart avec Maven
 Pour démarrer sans rien installer, juste à partir du projet cloné, en ayant maven sur son poste, et les bases de données nécessaires (voir plus loin), utiliser : 

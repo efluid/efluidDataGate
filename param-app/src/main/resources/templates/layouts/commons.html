@@ -25,7 +25,9 @@
 						<span th:text="${payload}" class="query-error">details</span>. Merci de contacter le support technique
 					</p>
 					<p th:case="'DIC_NO_KEY'">La clé est obligatoire dans la spécification d'une table de paramètrage</p>
+					<p th:case="'DIC_TOO_MANY_KEYS'">Le nombre de colonnes sélectionnées pour les clés composites ne doit pas dépasser un maximum de 5</p>
 					<p th:case="'DIC_ENTRY_NOT_FOUND'">Aucune entrée de dictionnaire trouvée pour l'identifiant donné</p>
+					<p th:case="'DOMAIN_NOT_EXIST'">Au moins un domaine fonctionnel doit avoir été créé dans le projet courant pour pouvoir créer une table de paramètrage</p>
 					<p th:case="'IMPORT_FAIL_FILE'">Le fichier importé ne peut pas être stocké localement</p>
 					<p th:case="'EXPORT_FAIL_FILE'">Le fichier d'export ne peut pas être préparé</p>
 					<p th:case="'IMPORT_WRONG_TYPE'">Le fichier importé référence un type de package non supporté</p>
@@ -101,6 +103,9 @@
 						La ou les versions du dictionnaire importé sont associées à une version du modèle différente de celle de l'application actuellement 
 						gérée (<span th:text="${payload}">1.2.3</span>). Le dictionnaire doit être mis à jour <b>après</b> application des changements dans le modèle
 						de base de données de l'application gérée.
+					</p>
+					<p th:case="'ATTACHMENT_EXEC_ERROR'">
+						L'exécution d'un script importé a échoué. Le détail de l'erreur rencontrée : <span th:text="${payload}">1.2.3</span>.
 					</p>
 					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
 				</span>

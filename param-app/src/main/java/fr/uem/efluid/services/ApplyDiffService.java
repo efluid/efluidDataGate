@@ -8,6 +8,8 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +20,7 @@ import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
 import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
 import fr.uem.efluid.services.types.RollbackLine;
+import fr.uem.efluid.services.types.SearchHistoryPage;
 
 /**
  * <p>
@@ -37,6 +40,11 @@ import fr.uem.efluid.services.types.RollbackLine;
 public class ApplyDiffService extends AbstractApplicationService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ApplyDiffService.class);
+
+	private static final String DEFAULT_HISTORY_SEARCH = "%";
+
+	@Value("${param-efluid.display.history-page-size}")
+	private int historyPageSize;
 
 	@Autowired
 	private ManagedUpdateRepository updates;
@@ -82,6 +90,23 @@ public class ApplyDiffService extends AbstractApplicationService {
 				.runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()), lobs,
 						project),
 				true);
+	}
+
+	/**
+	 * <p>
+	 * For requested page, search for given content in hisotyr queries
+	 * </p>
+	 * 
+	 * @param pageIndex
+	 * @param search
+	 * @return
+	 */
+	public SearchHistoryPage getHistory(int pageIndex, String search) {
+
+		String validSearch = search == null || "".equals(search.trim()) || "*".equals(search.trim()) ? DEFAULT_HISTORY_SEARCH : DEFAULT_HISTORY_SEARCH+search+DEFAULT_HISTORY_SEARCH;
+
+		return SearchHistoryPage.fromPage(pageIndex, search,
+				this.history.findByQueryLikeOrderByTimestampDesc(validSearch, PageRequest.of(pageIndex, this.historyPageSize)));
 	}
 
 	/**

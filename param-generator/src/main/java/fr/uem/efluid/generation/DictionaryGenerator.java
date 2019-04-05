@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.ParameterCompositeValue;
 import fr.uem.efluid.ParameterDomain;
 import fr.uem.efluid.ParameterIgnored;
 import fr.uem.efluid.ParameterKey;
@@ -40,6 +42,7 @@ import fr.uem.efluid.ParameterLink;
 import fr.uem.efluid.ParameterMapping;
 import fr.uem.efluid.ParameterProject;
 import fr.uem.efluid.ParameterTable;
+import fr.uem.efluid.ParameterTableSet;
 import fr.uem.efluid.ParameterValue;
 import fr.uem.efluid.ProjectColor;
 import fr.uem.efluid.clients.DictionaryApiClient;
@@ -73,11 +76,11 @@ import fr.uem.efluid.utils.SelectClauseGenerator;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 3
+ * @version 4
  */
 public class DictionaryGenerator {
 
-	private static final String VERSION = "3";
+	private static final String VERSION = "4";
 
 	private final DictionaryGeneratorConfig config;
 
@@ -112,7 +115,7 @@ public class DictionaryGenerator {
 			List<ParameterMappingDefinition> allMappings = new ArrayList<>();
 
 			/* Process all tables init + key for clean link building */
-			Map<Class<?>, ParameterTableDefinition> typeTables = initParameterTablesWithKeys(reflections,
+			Map<Class<?>, List<ParameterTableDefinition>> typeTables = initParameterTablesWithKeys(reflections,
 					searchDomainsByAnnotation(reflections, projects));
 
 			/* Complete project definitions */
@@ -127,12 +130,22 @@ public class DictionaryGenerator {
 			/* Finally, prepare a version for each projects */
 			Collection<ParameterVersionDefinition> allVersions = specifyVersionsByProjects(projectDefs.values());
 
+			/* Check everything is OK */
+			assertTableNotDuplicated(typeTables);
+
 			/* Now can export */
-			export(projectDefs.values(), allDomains, typeTables.values(), allLinks, allMappings, allVersions);
+			export(
+					projectDefs.values(),
+					allDomains,
+					typeTables.values().stream().flatMap(Collection::stream).collect(Collectors.toList()),
+					allLinks,
+					allMappings,
+					allVersions);
 
 			getLog().info("###### PARAM-GENERATOR VERSION " + VERSION + " - GENERATE COMPLETED IN "
 					+ BigDecimal.valueOf(System.currentTimeMillis() - start, 3).toPlainString()
 					+ " s ######");
+
 		} catch (Exception e) {
 			getLog().error("Process failed with", e);
 			throw e;
@@ -144,6 +157,7 @@ public class DictionaryGenerator {
 	 * @return
 	 */
 	private Reflections initReflectionEntryPoint(ClassLoader contextClassLoader) {
+
 		return new Reflections(new ConfigurationBuilder()
 				.addClassLoader(contextClassLoader)
 				.setUrls(ClasspathHelper.forPackage(this.config.getSourcePackage()))
@@ -156,7 +170,9 @@ public class DictionaryGenerator {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	private Map<Class<?>, String> searchDomainsByAnnotation(Reflections reflections, Map<String, ParameterProject> projects) {
+	private Map<Class<?>, String> searchDomainsByAnnotation(
+			Reflections reflections,
+			Map<String, ParameterProject> projects) {
 
 		getLog().debug("Process domains spec search");
 
@@ -191,7 +207,10 @@ public class DictionaryGenerator {
 				String packageName = typedDomain.getPackage().getName();
 
 				// Get all types for package, not directly annotated
-				reflections.getTypesAnnotatedWith(ParameterTable.class, true).stream()
+				Stream.concat(
+						reflections.getTypesAnnotatedWith(ParameterTable.class, true).stream(),
+						reflections.getTypesAnnotatedWith(ParameterTableSet.class, true).stream())
+
 						.filter(c -> c.getPackage().getName().startsWith(packageName))
 						.filter(c -> !typeDomains.containsKey(c))
 						.peek(t -> getLog()
@@ -207,21 +226,124 @@ public class DictionaryGenerator {
 	 * @param reflections
 	 * @return
 	 */
-	private Map<Class<?>, ParameterTableDefinition> initParameterTablesWithKeys(Reflections reflections,
+	private Map<Class<?>, List<ParameterTableDefinition>> initParameterTablesWithKeys(
+			Reflections reflections,
 			Map<Class<?>, String> annotDomains) {
 
 		getLog().debug("Process parameter table init with " + annotDomains.size() + " identified domain annotations");
 
-		Map<Class<?>, ParameterTableDefinition> tables = new HashMap<>();
+		Map<Class<?>, List<ParameterTableDefinition>> tables = new HashMap<>();
 
 		// Domains - direct search, with inherited
 		for (Class<?> tableType : reflections.getTypesAnnotatedWith(ParameterTable.class, false)) {
+			processParameterTableDirect(tableType, annotDomains, tables);
+		}
 
-			// Table cfg - includes inherited
-			ParameterTable paramTable = tableType.getAnnotation(ParameterTable.class);
+		// Then completed with ParameterTableSet
+		for (Class<?> tableSetType : reflections.getTypesAnnotatedWith(ParameterTableSet.class, false)) {
+			processParameterTableSet(tableSetType, annotDomains, tables);
+		}
 
-			// Only process concrete use of annotation
-			if (paramTable != null) {
+		return tables;
+	}
+
+	/**
+	 * <p>
+	 * For table directly annotated with <tt>ParameterTable</tt>
+	 * </p>
+	 * 
+	 * @param tableType
+	 * @param annotDomains
+	 * @param tables
+	 */
+	private void processParameterTableDirect(
+			Class<?> tableType,
+			Map<Class<?>, String> annotDomains,
+			Map<Class<?>, List<ParameterTableDefinition>> tables) {
+
+		// Table cfg - includes inherited
+		ParameterTable paramTable = tableType.getAnnotation(ParameterTable.class);
+
+		// Only process concrete use of annotation
+		if (paramTable != null) {
+
+			ParameterTableDefinition def = new ParameterTableDefinition();
+			def.setCreatedTime(LocalDateTime.now());
+			def.setUpdatedTime(def.getCreatedTime());
+			def.setDomain(new ParameterDomainDefinition()); // Will be merged later
+
+			// Found domain name
+			def.getDomain()
+					.setName(paramTable.domainName() != null && paramTable.domainName().trim().length() > 0 ? paramTable.domainName()
+							: annotDomains.get(tableType));
+
+			// Domain is mandatory
+			if (def.getDomain().getName() == null) {
+				throw new IllegalArgumentException(
+						"No domain found for type " + tableType.getName()
+								+ ". Need to specify the domain with meta-annotation, with package annotation or with domainName property in @ParameterTable");
+			}
+
+			// Init table def
+			def.setParameterName(
+					paramTable.name() == null || "".equals(paramTable.name()) ? tableType.getSimpleName() : paramTable.name());
+			def.setTableName("".equals(paramTable.tableName()) ? tableType.getSimpleName().toUpperCase() : paramTable.tableName());
+			def.setWhereClause(paramTable.filterClause());
+			def.setUuid(generateFixedUUID(def.getTableName(), ParameterTableDefinition.class));
+
+			getLog().debug("Found mapped parameter type " + tableType.getName() + " with table " + def.getTableName()
+					+ " and generated UUID " + def.getUuid().toString());
+
+			// Search for key (field / method or parameterTable)
+			completeTableParameterKey(tableType, paramTable, def);
+
+			List<ParameterTableDefinition> defs = tables.get(tableType);
+
+			if (defs == null) {
+				defs = new ArrayList<>();
+				tables.put(tableType, defs);
+			}
+
+			defs.add(def);
+		}
+	}
+
+	/**
+	 * <p>
+	 * For table directly annotated with <tt>ParameterTable</tt>
+	 * </p>
+	 * 
+	 * @param tableType
+	 * @param annotDomains
+	 * @param tables
+	 */
+	private void processParameterTableSet(
+			Class<?> tableSetType,
+			Map<Class<?>, String> annotDomains,
+			Map<Class<?>, List<ParameterTableDefinition>> tables) {
+
+		// Table cfg - includes inherited
+		ParameterTableSet paramTableSet = tableSetType.getAnnotation(ParameterTableSet.class);
+
+		List<ParameterTableDefinition> defs = tables.get(tableSetType);
+
+		if (defs == null) {
+			defs = new ArrayList<>();
+		}
+
+		// Only process concrete use of annotation
+		if (paramTableSet != null) {
+
+			// Search table spec on on "tables" or alias
+			ParameterTable[] paramTables = paramTableSet.value().length > 0 ? paramTableSet.value() : paramTableSet.tables();
+
+			// If none specified, error
+			if (paramTables.length == 0) {
+				throw new IllegalArgumentException("No ParameterTable specified into ParameterTableSet from class " + tableSetType.getName()
+						+ ". The @ParameterTable must be defined in \"value\" or \"tables\" attribute for a valid set");
+			}
+
+			for (ParameterTable paramTable : paramTables) {
 
 				ParameterTableDefinition def = new ParameterTableDefinition();
 				def.setCreatedTime(LocalDateTime.now());
@@ -231,33 +353,38 @@ public class DictionaryGenerator {
 				// Found domain name
 				def.getDomain()
 						.setName(paramTable.domainName() != null && paramTable.domainName().trim().length() > 0 ? paramTable.domainName()
-								: annotDomains.get(tableType));
+								: annotDomains.get(tableSetType));
 
-				// Domain is mandatory
+				// If not found this way, use the parameterTableSet domain
 				if (def.getDomain().getName() == null) {
-					throw new IllegalArgumentException(
-							"No domain found for type " + tableType.getName()
-									+ ". Need to specify the domain with meta-annotation, with package annotation or with domainName property in @ParameterTable");
+					def.getDomain().setName(paramTableSet.domainName());
+
+					// Domain is mandatory - if still missing = error
+					if (def.getDomain().getName() == null) {
+						throw new IllegalArgumentException("No domain found for type " + tableSetType.getName() + ". Need to specify the "
+								+ "domain with meta-annotation, with package annotation or with domainName property in @ParameterTable or in "
+								+ "@ParameterTableSet");
+					}
 				}
 
 				// Init table def
 				def.setParameterName(
-						paramTable.name() == null || "".equals(paramTable.name()) ? tableType.getSimpleName() : paramTable.name());
-				def.setTableName("".equals(paramTable.tableName()) ? tableType.getSimpleName().toUpperCase() : paramTable.tableName());
+						paramTable.name() == null || "".equals(paramTable.name()) ? tableSetType.getSimpleName() : paramTable.name());
+				def.setTableName("".equals(paramTable.tableName()) ? tableSetType.getSimpleName().toUpperCase() : paramTable.tableName());
 				def.setWhereClause(paramTable.filterClause());
 				def.setUuid(generateFixedUUID(def.getTableName(), ParameterTableDefinition.class));
 
-				getLog().debug("Found mapped parameter type " + tableType.getName() + " with table " + def.getTableName()
+				getLog().debug("Found new mapped parameter from set in type " + tableSetType.getName() + " with table " + def.getTableName()
 						+ " and generated UUID " + def.getUuid().toString());
 
 				// Search for key (field / method or parameterTable)
-				completeTableParameterKey(tableType, paramTable, def);
+				completeTableParameterKey(tableSetType, paramTable, def);
 
-				tables.put(tableType, def);
+				defs.add(def);
 			}
 		}
 
-		return tables;
+		tables.put(tableSetType, defs);
 	}
 
 	/**
@@ -266,122 +393,288 @@ public class DictionaryGenerator {
 	 * @param def
 	 */
 	@SuppressWarnings("unchecked")
-	private void completeTableParameterKey(Class<?> tableType, ParameterTable paramTable, ParameterTableDefinition def) {
+	private void completeTableParameterKey(
+			Class<?> tableType,
+			ParameterTable paramTable,
+			ParameterTableDefinition def) {
 
 		// Search for key properties (field / method)
 		Set<Field> foundFields = ReflectionUtils.getAllFields(tableType, f -> f.isAnnotationPresent(ParameterKey.class));
 		Set<Method> foundMethods = ReflectionUtils.getAllMethods(tableType, f -> f.isAnnotationPresent(ParameterKey.class));
 
-		// As a list of identified PossibleKeyAnnotation
+		// As a list of identified PossibleKeyAnnotation (ordered by name for consistency)
 		List<PossibleKeyAnnotation> keys = Stream.concat(foundFields.stream().map(f -> new PossibleKeyAnnotation(f)),
-				foundMethods.stream().map(m -> new PossibleKeyAnnotation(m))).collect(Collectors.toList());
+				foundMethods.stream().map(m -> new PossibleKeyAnnotation(m)))
+				.sorted(Comparator.comparing(PossibleKeyAnnotation::getValidName))
+				.collect(Collectors.toList());
 
-		// The clean PossibleKeyAnnotation to keep
-		PossibleKeyAnnotation foundKeySpec;
+		int keyFounds = 0;
 
-		// Found specified key annotation - use first
-		if (keys.size() != 0) {
-			foundKeySpec = keys.get(0);
-		}
+		// No keys found on fields / methods, search other / auto-select
+		if (keys.size() == 0) {
 
-		// Found key specified in table def
-		else if (!paramTable.keyField().equals("")) {
+			if (!paramTable.keyField().equals("")) {
 
-			// Not specified : search on field def
-			if (ColumnType.UNKNOWN.equals(paramTable.keyType())) {
-				try {
-					foundKeySpec = new PossibleKeyAnnotation(tableType.getField(paramTable.keyField()));
-					getLog().debug("Found key type from specified field " + foundKeySpec.getValidName() + " of type "
-							+ foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
-				}
+				PossibleKeyAnnotation foundKeySpec = null;
 
-				// Field not found, search getter method
-				catch (NoSuchFieldException n) {
-
-					String getterName = "get" + paramTable.keyField().substring(0, 1).toUpperCase() + paramTable.keyField().substring(1);
-
+				// Not specified : search on field def
+				if (ColumnType.UNKNOWN.equals(paramTable.keyType())) {
 					try {
-						foundKeySpec = new PossibleKeyAnnotation(tableType.getMethod(getterName));
-						getLog().debug("Found key type from specified method " + foundKeySpec.getValidName() + " (getter \"" + getterName
-								+ "\") of type " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
+						foundKeySpec = new PossibleKeyAnnotation(tableType.getField(paramTable.keyField()));
+						getLog().debug("Found key type from specified field " + foundKeySpec.getValidName() + " of type "
+								+ foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
 					}
 
-					// Still not found : failure
-					catch (NoSuchMethodException e) {
-						throw new IllegalArgumentException("Specified key in ParameterTable " + tableType + " doesn't match with the"
-								+ " class getters. Check if the field is specified correctly or that a method exists with the name \""
-								+ getterName + "\"", e);
-					}
+					// Field not found, search getter method
+					catch (NoSuchFieldException n) {
 
-				} catch (SecurityException e) {
-					throw new IllegalArgumentException("Specified key in ParameterTable " + tableType
-							+ " doesn't match with the class fields. Check if the field is specified correctly", e);
+						String getterName = "get" + paramTable.keyField().substring(0, 1).toUpperCase()
+								+ paramTable.keyField().substring(1);
+
+						try {
+							foundKeySpec = new PossibleKeyAnnotation(tableType.getMethod(getterName));
+							getLog().debug("Found key type from specified method " + foundKeySpec.getValidName() + " (getter \""
+									+ getterName
+									+ "\") of type " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
+						}
+
+						// Still not found : failure
+						catch (NoSuchMethodException e) {
+							throw new IllegalArgumentException("Specified key in ParameterTable " + tableType + " doesn't match with the"
+									+ " class getters. Check if the field is specified correctly or that a method exists with the name \""
+									+ getterName + "\"", e);
+						}
+
+					} catch (SecurityException e) {
+						throw new IllegalArgumentException("Specified key in ParameterTable " + tableType
+								+ " doesn't match with the class fields. Check if the field is specified correctly", e);
+					}
+				} else {
+					foundKeySpec = new PossibleKeyAnnotation(paramTable);
+					getLog().debug("Specified keytype " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
 				}
-			} else {
-				foundKeySpec = new PossibleKeyAnnotation(paramTable);
-				getLog().debug("Specified keytype " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
+
+				// Init key def
+				def.setKeyName(foundKeySpec.getValidName());
+				def.setKeyType(foundKeySpec.getValidType());
+			}
+
+			else {
+				throw new IllegalArgumentException(
+						"No key found for type " + tableType.getName()
+								+ ". Need to specify a @ParameterKey on field or method, or to set keyField on @ParamaterTable");
 			}
 		}
 
+		// Key(s) specified on fields / methods
 		else {
-			throw new IllegalArgumentException(
-					"No key found for type " + tableType.getName()
-							+ ". Need to specify a @ParameterKey on field or method, or to set keyField on @ParamaterTable");
+
+			// Copy key spec with support for composite
+
+			for (int i = 0; i < keys.size(); i++) {
+
+				// In most case, only one key will be found
+				PossibleKeyAnnotation foundKeySpec = keys.get(i);
+
+				// If key compliant (in set -> with forTable else always select)
+				if (foundKeySpec.isCompliantTable(paramTable.tableName())) {
+
+					// Init key def
+					def.setKeyName(i, foundKeySpec.getValidName());
+					def.setKeyType(i, foundKeySpec.getValidType());
+					keyFounds++;
+				}
+			}
 		}
 
-		// Init key def
-		def.setKeyName(foundKeySpec.getValidName());
-		def.setKeyType(foundKeySpec.getValidType());
+		getLog().debug("Found key " + def.getKeyName() + " of type " + def.getKeyType() + " for type " + tableType.getName()
+				+ ((def.getExt1KeyName() != null) ? " and " + (keyFounds - 1) + " other ext keys" : ""));
+	}
 
-		getLog().debug("Found key " + def.getKeyName() + " of type " + def.getKeyType() + " for type " + tableType.getName());
+	/**
+	 * @param defs
+	 */
+	private static void assertTableNotDuplicated(Map<Class<?>, List<ParameterTableDefinition>> defs) {
+
+		// Get duplicated table name (and count for each)
+		Map<String, Integer> duplicates = defs.values().stream()
+				.flatMap(Collection::stream)
+				.map(ParameterTableDefinition::getTableName)
+				.collect(Collectors.groupingBy(v -> v))
+				.entrySet().stream()
+				.filter(e -> e.getValue().size() > 1)
+				.collect(Collectors.toMap(e -> e.getKey(), e -> Integer.valueOf(e.getValue().size())));
+
+		// Shouldn't have duplicate on table name
+		if (duplicates.size() > 0) {
+			StringBuilder details = new StringBuilder();
+			details.append("Error on duplicated table names : ");
+			duplicates.entrySet().forEach(e -> {
+				details.append("table \"").append(e.getKey()).append("\" (duplicated ").append(e.getValue()).append(") ");
+			});
+			details.append("Check @ParameterTable and @ParameterTableSet definition");
+
+			throw new IllegalArgumentException(details.toString());
+		}
 	}
 
 	/**
 	 * @param reflections
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	private void completeParameterValuesWithLinksAndMappings(
 			Reflections reflections,
-			Map<Class<?>, ParameterTableDefinition> defs,
+			Map<Class<?>, List<ParameterTableDefinition>> defs,
 			List<ParameterLinkDefinition> allLinks,
-			List<ParameterMappingDefinition> allMappings, ClassLoader ccl) {
+			List<ParameterMappingDefinition> allMappings,
+			ClassLoader ccl) {
 
 		getLog().debug("Process completion of values, links and mappings for " + defs.size() + " identified tables");
 
 		// For link transform
-		Map<String, ParameterTableDefinition> allTables = defs.values().stream().collect(Collectors.toMap(e -> e.getTableName(), v -> v));
+		Map<String, ParameterTableDefinition> allTables = defs.values().stream()
+				.flatMap(Collection::stream)
+				.collect(Collectors.toMap(e -> e.getTableName(), v -> v));
 
 		// Domains - direct search, with inherited
 		for (Class<?> tableType : defs.keySet()) {
 
+			// Check if it's a set
+			ParameterTableSet paramTableSet = tableType.getAnnotation(ParameterTableSet.class);
+
 			// Table cfg - includes inherited
-			ParameterTable paramTable = tableType.getAnnotation(ParameterTable.class);
+			if (paramTableSet != null) {
+				processParameterValueSet(tableType, allTables, defs, allLinks, allMappings, ccl);
+			} else {
+				processParameterValueDirect(tableType, allTables, defs, allLinks, allMappings, ccl);
+			}
+		}
+	}
 
-			// Edited def
-			ParameterTableDefinition def = defs.get(tableType);
+	/**
+	 * @param tableType
+	 * @param allTables
+	 * @param defs
+	 * @param allLinks
+	 * @param allMappings
+	 * @param ccl
+	 */
+	@SuppressWarnings("unchecked")
+	private void processParameterValueDirect(
+			Class<?> tableType,
+			Map<String, ParameterTableDefinition> allTables,
+			Map<Class<?>, List<ParameterTableDefinition>> defs,
+			List<ParameterLinkDefinition> allLinks,
+			List<ParameterMappingDefinition> allMappings,
+			ClassLoader ccl) {
 
-			// Valid fields (regarding anot / table def)
-			Set<Field> foundFields = ReflectionUtils.getAllFields(tableType, f -> isFieldValue(f, paramTable));
+		// Table cfg - includes inherited
+		ParameterTable paramTable = tableType.getAnnotation(ParameterTable.class);
 
-			// Valid methods (regarding anot)
-			Set<Method> foundMethods = ReflectionUtils.getAllMethods(tableType, m -> isMethodValue(m));
+		List<ParameterTableDefinition> possibleDef = defs.get(tableType);
+
+		// Cannot be != 1 item here
+		if (possibleDef == null || possibleDef.size() != 1) {
+			throw new IllegalArgumentException("Wrong def spec for type " + tableType);
+		}
+
+		// Edited def
+		ParameterTableDefinition def = possibleDef.get(0);
+
+		// Valid fields (regarding anot / table def)
+		Set<Field> foundFields = ReflectionUtils.getAllFields(tableType, f -> isFieldValue(f, paramTable.useAllFields()));
+
+		// Valid methods (regarding anot)
+		Set<Method> foundMethods = ReflectionUtils.getAllMethods(tableType, m -> isMethodValue(m));
+
+		// Mixed all values + associated links, on both field and methods
+		List<PossibleValueAnnotation> values = Stream.concat(foundFields.stream().map(f -> new PossibleValueAnnotation(f, ccl)),
+				foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))).collect(Collectors.toList());
+
+		// Prepare value columns (with support for composite)
+		List<String> columnNames = values.stream()
+				.flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
+				.peek(v -> getLog().debug("Found selected value " + v + " for type " + tableType.getName()))
+				.collect(Collectors.toList());
+
+		// Search for specified links
+		Collection<ParameterLinkDefinition> links = extractLinksFromValues(defs, allTables, def, values);
+
+		// Search for specified mappings
+		Collection<ParameterMappingDefinition> mappings = extractMappingsFromValues(defs, allTables, def, values);
+
+		// Produces select clause
+		String selectClause = this.selectClauseGen.mergeSelectClause(
+				columnNames,
+				columnNames.size() + 2,
+				links,
+				mappings,
+				allTables);
+
+		getLog().debug("Generated select clause for type " + tableType.getName() + " is " + selectClause);
+
+		def.setSelectClause(selectClause);
+		allLinks.addAll(links);
+		allMappings.addAll(mappings);
+	}
+
+	private static Stream<PossibleValueAnnotation> streamPossibleValueInDirectTablesDef(ParameterTableSet setAnnot) {
+		return Stream.of(setAnnot.tables())
+				.filter(t -> t.values().length > 0)
+				.flatMap(t -> Stream.of(t.values())
+						.map(v -> new PossibleValueAnnotation(v, t.tableName())));
+	}
+
+	/**
+	 * @param tableType
+	 * @param allTables
+	 * @param defs
+	 * @param allLinks
+	 * @param allMappings
+	 * @param ccl
+	 */
+	@SuppressWarnings("unchecked")
+	private void processParameterValueSet(
+			Class<?> tableType,
+			Map<String, ParameterTableDefinition> allTables,
+			Map<Class<?>, List<ParameterTableDefinition>> allDefs,
+			List<ParameterLinkDefinition> allLinks,
+			List<ParameterMappingDefinition> allMappings,
+			ClassLoader ccl) {
+
+		ParameterTableSet paramTableSet = tableType.getAnnotation(ParameterTableSet.class);
+
+		// Edited def
+		List<ParameterTableDefinition> defs = allDefs.get(tableType);
+
+		// Valid fields (regarding anot / table def)
+		Set<Field> foundFields = ReflectionUtils.getAllFields(tableType, f -> isFieldValue(f, paramTableSet.useAllFields()));
+
+		// Valid methods (regarding anot)
+		Set<Method> foundMethods = ReflectionUtils.getAllMethods(tableType, m -> isMethodValue(m));
+
+		for (ParameterTableDefinition def : defs) {
 
 			// Mixed all values + associated links, on both field and methods
-			List<PossibleValueAnnotation> values = Stream.concat(foundFields.stream().map(f -> new PossibleValueAnnotation(f, ccl)),
-					foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))).collect(Collectors.toList());
+			List<PossibleValueAnnotation> values = Stream.concat(
+					Stream.concat(
+							foundFields.stream().map(f -> new PossibleValueAnnotation(f, ccl)),
+							foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))),
+					streamPossibleValueInDirectTablesDef(paramTableSet))
+					.filter(v -> v.isCompliantTable(def.getTableName())) // Only compliant
+					.collect(Collectors.toList());
 
-			// Prepare value columns
+			// Prepare value columns (with support for composite)
 			List<String> columnNames = values.stream()
-					.map(PossibleValueAnnotation::getValidName)
+					.flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
 					.peek(v -> getLog().debug("Found selected value " + v + " for type " + tableType.getName()))
 					.collect(Collectors.toList());
 
 			// Search for specified links
-			List<ParameterLinkDefinition> links = extractLinksFromValues(defs, allTables, def, values);
+			Collection<ParameterLinkDefinition> links = extractLinksFromValues(allDefs, allTables, def, values);
 
 			// Search for specified mappings
-			List<ParameterMappingDefinition> mappings = extractMappingsFromValues(defs, allTables, def, values);
+			Collection<ParameterMappingDefinition> mappings = extractMappingsFromValues(allDefs, allTables, def, values);
 
 			// Produces select clause
 			String selectClause = this.selectClauseGen.mergeSelectClause(
@@ -397,6 +690,57 @@ public class DictionaryGenerator {
 			allLinks.addAll(links);
 			allMappings.addAll(mappings);
 		}
+
+	}
+
+	/**
+	 * <p>
+	 * Search for the referenced table for a value used in a link
+	 * </p>
+	 * 
+	 * @param defs
+	 * @param allTables
+	 * @param currentTableDef
+	 * @param possibleValue
+	 * @param annot
+	 * @return
+	 */
+	private static ParameterTableDefinition prepareReferencedTable(
+			Map<Class<?>, List<ParameterTableDefinition>> defs,
+			Map<String, ParameterTableDefinition> allTables,
+			ParameterTableDefinition currentTableDef,
+			PossibleValueAnnotation possibleValue,
+			String annotToTableName,
+			Class<?> annotToParameter) {
+
+		ParameterTableDefinition toDef = null;
+
+		if (annotToTableName == null || annotToTableName.trim().equals("")) {
+			List<ParameterTableDefinition> possibleToDefs = defs.get(annotToParameter);
+			if (possibleToDefs != null) {
+				toDef = possibleToDefs.get(0);
+			}
+		} else {
+			toDef = allTables.get(annotToTableName);
+		}
+
+		// If still empty, search by attribute type
+		if (toDef == null) {
+			List<ParameterTableDefinition> possibleToDefs = defs.get(possibleValue.getValidType());
+			if (possibleToDefs != null) {
+				toDef = possibleToDefs.get(0);
+			}
+		}
+
+		// Mandatory, fail if still empty
+		if (toDef == null) {
+			throw new IllegalArgumentException(
+					"No valid specified table found for link or mapping on column " + possibleValue.getValidName() + " for type "
+							+ currentTableDef.getTableName()
+							+ ". Specify @ParameterLink or @ParameterMapping toTableName or toParameter with a valid value");
+		}
+
+		return toDef;
 	}
 
 	/**
@@ -406,60 +750,102 @@ public class DictionaryGenerator {
 	 * @param values
 	 * @return
 	 */
-	private List<ParameterLinkDefinition> extractLinksFromValues(
-			Map<Class<?>, ParameterTableDefinition> defs,
+	private Collection<ParameterLinkDefinition> extractLinksFromValues(
+			Map<Class<?>, List<ParameterTableDefinition>> defs,
 			Map<String, ParameterTableDefinition> allTables,
 			ParameterTableDefinition currentTableDef,
 			List<PossibleValueAnnotation> values) {
 
+		/*
+		 * Keeps the links mapped to their table "to" for clean association of multiple
+		 * link definition in case of composite key
+		 */
+		Map<String, ParameterLinkDefinition> linksByTablesTo = new HashMap<>();
+
 		// Prepare links (where found)
-		return values.stream()
+		values.stream()
 				.filter(a -> a.getLinkAnnot() != null)
-				.map(a -> {
+				.forEach(a -> {
 					ParameterLink annot = a.getLinkAnnot();
-					ParameterLinkDefinition link = new ParameterLinkDefinition();
-					link.setCreatedTime(LocalDateTime.now());
-					link.setUpdatedTime(link.getCreatedTime());
-					link.setDictionaryEntry(currentTableDef);
 
-					// If not specified directly, search table to by param
-					ParameterTableDefinition toDef = (annot.toTableName() == null || annot.toTableName().trim().equals(""))
-							? defs.get(annot.toParameter())
-							: allTables.get(annot.toTableName());
+					// Search the referenced table
+					ParameterTableDefinition toDef = prepareReferencedTable(
+							defs,
+							allTables,
+							currentTableDef,
+							a,
+							annot.toTableName(),
+							annot.toParameter());
 
-					// If still empty, search by attribute type
-					if (toDef == null) {
-						toDef = defs.get(a.getValidType());
+					// Referenced column or auto-set from parameter key
+					String columnTo = annot.toColumn().length > 0 ? annot.toColumn()[0] : toDef.getKeyName().toUpperCase();
+
+					// Referenced name or auto-set from referenced parameter name
+					String linkName = !"".equals(annot.name()) ? annot.name() : toDef.getParameterName();
+
+					// Get link already referenced or update "composite key" link
+					ParameterLinkDefinition link = linksByTablesTo.get(toDef.getTableName());
+
+					// Most case will only go there
+					if (link == null) {
+
+						link = new ParameterLinkDefinition();
+
+						link.setCreatedTime(LocalDateTime.now());
+						link.setUpdatedTime(link.getCreatedTime());
+						link.setDictionaryEntry(currentTableDef);
+						link.setName(linkName);
+						link.setTableTo(toDef.getTableName());
+
+						// In most case, not composite
+						if (!a.isComposite()) {
+							// To column, if not specified, is based on dest entity key
+							link.setColumnTo(columnTo);
+							link.setColumnFrom(a.getValidName());
+						}
+
+						// Else rarest situation : composite - single def
+						else {
+
+							// Check compliance between referenced "from" values and "tos"
+							if (a.getCompositeNames().length != annot.toColumn().length) {
+								throw new IllegalArgumentException("Error in Link spec for name " + a.getValidName() + " into "
+										+ currentTableDef.getParameterName() + " : If a link is specified with composite key, for"
+										+ " each specified \"to\" column in @ParameterLink, a corresponding value column must be"
+										+ " specified in @ParameterCompositeValue");
+							}
+
+							for (int i = 0; i < a.getCompositeNames().length; i++) {
+								// Apply in same order to - from
+								link.setColumnTo(i, annot.toColumn()[i]);
+								link.setColumnFrom(i, a.getCompositeNames()[i]);
+							}
+						}
+
+						String refForUuid = currentTableDef.getTableName() + "." + link.getColumnFrom() + " -> " + link.getTableTo() + "."
+								+ link.getColumnTo();
+
+						// Produces uuid
+						link.setUuid(generateFixedUUID(refForUuid, ParameterLinkDefinition.class));
+
+						getLog().debug("Found link " + refForUuid + " with generated UUID " + link.getUuid().toString() + " for type "
+								+ currentTableDef.getTableName());
+
+						linksByTablesTo.put(toDef.getTableName(), link);
 					}
 
-					// Mandatory, fail if still empty
-					if (toDef == null) {
-						throw new IllegalArgumentException(
-								"No valid specified table found for link on column " + a.getValidName() + " for type "
-										+ currentTableDef.getTableName()
-										+ ". Specify @ParameterLink toTableName or toParameter with a valid value");
+					// Rare case : composite key - multiple def (all keys referenced
+					// directly)
+					else {
+						int colIndex = (int) link.columnTos().count();
+
+						link.setColumnFrom(colIndex, a.getValidName());
+						link.setColumnTo(colIndex, columnTo);
 					}
 
-					link.setColumnFrom(a.getValidName());
+				});
 
-					link.setTableTo(toDef.getTableName());
-
-					// To column, if not specified, is based on dest entity key
-					link.setColumnTo(!"".equals(annot.toColumn()) ? annot.toColumn() : toDef.getKeyName().toUpperCase());
-
-					String refForUuid = currentTableDef.getTableName() + "." + link.getColumnFrom() + " -> " + link.getTableTo() + "."
-							+ link.getColumnTo();
-
-					// Produces uuid
-					link.setUuid(generateFixedUUID(refForUuid, ParameterLinkDefinition.class));
-
-					getLog().debug("Found link " + refForUuid + " with generated UUID " + link.getUuid().toString() + " for type "
-							+ currentTableDef.getTableName());
-
-					return link;
-				})
-				.collect(Collectors.toList());
-
+		return linksByTablesTo.values();
 	}
 
 	/**
@@ -470,7 +856,7 @@ public class DictionaryGenerator {
 	 * @return
 	 */
 	private List<ParameterMappingDefinition> extractMappingsFromValues(
-			Map<Class<?>, ParameterTableDefinition> defs,
+			Map<Class<?>, List<ParameterTableDefinition>> defs,
 			Map<String, ParameterTableDefinition> allTables,
 			ParameterTableDefinition currentTableDef,
 			List<PossibleValueAnnotation> values) {
@@ -486,23 +872,14 @@ public class DictionaryGenerator {
 					mapping.setDictionaryEntry(currentTableDef);
 					mapping.setMapTable(annot.mapTableName());
 
-					// If not specified directly, search table to by param
-					ParameterTableDefinition toDef = (annot.toTableName() == null || annot.toTableName().trim().equals(""))
-							? defs.get(annot.toParameter())
-							: allTables.get(annot.toTableName());
-
-					// If still empty, search by attribute type
-					if (toDef == null) {
-						toDef = defs.get(a.getValidType());
-					}
-
-					// Mandatory, fail if still empty
-					if (toDef == null) {
-						throw new IllegalArgumentException(
-								"No valid specified table found for mapping on column " + a.getValidName() + " for type "
-										+ currentTableDef.getTableName()
-										+ ". Specify @ParameterMapping toTableName or toParameter with a valid value");
-					}
+					// Search the referenced table
+					ParameterTableDefinition toDef = prepareReferencedTable(
+							defs,
+							allTables,
+							currentTableDef,
+							a,
+							annot.toTableName(),
+							annot.toParameter());
 
 					// Name is column alias used for payload, not a real column
 					mapping.setName(a.getValidName());
@@ -593,38 +970,42 @@ public class DictionaryGenerator {
 	 * @return
 	 */
 	private Collection<ParameterDomainDefinition> completeParameterDomains(
-			Map<Class<?>, ParameterTableDefinition> defs,
+			Map<Class<?>, List<ParameterTableDefinition>> defs,
 			Map<String, ParameterProject> projectsByDomains,
 			Map<String, ParameterProjectDefinition> projectsByName) {
 
 		getLog().debug("Process completion of distinct domains extracted from " + defs.size() + " identified tables");
 
 		// Get all domain values
-		Map<String, ParameterDomainDefinition> domains = defs.values().stream().map(d -> d.getDomain().getName()).distinct().map(n -> {
-			ParameterDomainDefinition def = new ParameterDomainDefinition();
-			def.setCreatedTime(LocalDateTime.now());
-			def.setUpdatedTime(def.getCreatedTime());
-			def.setName(n);
+		Map<String, ParameterDomainDefinition> domains = defs.values().stream()
+				.flatMap(Collection::stream)
+				.map(d -> d.getDomain().getName()).distinct().map(n -> {
+					ParameterDomainDefinition def = new ParameterDomainDefinition();
+					def.setCreatedTime(LocalDateTime.now());
+					def.setUpdatedTime(def.getCreatedTime());
+					def.setName(n);
 
-			// linking to project
-			ParameterProject projectPar = projectsByDomains.get(n);
+					// linking to project
+					ParameterProject projectPar = projectsByDomains.get(n);
 
-			// If none found, set default project
-			def.setProject(projectPar != null ? projectsByName.get(projectPar.name())
-					: projectsByName.get(ParameterProjectDefinition.DEFAULT_PROJECT));
+					// If none found, set default project
+					def.setProject(projectPar != null ? projectsByName.get(projectPar.name())
+							: projectsByName.get(ParameterProjectDefinition.DEFAULT_PROJECT));
 
-			def.setUuid(generateFixedUUID(n + "-###-" + def.getProject().getName(), ParameterDomainDefinition.class));
+					def.setUuid(generateFixedUUID(n + "-###-" + def.getProject().getName(), ParameterDomainDefinition.class));
 
-			getLog().debug("Identified distinct domain \"" + n + "\" with generated UUID " + def.getUuid() + " onto project "
-					+ def.getProject().getName());
-			return def;
-		}).collect(Collectors.toMap(ParameterDomainDefinition::getName, v -> v));
+					getLog().debug("Identified distinct domain \"" + n + "\" with generated UUID " + def.getUuid() + " onto project "
+							+ def.getProject().getName());
+					return def;
+				}).collect(Collectors.toMap(ParameterDomainDefinition::getName, v -> v));
 
 		// Then fix associated domains on param tables
-		defs.values().forEach(d -> {
-			ParameterDomainDefinition clean = domains.get(d.getDomain().getName());
-			d.setDomain(clean);
-		});
+		defs.values().stream()
+				.flatMap(Collection::stream)
+				.forEach(d -> {
+					ParameterDomainDefinition clean = domains.get(d.getDomain().getName());
+					d.setDomain(clean);
+				});
 
 		return domains.values();
 	}
@@ -726,15 +1107,15 @@ public class DictionaryGenerator {
 	 * @param paramTable
 	 * @return
 	 */
-	private static boolean isFieldValue(Field field, ParameterTable paramTable) {
+	private static boolean isFieldValue(Field field, boolean useAll) {
 
 		// All fields When the table is enabled "useAllFields"
-		return (paramTable.useAllFields()
+		return (useAll
 
 				// If not "useAllFields", keep only @ParameterValue fields or link or
 				// mappings
-				|| (field.isAnnotationPresent(ParameterValue.class) || field.isAnnotationPresent(ParameterLink.class)
-						|| field.isAnnotationPresent(ParameterMapping.class)))
+				|| (field.isAnnotationPresent(ParameterValue.class) || field.isAnnotationPresent(ParameterCompositeValue.class)
+						|| field.isAnnotationPresent(ParameterLink.class) || field.isAnnotationPresent(ParameterMapping.class)))
 
 				// Exclude ignored with @ParameterIgnored or specified as key with
 				// @ParameterKey
@@ -755,6 +1136,7 @@ public class DictionaryGenerator {
 		 * All methods specified as values, link or mappings, and not ignored or key
 		 */
 		(method.isAnnotationPresent(ParameterValue.class)
+				|| method.isAnnotationPresent(ParameterCompositeValue.class)
 				|| method.isAnnotationPresent(ParameterLink.class)
 				|| method.isAnnotationPresent(ParameterMapping.class))
 				&& !(method.isAnnotationPresent(ParameterIgnored.class)
@@ -796,6 +1178,7 @@ public class DictionaryGenerator {
 		private final ParameterKey keyAnnot;
 		private final String validName;
 		private final ColumnType validType;
+		private final Collection<String> forTable;
 
 		PossibleKeyAnnotation(Method method) {
 
@@ -805,6 +1188,8 @@ public class DictionaryGenerator {
 					: method.getName().toUpperCase();
 			this.validType = this.keyAnnot != null && ColumnType.UNKNOWN != this.keyAnnot.type() ? this.keyAnnot.type()
 					: ColumnType.forClass(method.getReturnType());
+			this.forTable = this.keyAnnot != null && this.keyAnnot.forTable().length > 0 ? Arrays.asList(this.keyAnnot.forTable())
+					: null;
 		}
 
 		PossibleKeyAnnotation(Field field) {
@@ -815,12 +1200,15 @@ public class DictionaryGenerator {
 			// Type must be found from generic collection
 			this.validType = this.keyAnnot != null && ColumnType.UNKNOWN != this.keyAnnot.type() ? this.keyAnnot.type()
 					: ColumnType.forClass(field.getType());
+			this.forTable = this.keyAnnot != null && this.keyAnnot.forTable().length > 0 ? Arrays.asList(this.keyAnnot.forTable())
+					: null;
 		}
 
 		PossibleKeyAnnotation(ParameterTable paramTable) {
 			this.keyAnnot = null;
 			this.validName = paramTable.keyField().toUpperCase();
 			this.validType = paramTable.keyType();
+			this.forTable = Arrays.asList(paramTable.name());
 		}
 
 		/**
@@ -835,6 +1223,14 @@ public class DictionaryGenerator {
 		 */
 		public ColumnType getValidType() {
 			return this.validType;
+		}
+
+		/**
+		 * @param name
+		 * @return
+		 */
+		public boolean isCompliantTable(String name) {
+			return this.forTable == null || this.forTable.contains(name);
 		}
 
 	}
@@ -865,31 +1261,55 @@ public class DictionaryGenerator {
 	private static class PossibleValueAnnotation {
 
 		private final ParameterValue valueAnnot;
+		private final ParameterCompositeValue compositeValueAnnot;
 		private final String validName;
 		private final Class<?> validType;
 		private final ParameterLink linkAnnot;
 		private final ParameterMapping mappingAnnot;
+		private final String[] compositeNames;
+		private final Collection<String> forTable;
 
+		// Detected on method
 		PossibleValueAnnotation(Method method, ClassLoader contextClassLoader) {
 
 			this.valueAnnot = method.getAnnotation(ParameterValue.class);
+			this.compositeValueAnnot = method.getAnnotation(ParameterCompositeValue.class);
 			// If not set on ParameterValue annotation, uses method name
-			this.validName = this.valueAnnot != null && !"".equals(this.valueAnnot.value()) ? this.valueAnnot.value()
-					: method.getName().toUpperCase();
+			this.validName = prepareValidName(this.valueAnnot, method.getName());
 			this.linkAnnot = method.getAnnotation(ParameterLink.class);
 			this.mappingAnnot = method.getAnnotation(ParameterMapping.class);
 			this.validType = this.mappingAnnot != null ? getMappingType(method, contextClassLoader) : method.getReturnType();
+			this.compositeNames = prepareCompositeNames(this.compositeValueAnnot);
+			this.forTable = prepareValidForTable(this.valueAnnot, this.compositeValueAnnot);
 		}
 
+		// Detected on field
 		PossibleValueAnnotation(Field field, ClassLoader contextClassLoader) {
+
 			this.valueAnnot = field.getAnnotation(ParameterValue.class);
+			this.compositeValueAnnot = field.getAnnotation(ParameterCompositeValue.class);
 			// If not set on ParameterValue annotation, uses field name
-			this.validName = this.valueAnnot != null && !"".equals(this.valueAnnot.value()) ? this.valueAnnot.value()
-					: field.getName().toUpperCase();
+			this.validName = prepareValidName(this.valueAnnot, field.getName());
 			this.linkAnnot = field.getAnnotation(ParameterLink.class);
 			this.mappingAnnot = field.getAnnotation(ParameterMapping.class);
 			// Type must be found from generic collection
 			this.validType = this.mappingAnnot != null ? getMappingType(field, contextClassLoader) : field.getType();
+			this.compositeNames = prepareCompositeNames(this.compositeValueAnnot);
+			this.forTable = prepareValidForTable(this.valueAnnot, this.compositeValueAnnot);
+		}
+
+		// Declared directly into ParameterTable annot
+		PossibleValueAnnotation(ParameterValue directValueSpec, String tableName) {
+
+			this.valueAnnot = directValueSpec;
+			this.compositeValueAnnot = null;
+			// If not set on ParameterValue annotation, uses field name
+			this.validName = prepareValidName(this.valueAnnot, null);
+			this.linkAnnot = null;
+			this.mappingAnnot = null;
+			this.validType = null;
+			this.compositeNames = null;
+			this.forTable = Arrays.asList(tableName);
 		}
 
 		/**
@@ -918,6 +1338,29 @@ public class DictionaryGenerator {
 		 */
 		public ParameterMapping getMappingAnnot() {
 			return this.mappingAnnot;
+		}
+
+		/**
+		 * @return
+		 */
+		public boolean isComposite() {
+			// Rare
+			return this.compositeValueAnnot != null;
+		}
+
+		/**
+		 * @return
+		 */
+		public String[] getCompositeNames() {
+			return this.compositeNames;
+		}
+
+		/**
+		 * @param name
+		 * @return
+		 */
+		public boolean isCompliantTable(String name) {
+			return this.forTable == null || this.forTable.contains(name);
 		}
 
 		/**
@@ -974,6 +1417,69 @@ public class DictionaryGenerator {
 
 			// Basic type
 			return rawType;
+		}
+
+		private static String prepareValidName(ParameterValue annot, String holderName) {
+
+			if (annot != null) {
+				// Specified name
+				if (!"".equals(annot.name())) {
+					return annot.name();
+				}
+
+				// Value is an alias for name()
+				if (!"".equals(annot.value())) {
+					return annot.value();
+				}
+			}
+
+			// If not found from annotation, use holderName
+			return holderName.toUpperCase();
+		}
+
+		/**
+		 * @param valueAnnot
+		 * @param compAnnot
+		 * @return
+		 */
+		private static Collection<String> prepareValidForTable(ParameterValue valueAnnot, ParameterCompositeValue compAnnot) {
+
+			// Can be from a value annot
+			if (valueAnnot != null) {
+				if (valueAnnot.forTable().length > 0) {
+					return Arrays.asList(valueAnnot.forTable());
+				}
+			}
+
+			// Or a composite value annot
+			if (compAnnot != null) {
+				if (compAnnot.forTable().length > 0) {
+					return Arrays.asList(compAnnot.forTable());
+				}
+			}
+
+			return null;
+		}
+
+		/**
+		 * @param compositeValueAnnot
+		 * @return
+		 */
+		private static String[] prepareCompositeNames(ParameterCompositeValue compositeValueAnnot) {
+
+			if (compositeValueAnnot != null) {
+
+				if (compositeValueAnnot.names().length != 0) {
+					return compositeValueAnnot.names();
+				}
+
+				// Support for alias
+				if (compositeValueAnnot.value().length != 0) {
+					return compositeValueAnnot.value();
+				}
+			}
+
+			return new String[] {};
 		}
 	}
 }

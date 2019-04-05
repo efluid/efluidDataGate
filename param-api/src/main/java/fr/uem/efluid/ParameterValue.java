@@ -28,11 +28,30 @@ public @interface ParameterValue {
 
 	/**
 	 * <p>
+	 * Alias for {@link #name()}
+	 * </p>
+	 * 
+	 * @return
+	 */
+	String value() default "";
+
+	/**
+	 * <p>
 	 * Name of a column mapped by the current {@link ParameterValue}. If not set, will use
 	 * the field name
 	 * </p>
 	 * 
 	 * @return
 	 */
-	String value() default "";
+	String name() default "";
+
+	/**
+	 * <p>
+	 * When the current parameter table is specified in a <tt>ParameterTableSet</tt> use
+	 * this attribute to refer the corresponding table for current value
+	 * </p>
+	 * 
+	 * @return
+	 */
+	String[] forTable() default {};
 }

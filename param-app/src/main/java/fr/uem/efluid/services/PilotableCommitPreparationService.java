@@ -1,35 +1,38 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.utils.ErrorType.ATTACHMENT_ERROR;
 import static fr.uem.efluid.utils.ErrorType.COMMIT_MISS_COMMENT;
 import static fr.uem.efluid.utils.ErrorType.IMPORT_RUNNING;
-import static fr.uem.efluid.utils.ErrorType.PREPARATION_BIZ_FAILURE;
 import static fr.uem.efluid.utils.ErrorType.PREPARATION_CANNOT_START;
 import static fr.uem.efluid.utils.ErrorType.PREPARATION_INTERRUPTED;
+import static fr.uem.efluid.utils.ErrorType.PREPARATION_NOT_READY;
 import static fr.uem.efluid.utils.ErrorType.TABLE_NAME_INVALID;
 import static fr.uem.efluid.utils.ErrorType.TABLE_WRONG_REF;
 import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_EXIST;
 import static fr.uem.efluid.utils.ErrorType.VERSION_NOT_UP_TO_DATE;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,8 +43,10 @@ import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
+import fr.uem.efluid.services.types.AttachmentLine;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.DiffDisplay;
+import fr.uem.efluid.services.types.DiffDisplayPage;
 import fr.uem.efluid.services.types.DomainDiffDisplay;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportResult;
@@ -51,8 +56,11 @@ import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.WizzardCommitPreparationResult;
+import fr.uem.efluid.tools.AsyncDriver;
+import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.FormatUtils;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * <p>
@@ -78,6 +86,13 @@ public class PilotableCommitPreparationService {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PilotableCommitPreparationService.class);
 
+	protected static final String ATTACH_EXT = ".att";
+
+	protected static final String ATTACH_FILE_ID = "attachment";
+
+	@Value("${param-efluid.display.diff-page-size}")
+	private int diffDisplayPageSize;
+
 	@Autowired
 	private PrepareIndexService diffService;
 
@@ -96,8 +111,11 @@ public class PilotableCommitPreparationService {
 	@Autowired
 	private ProjectManagementService projectService;
 
-	// TODO : use cfg entry.
-	private ExecutorService executor = Executors.newFixedThreadPool(4);
+	@Autowired
+	private AttachmentProcessor.Provider attachProcs;
+
+	@Autowired
+	private AsyncDriver async;
 
 	// One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
 	private Map<UUID, PilotedCommitPreparation<?>> currents = new HashMap<>();
@@ -127,8 +145,11 @@ public class PilotableCommitPreparationService {
 					// Start preparation for project
 					PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
 					preparation.setProjectUuid(p.getUuid());
-					this.currents.put(p.getUuid(), preparation);
-					CompletableFuture.runAsync(() -> processAllDiff(preparation));
+
+					// Init feature support for attachments
+					setAttachmentFeatureSupports(preparation);
+
+					this.async.start(preparation, this::processAllDiff);
 
 					LOGGER.info("Request for a new commit preparation in wizzard context - starting preparation"
 							+ " {} for project \"{}\"", preparation.getIdentifier(), p.getName());
@@ -189,13 +210,110 @@ public class PilotableCommitPreparationService {
 
 		// Init domain data
 		preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
-		
+
+		// Init feature support for attachments
+		setAttachmentFeatureSupports(preparation);
+
 		// Specify as active one
 		this.currents.put(projectUuid, preparation);
 
-		CompletableFuture.runAsync(() -> processAllDiff(preparation));
+		this.async.start(preparation, this::processAllDiff);
 
 		return preparation;
+	}
+
+	/**
+	 * <p>
+	 * For commit preparation, we can add attachment files on last step of commit
+	 * preparation. This service add ONE attachment file to current commit preparation to
+	 * store once commit is completed
+	 * </p>
+	 * <p>
+	 * Uses a tmp file and refers it. Data is loaded only at commit completion
+	 * </p>
+	 * 
+	 * @param file
+	 */
+	public void addAttachmentOnCurrentCommitPreparation(ExportFile file) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		// Must be on existing preparation
+		if (current == null || current.getStatus() != PilotedCommitStatus.COMMIT_CAN_PREPARE) {
+
+			// Can process attachment only after diff prepare
+			LOGGER.error("Cannot proceed to add attachment if diff is not complete.");
+			throw new ApplicationException(PREPARATION_NOT_READY,
+					"Cannot proceed to add attachment if diff is not complete.");
+		}
+
+		try {
+			// Store attachment into a tmp file
+			Path path = SharedOutputInputUtils.initTmpFile(ATTACH_FILE_ID, ATTACH_EXT, true);
+			Files.write(path, file.getData());
+
+			// Init on demand attachment list only
+			if (current.getCommitData().getAttachments() == null) {
+				current.getCommitData().setAttachments(new ArrayList<>());
+			}
+
+			// Add attachment tmp info, using tmp file
+			current.getCommitData().getAttachments().add(AttachmentLine.fromUpload(file, path));
+
+		} catch (IOException e) {
+			throw new ApplicationException(ATTACHMENT_ERROR, "Cannot process attachment file " + file.getFilename(), e);
+		}
+	}
+
+	/**
+	 * @param encodedLobHash
+	 * @return
+	 */
+	public byte[] getAttachmentContentFromCurrentCommitPreparation(String name) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		// Must be on existing preparation
+		if (current == null || current.getStatus() != PilotedCommitStatus.COMMIT_CAN_PREPARE) {
+
+			// Can process attachment only after diff prepare
+			LOGGER.error("Cannot proceed to add attachment if diff is not complete.");
+			throw new ApplicationException(PREPARATION_NOT_READY,
+					"Cannot proceed to add attachment if diff is not complete.");
+		}
+
+		LOGGER.debug("Request for binary content from attachment \"{}\"", name);
+
+		AttachmentLine line = current.getCommitData().getAttachments().stream()
+				.filter(a -> a.getName().equals(name))
+				.findFirst().orElseThrow(() -> new ApplicationException(ATTACHMENT_ERROR, "Cannot process attachment file " + name));
+
+		return this.attachProcs.display(line);
+	}
+
+	/**
+	 * @param name
+	 */
+	public void removeAttachmentOnCurrentCommitPreparation(String name) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		// Must be on existing preparation
+		if (current == null || current.getStatus() != PilotedCommitStatus.COMMIT_CAN_PREPARE) {
+
+			// Can process attachment only after diff prepare
+			LOGGER.error("Cannot proceed to add attachment if diff is not complete.");
+			throw new ApplicationException(PREPARATION_NOT_READY,
+					"Cannot proceed to add attachment if diff is not complete.");
+		}
+
+		Iterator<AttachmentLine> it = current.getCommitData().getAttachments().iterator();
+		while (it.hasNext()) {
+			AttachmentLine line = it.next();
+			if (line.getName().equals(name)) {
+				it.remove();
+			}
+		}
 	}
 
 	/**
@@ -224,6 +342,9 @@ public class PilotableCommitPreparationService {
 		// Init domain data
 		preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
 
+		// Init feature support for attachments
+		setAttachmentFeatureSupports(preparation);
+
 		// First step is NOT async : load the package and identify the appliable index
 		ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> importResult = this.commitService.importCommits(file,
 				preparation);
@@ -231,7 +352,7 @@ public class PilotableCommitPreparationService {
 		// Specify as active one
 		this.currents.put(projectUuid, preparation);
 
-		CompletableFuture.runAsync(() -> processAllMergeDiff(preparation));
+		this.async.start(preparation, this::processAllMergeDiff);
 
 		return importResult;
 	}
@@ -241,6 +362,141 @@ public class PilotableCommitPreparationService {
 	 */
 	public PilotedCommitPreparation<?> getCurrentCommitPreparation() {
 		return this.currents.get(getActiveProjectUuid());
+	}
+
+	/**
+	 * <p>
+	 * Content of diffDisplay is rendered by paginated page. This method provides 1 page
+	 * for one diffDisplay content list. A search on key values can be specified (default
+	 * is null)
+	 * </p>
+	 * 
+	 * @param dictUUID
+	 * @param pageIndex
+	 * @param search
+	 * @return
+	 */
+	public DiffDisplayPage getPaginatedDiffDisplay(UUID dictUUID, int pageIndex, String search) {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		if (current != null) {
+
+			Optional<? extends DiffDisplay<?>> searchDiffDisplay = current.getDomains().stream()
+					.flatMap(d -> d.getPreparedContent().stream())
+					.filter(c -> c.getDictionaryEntryUuid().equals(dictUUID))
+					.findFirst();
+
+			if (searchDiffDisplay.isPresent()) {
+
+				DiffDisplay<?> diffDisplay = searchDiffDisplay.get();
+
+				// If required, filter content
+				List<? extends PreparedIndexEntry> diffDisplayContent = search == null
+						? diffDisplay.getDiff()
+						: diffDisplay.getDiff().stream().filter(i -> i.getKeyValue().contains(search)).collect(Collectors.toList());
+
+				int pageCount = (int) Math.round(Math.ceil((double) diffDisplayContent.size() / this.diffDisplayPageSize));
+
+				List<? extends PreparedIndexEntry> pageContent;
+
+				// No pagination needed
+				if (pageCount == 1) {
+					pageContent = diffDisplayContent;
+				}
+
+				// Paginated
+				else if (pageIndex < pageCount - 1) {
+					pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize,
+							(pageIndex + 1) * this.diffDisplayPageSize);
+				}
+
+				// Special paginated case : last page
+				else {
+					pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize, diffDisplayContent.size());
+				}
+
+				return new DiffDisplayPage(pageIndex, pageCount, diffDisplayContent.size(), pageContent, search);
+			}
+		}
+
+		throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation with dict " + dictUUID);
+	}
+
+	/**
+	 * <p>
+	 * Update one line in preparation, for paginated navigation
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 * @param indexForDiff
+	 */
+	public void updateDiffLinePreparationSelections(boolean selected, boolean rollbacked, long indexForDiff) {
+
+		getPreparationContentForSelection().streamDiffDisplay()
+				.flatMap(d -> d.getDiff().stream())
+				.filter(i -> i.getIndexForDiff() == indexForDiff).findFirst()
+				.ifPresent(i -> {
+					i.setRollbacked(rollbacked);
+					i.setSelected(selected);
+				});
+	}
+
+	/**
+	 * <p>
+	 * Update all preparation
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 */
+	public void updateAllPreparationSelections(boolean selected, boolean rollbacked) {
+		getPreparationContentForSelection().streamDiffDisplay()
+				.flatMap(d -> d.getDiff().stream())
+				.forEach(i -> {
+					i.setRollbacked(rollbacked);
+					i.setSelected(selected);
+				});
+	}
+
+	/**
+	 * <p>
+	 * Update preparation content for one domain
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 * @param domainUUID
+	 */
+	public void updateDomainPreparationSelections(boolean selected, boolean rollbacked, UUID domainUUID) {
+		getPreparationContentForSelection().getDomains().stream()
+				.filter(d -> d.getDomainUuid().equals(domainUUID))
+				.flatMap(d -> d.getPreparedContent().stream())
+				.flatMap(t -> t.getDiff().stream())
+				.forEach(i -> {
+					i.setRollbacked(rollbacked);
+					i.setSelected(selected);
+				});
+	}
+
+	/**
+	 * <p>
+	 * Update preparation content for one diffDisplay (dict page)
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 * @param dictUUID
+	 */
+	public void updateDiffDisplayPreparationSelections(boolean selected, boolean rollbacked, UUID dictUUID) {
+		getPreparationContentForSelection().streamDiffDisplay()
+				.filter(d -> d.getDictionaryEntryUuid().equals(dictUUID))
+				.flatMap(d -> d.getDiff().stream())
+				.forEach(i -> {
+					i.setRollbacked(rollbacked);
+					i.setSelected(selected);
+				});
 	}
 
 	/**
@@ -339,7 +595,11 @@ public class PilotableCommitPreparationService {
 		UUID projectUuid = getActiveProjectUuid();
 
 		// For any ref holder : mark canceled and dropped
-		this.currents.get(projectUuid).setStatus(PilotedCommitStatus.CANCEL);
+		PilotedCommitPreparation<?> prep = this.currents.get(projectUuid);
+
+		if (prep != null) {
+			prep.setStatus(PilotedCommitStatus.CANCEL);
+		}
 
 		// Null = COMPLETED / CANCEL from local service pov
 		this.currents.remove(projectUuid);
@@ -439,7 +699,7 @@ public class PilotableCommitPreparationService {
 	public void copyCommitPreparationCommitData(
 			PilotedCommitPreparation<? extends DiffDisplay<? extends PreparedIndexEntry>> changedPreparation) {
 
-		setCommitPreparationCommitDataComment(changedPreparation.getCommitData().getComment());
+		setCommitPreparationCommitData(changedPreparation.getCommitData());
 	}
 
 	/**
@@ -563,13 +823,27 @@ public class PilotableCommitPreparationService {
 	}
 
 	/**
+	 * @return
+	 */
+	private PilotedCommitPreparation<?> getPreparationContentForSelection() {
+
+		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+		if (current == null) {
+			throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation");
+		}
+
+		return current;
+	}
+
+	/**
 	 * <p>
 	 * Apply comment only for completed Commit Data
 	 * </p>
 	 * 
 	 * @param comment
 	 */
-	private void setCommitPreparationCommitDataComment(String comment) {
+	private void setCommitPreparationCommitData(CommitEditData data) {
 
 		PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
 
@@ -579,7 +853,17 @@ public class PilotableCommitPreparationService {
 		}
 
 		// Other editable is the commit comment
-		current.getCommitData().setComment(comment);
+		current.getCommitData().setComment(data.getComment());
+
+		// Works only on edit
+		if (current.getCommitData().getAttachments() != null && data.getAttachments() != null
+				&& current.getCommitData().getAttachments().size() >= data.getAttachments().size()) {
+
+			// Copy only "executed" status which says if the script needs run
+			for (int i = 0; i < data.getAttachments().size(); i++) {
+				current.getCommitData().getAttachments().get(i).setExecuted(data.getAttachments().get(i).isExecuted());
+			}
+		}
 	}
 
 	/**
@@ -628,11 +912,7 @@ public class PilotableCommitPreparationService {
 
 			LOGGER.info("Diff LOCAL process starting with {} diff to run", Integer.valueOf(callables.size()));
 
-			List<LocalPreparedDiff> fullDiff = this.executor
-					.invokeAll(callables).stream()
-					.map(c -> gatherResult(c, preparation))
-					.sorted()
-					.collect(Collectors.toList());
+			List<LocalPreparedDiff> fullDiff = this.async.processSteps(callables, preparation);
 
 			// Keep in preparation for commit build
 			preparation.applyDiffDisplayContent(fullDiff);
@@ -680,6 +960,7 @@ public class PilotableCommitPreparationService {
 
 				// Process details
 				List<Callable<MergePreparedDiff>> callables = preparation.streamDiffDisplay()
+						.filter(d -> d != null)
 						.map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p, preparation))
 						.collect(Collectors.toList());
 				preparation.setProcessStarted(callables.size());
@@ -687,12 +968,8 @@ public class PilotableCommitPreparationService {
 
 				LOGGER.info("Diff MERGE process starting with {} diff to run", Integer.valueOf(callables.size()));
 
-				List<MergePreparedDiff> fullDiff = this.executor
-						.invokeAll(callables)
-						.stream()
-						.map(c -> gatherResult(c, preparation))
-						.sorted()
-						.collect(Collectors.toList());
+				// Run all callables in parallel exec
+				List<MergePreparedDiff> fullDiff = this.async.processSteps(callables, preparation);
 
 				// Reset content in preparation for commit build, once completed
 				preparation.resetDiffDisplayContent();
@@ -719,6 +996,27 @@ public class PilotableCommitPreparationService {
 		} catch (Throwable e) {
 			LOGGER.error("Error will processing diff", e);
 			preparation.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
+		}
+	}
+
+	/**
+	 * <p>
+	 * Add details on features related to attachment management : enable / disable access
+	 * to feature regarding the spec of current AttachmentProcessor.Provider
+	 * </p>
+	 * 
+	 * @param prep
+	 */
+	private void setAttachmentFeatureSupports(PilotedCommitPreparation<?> prep) {
+
+		// Support display if enabled in support items
+		prep.setAttachmentDisplaySupport(this.attachProcs.isDisplaySupport());
+
+		// Can execute only on merge
+		if (prep.getPreparingState() == CommitState.MERGED) {
+
+			// And if configured for support
+			prep.setAttachmentExecuteSupport(this.attachProcs.isExecuteSupport());
 		}
 	}
 
@@ -858,28 +1156,4 @@ public class PilotableCommitPreparationService {
 				}).collect(Collectors.toList());
 	}
 
-	/**
-	 * <p>
-	 * Join future execution and gather exception if any
-	 * </p>
-	 * 
-	 * @param future
-	 * @return
-	 */
-	private static <T> T gatherResult(Future<T> future, final PilotedCommitPreparation<?> current) {
-
-		try {
-			return future.get();
-		}
-
-		catch (InterruptedException | ExecutionException e) {
-			LOGGER.error("Error will processing diff", e);
-
-			// If already identified, keep going on 1st identified error
-			if (current.getErrorDuringPreparation() != null) {
-				throw current.getErrorDuringPreparation();
-			}
-			return current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
-		}
-	}
 }

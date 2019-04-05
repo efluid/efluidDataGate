@@ -21,6 +21,10 @@ public interface Value {
 
 	DateTimeFormatter INTERNAL_LDT_FORMATTER = DateTimeFormatter.ofPattern(FormatUtils.DATE_TIME_FORMAT);
 
+	String TO_DATE_CONVERT_BEGIN = "to_date (";
+	
+	String TO_DATE_CONVERT_END = ", 'DD-MM-YYYY HH24:MI:SS')";
+	
 	char TYPED_STRING_PROTECT = '\'';
 
 	String INJECT_OF_LOB = "?";
@@ -37,7 +41,6 @@ public interface Value {
 	 */
 	byte[] getValue();
 
-	// TODO : need to decide if typed or not
 	/**
 	 * @return true if value is a natural string representation (depends on database
 	 *         column type)
@@ -66,10 +69,10 @@ public interface Value {
 		// No choice, need to reformat for DB
 		if (getType() == ColumnType.TEMPORAL) {
 			LocalDateTime internal = LocalDateTime.parse(getValueAsString(), INTERNAL_LDT_FORMATTER);
-			return TYPED_STRING_PROTECT + dbTemporalFormater.format(internal) + TYPED_STRING_PROTECT;
+			return TO_DATE_CONVERT_BEGIN + TYPED_STRING_PROTECT + dbTemporalFormater.format(internal) + TYPED_STRING_PROTECT + TO_DATE_CONVERT_END;
 		}
 
-		if (getType() == ColumnType.BINARY) {
+		if (lobKeys != null && getType() == ColumnType.BINARY) {
 			lobKeys.add(getValueAsString());
 			return INJECT_OF_LOB;
 		}

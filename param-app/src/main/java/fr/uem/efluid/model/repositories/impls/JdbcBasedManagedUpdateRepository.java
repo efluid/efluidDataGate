@@ -37,8 +37,10 @@ import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TableLink;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.model.repositories.FeatureManager;
 import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
+import fr.uem.efluid.services.Feature;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.ApplicationException;
@@ -61,6 +63,8 @@ import fr.uem.efluid.utils.FormatUtils;
 public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedUpdateRepository.class);
+	protected static final Logger QUERRY_LOGGER = LoggerFactory.getLogger("update.queries");
+
 	private static final Charset ERROR_OUT_CHARSET = Charset.forName("utf8");
 	@Autowired
 	private JdbcTemplate managedSource;
@@ -82,11 +86,8 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	@Autowired
 	private TableLinkRepository links;
 
-	@Value("${param-efluid.managed-updates.check-update-missing-ids}")
-	private boolean checkUpdateMissingIds;
-
-	@Value("${param-efluid.managed-updates.check-delete-missing-ids}")
-	private boolean checkDeleteMissingIds;
+	@Autowired
+	private FeatureManager features;
 
 	@Value("${param-efluid.managed-updates.output-failed-query-set}")
 	private boolean outputFailedQuerySet;
@@ -122,7 +123,11 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 		String[] queries = null;
 
 		try {
-			checkUpdatesAndDeleteMissingIds(lines, dictEntries);
+			checkUpdatesAndDeleteMissingIds(
+					lines,
+					dictEntries,
+					this.features.isEnabled(Feature.CHECK_MISSING_IDS_AT_MANAGED_DELETE),
+					this.features.isEnabled(Feature.CHECK_MISSING_IDS_AT_MANAGED_UPDATE));
 
 			// Prepare all queries, ordered by dictionary entry and action regarding links
 			queries = lines.stream()
@@ -151,6 +156,11 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 					this.managedSource.update(currentQuery, args);
 				} else {
 					this.managedSource.update(currentQuery);
+				}
+
+				// Log from file spec
+				if (QUERRY_LOGGER.isDebugEnabled()) {
+					QUERRY_LOGGER.debug(currentQuery);
 				}
 			}
 
@@ -236,9 +246,9 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 * @param line
 	 * @return
 	 */
-	private boolean isCheckingRequired(DiffLine line) {
-		return ((line.getAction() == IndexAction.REMOVE && this.checkDeleteMissingIds)
-				|| (line.getAction() == IndexAction.UPDATE && this.checkUpdateMissingIds));
+	private static boolean isCheckingRequired(DiffLine line, boolean checkDeleteFeature, boolean checkUpdateFeature) {
+		return ((line.getAction() == IndexAction.REMOVE && checkDeleteFeature)
+				|| (line.getAction() == IndexAction.UPDATE && checkUpdateFeature));
 	}
 
 	/**
@@ -255,12 +265,13 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 	 * @param lines
 	 * @param dictEntries
 	 */
-	private void checkUpdatesAndDeleteMissingIds(List<? extends DiffLine> lines, Map<UUID, DictionaryEntry> dictEntries) {
+	private void checkUpdatesAndDeleteMissingIds(List<? extends DiffLine> lines, Map<UUID, DictionaryEntry> dictEntries,
+			final boolean checkDeleteFeature, final boolean checkUpdateFeature) {
 
-		if (this.checkDeleteMissingIds || this.checkUpdateMissingIds) {
+		if (checkDeleteFeature || checkUpdateFeature) {
 			LOGGER.debug("Check on updates or delete missing ids is enabled : transform as select queries all concerned changes");
 			lines.stream()
-					.filter(this::isCheckingRequired)
+					.filter(l -> isCheckingRequired(l, checkDeleteFeature, checkUpdateFeature))
 					.map(e -> this.queryGenerator.producesGetOneQuery(dictEntries.get(e.getDictionaryEntryUuid()), e.getKeyValue()))
 					.forEach(s -> this.managedSource.query(s, rs -> {
 						if (!rs.next()) {

@@ -8,11 +8,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import fr.uem.efluid.model.entities.CommitState;
+import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.utils.ApplicationException;
 
 /**
@@ -42,7 +44,7 @@ import fr.uem.efluid.utils.ApplicationException;
  * @version 1
  * @param <T>
  */
-public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
+public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements AsyncDriver.SourceErrorAware {
 
 	private final UUID identifier;
 
@@ -70,6 +72,10 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 
 	private List<DomainDiffDisplay<T>> domains;
 
+	// For attachments
+	private boolean attachmentDisplaySupport;
+	private boolean attachmentExecuteSupport;
+
 	/**
 	 * For pushed form only
 	 */
@@ -88,6 +94,36 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 		this.status = PilotedCommitStatus.DIFF_RUNNING;
 		this.start = LocalDateTime.now();
 		this.preparingState = preparingState;
+	}
+
+	/**
+	 * @return the attachmentDisplaySupport
+	 */
+	public boolean isAttachmentDisplaySupport() {
+		return this.attachmentDisplaySupport;
+	}
+
+	/**
+	 * @param attachmentDisplaySupport
+	 *            the attachmentDisplaySupport to set
+	 */
+	public void setAttachmentDisplaySupport(boolean attachmentDisplaySupport) {
+		this.attachmentDisplaySupport = attachmentDisplaySupport;
+	}
+
+	/**
+	 * @return the attachmentExecuteSupport
+	 */
+	public boolean isAttachmentExecuteSupport() {
+		return this.attachmentExecuteSupport;
+	}
+
+	/**
+	 * @param attachmentExecuteSupport
+	 *            the attachmentExecuteSupport to set
+	 */
+	public void setAttachmentExecuteSupport(boolean attachmentExecuteSupport) {
+		this.attachmentExecuteSupport = attachmentExecuteSupport;
 	}
 
 	/**
@@ -130,10 +166,29 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	/**
 	 * @param error
 	 */
+	@Override
 	public <F> F fail(ApplicationException error) {
 		this.errorDuringPreparation = error;
 		setStatus(PilotedCommitStatus.FAILED);
 		throw error;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.tools.AsyncDriver.SourceErrorAware#hasSourceFailure()
+	 */
+	@Override
+	public boolean hasSourceFailure() {
+		return getErrorDuringPreparation() != null;
+	}
+
+	/**
+	 * @return
+	 * @see fr.uem.efluid.tools.AsyncDriver.SourceErrorAware#getSourceFailure()
+	 */
+	@Override
+	public ApplicationException getSourceFailure() {
+		return getErrorDuringPreparation();
 	}
 
 	/**
@@ -236,6 +291,10 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	 * Applies the diff to corresponding domain display, and provides the top level domain
 	 * DiffDisplay with a diff
 	 * </p>
+	 * <p>
+	 * Affect also an index for each diff line for the whole preparation (for quick access
+	 * / reference)
+	 * </p>
 	 * 
 	 * @param domainDisplayByDictUuid
 	 * @param fullDiff
@@ -246,6 +305,8 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 		Map<UUID, DomainDiffDisplay<T>> domainsByUuid = this.domains.stream()
 				.collect(Collectors.toMap(DomainDiffDisplay::getDomainUuid, d -> d));
 
+		AtomicLong indexInPreparation = new AtomicLong(0);
+
 		fullDiff.stream().forEach(d -> {
 			DomainDiffDisplay<T> domain = domainsByUuid.get(d.getDomainUuid());
 
@@ -255,6 +316,9 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 			}
 
 			domain.getPreparedContent().add(d);
+
+			// Apply index for the item
+			d.getDiff().stream().forEach(l -> l.setIndexForDiff(indexInPreparation.getAndIncrement()));
 		});
 	}
 
@@ -385,6 +449,7 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> {
 	public Stream<T> streamDiffDisplay() {
 		return this.domains.stream()
 				.map(DomainDiffDisplay::getPreparedContent)
+				.filter(d -> d != null)
 				.flatMap(Collection::stream);
 	}
 

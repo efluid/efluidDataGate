@@ -42,6 +42,7 @@ import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.services.types.Rendered;
 import fr.uem.efluid.services.types.SimilarPreparedIndexEntry;
 import fr.uem.efluid.services.types.SimilarPreparedMergeIndexEntry;
+import fr.uem.efluid.services.types.TestQueryData;
 import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
@@ -87,6 +88,9 @@ public class PrepareIndexService {
 
 	@Value("${param-efluid.display.combine-similar-diff-after}")
 	private long maxSimilarBeforeCombined;
+
+	@Value("${param-efluid.display.test-row-max-size}")
+	private long maxForTestExtract;
 
 	@Autowired
 	private IndexRepository indexes;
@@ -212,8 +216,10 @@ public class PrepareIndexService {
 		// Then apply from local and from import to identify diff changes
 		completeMergeIndexes(entry, localIndexToTimeStamp, mergeContent, diff);
 
-		diff.stream().forEach(line->{line.setSelected(true);});
-		
+		diff.stream().forEach(line -> {
+			line.setSelected(true);
+		});
+
 		diffToComplete.setDiff(
 				combineSimilarDiffEntries(diff, SimilarPreparedMergeIndexEntry::fromSimilar).stream()
 						.sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
@@ -224,6 +230,24 @@ public class PrepareIndexService {
 	 */
 	public void resetDiffCaches() {
 		this.regeneratedParamaters.refreshAll();
+	}
+
+	/**
+	 * <p>
+	 * For content extraction in test context (will editing a dictionary entry for
+	 * example). Can process a stale dictionaryEntry, and will ignore links and blobs
+	 * </p>
+	 * 
+	 * @param entry
+	 * @return test data in dedicated bean with total count + configured extracted lines
+	 */
+	TestQueryData testActualContent(DictionaryEntry entry) {
+
+		List<List<String>> table = new ArrayList<>();
+
+		long count = this.rawParameters.testCurrentContent(entry, table, this.maxForTestExtract);
+
+		return new TestQueryData(table, count);
 	}
 
 	/**
@@ -493,7 +517,6 @@ public class PrepareIndexService {
 		// But for human readability, need a custom display payload (not saved)
 		entry.setHrPayload(getConverter().convertToHrPayload(currentPayload, previousPayload));
 
-		// TODO : other source of timestamp ?
 		entry.setTimestamp(System.currentTimeMillis());
 
 		// Complete from dict

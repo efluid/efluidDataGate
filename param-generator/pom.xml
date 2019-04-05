@@ -10,7 +10,7 @@
 	<parent>
 		<groupId>fr.uem.efluid</groupId>
 		<artifactId>param-parent</artifactId>
-		<version>0.2.0-SNAPSHOT</version>
+		<version>0.2.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>param-generator</artifactId>
@@ -55,6 +55,7 @@
 		</plugins>
 
 	</build>
+	
 	<dependencies>
 
 		<!-- Application libs -->

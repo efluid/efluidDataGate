@@ -1,5 +1,7 @@
 package fr.uem.efluid.model.entities;
 
+import java.util.UUID;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -25,14 +27,17 @@ public class ApplyHistoryEntry {
 	private Long id;
 
 	private boolean rollback;
-	
-	@Size(max=4096)
+
+	@Size(max = 4096)
 	private String query;
 
 	@ManyToOne(optional = false)
 	private User user;
 
 	private Long timestamp;
+
+	// Optional - weak link
+	private UUID attachmentSourceUuid;
 
 	/**
 	 * 
@@ -122,6 +127,21 @@ public class ApplyHistoryEntry {
 	 */
 	public void setTimestamp(Long timestamp) {
 		this.timestamp = timestamp;
+	}
+
+	/**
+	 * @return the attachmentSourceUuid
+	 */
+	public UUID getAttachmentSourceUuid() {
+		return this.attachmentSourceUuid;
+	}
+
+	/**
+	 * @param attachmentSourceUuid
+	 *            the attachmentSourceUuid to set
+	 */
+	public void setAttachmentSourceUuid(UUID attachmentSourceUuid) {
+		this.attachmentSourceUuid = attachmentSourceUuid;
 	}
 
 }

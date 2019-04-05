@@ -1,17 +1,26 @@
 package fr.uem.efluid.model.repositories.impls;
 
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Repository;
 
 import fr.uem.efluid.ColumnType;
@@ -29,10 +38,14 @@ import fr.uem.efluid.utils.FormatUtils;
  * <p>
  * Access to raw data of parameters : can read from Parameter source table using JDBC call
  * </p>
+ * <p>
+ * Default implements using <tt>JdbcTemplate</tt> with various {@link ResultSetExtractor}
+ * depending on required results. SQL query generation is done by a
+ * {@link ManagedQueriesGenerator}
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 2
+ * @version 3
  */
 @Repository
 public class JdbcBasedManagedExtractRepository implements ManagedExtractRepository {
@@ -57,6 +70,27 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 	@org.springframework.beans.factory.annotation.Value("${param-efluid.extractor.show-sql}")
 	private boolean showSql;
+
+	/**
+	 * @param parameterEntry
+	 * @param tableData
+	 * @param limit
+	 * @return
+	 * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#testCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry,
+	 *      java.util.List, long)
+	 */
+	@Override
+	public long testCurrentContent(DictionaryEntry parameterEntry, List<List<String>> tableData, long limit) {
+
+		String query = this.queryGenerator.producesSelectParameterQuery(parameterEntry, Collections.emptyList(), new HashMap<>());
+
+		LOGGER.debug("Test values from managed table {} with query \"{}\"", parameterEntry.getTableName(), query);
+
+		postProcessQuery(query);
+
+		// Load table content for query + Get total count
+		return this.managedSource.query(query, new TestRawExtractor(limit, tableData)).longValue();
+	}
 
 	/**
 	 * @param parameterEntry
@@ -210,7 +244,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 			// Call for binary only if needed
 			if (type == ColumnType.BINARY) {
-				currentValueConverter.appendBinaryValue(lineHolder, columnName, rs.getBytes(colPosition), this.blobs);
+				currentValueConverter.appendBinaryValue(lineHolder, columnName, rs.getString(colPosition).getBytes(), this.blobs);
 			}
 
 			// Boolean need full represent of boolean
@@ -383,5 +417,126 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
 		}
 
+	}
+
+	/**
+	 * <p>
+	 * For query validation, dedicated extractor "as a basic table ready to display" of a
+	 * Resultset.
+	 * </p>
+	 * <p>
+	 * Not immutable, doesn't support asynchronous process
+	 * </p>
+	 * 
+	 * @author elecomte
+	 * @since v0.0.8
+	 * @version 1
+	 */
+	private static class TestRawExtractor implements ResultSetExtractor<Long> {
+
+		private final long count;
+		private final List<List<String>> holder;
+
+		public TestRawExtractor(long count, List<List<String>> holder) {
+			super();
+			this.count = count;
+			this.holder = holder;
+		}
+
+		@Override
+		public Long extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+			ResultSetMetaData meta = rs.getMetaData();
+
+			// Prepare data definition from meta
+			final int colCount = meta.getColumnCount();
+			long totalCount = 0;
+			String[] columnNames = new String[colCount];
+			Set<String> existingColumns = new HashSet<>();
+			ColumnType[] columnType = new ColumnType[colCount];
+
+			// Identify columns
+			for (int i = 0; i < colCount; i++) {
+
+				String colname = meta.getColumnName(i + 1).toUpperCase();
+
+				// Avoid duplicates
+				if (!existingColumns.contains(colname)) {
+					columnNames[i] = colname;
+					columnType[i] = ColumnType.forJdbcType(meta.getColumnType(i + 1));
+					existingColumns.add(colname);
+				}
+			}
+
+			// With removed duplicates empty columns ...
+			this.holder.add(
+					Arrays.asList(columnNames).stream()
+							.filter(v -> v != null)
+							.collect(Collectors.toList()));
+
+			// Process content - limited details
+			while (rs.next() && totalCount < this.count) {
+				List<String> line = new ArrayList<>();
+				for (int i = 0; i < colCount; i++) {
+
+					// Avoid duplicates
+					if (columnNames[i] != null) {
+						extractValue(line, columnType[i], i + 1, rs);
+					}
+				}
+				this.holder.add(line);
+				totalCount++;
+			}
+
+			// Bad count ...
+			while (rs.next()) {
+				totalCount++;
+			}
+
+			// Remaining line
+			if (totalCount > this.count) {
+				totalCount++;
+			}
+
+			return Long.valueOf(totalCount);
+		}
+
+		/**
+		 * <p>
+		 * A basic flat extractor for common values
+		 * </p>
+		 * 
+		 * @param holder
+		 * @param type
+		 * @param colPosition
+		 * @param rs
+		 * @throws SQLException
+		 */
+		private static void extractValue(
+				List<String> holder,
+				ColumnType type,
+				int colPosition,
+				ResultSet rs) throws SQLException {
+
+			// Call for binary only if needed
+			if (type == ColumnType.BINARY) {
+				holder.add("- BLOB -");
+			}
+
+			// Boolean need full represent of boolean
+			else if (type == ColumnType.BOOLEAN) {
+				holder.add(rs.getBoolean(colPosition) ? "true" : "false");
+			}
+
+			// Temporal need parsing for DB independency
+			else if (type == ColumnType.TEMPORAL) {
+				holder.add(FormatUtils.formatRawDate(rs.getTimestamp(colPosition)));
+			}
+
+			// Else basic string extraction
+			else {
+				holder.add(rs.getString(colPosition));
+			}
+		}
 	}
 }

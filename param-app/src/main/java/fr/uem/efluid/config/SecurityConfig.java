@@ -92,11 +92,11 @@ public class SecurityConfig {
 	@Bean
 	public FilterRegistrationBean<SecurityFilter> restSecurityFilter() {
 
-		LOGGER.debug("[SECURITY] Mapping rest security on \"/rest/v1/backlog/*\", \"/rest/v1/dictionary/*\"");
+		LOGGER.debug("[SECURITY] Mapping rest security on \"/rest/v1/backlog/*\", \"/rest/v1/dictionary/*\", \"/rest/v1/features/*\"");
 
 		FilterRegistrationBean<SecurityFilter> registration = new FilterRegistrationBean<>();
 		registration.setFilter(new SecurityFilter(config(), REST_CLIENT, AUTHORIZER));
-		registration.addUrlPatterns(new String[] { "/rest/v1/backlog/*", "/rest/v1/dictionary/*" });
+		registration.addUrlPatterns(new String[] { "/rest/v1/backlog/*", "/rest/v1/dictionary/*", "/rest/v1/features/*" });
 		registration.setName("pac4jRestSecurityFilter");
 		registration.setOrder(1);
 

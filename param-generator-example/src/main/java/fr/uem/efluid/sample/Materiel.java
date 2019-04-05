@@ -30,7 +30,7 @@ public class Materiel {
 	 * 
 	 */
 	public Materiel() {
-		// TODO Auto-generated constructor stub
+		super();
 	}
 
 	/**

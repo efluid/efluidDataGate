@@ -148,6 +148,36 @@ select.select-column {
     background-image: url("/minus.png");
 }
 
+.history-state {
+	width: 25px;
+	vertical-align: middle !important;
+}
+
+.history-update {
+	background-image: url("/update.png");
+	width: 24px;
+	height: 18px;
+	display: block;
+}
+
+.history-rollback {
+    background-image: url("/rollback.png");
+	width: 24px;
+	height: 18px;
+	display: block;
+}
+
+.history-attachment {
+    background-image: url("/attachment.png");
+	width: 24px;
+	height: 18px;
+	display: block;
+}
+
+.inline-block {
+	display: inline-block!important;
+}
+
 .dictionary-summary .dictionary-name {
 	font-size: 17px;
 	color: #777;
@@ -387,4 +417,24 @@ select.select-column {
 
 .diff-remarks ul {
     padding-top: 10px;
+}
+
+.file-runnable-com {
+    font-style: italic;
+    font-size: 16px;
+    font-weight: bold;
+    color: Purple;
+}
+
+.file-ico {    
+	margin-top: 5px;
+	display: block;
+    width: 18px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.sql-comment {
+	color: DarkGreen;
+    font-style: italic;
 }

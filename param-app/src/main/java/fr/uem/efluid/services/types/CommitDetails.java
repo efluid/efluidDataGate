@@ -24,6 +24,8 @@ public class CommitDetails {
 
 	private String comment;
 
+	private CommitState state;
+	
 	private LocalDateTime createdTime;
 
 	private LocalDateTime importedTime;
@@ -31,8 +33,6 @@ public class CommitDetails {
 	private List<UUID> mergeSources;
 
 	private List<DiffDisplay<PreparedIndexEntry>> content;
-
-	private CommitState state;
 
 	private boolean tooMuchData;
 
@@ -42,6 +42,14 @@ public class CommitDetails {
 
 	private String versionModelId;
 
+	private List<AttachmentLine> attachments;
+
+	// For attachments
+	private boolean attachmentDisplaySupport;
+
+	/**
+	 * 
+	 */
 	private CommitDetails() {
 		super();
 	}
@@ -248,6 +256,35 @@ public class CommitDetails {
 	}
 
 	/**
+	 * @return the attachments
+	 */
+	public List<AttachmentLine> getAttachments() {
+		return this.attachments;
+	}
+
+	/**
+	 * @param attachments
+	 *            the attachments to set
+	 */
+	public void setAttachments(List<AttachmentLine> attachments) {
+		this.attachments = attachments;
+	}
+
+	/**
+	 * @return the attachmentDisplaySupport
+	 */
+	public boolean isAttachmentDisplaySupport() {
+		return this.attachmentDisplaySupport;
+	}
+
+	/**
+	 * @param attachmentDisplaySupport the attachmentDisplaySupport to set
+	 */
+	public void setAttachmentDisplaySupport(boolean attachmentDisplaySupport) {
+		this.attachmentDisplaySupport = attachmentDisplaySupport;
+	}
+
+	/**
 	 * @param commit
 	 * @return
 	 */
@@ -265,7 +302,7 @@ public class CommitDetails {
 		details.setMergeSources(commit.getMergeSources());
 		details.setVersionName(commit.getVersion().getName());
 		details.setVersionModelId(commit.getVersion().getModelIdentity());
-
+		
 		return details;
 	}
 

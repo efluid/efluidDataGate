@@ -1,4 +1,4 @@
-FROM java:8-jre
+FROM openjdk:10-jre
 
 RUN apt-get update
 RUN apt-get install dos2unix

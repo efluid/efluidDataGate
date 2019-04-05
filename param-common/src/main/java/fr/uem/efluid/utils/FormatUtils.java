@@ -36,7 +36,7 @@ public final class FormatUtils {
 	 * 
 	 */
 	private FormatUtils() {
-		// TODO Auto-generated constructor stub
+		super();
 	}
 
 	/**
@@ -53,6 +53,14 @@ public final class FormatUtils {
 	 */
 	public static String decodeAsString(String rawB64) {
 		return new String(decode(rawB64), CONTENT_ENCODING);
+	}
+
+	/**
+	 * @param raw
+	 * @return
+	 */
+	public static String toString(byte[] raw) {
+		return new String(raw, CONTENT_ENCODING);
 	}
 
 	/**
@@ -101,4 +109,15 @@ public final class FormatUtils {
 		return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
 	}
 
+	/**
+	 * <p>
+	 * Combines convert + format for compliance with internal rendering of datetimes
+	 * </p>
+	 * 
+	 * @param date
+	 * @return
+	 */
+	public static String formatRawDate(Date date) {
+		return format(toLdt(date));
+	}
 }

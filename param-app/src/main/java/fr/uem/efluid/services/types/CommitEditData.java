@@ -25,8 +25,8 @@ public class CommitEditData {
 
 	private String comment;
 
-  private CommitState state;
-  
+	private CommitState state;
+	
 	private LocalDateTime createdTime;
 
 	private LocalDateTime importedTime;
@@ -35,11 +35,13 @@ public class CommitEditData {
 
 	private String domainNames;
 
-	private String versionName;
-	
 	private LocalDateTime rangeStartTime;
 
+	private String versionName;
+
 	private String versionModelId;
+
+	private List<AttachmentLine> attachments;
 	
 	/**
 	 * 
@@ -107,21 +109,21 @@ public class CommitEditData {
 	public void setOriginalUserEmail(String originalUserEmail) {
 		this.originalUserEmail = originalUserEmail;
 	}
-	
-	/**
-   * @return the state
-   */
-  public CommitState getState() {
-    return this.state;
-  }
 
-  /**
-   * @param state
-   *            the state to set
-   */
-  public void setState(CommitState state) {
-    this.state = state;
-  }
+	/**
+	 * @return the state
+	 */
+	public CommitState getState() {
+		return this.state;
+	}
+
+	/**
+	 * @param state
+	 *            the state to set
+	 */
+	public void setState(CommitState state) {
+		this.state = state;
+	}
 
 	/**
 	 * @return the comment
@@ -225,6 +227,21 @@ public class CommitEditData {
 	 */
 	public void setVersionModelId(String versionModelId) {
 		this.versionModelId = versionModelId;
+	}
+
+	/**
+	 * @return the attachments
+	 */
+	public List<AttachmentLine> getAttachments() {
+		return this.attachments;
+	}
+
+	/**
+	 * @param attachments
+	 *            the attachments to set
+	 */
+	public void setAttachments(List<AttachmentLine> attachments) {
+		this.attachments = attachments;
 	}
 
 	/**

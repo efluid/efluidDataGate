@@ -13,7 +13,7 @@ import fr.uem.efluid.utils.ApplicationException;
  * 
  * @author elecomte
  * @since v0.0.1
- * @version 1
+ * @version 2
  */
 public interface DatabaseDescriptionRepository {
 
@@ -29,15 +29,17 @@ public interface DatabaseDescriptionRepository {
 	 */
 	boolean isTableExists(String tableName);
 
-	
 	/**
-	 * Check if for specified table, the given column as a unique value
+	 * <p>
+	 * Check if for specified table, the given column combination has a unique value
+	 * </p>
+	 * 
 	 * @param tableName
-	 * @param colName
+	 * @param colNames
 	 * @return
 	 */
-	public boolean isColumnHasUniqueValue(String tableName, String colName) ;
-	
+	public boolean isColumnSetHasUniqueValue(String tableName, Collection<String> colNames);
+
 	/**
 	 * Force refresh on cached data if any
 	 */

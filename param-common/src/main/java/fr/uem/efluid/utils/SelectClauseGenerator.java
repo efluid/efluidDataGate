@@ -3,6 +3,7 @@ package fr.uem.efluid.utils;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -45,6 +46,8 @@ public class SelectClauseGenerator {
 	protected static final String SELECT_CLAUSE_SEP_PROTECT_ALIAS = ITEM_PROTECT + SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS + ITEM_PROTECT;
 
 	protected static final String DEFAULT_SELECT_CLAUSE = "*";
+
+	protected static final String KEY_JOIN_SPLITER = " \\/ ";
 
 	protected static final int SELECT_CLAUSE_FIRST_COL_PROTECT = 1 + CURRENT_TAB_ALIAS.length();
 	protected static final int SELECT_CLAUSE_FIRST_COL_NO_PROTECT = CURRENT_TAB_ALIAS.length();
@@ -115,8 +118,8 @@ public class SelectClauseGenerator {
 	public String mergeSelectClause(
 			List<String> selectedColumnNames,
 			int availableColumnNumber,
-			List<? extends ExportAwareTableLink<?>> links,
-			List<? extends ExportAwareTableMapping<?>> mappings, // TODO : use this
+			Collection<? extends ExportAwareTableLink<?>> links,
+			Collection<? extends ExportAwareTableMapping<?>> mappings, // TODO : use this
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
 
 		if (selectedColumnNames.size() == availableColumnNumber) {
@@ -167,6 +170,46 @@ public class SelectClauseGenerator {
 
 	/**
 	 * <p>
+	 * Includes link alias set with support for composite keys
+	 * </p>
+	 * 
+	 * @param link
+	 * @return
+	 */
+	protected String createLinkAlias(ExportAwareTableLink<?> link) {
+		return null;
+	}
+
+	/**
+	 * <p>
+	 * Includes mapping alias set with support for composite keys
+	 * </p>
+	 * 
+	 * @param mapping
+	 * @return
+	 */
+	protected String createMappingAlias(ExportAwareTableMapping<?> mapping) {
+		return null;
+	}
+
+	/**
+	 * <p>
+	 * Join columns as simple select, without alias, and with support for "protectColumn".
+	 * For example, values {aaa,bbb,ccc} becames <code>"aaa", "bbb", "ccc"</code>
+	 * </p>
+	 * 
+	 * @param columnNames
+	 * @return
+	 */
+	protected String prepareSimpleSelectPart(Collection<String> columnNames) {
+
+		return columnNames.stream()
+				.map(s -> this.protectColumns ? "\"" + s + "\"" : s)
+				.collect(Collectors.joining(SELECT_CLAUSE_SEP));
+	}
+
+	/**
+	 * <p>
 	 * For the dic entry links, check if some are mapped as dictionary entries : if true,
 	 * needs to use refered table key instead of internal id
 	 * </p>
@@ -176,29 +219,77 @@ public class SelectClauseGenerator {
 	 *            mapped to table name
 	 * @return
 	 */
-	protected static boolean hasMappedLinks(List<? extends ExportAwareTableLink<?>> links,
+	protected static boolean hasMappedLinks(Collection<? extends ExportAwareTableLink<?>> links,
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
-		return links != null && links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
+		return links != null && links.size() > 0 && links.stream().anyMatch(l -> allEntries.containsKey(l.getTableTo()));
 	}
 
 	/**
+	 * @return
+	 */
+	protected static <T extends ExportAwareTableLink<?>> Comparator<T> linkOrder() {
+		return Comparator.comparing(ExportAwareTableLink::getTableTo);
+	}
+
+	/**
+	 * <p>
+	 * Prepare link cols with their alias (using indexed alias like "ln1", "ln2" ...)
+	 * </p>
+	 * 
 	 * @param links
 	 * @param allEntries
 	 * @return
 	 */
-	private Map<String, String> prepareSelectLinks(List<? extends ExportAwareTableLink<?>> links,
+	private Map<String, String> prepareSelectLinks(Collection<? extends ExportAwareTableLink<?>> links,
 			Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
 
 		AtomicInteger pos = new AtomicInteger(0);
+		Map<String, String> prepared = new HashMap<>();
 
-		return links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).collect(Collectors.toMap(
-				ExportAwareTableLink::getColumnFrom,
+		links.stream().filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).forEach(
 				l -> {
+
+					// Referenced table
 					ExportAwareDictionaryEntry<?> dic = allEntries.get(l.getTableTo());
-					// ln%s."%s" as ln_%s
-					return String.format(this.selectLinkValueModel, String.valueOf(pos.incrementAndGet()), dic.getKeyName(),
-							l.getColumnFrom());
-				}));
+
+					// Special case (rare) - composite
+					if (l.isCompositeKey()) {
+
+						int linkPos = pos.incrementAndGet();
+						int refCount = (int) l.columnFroms().count();
+
+						// Mark as aliased for each column From
+						for (int i = 0; i < refCount; i++) {
+							String columnFrom = l.getColumnFrom(i);
+							prepared.put(columnFrom, prepareSelectLinkColumnAlias(l.getColumnTo(i), linkPos, columnFrom));
+						}
+					}
+
+					// Standard case
+					else {
+						prepared.put(l.getColumnFrom(),
+								prepareSelectLinkColumnAlias(dic.getKeyName(), pos.incrementAndGet(), l.getColumnFrom()));
+					}
+				});
+
+		return prepared;
+	}
+
+	/**
+	 * <p>
+	 * For one column ref in a link. Repeated for each column keys in case of composite
+	 * keys
+	 * </p>
+	 * 
+	 * @param dic
+	 * @param pos
+	 * @param columnFrom
+	 * @return
+	 */
+	private String prepareSelectLinkColumnAlias(String keyName, int pos, String columnFrom) {
+		// ln%s."%s" as ln_%s
+		return String.format(this.selectLinkValueModel, String.valueOf(pos), keyName,
+				columnFrom);
 	}
 
 	/**
@@ -210,9 +301,5 @@ public class SelectClauseGenerator {
 	private static final String generateSelectLinkValue(boolean columnNamesProtected) {
 		return new StringBuilder(LINK_TAB_ALIAS + "%s.").append(columnNamesProtected ? "\"%s\"" : "%s")
 				.append(LINK_VAL_ALIAS_START + "%s ").toString();
-	}
-
-	protected static <T extends ExportAwareTableLink<?>> Comparator<T> linkOrder() {
-		return Comparator.comparing(ExportAwareTableLink::getTableTo);
 	}
 }

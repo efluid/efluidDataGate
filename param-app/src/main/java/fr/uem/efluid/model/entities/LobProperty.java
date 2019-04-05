@@ -51,7 +51,7 @@ public class LobProperty implements Shared {
 	 * 
 	 */
 	public LobProperty() {
-		// TODO Auto-generated constructor stub
+		super();
 	}
 
 	/**

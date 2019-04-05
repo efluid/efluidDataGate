@@ -45,14 +45,14 @@
 					<h5>Ensemble des modifications identifiées
 						<div class="float-right">
 							<div class="btn-group" role="group">
-							<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout garder</button>
-							<button type="button" id="rollbackAllButton"  class="btn btn-outline-danger btn-sm">Tout annuler</button>
-							<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
-						</div>&nbsp;
-						<div class="btn-group" role="group">
-							<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
-							<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
-						</div>&nbsp;
+								<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout garder</button>
+								<button type="button" id="rollbackAllButton" class="btn btn-outline-danger btn-sm">Tout annuler</button>
+								<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
+							</div>&nbsp;
+							<div class="btn-group" role="group">
+								<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
+								<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
+							</div>&nbsp;
 							<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
 							<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-dark btn-sm" type="button">Regénérer</a>
 						</div>
@@ -72,9 +72,9 @@
 							<div class="domain-buttons float-right">
 								Pour le domaine : 
 								<div class="btn-group" role="group">
-									<button type="button" id="selectAllButton" th:id="|select_${dstat.index}|" class="btn btn-outline-primary btn-sm all-button-domain">Tout garder</button>
-									<button type="button" id="rollbackAllButton" th:id="|rollback_${dstat.index}|" class="btn btn-outline-danger btn-sm all-button-domain">Tout annuler</button>
-									<button type="button" id="ignoreAllButton" th:id="|ignore_${dstat.index}|" class="btn btn-outline-secondary btn-sm all-button-domain">Tout ignorer</button>
+									<button type="button" id="selectAllButton" th:id="|select_${dstat.index}_${domain.domainUuid}|" class="btn btn-outline-primary btn-sm all-button-domain">Tout garder</button>
+									<button type="button" id="rollbackAllButton" th:id="|rollback_${dstat.index}_${domain.domainUuid}|" class="btn btn-outline-danger btn-sm all-button-domain">Tout annuler</button>
+									<button type="button" id="ignoreAllButton" th:id="|ignore_${dstat.index}_${domain.domainUuid}|" class="btn btn-outline-secondary btn-sm all-button-domain">Tout ignorer</button>
 								</div>&nbsp;
 								<div class="btn-group" role="group">
 									<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm all-hide-domain">Tout réduire</button>
@@ -96,34 +96,35 @@
 										<table class="table table-sm">
 											<thead>
 												<tr>
-													<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
+													<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryDisplayKeyName}">TITLE</span>)</th>
 													<th scope="col" width="10%">Type</th>
 													<th scope="col">Modification</th>
 													<th scope="col" width="18%">
 														<div class="btn-group float-right" role="group">
-															<button type="button" th:id="|select_${dstat.index}_${tstat.index}|" class="btn btn-outline-primary all-button btn-sm">Tout garder</button>
-															<button type="button" th:id="|rollback_${dstat.index}_${tstat.index}|" class="btn btn-outline-danger all-button btn-sm">Tout annuler</button>
-															<button type="button" th:id="|ignore_${dstat.index}_${tstat.index}|" class="btn btn-outline-secondary all-button btn-sm">Tout ignorer</button>
+															<button type="button" th:id="|select_${dstat.index}_${tstat.index}_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary all-button btn-sm">Tout garder</button>
+															<button type="button" th:id="|rollback_${dstat.index}_${tstat.index}_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-danger all-button btn-sm">Tout annuler</button>
+															<button type="button" th:id="|ignore_${dstat.index}_${tstat.index}_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-secondary all-button btn-sm">Tout ignorer</button>
 														</div>
 													</th>
 												</tr>
 											</thead>
-											<tbody>
-												<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${dstat.index}_${tstat.index}_${estat.index}|" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
-													<td th:if="${!entry.displayOnly}" th:text="${entry.keyValue}">XAZER5555 - 22</td>
-													<td th:if="${entry.displayOnly}" class="similar-display" th:text="|${entry.keyValues.size()} entrées similaires|" th:title="|clées : ${entry.combinedKey}|">34 entrées similaires</td>
-													<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
-													<td><span class="change-display" th:utext="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
-													<td>
-														<input type="hidden" th:id="|selectFor${dstat.index}_${tstat.index}_${estat.index}|" th:field="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
-														<input type="hidden" th:id="|rollbackFor${dstat.index}_${tstat.index}_${estat.index}|" th:field="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
-														<div class="btn-group float-right" role="group">
-															<button type="button" th:class="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Garder</button>
-															<button type="button" th:class="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Annuler</button>
-															<button type="button" th:class="!${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected or preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-secondary btn-sm ignore-button':'btn btn-outline-secondary btn-sm ignore-button'" class="btn btn-secondary btn-sm ignore-button">Ignorer</button>
+											<tbody class="pageHolder" th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}|">
+												
+			     								<tr th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_searchBar|">
+			     									<td colspan="100%">
+			     										<div>
+														    <input th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_searchField|" type="text" class="form-control float-left" name="search" style="width:400px!important;display:inline-block;height:31px;margin-right:10px" size="50" placeholder="Filtre"/>
+														    <button type="button" class="btn btn-outline-success btn-sm float-left filterButton">Filtrer par clés</button>
+														    <button th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_resetButton|" type="button" class="btn btn-outline-secondary btn-sm float-left resetButton" disabled="disabled" style="margin-left:5px!important">Tout lister</button>
 														</div>
 													</td>
-												</tr>
+			     								</tr>
+												<tr th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBar|">
+													<td colspan="100%">
+														<span th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBarContent|">
+														</span>
+													</td>
+			     								</tr>
 											</tbody>
 										</table>
 									</div>
@@ -160,45 +161,124 @@
     <script layout:fragment="script" th:inline="javascript">
 		 /*<![CDATA[*/
 		
-        // When selecting
-        const selectAction = (item) => {
-        	var selectInput = $("#selectFor" + item);
-        	var rollbackInput = $("#rollbackFor" + item);
-			if(selectInput.val() === 'false'){
-				selectInput.val("true");
-				rollbackInput.val("false");
-				$("#" + item + " td button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
-				$("#" + item + " td button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
-				$("#" + item + " td button.ignore-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
+		/* For pagination */
+		
+		const updateSelectItem = (index, selected, rollbacked) => {
+
+			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+				
+				// Reset 3 buttons
+				$("#" + index + "_item button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
+				$("#" + index + "_item button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
+				$("#" + index + "_item button.ignore-button").removeClass("btn-outline").addClass("btn-outline-secondary");
+				
+				// Apply selected button
+				if(selected){
+					$("#" + index + "_item button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
+				} else if(rollbacked) {
+					$("#" + index + "_item button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
+				} else {
+					$("#" + index + "_item button.ignore-button").removeClass("btn-outline-secondary").addClass("btn-secondary");
+				}
+			});
+		};
+		
+		const createNavBarItem = (elemId, active, num) => {
+			return '<li class="page-item' + (active ? ' active' : '') + '"><a class="page-link" onclick="getPageContent(\'' + elemId + '\',' + num + ')">' + (num + 1) + '</a></li>';
+		};
+		
+		const displayNavBar = (elemId, pageIndex, pageCount) => {
+			
+			var navBar = '<nav><ul class="pagination">';
+			var navStart = pageIndex <= 2 ? 0 : pageIndex - 2;
+			var navEnd = pageCount >= 2 ? pageCount : (pageIndex < pageCount - 1 ? pageIndex + 1 : pageCount);  
+			
+			// console.info("For elem " + elemId + " get pageIndex=" + pageIndex + " pageCount=" + pageCount + " navStart=" + navStart + " navEnd=" + navEnd);
+			
+			for(i = navStart; i < navEnd; i++) {
+				navBar += createNavBarItem(elemId, i == pageIndex, i);
+			}	
+
+			return navBar + '</ul></nav>';
+		};
+		
+		const getPageContent = (id, page) => {
+			
+			var parts = id.split("_"); 
+			var diffId = parts[1];
+			
+			var searchField = $("#" + id + "_searchField");
+			var search = searchField.val();
+			
+			var resetButton = $("#" + id + "_resetButton");
+			
+			if(search !== ''){
+				resetButton.prop('disabled', false);
+			} else {
+				resetButton.prop('disabled', true);
 			}
-        };
-        
-        // When rollbacking
-        const rollbackAction = (item) => {
-        	var selectInput = $("#selectFor" + item);
-        	var rollbackInput = $("#rollbackFor" + item);
-			if(rollbackInput.val() === 'false'){
-				selectInput.val("false");
-				rollbackInput.val("true");
-				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
-				$("#" + item + " td button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
-				$("#" + item + " td button.ignore-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
-			}
-        };
-        
-        // When ignoring
-        const ignoreAction = (item) => {
-        	var selectInput = $("#selectFor" + item);
-        	var rollbackInput = $("#rollbackFor" + item);
-			if(selectInput.val() === 'true' || rollbackInput.val() === 'true'){
-				selectInput.val("false");
-				rollbackInput.val("false");
-				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
-				$("#" + item + " td button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
-				$("#" + item + " td button.ignore-button").removeClass("btn-outline-secondary").addClass("btn-secondary");
-			}
-        };
-        
+			
+			$.get("/ui/prepare/page/" + diffId + "/" + page + "?search=" + search, (data, status) => {
+				
+				// Remove current page
+				$("." + id + "_added").remove();
+				
+				var navBar = $("#" + id + "_navBar");
+				
+				// Put new items
+				data.page.forEach(e => {
+				
+					var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
+					var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
+					var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
+				
+					var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
+					var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
+					var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
+				
+					var itemRow = 
+						'<tr id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' ' + id + '_added">' +
+						 	'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
+						 	'<td class="action-display">' + actionDisplay + '</td>' +
+						 	'<td><span class="change-display" title="payload technique=' + e.payload + '">' + e.hrPayload + '</span></td>' + 
+						 	'<td>' +
+							 	'<div class="btn-group float-right" role="group">' +
+									'<button type="button" class="' + butSelecClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',true,false)">Garder</button>' +
+									'<button type="button" class="' + butRollbackClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,true)">Annuler</button>' +
+									'<button type="button" class="' + butIgnoreClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,false)">Ignorer</button>' +
+								'</div>' +
+							'</td>' +
+						'</tr>';
+							
+					 navBar.before(itemRow);
+				}); 
+				
+				// Update navBar displayNavBar
+				if(data.pageCount > 1){
+					$("#" + id + "_navBarContent").html(displayNavBar(id, data.pageIndex, data.pageCount));
+				} else {
+					$("#" + id + "_navBarContent").html("");
+				}
+		    });
+		};
+		
+		const initPageData = (holder) => {
+			getPageContent(holder.id, 0);
+		};
+		
+		const filterPageData = (button) => {
+			getPageContent(button.target.parentElement.parentElement.parentElement.parentElement.id, 0);
+		};
+		
+		const resetFilterPageData = (button) => {
+			var id = button.target.parentElement.parentElement.parentElement.parentElement.id;
+			var searchField = $("#" + id + "_searchField");
+			searchField.val('');
+			getPageContent(id, 0);
+		};
+		
+		/* End pagination */
+		        
 		// For remarks hidding
 		const hideAndShowDiffRemarksAction = () => {
 			hideDisplays();
@@ -245,7 +325,9 @@
 		const hideAndShowAllDomainAction = (domainUuid, force) => {
 
 			// Hide / Show tables
-			$("#content_" + domainUuid + " span.table-reducer").each((index, e) => {
+			$("#domain" + domainUuid + " span.table-reducer").each((index, e) => {
+			
+				console.info("hide domain " + domainUuid + " = " + e.parentElement.parentElement.parentElement.id);
 				var tableUuid = e.parentElement.parentElement.parentElement.id;
 				var table = $("#" + tableUuid + " table");
 				var button = $("#" + tableUuid + " span.reducer");
@@ -294,13 +376,47 @@
 		// For "select All / rollback All / ignore All" in domain
 		const processAllDomain = (butId) => {
 			var idParts = butId.split("_");
-			$("#domain_" + idParts[1] + " button." + idParts[0] + "-button").click();
+			
+			console.info(idParts);
+			
+			var selected = idParts[0] === "select";
+			var rollbacked = idParts[0] === "rollback";
+			
+			$.post("/ui/prepare/selection/domain/" + idParts[2] + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+				$("#domain_" + idParts[1] + " button." + idParts[0] + "-button").click();
+			});
+			
+		};
+		
+		// For "select All / rollback All / ignore All" on diffDisplay
+		const processAllDiffDisplay = (butId) => {
+			var idParts = butId.split("_");
+			
+			console.info(idParts);
+			
+			var selected = idParts[0] === "select";
+			var rollbacked = idParts[0] === "rollback";
+			
+			$.post("/ui/prepare/selection/dict/" + idParts[3] + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+				$("#" + idParts[1] + "_" + idParts[2] + " button." + idParts[0] + "-button").click();
+			});
 		};
 		
 		// For "select All / rollback All / ignore All"
-		const processAll = (butId) => {
-			var idParts = butId.split("_");
-			$("#" + idParts[1] + "_" + idParts[2] + " button." + idParts[0] + "-button").click();
+		const processAll = (type) => {
+			
+			var selected = type === "select";
+			var rollbacked = type === "rollback";
+			
+			$.post("/ui/prepare/selection/all?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+				if(selected){
+					$("#selectAllButton").click((e) => $("button.select-button").click());
+				} else if(rollbacked){
+					$("#rollbackAllButton").click((e) => $("button.rollback-button").click());
+				} else {
+					$("#ignoreAllButton").click((e) => $("button.ignore-button").click());
+				}
+			});
 		};
 		
     	// Init actions
@@ -312,18 +428,22 @@
 			$("button.select-button").click((e) => selectAction(e.target.parentElement.parentElement.parentElement.id));
 			$("button.rollback-button").click((e) => rollbackAction(e.target.parentElement.parentElement.parentElement.id));
 			$("button.ignore-button").click((e) => ignoreAction(e.target.parentElement.parentElement.parentElement.id));
-			$("button.all-button").click((e) => processAll(e.target.id));
+			$("button.all-button").click((e) => processAllDiffDisplay(e.target.id));
 			$("button.all-button-domain").click((e) => processAllDomain(e.target.id));
-			$("#selectAllButton").click((e) => $("button.select-button").click());
-			$("#rollbackAllButton").click((e) => $("button.rollback-button").click());
-			$("#ignoreAllButton").click((e) => $("button.ignore-button").click());
+			$("#selectAllButton").click((e) => processAll('select'));
+			$("#rollbackAllButton").click((e) => processAll('rollback'));
+			$("#ignoreAllButton").click((e) => processAll('ignore'));
 			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
 			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
 			$("button.all-hide-domain").click((e) => hideAndShowAllDomainAction(e.target.parentElement.parentElement.parentElement.id, 'hide'));
 			$("button.all-show-domain").click((e) => hideAndShowAllDomainAction(e.target.parentElement.parentElement.parentElement.id, 'show'));
 			$("#diffRemarkAreaButton").click((e) => hideAndShowDiffRemarksAction());
+			$(".pageHolder").each((index, e) => initPageData(e));
+			$(".filterButton").click((e) => filterPageData(e));
+			$(".resetButton").click((e) => resetFilterPageData(e));
 		}); 
 		
+        /*]]>*/
     </script>
 </body>
 </html>

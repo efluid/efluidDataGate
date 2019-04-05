@@ -18,12 +18,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import fr.uem.efluid.model.entities.CommitState;
+import fr.uem.efluid.services.ApplyDiffService;
 import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
+import fr.uem.efluid.services.types.DiffDisplayPage;
 import fr.uem.efluid.services.types.LocalPreparedDiff;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.SearchHistoryPage;
 import fr.uem.efluid.utils.WebUtils;
 
 /**
@@ -49,9 +52,80 @@ public class BacklogController extends CommonController {
 
 	@Autowired
 	private PilotableCommitPreparationService pilotableCommitService;
-	
+
 	@Autowired
 	private DictionaryManagementService dictService;
+
+	@Autowired
+	private ApplyDiffService diffService;
+
+	/**
+	 * <p>
+	 * For history navigate default rendering
+	 * </p>
+	 * 
+	 * @param model
+	 * @return
+	 */
+	@RequestMapping("/history")
+	public String historyPage(Model model) {
+
+		return historySearchPageNav(model, 0, null);
+	}
+
+	/**
+	 * <p>
+	 * For new search
+	 * </p>
+	 * 
+	 * @param model
+	 * @param search
+	 * @return
+	 */
+	@RequestMapping(path = "/history", method = POST)
+	public String historySearchPage(Model model, @RequestParam("search") String search) {
+
+		return historySearchPageNav(model, 0, search);
+	}
+
+	/**
+	 * @param model
+	 * @param page
+	 * @param search
+	 * @return
+	 */
+	@RequestMapping(path = "/history/{page}", method = GET)
+	public String historySearchPageNav(Model model, @PathVariable("page") int pageNbr) {
+
+		return historySearchPageNav(model, pageNbr, null);
+	}
+
+	/**
+	 * @param model
+	 * @param page
+	 * @param search
+	 * @return
+	 */
+	@RequestMapping(path = "/history/{page}/{search}", method = GET)
+	public String historySearchPageNav(Model model, @PathVariable("page") int pageNbr, @PathVariable("search") String search) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
+		SearchHistoryPage page = this.diffService.getHistory(pageNbr, search);
+
+		// For formatting
+		WebUtils.addTools(model);
+
+		// For search nav
+		WebUtils.addPageNavBarItems(model, "/ui/history", search, pageNbr, page.getPageCount());
+
+		// Get updated preparation
+		model.addAttribute("history", page);
+
+		return "pages/history";
+	}
 
 	/**
 	 * <p>
@@ -89,6 +163,83 @@ public class BacklogController extends CommonController {
 	}
 
 	/**
+	 * @return content for paginated diffDisplay rendering
+	 */
+	@RequestMapping(path = { "/prepare/page/{uuid}/{page}", "/merge/page/{uuid}/{page}" }, method = GET)
+	@ResponseBody
+	public DiffDisplayPage preparationGetDiffDisplayPage(@PathVariable("uuid") UUID uuid, @PathVariable("page") int page,
+			@RequestParam(required = false) String search) {
+
+		return this.pilotableCommitService.getPaginatedDiffDisplay(uuid, page, search);
+	}
+
+	/**
+	 * <p>
+	 * Update selection for the whole diff
+	 * </p>
+	 * 
+	 * @param selected
+	 * @param rollbacked
+	 */
+	@RequestMapping(path = { "/prepare/selection/all", "/merge/selection/all" }, method = POST)
+	@ResponseBody
+	public void preparationSelectionUpdateAll(@RequestParam boolean selected, @RequestParam boolean rollbacked) {
+
+		this.pilotableCommitService.updateAllPreparationSelections(selected, rollbacked);
+	}
+
+	/**
+	 * <p>
+	 * Update selection for a selected domain
+	 * </p>
+	 * 
+	 * @param domainUUID
+	 * @param selected
+	 * @param rollbacked
+	 */
+	@RequestMapping(path = { "/prepare/selection/domain/{domain}", "/merge/selection/domain/{domain}" }, method = POST)
+	@ResponseBody
+	public void preparationSelectionUpdateDomain(@PathVariable("domain") UUID domainUUID, @RequestParam boolean selected,
+			@RequestParam boolean rollbacked) {
+
+		this.pilotableCommitService.updateDomainPreparationSelections(selected, rollbacked, domainUUID);
+	}
+
+	/**
+	 * <p>
+	 * Update selection for one diffDisplay
+	 * </p>
+	 * 
+	 * @param dictUUID
+	 * @param selected
+	 * @param rollbacked
+	 */
+	@RequestMapping(path = { "/prepare/selection/dict/{dict}", "/merge/selection/dict/{dict}" }, method = POST)
+	@ResponseBody
+	public void preparationSelectionUpdateDiffDisplay(@PathVariable("dict") UUID dictUUID, @RequestParam boolean selected,
+			@RequestParam boolean rollbacked) {
+
+		this.pilotableCommitService.updateDiffDisplayPreparationSelections(selected, rollbacked, dictUUID);
+	}
+
+	/**
+	 * <p>
+	 * Update selection for one item
+	 * </p>
+	 * 
+	 * @param index
+	 * @param selected
+	 * @param rollbacked
+	 */
+	@RequestMapping(path = { "/prepare/selection/line/{index}", "/merge/selection/line/{index}" }, method = POST)
+	@ResponseBody
+	public void preparationSelectionUpdateItem(@PathVariable("index") long itemIndex, @RequestParam boolean selected,
+			@RequestParam boolean rollbacked) {
+
+		this.pilotableCommitService.updateDiffLinePreparationSelections(selected, rollbacked, itemIndex);
+	}
+
+	/**
 	 * @param model
 	 * @param name
 	 * @return
@@ -108,7 +259,7 @@ public class BacklogController extends CommonController {
 
 		// Get current version
 		model.addAttribute("version", this.dictService.getLastVersion());
-		
+
 		return "pages/commit";
 	}
 
@@ -179,6 +330,7 @@ public class BacklogController extends CommonController {
 		// Get updated commits
 		model.addAttribute("commits", this.commitService.getAvailableCommits());
 		model.addAttribute("checkVersion", Boolean.valueOf(this.dictService.isDictionaryUpdatedAfterLastVersion()));
+		model.addAttribute("version", this.dictService.getLastVersion());
 
 		return "pages/push";
 	}
@@ -262,6 +414,73 @@ public class BacklogController extends CommonController {
 		model.addAttribute("result", this.pilotableCommitService.startMergeCommitPreparation(WebUtils.inputExportImportFile(request)));
 
 		return "pages/merging";
+	}
+
+	/**
+	 * @param model
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping(value = "/attachment/remove", method = GET)
+	public String removeAttachment(Model model, @RequestParam("name") String name) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
+		// Update current preparation with selected attributes
+		this.pilotableCommitService.removeAttachmentOnCurrentCommitPreparation(name);
+
+		// Get updated preparation
+		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
+
+		// Get current version
+		model.addAttribute("version", this.dictService.getLastVersion());
+
+		return "pages/commit";
+	}
+
+	/**
+	 * @param model
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/attachment/upload", method = POST)
+	public String uploadAttachment(Model model, MultipartHttpServletRequest request) {
+
+		if (!controlSelectedProject(model)) {
+			return REDIRECT_SELECT;
+		}
+
+		// Update current preparation with selected attributes
+		this.pilotableCommitService.addAttachmentOnCurrentCommitPreparation(WebUtils.inputExportImportFile(request));
+
+		// Get updated preparation
+		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
+
+		// Get current version
+		model.addAttribute("version", this.dictService.getLastVersion());
+
+		return "pages/commit";
+	}
+
+	/**
+	 * @param hash
+	 * @return
+	 */
+	@RequestMapping(path = "/attachment/content", method = GET)
+	@ResponseBody
+	public ResponseEntity<InputStreamResource> downloadAttachmentContent(
+			@RequestParam(name = "name", required = false) String name,
+			@RequestParam(name = "uuid", required = false) UUID uuid) {
+
+		// Provides existing content
+		if (name == null && uuid != null) {
+			return WebUtils.outputData(this.commitService.getExistingAttachmentData(uuid));
+		}
+
+		// Search by name from current temp files
+		return WebUtils.outputData(this.pilotableCommitService.getAttachmentContentFromCurrentCommitPreparation(name));
 	}
 
 	/**

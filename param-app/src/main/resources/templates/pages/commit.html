@@ -27,15 +27,86 @@
 					<textarea id="commitComment" th:field="${preparation.commitData.comment}" class="form-control" rows="10"></textarea>
 					<small class="form-text text-muted">Champs obligatoire</small>
 				</div>
+				
+				<!-- Attachment files for current commit -->
+                <div th:if="${preparation.commitData.attachments} != null and ${preparation.commitData.attachments.size()} > 0" class="form-group">
+					<table class="table table-sm">
+					    <thead>
+					        <tr>
+					            <th scope="col">
+					            	Pièces jointes intégrées au lot.
+					            	<span th:if="${preparation.preparingState.name()=='MERGED' && preparation.attachmentExecuteSupport}" class="file-runnable-com">Cocher les scripts à exécuter</span>
+					            </th>
+					            <th scope="col">&nbsp;</th>
+					        </tr>
+					    </thead>
+					    <tbody>
+					        <tr th:each="attachment, astat : ${preparation.commitData.attachments}">
+					            <td>
+					            	<img src="/ico.png" th:src="|/ico-${attachment.type}.png|" width="18" height="24" th:title="${attachment.type}"/>
+					            	&nbsp;
+					            	<span th:text="${attachment.name}">test.sql</span>
+					            	<span th:if="${attachment.type.runnable && preparation.attachmentExecuteSupport}" class="file-runnable-com">Executable</span>
+					            </td>
+					            <td>
+									<div class="float-right">
+		           						<span th:if="${attachment.type.runnable && preparation.attachmentExecuteSupport}">
+		           							<span class="file-runnable-com">Executer :&nbsp;</span>
+		           							<input type="checkbox" th:field="${preparation.commitData.attachments[__${astat.index}__].executed}">
+		           							&nbsp;
+		           						</span>
+		           						<button th:if="${attachment.type.editable && preparation.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#contentModal" th:id="${attachment.name}">Consulter</button>
+		           						&nbsp;
+		           						<a th:if="${preparation.preparingState.name()!='MERGED'}" href="./commit.html" th:href="@{/ui/attachment/remove?name={name}(name=${attachment.name})}" class="btn btn-sm btn-secondary float-right">Retirer</a>		           						
+		           					</div>
+		            			</td>
+					        </tr>
+					    </tbody>
+					</table>
+				</div>
 			</p>
+			
+			<!-- Save / update / cancel buttons -->
 			<p>
 				<div class="float-right">
+					&nbsp;
 					<a th:if="${preparation.preparingState.name()=='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/ui/prepare}" href="prepare.html">Revenir en arrière</a>
 					<a th:if="${preparation.preparingState.name()!='LOCAL'}" class="btn btn-secondary btn-sm" th:href="@{/ui/merge}" href="prepare.html">Revenir en arrière</a>
 					<input type="submit" id="commitSubmit" class="btn btn-success btn-sm" title="Le commentaire est obligatoire" value="Confirmer les opérations"/><br/><br/>
 				</div>
 			</p>
+			
 		</form>
+		
+		<!-- Upload file form / button -->
+		<span th:if="${preparation.preparingState.name()!='MERGED'}">
+			<form action="#" th:action="@{/ui/attachment/upload}" method="post" enctype="multipart/form-data">
+				<label class="btn btn-sm btn-primary">
+					Spécifier une pièce jointe à ajouter <input name="import" id="importInput" type="file" hidden="true"/>
+				</label>
+				<input type="submit" class="btn btn-success-outline btn-sm float-right" id="importSubmit" disabled="disabled" value="Ajouter la pièce jointe"/>
+			</form>
+			<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
+		</span>
+		
+		<!-- File content display modal -->
+		<div class="modal fade" id="contentModal" tabindex="-1" role="dialog" aria-labelledby="contentModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+		    	<div class="modal-content">
+					<div class="modal-header">
+			       		<h5 class="modal-title" id="contentModalLabel">New message</h5>
+			        	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+			          		<span aria-hidden="true">&times;</span>
+			        	</button>
+			      	</div>
+			      	<div class="modal-body" id="modalContent"> ... </div>
+			      	<div class="modal-footer">
+			        	<button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+			      	</div>
+		    	</div>
+		  	</div>
+		</div>
+		
 	</span>
 	 <script layout:fragment="script" th:inline="javascript">
 		 /*<![CDATA[*/
@@ -54,11 +125,34 @@
 				$("#commitSubmit").removeClass("btn-success").addClass("btn-outline-success");
     		}
     	};
+
+		// Display of file 
+		const displayFile = () => {
+			hideDisplays();
+			var file = $("#importInput").val();
+			console.log(file);
+			$("#displayFile").text(file);
+			$("#importSubmit").prop('disabled', false);
+			$("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
+		};
+        
+        // For attachment read in modal
+        const readAttach = (e) => {
+        	hideDisplays();
+			var name = e.relatedTarget.id;
+			console.log("id = " + name);
+			$.get("/ui/attachment/content?name=" + name, null, (data, status) => {
+				$("#modalContent").html(data);
+				$("#contentModalLabel").html("Fichier <b>" + name + "</b>");
+			}); 
+        };
         
     	// Init actions
     	$(document).ready(() => {
 			$("#commitComment").on('input',checkCommitComment);
 			checkCommitComment();
+			$("#importInput").change(displayFile);
+			$('#contentModal').on('show.bs.modal', readAttach); 
 		}); 
 		
         /*]]>*/

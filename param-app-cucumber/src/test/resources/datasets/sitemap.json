@@ -1,0 +1,23 @@
+{
+  "/": ["home page", "home"],
+  "/ui": ["default page"],
+  "/login" : ["login page"],
+  "/login?username=other&error=CredentialsException" : ["login error page"],
+  "/wizzard/": ["wizzard welcome page"],
+  "/wizzard/1": ["wizzard step one"],
+  "/wizzard/2": ["wizzard step two"],
+  "/wizzard/3": ["wizzard step three"],
+  "/wizzard/user": ["wizzard user creation"],
+  "/callback": ["login callback"],
+  "/ui/users": ["all users page"],
+  "/ui/user/": ["user edit page", "edit user page"],
+  "/ui/user/new": ["new user page"],
+  "/ui/domains": ["functional domain edit page"],
+  "/ui/dictionary": ["parameter table main page", "list of parameter tables page"],
+  "/ui/dictionary/new": ["new parameter table page"],
+  "/ui/versions": ["list of versions"],
+  "/ui/dictionary/save" : ["save parameter table", "saved parameter table"],
+  "/ui/dictionary/test" : ["test parameter table", "tested parameter table"],
+  "/ui/prepare" : ["diff launch page"],
+  "/rest/v1/features/" : ["feature listing rest service"]
+}

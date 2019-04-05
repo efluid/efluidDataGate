@@ -81,8 +81,8 @@
 							<div class="domain-buttons float-right">
 								Pour le domaine : 
 								<div class="btn-group" role="group">
-									<button type="button" id="selectAllButton" th:id="|select_${dstat.index}|" class="btn btn-outline-primary btn-sm all-button-domain">Tout appliquer</button>
-									<button type="button" id="rollbackAllButton" th:id="|rollback_${dstat.index}|" class="btn btn-outline-danger btn-sm all-button-domain">Tout ignorer</button>
+									<button type="button" id="selectAllButton" th:id="|select_${dstat.index}_${domain.domainUuid}|" class="btn btn-outline-primary btn-sm all-button-domain">Tout appliquer</button>
+									<button type="button" id="rollbackAllButton" th:id="|rollback_${dstat.index}_${domain.domainUuid}|" class="btn btn-outline-danger btn-sm all-button-domain">Tout ignorer</button>
 								</div>&nbsp;
 								<div class="btn-group" role="group">
 									<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm all-hide-domain">Tout réduire</button>
@@ -104,66 +104,35 @@
 										<table class="table table-sm">
 											<thead>
 												<tr>
-													<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryKeyName}">TITLE</span>)</th>
+													<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryDisplayKeyName}">TITLE</span>)</th>
 													<th scope="col" colspan="2" width="85%">
 														<span th:if="${needsAction}">
 															Modification
 															<div class="btn-group float-right" role="group">
-																<button type="button" th:id="|select_${dstat.index}_${tstat.index}|" class="btn btn-outline-primary all-button btn-sm">Tout appliquer</button>
-																<button type="button" th:id="|rollback_${dstat.index}_${tstat.index}|" class="btn btn-outline-danger all-button btn-sm">Tout ignorer</button>
+																<button type="button" th:id="|select_${dstat.index}_${tstat.index}_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-primary all-button btn-sm">Tout appliquer</button>
+																<button type="button" th:id="|rollback_${dstat.index}_${tstat.index}_${diffDisplay.dictionaryEntryUuid}|" class="btn btn-outline-danger all-button btn-sm">Tout ignorer</button>
 															</div>
 														</span>
 													</th>
 												</tr>
 											</thead>
-											<tbody>
-												<tr th:each="entry, estat : ${diffDisplay.diff}" th:id="|${dstat.index}_${tstat.index}_${estat.index}|" th:if="${showAll or entry.needAction}">
-													<td th:if="${!entry.displayOnly}" th:text="${entry.keyValue}">XAZER5555 - 22</td>
-													<td th:if="${entry.displayOnly}" class="similar-display" th:text="|${entry.keyValues.size()} entrées similaires|" th:title="|clées : ${entry.combinedKey}|">34 entrées similaires</td>
-													<td width="72%">
-														<span class="reducer reducer-sm reducer-open float-right">&nbsp;</span>
-														<span class="change-details">
-															<span class="change-title">Modification locale</span> : 
-															<span th:if="${entry.mine}" th:class="|mine action-line ${#strings.toLowerCase(entry.mine.action.name())}|" class="action-add">
-																<span class="change-display">
-																	<span class="action-display" th:text="${entry.mine.action.name()}=='ADD'?'Ajout':(${entry.mine.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
-																	<span th:if="${entry.mine.payload}" th:utext="${entry.mine.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
-																	<span th:if="!${entry.mine.payload}"> - pas de détails - </span>
-																</span>
-															</span>
-															<span class="mine change-display-none" th:if="!${entry.mine}">Ligne non présente dans l'index (ligne supprimée ou non créée)</span>
-															<span class="change-title">Modification importée</span> : 
-															<span th:if="${entry.their}" th:class="|their change-display action-line ${#strings.toLowerCase(entry.their.action.name())}|" class="action-add">
-																<span class="change-display">
-																	<span class="action-display" th:text="${entry.their.action.name()}=='ADD'?'Ajout':(${entry.their.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
-																	<span th:if="${entry.their.payload}" th:utext="${entry.their.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
-																	<span th:if="!${entry.their.payload}"> - pas de détails - </span>
-																</span>
-															</span>
-															<span class="mine change-display-none" th:if="!${entry.their}">Non présente dans l'import</span>
-															<span class="change-title">Proposition</span> : 
-														</span>
-														<span th:if="${entry.action}" th:class="|merged change-display action-line ${#strings.toLowerCase(entry.action.name())}|">
-															<span class="change-display">
-																<span class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</span>
-																<span th:if="${entry.payload}" th:utext="${entry.hrPayload}">"Compteur d'eau" / "abc" / "FS" => suppr</span>
-																<span th:if="!${entry.payload}"> - pas de détails - </span>
-															</span>
-														</span>
-														<span class="merged change-display-none" th:if="!${entry.action}">Modifications identiques, rien à changer</span>
-													</td>
-													<td th:if="${entry.needAction && preparation!= null}">
-														<input type="hidden" th:id="|selectFor${dstat.index}_${tstat.index}_${estat.index}|" th:field="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}"></input>
-														<input type="hidden" th:id="|rollbackFor${dstat.index}_${tstat.index}_${estat.index}|" th:field="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}"></input>
-														<div class="btn-group float-right" role="group">
-															<button type="button" th:class="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].selected}?'btn btn-primary btn-sm select-button':'btn btn-outline-primary btn-sm select-button'" class="btn btn-primary btn-sm select-button">Appliquer</button>
-															<button type="button" th:class="${preparation.domains[__${dstat.index}__].preparedContent[__${tstat.index}__].diff[__${estat.index}__].rollbacked}?'btn btn-danger btn-sm rollback-button':'btn btn-outline-danger btn-sm rollback-button'" class="btn btn-danger btn-sm rollback-button">Ignorer</button>
+											<tbody class="pageHolder" th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}|">
+												
+			     								<tr th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_searchBar|">
+			     									<td colspan="100%">
+			     										<div>
+														    <input th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_searchField|" type="text" class="form-control float-left" name="search" style="width:400px!important;display:inline-block;height:31px;margin-right:10px" size="50" placeholder="Filtre"/>
+														    <button type="button" class="btn btn-outline-success btn-sm float-left filterButton">Filtrer par clés</button>
+														    <button th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_resetButton|" type="button" class="btn btn-outline-secondary btn-sm float-left resetButton" disabled="disabled" style="margin-left:5px!important">Tout lister</button>
 														</div>
 													</td>
-													<td th:if="!${entry.needAction}">
-														<button type="button" class="btn btn-secondary-outline btn-sm select-button float-right" disabled="disabled">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Déjà en place&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>
+			     								</tr>
+												<tr th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBar|">
+													<td colspan="100%">
+														<span th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBarContent|">
+														</span>
 													</td>
-												</tr>
+			     								</tr>
 											</tbody>
 										</table>
 									</div>
@@ -202,30 +171,181 @@
     <script layout:fragment="script" th:inline="javascript">
 		 /*<![CDATA[*/
 		
-        // When selecting
-        const selectAction = (item) => {
-        	var selectInput = $("#selectFor" + item);
-        	var rollbackInput = $("#rollbackFor" + item);
-			if(selectInput.val() === 'false'){
-				selectInput.val("true");
-				rollbackInput.val("false");
-				$("#" + item + " td button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
-				$("#" + item + " td button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
+		 /* For pagination */
+		
+		var hasPreparation = /*[[${preparation != null}]]*/ true ;
+		var defaultShow = /*[[${showAll}?'show':'hide']]*/ 'hide';
+			
+		const updateSelectItem = (index, selected, rollbacked) => {
+
+			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+				
+				// Reset 3 buttons
+				$("#" + index + "_item button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
+				$("#" + index + "_item button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
+				$("#" + index + "_item button.ignore-button").removeClass("btn-outline").addClass("btn-outline-secondary");
+				
+				// Apply selected button
+				if(selected){
+					$("#" + index + "_item button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
+				} else if(rollbacked) {
+					$("#" + index + "_item button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
+				} else {
+					$("#" + index + "_item button.ignore-button").removeClass("btn-outline-secondary").addClass("btn-secondary");
+				}
+			});
+		};
+		
+		const createNavBarItem = (elemId, active, num) => {
+			return '<li class="page-item' + (active ? ' active' : '') + '"><a class="page-link" onclick="getPageContent(\'' + elemId + '\',' + num + ')">' + (num + 1) + '</a></li>';
+		};
+		
+		const displayNavBar = (elemId, pageIndex, pageCount) => {
+			
+			var navBar = '<nav><ul class="pagination">';
+			var navStart = pageIndex <= 2 ? 0 : pageIndex - 2;
+			var navEnd = pageCount >= 2 ? pageCount : (pageIndex < pageCount - 1 ? pageIndex + 1 : pageCount);  
+			
+			// console.info("For elem " + elemId + " get pageIndex=" + pageIndex + " pageCount=" + pageCount + " navStart=" + navStart + " navEnd=" + navEnd);
+			
+			for(i = navStart; i < navEnd; i++) {
+				navBar += createNavBarItem(elemId, i == pageIndex, i);
+			}	
+
+			return navBar + '</ul></nav>';
+		};
+		
+		const getPageContent = (id, page) => {
+			
+			var parts = id.split("_"); 
+			var diffId = parts[1];
+			
+			var searchField = $("#" + id + "_searchField");
+			var search = searchField.val();
+			
+			var resetButton = $("#" + id + "_resetButton");
+			
+			if(search !== ''){
+				resetButton.prop('disabled', false);
+			} else {
+				resetButton.prop('disabled', true);
 			}
-        };
-        
-        // When rollbacking
-        const rollbackAction = (item) => {
-        	var selectInput = $("#selectFor" + item);
-        	var rollbackInput = $("#rollbackFor" + item);
-			if(rollbackInput.val() === 'false'){
-				selectInput.val("false");
-				rollbackInput.val("true");
-				$("#" + item + " td button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
-				$("#" + item + " td button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
-			}
-        };
-        
+			
+			$.get("/ui/merge/page/" + diffId + "/" + page + "?search=" + search, (data, status) => {
+				
+				// Remove current page
+				$("." + id + "_added").remove();
+				
+				var navBar = $("#" + id + "_navBar");
+				
+				// Put new items
+				data.page.forEach(e => {
+				
+					if(defaultShow || e.needAction){
+						var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
+						var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
+						var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
+						var actionMineDisplay = e.mine && e.mine.action === 'ADD' ? 'Ajout' : e.mine && e.mine.action === 'REMOVE' ? 'Suppression' : 'Modification';
+						var actionTheirDisplay = e.their && e.their.action === 'ADD' ? 'Ajout' : e.their && e.their.action === 'REMOVE' ? 'Suppression' : 'Modification';
+					
+						var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
+						var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
+					
+						var payload = e.payload != null ? e.hrPayload : ' - pas de détails - ';
+						var minePayload = e.mine && e.mine.payload != null ? e.mine.hrPayload : ' - pas de détails - ';
+						var theirPayload = e.their && e.their.payload != null ? e.their.hrPayload : ' - pas de détails - ';
+					
+						var itemRow = 
+							'<tr id="' + e.indexForDiff + '_item" class="pageHolder ' + id + '_added">' +
+								'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
+								'<td width="72%">' +
+									'<span class="reducer reducer-sm reducer-open float-right" onclick="hideAndShowDisplayAction(\'' + e.indexForDiff + '_item\')">&nbsp;</span>' +
+									'<span class="change-details" style="display: none;">' +
+										'<span class="change-title">Modification locale</span> : ' + 
+										(e.mine
+											 ? '<span class="mine action-line ' + e.mine.action.toLowerCase() + '">' +
+													'<span class="change-display">' +
+														'<span class="action-display">' + actionMineDisplay + ' </span>' +
+														'<span>' + minePayload + '</span>' +
+													'</span>' + 
+												'</span>'
+											 : '<span class="mine change-display-none">Ligne non présente dans l\'index (ligne supprimée ou non créée)</span>'
+										) +
+										'<span class="change-title">Modification importée</span> : ' +
+										(e.their 
+											 ? '<span class="their change-display action-line ' + e.mine.action.toLowerCase() + '">' +
+													'<span class="change-display">' +
+														'<span class="action-display">' + actionTheirDisplay + ' </span>' +
+														'<span>' + theirPayload + '</span>' +
+													'</span>' + 
+												'</span>'
+											 : 	'<span class="mine change-display-none">Non présente dans l\'import</span>'
+										) +
+										'<span class="change-title">Proposition</span> : ' +
+									'</span>' ;
+									
+						if(e.action){
+							itemRow += 
+									'<span class="merged change-display action-line ' + e.action.toLowerCase() + '">' +
+										'<span class="change-display">' +
+							 				'<span class="action-display">' + actionDisplay + ' </span>' +
+											'<span>' + payload + '</span>' +
+										'</span>' +
+									'</span>' ;
+						} else {
+							itemRow += 
+									'<span class="merged change-display-none" >Modifications identiques, rien à changer</span>' ;
+						}
+						
+						itemRow += '</td>';
+						
+						if(e.needAction && hasPreparation){
+							itemRow += 
+								'<td>' +
+									'<div class="btn-group float-right" role="group">' +
+										'<button type="button" class="' + butSelecClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',true,false)">Appliquer</button>' +
+										'<button type="button" class="' + butRollbackClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,true)">Ignorer</button>' +
+									'</div>' +
+								'</td>' ;
+						} else if(!e.needAction) {
+							itemRow += 
+								'<td>' +
+									'<button type="button" class="btn btn-secondary-outline btn-sm select-button float-right" disabled="disabled">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Déjà en place&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</button>'
+								'</td>' ;
+						}
+			     		
+			     		itemRow += '</tr>' ;
+							
+					 	navBar.before(itemRow);
+					 }
+				}); 
+				
+				// Update navBar displayNavBar
+				if(data.pageCount > 1){
+					$("#" + id + "_navBarContent").html(displayNavBar(id, data.pageIndex, data.pageCount));
+				} else {
+					$("#" + id + "_navBarContent").html("");
+				}
+		    });
+		};
+		
+		const initPageData = (holder) => {
+			getPageContent(holder.id, 0);
+		};
+		
+		const filterPageData = (button) => {
+			getPageContent(button.target.parentElement.parentElement.parentElement.parentElement.id, 0);
+		};
+		
+		const resetFilterPageData = (button) => {
+			var id = button.target.parentElement.parentElement.parentElement.parentElement.id;
+			var searchField = $("#" + id + "_searchField");
+			searchField.val('');
+			getPageContent(id, 0);
+		};
+		
+		/* End pagination */
+		        
 		// For remarks hidding
 		const hideAndShowDiffRemarksAction = () => {
 			hideDisplays();
@@ -245,7 +365,6 @@
 			hideDisplays();
 			var content = $("#content_" + domainUuid);
 			var button = $("#reducer_" + domainUuid);
-			console.info("#reducer_" + domainUuid);
 			if(button.attr("class").indexOf('reducer-close') !== -1){
 				content.hide();
 				button.removeClass("reducer-close").addClass("reducer-open");
@@ -271,7 +390,9 @@
 		
 		// For display detail hidding
 		const hideAndShowDisplayAction = (trUuid) => {
+		
 			hideDisplays();
+			console.info("display action " + trUuid); 
 			var display = $("#" + trUuid + " span.change-details");
 			var button = $("#" + trUuid + " span.reducer-sm");
 			if(button.attr("class").indexOf('reducer-close') !== -1){
@@ -336,36 +457,73 @@
 		// For "select All / ignore All" in domain
 		const processAllDomain = (butId) => {
 			var idParts = butId.split("_");
-			$("#domain_" + idParts[1] + " button." + idParts[0] + "-button").click();
+			
+			console.info(idParts);
+			
+			var selected = idParts[0] === "select";
+			var rollbacked = idParts[0] === "rollback";
+			
+			$.post("/ui/merge/selection/domain/" + idParts[2] + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+				$("#domain_" + idParts[1] + " button." + idParts[0] + "-button").click();
+			});
+			
 		};
 		
-		// For "select All / ignore All"
-		const processAll = (butId) => {
+		// For "select All / rollback All / ignore All" on diffDisplay
+		const processAllDiffDisplay = (butId) => {
 			var idParts = butId.split("_");
-			$("#" + idParts[1] + "_" + idParts[2] + " button." + idParts[0] + "-button").click();
+			
+			console.info(idParts);
+			
+			var selected = idParts[0] === "select";
+			var rollbacked = idParts[0] === "rollback";
+			
+			$.post("/ui/merge/selection/dict/" + idParts[3] + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+				$("#" + idParts[1] + "_" + idParts[2] + " button." + idParts[0] + "-button").click();
+			});
+		};
+		
+		// For "select All / rollback All / ignore All"
+		const processAll = (type) => {
+			
+			var selected = type === "select";
+			var rollbacked = type === "rollback";
+			
+			console.info("full " + type);
+			
+			$.post("/ui/merge/selection/all?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+				if(selected){
+					$("#selectAllButton").click((e) => $("button.select-button").click());
+				} else if(rollbacked){
+					$("#rollbackAllButton").click((e) => $("button.rollback-button").click());
+				} else {
+					$("#ignoreAllButton").click((e) => $("button.ignore-button").click());
+				}
+			});
 		};
 		
     	// Init actions
     	$(document).ready(() => {
-			var defaultShow = /*[[${showAll}?'show':'hide']]*/ 'hide';
 			hideAndShowAllAction(defaultShow);
 			$("span.change-details").hide();
-			
 			$("span.domain-reducer").click((e) => hideAndShowDomainAction(e.target.parentElement.parentElement.parentElement.id));
 			$("span.table-reducer").click((e) => hideAndShowTableAction(e.target.parentElement.parentElement.parentElement.id));
-			$("span.reducer-sm").click((e) => hideAndShowDisplayAction(e.target.parentElement.parentElement.id));
-			
 			$("button.select-button").click((e) => selectAction(e.target.parentElement.parentElement.parentElement.id));
 			$("button.rollback-button").click((e) => rollbackAction(e.target.parentElement.parentElement.parentElement.id));
-			$("button.all-button").click((e) => processAll(e.target.id));
+			$("button.all-button").click((e) => processAllDiffDisplay(e.target.id));
 			$("button.all-button-domain").click((e) => processAllDomain(e.target.id));
-			$("#selectAllButton").click((e) => $("button.select-button").click());
-			$("#rollbackAllButton").click((e) => $("button.rollback-button").click());
+			$("#selectAllButton").click((e) => processAll('select'));
+			$("#rollbackAllButton").click((e) => processAll('rollback'));
 			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
 			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
 			$("button.all-hide-domain").click((e) => hideAndShowAllDomainAction(e.target.parentElement.parentElement.parentElement.id, 'hide'));
 			$("button.all-show-domain").click((e) => hideAndShowAllDomainAction(e.target.parentElement.parentElement.parentElement.id, 'show'));
 			$("#diffRemarkAreaButton").click((e) => hideAndShowDiffRemarksAction());
+			if(defaultShow){
+				$(".pageHolder").each((index, e) => initPageData(e));
+			}
+			$(".filterButton").click((e) => filterPageData(e));
+			$(".resetButton").click((e) => resetFilterPageData(e));
 		}); 
 		
         /*]]>*/

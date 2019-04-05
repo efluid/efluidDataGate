@@ -31,4 +31,12 @@ public class ApplicationApiController implements ApplicationApi {
 		return new ApplicationInfoView(info.getVersion(), info.getInstanceName(), desc != null ? desc.getIdentity() : null);
 	}
 
+	/**
+	 * @return
+	 * @see fr.uem.efluid.rest.v1.ApplicationApi#getCurrentState()
+	 */
+	@Override
+	public String getCurrentState() {
+		return "RUNNING";
+	}
 }

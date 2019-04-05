@@ -2,6 +2,7 @@ package fr.uem.efluid.tools;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +51,10 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ManagedQueriesGenerator.class);
 
 	private static final String AFFECT = "=";
+
+	private static final String WHERE_CLAUSE_SEP = " AND ";
+	private static final String WHERE_CLAUSE_SUB_START = " ( ";
+	private static final String WHERE_CLAUSE_SUB_END = " ) ";
 
 	private final String selectQueryModel;
 	private final String countQueryModel;
@@ -174,7 +179,17 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 			Map<String, DictionaryEntry> allEntries) {
 		// INSERT INTO %s (%) VALUES (%)
 		List<Value> combined = new ArrayList<>();
-		combined.add(new KeyValue(parameterEntry, keyValue));
+
+		// Custom behavior for composite
+		if (parameterEntry.isCompositeKey()) {
+			combined.addAll(prepareKeyValues(parameterEntry, keyValue));
+		}
+
+		// Else use standard direct key set
+		else {
+			combined.add(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue));
+		}
+
 		combined.addAll(values);
 		return String.format(this.insertQueryModel, parameterEntry.getTableName(), allNames(combined, links, allEntries),
 				allValues(combined, referedLobs, links, allEntries));
@@ -186,9 +201,22 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @return
 	 */
 	public String producesApplyRemoveQuery(DictionaryEntry parameterEntry, String keyValue) {
+
 		// DELETE FROM %s WHERE %s
-		return String.format(this.deleteQueryModel, parameterEntry.getTableName(),
-				valueAffect(new KeyValue(parameterEntry, keyValue), null));
+
+		String keyWhere = null;
+
+		// Dedicated "heavy" process for composite
+		if (parameterEntry.isCompositeKey()) {
+			keyWhere = combinedKeyWhere(prepareKeyValues(parameterEntry, keyValue));
+		}
+
+		// Standard process for single (common) key
+		else {
+			keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+		}
+
+		return String.format(this.deleteQueryModel, parameterEntry.getTableName(), keyWhere);
 	}
 
 	/**
@@ -203,9 +231,23 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 			List<String> referedLobs,
 			List<TableLink> links,
 			Map<String, DictionaryEntry> allEntries) {
+
 		// UPDATE %s SET %s WHERE %s
-		return String.format(this.updateQueryModel, parameterEntry.getTableName(), allValuesAffect(values, referedLobs, links, allEntries),
-				valueAffect(new KeyValue(parameterEntry, keyValue), null));
+
+		String keyWhere = null;
+
+		// Dedicated "heavy" process for composite
+		if (parameterEntry.isCompositeKey()) {
+			keyWhere = combinedKeyWhere(prepareKeyValues(parameterEntry, keyValue));
+		}
+
+		// Standard process for single (common) key
+		else {
+			keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+		}
+
+		return String.format(this.updateQueryModel, parameterEntry.getTableName(),
+				allValuesAffect(values, referedLobs, links, allEntries), keyWhere);
 	}
 
 	/**
@@ -214,27 +256,42 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @return
 	 */
 	public String producesGetOneQuery(DictionaryEntry parameterEntry, String keyValue) {
+
 		// SELECT %s FROM %s WHERE %s ORDER BY %s (reused query)
-		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), "",
-				valueAffect(new KeyValue(parameterEntry, keyValue), null),
-				parameterEntry.getKeyName());
+
+		String keyWhere = null;
+
+		// Dedicated "heavy" process for composite
+		if (parameterEntry.isCompositeKey()) {
+			keyWhere = combinedKeyWhere(prepareKeyValues(parameterEntry, keyValue));
+		}
+
+		// Standard process for single (common) key
+		else {
+			keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+		}
+
+		// Ordering by 1st key only
+		return String.format(this.selectQueryModel, "1", parameterEntry.getTableName(), "", keyWhere, parameterEntry.getKeyName());
 	}
 
 	/**
-	 * To check unicity on parameter key
+	 * To check unicity on parameter key (support for composite)
 	 * 
 	 * @param tablename
 	 * @param columnName
 	 * @return
 	 */
-	public String producesUnicityQuery(String tablename, String columnName) {
+	public String producesUnicityQuery(String tablename, Collection<String> columnNames) {
 
 		// select 1 from "TTABLEOTHERTEST2" group by "ID" HAVING COUNT("ID") > 1
-		return String.format(this.unicityQueryModel, tablename, columnName, columnName);
+		return String.format(this.unicityQueryModel, tablename, prepareSimpleSelectPart(columnNames));
 	}
 
 	/**
 	 * @param value
+	 * @param lobsKey
+	 *            for affect of binary (LOB). Can be null if LOB is not used in value
 	 * @return
 	 */
 	private String valueAffect(Value value, List<String> lobsKey) {
@@ -322,6 +379,16 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param values
 	 * @return
 	 */
+	private String combinedKeyWhere(List<KeyValue> keys) {
+		return WHERE_CLAUSE_SUB_START
+				+ keys.stream().map(v -> valueAffect(v, null)).collect(Collectors.joining(WHERE_CLAUSE_SEP))
+				+ WHERE_CLAUSE_SUB_END;
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
 	private String allValues(
 			List<Value> values,
 			List<String> lobKeys,
@@ -367,9 +434,20 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
 		DictionaryEntry dic = allEntries.get(link.getTableTo());
 
+		String keyWhere = null;
+
+		// Dedicated "heavy" process for composite
+		if (dic.isCompositeKey()) {
+			keyWhere = combinedKeyWhere(prepareKeyValues(dic, value));
+		}
+
+		// Standard process for single (common) key
+		else {
+			keyWhere = valueAffect(new KeyValue(dic.getKeyName(), dic.getKeyType(), value), null);
+		}
+
 		// (SELECT "%s" FROM "%s" WHERE %s)
-		return String.format(this.updateOrInsertLinkedSubQueryModel, link.getColumnTo(),
-				dic.getTableName(), valueAffect(new KeyValue(dic, value), null));
+		return String.format(this.updateOrInsertLinkedSubQueryModel, link.getColumnTo(), dic.getTableName(), keyWhere);
 	}
 
 	/**
@@ -384,9 +462,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 		}
 
 		// Clean search for key
-		String keyRef = this.protectColumns
-				? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
-				: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP;
+		String keyRef = createKeysRef(parameterEntry);
 
 		// If keyname not in select clause, need to add it
 		if (!parameterEntry.getSelectClause().contains(keyRef)) {
@@ -394,6 +470,27 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 		}
 
 		return parameterEntry.getSelectClause();
+	}
+
+	/**
+	 * @param parameterEntry
+	 * @return
+	 */
+	private String createKeysRef(DictionaryEntry parameterEntry) {
+
+		// For most case, use simple key build
+		if (!parameterEntry.isCompositeKey()) {
+			return this.protectColumns
+					? CURRENT_TAB_ALIAS + ITEM_PROTECT + parameterEntry.getKeyName() + ITEM_PROTECT + SELECT_CLAUSE_SEP
+					: CURRENT_TAB_ALIAS + parameterEntry.getKeyName() + SELECT_CLAUSE_SEP;
+		}
+
+		// For composite, use advanced building from iterator
+		return parameterEntry.keyNames()
+				.map(k -> this.protectColumns
+						? CURRENT_TAB_ALIAS + ITEM_PROTECT + k + ITEM_PROTECT
+						: CURRENT_TAB_ALIAS + k)
+				.collect(Collectors.joining(SELECT_CLAUSE_SEP)) + SELECT_CLAUSE_SEP;
 	}
 
 	/**
@@ -432,9 +529,47 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 					// INNER JOIN "%s" %s on %s."%s" = cur."%s"
 					// or for test : LEFT OUTER JOIN ....
 					// or whatever join type is required
-					return String.format(this.joinSubQueryModel, type.getValue(), dic.getTableName(), alias, alias, l.getColumnTo(),
-							l.getColumnFrom());
+					return String.format(this.joinSubQueryModel, type.getValue(), dic.getTableName(), alias, linkJoinOn(alias, l));
 				}).collect(Collectors.joining(" "));
+	}
+
+	/**
+	 * <p>
+	 * Inner part of join, with support for composite key links
+	 * </p>
+	 * 
+	 * @param alias
+	 * @param link
+	 * @return
+	 */
+	private String linkJoinOn(String alias, TableLink link) {
+
+		// Default - standard single key
+		if (!link.isCompositeKey()) {
+			return this.protectColumns
+					? alias + ".\"" + link.getColumnTo() + "\" = cur.\"" + link.getColumnFrom() + "\""
+					: alias + "." + link.getColumnTo() + " = cur." + link.getColumnFrom();
+		}
+
+		// Rare - composite key link
+		int max = (int) link.columnFroms().count();
+
+		StringBuilder joinOn = new StringBuilder();
+
+		for (int i = 0; i < max; i++) {
+			if (this.protectColumns) {
+				joinOn.append(alias).append(".\"").append(link.getColumnTo(i)).append("\" = cur.\"").append(link.getColumnFrom(i))
+						.append("\"");
+			} else {
+				joinOn.append(alias).append(".").append(link.getColumnTo(i)).append(" = cur.").append(link.getColumnFrom(i));
+			}
+
+			if (i < max - 1) {
+				joinOn.append(" AND ");
+			}
+		}
+
+		return joinOn.toString();
 	}
 
 	/**
@@ -457,12 +592,50 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	}
 
 	/**
+	 * @param keyValue
+	 * @return
+	 */
+	private static List<String> revertCombinedKeyValue(String combinedKeyValue) {
+
+		return Stream.of(combinedKeyValue.split(KEY_JOIN_SPLITER)).collect(Collectors.toList());
+	}
+
+	/**
+	 * <p>
+	 * Produces the keys for a <tt>DictionaryEntry</tt> as item <tt>KeyValue</tt>
+	 * </p>
+	 * <p>
+	 * Not optimized, should be used only for composite key tables (which is a rare
+	 * condition)
+	 * </p>
+	 * 
+	 * @param parameterEntry
+	 * @param combinedKeyValue
+	 * @return
+	 */
+	private static List<KeyValue> prepareKeyValues(DictionaryEntry parameterEntry, String combinedKeyValue) {
+
+		// 3 ordered source of data for key items
+		List<String> values = revertCombinedKeyValue(combinedKeyValue);
+		List<String> keyNames = parameterEntry.keyNames().collect(Collectors.toList());
+		List<ColumnType> keyTypes = parameterEntry.keyTypes().collect(Collectors.toList());
+
+		List<KeyValue> result = new ArrayList<>();
+
+		for (int i = 0; i < keyNames.size(); i++) {
+			result.add(new KeyValue(keyNames.get(0), keyTypes.get(0), values.get(0)));
+		}
+
+		return result;
+	}
+
+	/**
 	 * Generate the template regarding the rules on protect / not protected
 	 * 
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateCountQueryTemplate(QueryGenerationRules rules) {
+	private static String generateCountQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("SELECT count(*) FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" cur %s WHERE %s ORDER BY cur.")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
@@ -474,7 +647,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateSelectQueryTemplate(QueryGenerationRules rules) {
+	private static String generateSelectQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("SELECT %s FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" cur %s WHERE %s ORDER BY cur.")
 				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
@@ -486,7 +659,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateUpdateQueryTemplate(QueryGenerationRules rules) {
+	private static String generateUpdateQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("UPDATE ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" SET %s WHERE %s").toString();
 	}
 
@@ -496,7 +669,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateDeleteQueryTemplate(QueryGenerationRules rules) {
+	private static String generateDeleteQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("DELETE FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s ").toString();
 	}
 
@@ -506,11 +679,9 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateJoinSubQueryTemplate(QueryGenerationRules rules) {
+	private static String generateJoinSubQueryTemplate(QueryGenerationRules rules) {
 		// Join type specified on call
-		return new StringBuilder("%s JOIN ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" %s ON %s.")
-				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").append(" = cur.")
-				.append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").toString();
+		return new StringBuilder("%s JOIN ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" %s ON %s").toString();
 	}
 
 	/**
@@ -520,7 +691,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateUpdateOrInsertLinkedSubQueryTemplate(QueryGenerationRules rules) {
+	private static String generateUpdateOrInsertLinkedSubQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("(SELECT ").append(rules.isColumnNamesProtected() ? "\"%s\"" : "%s").append(" FROM ")
 				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" WHERE %s)").toString();
 	}
@@ -531,10 +702,9 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateUnicityQueryTemplate(QueryGenerationRules rules) {
-		return new StringBuilder("SELECT 1 FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" GROUP BY ")
-				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(" HAVING COUNT(")
-				.append(rules.isTableNamesProtected() ? "\"%s\"" : "%s").append(") > 1").toString();
+	private static String generateUnicityQueryTemplate(QueryGenerationRules rules) {
+		return new StringBuilder("SELECT 1 FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
+				.append(" GROUP BY %s HAVING COUNT(*) > 1").toString();
 	}
 
 	/**
@@ -543,7 +713,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateInsertQueryTemplate(QueryGenerationRules rules) {
+	private static String generateInsertQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("INSERT INTO ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" (%s) VALUES (%s)").toString();
 	}
@@ -556,7 +726,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * @param rules
 	 * @return
 	 */
-	private static final String generateSelectMissingLinkWhereClausePartTemplate(QueryGenerationRules rules) {
+	private static String generateSelectMissingLinkWhereClausePartTemplate(QueryGenerationRules rules) {
 		return new StringBuilder(" %s.").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
 				.append(" IS NULL ").toString();
 	}
@@ -594,19 +764,18 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 */
 	private static class KeyValue implements Value {
 		private final String keyName;
-		private final String keyValue;
 		private final ColumnType keyType;
+		private final String keyValue;
 
 		/**
-		 * Key definition is from dict, key value is associated to currently applied
-		 * values
-		 * 
-		 * @param parameterEntry
+		 * @param keyName
+		 * @param keyType
 		 * @param keyValue
 		 */
-		KeyValue(DictionaryEntry parameterEntry, String keyValue) {
-			this.keyName = parameterEntry.getKeyName();
-			this.keyType = parameterEntry.getKeyType();
+		public KeyValue(String keyName, ColumnType keyType, String keyValue) {
+			super();
+			this.keyName = keyName;
+			this.keyType = keyType;
 			this.keyValue = keyValue;
 		}
 

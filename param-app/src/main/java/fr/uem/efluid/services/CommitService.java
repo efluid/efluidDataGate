@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.entities.Attachment;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
@@ -34,12 +36,16 @@ import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.entities.Version;
+import fr.uem.efluid.model.repositories.AttachmentRepository;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.model.repositories.FeatureManager;
 import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.LobPropertyRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
+import fr.uem.efluid.services.types.AttachmentLine;
+import fr.uem.efluid.services.types.AttachmentPackage;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.CommitPackage;
@@ -53,6 +59,7 @@ import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.services.types.RollbackLine;
 import fr.uem.efluid.services.types.SharedPackage;
+import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.FormatUtils;
@@ -75,6 +82,7 @@ public class CommitService extends AbstractApplicationService {
 	private static final String PCKG_AFTER = "commits-part";
 
 	private static final String PCKG_LOBS = "lobs";
+	private static final String PCKG_ATTACHS = "attachs";
 
 	private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
@@ -112,6 +120,15 @@ public class CommitService extends AbstractApplicationService {
 
 	@Autowired
 	private VersionRepository versions;
+
+	@Autowired
+	private AttachmentRepository attachments;
+
+	@Autowired
+	private AttachmentProcessor.Provider attachProcs;
+
+	@Autowired
+	private FeatureManager features;
 
 	/**
 	 * <p>
@@ -156,7 +173,9 @@ public class CommitService extends AbstractApplicationService {
 		// Then export :
 		ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
 				new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
-				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport)));
+				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport),
+				new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now())
+						.initWithContent(this.attachments.findByCommitIn(commitsToExport))));
 
 		ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
@@ -189,7 +208,8 @@ public class CommitService extends AbstractApplicationService {
 		// Then export :
 		ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
 				new CommitPackage(PCKG_CHERRY_PICK, LocalDateTime.now()).initWithContent(Collections.singletonList(exported)),
-				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(this.lobs.findByCommit(exported))));
+				new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(this.lobs.findByCommit(exported)),
+				new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now()).initWithContent(this.attachments.findByCommit(exported))));
 
 		LOGGER.info("Export package for commit {} is ready. Size is {}b", commitUuid, Integer.valueOf(file.getSize()));
 
@@ -268,6 +288,18 @@ public class CommitService extends AbstractApplicationService {
 			details.setSize(size);
 		}
 
+		List<Attachment> commitAtt = this.attachments.findByCommit(new Commit(commitUUID));
+
+		// Attachment data if any
+		if (commitAtt != null && commitAtt.size() > 0) {
+
+			// Prepare and set for display (not content for now)
+			details.setAttachments(commitAtt.stream().map(AttachmentLine::fromEntity).collect(Collectors.toList()));
+		}
+
+		// Add support for display if any
+		details.setAttachmentDisplaySupport(this.attachProcs.isDisplaySupport());
+
 		return details;
 	}
 
@@ -284,6 +316,17 @@ public class CommitService extends AbstractApplicationService {
 		LobProperty lob = this.lobs.findByHash(decHash);
 
 		return lob.getData();
+	}
+
+	/**
+	 * @param encodedLobHash
+	 * @return
+	 */
+	public byte[] getExistingAttachmentData(UUID uuid) {
+
+		LOGGER.debug("Request for binary content from attachment \"{}\"", uuid);
+
+		return this.attachProcs.display(this.attachments.getOne(uuid));
 	}
 
 	/**
@@ -367,6 +410,34 @@ public class CommitService extends AbstractApplicationService {
 					commit.getUuid(), Integer.valueOf(entries.size()));
 			this.applyDiffService.applyDiff(entries, prepared.getDiffLobs());
 			LOGGER.debug("Processing merge commit {} : diff applied with success", commit.getUuid());
+
+			// And execute attachments if needed
+			if (this.attachProcs.isExecuteSupport()) {
+				List<AttachmentLine> runnableAtts = prepared.getCommitData().getAttachments().stream()
+						.filter(a -> a.getType().isRunnable() && a.isExecuted()).collect(Collectors.toList());
+
+				// Process only if some found
+				if (runnableAtts.size() > 0) {
+
+					LOGGER.info("Processing merge commit {} : now run {} executable scripts",
+							commit.getUuid(), Integer.valueOf(runnableAtts.size()));
+
+					User user = new User(getCurrentUser().getLogin());
+
+					// Run each with identified processor. Processor keep history if
+					// needed
+					runnableAtts.forEach(a -> {
+						AttachmentProcessor proc = this.attachProcs.getFor(a);
+						proc.execute(user, a);
+						LOGGER.debug("Processing merge commit {} : attachements {} executed with success", commit.getUuid());
+					});
+				}
+			}
+		}
+
+		// Update commit attachments
+		if (prepared.getCommitData().getAttachments() != null) {
+			this.attachments.saveAll(prepareAttachments(prepared.getCommitData().getAttachments(), commit));
 		}
 
 		LOGGER.info("Commit {} saved with {} items and {} lobs", commit.getUuid(), Integer.valueOf(entries.size()),
@@ -405,6 +476,11 @@ public class CommitService extends AbstractApplicationService {
 				.findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
 						"Import of commits doens't contains the expected package types"));
 
+		// Get package files - attachments
+		AttachmentPackage attachsPckg = (AttachmentPackage) commitPackages.stream().filter(p -> p.getClass() == AttachmentPackage.class)
+				.findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
+						"Import of commits doens't contains the expected package types"));
+
 		LOGGER.debug("Import of commits from package {} initiated", commitPckg);
 
 		// #3 Extract local data to merge with
@@ -420,11 +496,16 @@ public class CommitService extends AbstractApplicationService {
 		// Need to be sorted by create time
 		Collections.sort(commitPckg.getContent(), Comparator.comparing(Commit::getCreatedTime));
 
+		// Version checking is a dynamic feature
+		boolean checkVersion = this.features.isEnabled(Feature.VALIDATE_VERSION_FOR_IMPORT);
+
 		// #4 Process commits, one by one
 		for (Commit imported : commitPckg.getContent()) {
 
-			// Referenced version must exist locally
-			assertImportedCommitHasExpectedVersion(imported);
+			// Referenced version must exist locally if feature enable
+			if (checkVersion) {
+				assertImportedCommitHasExpectedVersion(imported);
+			}
 
 			// Check if already stored localy (in "local" or "merged")
 			boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());
@@ -474,6 +555,12 @@ public class CommitService extends AbstractApplicationService {
 		currentPreparation.getCommitData().setRangeStartTime(timeProcessStart);
 		currentPreparation.getCommitData().setComment(generateMergeCommitComment(toProcess));
 
+		// Add attachment - managed in temporary version first
+		currentPreparation.getCommitData().setAttachments(attachsPckg.toAttachmentLines());
+
+		// Remove the already imported attachments
+		removeAlreadyImportedAttachments(currentPreparation);
+
 		// Init prepared merge with imported index
 		currentPreparation.applyDiffDisplayContent(importedCommitIndexes(toProcess));
 
@@ -488,6 +575,28 @@ public class CommitService extends AbstractApplicationService {
 
 		return result;
 
+	}
+
+	/**
+	 * <p>
+	 * Simple search for existing attachments (imported by uuid). Remove the ones we
+	 * already have processed
+	 * </p>
+	 * 
+	 * @param prepa
+	 */
+	private void removeAlreadyImportedAttachments(PilotedCommitPreparation<?> prepa) {
+		if (prepa.getCommitData().getAttachments() != null) {
+			Iterator<AttachmentLine> atts = prepa.getCommitData().getAttachments().iterator();
+
+			while (atts.hasNext()) {
+				AttachmentLine line = atts.next();
+
+				if (this.attachments.existsById(line.getUuid())) {
+					atts.remove();
+				}
+			}
+		}
 	}
 
 	/**
@@ -576,6 +685,9 @@ public class CommitService extends AbstractApplicationService {
 		}
 	}
 
+	/**
+	 * @param refCommit
+	 */
 	private void assertImportedCommitHasExpectedVersion(Commit refCommit) {
 
 		Optional<Version> vers = this.versions.findById(refCommit.getVersion().getUuid());
@@ -612,11 +724,37 @@ public class CommitService extends AbstractApplicationService {
 
 					diff.getDiff().add(PreparedMergeIndexEntry.fromImportedEntity(indexEntry));
 				}
-
 			}
 		}
 
 		return groupedByDicEntry.values();
+	}
+
+	/**
+	 * @param source
+	 * @param commit
+	 * @return
+	 */
+	private static Collection<Attachment> prepareAttachments(Collection<AttachmentLine> source, Commit commit) {
+		return source.stream()
+				.map(l -> {
+					Attachment at = AttachmentLine.toEntity(l);
+
+					at.setCommit(commit);
+
+					// Create uuid if required (new item)
+					if (at.getUuid() == null) {
+						at.setUuid(UUID.randomUUID());
+					}
+
+					// If selected for executed => Update exec time
+					else if (l.isExecuted()) {
+						at.setExecuteTime(LocalDateTime.now());
+					}
+
+					return at;
+				})
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -634,12 +772,14 @@ public class CommitService extends AbstractApplicationService {
 	 * @param commitPackages
 	 */
 	private static void assertImportPackageIsValid(List<SharedPackage<?>> commitPackages) {
-		if (commitPackages.size() != 2) {
+		if (commitPackages.size() != 3) {
 			throw new ApplicationException(COMMIT_IMPORT_INVALID,
-					"Import of commits can contain only commit package file + lobs package file");
+					"Import of commits can contain only commit package file + lobs package + attachment package file");
 		}
 
-		if (commitPackages.stream().noneMatch(p -> p instanceof CommitPackage || p instanceof LobPropertyPackage)) {
+		if (commitPackages.stream().noneMatch(p -> p instanceof CommitPackage
+				|| p instanceof LobPropertyPackage
+				|| p instanceof AttachmentPackage)) {
 			throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types");
 		}
 	}

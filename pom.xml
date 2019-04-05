@@ -10,24 +10,28 @@
 
 	<groupId>fr.uem.efluid</groupId>
 	<artifactId>param-parent</artifactId>
-	<version>0.2.0-SNAPSHOT</version>
+	<version>0.2.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.0.4.RELEASE</version>
+		<version>2.1.0.RELEASE</version>
 	</parent>
 
 	<modules>
 		<module>param-common</module>
 		<module>param-api</module>
 		<module>param-app</module>
+		<module>param-app-cucumber</module>
 		<module>param-generator</module>
 		<module>param-generator-example</module>
 	</modules>
 
 	<properties>
+
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<java.version>10</java.version>
 
@@ -35,19 +39,23 @@
 		<dependency.zip4j.version>1.3.2</dependency.zip4j.version>
 		<dependency.ojdbc8.version>12.2.0.1</dependency.ojdbc8.version>
 		<dependency.plexus.version>0.0.7</dependency.plexus.version>
-		<dependency.maven-plugin-api.version>3.5.4</dependency.maven-plugin-api.version>
+		<dependency.maven-plugin-api.version>3.6.0</dependency.maven-plugin-api.version>
 		<dependency.maven-plugin-annotations.version>3.5.2</dependency.maven-plugin-annotations.version>
 		<dependency.maven-core.version>3.5.4</dependency.maven-core.version>
 		<dependency.reflections-utils.version>0.9.11</dependency.reflections-utils.version>
-		<dependency.spring-webmvc-pac4j.version>2.2.0</dependency.spring-webmvc-pac4j.version>
-		<dependency.pac4j-jee.version>3.0.0</dependency.pac4j-jee.version>
-		<dependency.pac4j.version>2.3.0</dependency.pac4j.version>
-		<dependency.jaxb.version>2.3.0</dependency.jaxb.version>
+		<dependency.spring-webmvc-pac4j.version>3.2.0</dependency.spring-webmvc-pac4j.version>
+		<dependency.pac4j-jee.version>4.1.0</dependency.pac4j-jee.version>
+		<dependency.pac4j.version>3.3.0</dependency.pac4j.version>
+		<dependency.jaxb.version>2.3.1</dependency.jaxb.version>
 		<dependency.activation.version>1.1.1</dependency.activation.version>
 		<dependency.swagger-api.version>1.5.18</dependency.swagger-api.version>
 		<dependency.springfox-swagger.version>2.8.0</dependency.springfox-swagger.version>
 		<dependency.classmate.version>1.3.1</dependency.classmate.version>
 		<dependency.thymeleaf-layout.version>2.3.0</dependency.thymeleaf-layout.version>
+		<dependency.txtmark.version>0.13</dependency.txtmark.version>
+		<dependency.cucumber.version>1.2.4</dependency.cucumber.version>
+		<dependency.togglz.version>2.6.1.Final</dependency.togglz.version>
+		<dependency.togglz-thymeleaf.version>1.0.1.RELEASE</dependency.togglz-thymeleaf.version>
 
 		<!-- dependencies - webjars -->
 		<dependency.bootstrap.version>4.0.0-2</dependency.bootstrap.version>
@@ -56,14 +64,212 @@
 		<dependency.swagger-ui.version>2.2.10</dependency.swagger-ui.version>
 
 		<!-- Fixed plugins -->
-		<plugin.maven-plugin.version>3.5.2</plugin.maven-plugin.version>
+		<plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
 
+		<!-- Plugins for Sonar / Gerrit integration -->
+		<plugin.efluid-sonar-review.version>3.0.0-b10</plugin.efluid-sonar-review.version>
+		<plugin.sonar-scanner.version>3.6.0</plugin.sonar-scanner.version>
+		<plugin.jacoco.version>0.8.2</plugin.jacoco.version>
+
+		<!-- For preview parsing -->
+		<sonar.gerrit.reviewFiles>
+			param-app/src/main/java/fr/uem/efluid/model/entities/Commit.java;
+			param-app/src/main/java/fr/uem/efluid/model/entities/DictionaryEntry.java;
+			param-app/src/main/java/fr/uem/efluid/security/ShaPasswordEncoder.java
+		</sonar.gerrit.reviewFiles>
+				
 	</properties>
+
+	<!-- ###################### TESTING SONAR UPDATE / START ####################### -->
+
+	<profiles>
+	
+		<profile>
+			<id>prepare-sonar-gerrit</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+
+				<sonar.gerrit.mode>prepare</sonar.gerrit.mode>
+
+			</properties>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.efluid.utils</groupId>
+						<artifactId>sonar-review-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>prepare-sonar-gerrit</id>
+								<phase>process-resources</phase>
+								<goals>
+									<goal>prepare</goal>
+								</goals>
+								<configuration>
+									<changeId>1111</changeId>
+									<revisionId>22222</revisionId>
+									<scoreLabel>Code-Review</scoreLabel>
+									<scoreSeverities>-2: BLOCKER; -1: CRITICAL, MAJOR, MINOR, INFO</scoreSeverities>
+									<sonarHost>${sonar.host.url}</sonarHost>
+									<sonarUseHttps>false</sonarUseHttps>
+									<existingViolationStrategy>ALL</existingViolationStrategy>
+									<filesToReview>${sonar.gerrit.reviewFiles}</filesToReview>
+									<sonarScannerFileName>sonar-project.properties</sonarScannerFileName>
+									<sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+		
+		<profile>
+			<id>review-sonar-gerrit</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<profile.description>permet de verifier les nouvelles violations
+					sonar, lors de la validation d'un change. Scanner sonar standalone lancé auparavant</profile.description>
+
+				<sonar.jacoco.reportPaths>${project.build.directory}/jacoco.exec</sonar.jacoco.reportPaths>
+				<sonar.issuesReport.json.enable>true</sonar.issuesReport.json.enable>
+				<sonar.report.export.path>sonar-report.json</sonar.report.export.path>
+				<sonar.working.directory>.sonar</sonar.working.directory>
+				
+			</properties>
+
+			<build>
+				<plugins>
+				
+					<plugin>
+						<groupId>com.efluid.utils</groupId>
+						<artifactId>sonar-review-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>preview-sonar-gerrit</id>
+								<phase>process-resources</phase>
+								<goals>
+									<goal>preview</goal><!-- review in efluid env -->
+								</goals>
+								<configuration>
+									<changeId>1111</changeId>
+									<revisionId>22222</revisionId>
+									<scoreLabel>Code-Review</scoreLabel>
+									<scoreSeverities>-2: BLOCKER; -1: CRITICAL, MAJOR, MINOR, INFO</scoreSeverities>
+									<sonarHost>${sonar.host.url}</sonarHost>
+									<sonarUseHttps>false</sonarUseHttps>
+									<existingViolationStrategy>ALL</existingViolationStrategy>
+									<filesToReview>${sonar.gerrit.reviewFiles}</filesToReview>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+		
+		<!-- With goal verify -->
+		<profile>
+			<id>full-sonar</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<profile.description>full analysis</profile.description>
+
+				<sonar.jacoco.reportPaths>${project.build.directory}/jacoco.exec</sonar.jacoco.reportPaths>
+				<sonar.issuesReport.json.enable>true</sonar.issuesReport.json.enable>
+				<sonar.report.export.path>sonar-report.json</sonar.report.export.path>
+				<sonar.working.directory>.sonar</sonar.working.directory>
+			</properties>
+
+			<build>
+				<plugins>
+
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<systemPropertyVariables>
+								<jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
+							</systemPropertyVariables>
+						</configuration>
+					</plugin>
+
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<configuration>
+							<append>true</append>
+						</configuration>
+						<executions>
+							<execution>
+								<id>agent</id>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>jacoco-report</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>report</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+					<plugin>
+						<groupId>org.sonarsource.scanner.maven</groupId>
+						<artifactId>sonar-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sonar-scan</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sonar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+
+				</plugins>
+			</build>
+		</profile>
+		
+	</profiles>
+
+	<!-- ###################### END / TESTING SONAR UPDATE ####################### -->
 
 	<build>
 
 		<pluginManagement>
 			<plugins>
+
+				<!-- ###################### TESTING SONAR UPDATE / START ####################### -->
+
+				<!-- -->
+				<plugin>
+					<groupId>com.efluid.utils</groupId>
+					<artifactId>sonar-review-maven-plugin</artifactId>
+					<version>${plugin.efluid-sonar-review.version}</version>
+				</plugin>
+
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>${plugin.jacoco.version}</version>
+				</plugin>
+
+				<!-- ###################### END / TESTING SONAR UPDATE ####################### -->
+
+
 				<!-- Complete default informations about used source code -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -86,7 +292,7 @@
 						<useDefaultDelimiters>false</useDefaultDelimiters>
 					</configuration>
 				</plugin>
-				
+
 				<!-- For maven plugin build -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -94,6 +300,7 @@
 					<version>${plugin.maven-plugin.version}</version>
 				</plugin>
 
+				<!-- Inter-dependency - param dic generator -->
 				<plugin>
 					<groupId>${project.groupId}</groupId>
 					<artifactId>param-generator</artifactId>
@@ -118,7 +325,6 @@
 		<dependencies>
 
 			<!-- Basic common tools -->
-
 			<dependency>
 				<groupId>net.lingala.zip4j</groupId>
 				<artifactId>zip4j</artifactId>
@@ -137,16 +343,25 @@
 				<artifactId>jaxb-api</artifactId>
 				<version>${dependency.jaxb.version}</version>
 			</dependency>
+
 			<dependency>
-				<groupId>com.sun.xml.bind</groupId>
-				<artifactId>jaxb-core</artifactId>
-				<version>${dependency.jaxb.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.sun.xml.bind</groupId>
+				<groupId>com.sun.xml.bind </groupId>
 				<artifactId>jaxb-impl</artifactId>
 				<version>${dependency.jaxb.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>org.togglz</groupId>
+				<artifactId>togglz-spring-boot-starter</artifactId>
+				<version>${dependency.togglz.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.github.heneke.thymeleaf</groupId>
+				<artifactId>thymeleaf-extras-togglz</artifactId>
+				<version>${dependency.togglz-thymeleaf.version}</version>
+			</dependency>
+
 			<dependency>
 				<groupId>javax.activation</groupId>
 				<artifactId>activation</artifactId>
@@ -205,6 +420,32 @@
 				<groupId>org.pac4j</groupId>
 				<artifactId>pac4j-jwt</artifactId>
 				<version>${dependency.pac4j.version}</version>
+			</dependency>
+
+			<!-- For formated MD files -->
+			<dependency>
+				<groupId>com.github.rjeschke</groupId>
+				<artifactId>txtmark</artifactId>
+				<version>${dependency.txtmark.version}</version>
+			</dependency>
+
+			<!-- For system tests using cucumber -->
+			<dependency>
+				<groupId>info.cukes</groupId>
+				<artifactId>cucumber-java</artifactId>
+				<version>${dependency.cucumber.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>info.cukes</groupId>
+				<artifactId>cucumber-junit</artifactId>
+				<version>${dependency.cucumber.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>info.cukes</groupId>
+				<artifactId>cucumber-spring</artifactId>
+				<version>${dependency.cucumber.version}</version>
 			</dependency>
 
 			<!-- WebJars (Web libraries managed as java artifacts) -->
@@ -284,6 +525,13 @@
 				<artifactId>param-generator</artifactId>
 				<version>${project.version}</version>
 			</dependency>
+
+			<dependency>
+				<groupId>${project.groupId}</groupId>
+				<artifactId>param-app</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+
 
 		</dependencies>
 	</dependencyManagement>

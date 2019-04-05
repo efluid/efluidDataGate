@@ -51,7 +51,7 @@ public @interface ParameterTable {
 	/**
 	 * <p>
 	 * Specify the business name for the parameter table (how it will be identified in
-	 * Dictionnary management). Unique : if the value is not unique, the dictionary build
+	 * Dictionary management). Unique : if the value is not unique, the dictionary build
 	 * will fail. If not set, will use the annotated type name as parameter name
 	 * </p>
 	 * 
@@ -133,4 +133,14 @@ public @interface ParameterTable {
 	 * @return
 	 */
 	boolean useAllFields() default true;
+
+	/**
+	 * <p>
+	 * When a parameter table is identified with <tt>ParameterTableSet</tt> then the
+	 * values can be directly identified here
+	 * </p>
+	 * 
+	 * @return
+	 */
+	ParameterValue[] values() default {};
 }

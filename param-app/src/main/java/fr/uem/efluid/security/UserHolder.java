@@ -29,9 +29,15 @@ public class UserHolder {
 	/**
 	 * @param user
 	 */
-	void setCurrentUser(User user) {
-		LOGGER.debug("Apply active user {}", user.getLogin());
-		this.currentUser.set(user);
+	public void setCurrentUser(User user) {
+
+		if (user == null) {
+			LOGGER.debug("Drop active user ");
+			this.currentUser.remove();
+		} else {
+			LOGGER.debug("Apply active user {}", user.getLogin());
+			this.currentUser.set(user);
+		}
 	}
 
 	/**
