@@ -543,6 +543,9 @@ public class PilotableCommitPreparationService {
 
         if (prep != null) {
             prep.setStatus(PilotedCommitStatus.CANCEL);
+
+            // Remove from survey also if not done yet
+            this.async.dropFromSurvey(prep);
         }
 
         // Null = COMPLETED / CANCEL from local service pov
@@ -557,11 +560,18 @@ public class PilotableCommitPreparationService {
 
         UUID projectUuid = getActiveProjectUuid();
 
-        // For any ref holder : mark completed
-        this.currents.get(projectUuid).setStatus(PilotedCommitStatus.COMPLETED);
+        PilotedCommitPreparation<?> preparation = this.currents.get(projectUuid);
 
-        // Null = COMPLETED from local service pov
-        this.currents.remove(projectUuid);
+        if (preparation != null) {
+
+            // For any ref holder : mark completed
+            preparation.setStatus(PilotedCommitStatus.COMPLETED);
+
+            this.async.dropFromSurvey(preparation);
+
+            // Null = COMPLETED from local service pov
+            this.currents.remove(projectUuid);
+        }
     }
 
     /**
@@ -758,7 +768,7 @@ public class PilotableCommitPreparationService {
         // Reset cached diff values, if any, for further uses
         this.diffService.resetDiffCaches();
 
-        // Drop preparation
+        // Drop preparation (if not done yet)
         completeCommitPreparation();
 
         LOGGER.info("Saving completed for commit preparation. New commit is {}", commitUUID);
@@ -891,6 +901,9 @@ public class PilotableCommitPreparationService {
             preparation.setEnd(LocalDateTime.now());
             preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
+            // And stop survey (on own thread)
+            this.async.dropFromSurvey(preparation);
+
             LOGGER.info("Diff process completed on commit preparation {}. Found {} index entries. Total process duration was {} ms",
                     preparation.getIdentifier(),
                     fullDiff.size(),
@@ -952,13 +965,16 @@ public class PilotableCommitPreparationService {
                 LOGGER.info(
                         "Diff process completed on merge commit preparation {}. Found {} index entries. Total process duration was {} ms",
                         preparation.getIdentifier(),
-                        Integer.valueOf(fullDiff.size()),
-                        Long.valueOf(System.currentTimeMillis() - startTimeout));
+                        fullDiff.size(),
+                        System.currentTimeMillis() - startTimeout);
             } else {
                 LOGGER.info("Import found no differences. No merge to run");
                 preparation.setEnd(LocalDateTime.now());
                 preparation.setStatus(PilotedCommitStatus.COMPLETED);
             }
+
+            // And stop survey (on own thread)
+            this.async.dropFromSurvey(preparation);
 
         } catch (ApplicationException a) {
             LOGGER.error("Identified Merge process error. Sharing", a);

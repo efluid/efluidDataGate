@@ -39,7 +39,7 @@ import java.util.stream.Stream;
  * @version 1
  * @since v0.0.1
  */
-public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements AsyncDriver.SourceErrorAware {
+public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements AsyncDriver.AsyncSourceProcess {
 
     private final UUID identifier;
 
@@ -166,7 +166,7 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
 
     /**
      * @return
-     * @see fr.uem.efluid.tools.AsyncDriver.SourceErrorAware#hasSourceFailure()
+     * @see AsyncDriver.AsyncSourceProcess#hasSourceFailure()
      */
     @Override
     public boolean hasSourceFailure() {
@@ -175,7 +175,7 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
 
     /**
      * @return
-     * @see fr.uem.efluid.tools.AsyncDriver.SourceErrorAware#getSourceFailure()
+     * @see AsyncDriver.AsyncSourceProcess#getSourceFailure()
      */
     @Override
     public ApplicationException getSourceFailure() {
@@ -199,8 +199,25 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     /**
      * @return the identifier
      */
+    @Override
     public UUID getIdentifier() {
         return this.identifier;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Preparation for state " + this.preparingState + " created " + this.start + " - current status \"" + this.status + "\"";
+    }
+
+    @Override
+    public LocalDateTime getCreatedTime() {
+        return this.start;
+    }
+
+    @Override
+    public int getAyncStepNbr() {
+        // Use remaining process steps
+        return getProcessRemaining().get();
     }
 
     /**

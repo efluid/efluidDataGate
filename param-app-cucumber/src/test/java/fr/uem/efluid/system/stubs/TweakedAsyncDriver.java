@@ -33,7 +33,7 @@ public class TweakedAsyncDriver extends FutureAsyncDriver {
 	 * @param poolSize
 	 */
 	public TweakedAsyncDriver() {
-		super(4); // Fixed pool
+		super(4,5000,200); // Fixed pool
 	}
 
 	/**
@@ -61,11 +61,11 @@ public class TweakedAsyncDriver extends FutureAsyncDriver {
 	/**
 	 * @param source
 	 * @param action
-	 * @see fr.uem.efluid.tools.AsyncDriver#start(fr.uem.efluid.tools.AsyncDriver.SourceErrorAware,
+	 * @see fr.uem.efluid.tools.AsyncDriver#start(AsyncSourceProcess,
 	 *      java.util.function.Consumer)
 	 */
 	@Override
-	public <T extends SourceErrorAware> void start(T source, Consumer<T> action) {
+	public <T extends AsyncSourceProcess> void start(T source, Consumer<T> action) {
 		// Add a delay to allow testing (else to fast to check running state)
 		CompletableFuture.runAsync(() -> {
 			try {
@@ -83,10 +83,10 @@ public class TweakedAsyncDriver extends FutureAsyncDriver {
 	 * @return
 	 * @throws InterruptedException
 	 * @see fr.uem.efluid.tools.FutureAsyncDriver#processSteps(java.util.List,
-	 *      fr.uem.efluid.tools.AsyncDriver.SourceErrorAware)
+	 *      AsyncSourceProcess)
 	 */
 	@Override
-	public <T> List<T> processSteps(List<Callable<T>> callables, SourceErrorAware current) throws InterruptedException {
+	public <T> List<T> processSteps(List<Callable<T>> callables, AsyncSourceProcess current) throws InterruptedException {
 
 		// Replace steps by a fixed locked / error one
 		if (this.lockedRun || this.forcedError != null) {

@@ -2,10 +2,13 @@ package fr.uem.efluid.services;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import javax.annotation.PostConstruct;
 
+import fr.uem.efluid.tools.AsyncDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,149 +32,165 @@ import fr.uem.efluid.services.types.ProjectData;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 @Service
 public class ApplicationDetailsService {
 
-	private static final long INDEX_ENTRY_ESTIMATED_SIZE = 500;
-	private static final long LOB_ESTIMATED_SIZE = 2000;
+    private static final long INDEX_ENTRY_ESTIMATED_SIZE = 500;
+    private static final long LOB_ESTIMATED_SIZE = 2000;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationDetailsService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationDetailsService.class);
 
-	@Autowired
-	private CommitRepository commits;
+    @Autowired
+    private CommitRepository commits;
 
-	@Autowired
-	private IndexRepository index;
+    @Autowired
+    private IndexRepository index;
 
-	@Autowired
-	private FunctionalDomainRepository domains;
+    @Autowired
+    private FunctionalDomainRepository domains;
 
-	@Autowired
-	private DictionaryRepository dictionary;
+    @Autowired
+    private DictionaryRepository dictionary;
 
-	@Autowired
-	private LobPropertyRepository lobs;
+    @Autowired
+    private LobPropertyRepository lobs;
 
-	@Autowired
-	private UserRepository users;
+    @Autowired
+    private UserRepository users;
 
-	@Autowired
-	private ProjectRepository projects;
+    @Autowired
+    private ProjectRepository projects;
 
-	@Autowired
-	private VersionRepository versions;
+    @Autowired
+    private VersionRepository versions;
 
-	@Autowired
-	private ProjectManagementService projectService;
+    @Autowired
+    private ProjectManagementService projectService;
 
-	@Autowired
-	private ManagedModelDescriptionRepository modelDescs;
+    @Autowired
+    private ManagedModelDescriptionRepository modelDescs;
 
-	@Autowired
-	private ApplicationInfo info;
+    @Autowired
+    private ApplicationInfo info;
 
-	@Value("${param-efluid.managed-datasource.url}")
-	private String managedDbUrl;
+    @Autowired
+    private AsyncDriver asyncDriver;
 
-	// If wizzard started, cannot quit
-	private boolean wizzardCompleted;
+    @Value("${param-efluid.managed-datasource.url}")
+    private String managedDbUrl;
 
-	/**
-	 * @return
-	 */
-	public boolean isNeedWizzard() {
-		// Until a wizzard is completed (or data is complete), it is not possible to avoid
-		// the wizzard
-		return !this.wizzardCompleted;
-	}
+    // If wizzard started, cannot quit
+    private boolean wizzardCompleted;
 
-	/**
-	 *
-	 * @return
-	 */
-	@Cacheable("details")
-	public ApplicationDetails getCurrentDetails() {
+    /**
+     * @return
+     */
+    public boolean isNeedWizzard() {
+        // Until a wizzard is completed (or data is complete), it is not possible to avoid
+        // the wizzard
+        return !this.wizzardCompleted;
+    }
 
-		LOGGER.debug("Loading new details");
+    /**
+     * @return all active running async process
+     */
+    public Collection<AsyncDriver.AsyncSourceProcess> getActiveAsyncProcess() {
+        return this.asyncDriver.listCurrentInSurvey();
+    }
 
-		ApplicationDetails details = new ApplicationDetails();
+    /**
+     * @param identifier identifier for a process under survey
+     */
+    public void killActiveAsyncProcess(UUID identifier) {
+        this.asyncDriver.kill(identifier);
+    }
 
-		details.setInfo(this.getInfo());
-		details.setCommitsCount(this.commits.count());
-		details.setDbUrl(this.managedDbUrl);
-		details.setIndexCount(this.index.count());
-		details.setDomainsCount(this.domains.count());
-		details.setDictionaryCount(this.dictionary.count());
-		details.setLobsCount(this.lobs.count());
-		details.setIndexSize(getEstimatedIndexSize());
-		details.setProjectsCount(this.projects.count());
-		details.setVersionsCount(this.versions.count());
-		ProjectData project = this.projectService.getCurrentSelectedProject();
+    /**
+     * @return
+     */
+    @Cacheable("details")
+    public ApplicationDetails getCurrentDetails() {
 
-		if (project != null) {
-			details.setDomainsCountForProject(this.domains.countForProject(project.getUuid()));
-			details.setVersionsCountForProject(this.versions.countForProject(project.getUuid()));
-		}
+        LOGGER.debug("Loading new details");
 
-		// Can be null / empty
-		if (this.modelDescs.hasToCheckDescriptions()) {
-			List<ManagedModelDescription> descs = this.modelDescs.getModelDescriptions();
-			if (descs.size() > 0) {
-				details.setModelDesc(descs.get(descs.size() - 1));
-			}
-		}
+        ApplicationDetails details = new ApplicationDetails();
 
-		return details;
-	}
+        details.setInfo(this.getInfo());
+        details.setCommitsCount(this.commits.count());
+        details.setDbUrl(this.managedDbUrl);
+        details.setIndexCount(this.index.count());
+        details.setDomainsCount(this.domains.count());
+        details.setDictionaryCount(this.dictionary.count());
+        details.setLobsCount(this.lobs.count());
+        details.setIndexSize(getEstimatedIndexSize());
+        details.setProjectsCount(this.projects.count());
+        details.setVersionsCount(this.versions.count());
+        ProjectData project = this.projectService.getCurrentSelectedProject();
 
-	/**
-	 * @return null if not found / not enabled
-	 */
-	public ManagedModelDescription getCurrentModelId() {
+        if (project != null) {
+            details.setDomainsCountForProject(this.domains.countForProject(project.getUuid()));
+            details.setVersionsCountForProject(this.versions.countForProject(project.getUuid()));
+        }
 
-		if (this.modelDescs.hasToCheckDescriptions()) {
-			List<ManagedModelDescription> descs = this.modelDescs.getModelDescriptions();
-			if (descs.size() > 0) {
-				return descs.get(descs.size() - 1);
-			}
-		}
+        // Can be null / empty
+        if (this.modelDescs.hasToCheckDescriptions()) {
+            List<ManagedModelDescription> descs = this.modelDescs.getModelDescriptions();
+            if (descs.size() > 0) {
+                details.setModelDesc(descs.get(descs.size() - 1));
+            }
+        }
 
-		return null;
-	}
+        return details;
+    }
 
-	@PostConstruct
-	public void completeWizzard() {
+    /**
+     * @return null if not found / not enabled
+     */
+    public ManagedModelDescription getCurrentModelId() {
 
-		this.wizzardCompleted = this.users.count() > 0 && this.domains.count() > 0;
+        if (this.modelDescs.hasToCheckDescriptions()) {
+            List<ManagedModelDescription> descs = this.modelDescs.getModelDescriptions();
+            if (descs.size() > 0) {
+                return descs.get(descs.size() - 1);
+            }
+        }
 
-		if (!this.wizzardCompleted) {
-			LOGGER.info("Application is started in wizzard mode : no data found localy");
-		}
-	}
+        return null;
+    }
 
-	/**
-	 * @return
-	 */
-	public ApplicationInfo getInfo() {
-		return this.info;
-	}
+    @PostConstruct
+    public void completeWizzard() {
 
-	/**
-	 * @return
-	 */
-	private String getEstimatedIndexSize() {
+        this.wizzardCompleted = this.users.count() > 0 && this.domains.count() > 0;
 
-		long size = this.index.count() * INDEX_ENTRY_ESTIMATED_SIZE;
-		long lobSize = this.lobs.count() * LOB_ESTIMATED_SIZE;
-		BigDecimal estim = new BigDecimal((size + lobSize) / (1024 * 1024));
-		estim.setScale(1, RoundingMode.HALF_UP);
+        if (!this.wizzardCompleted) {
+            LOGGER.info("Application is started in wizzard mode : no data found localy");
+        }
+    }
 
-		LOGGER.debug("Checking estimated index size. Found {} items and {} lobs, for a an estimated total size of {} Mb",
-				Long.valueOf(size), Long.valueOf(lobSize), estim);
+    /**
+     * @return
+     */
+    public ApplicationInfo getInfo() {
+        return this.info;
+    }
 
-		return estim.toPlainString() + " Mb";
-	}
+    /**
+     * @return
+     */
+    private String getEstimatedIndexSize() {
+
+        long size = this.index.count() * INDEX_ENTRY_ESTIMATED_SIZE;
+        long lobSize = this.lobs.count() * LOB_ESTIMATED_SIZE;
+        BigDecimal estim = new BigDecimal((size + lobSize) / (1024 * 1024));
+        estim.setScale(1, RoundingMode.HALF_UP);
+
+        LOGGER.debug("Checking estimated index size. Found {} items and {} lobs, for a an estimated total size of {} Mb",
+                Long.valueOf(size), Long.valueOf(lobSize), estim);
+
+        return estim.toPlainString() + " Mb";
+    }
 }

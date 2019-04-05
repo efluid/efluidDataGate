@@ -51,7 +51,11 @@ param-efluid:
     
     imports:
         check-model-version: true
-    
+
+    async-preparation:
+        thread-pool-size: 8
+        timeout-seconds: 1200
+
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
