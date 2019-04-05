@@ -25,3 +25,4 @@ param-app/src/main/resources/config/application-dest.yml
 param-app/src/main/resources/config/application-marie.yml
 param-app/src/main/resources/config/application-small-server.yml
 param-generator-example/sonar-project.properties
+update-errors.out

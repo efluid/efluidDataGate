@@ -35,6 +35,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
   * Solutions technique en place
   * Architecture générale
   * [Tester l'application avec cucumber](cucumber-testing.md)
+  * [Manipuler les fichiers export .par](read-export.md)
   * Développer des extensions
     * Support limité des extensions
     * [Transformer](transformer-develop.md)
