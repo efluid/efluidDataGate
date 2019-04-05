@@ -1,9 +1,12 @@
-# PARAMETHOR
+# DATAGATE
 
 Application dédiée à l'identification, au packaging et au déploiement de paramètrage pour une instance Efluid.
 
-## Utilisation de l'application
+## Nouvelle documentation
 
+**Nouveau !!!** Une documentation de référence est en cours de rédaction. Une partie de ce readme sera repris dans cette doc et d'autres éléments seront ajoutés pour couvrir tous les besoins pour Efluid.
+
+La documentation est ici : [accueil doc](docs/README.md)
 
 
 ## Build
@@ -34,7 +37,7 @@ L'instance est déployée dans le répo local docker sous le nom **paramethor**:
 
 **Pour démarrer la version standalone server avec les scripts fournis**
 
-S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de paramethor, comme ``/opt/server/paramethor``
+S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de datagate, comme ``/opt/server/paramethor``
 
 Après build, faire : 
     
