@@ -407,7 +407,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 .map(c -> ColumnEditData.fromColumnDescription(c, null, null, null))
                 .peek(c -> {
                     // If identifier, select it as key
-                    if(isSelectPkAsKeys && c.getType().isPk()){
+                    if (isSelectPkAsKeys && c.getType().isPk()) {
                         c.setKey(true);
                     }
 
@@ -1364,26 +1364,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
                                     + " is not of the required type in version \"" + version.getName() + "\"", version.getModelIdentity());
                         }
                     }
-
-                    // // If not yet last
-                    // else {
-                    //
-                    // String nextModelIdentity = importedVersions.get(i +
-                    // 1).getModelIdentity();
-                    //
-                    // // If it's not a reuse of current model identity on new version, a
-                    // // version is then missing
-                    // if (type != IdentifierType.OLD_ONE && version.getModelIdentity() !=
-                    // null
-                    // && !version.getModelIdentity().equals(nextModelIdentity)) {
-                    // throw new ApplicationException(VERSION_NOT_MODEL_ID, "Model id " +
-                    // version.getModelIdentity()
-                    // + " is not of the required intermediate type in version \"" +
-                    // version.getName() + "\"",
-                    // version.getModelIdentity());
-                    // }
-                    // }
-
                 }
             }
         }

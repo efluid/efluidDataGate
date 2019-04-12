@@ -118,7 +118,7 @@ public class ApplicationDetailsService {
 
         ApplicationDetails details = new ApplicationDetails();
 
-        details.setInfo(this.getInfo());
+        details.setInfo(getInfo());
         details.setCommitsCount(this.commits.count());
         details.setDbUrl(this.managedDbUrl);
         details.setIndexCount(this.index.count());
