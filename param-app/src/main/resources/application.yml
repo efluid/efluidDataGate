@@ -39,6 +39,9 @@ param-efluid:
     web-options:
         enable-custom-h2-console: false
 
+    dictionary:
+        select-pk-as-default-keys: true
+
     security:
         salt: 12345678901234567890123456789012
                    

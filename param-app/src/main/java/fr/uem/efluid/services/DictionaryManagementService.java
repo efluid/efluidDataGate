@@ -109,6 +109,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
     @Autowired
     private PrepareIndexService indexService;
 
+    @Autowired
+    private FeatureManager features;
+
     /**
      * @param name
      */
@@ -397,10 +400,22 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // Pre-select first domain
         edit.setDomainUuid(domainDatas.get(0).getUuid());
 
+        final boolean isSelectPkAsKeys = this.features.isEnabled(Feature.SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY);
+
         // Add metadata to use for edit
         edit.setColumns(getTableDescription(edit.getTable()).getColumns().stream()
                 .map(c -> ColumnEditData.fromColumnDescription(c, null, null, null))
-                .peek(c -> c.setSelected(true)) // Default : select all
+                .peek(c -> {
+                    // If identifier, select it as key
+                    if(isSelectPkAsKeys && c.getType().isPk()){
+                        c.setKey(true);
+                    }
+
+                    // Default : select all
+                    else {
+                        c.setSelected(true);
+                    }
+                })
                 .sorted()
                 .collect(Collectors.toList()));
 
