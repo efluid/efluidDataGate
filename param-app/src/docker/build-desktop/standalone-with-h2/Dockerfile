@@ -4,6 +4,7 @@ RUN apt-get update
 RUN apt-get -y install dos2unix
 
 EXPOSE 8080
+EXPOSE 8087
 EXPOSE 8000
 
 ENV remoteXdebug=false
