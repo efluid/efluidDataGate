@@ -34,7 +34,6 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 	 * 
 	 * @return
 	 */
-	// TODO : Once with java9, specify as private
 	@Query(value = "select distinct "
 			+ "		concat(c.uuid,'') as c_uuid, "
 			+ "		d.name "
@@ -62,7 +61,7 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 	 * @param projectUuid
 	 * @return
 	 */
-	@Query(value = "select count(*) from domain d where d.project_uuid = :projectUuid", nativeQuery = true)
+	@Query("select count(d) from FunctionalDomain d where d.project.uuid = :projectUuid")
 	int countForProject(UUID projectUuid);
 
 	/**

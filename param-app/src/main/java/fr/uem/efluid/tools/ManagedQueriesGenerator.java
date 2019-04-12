@@ -279,13 +279,14 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 * To check unicity on parameter key (support for composite)
 	 * 
 	 * @param tablename
-	 * @param columnName
+	 * @param columnNames
+	 * @param filterClause
 	 * @return
 	 */
-	public String producesUnicityQuery(String tablename, Collection<String> columnNames) {
+	public String producesUnicityQuery(String tablename, Collection<String> columnNames, String filterClause) {
 
-		// select 1 from "TTABLEOTHERTEST2" group by "ID" HAVING COUNT("ID") > 1
-		return String.format(this.unicityQueryModel, tablename, prepareSimpleSelectPart(columnNames));
+		// select 1 from "TTYPEMATERIEL" cur where cur."ID"<50 group by "SERIE" HAVING COUNT("SERIE") > 1 ;
+		return String.format(this.unicityQueryModel, tablename, filterClause, prepareSimpleSelectPart(columnNames));
 	}
 
 	/**
@@ -704,7 +705,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 	 */
 	private static String generateUnicityQueryTemplate(QueryGenerationRules rules) {
 		return new StringBuilder("SELECT 1 FROM ").append(rules.isTableNamesProtected() ? "\"%s\"" : "%s")
-				.append(" GROUP BY %s HAVING COUNT(*) > 1").toString();
+				.append(" cur WHERE %s GROUP BY %s HAVING COUNT(*) > 1").toString();
 	}
 
 	/**

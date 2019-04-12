@@ -31,8 +31,8 @@ public interface TableMappingRepository extends JpaRepository<TableMapping, UUID
 	 * @param dictionaryEntry
 	 * @return
 	 */
-	@Query("select count(t) > 0 from TableMapping t where t.dictionaryEntry = :dictionaryEntry")
-	boolean hasMappingsForDictionaryEntry(@Param("dictionaryEntry") DictionaryEntry dictionaryEntry);
+	@Query("select count(t) from TableMapping t where t.dictionaryEntry = :dictionaryEntry")
+	long countMappingsForDictionaryEntry(@Param("dictionaryEntry") DictionaryEntry dictionaryEntry);
 
 	/**
 	 * @param dictionaryEntry
@@ -57,7 +57,6 @@ public interface TableMappingRepository extends JpaRepository<TableMapping, UUID
 	 * 
 	 * @return
 	 */
-	// TODO : Once with java9, specify as private
 	@Query(value = "SELECT concat(m.dictionary_entry_uuid,'') as from_col, concat(d.uuid,'') as to_col FROM mappings m INNER JOIN dictionary d ON d.table_name = m.table_to",
 			nativeQuery = true)
 	List<Object[]> _internal_findAllRelationships();

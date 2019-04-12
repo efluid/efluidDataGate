@@ -23,76 +23,79 @@ import fr.uem.efluid.utils.WebUtils;
  * <p>
  * implemented shared REST API for dictionary
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 2
+ * @since v0.0.1
  */
 @RestController
 public class DictionaryApiController implements DictionaryApi {
 
-	@Autowired
-	private DictionaryManagementService dictionaryManagementService;
+    @Autowired
+    private DictionaryManagementService dictionaryManagementService;
 
-	/**
-	 * @param request
-	 * @return
-	 * @throws ApplicationException
-	 * @see fr.uem.efluid.rest.v1.DictionaryApi#uploadDictionaryPackage(org.springframework.web.multipart.MultipartHttpServletRequest)
-	 */
-	@Override
-	public CreatedDictionaryView uploadDictionaryPackage(MultipartFile file) throws ApplicationException {
+    /**
+     * @param request
+     * @return
+     * @throws ApplicationException
+     * @see fr.uem.efluid.rest.v1.DictionaryApi#uploadDictionaryPackage(org.springframework.web.multipart.MultipartHttpServletRequest)
+     */
+    @Override
+    public CreatedDictionaryView uploadDictionaryPackage(MultipartFile file) throws ApplicationException {
 
-		ExportImportResult<Void> result = this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(file));
+        ExportImportResult<Void> result = this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(file));
 
-		CreatedDictionaryView view = new CreatedDictionaryView();
+        CreatedDictionaryView view = new CreatedDictionaryView();
 
-		ItemCount dict = result.getCounts().get(DictionaryExportPackage.DICT_EXPORT);
-		ItemCount doms = result.getCounts().get(FunctionalDomainExportPackage.DOMAINS_EXPORT);
-		ItemCount lins = result.getCounts().get(TableLinkExportPackage.LINKS_EXPORT);
+        ItemCount dict = result.getCounts().get(DictionaryExportPackage.DICT_EXPORT);
+        ItemCount doms = result.getCounts().get(FunctionalDomainExportPackage.DOMAINS_EXPORT);
+        ItemCount lins = result.getCounts().get(TableLinkExportPackage.LINKS_EXPORT);
 
-		view.setAddedDictionaryEntryCount(dict.getAdded());
-		view.setUpdatedDictionaryEntryCount(dict.getModified());
-		view.setAddedDomainCount(doms.getAdded());
-		view.setUpdatedDomainCount(doms.getModified());
-		view.setAddedLinkCount(lins.getAdded());
-		view.setUpdatedLinkCount(lins.getModified());
+        view.setAddedDictionaryEntryCount(dict.getAdded());
+        view.setUpdatedDictionaryEntryCount(dict.getModified());
+        view.setAddedDomainCount(doms.getAdded());
+        view.setUpdatedDomainCount(doms.getModified());
 
-		return view;
-	}
+        if (lins != null) {
+            view.setAddedLinkCount(lins.getAdded());
+            view.setUpdatedLinkCount(lins.getModified());
+        }
 
-	/**
-	 * @param versionName
-	 * @throws ApplicationException
-	 * @see fr.uem.efluid.rest.v1.DictionaryApi#setVersion(java.lang.String)
-	 */
-	@Override
-	public void setVersion(String versionName) throws ApplicationException {
-		this.dictionaryManagementService.setCurrentVersion(versionName);
-	}
+        return view;
+    }
 
-	/**
-	 * @return
-	 * @throws ApplicationException
-	 * @see fr.uem.efluid.rest.v1.DictionaryApi#getLastVersion()
-	 */
-	@Override
-	public VersionView getLastVersion() throws ApplicationException {
+    /**
+     * @param versionName
+     * @throws ApplicationException
+     * @see fr.uem.efluid.rest.v1.DictionaryApi#setVersion(java.lang.String)
+     */
+    @Override
+    public void setVersion(String versionName) throws ApplicationException {
+        this.dictionaryManagementService.setCurrentVersion(versionName);
+    }
 
-		return VersionData.toView(this.dictionaryManagementService.getLastVersion());
-	}
+    /**
+     * @return
+     * @throws ApplicationException
+     * @see fr.uem.efluid.rest.v1.DictionaryApi#getLastVersion()
+     */
+    @Override
+    public VersionView getLastVersion() throws ApplicationException {
 
-	/**
-	 * @return
-	 * @throws ApplicationException
-	 * @see fr.uem.efluid.rest.v1.DictionaryApi#getVersions()
-	 */
-	@Override
-	public List<VersionView> getVersions() throws ApplicationException {
+        return VersionData.toView(this.dictionaryManagementService.getLastVersion());
+    }
 
-		return this.dictionaryManagementService.getAvailableVersions().stream()
-				.map(VersionData::toView)
-				.collect(Collectors.toList());
-	}
+    /**
+     * @return
+     * @throws ApplicationException
+     * @see fr.uem.efluid.rest.v1.DictionaryApi#getVersions()
+     */
+    @Override
+    public List<VersionView> getVersions() throws ApplicationException {
+
+        return this.dictionaryManagementService.getAvailableVersions().stream()
+                .map(VersionData::toView)
+                .collect(Collectors.toList());
+    }
 
 }

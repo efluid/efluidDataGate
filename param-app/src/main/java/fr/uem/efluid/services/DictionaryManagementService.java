@@ -83,6 +83,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
     private VersionRepository versions;
 
     @Autowired
+    private CommitRepository commits;
+
+    @Autowired
     private DatabaseDescriptionRepository metadatas;
 
     @Autowired
@@ -158,7 +161,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
         Project project = this.projectService.getCurrentSelectedProjectEntity();
         Version last = this.versions.getLastVersionForProject(project);
 
-        return VersionData.fromEntity(last, this.versions.isVersionUpdatable(last.getUuid()));
+        // Must have no commit for version
+        return VersionData.fromEntity(last, this.commits.countCommitsForVersion(last.getUuid()) == 0);
     }
 
     /**
@@ -453,15 +457,15 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // Specified keys from columns
         List<ColumnEditData> keys = editData.getColumns().stream().filter(ColumnEditData::isKey).sorted().collect(Collectors.toList());
 
-        // Apply keys, with support for composite keys
-        applyEditedKeys(entry, keys, true);
-
         // Other common edited properties
         entry.setDomain(this.domains.getOne(editData.getDomainUuid()));
         entry.setParameterName(editData.getName());
         entry.setSelectClause("- to update -");
         entry.setWhereClause(editData.getWhere());
         entry.setUpdatedTime(LocalDateTime.now());
+
+        // Apply keys, with support for composite keys
+        applyEditedKeys(entry, keys, true);
 
         this.dictionary.save(entry);
 
@@ -805,8 +809,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
      */
     private VersionData getCompletedVersion(Version version, Version lastProjectVersion) {
 
+        // ID is the one from last version
         boolean isLastVersion = version.getUuid().equals(lastProjectVersion.getUuid());
-        return VersionData.fromEntity(version, isLastVersion && this.versions.isVersionUpdatable(lastProjectVersion.getUuid()));
+
+        // No commits for it
+        boolean isUpdatable = this.commits.countCommitsForVersion(lastProjectVersion.getUuid()) == 0;
+
+        return VersionData.fromEntity(version, isLastVersion && isUpdatable);
     }
 
     /**
@@ -1292,7 +1301,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         // Unique key check
         if (dict.getExt1KeyName() == null) {
-            if (!this.metadatas.isColumnSetHasUniqueValue(dict.getTableName(), Arrays.asList(dict.getKeyName()))) {
+            if (!this.metadatas.isColumnSetHasUniqueValue(dict.getTableName(), Collections.singletonList(dict.getKeyName()), dict.getWhereClause())) {
                 throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() +
                         " with unique key " + dict.getKeyName() + " has not unique values",
                         dict.getTableName() + "." + dict.getKeyName());
@@ -1302,7 +1311,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // Check on composite key
         else {
             Collection<String> keys = dict.keyNames().collect(Collectors.toSet());
-            if (!this.metadatas.isColumnSetHasUniqueValue(dict.getTableName(), keys)) {
+            if (!this.metadatas.isColumnSetHasUniqueValue(dict.getTableName(), keys, dict.getWhereClause())) {
                 throw new ApplicationException(DIC_KEY_NOT_UNIQ, "Cannot edit dictionary entry for table " + dict.getTableName() +
                         " with composite key on columns " + keys + " has not unique values",
                         keys.stream().map(s -> (dict.getTableName() + "." + s)).collect(Collectors.joining(" / ")));

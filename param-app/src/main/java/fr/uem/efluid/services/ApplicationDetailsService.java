@@ -132,7 +132,7 @@ public class ApplicationDetailsService {
 
         if (project != null) {
             details.setDomainsCountForProject(this.domains.countForProject(project.getUuid()));
-            details.setVersionsCountForProject(this.versions.countForProject(project.getUuid()));
+            details.setVersionsCountForProject(this.versions.countVersionsForProject(project.getUuid()));
         }
 
         // Can be null / empty
