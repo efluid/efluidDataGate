@@ -623,7 +623,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 		List<KeyValue> result = new ArrayList<>();
 
 		for (int i = 0; i < keyNames.size(); i++) {
-			result.add(new KeyValue(keyNames.get(0), keyTypes.get(0), values.get(0)));
+			result.add(new KeyValue(keyNames.get(i), keyTypes.get(i), values.get(i)));
 		}
 
 		return result;
