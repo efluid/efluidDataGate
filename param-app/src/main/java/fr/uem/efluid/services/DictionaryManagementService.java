@@ -1256,9 +1256,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
     private TableDescription getTableDescription(String tableName) {
 
         return this.metadatas.getTables().stream()
-                .filter(t -> t.getName().equals(tableName))
+                .filter(t -> t.getName().equalsIgnoreCase(tableName))
                 .findFirst()
-                .orElseGet(() -> TableDescription.MISSING);
+                .orElse(TableDescription.MISSING);
     }
 
     /**
