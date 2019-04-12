@@ -17,20 +17,20 @@
 		</nav>
         <div class="row"><div class="col-1"><br/></div></div>
         <div class="row">
-            <div class="col-1"></div>
-            <div class="col-9">
+            <div class="col-3"></div>
+            <div class="col-6">
 		    	<span>
 					<form action="index.html" th:action="@{/callback?client_name=web}" method="post">
 						<div class="form-group">
 							<label for="username">Login</label>
-							<input type="text" class="form-control" name="username" size="50"/>
+							<input type="text" class="form-control" id="username" name="username" size="50"/>
 						</div>
 						<div class="form-group">
 							<label for="password">Mot de passe</label>
-							<input type="password" class="form-control" name="password" size="50"/>
+							<input type="password" class="form-control" id="password" name="password" size="50"/>
 						</div>
 						<div>
-							<span class="remark">Attention : Tous les champs sont obligatoires</span>
+							<span class="remark">Instance <span th:text="${info.instanceName}">SOURCE</span> - v<span th:text="${info.version}">1</span></span>
 							<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right">Se connecter</button><br/><br/>
 						</div>
 					</form>
