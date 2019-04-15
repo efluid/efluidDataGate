@@ -3,6 +3,7 @@ package fr.uem.efluid.model.entities;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -36,6 +37,7 @@ import java.util.stream.StreamSupport;
 public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain> {
 
     @Id
+    @Type(type="uuid-char")
     private UUID uuid;
 
     @NotNull

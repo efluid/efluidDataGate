@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 
 import fr.uem.efluid.model.shared.ExportAwareTableMapping;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.hibernate.annotations.Type;
 
 /**
  * @author elecomte
@@ -22,6 +23,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
 public class TableMapping extends ExportAwareTableMapping<DictionaryEntry> {
 
 	@Id
+	@Type(type="uuid-char")
 	private UUID uuid;
 
 	private String columnFrom;

@@ -26,6 +26,7 @@ import javax.validation.constraints.NotNull;
 
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.hibernate.annotations.Type;
 
 /**
  * @author elecomte
@@ -37,6 +38,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
 public class Commit implements Shared {
 
 	@Id
+	@Type(type="uuid-char")
 	private UUID uuid;
 
 	@Column(name = "hashv")

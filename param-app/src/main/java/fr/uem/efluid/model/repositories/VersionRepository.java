@@ -43,7 +43,7 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 	@Query(value = "select concat(uuid,'') from versions where created_time = "
 			+ " (select max(created_time) from versions where project_uuid = :projectUuid) "
 			+ " and project_uuid = :projectUuid", nativeQuery = true)
-	Object _internal_findLastVersionUuidForProject(@Param("projectUuid") UUID projectUuid);
+	Object _internal_findLastVersionUuidForProject(@Param("projectUuid") String projectUuid);
 
 	/**
 	 * @param projectUuid
@@ -60,7 +60,7 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 			+ " inner join dictionary d on l.dictionary_entry_uuid = d.uuid "
 			+ " inner join domain m on d.domain_uuid = m.uuid "
 			+ " where m.project_uuid = :projectUuid", nativeQuery = true)
-	List<Object[]> _internal_findLastDictionaryUpdateForProject(@Param("projectUuid") UUID projectUuid);
+	List<Object[]> _internal_findLastDictionaryUpdateForProject(@Param("projectUuid") String projectUuid);
 
 	/**
 	 * @param project
@@ -68,7 +68,7 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 	 */
 	default Version getLastVersionForProject(Project project) {
 
-		UUID lastVersion = RuntimeValuesUtils.dbRawToUuid(_internal_findLastVersionUuidForProject(project.getUuid()));
+		UUID lastVersion = RuntimeValuesUtils.dbRawToUuid(_internal_findLastVersionUuidForProject(project.getUuid().toString()));
 
 		// Last version
 		return lastVersion != null ? getOne(lastVersion) : null;
@@ -87,7 +87,7 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 			return true;
 		}
 
-		List<Object[]> res = _internal_findLastDictionaryUpdateForProject(project.getUuid());
+		List<Object[]> res = _internal_findLastDictionaryUpdateForProject(project.getUuid().toString());
 
 		return res.stream()
 				.filter(a -> a[1] != null)

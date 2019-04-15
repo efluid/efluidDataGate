@@ -10,6 +10,7 @@ import javax.validation.constraints.NotNull;
 
 import fr.uem.efluid.model.shared.ExportAwareProject;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.hibernate.annotations.Type;
 
 /**
  * @author elecomte
@@ -21,6 +22,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
 public class Project extends ExportAwareProject {
 
 	@Id
+	@Type(type="uuid-char")
 	private UUID uuid;
 
 	@NotNull

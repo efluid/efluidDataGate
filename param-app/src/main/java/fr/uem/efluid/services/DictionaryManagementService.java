@@ -226,7 +226,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
             this.links.deleteAll(dicLinks);
         }
 
-        this.dictionary.deleteById(uuid);
+        this.dictionary.delete(new DictionaryEntry(uuid));
     }
 
     /**
