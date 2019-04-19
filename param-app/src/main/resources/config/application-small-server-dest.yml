@@ -1,0 +1,44 @@
+---
+## PARAMETER MANAGER CONFIG
+param-efluid:
+
+    managed-datasource:
+        driver-class-name: oracle.jdbc.OracleDriver
+        url: jdbc:oracle:thin:@localhost:49161:xe
+        username: demo
+        password: demo
+        meta:
+            filter-schema: DEMO
+
+    security:
+        salt: 12345678901234567890123456789012
+
+    details:
+        instance-name: DESTINATION-ORACLE-MGMT
+    
+    model-identifier:
+        enabled: true
+        class-name: fr.uem.efluid.tools.DemoDatabaseIdentifier
+        show-sql: false
+
+## TECH FEATURES CUSTOM
+spring:
+    profiles:
+        active: prod
+
+    datasource:
+        url: jdbc:oracle:thin:@small-server:49161:xe
+        username: mgmt_dest
+        password: mgmt_dest
+        driver-class-name: oracle.jdbc.OracleDriver
+
+    jpa:
+        show-sql: true
+        hibernate:
+            ddl-auto: create
+        properties:
+            hibernate.dialect: org.hibernate.dialect.Oracle12cDialect
+
+## WEB SERVER CONFIG
+server:
+    port: 8082

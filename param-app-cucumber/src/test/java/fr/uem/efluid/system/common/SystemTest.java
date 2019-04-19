@@ -65,19 +65,19 @@ import junit.framework.AssertionFailedError;
 @AutoConfigureMockMvc
 public abstract class SystemTest {
 
-	private static final String DEFAULT_USER = "any";
+	protected static final String DEFAULT_USER = "any";
 
-	private static final String DEFAULT_PROJECT = "Default";
+	protected static final String DEFAULT_PROJECT = "Default";
 
-	private static final String DEFAULT_DOMAIN = "Test domain";
+	protected static final String DEFAULT_DOMAIN = "Test domain";
 
-	private static final String DEFAULT_VERSION = "vDefault";
+	protected static final String DEFAULT_VERSION = "vDefault";
 
-	private static final String DEFAULT_TABLE_ONE = "Table One";
-	private static final String DEFAULT_TABLE_TWO = "Table Two";
-	private static final String DEFAULT_TABLE_THREE = "Table Three";
+	protected static final String DEFAULT_TABLE_ONE = "Table One";
+	protected static final String DEFAULT_TABLE_TWO = "Table Two";
+	protected static final String DEFAULT_TABLE_THREE = "Table Three";
 
-	private static final String DEFAULT_WHERE = "1=1";
+	protected static final String DEFAULT_WHERE = "1=1";
 
 	protected static ResultActions currentAction;
 

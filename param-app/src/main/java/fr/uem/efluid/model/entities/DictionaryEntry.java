@@ -4,6 +4,7 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.hibernate.annotations.Type;
+import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -37,7 +38,7 @@ import java.util.stream.StreamSupport;
 public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain> {
 
     @Id
-    @Type(type="uuid-char")
+    @Type(type = "uuid-char")
     private UUID uuid;
 
     @NotNull
@@ -50,7 +51,9 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 
     private String whereClause;
 
-    @Size(max = 4096)
+    // If need more, check type compliance - Oracle can have 32k varchar2 but the
+    // hibernate dialect seems to check it as a varchar() with a limited size of 4k
+    @Column(length = 2048)
     private String selectClause;
 
     @NotNull

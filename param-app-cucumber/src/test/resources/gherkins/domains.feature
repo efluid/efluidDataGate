@@ -1,10 +1,10 @@
 Feature: The dictionary is specified in functional domains
-  
+
   Scenario: A functional domain edit page is available to all users
     Given from the home page
     When the user access to functional domain edit page
     Then the provided template is functional domain
-    
+
   Scenario: The existing domains are listed
     Given the existing functional domains My domain, Device management, Other test domain
     When the user access to functional domain edit page
@@ -19,4 +19,9 @@ Feature: The dictionary is specified in functional domains
     Given the existing functional domains My domain, Device management, Other test domain
     When the user remove functional domain My domain
     Then the 2 remaining functional domains are displayed
-  
+
+  @SINGLE
+  Scenario: An imported domain is deduplicated if a domain with the same name exists
+    Given the existing functional domains My domain, Device management, Other test domain
+    When the user import a package "datasets/imports/one-domain.par" containing a new domain name My domain
+    Then only 3 domains are still existing and the old My domain functional domain is deleted

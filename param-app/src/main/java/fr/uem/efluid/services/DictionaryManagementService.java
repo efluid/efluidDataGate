@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static fr.uem.efluid.utils.ErrorType.*;
@@ -70,6 +71,8 @@ import static fr.uem.efluid.utils.ErrorType.*;
 @Service
 @Transactional
 public class DictionaryManagementService extends AbstractApplicationService {
+
+    private static final String DEDUPLICATED_DOMAINS = "deduplicated-domains";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryManagementService.class);
 
@@ -694,6 +697,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         AtomicInteger newDictCount = new AtomicInteger(0);
         AtomicInteger newLinksCount = new AtomicInteger(0);
         AtomicInteger newMappingsCount = new AtomicInteger(0);
+        AtomicInteger deduplicatedDomainsCount = new AtomicInteger(0);
 
         // Can substitute project by name : need refer update
         Map<UUID, Project> substituteProjects = new HashMap<>();
@@ -763,6 +767,14 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 importedProjects.size(), importedDomains.size(), importedDicts.size(), importedLinks.size(), importedMappings.size());
         ExportImportResult<Void> result = ExportImportResult.newVoid();
 
+        // Now check for duplicate domain names and fix
+        if (this.domains.findAll().stream().anyMatch(d -> importedDomains.stream().anyMatch(similareDomain(d)))) {
+
+            LOGGER.info("Some domains need to be deduplicated from existing");
+
+            deduplicateDomains(importedDomains, deduplicatedDomainsCount);
+        }
+
         // Details on imported counts (add vs updated items)
         if (importedProjects.size() > 0) {
             result.addCount(ProjectExportPackage.PROJECTS_EXPORT, newProjsCount.get(),
@@ -794,7 +806,47 @@ public class DictionaryManagementService extends AbstractApplicationService {
                     importedVersions.size() - newVersCount.get(), 0);
         }
 
+        if (deduplicatedDomainsCount.get() > 0) {
+            result.addCount(DEDUPLICATED_DOMAINS, deduplicatedDomainsCount.get(),
+                    0, deduplicatedDomainsCount.get());
+        }
+
         return result;
+    }
+
+    private static Predicate<FunctionalDomain> similareDomain(FunctionalDomain existing) {
+        // Not an imported one
+        return i -> !i.getUuid().equals(existing.getUuid())
+                // But similar in project
+                && i.getProject().equals(existing.getProject())
+                && i.getName().equals(existing.getName());
+    }
+
+    /**
+     * Search for existing domain on similar name,
+     *
+     * @param importedDomains
+     */
+    private void deduplicateDomains(List<FunctionalDomain> importedDomains, AtomicInteger deduplicatedDomainsCount) {
+        this.domains.findAll().forEach(existing ->
+                // If a duplicate exists in imported domains
+                importedDomains.stream().filter(similareDomain(existing)).findFirst().ifPresent(
+
+                        // Then process it to switch existing to new imported one
+                        imported -> {
+
+                            // Update dic entries with imported domain
+                            this.dictionary.findByDomain(existing).forEach(d -> {
+                                d.setDomain(imported);
+                                this.dictionary.save(d);
+                            });
+
+                            // And drop existing one
+                            this.domains.delete(existing);
+
+                            deduplicatedDomainsCount.incrementAndGet();
+                        })
+        );
     }
 
     /**

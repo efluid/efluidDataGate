@@ -1,17 +1,24 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import org.junit.Before;
-
 import cucumber.api.Delimiter;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
+import fr.uem.efluid.services.DictionaryManagementService;
+import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.FunctionalDomainData;
 import fr.uem.efluid.system.common.SystemTest;
+import org.junit.Before;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author elecomte
@@ -21,6 +28,14 @@ import fr.uem.efluid.system.common.SystemTest;
 public class DomainFixtures extends SystemTest {
 
 	private static List<String> specifiedDomainNames;
+
+	private static UUID currentDomainUUID;
+
+	@Autowired
+	private DictionaryManagementService dictionaryManagementService;
+
+	@Autowired
+	private FunctionalDomainRepository domains;
 
 	@Before
 	public void resetFixture() {
@@ -57,6 +72,17 @@ public class DomainFixtures extends SystemTest {
 		get(getCorrespondingLinkForPageName("functional domain edit page"));
 	}
 
+	@When("^the user import a package \"(.*)\" containing a new domain name (.*)$")
+	public void the_user_import_package_with_domain(String file, String name) throws IOException {
+
+		File importFile = new File("src/test/resources/" + file);
+
+		currentDomainUUID = modelDatabase().findDomainByProjectAndName(getCurrentUserProject(), name).getUuid();
+
+		this.dictionaryManagementService.importAll(new ExportFile(importFile.toPath(),""));
+	}
+
+
 	@When("^the user remove functional domain (.*)$")
 	public void the_user_remove_functional_domain(String name) throws Throwable {
 
@@ -84,5 +110,12 @@ public class DomainFixtures extends SystemTest {
 				nbr,
 				FunctionalDomainData::getName,
 				specifiedDomainNames);
+	}
+
+	@Then("^only (\\d+) domains are still existing and the old (.*) functional domain is deleted$")
+	public void deduplicated_domain(int remaining, String name){
+
+		assertThat(this.domains.findAll()).hasSize(remaining);
+		assertThat(modelDatabase().findDomainByProjectAndName(getCurrentUserProject(), name).getUuid()).isNotEqualTo(currentDomainUUID);
 	}
 }
