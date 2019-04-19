@@ -78,11 +78,11 @@ import fr.uem.efluid.utils.FormatUtils;
 @Service
 public class CommitService extends AbstractApplicationService {
 
-	private static final String PCKG_ALL = "commits-all";
-	private static final String PCKG_AFTER = "commits-part";
+	public static final String PCKG_ALL = "commits-all";
+	public static final String PCKG_AFTER = "commits-part";
 
-	private static final String PCKG_LOBS = "lobs";
-	private static final String PCKG_ATTACHS = "attachs";
+	public static final String PCKG_LOBS = "lobs";
+	public static final String PCKG_ATTACHS = "attachs";
 
 	private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
@@ -458,8 +458,6 @@ public class CommitService extends AbstractApplicationService {
 
 		LOGGER.debug("Asking for an import of commit in piloted preparation context {}", currentPreparation.getIdentifier());
 
-		// TODO : dedicated process for Cherry pick
-
 		// #1 Load import
 		List<SharedPackage<?>> commitPackages = this.exportImportService.importPackages(importFile);
 
@@ -494,7 +492,7 @@ public class CommitService extends AbstractApplicationService {
 		LocalDateTime timeProcessStart = null;
 
 		// Need to be sorted by create time
-		Collections.sort(commitPckg.getContent(), Comparator.comparing(Commit::getCreatedTime));
+		commitPckg.getContent().sort(Comparator.comparing(Commit::getCreatedTime));
 
 		// Version checking is a dynamic feature
 		boolean checkVersion = this.features.isEnabled(Feature.VALIDATE_VERSION_FOR_IMPORT);
@@ -547,7 +545,7 @@ public class CommitService extends AbstractApplicationService {
 		currentPreparation.setDiffLobs(
 				lobsPckg.getContent().stream()
 						.distinct()
-						.collect(Collectors.toConcurrentMap(l -> l.getHash(), l -> l.getData())));
+						.collect(Collectors.toConcurrentMap(LobProperty::getHash, LobProperty::getData)));
 
 		// Create the future merge commit info
 		currentPreparation.setCommitData(new CommitEditData());
@@ -571,7 +569,7 @@ public class CommitService extends AbstractApplicationService {
 		result.addCount(PCKG_ALL, commitPckg.getContent().size(), toProcess.size(), 0);
 
 		LOGGER.info("Import of commits from package {} done  : now the merge data is ready with {} source commits", commitPckg,
-				Integer.valueOf(commitPckg.getContent().size()));
+				commitPckg.getContent().size());
 
 		return result;
 

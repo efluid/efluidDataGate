@@ -3,6 +3,9 @@ package fr.uem.efluid.rest.v1;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
+import fr.uem.efluid.rest.v1.model.StartedMergeView;
+import fr.uem.efluid.utils.ApplicationException;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -15,6 +18,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * <p>
@@ -106,5 +110,24 @@ public interface BacklogApi {
 			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
 	})
 	CommitCreatedResultView validateCurrentPreparedCommit(@RequestParam String commitComment);
+
+
+	/**
+	 * <p>
+	 * Upload a given .par file containing commit items, and start a merge commit prepare
+	 * </p>
+	 *
+	 * @param file
+	 * @return
+	 * @throws ApplicationException
+	 */
+	@RequestMapping(value = "/upload", method = POST)
+	@ResponseBody
+	@ApiOperation("Upload a commit \".par\" archive and start an asynchronous merge commit preparation. " +
+			"The running merge is processed as a preparing commit and can be validated or canceled using other services")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+	})
+	StartedMergeView uploadAndInitPreparedCommit(@RequestParam("file") MultipartFile file) throws ApplicationException;
 
 }
