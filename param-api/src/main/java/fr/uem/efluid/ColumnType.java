@@ -46,6 +46,7 @@ public enum ColumnType {
 
     // TODO : If CLOB and BLOB cannot be managed the same way, use a dedicated type "TEXT"
     BINARY('B', "LOB", false),
+    TEXT('X', "TEXT", false),
     ATOMIC('O', "Variable", false),
     STRING('S', "Litteral", false),
     BOOLEAN('1', "Booleen", false),
@@ -158,6 +159,10 @@ public enum ColumnType {
             return ColumnType.STRING;
         }
 
+        if (represent == TEXT.represent) {
+            return ColumnType.TEXT;
+        }
+
         if (represent == ATOMIC.represent) {
             return ColumnType.ATOMIC;
         }
@@ -200,9 +205,14 @@ public enum ColumnType {
             return ColumnType.BINARY;
         }
 
-        // Explicit value for char and CLOB
-        if (type == Types.CHAR || type == Types.CLOB) {
+        // Explicit value for char
+        if (type == Types.CHAR) {
             return ColumnType.STRING;
+        }
+
+        // Specific for CLOB
+        if (type == Types.CLOB) {
+            return ColumnType.TEXT;
         }
 
         // Explicit identification by type range

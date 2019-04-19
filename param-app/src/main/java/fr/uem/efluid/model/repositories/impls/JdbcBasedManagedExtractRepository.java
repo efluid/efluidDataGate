@@ -222,15 +222,13 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
          * @param colPosition
          * @param rs
          * @throws SQLException
-         * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#appendProcessValue(fr.uem.efluid.tools.ManagedValueConverter,
-         * java.lang.Object, fr.uem.efluid.ColumnType, java.lang.String, int,
-         * java.sql.ResultSet)
          */
         @Override
         protected void appendProcessValue(
                 ManagedValueConverter currentValueConverter,
                 StringBuilder lineHolder,
                 ColumnType type,
+                int nativeType,
                 String columnName,
                 int colPosition,
                 ResultSet rs) throws SQLException {
@@ -238,6 +236,11 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
             // Call for binary only if needed
             if (type == ColumnType.BINARY) {
                 currentValueConverter.appendBinaryValue(lineHolder, columnName, rs.getBytes(colPosition), this.blobs);
+            }
+
+            // Text are managed as custom type
+            else if (type == ColumnType.TEXT) {
+                currentValueConverter.appendTextValue(lineHolder, columnName, rs.getString(colPosition), this.blobs);
             }
 
             // Boolean need full represent of boolean
@@ -304,16 +307,13 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
          * @param columnName
          * @param colPosition
          * @param rs
-         * @throws SQLException
-         * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#appendProcessValue(fr.uem.efluid.tools.ManagedValueConverter,
-         * java.lang.Object, fr.uem.efluid.ColumnType, java.lang.String, int,
-         * java.sql.ResultSet)
          */
         @Override
         protected void appendProcessValue(
                 ManagedValueConverter currentValueConverter,
                 List<Value> lineHolder,
                 ColumnType type,
+                int nativeType,
                 String columnName,
                 int colPosition,
                 ResultSet rs) throws SQLException {
@@ -321,7 +321,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
             String value = null;
 
             // Call for binary only if needed
-            if (type == ColumnType.BINARY) {
+            if (type == ColumnType.BINARY || type == ColumnType.TEXT) {
                 value = "BYTES";
             }
 
