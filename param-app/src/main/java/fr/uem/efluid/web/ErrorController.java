@@ -16,7 +16,7 @@ import fr.uem.efluid.utils.ErrorType;
  * @since v0.0.1
  * @version 1
  */
-@ControllerAdvice
+@ControllerAdvice(basePackageClasses = CommonController.class)
 public class ErrorController {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ErrorController.class);
