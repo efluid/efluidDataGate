@@ -8,6 +8,8 @@ import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -87,6 +90,7 @@ public class PrepareIndexService {
      * <p>
      * Apply also some "remarks" to diff if required
      * </p>
+     * <p>5 steps</p>
      *
      * @param diffToComplete the specified <tt>LocalPreparedDiff</tt> to complete with content and
      *                       remarks
@@ -98,7 +102,8 @@ public class PrepareIndexService {
             LocalPreparedDiff diffToComplete,
             DictionaryEntry entry,
             Map<String, byte[]> lobs,
-            Project project) {
+            Project project,
+            PilotedCommitPreparation<?> preparation) {
 
         LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
 
@@ -108,21 +113,36 @@ public class PrepareIndexService {
         LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
         Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(entry);
 
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
+
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
         Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
+
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
 
         // Some diffs may add remarks
         LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
         processOptionalCurrentContendDiffRemarks(diffToComplete, entry, project, actualContent);
 
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
+
         // Completed diff
         Collection<PreparedIndexEntry> index = generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
+
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
 
         // Detect and process similar entries for display
         diffToComplete.setDiff(
                 combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar)
                         .stream()
                         .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
     }
 
     /**
@@ -140,6 +160,7 @@ public class PrepareIndexService {
      * <p>
      * Apply also some "remarks" to diff if required
      * </p>
+     * <p>7 steps</p>
      *
      * @param diffToComplete     the specified <tt>MergePreparedDiff</tt> to complete with content and
      *                           remarks
@@ -155,7 +176,8 @@ public class PrepareIndexService {
             Map<String, byte[]> lobs,
             long timeStampForSearch,
             List<PreparedMergeIndexEntry> mergeContent,
-            Project project) {
+            Project project,
+            PilotedCommitPreparation<?> preparation) {
 
         LOGGER.debug("Regenerating values from combined local + specified index for managed table \"{}\", using"
                 + " timestamp for local index search {}", entry.getTableName(), timeStampForSearch);
@@ -167,6 +189,8 @@ public class PrepareIndexService {
         List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampGreaterThanEqualOrderByTimestamp(entry,
                 timeStampForSearch);
 
+        preparation.incrementProcessStep();
+
         // Prepare simulated "knew index"
         List<DiffLine> toProcess = new ArrayList<>();
         toProcess.addAll(localIndexToTimeStamp);
@@ -175,20 +199,30 @@ public class PrepareIndexService {
         LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
         Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(toProcess);
 
+        preparation.incrementProcessStep();
+
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
         Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
+
+        preparation.incrementProcessStep();
 
         // Some diffs may add remarks on local contents
         LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
         processOptionalCurrentContendDiffRemarks(diffToComplete, entry, project, actualContent);
 
+        preparation.incrementProcessStep();
+
         Collection<PreparedMergeIndexEntry> diff = generateDiffIndexFromContent(PreparedMergeIndexEntry::new, knewContent, actualContent,
                 entry);
+
+        preparation.incrementProcessStep();
 
         LOGGER.info("Diff prepared. Complete merge data for table \"{}\"", entry.getTableName());
 
         // Then apply from local and from import to identify diff changes
         completeMergeIndexes(entry, localIndexToTimeStamp, mergeContent, diff);
+
+        preparation.incrementProcessStep();
 
         diff.forEach(line -> {
             line.setSelected(true);
@@ -197,6 +231,8 @@ public class PrepareIndexService {
         diffToComplete.setDiff(
                 combineSimilarDiffEntries(diff, SimilarPreparedMergeIndexEntry::fromSimilar).stream()
                         .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+
+        preparation.incrementProcessStep();
     }
 
     /**

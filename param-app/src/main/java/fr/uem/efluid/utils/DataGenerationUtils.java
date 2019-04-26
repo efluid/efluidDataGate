@@ -108,10 +108,10 @@ public class DataGenerationUtils {
 		entry.setUuid(UUID.randomUUID());
 		entry.setParameterName(name);
 		entry.setDomain(domain);
-		entry.setSelectClause(select != null ? select.toUpperCase() : select);
+		entry.setSelectClause(select != null ? select.toUpperCase() : null);
 		entry.setTableName(table);
 		entry.setWhereClause(where);
-		entry.setKeyName(keyName != null ? keyName.toUpperCase() : keyName);
+		entry.setKeyName(keyName != null ? keyName.toUpperCase() : null);
 		entry.setKeyType(keyType);
 		return entry;
 	}
@@ -177,9 +177,6 @@ public class DataGenerationUtils {
 		return commit;
 	}
 
-	/**
-	 * @return
-	 */
 	/**
 	 * @param entry
 	 * @param col

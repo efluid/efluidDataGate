@@ -5,6 +5,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 import java.util.UUID;
 
+import fr.uem.efluid.services.types.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
@@ -22,11 +23,6 @@ import fr.uem.efluid.services.ApplyDiffService;
 import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
-import fr.uem.efluid.services.types.DiffDisplayPage;
-import fr.uem.efluid.services.types.LocalPreparedDiff;
-import fr.uem.efluid.services.types.PilotedCommitPreparation;
-import fr.uem.efluid.services.types.PilotedCommitStatus;
-import fr.uem.efluid.services.types.SearchHistoryPage;
 import fr.uem.efluid.utils.WebUtils;
 
 /**
@@ -90,8 +86,7 @@ public class BacklogController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param page
-	 * @param search
+	 * @param pageNbr
 	 * @return
 	 */
 	@RequestMapping(path = "/history/{page}", method = GET)
@@ -102,7 +97,7 @@ public class BacklogController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param page
+	 * @param pageNbr
 	 * @param search
 	 * @return
 	 */
@@ -158,8 +153,8 @@ public class BacklogController extends CommonController {
 	 */
 	@RequestMapping(path = { "/prepare/progress", "/merge/progress" }, method = GET)
 	@ResponseBody
-	public PilotedCommitStatus preparationGetStatus() {
-		return this.pilotableCommitService.getCurrentCommitPreparationStatus();
+	public PreparationState preparationGetState() {
+		return this.pilotableCommitService.getCurrentCommitPreparationState();
 	}
 
 	/**
@@ -227,7 +222,7 @@ public class BacklogController extends CommonController {
 	 * Update selection for one item
 	 * </p>
 	 * 
-	 * @param index
+	 * @param itemIndex
 	 * @param selected
 	 * @param rollbacked
 	 */
@@ -241,7 +236,7 @@ public class BacklogController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param name
+	 * @param preparation
 	 * @return
 	 */
 	@RequestMapping(path = { "/prepare/commit", "/merge/commit" }, method = POST)
@@ -265,7 +260,7 @@ public class BacklogController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param name
+	 * @param preparation
 	 * @return
 	 */
 	@RequestMapping(path = { "/prepare/save", "/merge/save" }, method = POST)
@@ -291,7 +286,6 @@ public class BacklogController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param name
 	 * @return
 	 */
 	@RequestMapping(path = { "/prepare/cancel", "/merge/cancel" }, method = GET)
@@ -310,7 +304,6 @@ public class BacklogController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param name
 	 * @return
 	 */
 	@RequestMapping(path = "/push", method = GET)
@@ -329,7 +322,7 @@ public class BacklogController extends CommonController {
 
 		// Get updated commits
 		model.addAttribute("commits", this.commitService.getAvailableCommits());
-		model.addAttribute("checkVersion", Boolean.valueOf(this.dictService.isDictionaryUpdatedAfterLastVersion()));
+		model.addAttribute("checkVersion", this.dictService.isDictionaryUpdatedAfterLastVersion());
 		model.addAttribute("version", this.dictService.getLastVersion());
 
 		return "pages/push";
@@ -465,7 +458,9 @@ public class BacklogController extends CommonController {
 	}
 
 	/**
-	 * @param hash
+	 *
+	 * @param name
+	 * @param uuid
 	 * @return
 	 */
 	@RequestMapping(path = "/attachment/content", method = GET)
@@ -484,8 +479,8 @@ public class BacklogController extends CommonController {
 	}
 
 	/**
+	 *
 	 * @param model
-	 * @param request
 	 * @return
 	 */
 	@RequestMapping(value = "/pull/upload", method = GET)
@@ -516,15 +511,15 @@ public class BacklogController extends CommonController {
 		}
 
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
-		model.addAttribute("needsAction", Boolean.valueOf(this.pilotableCommitService.isCurrentMergeCommitNeedsAction()));
-		model.addAttribute("showAll", Boolean.valueOf(showAll));
+		model.addAttribute("needsAction", this.pilotableCommitService.isCurrentMergeCommitNeedsAction());
+		model.addAttribute("showAll", showAll);
 
 		return "pages/merge";
 	}
 
 	/**
+	 *
 	 * @param model
-	 * @param name
 	 * @return
 	 */
 	@RequestMapping(path = "/commits", method = GET)

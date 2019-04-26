@@ -71,24 +71,23 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     private boolean attachmentDisplaySupport;
     private boolean attachmentExecuteSupport;
 
-    /**
-     * For pushed form only
-     */
-    public PilotedCommitPreparation() {
-        this.identifier = null;
-        this.status = PilotedCommitStatus.COMMIT_CAN_PREPARE;
-        this.preparingState = null;
-        this.start = null;
-    }
+    // For percentDone step counts
+    private AtomicInteger totalStepCount = new AtomicInteger(0);
+    private final int stepByProcess;
 
     /**
      *
      */
-    public PilotedCommitPreparation(CommitState preparingState) {
+    public PilotedCommitPreparation(CommitState preparingState, int stepByProcess) {
         this.identifier = UUID.randomUUID();
         this.status = PilotedCommitStatus.DIFF_RUNNING;
         this.start = LocalDateTime.now();
         this.preparingState = preparingState;
+        this.stepByProcess = stepByProcess;
+    }
+
+    public void incrementProcessStep(){
+        this.totalStepCount.incrementAndGet();
     }
 
     /**
@@ -447,7 +446,7 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     public Stream<T> streamDiffDisplay() {
         return this.domains.stream()
                 .map(DomainDiffDisplay::getPreparedContent)
-                .filter(d -> d != null)
+                .filter(Objects::nonNull)
                 .flatMap(Collection::stream);
     }
 
@@ -461,6 +460,23 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList())
                 : Collections.emptyList();
+    }
+
+    /**
+     * Calculated percent of process on current preparation
+     *
+     * @return
+     */
+    @Override
+    public int getPercentDone() {
+
+        if(getProcessStarted() == 0 ){
+            return 0;
+        }
+
+        return (this.totalStepCount.get() * 100) / (this.stepByProcess * getProcessStarted());
+
+         //return ((getProcessStarted() - getProcessRemaining().get()) * 100 / getProcessStarted());
     }
 
     /**

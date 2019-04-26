@@ -35,10 +35,10 @@ public class DictionaryApiController implements DictionaryApi {
     private DictionaryManagementService dictionaryManagementService;
 
     /**
-     * @param request
+     *
+     * @param file
      * @return
      * @throws ApplicationException
-     * @see fr.uem.efluid.rest.v1.DictionaryApi#uploadDictionaryPackage(org.springframework.web.multipart.MultipartHttpServletRequest)
      */
     @Override
     public CreatedDictionaryView uploadDictionaryPackage(MultipartFile file) throws ApplicationException {

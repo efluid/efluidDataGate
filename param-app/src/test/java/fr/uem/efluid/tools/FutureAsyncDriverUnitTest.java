@@ -134,6 +134,11 @@ public class FutureAsyncDriverUnitTest {
         }
 
         @Override
+        public int getPercentDone() {
+            return 0;
+        }
+
+        @Override
         public <F> F fail(ApplicationException error) {
             return null;
         }

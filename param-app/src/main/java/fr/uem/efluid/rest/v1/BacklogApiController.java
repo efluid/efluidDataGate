@@ -6,10 +6,7 @@ import fr.uem.efluid.rest.v1.model.CommitPrepareDetailsView.CommitPrepareTableVi
 import fr.uem.efluid.rest.v1.model.StartedMergeView;
 import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
-import fr.uem.efluid.services.types.ExportImportResult;
-import fr.uem.efluid.services.types.MergePreparedDiff;
-import fr.uem.efluid.services.types.PilotedCommitPreparation;
-import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.WebUtils;
@@ -36,9 +33,10 @@ public class BacklogApiController implements BacklogApi {
      * @see fr.uem.efluid.rest.v1.BacklogApi#initPreparedCommit()
      */
     @Override
-    public PilotedCommitStatus initPreparedCommit() {
+    public PreparationState initPreparedCommit() {
 
-        return this.pilotableCommitService.startLocalCommitPreparation(false).getStatus();
+        PilotedCommitPreparation<?> prep = this.pilotableCommitService.startLocalCommitPreparation(false);
+        return new PreparationState(prep.getStatus(), prep.getPercentDone());
     }
 
     /**
@@ -56,7 +54,7 @@ public class BacklogApiController implements BacklogApi {
 
         return new StartedMergeView(
                 packgs.getAdded(),
-                result.getResult().getStatus(),
+                new PreparationState(result.getResult().getStatus(), result.getResult().getPercentDone()),
                 result.getResult().getCommitData().getAttachments().size(),
                 result.getResult().getCommitData().getAttachments().stream()
                         .map(a -> new StartedMergeView.AttachementView(
@@ -72,23 +70,29 @@ public class BacklogApiController implements BacklogApi {
      * @see fr.uem.efluid.rest.v1.BacklogApi#cancelPreparedCommit()
      */
     @Override
-    public PilotedCommitStatus cancelPreparedCommit() {
+    public PreparationState cancelPreparedCommit() {
+
+        int currentPercent = 0;
+        PilotedCommitPreparation<?> prep =  this.pilotableCommitService.getCurrentCommitPreparation();
 
         // Update current preparation as canceled
-        if (this.pilotableCommitService.getCurrentCommitPreparation() != null) {
+        if (prep != null) {
+
+            // But display percent done will canceling
+            currentPercent = prep.getPercentDone();
             this.pilotableCommitService.cancelCommitPreparation();
         }
 
-        return PilotedCommitStatus.CANCEL;
+        return new PreparationState(PilotedCommitStatus.CANCEL, currentPercent) ;
     }
 
     /**
      * @return
-     * @see fr.uem.efluid.rest.v1.BacklogApi#getCurrentPreparedCommitStatus()
+     * @see fr.uem.efluid.rest.v1.BacklogApi#getCurrentPreparedCommitState()
      */
     @Override
-    public PilotedCommitStatus getCurrentPreparedCommitStatus() {
-        return this.pilotableCommitService.getCurrentCommitPreparationStatus();
+    public PreparationState getCurrentPreparedCommitState() {
+        return this.pilotableCommitService.getCurrentCommitPreparationState();
     }
 
     /**

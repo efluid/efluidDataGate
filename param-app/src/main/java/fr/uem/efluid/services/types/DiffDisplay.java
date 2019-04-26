@@ -1,227 +1,220 @@
 package fr.uem.efluid.services.types;
 
+import fr.uem.efluid.model.entities.DictionaryEntry;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import fr.uem.efluid.model.entities.DictionaryEntry;
-
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<DiffDisplay<?>> {
 
-	private UUID dictionaryEntryUuid;
+    private UUID dictionaryEntryUuid;
 
-	private UUID domainUuid;
+    private UUID domainUuid;
 
-	private String domainName;
+    private String domainName;
 
-	private String dictionaryEntryName;
+    private String dictionaryEntryName;
 
-	private String dictionaryEntryDisplayKeyName;
+    private String dictionaryEntryDisplayKeyName;
 
-	private String dictionaryEntryTableName;
+    private String dictionaryEntryTableName;
 
-	private List<T> diff;
+    private List<T> diff;
 
-	private List<DiffRemark<?>> remarks;
+    private List<DiffRemark<?>> remarks;
 
-	/**
-	 * 
-	 */
-	public DiffDisplay() {
-		super();
-	}
+    /**
+     *
+     */
+    public DiffDisplay() {
+        super();
+    }
 
-	/**
-	 * @param dict
-	 */
-	public DiffDisplay(UUID dictionaryEntryUuid) {
-		super();
-		this.dictionaryEntryUuid = dictionaryEntryUuid;
-	}
+    /**
+     * @param dictionaryEntryUuid
+     */
+    public DiffDisplay(UUID dictionaryEntryUuid) {
+        super();
+        this.dictionaryEntryUuid = dictionaryEntryUuid;
+    }
 
-	/**
-	 * @return the diff
-	 */
-	public List<T> getDiff() {
-		return this.diff;
-	}
+    /**
+     * @return the diff
+     */
+    public List<T> getDiff() {
+        return this.diff;
+    }
 
-	/**
-	 * @return real size of diff, when some items are combined
-	 */
-	public long getRealDiffSize() {
-		return this.diff.stream().mapToInt(Rendered::getRealSize).sum();
-	}
+    /**
+     * @return real size of diff, when some items are combined
+     */
+    public long getRealDiffSize() {
+        return this.diff.stream().mapToInt(Rendered::getRealSize).sum();
+    }
 
-	/**
-	 * @param diff
-	 *            the diff to set
-	 */
-	public void setDiff(List<T> diff) {
-		this.diff = diff;
-	}
 
-	/**
-	 * @return the remarks
-	 */
-	public List<DiffRemark<?>> getRemarks() {
-		return this.remarks;
-	}
+    /**
+     * @param diff the diff to set
+     */
+    public void setDiff(List<T> diff) {
+        this.diff = diff;
+    }
 
-	/**
-	 * @param remark
-	 *            the remark to add on managed remarks. Inits the holder list on demand
-	 */
-	public void addRemark(DiffRemark<?> remark) {
-		if (this.remarks == null) {
-			this.remarks = new ArrayList<>();
-		}
-		this.remarks.add(remark);
-	}
+    /**
+     * @return the remarks
+     */
+    public List<DiffRemark<?>> getRemarks() {
+        return this.remarks;
+    }
 
-	/**
-	 * @return the dictionaryEntryTableName
-	 */
-	public String getDictionaryEntryTableName() {
-		return this.dictionaryEntryTableName;
-	}
+    /**
+     * @param remark the remark to add on managed remarks. Inits the holder list on demand
+     */
+    public void addRemark(DiffRemark<?> remark) {
+        if (this.remarks == null) {
+            this.remarks = new ArrayList<>();
+        }
+        this.remarks.add(remark);
+    }
 
-	/**
-	 * @param dictionaryEntryTableName
-	 *            the dictionaryEntryTableName to set
-	 */
-	public void setDictionaryEntryTableName(String dictionaryEntryTableName) {
-		this.dictionaryEntryTableName = dictionaryEntryTableName;
-	}
+    /**
+     * @return the dictionaryEntryTableName
+     */
+    public String getDictionaryEntryTableName() {
+        return this.dictionaryEntryTableName;
+    }
 
-	/**
-	 * @return the dictionaryEntryUuid
-	 */
-	public UUID getDictionaryEntryUuid() {
-		return this.dictionaryEntryUuid;
-	}
+    /**
+     * @param dictionaryEntryTableName the dictionaryEntryTableName to set
+     */
+    public void setDictionaryEntryTableName(String dictionaryEntryTableName) {
+        this.dictionaryEntryTableName = dictionaryEntryTableName;
+    }
 
-	/**
-	 * @param dictionaryEntryUuid
-	 *            the dictionaryEntryUuid to set
-	 */
-	public void setDictionaryEntryUuid(UUID dictionaryEntryUuid) {
-		this.dictionaryEntryUuid = dictionaryEntryUuid;
-	}
+    /**
+     * @return the dictionaryEntryUuid
+     */
+    public UUID getDictionaryEntryUuid() {
+        return this.dictionaryEntryUuid;
+    }
 
-	/**
-	 * @return the domainUuid
-	 */
-	public UUID getDomainUuid() {
-		return this.domainUuid;
-	}
+    /**
+     * @param dictionaryEntryUuid the dictionaryEntryUuid to set
+     */
+    public void setDictionaryEntryUuid(UUID dictionaryEntryUuid) {
+        this.dictionaryEntryUuid = dictionaryEntryUuid;
+    }
 
-	/**
-	 * @param domainUuid
-	 *            the domainUuid to set
-	 */
-	public void setDomainUuid(UUID domainUuid) {
-		this.domainUuid = domainUuid;
-	}
+    /**
+     * @return the domainUuid
+     */
+    public UUID getDomainUuid() {
+        return this.domainUuid;
+    }
 
-	/**
-	 * @return the domainName
-	 */
-	public String getDomainName() {
-		return this.domainName;
-	}
+    /**
+     * @param domainUuid the domainUuid to set
+     */
+    public void setDomainUuid(UUID domainUuid) {
+        this.domainUuid = domainUuid;
+    }
 
-	/**
-	 * @param domainName
-	 *            the domainName to set
-	 */
-	public void setDomainName(String domainName) {
-		this.domainName = domainName;
-	}
+    /**
+     * @return the domainName
+     */
+    public String getDomainName() {
+        return this.domainName;
+    }
 
-	/**
-	 * @return the dictionaryEntryName
-	 */
-	public String getDictionaryEntryName() {
-		return this.dictionaryEntryName;
-	}
+    /**
+     * @param domainName the domainName to set
+     */
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
+    }
 
-	/**
-	 * @param dictionaryEntryName
-	 *            the dictionaryEntryName to set
-	 */
-	public void setDictionaryEntryName(String dictionaryEntryName) {
-		this.dictionaryEntryName = dictionaryEntryName;
-	}
+    /**
+     * @return the dictionaryEntryName
+     */
+    public String getDictionaryEntryName() {
+        return this.dictionaryEntryName;
+    }
 
-	/**
-	 * @return the dictionaryEntryDisplayKeyName
-	 */
-	public String getDictionaryEntryDisplayKeyName() {
-		return this.dictionaryEntryDisplayKeyName;
-	}
+    /**
+     * @param dictionaryEntryName the dictionaryEntryName to set
+     */
+    public void setDictionaryEntryName(String dictionaryEntryName) {
+        this.dictionaryEntryName = dictionaryEntryName;
+    }
 
-	/**
-	 * @param dictionaryEntryDisplayKeyName
-	 *            the dictionaryEntryDisplayKeyName to set
-	 */
-	public void setDictionaryEntryDisplayKeyName(String dictionaryEntryDisplayKeyName) {
-		this.dictionaryEntryDisplayKeyName = dictionaryEntryDisplayKeyName;
-	}
+    /**
+     * @return the dictionaryEntryDisplayKeyName
+     */
+    public String getDictionaryEntryDisplayKeyName() {
+        return this.dictionaryEntryDisplayKeyName;
+    }
 
-	/**
-	 * @return
-	 */
-	public boolean isHasRemarks() {
-		return this.remarks != null && this.remarks.size() > 0;
-	}
+    /**
+     * @param dictionaryEntryDisplayKeyName the dictionaryEntryDisplayKeyName to set
+     */
+    public void setDictionaryEntryDisplayKeyName(String dictionaryEntryDisplayKeyName) {
+        this.dictionaryEntryDisplayKeyName = dictionaryEntryDisplayKeyName;
+    }
 
-	/**
-	 * @return
-	 */
-	public boolean isHasContent() {
-		return this.diff != null && this.diff.size() > 0;
-	}
+    /**
+     * @return
+     */
+    public boolean isHasRemarks() {
+        return this.remarks != null && this.remarks.size() > 0;
+    }
 
-	/**
-	 * Can be partially completed (uuid only) : get other dict entry properties from its
-	 * entity
-	 * 
-	 * @param entity
-	 */
-	public void completeFromEntity(DictionaryEntry entity) {
+    /**
+     * @return
+     */
+    public boolean isHasContent() {
+        return this.diff != null && this.diff.size() > 0;
+    }
 
-		setDictionaryEntryName(entity.getParameterName());
-		setDictionaryEntryDisplayKeyName(entity.keyNames().collect(Collectors.joining("/")));
-		setDictionaryEntryTableName(entity.getTableName());
+    /**
+     * Can be partially completed (uuid only) : get other dict entry properties from its
+     * entity
+     *
+     * @param entity
+     */
+    public void completeFromEntity(DictionaryEntry entity) {
 
-		if (entity.getDomain() != null) {
-			setDomainName(entity.getDomain().getName());
-			setDomainUuid(entity.getDomain().getUuid());
-		}
-	}
+        setDictionaryEntryName(entity.getParameterName());
+        setDictionaryEntryDisplayKeyName(entity.keyNames().collect(Collectors.joining("/")));
+        setDictionaryEntryTableName(entity.getTableName());
 
-	/**
-	 * @param o
-	 * @return
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(DiffDisplay<?> o) {
+        if (entity.getDomain() != null) {
+            setDomainName(entity.getDomain().getName());
+            setDomainUuid(entity.getDomain().getUuid());
+        }
+    }
 
-		int dom = this.getDomainName().compareTo(o.getDomainName());
+    /**
+     * @param o
+     * @return
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(DiffDisplay<?> o) {
 
-		if (dom != 0) {
-			return dom;
-		}
+        int dom = this.getDomainName().compareTo(o.getDomainName());
 
-		return this.getDictionaryEntryName().compareTo(o.getDictionaryEntryName());
-	}
+        if (dom != 0) {
+            return dom;
+        }
+
+        return this.getDictionaryEntryName().compareTo(o.getDictionaryEntryName());
+    }
 
 }

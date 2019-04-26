@@ -20,15 +20,26 @@ public class AsyncProcessView {
 
     private boolean sourceError;
 
+    private int percentDone;
+
     public AsyncProcessView() {
         super();
     }
 
-    public AsyncProcessView(UUID identifier, String description, LocalDateTime createdTime, boolean sourceError) {
+    public AsyncProcessView(UUID identifier, String description, LocalDateTime createdTime, boolean sourceError, int percentDone) {
         this.identifier = identifier;
         this.description = description;
         this.createdTime = createdTime;
         this.sourceError = sourceError;
+        this.percentDone = percentDone;
+    }
+
+    public int getPercentDone() {
+        return percentDone;
+    }
+
+    public void setPercentDone(int percentDone) {
+        this.percentDone = percentDone;
     }
 
     public UUID getIdentifier() {

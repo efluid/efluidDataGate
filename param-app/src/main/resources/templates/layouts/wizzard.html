@@ -31,40 +31,7 @@
     <script type="text/javascript" th:src="@{/webjars/jquery/3.3.1-1/jquery.min.js/}"></script>
     <script type="text/javascript" th:src="@{/webjars/bootstrap/4.0.0-2/js/bootstrap.min.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/popper.js/1.13.0/dist/umd/popper.min.js}"></script>
-    <script>
-    	
-    	// Utils
-    	
-    	String.prototype.endsWith = function(suffix) {
-		    return this.indexOf(suffix, this.length - suffix.length) !== -1;
-		};
-    
-    	const hideDisplays = () => {
-    		$("#successDisplay").hide();
-    		$("#errorDisplay").hide();
-    	};
-    
-    	const showSuccessHtml = (html) => {
-    		$("#successDisplay").html(html).fadeIn();
-    	};
-    	
-    	const showSuccess = (message) => {
-    		$("#successDisplay").text(message).fadeIn();
-    	};
-    	
-    	const showError = (message) => {
-    		 $("#errorDisplay").text(message).fadeIn();
-    	};
-    	
-    	const setInvalid = (inputSelector, message) => {
-    		showError(message);
-    		$(inputSelector).addClass("is-invalid").focusin(function(){
-    			$("#errorDisplay").hide();
-    			$(this).removeClass("is-invalid");
-    		});
-    	};
-    	
-    </script>
+    <script type="text/javascript" th:src="@{/scripts/utils.js}"></script>
     <script layout:fragment="script">
     	// Page script goes here
     </script>

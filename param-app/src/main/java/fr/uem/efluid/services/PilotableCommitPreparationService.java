@@ -57,9 +57,9 @@ public class PilotableCommitPreparationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PilotableCommitPreparationService.class);
 
-    protected static final String ATTACH_EXT = ".att";
+    private static final String ATTACH_EXT = ".att";
 
-    protected static final String ATTACH_FILE_ID = "attachment";
+    private static final String ATTACH_FILE_ID = "attachment";
 
     @Value("${param-efluid.display.diff-page-size}")
     private int diffDisplayPageSize;
@@ -280,7 +280,7 @@ public class PilotableCommitPreparationService {
         LOGGER.info("Request for a new merge commit preparation from an import - start a new one");
 
         // For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
-        PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
+        PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED, 7);
         preparation.setProjectUuid(projectUuid);
 
         // Init domain data
@@ -464,7 +464,7 @@ public class PilotableCommitPreparationService {
             boolean result = ((PilotedCommitPreparation<MergePreparedDiff>) current)
                     .isAnyDiffValidate(MergePreparedDiff::isDiffNeedAction);
 
-            LOGGER.debug("Checking if current merge commit needs action. Found {}", Boolean.valueOf(result));
+            LOGGER.debug("Checking if current merge commit needs action. Found {}", result);
 
             return result;
         }
@@ -480,10 +480,12 @@ public class PilotableCommitPreparationService {
      *
      * @return
      */
-    public PilotedCommitStatus getCurrentCommitPreparationStatus() {
+    public PreparationState getCurrentCommitPreparationState() {
 
         PilotedCommitPreparation<?> preparation = getCurrentCommitPreparation();
-        return preparation != null ? preparation.getStatus() : PilotedCommitStatus.NOT_LAUNCHED;
+        return preparation != null
+                ? new PreparationState(preparation.getStatus(), preparation.getPercentDone())
+                : new PreparationState(PilotedCommitStatus.NOT_LAUNCHED, 0);
     }
 
     /**
@@ -493,18 +495,22 @@ public class PilotableCommitPreparationService {
      *
      * @return
      */
-    public PilotedCommitStatus getAllCommitPreparationStatus() {
+    public PreparationState getAllCommitPreparationStates() {
 
         // None => Not launched
         if (this.currents.size() == 0) {
-            return PilotedCommitStatus.NOT_LAUNCHED;
+            return new PreparationState(PilotedCommitStatus.NOT_LAUNCHED, 0);
         }
 
         // Completion needs all completed
-        return this.currents.values().stream().allMatch(p -> p.getStatus() == PilotedCommitStatus.COMMIT_CAN_PREPARE)
+        return new PreparationState(this.currents.values().stream().allMatch(p -> p.getStatus() == PilotedCommitStatus.COMMIT_CAN_PREPARE)
                 ? PilotedCommitStatus.COMMIT_CAN_PREPARE
-                : PilotedCommitStatus.DIFF_RUNNING;
+                : PilotedCommitStatus.DIFF_RUNNING,
+                this.currents.values().stream()
+                        .mapToInt(PilotedCommitPreparation::getPercentDone).sum() / this.currents.size()
+        );
     }
+
 
     /**
      * @param encodedLobHash
@@ -556,7 +562,7 @@ public class PilotableCommitPreparationService {
      * To complete (validated) preparation : closes and drops it, then makes service ready
      * for a new one
      */
-    public void completeCommitPreparation() {
+    private void completeCommitPreparation() {
 
         UUID projectUuid = getActiveProjectUuid();
 
@@ -613,8 +619,8 @@ public class PilotableCommitPreparationService {
                     // Use basic global iterate on both current and changed, for content
                     for (int j = 0; j < endContent; j++) {
 
-                        DiffDisplay<? extends PreparedIndexEntry> currentDiff = (DiffDisplay<? extends PreparedIndexEntry>) preparedDomain.getPreparedContent().get(j);
-                        DiffDisplay<? extends PreparedIndexEntry> changedDiff = changedDomain.getPreparedContent().get(j);
+                        var currentDiff = preparedDomain.getPreparedContent().get(j);
+                        var changedDiff = changedDomain.getPreparedContent().get(j);
 
                         if (changedDiff != null && changedDiff.getDiff() != null) {
 
@@ -667,7 +673,7 @@ public class PilotableCommitPreparationService {
     public void finalizeWizzardCommitPreparation(String comment) {
 
         // Shared process on all preparations
-        this.currents.values().stream().forEach(current -> {
+        this.currents.values().forEach(current -> {
 
             // If not done yet, init for comment apply
             if (current.getCommitData() == null) {
@@ -700,7 +706,7 @@ public class PilotableCommitPreparationService {
     public WizzardCommitPreparationResult saveWizzardCommitPreparations() {
 
         WizzardCommitPreparationResult result = WizzardCommitPreparationResult.fromPreparations(this.currents.values().stream()
-                .map(current -> {
+                .peek(current -> {
 
                     LOGGER.info("Starting saving for preparation in wizzard {}", current.getIdentifier());
 
@@ -721,7 +727,6 @@ public class PilotableCommitPreparationService {
 
                     LOGGER.info("Saving completed for commit preparation. New commit is {}", commitUUID);
 
-                    return current;
                 })
                 .collect(Collectors.toList()));
 
@@ -829,7 +834,7 @@ public class PilotableCommitPreparationService {
     private PilotedCommitPreparation<LocalPreparedDiff> startLocalPreparation(UUID projectUuid) {
 
         // For CommitState LOCAL => Use PreparedIndexEntry
-        PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
+        PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL, 5);
         preparation.setProjectUuid(projectUuid);
 
         // Init domain data
@@ -943,13 +948,13 @@ public class PilotableCommitPreparationService {
 
                 // Process details
                 List<Callable<MergePreparedDiff>> callables = preparation.streamDiffDisplay()
-                        .filter(d -> d != null)
+                        .filter(Objects::nonNull)
                         .map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p, preparation))
                         .collect(Collectors.toList());
                 preparation.setProcessStarted(callables.size());
                 preparation.setProcessRemaining(new AtomicInteger(callables.size()));
 
-                LOGGER.info("Diff MERGE process starting with {} diff to run", Integer.valueOf(callables.size()));
+                LOGGER.info("Diff MERGE process starting with {} diff to run", callables.size());
 
                 // Run all callables in parallel exec
                 List<MergePreparedDiff> fullDiff = this.async.processSteps(callables, preparation);
@@ -1027,11 +1032,10 @@ public class PilotableCommitPreparationService {
             tableDiff.completeFromEntity(dict);
 
             // Search diff content
-            this.diffService.completeCurrentContentDiff(tableDiff, dict, current.getDiffLobs(), new Project(current.getProjectUuid()));
+            this.diffService.completeCurrentContentDiff(tableDiff, dict, current.getDiffLobs(), new Project(current.getProjectUuid()), current);
 
             int rem = current.getProcessRemaining().decrementAndGet();
-            LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", Integer.valueOf(rem),
-                    Integer.valueOf(current.getProcessStarted()));
+            LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", rem, current.getProcessStarted());
 
             return tableDiff;
         };
@@ -1048,7 +1052,7 @@ public class PilotableCommitPreparationService {
      * @param correspondingDiff
      * @return
      */
-    private final Callable<MergePreparedDiff> callMergeDiff(
+    private Callable<MergePreparedDiff> callMergeDiff(
             DictionaryEntry dict,
             long lastLocalCommitTimestamp,
             MergePreparedDiff correspondingDiff,
@@ -1063,11 +1067,10 @@ public class PilotableCommitPreparationService {
 
             // Then run one merge action for dictionaryEntry
             this.diffService.completeMergeIndexDiff(correspondingDiff, dict, current.getDiffLobs(), lastLocalCommitTimestamp,
-                    correspondingDiff.getDiff(), new Project(current.getProjectUuid()));
+                    correspondingDiff.getDiff(), new Project(current.getProjectUuid()), current);
 
             int rem = current.getProcessRemaining().decrementAndGet();
-            LOGGER.info("Completed 1 merge Diff. Remaining : {} / {}", Integer.valueOf(rem),
-                    Integer.valueOf(current.getProcessStarted()));
+            LOGGER.info("Completed 1 merge Diff. Remaining : {} / {}", rem, current.getProcessStarted());
 
             // For chained process
             return correspondingDiff;

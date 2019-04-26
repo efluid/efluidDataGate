@@ -62,7 +62,7 @@ public class DictionaryController extends CommonController {
 
 		model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
 		model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
-		model.addAttribute("checkVersion", Boolean.valueOf(this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion()));
+		model.addAttribute("checkVersion", this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion());
 
 		return "pages/versions";
 	}
@@ -127,7 +127,7 @@ public class DictionaryController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param name
+	 * @param uuid
 	 * @return
 	 */
 	@RequestMapping("/dictionary/edit/{uuid}")
@@ -165,7 +165,7 @@ public class DictionaryController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param name
+	 * @param editData
 	 * @return
 	 */
 	@RequestMapping(path = "/dictionary/save", method = POST)
@@ -293,7 +293,7 @@ public class DictionaryController extends CommonController {
 	/**
 	 * Rest Method for AJAX push
 	 * 
-	 * @param name
+	 * @param uuid
 	 * @return
 	 */
 	@RequestMapping(value = "/domains/remove/{uuid}", method = POST)
@@ -305,7 +305,7 @@ public class DictionaryController extends CommonController {
 	/**
 	 * Rest Method for AJAX push
 	 * 
-	 * @param name
+	 * @param uuid
 	 * @return
 	 */
 	@RequestMapping(value = "/dictionary/remove/{uuid}", method = POST)

@@ -1,38 +1,37 @@
 package fr.uem.efluid.web;
 
+import fr.uem.efluid.services.ProjectManagementService;
+import fr.uem.efluid.services.types.ProjectData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 
-import fr.uem.efluid.services.ProjectManagementService;
-import fr.uem.efluid.services.types.ProjectData;
-
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 public abstract class CommonController {
 
-	static final String PROJECT_ATTR = "project";
-	
-	protected static final String REDIRECT_SELECT = "redirect:/ui/projects/select";
-	
-	@Autowired
-	protected ProjectManagementService projectManagementService;
+    static final String PROJECT_ATTR = "project";
 
-	/**
-	 * @param model
-	 * @return
-	 */
-	protected boolean controlSelectedProject(Model model) {
+    static final String REDIRECT_SELECT = "redirect:/ui/projects/select";
 
-		ProjectData current = this.projectManagementService.getCurrentSelectedProject();
+    @Autowired
+    protected ProjectManagementService projectManagementService;
 
-		if (current != null) {
-			model.addAttribute(PROJECT_ATTR, current);
-			return true;
-		}
+    /**
+     * @param model
+     * @return
+     */
+    boolean controlSelectedProject(Model model) {
 
-		return false;
-	}
+        ProjectData current = this.projectManagementService.getCurrentSelectedProject();
+
+        if (current != null) {
+            model.addAttribute(PROJECT_ATTR, current);
+            return true;
+        }
+
+        return false;
+    }
 }

@@ -47,7 +47,7 @@ public class ApplicationApiController implements ApplicationApi {
     @Override
     public List<AsyncProcessView> getCurrentProcesses() {
         return this.applicationDetailsService.getActiveAsyncProcess().stream()
-                .map(p -> new AsyncProcessView(p.getIdentifier(), p.getDescription(), p.getCreatedTime(), p.hasSourceFailure()))
+                .map(p -> new AsyncProcessView(p.getIdentifier(), p.getDescription(), p.getCreatedTime(), p.hasSourceFailure(), p.getPercentDone()))
                 .collect(Collectors.toList());
     }
 

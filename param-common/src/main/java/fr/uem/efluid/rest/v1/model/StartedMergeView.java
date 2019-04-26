@@ -1,6 +1,6 @@
 package fr.uem.efluid.rest.v1.model;
 
-import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.PreparationState;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public class StartedMergeView {
 
     private final long packageCount;
 
-    private final PilotedCommitStatus status;
+    private final PreparationState state;
 
     private final int attachementCount;
 
@@ -21,11 +21,13 @@ public class StartedMergeView {
 
     /**
      * @param packageCount
-     * @param status
+     * @param state
+     * @param attachementCount
+     * @param attachements
      */
-    public StartedMergeView(long packageCount, PilotedCommitStatus status, int attachementCount, List<AttachementView> attachements) {
+    public StartedMergeView(long packageCount, PreparationState state, int attachementCount, List<AttachementView> attachements) {
         this.packageCount = packageCount;
-        this.status = status;
+        this.state = state;
         this.attachementCount = attachementCount;
         this.attachements = attachements;
     }
@@ -40,8 +42,8 @@ public class StartedMergeView {
     /**
      * @return
      */
-    public PilotedCommitStatus getStatus() {
-        return this.status;
+    public PreparationState getState() {
+        return this.state;
     }
 
     /**

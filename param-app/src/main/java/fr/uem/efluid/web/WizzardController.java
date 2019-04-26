@@ -2,6 +2,7 @@ package fr.uem.efluid.web;
 
 import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.PreparationState;
 import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -174,8 +175,8 @@ public class WizzardController {
      */
     @RequestMapping(path = {"/3/progress"}, method = GET)
     @ResponseBody
-    public PilotedCommitStatus preparationGetStatus() {
-        return this.pilotableCommitService.getAllCommitPreparationStatus();
+    public PreparationState preparationGetState() {
+        return this.pilotableCommitService.getAllCommitPreparationStates();
     }
 
     /**

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html layout:decorate="~{layouts/pages.html}">
 <head>
-    <link rel="stylesheet" href="/css/spinning.css" media="screen"/>
 </head>
 <body>
     <span layout:fragment="content">
@@ -15,40 +14,18 @@
 				dont <span th:text="${result.counts['commits-all'].added}">10</span> seront appliqués dans la base de données de paramètrage. 
 			</span>
 			Le traitement d'analyse des différences entre la base de données gérée et l'index obtenu suite à l'import peut prendre un certain 
-			temps. Il n'est pas possible d'arrêter un traitement en cours.
-			<div id="floatingCirclesG">
-				<div class="f_circleG" id="frotateG_01"></div>
-				<div class="f_circleG" id="frotateG_02"></div>
-				<div class="f_circleG" id="frotateG_03"></div>
-				<div class="f_circleG" id="frotateG_04"></div>
-				<div class="f_circleG" id="frotateG_05"></div>
-				<div class="f_circleG" id="frotateG_06"></div>
-				<div class="f_circleG" id="frotateG_07"></div>
-				<div class="f_circleG" id="frotateG_08"></div>
+			temps. Il n'est pas possible d'arrêter un traitement en cours.<br/><br/>
+			<div class="progress">
+				<div id="progressBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width:00%">00%</div>
 			</div>
 		</div>
 		<p>&nbsp;<br/><br/><br/><br/></p>
 	</span>
     <script layout:fragment="script" th:inline="javascript">
-    
-    	// Repeated check on status using basic rest service
-		const checkProgress = () => {
-			console.info("start a new check");
-			$.get("/ui/merge/progress", (data, status) => {
-				console.info("Check with data" + data);
-				if(data === 'DIFF_RUNNING'){
-					// Add new timeout 
-					setTimeout(checkProgress, 1000);
-				} else {
-					// Reload page for valid data
-					window.location.replace("/ui/merge");
-				}
-			});
-		};
-		
+
     	// Start loading
     	$(document).ready(() => {
-			checkProgress();
+    		checkProgress('/ui/merge/progress', '/ui/merge');
 		}); 
 		
     </script>

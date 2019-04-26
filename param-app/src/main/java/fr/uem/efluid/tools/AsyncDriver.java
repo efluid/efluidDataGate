@@ -83,7 +83,7 @@ public interface AsyncDriver {
      * </p>
      *
      * @author elecomte
-     * @version 1
+     * @version 2
      * @since v0.0.8
      */
     interface AsyncSourceProcess {
@@ -115,6 +115,13 @@ public interface AsyncDriver {
          * @return
          */
         boolean hasSourceFailure();
+
+        /**
+         * Defails on processed content
+         *
+         * @return
+         */
+        int getPercentDone();
 
         /**
          * <p>
