@@ -24,7 +24,7 @@
 			</thead>
 			<tbody>
 				<tr th:each="commit, cstat : ${commits}" th:id="${commit.uuid}">
-					<td th:text="${commit.comment}">Préchargement configuration</td>
+					<td th:utext="${custom.processGitmoji(commit.comment)}">Préchargement configuration</td>
 		            <td th:text="${commit.domainNames}">Fonct domains</td>
 		            <td th:text="${commit.originalUserEmail}">System</td>
 		            <td th:text="${custom.format(commit.createdTime)}">01/11/2017</td>
@@ -79,6 +79,9 @@
         // Init actions
     	$(document).ready(() => {
 			$("div.selecter").click((e) => selectAction(e.target.parentElement.parentElement.parentElement.id));
+
+			// This page support gitmojis
+			supportGitmojis();
 		}); 
         
         /*]]>*/

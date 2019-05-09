@@ -16,13 +16,13 @@
 			<!-- Commit summary -->
 			<p>
 				<ul>
-					<li><b>Détails</b> : <span th:text="${details.comment}">mon lot</span></li>
+					<li><b>Détails</b> : <span th:utext="${custom.processGitmoji(commit.comment)}">mon lot</span></li>
 					<li><b>Créé par</b> : <span th:text="${details.originalUserEmail}">perso@email.com</span></li>
-					<li><b>Créé le</b> : <span th:text="${details.createdTime}">jeudi</span></li>
+					<li><b>Créé le</b> : <span th:text="${custom.format(details.createdTime)}">jeudi</span></li>
 					<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>
 					<li><b>Version du dictionnaire</b> : <span class="version-name" th:text="${details.versionName}">0.1.2</span></li>
 					<li><b>Version du modèle associé</b> : <span th:text="${details.versionModelId}">0.1.2</span></li>
-					<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${details.importedTime}">vendredi</span></li>
+					<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${custom.format(details.importedTime)}">vendredi</span></li>
 				</ul>
 			</p>
 		</div>
@@ -169,7 +169,10 @@
 			$("span.reducer").click((e) => hideAndShowTableAction(e.target.parentElement.parentElement.parentElement.id));
 			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
 			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
-			$('#contentModal').on('show.bs.modal', readAttach); 
+			$('#contentModal').on('show.bs.modal', readAttach);
+
+			// This page support gitmojis
+			supportGitmojis();
 		}); 
 		
     </script>

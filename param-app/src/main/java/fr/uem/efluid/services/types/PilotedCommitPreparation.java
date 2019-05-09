@@ -61,6 +61,9 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
 
     private int processStarted;
 
+    // For percentDone step counts
+    private AtomicInteger totalStepCount = new AtomicInteger(0);
+
     private Map<String, byte[]> diffLobs;
 
     private UUID projectUuid;
@@ -71,22 +74,18 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     private boolean attachmentDisplaySupport;
     private boolean attachmentExecuteSupport;
 
-    // For percentDone step counts
-    private AtomicInteger totalStepCount = new AtomicInteger(0);
-    private final int stepByProcess;
 
     /**
      *
      */
-    public PilotedCommitPreparation(CommitState preparingState, int stepByProcess) {
+    public PilotedCommitPreparation(CommitState preparingState) {
         this.identifier = UUID.randomUUID();
         this.status = PilotedCommitStatus.DIFF_RUNNING;
         this.start = LocalDateTime.now();
         this.preparingState = preparingState;
-        this.stepByProcess = stepByProcess;
     }
 
-    public void incrementProcessStep(){
+    public void incrementProcessStep() {
         this.totalStepCount.incrementAndGet();
     }
 
@@ -470,13 +469,11 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     @Override
     public int getPercentDone() {
 
-        if(getProcessStarted() == 0 ){
+        if (getProcessStarted() == 0) {
             return 0;
         }
 
-        return (this.totalStepCount.get() * 100) / (this.stepByProcess * getProcessStarted());
-
-         //return ((getProcessStarted() - getProcessRemaining().get()) * 100 / getProcessStarted());
+        return (this.totalStepCount.get() * 100) / (getPreparingState().getProcessingSteps() * getProcessStarted());
     }
 
     /**
@@ -487,5 +484,4 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     public String toString() {
         return "Preparation[" + this.identifier + "|" + this.status + "]";
     }
-
 }

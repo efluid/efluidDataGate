@@ -280,7 +280,7 @@ public class PilotableCommitPreparationService {
         LOGGER.info("Request for a new merge commit preparation from an import - start a new one");
 
         // For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
-        PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED, 7);
+        PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
         preparation.setProjectUuid(projectUuid);
 
         // Init domain data
@@ -834,7 +834,7 @@ public class PilotableCommitPreparationService {
     private PilotedCommitPreparation<LocalPreparedDiff> startLocalPreparation(UUID projectUuid) {
 
         // For CommitState LOCAL => Use PreparedIndexEntry
-        PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL, 5);
+        PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
         preparation.setProjectUuid(projectUuid);
 
         // Init domain data

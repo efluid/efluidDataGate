@@ -52,3 +52,19 @@ const checkProgress = (service, redirectPath) => {
 		}
 	});
 };
+
+// Update one gitmoji
+const updateGitmoji = (e, gitmojis) => {
+	var code = $(e).attr("code");
+	var gitmoji = gitmojis.find(g => g.code === code);
+	if(gitmoji){
+		$(e).html(gitmoji.entity);
+	}
+};
+
+// Common support for gitmojis in a page
+const supportGitmojis = () => {
+    $.getJSON("/gitmoji/gitmojis.json", function(json) {
+        $(".gitmoji").each((index, e) => updateGitmoji(e, json.gitmojis));
+    });
+}

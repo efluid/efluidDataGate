@@ -65,7 +65,7 @@ public class PrepareDiffServiceIntegrationTest {
 				diffToComplete,
 				this.dictionary.getOne(this.dictionaryEntryUuid),
 				new HashMap<>(),
-				new Project(this.projectUuid), new PilotedCommitPreparation<>(CommitState.LOCAL,5));
+				new Project(this.projectUuid), new PilotedCommitPreparation<>(CommitState.LOCAL));
 		Assert.assertEquals(0, diffToComplete.getDiff().size());
 	}
 
@@ -78,7 +78,7 @@ public class PrepareDiffServiceIntegrationTest {
 				diffToComplete,
 				this.dictionary.getOne(this.dictionaryEntryUuid),
 				new HashMap<>(),
-				new Project(this.projectUuid), new PilotedCommitPreparation<>(CommitState.LOCAL,5));
+				new Project(this.projectUuid), new PilotedCommitPreparation<>(CommitState.LOCAL));
 		Assert.assertEquals(80 + 100 + 85, diffToComplete.getDiff().size());
 		List<PreparedIndexEntry> adds = diffToComplete.getDiff().stream()
 				.filter(i -> i.getAction() == IndexAction.ADD)
