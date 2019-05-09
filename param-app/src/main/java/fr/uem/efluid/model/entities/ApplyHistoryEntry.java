@@ -2,11 +2,7 @@ package fr.uem.efluid.model.entities;
 
 import java.util.UUID;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 
 /**
@@ -28,7 +24,7 @@ public class ApplyHistoryEntry {
 
 	private boolean rollback;
 
-	@Size(max = 4096)
+	@Lob
 	private String query;
 
 	@ManyToOne(optional = false)
