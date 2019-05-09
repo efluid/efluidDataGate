@@ -567,6 +567,16 @@ public class DictionaryManagementService extends AbstractApplicationService {
     }
 
     /**
+     *
+     */
+    public void refreshCachedMetadataForOneTable(String tableName) {
+
+        LOGGER.debug("Forced refresh on cache for metadata on table {}", tableName);
+
+        this.metadatas.refreshTable(tableName.toUpperCase());
+    }
+
+    /**
      * @return
      */
     public ExportImportResult<ExportFile> exportFonctionalDomains(UUID domainUUID) {

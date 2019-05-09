@@ -16,7 +16,7 @@
 			<!-- Commit summary -->
 			<p>
 				<ul>
-					<li><b>Détails</b> : <span th:utext="${custom.processGitmoji(commit.comment)}">mon lot</span></li>
+					<li><b>Détails</b> : <span th:utext="${custom.processGitmoji(details.comment)}">mon lot</span></li>
 					<li><b>Créé par</b> : <span th:text="${details.originalUserEmail}">perso@email.com</span></li>
 					<li><b>Créé le</b> : <span th:text="${custom.format(details.createdTime)}">jeudi</span></li>
 					<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>

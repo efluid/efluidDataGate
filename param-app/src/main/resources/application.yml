@@ -15,7 +15,6 @@ param-efluid:
             filter-schema: CHANGE_ME
             search-fk-type: oracle-by-name
             preload: false
-            fixed-cached: true
         query: 
             table-names-protected: true
             column-names-protected: true

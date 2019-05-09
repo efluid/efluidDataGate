@@ -45,4 +45,10 @@ public interface DatabaseDescriptionRepository {
      * Force refresh on cached data if any
      */
     void refreshAll();
+
+    /**
+     * Force refresh on one specified table only
+     * @param tablename
+     */
+    void refreshTable(String tablename);
 }

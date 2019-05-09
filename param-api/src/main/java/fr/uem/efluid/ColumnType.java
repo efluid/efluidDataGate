@@ -52,8 +52,8 @@ public enum ColumnType {
     BOOLEAN('1', "Booleen", false),
     TEMPORAL('T', "Temporal", false),
     UNKNOWN('U', "Unknown", false),
-    PK_ATOMIC('!', "Identifiant", true),
-    PK_STRING('§', "Identifiant", true);
+    PK_ATOMIC('!', "Identifiant Num", true),
+    PK_STRING('§', "Identifiant Char", true);
 
     private final char represent;
     private final String displayName;

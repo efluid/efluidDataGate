@@ -1,8 +1,19 @@
 package fr.uem.efluid.model.repositories.impls;
 
-import static fr.uem.efluid.utils.ErrorType.METADATA_FAILED;
-import static fr.uem.efluid.utils.ErrorType.METADATA_WRONG_SCHEMA;
-import static fr.uem.efluid.utils.ErrorType.VALUE_CHECK_FAILED;
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.metas.ColumnDescription;
+import fr.uem.efluid.model.metas.TableDescription;
+import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.utils.ApplicationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.jdbc.InvalidResultSetAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.lang.Nullable;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -11,21 +22,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.jdbc.InvalidResultSetAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.model.metas.ColumnDescription;
-import fr.uem.efluid.model.metas.TableDescription;
-import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
-import fr.uem.efluid.tools.ManagedQueriesGenerator;
-import fr.uem.efluid.utils.ApplicationException;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * <p>
@@ -65,9 +62,6 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
     @Value("${param-efluid.managed-datasource.meta.filter-schema}")
     protected String filterSchema;
 
-    @Value("${param-efluid.managed-datasource.meta.fixed-cached}")
-    private boolean fixedCached;
-
     @Autowired
     protected JdbcTemplate managedSource;
 
@@ -80,24 +74,34 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
     @Cacheable("metadatas")
     public Collection<TableDescription> getTables() throws ApplicationException {
 
-        // Disable totaly cache refresh : preloaded is immutable
-        if (this.fixedCached) {
-
-            if (this.localCache != null) {
-                LOGGER.info("Use fixed preloaded value. Even a cache refresh will keep metadata details : "
-                        + "need to restart for preload update");
-                return this.localCache.values();
-            }
+        // Already loaded
+        if (this.localCache != null) {
+            LOGGER.info("Use fixed preloaded metadata values from local cache.");
+            return this.localCache.values();
         }
 
-        try {
-            LOGGER.info("Begin metadata extraction from managed database on schema \"{}\". Fixed cache is {}.", this.filterSchema,
-                    this.fixedCached ? "enabled" : "disabled");
+        LOGGER.info("Begin metadata extraction from managed database on schema \"{}\".", this.filterSchema);
 
+        // Keep it cached
+        Map<String, TableDescription> tables = loadTableMetadata(null);
+        this.localCache = tables;
+
+        return tables.values();
+    }
+
+    /**
+     * Load the metadata for current source database. Read metadata and use only METADATA level inspection to identify the required table values
+     *
+     * @param filterTable optional (nullable) table name : will process only the specified table if set, else will load all
+     * @return loaded table metadatas, mapped to their table names
+     */
+    private Map<String, TableDescription> loadTableMetadata(@Nullable String filterTable) {
+
+        try {
             long start = System.currentTimeMillis();
             long firstStart = start;
             DatabaseMetaData md = this.managedSource.getDataSource().getConnection().getMetaData();
-            LOGGER.debug("Metadata access duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
+            LOGGER.debug("Metadata access duration : {} ms", System.currentTimeMillis() - start);
 
             // Check and signal if database vendor is supported by extractor
             assertVendorSupport(md);
@@ -107,32 +111,34 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
 
             // 4 metadata queries for completed values
             start = System.currentTimeMillis();
-            Map<String, TableDescription> tables = loadCompliantTables(md);
-            LOGGER.debug("Metadata loadCompliantTables duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
+            Map<String, TableDescription> tables = loadCompliantTables(md, filterTable);
+
+            // If filtered, must have found requested table
+            if (filterTable != null && tables.size() != 1) {
+                throw new ApplicationException(METADATA_WRONG_TABLE, "Table " + filterTable
+                        + " not found in metadata process. Wrong ref call", filterTable);
+            }
+
+            LOGGER.debug("Metadata loadCompliantTables duration : {} ms", System.currentTimeMillis() - start);
 
             start = System.currentTimeMillis();
             initTablesColumns(md, tables);
-            LOGGER.debug("Metadata initTablesColumns duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
+            LOGGER.debug("Metadata initTablesColumns duration : {} ms", System.currentTimeMillis() - start);
 
             start = System.currentTimeMillis();
             completeTablesPrimaryKeys(md, tables);
-            LOGGER.debug("Metadata completeTablesPrimaryKeys duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
+            LOGGER.debug("Metadata completeTablesPrimaryKeys duration : {} ms", System.currentTimeMillis() - start);
 
             start = System.currentTimeMillis();
             completeTablesForeignKeys(md, tables);
-            LOGGER.debug("Metadata completeTablesForeignKeys duration : {} ms", Long.valueOf(System.currentTimeMillis() - start));
+            LOGGER.debug("Metadata completeTablesForeignKeys duration : {} ms", System.currentTimeMillis() - start);
 
-            LOGGER.info("Metadata extracted in {}ms from managed database on schema \"{}\". Found {} tables",
-                    Long.valueOf(System.currentTimeMillis() - firstStart), this.filterSchema, Integer.valueOf(tables.size()));
+            LOGGER.info("Metadata extracted in {}ms from managed database on schema \"{}\", filtering on {}. Found {} tables",
+                    System.currentTimeMillis() - firstStart, this.filterSchema,
+                    filterTable != null ? filterTable : "no table", tables.size());
 
-            // Fixed only if asked
-            if (this.fixedCached) {
-                LOGGER.info("Use fixed precaching. A live refresh of metadata will not do anything : "
-                        + "you need to restart app to update cached data");
-                this.localCache = tables;
-            }
+            return tables;
 
-            return tables.values();
         } catch (SQLException e) {
             throw new ApplicationException(METADATA_FAILED, "Cannot extract metadata", e);
         }
@@ -143,15 +149,11 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
      * @return
      */
     @Override
-    @Cacheable("existingTables")
     public boolean isTableExists(String tableName) {
 
-        // Disable totaly cache refresh : preloaded is immutable
-        if (this.fixedCached) {
-
-            if (this.localCache != null) {
-                return this.localCache.containsKey(tableName);
-            }
+        // Check in cache if available
+        if (this.localCache != null) {
+            return this.localCache.containsKey(tableName);
         }
 
         try {
@@ -186,9 +188,28 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
      * @see fr.uem.efluid.model.repositories.DatabaseDescriptionRepository#refreshAll()
      */
     @Override
-    @CacheEvict(cacheNames = {"metadatas", "existingTables"}, allEntries = true)
     public void refreshAll() {
         LOGGER.info("Metadata cache droped. Will extract fresh data on next call");
+        this.localCache = null;
+    }
+
+    @Override
+    public void refreshTable(String tablename) {
+
+        // Already loaded, force update specified table
+        if (this.localCache != null) {
+            LOGGER.warn("Update metadata for table {}", tablename);
+            this.localCache.remove(tablename);
+            this.localCache.put(tablename, loadTableMetadata(tablename).get(tablename));
+
+        }
+
+        // Not initialized yet, force full load
+        else {
+            LOGGER.warn("No full cache update done yet - force it");
+            this.localCache = loadTableMetadata(null);
+
+        }
     }
 
     /**
@@ -210,22 +231,26 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
      * </pre>
      * </p>
      *
-     * @param md JDBC metadata holder, as a <tt>DatabaseMetaData</tt>
+     * @param md          JDBC metadata holder, as a <tt>DatabaseMetaData</tt>
+     * @param filterTable optional (nullable) filter on table name. Will process only the specified table
      * @return map of initialized table identifications as <tt>TableDescription</tt>,
      * mapped to their table name
      * @throws SQLException
      */
-    protected Map<String, TableDescription> loadCompliantTables(DatabaseMetaData md) throws SQLException {
+    protected Map<String, TableDescription> loadCompliantTables(DatabaseMetaData md, @Nullable String filterTable) throws SQLException {
 
         Map<String, TableDescription> tables = new HashMap<>();
 
         try (ResultSet rs = md.getTables(null, this.filterSchema, "%", TABLES_TYPES)) {
             while (rs.next()) {
-                TableDescription desc = new TableDescription();
                 String tblName = rs.getString(3);
-                desc.setName(tblName);
-                desc.setView(false);
-                tables.put(tblName, desc);
+
+                if (filterTable == null || tblName.equalsIgnoreCase(filterTable)) {
+                    TableDescription desc = new TableDescription();
+                    desc.setName(tblName);
+                    desc.setView(false);
+                    tables.put(tblName, desc);
+                }
             }
         }
         return tables;
@@ -273,7 +298,7 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
      * </p>
      *
      * @param md
-     * @param validTables
+     * @param descs
      * @return
      * @throws SQLException
      */
@@ -319,7 +344,7 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
      * </p>
      *
      * @param md
-     * @param table
+     * @param descs
      */
     protected abstract void completeTablesPrimaryKeys(DatabaseMetaData md, Map<String, TableDescription> descs);
 
@@ -331,7 +356,7 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
      * </p>
      *
      * @param md
-     * @param table
+     * @param descs
      */
     protected abstract void completeTablesForeignKeys(DatabaseMetaData md, Map<String, TableDescription> descs);
 
@@ -346,11 +371,15 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
      */
     protected static void setColumnAsPk(ColumnDescription desc) {
 
-        // Distinct PK type for clean query building
-        if (desc.getType() == ColumnType.STRING) {
-            desc.setType(ColumnType.PK_STRING);
-        } else {
-            desc.setType(ColumnType.PK_ATOMIC);
+        // If already set, do not update type
+        if (!desc.getType().isPk()) {
+
+            // Distinct PK type for clean query building
+            if (desc.getType() == ColumnType.STRING) {
+                desc.setType(ColumnType.PK_STRING);
+            } else {
+                desc.setType(ColumnType.PK_ATOMIC);
+            }
         }
     }
 
