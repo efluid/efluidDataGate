@@ -10,6 +10,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
   * Docker
   * Base de données
   * Autre
+  * [Mise à jour](updates.md)
 * Fonctionnalités
   * Wizzard
   * Projets

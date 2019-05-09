@@ -138,7 +138,7 @@
 			<artifactId>pac4j-jwt</artifactId>
 		</dependency>
 
-		<!-- JDBC drivers -->
+		<!-- JDBC drivers and database support -->
 
 		<dependency>
 			<groupId>com.h2database</groupId>
@@ -154,6 +154,12 @@
 		<dependency>
 			<groupId>com.oracle</groupId>
 			<artifactId>ojdbc8</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 
 		<!-- For formated MD files -->

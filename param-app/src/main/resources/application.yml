@@ -15,19 +15,19 @@ param-efluid:
             filter-schema: CHANGE_ME
             search-fk-type: oracle-by-name
             preload: false
-        query: 
+        query:
             table-names-protected: true
             column-names-protected: true
             database-date-format: dd-MM-yyyy HH:mm:ss
         value:
             keep-empty: false
-    
+
     managed-updates:
         check-update-missing-ids: true
         check-delete-missing-ids: true
         output-failed-query-set: true
         output-failed-query-set-file: update-errors.out
-    
+
     display:
         details-index-max: 10000
         combine-similar-diff-after: 10
@@ -43,17 +43,17 @@ param-efluid:
 
     security:
         salt: 12345678901234567890123456789012
-                   
+
     details:
         version: @project.version@
-    
+
     extractor:
         show-sql: true
-        
+
     attachments:
         enable-sql-execute: true
         enable-display: true
-    
+
     imports:
         check-model-version: true
 
@@ -65,12 +65,12 @@ param-efluid:
         enabled: true
         class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
         show-sql: true
-        
+
 ## TECH FEATURES CUSTOM
 spring:
     profiles:
         active: prod
-    
+
     thymeleaf:
         cache: false
         check-template: true
@@ -79,24 +79,30 @@ spring:
         encoding: UTF-8
         mode: HTML
         enabled: true
-    
+
     datasource:
         url: jdbc:postgresql://CHANGE_ME/MANAGED
         driver-class-name: org.postgresql.Driver
         username: CHANGE_ME
         password: CHANGE_ME
-    
+
     servlet:
         multipart:
             max-request-size: 51MB
             max-file-size: 50MB
-    
+
     jpa:
         open-in-view: false
         show-sql: true
         hibernate:
-            ddl-auto: none
-    
+            ddl-auto: validate
+
+    flyway:
+        enabled: false
+        url: ${spring.datasource.url}
+        user: ${spring.datasource.username}
+        password: ${spring.datasource.password}
+
 ## WEB SERVER CONFIG
 server:
     contextPath:
