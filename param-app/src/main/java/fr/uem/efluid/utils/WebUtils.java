@@ -313,7 +313,7 @@ public class WebUtils {
 		}
 
 		public String processGitmoji(String title) {
-			if(title.trim().startsWith(":") && title.indexOf(":", 2) > 0){
+			if(title != null && title.trim().startsWith(":") && title.indexOf(":", 2) > 0){
 				return title.replaceAll(":(\\w*):", "<span class=\"gitmoji\" code=\":$1:\">:$1:</span>");
 			}
 			return title;

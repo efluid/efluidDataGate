@@ -551,6 +551,7 @@ public class CommitService extends AbstractApplicationService {
 		currentPreparation.setCommitData(new CommitEditData());
 		currentPreparation.getCommitData().setMergeSources(toProcess.stream().map(Commit::getUuid).collect(Collectors.toList()));
 		currentPreparation.getCommitData().setRangeStartTime(timeProcessStart);
+		currentPreparation.getCommitData().setImportedTime(LocalDateTime.now());
 		currentPreparation.getCommitData().setComment(generateMergeCommitComment(toProcess));
 
 		// Add attachment - managed in temporary version first
@@ -608,6 +609,7 @@ public class CommitService extends AbstractApplicationService {
 
 		LOGGER.debug("Current project version is \"{}\" ({}). Will not check if dictionnary was modified", version.getName(),
 				version.getUuid());
+
 
 		Commit newCommit = CommitEditData.toEntity(prepared.getCommitData());
 		newCommit.setCreatedTime(LocalDateTime.now());

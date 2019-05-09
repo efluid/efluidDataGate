@@ -98,6 +98,11 @@ public final class FormatUtils {
 	 * @return
 	 */
 	public static String format(LocalDateTime date) {
+
+		if(date == null){
+			return null;
+		}
+
 		return LDT_FORMATTER.format(date);
 	}
 
@@ -106,6 +111,11 @@ public final class FormatUtils {
 	 * @return
 	 */
 	public static LocalDateTime toLdt(Date date) {
+
+		if(date == null){
+			return null;
+		}
+
 		return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
 	}
 
