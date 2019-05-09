@@ -58,7 +58,7 @@ const updateGitmoji = (e, gitmojis) => {
 	var code = $(e).attr("code");
 	var gitmoji = gitmojis.find(g => g.code === code);
 	if(gitmoji){
-		$(e).html(gitmoji.entity);
+		$(e).html(gitmoji.emoji);
 	}
 };
 
