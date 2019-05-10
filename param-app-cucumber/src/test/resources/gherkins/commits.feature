@@ -1,24 +1,39 @@
-Feature: The update on parameter tables can be followed, checked and stored as commits. 
+Feature: The commit can be saved and are historised
 
-  The features are similar to the way GIT can be used to manage updates on source files, but adapted
-  for database contents. The content is first identified, by looking on changes and comparing them
-  to a local index, and then "stored" in commits. The commits can be shared with export / import files
-  (similar to GIT push / pull processes).
-  
-  A diff analysis can be started if :
-   * Dictionary is initialized
-   * Valid version is set
-   * User is authenticated
-  
-  Scenario: A diff analysis can be launched
-    Given a diff analysis can be started
-    And no diff is running
-    When the user access to diff launch page
-    Then the provided template is diff running
-    And a diff is running
-    
-  Scenario: Only one diff can be launched for current project
-    Given a diff analysis can be started
-    And a diff has already been launched
-    When the user access to diff launch page
-    Then an alert says that the diff is still running
+  After a diff, content of commit can be saved in application managed index. For each standard diff content line, user can say "keep, revert or ignore"
+
+  Background:
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | KKK | Two   | Other KKK |
+    And the existing data in managed table "TTAB_THREE" :
+      | key   | value | other   |
+      | 11111 | A     | Other A |
+      | 22222 | B     | Other B |
+      | 33333 | C     | Other C |
+
+  Scenario: From the commit diff the user can access to saving page for commit completion.
+    Given a diff analysis have been started and completed
+    When the user accesses to preparation commit page
+    Then the provided template is commit saving
+    And the commit comment is empty
+
+  Scenario: The diff content is default not selected for commit preparation
+    Given a diff analysis have been started and completed
+    When the user do not select any prepared diff content for commit
+    And the user accesses to preparation commit page
+    Then all the diff preparation content is ignored by default
+
+  Scenario: The diff content can be fully selected for commit preparation
+    Given a diff analysis have been started and completed
+    When the user select all prepared diff content for commit
+    And the user accesses to preparation commit page
+    Then all the diff preparation content is selected for commit

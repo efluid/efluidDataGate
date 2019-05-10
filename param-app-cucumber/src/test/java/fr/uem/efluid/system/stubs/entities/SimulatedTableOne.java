@@ -9,114 +9,119 @@ import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
 
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 @Entity
 @Table(name = ManagedDatabaseAccess.TABLE_ONE)
 public class SimulatedTableOne {
 
-	@Id
-	@GeneratedValue
-	private Long key;
+    @Id
+    @GeneratedValue
+    private Long key;
 
-	private String value;
+    private String value;
 
-	private String preset;
+    private String preset;
 
-	private String something;
+    private String something;
 
-	/**
-	 * @return the key
-	 */
-	public Long getKey() {
-		return this.key;
-	}
+    public SimulatedTableOne() {
+        super();
+    }
 
-	/**
-	 * @param key
-	 *            the key to set
-	 */
-	public void setKey(Long key) {
-		this.key = key;
-	}
+    public SimulatedTableOne(Long key) {
+        super();
+        this.key = key;
+    }
 
-	/**
-	 * @return the value
-	 */
-	public String getValue() {
-		return this.value;
-	}
+    /**
+     * @return the key
+     */
+    public Long getKey() {
+        return this.key;
+    }
 
-	/**
-	 * @param value
-	 *            the value to set
-	 */
-	public void setValue(String value) {
-		this.value = value;
-	}
+    /**
+     * @param key the key to set
+     */
+    public void setKey(Long key) {
+        this.key = key;
+    }
 
-	/**
-	 * @return the preset
-	 */
-	public String getPreset() {
-		return this.preset;
-	}
+    /**
+     * @return the value
+     */
+    public String getValue() {
+        return this.value;
+    }
 
-	/**
-	 * @param preset
-	 *            the preset to set
-	 */
-	public void setPreset(String preset) {
-		this.preset = preset;
-	}
+    /**
+     * @param value the value to set
+     */
+    public void setValue(String value) {
+        this.value = value;
+    }
 
-	/**
-	 * @return the something
-	 */
-	public String getSomething() {
-		return this.something;
-	}
+    /**
+     * @return the preset
+     */
+    public String getPreset() {
+        return this.preset;
+    }
 
-	/**
-	 * @param something
-	 *            the something to set
-	 */
-	public void setSomething(String something) {
-		this.something = something;
-	}
+    /**
+     * @param preset the preset to set
+     */
+    public void setPreset(String preset) {
+        this.preset = preset;
+    }
 
-	/**
-	 * @return
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((this.key == null) ? 0 : this.key.hashCode());
-		return result;
-	}
+    /**
+     * @return the something
+     */
+    public String getSomething() {
+        return this.something;
+    }
 
-	/**
-	 * @param obj
-	 * @return
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SimulatedTableOne other = (SimulatedTableOne) obj;
-		if (this.key == null) {
-			if (other.key != null)
-				return false;
-		} else if (!this.key.equals(other.key))
-			return false;
-		return true;
-	}
+    /**
+     * @param something the something to set
+     */
+    public void setSomething(String something) {
+        this.something = something;
+    }
+
+    /**
+     * @return
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((this.key == null) ? 0 : this.key.hashCode());
+        return result;
+    }
+
+    /**
+     * @param obj
+     * @return
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SimulatedTableOne other = (SimulatedTableOne) obj;
+        if (this.key == null) {
+            if (other.key != null)
+                return false;
+        } else if (!this.key.equals(other.key))
+            return false;
+        return true;
+    }
 }

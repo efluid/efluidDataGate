@@ -1,269 +1,328 @@
 package fr.uem.efluid.system.stubs;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasProperty;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.hamcrest.Matcher;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
+import cucumber.api.DataTable;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
+import fr.uem.efluid.system.stubs.entities.SimulatedTableFour;
 import fr.uem.efluid.system.stubs.entities.SimulatedTableOne;
 import fr.uem.efluid.system.stubs.entities.SimulatedTableThree;
 import fr.uem.efluid.system.stubs.entities.SimulatedTableTwo;
+import fr.uem.efluid.system.stubs.repositories.SimulatedTableFourRepository;
 import fr.uem.efluid.system.stubs.repositories.SimulatedTableOneRepository;
 import fr.uem.efluid.system.stubs.repositories.SimulatedTableThreeRepository;
 import fr.uem.efluid.system.stubs.repositories.SimulatedTableTwoRepository;
 import fr.uem.efluid.utils.FormatUtils;
+import org.hamcrest.Matcher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.hamcrest.Matchers.*;
 
 /**
  * <p>
  * Component for init and use of the <tt>managed</tt> database (the configured source
  * database, simulated with stubs entity model)
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 @Component
 public class ManagedDatabaseAccess {
 
-	public static final String TABLE_ONE = "TTAB_ONE";
-	public static final String TABLE_TWO = "TTAB_TWO";
-	public static final String TABLE_THREE = "TTAB_THREE";
+    public static final String TABLE_ONE = "TTAB_ONE";
+    public static final String TABLE_TWO = "TTAB_TWO";
+    public static final String TABLE_THREE = "TTAB_THREE";
+    public static final String TABLE_FOUR = "TTAB_FOUR";
 
-	@Autowired
-	private SimulatedTableOneRepository tabOne;
+    @Autowired
+    private SimulatedTableOneRepository tabOne;
 
-	@Autowired
-	private SimulatedTableTwoRepository tabTwo;
+    @Autowired
+    private SimulatedTableTwoRepository tabTwo;
 
-	@Autowired
-	private SimulatedTableThreeRepository tabThree;
+    @Autowired
+    private SimulatedTableThreeRepository tabThree;
 
-	/**
-	 * @param nbr
-	 * @param keyPattern
-	 * @param valuePattern
-	 * @param otherPattern
-	 */
-	public void initTabTwoData(int nbr, String keyPattern, String valuePattern, String otherPattern) {
+    @Autowired
+    private SimulatedTableFourRepository tabFour;
 
-		for (int i = 0; i < nbr; i++) {
-			this.tabTwo.save(two(keyPattern + i, valuePattern + i, otherPattern + i));
-		}
-	}
+    /**
+     * Init from cucumber Datatable
+     *
+     * @param name
+     * @param data
+     */
+    public void initTab(String name, DataTable data) {
 
-	/**
-	 * @param nbr
-	 * @param presetPattern
-	 * @param somethingPattern
-	 * @param valuePattern
-	 */
-	public void initTabOneData(int nbr, String presetPattern, String somethingPattern, String valuePattern) {
+        List<Map<String, String>> values = data.asMaps(String.class, String.class);
 
-		for (int i = 0; i < nbr; i++) {
-			this.tabOne.save(one(i, presetPattern + i, somethingPattern + i, valuePattern + i));
-		}
-	}
+        switch (name) {
+            case TABLE_ONE:
+                values.forEach(m ->
+                        this.tabOne.save(one(Integer.parseInt(m.get("key")), m.get("preset"), m.get("something"), m.get("value")))
+                );
+                break;
+            case TABLE_TWO:
+                values.forEach(m ->
+                        this.tabTwo.save(two(m.get("key"), m.get("value"), m.get("other")))
+                );
+                break;
+            case TABLE_THREE:
 
-	/**
-	 * @param nbr
-	 * @param keyPattern
-	 * @param valuePattern
-	 * @param otherPattern
-	 */
-	public void initTabThreeData(int nbr, String keyPattern, String valuePattern, String otherPattern) {
+                values.forEach(m ->
+                        this.tabThree.save(three(m.get("key"), m.get("value"), m.get("other")))
+                );
+                break;
+            case TABLE_FOUR:
 
-		for (int i = 0; i < nbr; i++) {
-			this.tabThree.save(three(keyPattern + i, valuePattern + i, otherPattern + i));
-		}
-	}
+                values.forEach(m ->
+                        this.tabFour.save(four(m.get("key"), Long.valueOf(m.get("otherTable")), FormatUtils.parse(m.get("contentTime")), Integer.valueOf(m.get("contentInt"))))
+                );
+                break;
+            default:
+                throw new AssertionError("Unknown table name " + name);
+        }
 
-	private static SimulatedTableOne one(int key, String preset, String something, String value) {
+    }
 
-		SimulatedTableOne data = new SimulatedTableOne();
-		data.setKey(Long.valueOf(key));
-		data.setPreset(preset);
-		data.setSomething(something);
-		data.setValue(value);
+    /**
+     * @param nbr
+     * @param keyPattern
+     * @param valuePattern
+     * @param otherPattern
+     */
+    public void initTabTwoData(int nbr, String keyPattern, String valuePattern, String otherPattern) {
 
-		return data;
-	}
+        for (int i = 0; i < nbr; i++) {
+            this.tabTwo.save(two(keyPattern + i, valuePattern + i, otherPattern + i));
+        }
+    }
 
-	private static SimulatedTableTwo two(String key, String value, String other) {
+    /**
+     * @param nbr
+     * @param presetPattern
+     * @param somethingPattern
+     * @param valuePattern
+     */
+    public void initTabOneData(int nbr, String presetPattern, String somethingPattern, String valuePattern) {
 
-		SimulatedTableTwo data = new SimulatedTableTwo();
-		data.setKey(key);
-		data.setValue(value);
-		data.setOther(other);
+        for (int i = 0; i < nbr; i++) {
+            this.tabOne.save(one(i, presetPattern + i, somethingPattern + i, valuePattern + i));
+        }
+    }
 
-		return data;
-	}
+    /**
+     * @param nbr
+     * @param keyPattern
+     * @param valuePattern
+     * @param otherPattern
+     */
+    public void initTabThreeData(int nbr, String keyPattern, String valuePattern, String otherPattern) {
 
-	private static SimulatedTableThree three(String key, String value, String other) {
+        for (int i = 0; i < nbr; i++) {
+            this.tabThree.save(three(keyPattern + i, valuePattern + i, otherPattern + i));
+        }
+    }
 
-		SimulatedTableThree data = new SimulatedTableThree();
-		data.setKey(key);
-		data.setValue(value);
-		data.setOther(other);
+    private static SimulatedTableOne one(int key, String preset, String something, String value) {
 
-		return data;
-	}
+        SimulatedTableOne data = new SimulatedTableOne();
+        data.setKey((long) key);
+        data.setPreset(preset);
+        data.setSomething(something);
+        data.setValue(value);
 
-	/**
-	 * <p>
-	 * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
-	 * content in an assertion
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<String> getColumnNamesForTable(String tableName) {
+        return data;
+    }
 
-		if (tableName.equals(TABLE_ONE))
-			return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
+    private static SimulatedTableTwo two(String key, String value, String other) {
 
-		if (tableName.equals(TABLE_TWO))
-			return Arrays.asList("KEY", "VALUE", "OTHER");
+        SimulatedTableTwo data = new SimulatedTableTwo();
+        data.setKey(key);
+        data.setValue(value);
+        data.setOther(other);
 
-		return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
-	}
+        return data;
+    }
 
-	@SuppressWarnings("unchecked")
-	public <T> List<T> getAllEntitiesForTable(String tableName) {
+    private static SimulatedTableThree three(String key, String value, String other) {
 
-		if (tableName.equals(TABLE_ONE))
-			return (List<T>) this.tabOne.findAll();
+        SimulatedTableThree data = new SimulatedTableThree();
+        data.setKey(key);
+        data.setValue(value);
+        data.setOther(other);
 
-		if (tableName.equals(TABLE_TWO))
-			return (List<T>) this.tabTwo.findAll();
+        return data;
+    }
 
-		return (List<T>) this.tabThree.findAll();
-	}
+    private static SimulatedTableFour four(String key, Long otherId, LocalDateTime time, int content) {
 
-	/**
-	 * @return
-	 */
-	public long countTable(String tableName) {
+        SimulatedTableFour data = new SimulatedTableFour();
+        data.setKey(key);
+        data.setOtherTable(new SimulatedTableOne(otherId));
+        data.setContentTime(time);
+        data.setContentInt(content);
 
-		if (tableName.equals(TABLE_ONE))
-			return this.tabOne.count();
+        return data;
+    }
 
-		if (tableName.equals(TABLE_TWO))
-			return this.tabTwo.count();
+    /**
+     * <p>
+     * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
+     * content in an assertion
+     * </p>
+     *
+     * @return
+     */
+    public List<String> getColumnNamesForTable(String tableName) {
 
-		return this.tabThree.count();
-	}
+        if (tableName.equals(TABLE_ONE))
+            return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
 
-	/**
-	 * <p>
-	 * Get easy to use content for Tab 1
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<Map<String, String>> getAllContentForTable(String tableName) {
+        if (tableName.equals(TABLE_TWO))
+            return Arrays.asList("KEY", "VALUE", "OTHER");
 
-		List<String> cols = getColumnNamesForTable(tableName);
+        if (tableName.equals(TABLE_FOUR))
+            return Arrays.asList("KEY", "SIMULATEDTABLEONE_KEY", "CONTENT_TIME", "CONTENT_INT");
 
-		return getAllEntitiesForTable(tableName).stream().map(i -> {
-			Map<String, String> vals = new HashMap<>();
-			cols.forEach(c -> vals.put(c, getPropertyValueByColumnName(i, c)));
-			return vals;
-		})
-				.sorted(Comparator.comparing(m -> m.get("KEY")))
-				.collect(Collectors.toList());
-	}
+        return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
+    }
 
-	/**
-	 * <p>
-	 * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
-	 * content in an assertion
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableOne() {
-		return Arrays.asList(
-				columnMatcher("KEY", ColumnType.PK_ATOMIC),
-				columnMatcher("VALUE", ColumnType.STRING),
-				columnMatcher("PRESET", ColumnType.STRING),
-				columnMatcher("SOMETHING", ColumnType.STRING));
-	}
+    @SuppressWarnings("unchecked")
+    public <T> List<T> getAllEntitiesForTable(String tableName) {
 
-	/**
-	 * <p>
-	 * Matcher spec for the columns for TABLE_TWO. Allows to check Column / ColumnEditData
-	 * content in an assertion
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableTwo() {
-		return Arrays.asList(
-				columnMatcher("KEY", ColumnType.PK_STRING),
-				columnMatcher("VALUE", ColumnType.STRING),
-				columnMatcher("OTHER", ColumnType.STRING));
-	}
+        if (tableName.equals(TABLE_ONE))
+            return (List<T>) this.tabOne.findAll();
 
-	/**
-	 * <p>
-	 * Matcher spec for the columns for TABLE_THREE. Allows to check Column /
-	 * ColumnEditData content in an assertion
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableThree() {
-		return Arrays.asList(
-				columnMatcher("KEY", ColumnType.PK_STRING),
-				columnMatcher("VALUE", ColumnType.STRING),
-				columnMatcher("OTHER", ColumnType.STRING));
-	}
+        if (tableName.equals(TABLE_TWO))
+            return (List<T>) this.tabTwo.findAll();
 
-	/**
-	 * @param rawObject
-	 * @param propertyAsColumnName
-	 * @return
-	 */
-	private static String getPropertyValueByColumnName(Object rawObject, String propertyAsColumnName) {
-		try {
-			Method getter = rawObject.getClass().getMethod(
-					"get" + propertyAsColumnName.substring(0, 1).toUpperCase() + propertyAsColumnName.substring(1).toLowerCase());
+        if (tableName.equals(TABLE_FOUR))
+            return (List<T>) this.tabFour.findAll();
 
-			Object res = getter.invoke(rawObject);
+        return (List<T>) this.tabThree.findAll();
+    }
 
-			if (res instanceof LocalDateTime) {
-				return FormatUtils.format((LocalDateTime) res);
-			}
+    /**
+     * @return
+     */
+    public long countTable(String tableName) {
 
-			return String.valueOf(res);
-		} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
-				| InvocationTargetException e) {
-			throw new AssertionError("Cannot get getter for " + propertyAsColumnName + " into object of type " + rawObject);
-		}
-	}
+        if (tableName.equals(TABLE_ONE))
+            return this.tabOne.count();
 
-	/**
-	 * @param name
-	 * @param type
-	 * @return
-	 */
-	private static Matcher<DictionaryEntryEditData.ColumnEditData> columnMatcher(String name, ColumnType type) {
-		return allOf(hasProperty("name", equalTo(name)), hasProperty("type", equalTo(type)));
-	}
+        if (tableName.equals(TABLE_TWO))
+            return this.tabTwo.count();
+
+        if (tableName.equals(TABLE_FOUR))
+            return this.tabFour.count();
+
+        return this.tabThree.count();
+    }
+
+    /**
+     * <p>
+     * Get easy to use content for Tab 1
+     * </p>
+     *
+     * @return
+     */
+    public List<Map<String, String>> getAllContentForTable(String tableName) {
+
+        List<String> cols = getColumnNamesForTable(tableName);
+
+        return getAllEntitiesForTable(tableName).stream().map(i -> {
+            Map<String, String> vals = new HashMap<>();
+            cols.forEach(c -> vals.put(c, getPropertyValueByColumnName(i, c)));
+            return vals;
+        })
+                .sorted(Comparator.comparing(m -> m.get("KEY")))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * <p>
+     * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
+     * content in an assertion
+     * </p>
+     *
+     * @return
+     */
+    public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableOne() {
+        return Arrays.asList(
+                columnMatcher("KEY", ColumnType.PK_ATOMIC),
+                columnMatcher("VALUE", ColumnType.STRING),
+                columnMatcher("PRESET", ColumnType.STRING),
+                columnMatcher("SOMETHING", ColumnType.STRING));
+    }
+
+    /**
+     * <p>
+     * Matcher spec for the columns for TABLE_TWO. Allows to check Column / ColumnEditData
+     * content in an assertion
+     * </p>
+     *
+     * @return
+     */
+    public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableTwo() {
+        return Arrays.asList(
+                columnMatcher("KEY", ColumnType.PK_STRING),
+                columnMatcher("VALUE", ColumnType.STRING),
+                columnMatcher("OTHER", ColumnType.STRING));
+    }
+
+    /**
+     * <p>
+     * Matcher spec for the columns for TABLE_THREE. Allows to check Column /
+     * ColumnEditData content in an assertion
+     * </p>
+     *
+     * @return
+     */
+    public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableThree() {
+        return Arrays.asList(
+                columnMatcher("KEY", ColumnType.PK_STRING),
+                columnMatcher("VALUE", ColumnType.STRING),
+                columnMatcher("OTHER", ColumnType.STRING));
+    }
+
+    /**
+     * @param rawObject
+     * @param propertyAsColumnName
+     * @return
+     */
+    private static String getPropertyValueByColumnName(Object rawObject, String propertyAsColumnName) {
+        try {
+            Method getter = rawObject.getClass().getMethod(
+                    "get" + propertyAsColumnName.substring(0, 1).toUpperCase() + propertyAsColumnName.substring(1).toLowerCase());
+
+            Object res = getter.invoke(rawObject);
+
+            if (res instanceof LocalDateTime) {
+                return FormatUtils.format((LocalDateTime) res);
+            }
+
+            return String.valueOf(res);
+        } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
+                | InvocationTargetException e) {
+            throw new AssertionError("Cannot get getter for " + propertyAsColumnName + " into object of type " + rawObject);
+        }
+    }
+
+    /**
+     * @param name
+     * @param type
+     * @return
+     */
+    private static Matcher<DictionaryEntryEditData.ColumnEditData> columnMatcher(String name, ColumnType type) {
+        return allOf(hasProperty("name", equalTo(name)), hasProperty("type", equalTo(type)));
+    }
 }
