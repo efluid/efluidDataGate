@@ -258,8 +258,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
         List<DictionaryEntry> entries = this.dictionary.findByDomainProject(project);
 
         // Table with columns
-        Map<String, List<String>> allTables = this.metadatas.getTables().stream().collect(Collectors.toMap(t -> t.getName(),
-                t -> t.getColumns().stream().map(ColumnDescription::getName).sorted().collect(Collectors.toList())));
+        Map<String, List<String>> allTables = this.metadatas.getTables().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.toMap(TableDescription::getName,
+                        t -> t.getColumns().stream().map(ColumnDescription::getName).sorted().collect(Collectors.toList())));
 
         // Convert dictionnary as selectable
         List<SelectableTable> selectables = entries.stream()
@@ -573,7 +575,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         LOGGER.debug("Forced refresh on cache for metadata on table {}", tableName);
 
-        this.metadatas.refreshTable(tableName.toUpperCase());
+        this.metadatas.refreshTable(tableName != null ? tableName.toUpperCase() : null);
     }
 
     /**

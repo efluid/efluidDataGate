@@ -6,7 +6,7 @@
     <span layout:fragment="content">
 		<form id="editTableForm" action="#" th:action="@{/ui/dictionary/save}" method="post">
 			<h5>Edition d'une table de paramètrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
-			&nbsp;<a th:href="@{|/ui/dictionary/refresh/${entry.table}/${entry.uuid}|}" href="./table_init.html" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les informations de la table</a>
+			&nbsp;<a th:href="@{|/ui/dictionary/refresh/one/${entry.table}/${entry.uuid}|}" href="./table_init.html" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les informations de la table</a>
 			<span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramètrage.
 			La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel. Les dépendances sont prises en compte et validées
 			lors de la préparation d'un lot. Si plusieurs dépendances sont créées vers la même table cible alors le lien sera traité comme une clé composite</span>

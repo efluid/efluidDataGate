@@ -166,10 +166,30 @@ public class DictionaryController extends CommonController {
 
     /**
      * @param model
+     * @return
+     */
+    @RequestMapping("/dictionary/refresh/all")
+    public String dictionaryRefreshAllTableMetadata(Model model) {
+
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
+        // Refresh
+        this.dictionaryManagementService.refreshCachedMetadata();
+
+        model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
+        model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
+
+        return "pages/table_init";
+    }
+
+    /**
+     * @param model
      * @param name
      * @return
      */
-    @RequestMapping("/dictionary/refresh/{name}/{uuid}")
+    @RequestMapping("/dictionary/refresh/one/{name}/{uuid}")
     public String dictionaryRefreshTableMetadata(Model model, @PathVariable("uuid") String uuid, @PathVariable("name") String name) {
 
         if (!controlSelectedProject(model)) {

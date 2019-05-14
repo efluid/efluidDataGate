@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.InvalidResultSetAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.Nullable;
@@ -71,7 +70,6 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
     private Map<String, TableDescription> localCache;
 
     @Override
-    @Cacheable("metadatas")
     public Collection<TableDescription> getTables() throws ApplicationException {
 
         // Already loaded
