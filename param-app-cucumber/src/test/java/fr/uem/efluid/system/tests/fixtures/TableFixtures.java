@@ -120,9 +120,6 @@ public class TableFixtures extends SystemTest {
         // Apply selection
         select.asMaps(String.class, String.class)
                 .forEach(s -> data.getColumns().stream()
-                        .peek(c -> {
-                            System.out.println(c);
-                        })
                         .filter(c -> c.getName().equalsIgnoreCase(s.get("name")))
                         .forEach(c -> {
                             switch (s.get("selection")) {

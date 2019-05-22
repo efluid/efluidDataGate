@@ -11,11 +11,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import fr.uem.efluid.model.entities.CommitState;
@@ -240,7 +236,7 @@ public class BacklogController extends CommonController {
 	 * @return
 	 */
 	@RequestMapping(path = { "/prepare/commit", "/merge/commit" }, method = POST)
-	public String preparationLocalCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+	public String preparationLocalCommitPage(Model model, @RequestAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
 		if (!controlSelectedProject(model)) {
 			return REDIRECT_SELECT;
@@ -264,7 +260,7 @@ public class BacklogController extends CommonController {
 	 * @return
 	 */
 	@RequestMapping(path = { "/prepare/save", "/merge/save" }, method = POST)
-	public String preparationLocalSave(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+	public String preparationLocalSave(Model model, @RequestAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
 		if (!controlSelectedProject(model)) {
 			return REDIRECT_SELECT;
@@ -272,13 +268,16 @@ public class BacklogController extends CommonController {
 
 		// Update current preparation with selected attributes
 		this.pilotableCommitService.copyCommitPreparationCommitData(preparation);
-		this.pilotableCommitService.saveCommitPreparation();
+		UUID created = this.pilotableCommitService.saveCommitPreparation();
 
 		// Get updated preparation
 		model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
 
 		// For success save message
 		model.addAttribute("from", "success_edit");
+
+		// For details
+		model.addAttribute("createdUUID", created);
 
 		// Forward to commits list
 		return commitListPage(model);

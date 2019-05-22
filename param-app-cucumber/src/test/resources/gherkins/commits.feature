@@ -21,19 +21,26 @@ Feature: The commit can be saved and are historised
       | 33333 | C     | Other C |
 
   Scenario: From the commit diff the user can access to saving page for commit completion.
-    Given a diff analysis have been started and completed
+    Given a diff analysis has been started and completed
     When the user accesses to preparation commit page
     Then the provided template is commit saving
     And the commit comment is empty
 
-  Scenario: The diff content is default not selected for commit preparation
-    Given a diff analysis have been started and completed
+  Scenario: The diff content is not selected by default for commit preparation
+    Given a diff analysis has been started and completed
     When the user do not select any prepared diff content for commit
     And the user accesses to preparation commit page
     Then all the diff preparation content is ignored by default
 
   Scenario: The diff content can be fully selected for commit preparation
-    Given a diff analysis have been started and completed
+    Given a diff analysis has been started and completed
     When the user select all prepared diff content for commit
     And the user accesses to preparation commit page
     Then all the diff preparation content is selected for commit
+
+  Scenario: The selected diff content can be saved as a new commit
+    Given a diff analysis has been started and completed
+    And the user has selected all content for commit
+    And the user has specified a commit comment ":construction: Test commit"
+    When the user save the commit
+    Then the commit ":construction: Test commit" is added to commit list for current project

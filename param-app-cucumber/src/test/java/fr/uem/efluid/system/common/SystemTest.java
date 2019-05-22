@@ -7,14 +7,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import org.junit.Assert;
 import org.junit.Before;
 import org.pac4j.core.config.Config;
@@ -47,6 +46,8 @@ import fr.uem.efluid.system.stubs.TweakedDatabaseIdentifier;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import junit.framework.AssertionFailedError;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.WebDataBinder;
 
 /**
@@ -112,6 +113,8 @@ public abstract class SystemTest {
     @Autowired
     private TweakedDatabaseIdentifier databaseIdentifier;
 
+    @Autowired
+    private ObjectMapper mapper;
     /**
      *
      */
@@ -373,25 +376,30 @@ public abstract class SystemTest {
     }
     /**
      * @param url
-     * @param name
-     * @param object
+     * @param objects
      * @throws Exception
      */
-    protected final void postObject(String url, String name, Object object) throws Exception {
+    protected final void postObject(String url, Associate<String,Object> ... objects) throws Exception {
 
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post(url);
 
         // Add attribute
-        builder.requestAttr(name, object);
+        for(Associate<String,Object> object : objects) {
+            builder.requestAttr(object.getOne(), object.getTwo());
+        }
 
         if (currentStartPage != null) {
             builder.header("Referer", currentStartPage);
         }
 
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.contentType(MediaType.APPLICATION_FORM_URLENCODED);
 
         currentAction = this.mockMvc.perform(builder);
     }
+
+
+
+
 
     /**
      * <p>
@@ -599,7 +607,7 @@ public abstract class SystemTest {
      * @param value
      * @return
      */
-    protected static Associate<String, String> p(String name, String value) {
+    protected static <T> Associate<String, T> p(String name, T value) {
         return Associate.of(name, value);
     }
 

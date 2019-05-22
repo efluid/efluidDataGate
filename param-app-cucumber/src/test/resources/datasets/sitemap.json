@@ -21,5 +21,6 @@
   "/ui/prepare" : ["diff launch page"],
   "/ui/preparing" : ["diff commit page"],
   "/ui/prepare/commit" : ["commit saving page"],
+  "/ui/prepare/save" : ["commit save"],
   "/rest/v1/features/" : ["feature listing rest service"]
 }
