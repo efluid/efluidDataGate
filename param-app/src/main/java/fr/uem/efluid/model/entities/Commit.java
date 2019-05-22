@@ -61,7 +61,7 @@ public class Commit implements Shared {
 	@ManyToOne(optional = false)
 	private User user;
 
-	@OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+	@OneToMany( fetch = FetchType.LAZY)
 	@JoinColumn(name = "commit_uuid")
 	private Collection<IndexEntry> index = new ArrayList<>();
 

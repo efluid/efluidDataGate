@@ -3,9 +3,12 @@ package fr.uem.efluid.system.tests.fixtures;
 import cucumber.api.DataTable;
 import cucumber.api.java.en.Then;
 import fr.uem.efluid.model.entities.AttachmentType;
+import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.LobProperty;
-import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.services.types.CommitDetails;
+import fr.uem.efluid.services.types.DiffDisplay;
+import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.system.common.SystemTest;
 import fr.uem.efluid.utils.FormatUtils;
 
@@ -33,6 +36,29 @@ public class CommitFixtures extends SystemTest {
 
         assertThat(commit).isNotNull();
         assertThat(commit.getComment()).isEqualTo(comment);
+    }
+
+    @Then("^the merge commit \"(.*)\" is added to commit list for current project$")
+    public void then_merge_commit_is_added_with_comment(String comment) {
+
+        // Merge is a normal commit
+        then_commit_is_added_with_comment(comment);
+    }
+
+    @Then("^the commit \"(.*)\" from current project is of type \"(.*)\"$")
+    public void then_commit_is_added_with_comment_and_type(String comment, String type) {
+
+        CommitDetails commit = this.commitService.getExistingCommitDetails(backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment));
+
+        assertThat(commit).isNotNull();
+        assertThat(commit.getState()).isEqualTo(CommitState.valueOf(type));
+    }
+
+    @Then("^the commit \"(.*)\" is added to commit list for current project in destination environment$")
+    public void then_commit_is_added_with_comment_in_dest(String comment) {
+
+        // Switched env is same db
+        then_commit_is_added_with_comment(comment);
     }
 
     @Then("^the saved commit content has these identified changes :$")
@@ -68,6 +94,13 @@ public class CommitFixtures extends SystemTest {
                 }
             }
         });
+    }
+
+    @Then("^the saved merge commit content has these identified changes :$")
+    public void merge_commit_content_changes(DataTable data) {
+
+        // Merge is a normal commit
+        commit_content_changes(data);
     }
 
 

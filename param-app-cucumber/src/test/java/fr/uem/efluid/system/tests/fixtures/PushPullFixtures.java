@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @version 1
  * @since v0.0.8
  */
-public class PushFixtures extends SystemTest {
+public class PushPullFixtures extends SystemTest {
 
     static ExportImportResult<ExportFile> currentExport;
 
@@ -34,8 +34,13 @@ public class PushFixtures extends SystemTest {
 
     @When("^the user request an export of the commit with name \"(.*)\"$")
     public void when_export_one_commit(String name) {
-        Commit specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
-        currentExport = this.commitService.exportOneCommit(specifiedCommit.getUuid());
+        UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
+        currentExport = this.commitService.exportOneCommit(specifiedCommit);
+    }
+
+    @When("^the user import the available source package$")
+    public void when_import_current_package(){
+        this.prep.startMergeCommitPreparation(currentExport.getResult());
     }
 
     @Then("^an export package \"(.*)\" is available$")
@@ -51,6 +56,31 @@ public class PushFixtures extends SystemTest {
         assertThat(readPackageCommits()).hasSize(size);
     }
 
+    @Then("^the exported commit \"(.*)\" is not present in the destination environment$")
+    public void commit_not_imported_in_dest(String name) {
+
+        // Get from package
+        UUID commitUUID = readPackageCommits().stream()
+                .filter(c -> c.getComment().equals(name))
+                .map(Commit::getUuid)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Cannot find content for commit with name " + name + " in exported package"));
+
+        assertThat(this.commitService.getAvailableCommits()).noneMatch(c -> c.getUuid().equals(commitUUID) || c.getMergeSources().contains(commitUUID));
+    }
+
+    @Then("^the exported commit \"(.*)\" is present and merged in the destination environment$")
+    public void commit_imported_in_dest(String name) {
+
+        // Get from package
+        UUID commitUUID = readPackageCommits().stream()
+                .filter(c -> c.getComment().equals(name))
+                .map(Commit::getUuid)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Cannot find content for commit with name " + name + " in exported package"));
+
+        assertThat(this.commitService.getAvailableCommits()).anyMatch(c -> c.getUuid().equals(commitUUID) || c.getMergeSources().contains(commitUUID));
+    }
 
     @Then("^the export package content has these identified changes for commit with name \"(.*)\" :$")
     public void commit_content_changes(String name, DataTable data) {

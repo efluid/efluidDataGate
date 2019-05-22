@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import fr.uem.efluid.security.UserHolder;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * <p>
@@ -30,6 +31,7 @@ import fr.uem.efluid.security.UserHolder;
  * @since v0.0.8
  */
 @Component
+@Transactional
 @SuppressWarnings("unused")
 public class ModelDatabaseAccess {
 

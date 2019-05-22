@@ -7,6 +7,8 @@ import javax.persistence.Table;
 
 import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
 
+import java.util.Objects;
+
 /**
  * @author elecomte
  * @version 1
@@ -90,37 +92,19 @@ public class SimulatedTableOne {
         this.something = something;
     }
 
-    /**
-     * @return
-     * @see java.lang.Object#hashCode()
-     */
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((this.key == null) ? 0 : this.key.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SimulatedTableOne that = (SimulatedTableOne) o;
+        return Objects.equals(key, that.key) &&
+                Objects.equals(value, that.value) &&
+                Objects.equals(preset, that.preset) &&
+                Objects.equals(something, that.something);
     }
 
-    /**
-     * @param obj
-     * @return
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SimulatedTableOne other = (SimulatedTableOne) obj;
-        if (this.key == null) {
-            if (other.key != null)
-                return false;
-        } else if (!this.key.equals(other.key))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(key, value, preset, something);
     }
 }

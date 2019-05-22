@@ -11,8 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.Id;
-import javax.persistence.Lob;
+import javax.persistence.EntityManager;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
@@ -20,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
 /**
@@ -57,6 +57,18 @@ public class ManagedDatabaseAccess {
     @Autowired
     private SimulatedTableFiveRepository tabFive;
 
+    @Autowired
+    private EntityManager em;
+
+    public void dropManaged() {
+        this.tabFive.deleteAll();
+        this.tabFour.deleteAll();
+        this.tabThree.deleteAll();
+        this.tabTwo.deleteAll();
+        this.tabOne.deleteAll();
+        this.em.flush();
+    }
+
     /**
      * Init from cucumber Datatable
      *
@@ -84,6 +96,38 @@ public class ManagedDatabaseAccess {
                 break;
             case TABLE_FIVE:
                 values.forEach(m -> updateFive(m.get("change"), m));
+                break;
+            default:
+                throw new AssertionError("Unknown table name " + name);
+        }
+        this.em.flush();
+    }
+
+    /**
+     * Init from cucumber Datatable
+     *
+     * @param name
+     * @param data
+     */
+    public void assertCurrentTabComplies(String name, DataTable data) {
+
+        List<Map<String, String>> values = data.asMaps(String.class, String.class);
+
+        switch (name) {
+            case TABLE_ONE:
+                assertOneComplies(values);
+                break;
+            case TABLE_TWO:
+                assertTwoComplies(values);
+                break;
+            case TABLE_THREE:
+                assertThreeComplies(values);
+                break;
+            case TABLE_FOUR:
+                assertFourComplies(values);
+                break;
+            case TABLE_FIVE:
+                assertFiveComplies(values);
                 break;
             default:
                 throw new AssertionError("Unknown table name " + name);
@@ -119,6 +163,7 @@ public class ManagedDatabaseAccess {
             default:
                 throw new AssertionError("Unknown table name " + name);
         }
+        this.em.flush();
     }
 
     private void updateOne(String action, Map<String, String> m) {
@@ -141,6 +186,18 @@ public class ManagedDatabaseAccess {
         }
     }
 
+    private void assertOneComplies(List<Map<String, String>> values) {
+        assertThat(this.tabOne.count()).isEqualTo(values.size());
+
+        values.forEach(m -> {
+            SimulatedTableOne expected = one(Integer.parseInt(m.get("key")), m.get("preset"), m.get("something"), m.get("value"));
+            SimulatedTableOne found = this.tabOne.getOne(expected.getKey());
+            assertThat(found).isNotNull();
+            assertThat(found).isEqualTo(expected);
+        });
+    }
+
+
     private void updateTwo(String action, Map<String, String> m) {
 
         switch (action) {
@@ -160,6 +217,17 @@ public class ManagedDatabaseAccess {
         }
     }
 
+    private void assertTwoComplies(List<Map<String, String>> values) {
+        assertThat(this.tabTwo.count()).isEqualTo(values.size());
+
+        values.forEach(m -> {
+            SimulatedTableTwo expected = two(m.get("key"), m.get("value"), m.get("other"));
+            SimulatedTableTwo found = this.tabTwo.getOne(expected.getKey());
+            assertThat(found).isNotNull();
+            assertThat(found).isEqualTo(expected);
+        });
+    }
+
     private void updateThree(String action, Map<String, String> m) {
 
         switch (action) {
@@ -177,6 +245,17 @@ public class ManagedDatabaseAccess {
                 this.tabThree.delete(this.tabThree.getOne(m.get("key")));
                 break;
         }
+    }
+
+    private void assertThreeComplies(List<Map<String, String>> values) {
+        assertThat(this.tabThree.count()).isEqualTo(values.size());
+
+        values.forEach(m -> {
+            SimulatedTableThree expected = three(m.get("key"), m.get("value"), m.get("other"));
+            SimulatedTableThree found = this.tabThree.getOne(expected.getKey());
+            assertThat(found).isNotNull();
+            assertThat(found).isEqualTo(expected);
+        });
     }
 
     private void updateFour(String action, Map<String, String> m) {
@@ -199,6 +278,16 @@ public class ManagedDatabaseAccess {
         }
     }
 
+    private void assertFourComplies(List<Map<String, String>> values) {
+        assertThat(this.tabFour.count()).isEqualTo(values.size());
+
+        values.forEach(m -> {
+            SimulatedTableFour expected = four(m.get("key"), Long.valueOf(m.get("otherTable")), FormatUtils.parse(m.get("contentTime")), Integer.valueOf(m.get("contentInt")));
+            SimulatedTableFour found = this.tabFour.getOne(expected.getKey());
+            assertThat(found).isNotNull();
+            assertThat(found).isEqualTo(expected);
+        });
+    }
 
     private void updateFive(String action, Map<String, String> m) {
 
@@ -217,6 +306,17 @@ public class ManagedDatabaseAccess {
                 this.tabFive.delete(this.tabFive.getOne(m.get("key")));
                 break;
         }
+    }
+
+    private void assertFiveComplies(List<Map<String, String>> values) {
+        assertThat(this.tabFive.count()).isEqualTo(values.size());
+
+        values.forEach(m -> {
+            SimulatedTableFive expected = five(m.get("key"), FormatUtils.toBytes(m.get("data")), new BigDecimal(m.get("simple")));
+            SimulatedTableFive found = this.tabFive.getOne(expected.getKey());
+            assertThat(found).isNotNull();
+            assertThat(found).isEqualTo(expected);
+        });
     }
 
     /**

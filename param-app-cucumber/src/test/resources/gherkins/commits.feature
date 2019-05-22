@@ -38,11 +38,17 @@ Feature: The commit can be saved and are historised
     And the user accesses to preparation commit page
     Then all the diff preparation content is selected for commit
 
+  Scenario: The default preparing commit type is LOCAL
+    Given a diff analysis has been started and completed
+    When the user select all prepared diff content for commit
+    And the user accesses to preparation commit page
+    Then the commit type is "LOCAL"
+
   Scenario: The selected diff content can be saved as a new commit
     Given a diff analysis has been started and completed
     And the user has selected all content for commit
     And the user has specified a commit comment ":construction: Test commit"
-    When the user save the commit
+    When the user save the merge commit
     Then the commit ":construction: Test commit" is added to commit list for current project
     And the saved commit content has these identified changes :
       | Table      | Key | Action | Payload                            |
@@ -66,7 +72,7 @@ Feature: The commit can be saved and are historised
     And a diff analysis has been started and completed
     And the user has selected all content for commit
     And the user has specified a commit comment ":construction: Test commit"
-    When the user save the commit
+    When the user save the merge commit
     And the saved commit content has these associated lob data :
       | data                | hash                                         |
       | ABCDEF1234567ABDDDD | ZVs3L0PiRT7vzgYlGCrAmrqVm643dW1ZwshZNTNmEBc= |
@@ -82,7 +88,7 @@ Feature: The commit can be saved and are historised
       | attachment.md | MD_FILE   | 1500  |
       | script.sql    | SQL_FILE  | 7800  |
       | something.txt | TEXT_FILE | 45000 |
-    When the user save the commit
+    When the user save the merge commit
     Then the commit ":construction: Test commit with attachment" is added to commit list for current project
     And these attachment documents are associated to the commit in the current project backlog:
       | title         | type      |

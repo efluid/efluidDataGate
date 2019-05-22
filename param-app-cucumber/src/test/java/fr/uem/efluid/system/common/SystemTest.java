@@ -3,6 +3,7 @@ package fr.uem.efluid.system.common;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.CommitDetails;
@@ -26,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
@@ -81,6 +83,9 @@ public abstract class SystemTest {
 
     @Autowired
     protected MockMvc mockMvc;
+
+    @Autowired
+    private DatabaseDescriptionRepository desc;
 
     @Autowired
     private ManagedDatabaseAccess managed;
@@ -208,6 +213,9 @@ public abstract class SystemTest {
         User user = initDefaultUser();
         Project newProject = initDefaultProject();
         FunctionalDomain newDomain = initDefaultDomain(newProject);
+
+        // Force cache
+        this.desc.getTables();
 
         modelDatabase().initWizzardData(user, newProject, Arrays.asList(newDomain));
 

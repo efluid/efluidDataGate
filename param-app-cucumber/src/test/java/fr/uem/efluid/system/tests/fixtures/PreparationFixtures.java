@@ -5,6 +5,7 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.types.*;
@@ -86,6 +87,18 @@ public class PreparationFixtures extends SystemTest {
         a_diff_is_completed();
     }
 
+    @Given("^a merge diff analysis has been started and completed with the available source package$")
+    public void a_merge_diff_analysis_has_been_started_and_completed_from_package() throws Throwable {
+        // Import started
+        a_merge_diff_has_already_been_launched();
+
+        // Completed
+        a_merge_diff_is_completed();
+
+
+    }
+
+
     @Given("^no diff is running$")
     public void no_diff_is_running() {
         this.prep.cancelCommitPreparation();
@@ -104,6 +117,19 @@ public class PreparationFixtures extends SystemTest {
         runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
     }
 
+    @Given("^a merge diff has already been launched with the available source package$")
+    public void a_merge_diff_has_already_been_launched() throws Throwable {
+
+        // Cancel anything running
+        no_diff_is_running();
+
+        // Start new merge from available package
+        this.prep.startMergeCommitPreparation(PushPullFixtures.currentExport.getResult());
+
+        // And get diff uuid for testing
+        runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
+    }
+
     @Given("^the diff is completed$")
     public void a_diff_is_completed() throws InterruptedException {
 
@@ -116,12 +142,35 @@ public class PreparationFixtures extends SystemTest {
         assertThat(this.prep.getCurrentCommitPreparationState().getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
     }
 
+    @Given("^the merge diff is completed$")
+    public void a_merge_diff_is_completed() throws InterruptedException {
+
+        // We must wait ...
+        while (this.prep.getCurrentCommitPreparationState().getStatus() == PilotedCommitStatus.DIFF_RUNNING) {
+            Thread.sleep(10);
+        }
+
+        // Must be ok for next step
+        assertThat(this.prep.getCurrentCommitPreparationState().getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+        assertThat(this.prep.getCurrentCommitPreparation().getPreparingState()).isEqualTo(CommitState.MERGED);
+    }
+
 
     @Given("^the user has selected all content for commit$")
     public void user_has_selected_all_ready_content() throws Throwable {
 
         // Call select all uri
         post("/prepare/selection/all", p("selected", "true"), p("rollbacked", "false"));
+
+        select = "ALL";
+
+        user_access_preparation_saving_page();
+    }
+    @Given("^the user has selected all content for merge commit$")
+    public void user_has_selected_all_ready_content_for_merge() throws Throwable {
+
+        // Call select all uri
+        post("/merge/selection/all", p("selected", "true"), p("rollbacked", "false"));
 
         select = "ALL";
 
@@ -192,11 +241,17 @@ public class PreparationFixtures extends SystemTest {
         assertThat(commit.getComment()).isEqualTo(comment);
     }
 
+    @Given("^a commit \"(.*)\" has been saved with all the new identified diff content in destination environment$")
+    public void new_commit_was_added_with_comment_in_dest(String comment) throws Throwable {
+        // Switched env use same db
+        new_commit_was_added_with_comment(comment);
+    }
+
     @Given("^the commit \"(.*)\" has been saved and exported with all the identified initial diff content$")
     public void new_commit_exported(String comment) throws Throwable {
         commit_has_been_added_with_comment(comment);
-        Commit specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushFixtures.currentExport = this.commitService.exportOneCommit(specifiedCommit.getUuid());
+        UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
+        PushPullFixtures.currentExport = this.commitService.exportOneCommit(specifiedCommit);
     }
 
     @When("^the user accesses to preparation commit page$")
@@ -235,6 +290,15 @@ public class PreparationFixtures extends SystemTest {
         select = "ALL";
     }
 
+    @When("^the user select all prepared diff content for merge commit$")
+    public void user_select_all_content_for_merge() throws Exception {
+
+        // Call select all uri
+        post("/merge/selection/all", p("selected", "true"), p("rollbacked", "false"));
+
+        select = "ALL";
+    }
+
     @When("^the user save the commit$")
     public void user_save_commit() throws Exception {
 
@@ -250,10 +314,24 @@ public class PreparationFixtures extends SystemTest {
         postObject(getCorrespondingLinkForPageName("commit save"), p("preparation", preparation));
     }
 
+    @When("^the user save the merge commit$")
+    public void user_save_merge_commit() throws Exception {
+
+        // It's a normal commit
+        user_save_commit();
+    }
+
     @Then("^a diff is running$")
     public void a_diff_is_running() {
 
         Assert.assertEquals(PilotedCommitStatus.DIFF_RUNNING, this.prep.getCurrentCommitPreparationState().getStatus());
+    }
+
+    @Then("^a merge diff is running$")
+    public void a_merge_diff_is_running() {
+
+        a_diff_is_running();
+        assertThat(this.prep.getCurrentCommitPreparation().getPreparingState()).isEqualTo(CommitState.MERGED);
     }
 
     @Then("^an alert says that the diff is still running$")
@@ -266,14 +344,47 @@ public class PreparationFixtures extends SystemTest {
         Assert.assertEquals(runningPrep, this.prep.getCurrentCommitPreparation().getIdentifier());
     }
 
-    /*
-            | Table    | Key | Payload |
-            | TTAB_ONE | 1   | eee     |
-            | TTAB_ONE | 2   | eee     |
-            | TTAB_ONE | 3   | eee     |
-    */
     @Then("^the commit content is rendered with these identified changes :$")
     public void commit_content_ready(DataTable data) {
+
+        // Get by tables
+        Map<String, List<Map<String, String>>> tables = data.asMaps(String.class, String.class).stream().collect(Collectors.groupingBy(i -> i.get("Table")));
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+        assertThat(preparation.getTotalCount()).isEqualTo(data.asMaps(String.class, String.class).size());
+        assertThat(preparation.getDomains().size()).isEqualTo(1);
+
+        tables.forEach((t, v) -> {
+            DiffDisplay<?> content = preparation.getDomains().get(0).getPreparedContent().stream()
+                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
+                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
+
+            assertThat(content.getDiff().size()).isEqualTo(v.size());
+
+            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
+            v.sort(Comparator.comparing(m -> m.get("Key")));
+
+            // Keep order
+            for (int i = 0; i < content.getDiff().size(); i++) {
+                PreparedIndexEntry diffLine = content.getDiff().get(i);
+                Map<String, String> dataLine = v.get(i);
+
+                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
+                assertThat(diffLine.getAction()).isEqualTo(action);
+                assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
+
+                // No need to check payload in delete
+                if (action != REMOVE) {
+                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
+                }
+            }
+        });
+    }
+
+    @Then("^the merge commit content is rendered with these identified changes :$")
+    public void merge_commit_content_ready(DataTable data) {
 
         // Get by tables
         Map<String, List<Map<String, String>>> tables = data.asMaps(String.class, String.class).stream().collect(Collectors.groupingBy(i -> i.get("Table")));
@@ -315,7 +426,7 @@ public class PreparationFixtures extends SystemTest {
     @Then("^the commit content has these associated lob data :$")
     public void commit_lob_content(DataTable table) {
 
-        Map<String, String> datas = table.asMaps(String.class, String.class).stream().collect(Collectors.toMap(i -> i.get("hash"),i -> i.get("data")));
+        Map<String, String> datas = table.asMaps(String.class, String.class).stream().collect(Collectors.toMap(i -> i.get("hash"), i -> i.get("data")));
 
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
@@ -325,7 +436,7 @@ public class PreparationFixtures extends SystemTest {
         preparation.getDiffLobs().forEach((hash, bin) -> {
 
             // Custom clean message
-            if(datas.get(hash) == null){
+            if (datas.get(hash) == null) {
                 throw new AssertionError("Cannot found corresponding hash for current lob. Current is "
                         + hash + " with data \"" + FormatUtils.toString(bin) + "\"");
             }
@@ -362,6 +473,14 @@ public class PreparationFixtures extends SystemTest {
             assertThat(l.isSelected()).isTrue();
             assertThat(l.isRollbacked()).isFalse();
         })));
+    }
+
+    @Then("^the commit type is \"(.*)\"$")
+    public void commit_type(String type) {
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation).isNotNull();
+        assertThat(preparation.getPreparingState()).isEqualTo(CommitState.valueOf(type));
     }
 
 }

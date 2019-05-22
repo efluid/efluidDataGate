@@ -36,7 +36,7 @@ public class IndexEntry implements DiffLine {
 	@Enumerated(EnumType.STRING)
 	private IndexAction action;
 
-	@ManyToOne(optional = false)
+	@ManyToOne
 	private Commit commit;
 
 	@Lob

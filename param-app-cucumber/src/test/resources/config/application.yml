@@ -57,7 +57,7 @@ spring:
         max-pool-size: 50
 
     jpa:
-        show-sql: false
+        show-sql: true
         hibernate:
             ddl-auto: create
 

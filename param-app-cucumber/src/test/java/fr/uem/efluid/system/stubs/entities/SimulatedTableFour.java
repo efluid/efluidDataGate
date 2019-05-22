@@ -7,6 +7,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
  * A table with a join on another table
@@ -71,37 +72,19 @@ public class SimulatedTableFour {
         this.contentInt = contentInt;
     }
 
-    /**
-     * @return
-     * @see Object#hashCode()
-     */
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((this.key == null) ? 0 : this.key.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SimulatedTableFour that = (SimulatedTableFour) o;
+        return contentInt == that.contentInt &&
+                Objects.equals(key, that.key) &&
+                Objects.equals(otherTable, that.otherTable) &&
+                Objects.equals(contentTime, that.contentTime);
     }
 
-    /**
-     * @param obj
-     * @return
-     * @see Object#equals(Object)
-     */
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SimulatedTableFour _other = (SimulatedTableFour) obj;
-        if (this.key == null) {
-            if (_other.key != null)
-                return false;
-        } else if (!this.key.equals(_other.key))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(key, otherTable, contentTime, contentInt);
     }
 }
