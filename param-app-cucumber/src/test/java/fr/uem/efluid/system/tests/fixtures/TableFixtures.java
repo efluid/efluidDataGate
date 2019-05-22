@@ -1,12 +1,17 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.isIn;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import cucumber.api.DataTable;
+import cucumber.api.java.en.Given;
+import cucumber.api.java.en.Then;
+import cucumber.api.java.en.When;
+import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.services.types.DictionaryEntryEditData;
+import fr.uem.efluid.services.types.TestQueryData;
+import fr.uem.efluid.system.common.SystemTest;
+import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
+import org.junit.Assert;
+import org.junit.Before;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,20 +19,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import cucumber.api.DataTable;
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import org.junit.Assert;
-import org.junit.Before;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import cucumber.api.java.en.Given;
-import cucumber.api.java.en.Then;
-import cucumber.api.java.en.When;
-import fr.uem.efluid.services.types.DictionaryEntryEditData;
-import fr.uem.efluid.services.types.TestQueryData;
-import fr.uem.efluid.system.common.SystemTest;
-import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 
 /**
  * @author elecomte
@@ -72,7 +66,7 @@ public class TableFixtures extends SystemTest {
     @Given("^the parameter table for managed table \"(.*)\" already exists$")
     public void existing_parameter_table(String table) throws Throwable {
         // Init one table in dict
-        modelDatabase().initDictionary(initDefaultTables(getDefaultDomainFromCurrentProject(), table), initDefaultVersion(getCurrentUserProject()));
+        initDictionaryForDefaultVersionWithTables(getDefaultDomainFromCurrentProject(), getCurrentUserProject(), table);
     }
 
     @Given("^a prepared parameter table data with name \"(.*)\" for managed table \"(.*)\"$")

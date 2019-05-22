@@ -9,22 +9,14 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.*;
 import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.FunctionalDomain;
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.entities.Version;
-import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
-import fr.uem.efluid.model.repositories.ProjectRepository;
-import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.security.UserHolder;
 
 /**
@@ -57,6 +49,9 @@ public class ModelDatabaseAccess {
 
     @Autowired
     private DictionaryRepository entries;
+
+    @Autowired
+    private TableLinkRepository links;
 
     @Autowired
     private VersionRepository versions;
@@ -99,11 +94,12 @@ public class ModelDatabaseAccess {
      * @param tables
      * @param version
      */
-    public void initDictionary(List<DictionaryEntry> tables, Version version) {
+    public void initDictionary(List<DictionaryEntry> tables, List<TableLink> tableLinks, Version version) {
 
         LOGGER.info("[MODEL-INIT] Setup some dictionary data");
 
         this.entries.saveAll(tables);
+        this.links.saveAll(tableLinks);
         this.versions.save(version);
 
         this.entries.flush();

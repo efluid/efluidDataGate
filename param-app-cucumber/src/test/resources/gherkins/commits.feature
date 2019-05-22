@@ -44,3 +44,48 @@ Feature: The commit can be saved and are historised
     And the user has specified a commit comment ":construction: Test commit"
     When the user save the commit
     Then the commit ":construction: Test commit" is added to commit list for current project
+    And the saved commit content has these identified changes :
+      | Table      | Key | Action | Payload                            |
+      | TTAB_ONE   | AAA | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
+      | TTAB_ONE   | BBB | ADD    | PRESET:'Preset 2', SOMETHING:'BBB' |
+      | TTAB_ONE   | CCC | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
+      | TTAB_ONE   | DDD | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
+      | TTAB_ONE   | EEE | ADD    | PRESET:'Preset 5', SOMETHING:'EEE' |
+      | TTAB_TWO   | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'     |
+      | TTAB_TWO   | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'     |
+      | TTAB_THREE | A   | ADD    | OTHER:'Other A'                    |
+      | TTAB_THREE | B   | ADD    | OTHER:'Other B'                    |
+      | TTAB_THREE | C   | ADD    | OTHER:'Other C'                    |
+
+  Scenario: The lob data is associated to a saved commit content
+    Given the existing data in managed table "TTAB_FIVE" :
+      | key | data                | simple |
+      | 1   | ABCDEF1234567ABDDDD | 17.81  |
+      | 2   | ABCDEF1234567ABEEEE | 17.82  |
+      | 3   | ABCDEF1234567ABFFFF | 17.83  |
+    And a diff analysis has been started and completed
+    And the user has selected all content for commit
+    And the user has specified a commit comment ":construction: Test commit"
+    When the user save the commit
+    And the saved commit content has these associated lob data :
+      | data                | hash                                         |
+      | ABCDEF1234567ABDDDD | ZVs3L0PiRT7vzgYlGCrAmrqVm643dW1ZwshZNTNmEBc= |
+      | ABCDEF1234567ABEEEE | MDOnerGg0ikFARKvihX0fFD8V2mUp4+KHfrji2ByPKE= |
+      | ABCDEF1234567ABFFFF | mGb4npkQbRvRJrJWp/QIpwGPqZTFkKhI1FU9l9jNj1M= |
+
+  Scenario: A saved commit can be associated to attached documents. The attached documents are then managed in backlog database
+    Given a diff analysis has been started and completed
+    And the user has selected all content for commit
+    And the user has specified a commit comment ":construction: Test commit with attachment"
+    And the user has attached these documents to the commit:
+      | title         | type      | size  |
+      | attachment.md | MD_FILE   | 1500  |
+      | script.sql    | SQL_FILE  | 7800  |
+      | something.txt | TEXT_FILE | 45000 |
+    When the user save the commit
+    Then the commit ":construction: Test commit with attachment" is added to commit list for current project
+    And these attachment documents are associated to the commit in the current project backlog:
+      | title         | type      |
+      | attachment.md | MD_FILE   |
+      | script.sql    | SQL_FILE  |
+      | something.txt | TEXT_FILE |

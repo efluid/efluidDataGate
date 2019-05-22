@@ -17,7 +17,6 @@ import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
 public class SimulatedTableOne {
 
     @Id
-    @GeneratedValue
     private Long key;
 
     private String value;

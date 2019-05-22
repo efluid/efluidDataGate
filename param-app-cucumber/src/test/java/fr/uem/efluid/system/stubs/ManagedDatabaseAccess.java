@@ -3,21 +3,19 @@ package fr.uem.efluid.system.stubs;
 import cucumber.api.DataTable;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
-import fr.uem.efluid.system.stubs.entities.SimulatedTableFour;
-import fr.uem.efluid.system.stubs.entities.SimulatedTableOne;
-import fr.uem.efluid.system.stubs.entities.SimulatedTableThree;
-import fr.uem.efluid.system.stubs.entities.SimulatedTableTwo;
-import fr.uem.efluid.system.stubs.repositories.SimulatedTableFourRepository;
-import fr.uem.efluid.system.stubs.repositories.SimulatedTableOneRepository;
-import fr.uem.efluid.system.stubs.repositories.SimulatedTableThreeRepository;
-import fr.uem.efluid.system.stubs.repositories.SimulatedTableTwoRepository;
+import fr.uem.efluid.system.stubs.entities.*;
+import fr.uem.efluid.system.stubs.repositories.*;
 import fr.uem.efluid.utils.FormatUtils;
 import org.hamcrest.Matcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.Id;
+import javax.persistence.Lob;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,12 +33,14 @@ import static org.hamcrest.Matchers.*;
  * @since v0.0.8
  */
 @Component
+@Transactional
 public class ManagedDatabaseAccess {
 
     public static final String TABLE_ONE = "TTAB_ONE";
     public static final String TABLE_TWO = "TTAB_TWO";
     public static final String TABLE_THREE = "TTAB_THREE";
     public static final String TABLE_FOUR = "TTAB_FOUR";
+    public static final String TABLE_FIVE = "TTAB_FIVE";
 
     @Autowired
     private SimulatedTableOneRepository tabOne;
@@ -54,6 +54,42 @@ public class ManagedDatabaseAccess {
     @Autowired
     private SimulatedTableFourRepository tabFour;
 
+    @Autowired
+    private SimulatedTableFiveRepository tabFive;
+
+    /**
+     * Init from cucumber Datatable
+     *
+     * @param name
+     * @param data
+     */
+    public void updateTab(String name, DataTable data) {
+
+        this.tabOne.findAll();
+
+        List<Map<String, String>> values = data.asMaps(String.class, String.class);
+
+        switch (name) {
+            case TABLE_ONE:
+                values.forEach(m -> updateOne(m.get("change"), m));
+                break;
+            case TABLE_TWO:
+                values.forEach(m -> updateTwo(m.get("change"), m));
+                break;
+            case TABLE_THREE:
+                values.forEach(m -> updateThree(m.get("change"), m));
+                break;
+            case TABLE_FOUR:
+                values.forEach(m -> updateFour(m.get("change"), m));
+                break;
+            case TABLE_FIVE:
+                values.forEach(m -> updateFive(m.get("change"), m));
+                break;
+            default:
+                throw new AssertionError("Unknown table name " + name);
+        }
+    }
+
     /**
      * Init from cucumber Datatable
      *
@@ -66,31 +102,121 @@ public class ManagedDatabaseAccess {
 
         switch (name) {
             case TABLE_ONE:
-                values.forEach(m ->
-                        this.tabOne.save(one(Integer.parseInt(m.get("key")), m.get("preset"), m.get("something"), m.get("value")))
-                );
+                values.forEach(m -> updateOne("add", m));
                 break;
             case TABLE_TWO:
-                values.forEach(m ->
-                        this.tabTwo.save(two(m.get("key"), m.get("value"), m.get("other")))
-                );
+                values.forEach(m -> updateTwo("add", m));
                 break;
             case TABLE_THREE:
-
-                values.forEach(m ->
-                        this.tabThree.save(three(m.get("key"), m.get("value"), m.get("other")))
-                );
+                values.forEach(m -> updateThree("add", m));
                 break;
             case TABLE_FOUR:
-
-                values.forEach(m ->
-                        this.tabFour.save(four(m.get("key"), Long.valueOf(m.get("otherTable")), FormatUtils.parse(m.get("contentTime")), Integer.valueOf(m.get("contentInt"))))
-                );
+                values.forEach(m -> updateFour("add", m));
+                break;
+            case TABLE_FIVE:
+                values.forEach(m -> updateFive("add", m));
                 break;
             default:
                 throw new AssertionError("Unknown table name " + name);
         }
+    }
 
+    private void updateOne(String action, Map<String, String> m) {
+
+        switch (action) {
+            case "add":
+                this.tabOne.save(one(Integer.parseInt(m.get("key")), m.get("preset"), m.get("something"), m.get("value")));
+                break;
+            case "update":
+                SimulatedTableOne one = this.tabOne.getOne(Long.parseLong(m.get("key")));
+                one.setPreset(m.get("preset"));
+                one.setSomething(m.get("something"));
+                one.setValue(m.get("value"));
+                this.tabOne.save(one);
+                break;
+            case "delete":
+            default:
+                this.tabOne.delete(this.tabOne.getOne(Long.parseLong(m.get("key"))));
+                break;
+        }
+    }
+
+    private void updateTwo(String action, Map<String, String> m) {
+
+        switch (action) {
+            case "add":
+                this.tabTwo.save(two(m.get("key"), m.get("value"), m.get("other")));
+                break;
+            case "update":
+                SimulatedTableTwo two = this.tabTwo.getOne(m.get("key"));
+                two.setOther(m.get("other"));
+                two.setValue(m.get("value"));
+                this.tabTwo.save(two);
+                break;
+            case "delete":
+            default:
+                this.tabTwo.delete(this.tabTwo.getOne(m.get("key")));
+                break;
+        }
+    }
+
+    private void updateThree(String action, Map<String, String> m) {
+
+        switch (action) {
+            case "add":
+                this.tabThree.save(three(m.get("key"), m.get("value"), m.get("other")));
+                break;
+            case "update":
+                SimulatedTableThree three = this.tabThree.getOne(m.get("key"));
+                three.setOther(m.get("other"));
+                three.setValue(m.get("value"));
+                this.tabThree.save(three);
+                break;
+            case "delete":
+            default:
+                this.tabThree.delete(this.tabThree.getOne(m.get("key")));
+                break;
+        }
+    }
+
+    private void updateFour(String action, Map<String, String> m) {
+
+        switch (action) {
+            case "add":
+                this.tabFour.save(four(m.get("key"), Long.valueOf(m.get("otherTable")), FormatUtils.parse(m.get("contentTime")), Integer.valueOf(m.get("contentInt"))));
+                break;
+            case "update":
+                SimulatedTableFour four = this.tabFour.getOne(m.get("key"));
+                four.setOtherTable(new SimulatedTableOne(Long.valueOf(m.get("otherTable"))));
+                four.setContentInt(Integer.valueOf(m.get("contentInt")));
+                four.setContentTime(FormatUtils.parse(m.get("contentTime")));
+                this.tabFour.save(four);
+                break;
+            case "delete":
+            default:
+                this.tabFour.delete(this.tabFour.getOne(m.get("key")));
+                break;
+        }
+    }
+
+
+    private void updateFive(String action, Map<String, String> m) {
+
+        switch (action) {
+            case "add":
+                this.tabFive.save(five(m.get("key"), FormatUtils.toBytes(m.get("data")), new BigDecimal(m.get("simple"))));
+                break;
+            case "update":
+                SimulatedTableFive five = this.tabFive.getOne(m.get("key"));
+                five.setData(FormatUtils.toBytes(m.get("data")));
+                five.setSimple(new BigDecimal(m.get("simple")));
+                this.tabFive.save(five);
+                break;
+            case "delete":
+            default:
+                this.tabFive.delete(this.tabFive.getOne(m.get("key")));
+                break;
+        }
     }
 
     /**
@@ -174,6 +300,17 @@ public class ManagedDatabaseAccess {
         return data;
     }
 
+
+    private static SimulatedTableFive five(String key, byte[] clob, BigDecimal content) {
+
+        SimulatedTableFive data = new SimulatedTableFive();
+        data.setKey(key);
+        data.setData(clob);
+        data.setSimple(content);
+
+        return data;
+    }
+
     /**
      * <p>
      * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
@@ -193,6 +330,9 @@ public class ManagedDatabaseAccess {
         if (tableName.equals(TABLE_FOUR))
             return Arrays.asList("KEY", "SIMULATEDTABLEONE_KEY", "CONTENT_TIME", "CONTENT_INT");
 
+        if (tableName.equals(TABLE_FIVE))
+            return Arrays.asList("KEY", "DATA", "SIMPLE");
+
         return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
     }
 
@@ -207,6 +347,9 @@ public class ManagedDatabaseAccess {
 
         if (tableName.equals(TABLE_FOUR))
             return (List<T>) this.tabFour.findAll();
+
+        if (tableName.equals(TABLE_FIVE))
+            return (List<T>) this.tabFive.findAll();
 
         return (List<T>) this.tabThree.findAll();
     }
@@ -224,6 +367,9 @@ public class ManagedDatabaseAccess {
 
         if (tableName.equals(TABLE_FOUR))
             return this.tabFour.count();
+
+        if (tableName.equals(TABLE_FIVE))
+            return this.tabFive.count();
 
         return this.tabThree.count();
     }

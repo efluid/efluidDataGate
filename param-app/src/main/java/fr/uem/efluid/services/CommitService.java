@@ -225,19 +225,7 @@ public class CommitService extends AbstractApplicationService {
 
         // Check index size for commit
         if (size < this.maxDisplayDetails) {
-
-            Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid(project);
-
-            // Load commit index
-            CommitDetails.completeIndex(details, this.indexes.findByCommitUuid(commitUUID));
-
-            // Need to complete DictEnty + HRPayload for index entries
-            details.getContent().forEach(d -> {
-                DictionaryEntry dict = mappedDict.get(d.getDictionaryEntryUuid());
-                d.completeFromEntity(dict);
-                // Update for rendering
-                d.setDiff(this.diffs.prepareDiffForRendering(dict, d.getDiff()));
-            });
+            completeCommitDetailsWithIndexForProjectDict(project, details, this.indexes.findByCommitUuid(commitUUID));
         }
 
         // Too much data, get only dictionary item listings
@@ -259,6 +247,28 @@ public class CommitService extends AbstractApplicationService {
         details.setAttachmentDisplaySupport(this.attachProcs.isDisplaySupport());
 
         return details;
+    }
+
+    /**
+     * Complete commit details for rendering regarding the specified project dictionary, and the given index content
+     * @param project
+     * @param details
+     * @param index
+     */
+    public void completeCommitDetailsWithIndexForProjectDict(Project project, CommitDetails details, List<IndexEntry> index) {
+
+        Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid(project);
+
+        // Load commit index
+        CommitDetails.completeIndex(details, index);
+
+        // Need to complete DictEnty + HRPayload for index entries
+        details.getContent().forEach(d -> {
+            DictionaryEntry dict = mappedDict.get(d.getDictionaryEntryUuid());
+            d.completeFromEntity(dict);
+            // Update for rendering
+            d.setDiff(this.diffs.prepareDiffForRendering(dict, d.getDiff()));
+        });
     }
 
     /**

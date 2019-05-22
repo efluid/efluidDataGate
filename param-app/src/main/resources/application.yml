@@ -9,7 +9,7 @@ param-efluid:
         password: CHANGE_ME
         connection-test-query: SELECT 1 from DUAL
         minimum-idle: 5
-        max-pool-size: 20
+        max-pool-size: 50
         timeout: 60000
         meta:
             filter-schema: CHANGE_ME

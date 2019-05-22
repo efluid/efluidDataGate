@@ -1,19 +1,16 @@
 package fr.uem.efluid.system.common;
 
-import static fr.uem.efluid.ColumnType.PK_STRING;
-import static fr.uem.efluid.ColumnType.STRING;
-import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.security.UserHolder;
+import fr.uem.efluid.services.*;
+import fr.uem.efluid.services.types.CommitDetails;
+import fr.uem.efluid.system.stubs.*;
+import fr.uem.efluid.system.stubs.entities.SimulatedTableOne;
+import fr.uem.efluid.utils.Associate;
+import fr.uem.efluid.utils.DataGenerationUtils;
+import junit.framework.AssertionFailedError;
 import org.junit.Assert;
 import org.junit.Before;
 import org.pac4j.core.config.Config;
@@ -30,25 +27,20 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.FunctionalDomain;
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.entities.Version;
-import fr.uem.efluid.security.UserHolder;
-import fr.uem.efluid.services.ApplicationDetailsService;
-import fr.uem.efluid.services.ProjectManagementService;
-import fr.uem.efluid.system.stubs.ManagedDatabaseAccess;
-import fr.uem.efluid.system.stubs.ModelDatabaseAccess;
-import fr.uem.efluid.system.stubs.TweakedAsyncDriver;
-import fr.uem.efluid.system.stubs.TweakedDatabaseIdentifier;
-import fr.uem.efluid.utils.Associate;
-import fr.uem.efluid.utils.DataGenerationUtils;
-import junit.framework.AssertionFailedError;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.WebDataBinder;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static fr.uem.efluid.ColumnType.PK_STRING;
+import static fr.uem.efluid.ColumnType.STRING;
+import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * @author elecomte
@@ -79,6 +71,7 @@ public abstract class SystemTest {
     protected static final String DEFAULT_TABLE_TWO = "Table Two";
     protected static final String DEFAULT_TABLE_THREE = "Table Three";
     protected static final String DEFAULT_TABLE_FOUR = "Table Four";
+    protected static final String DEFAULT_TABLE_FIVE = "Table Five";
 
     protected static final String DEFAULT_WHERE = "1=1";
 
@@ -96,13 +89,16 @@ public abstract class SystemTest {
     private ModelDatabaseAccess model;
 
     @Autowired
-    private ApplicationDetailsService dets;
+    private BacklogDatabaseAccess backlog;
+
+    @Autowired
+    protected ApplicationDetailsService dets;
 
     @Autowired
     private UserHolder userHolder;
 
     @Autowired
-    private ProjectManagementService projectMgmt;
+    protected ProjectManagementService projectMgmt;
 
     @Autowired
     private Config securityConfig;
@@ -115,6 +111,15 @@ public abstract class SystemTest {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    protected PilotableCommitPreparationService prep;
+
+    @Autowired
+    protected CommitService commitService;
+
+    @Autowired
+    protected ExportImportService exportImportService;
     /**
      *
      */
@@ -127,6 +132,17 @@ public abstract class SystemTest {
         resetAuthentication();
         resetAsyncProcess();
         resetDatabaseIdentifier();
+    }
+
+    /**
+     * <p>
+     * Entry point for backlog database (preloaded queries ...)
+     * </p>
+     *
+     * @return
+     */
+    protected final BacklogDatabaseAccess backlogDatabase() {
+        return this.backlog;
     }
 
     /**
@@ -184,7 +200,7 @@ public abstract class SystemTest {
     /**
      *
      */
-    protected void initCompleteDictionaryWith3Tables() {
+    protected void initCompleteDictionaryWith4Tables() {
 
         resetAsyncProcess();
         resetDatabaseIdentifier();
@@ -197,8 +213,22 @@ public abstract class SystemTest {
 
         this.dets.completeWizzard();
 
-        modelDatabase().initDictionary(initDefaultTables(newDomain), initDefaultVersion(newProject));
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TABLE_ONE, TABLE_TWO, TABLE_THREE, TABLE_FIVE);
+
     }
+
+
+    protected void initDictionaryForDefaultVersionWithTables(FunctionalDomain domain, Project project, String... tableNames) {
+
+        List<DictionaryEntry> tables = new ArrayList<>();
+        List<TableLink> links = new ArrayList<>();
+
+        // Prepare dictionary
+        initDefaultTables(domain, tables, links, tableNames);
+
+        modelDatabase().initDictionary(tables, links, initDefaultVersion(project));
+    }
+
 
     /**
      *
@@ -374,17 +404,18 @@ public abstract class SystemTest {
 
         currentAction = this.mockMvc.perform(builder);
     }
+
     /**
      * @param url
      * @param objects
      * @throws Exception
      */
-    protected final void postObject(String url, Associate<String,Object> ... objects) throws Exception {
+    protected final void postObject(String url, Associate<String, Object>... objects) throws Exception {
 
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post(url);
 
         // Add attribute
-        for(Associate<String,Object> object : objects) {
+        for (Associate<String, Object> object : objects) {
             builder.requestAttr(object.getOne(), object.getTwo());
         }
 
@@ -396,9 +427,6 @@ public abstract class SystemTest {
 
         currentAction = this.mockMvc.perform(builder);
     }
-
-
-
 
 
     /**
@@ -499,34 +527,42 @@ public abstract class SystemTest {
      * @param domain
      * @return
      */
-    public static List<DictionaryEntry> initDefaultTables(FunctionalDomain domain) {
-        return Arrays.asList(
-                table(DEFAULT_TABLE_ONE, TABLE_ONE, domain, "\"PRESET\", \"SOMETHING\"", DEFAULT_WHERE, "VALUE", STRING),
-                table(DEFAULT_TABLE_TWO, TABLE_TWO, domain, "\"VALUE\", \"OTHER\"", DEFAULT_WHERE, "KEY", PK_STRING),
-                table(DEFAULT_TABLE_THREE, TABLE_THREE, domain, "\"OTHER\"", DEFAULT_WHERE, "VALUE", STRING));
+    public static void initDefaultTables(FunctionalDomain domain, List<DictionaryEntry> tables, List<TableLink> links, String... tableNames) {
+        for (String tableName : tableNames) {
+            switch (tableName) {
+                case TABLE_ONE:
+                    tables.add(table(DEFAULT_TABLE_ONE, TABLE_ONE, domain, "cur.\"PRESET\", cur.\"SOMETHING\"", DEFAULT_WHERE, "VALUE", STRING));
+                    break;
+                case TABLE_TWO:
+                    tables.add(table(DEFAULT_TABLE_TWO, TABLE_TWO, domain, "cur.\"VALUE\", cur.\"OTHER\"", DEFAULT_WHERE, "KEY", PK_STRING));
+                    break;
+                case TABLE_THREE:
+                    tables.add(table(DEFAULT_TABLE_THREE, TABLE_THREE, domain, "cur.\"OTHER\"", DEFAULT_WHERE, "VALUE", STRING));
+                    break;
+                case TABLE_FOUR:
+                    DictionaryEntry tableFour = table(DEFAULT_TABLE_FOUR, TABLE_FOUR, domain, "cur.\"CONTENT_TIME\", cur.\"CONTENT_INT\", ln1.\"VALUE\" as ln_OTHER_TABLE_KEY", DEFAULT_WHERE, "KEY", STRING);
+                    tables.add(tableFour);
+                    links.add(DataGenerationUtils.link(tableFour, "OTHER_TABLE_KEY", "KEY", TABLE_ONE));
+                    break;
+                case TABLE_FIVE:
+                    tables.add(table(DEFAULT_TABLE_FIVE, TABLE_FIVE, domain, "cur.\"DATA\", cur.\"SIMPLE\"", DEFAULT_WHERE, "KEY", PK_STRING));
+                    break;
+                default:
+                    throw new AssertionError("Unsupported table name " + tableName);
+            }
+        }
     }
 
-    /**
-     * @param domain
-     * @return
-     */
-    public static List<DictionaryEntry> initDefaultTables(FunctionalDomain domain, String... tableNames) {
-        return Stream.of(tableNames).map(n ->
-        {
-            switch (n) {
-                case TABLE_ONE:
-                    return table(DEFAULT_TABLE_ONE, TABLE_ONE, domain, "\"PRESET\", \"SOMETHING\"", DEFAULT_WHERE, "VALUE", STRING);
-                case TABLE_TWO:
-                    return table(DEFAULT_TABLE_TWO, TABLE_TWO, domain, "\"VALUE\", \"OTHER\"", DEFAULT_WHERE, "KEY", PK_STRING);
-                case TABLE_THREE:
-                    return table(DEFAULT_TABLE_THREE, TABLE_THREE, domain, "\"OTHER\"", DEFAULT_WHERE, "VALUE", STRING);
-                case TABLE_FOUR:
-                    return table(DEFAULT_TABLE_FOUR, TABLE_THREE, domain, "\"OTHER\"", DEFAULT_WHERE, "VALUE", STRING);
-                default:
-                    throw new AssertionError("Unsupported table name " + n);
-            }
-        }).collect(Collectors.toList());
-    }
+
+    @Id
+    private String key;
+
+    @ManyToOne
+    private SimulatedTableOne otherTable;
+
+    private LocalDateTime contentTime;
+
+    private int contentInt;
 
     /**
      * @param domain
@@ -552,6 +588,18 @@ public abstract class SystemTest {
      */
     protected static Project project(String project) {
         return DataGenerationUtils.project(project);
+    }
+
+    protected CommitDetails getSavedCommit() {
+
+        assertRequestWasOk();
+
+        UUID savedCommitUUID = (UUID) currentAction.andReturn()
+                .getModelAndView().getModel().get("createdUUID");
+
+        assertThat(savedCommitUUID).isNotNull();
+
+        return this.commitService.getExistingCommitDetails(savedCommitUUID);
     }
 
     /**

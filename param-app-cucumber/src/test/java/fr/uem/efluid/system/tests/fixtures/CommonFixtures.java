@@ -9,8 +9,6 @@ import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import fr.uem.efluid.services.types.DictionaryEntryEditData;
-import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.system.common.SystemTest;
 
 /**
@@ -27,7 +25,14 @@ public class CommonFixtures extends SystemTest {
 
     @Given("^the dictionary is fully initialized with tables 1, 2 and 3$")
     public void the_dictionary_is_fully_initialized_with_tables() throws Throwable {
-        initCompleteDictionaryWith3Tables();
+        initCompleteDictionaryWith4Tables();
+    }
+
+    @Given("^the user accesses to the destination environment with the same dictionary$")
+    public void user_witch_environment_same_dic() {
+        // For this, we simply keep current dict, and drop all indexes + Test tables datas
+
+
     }
 
     @When("^(.+) access to (.+)$")
@@ -75,6 +80,13 @@ public class CommonFixtures extends SystemTest {
     public void existing_data_in_managed_table(String name, DataTable data) {
         managedDatabase().initTab(name, data);
     }
+
+
+    @Given("^these changes are applied to table \"(.*)\" :$")
+    public void updated_data_in_managed_table(String name, DataTable data) {
+        managedDatabase().updateTab(name, data);
+    }
+
 
     /**
      * <p>

@@ -4,9 +4,13 @@ import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.system.common.ImportExportHelper;
 import fr.uem.efluid.system.common.SystemTest;
+import fr.uem.efluid.utils.FormatUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -48,7 +53,7 @@ public class PreparationFixtures extends SystemTest {
         select = null;
 
         // Full dic init
-        initCompleteDictionaryWith3Tables();
+        initCompleteDictionaryWith4Tables();
 
         // Authenticated
         implicitlyAuthenticatedAndOnPage("home page");
@@ -127,6 +132,71 @@ public class PreparationFixtures extends SystemTest {
     public void user_has_defined_commit_comment(String comment) throws Exception {
 
         currentCommit.setComment(comment);
+    }
+
+    @Given("^the user has attached these documents to the commit:$")
+    public void user_had_specified_attachments(DataTable table) {
+
+        table.asMaps(String.class, String.class).forEach(m -> {
+            ExportFile export = ImportExportHelper.generateFile(Integer.parseInt(m.get("size")), m.get("title"));
+            this.prep.addAttachmentOnCurrentCommitPreparation(export);
+        });
+    }
+
+    @Given("^the commit \"(.*)\" has been saved with all the identified initial diff content$")
+    public void commit_has_been_added_with_comment(String comment) throws Throwable {
+
+        // Diff completed
+        a_diff_analysis_has_been_started_and_completed();
+
+        // Selected all
+        user_has_selected_all_ready_content();
+
+        // Specified comment
+        user_has_defined_commit_comment(comment);
+
+        // Saved commit
+        user_save_commit();
+
+        // Checked commit
+        CommitDetails commit = getSavedCommit();
+
+        assertThat(getSavedCommit()).isNotNull();
+        assertThat(commit.getComment()).isEqualTo(comment);
+    }
+
+    @Given("^a new commit \"(.*)\" has been saved with all the new identified diff content$")
+    public void new_commit_was_added_with_comment(String comment) throws Throwable {
+
+        // No init here
+
+        // Started
+        a_diff_has_already_been_launched();
+
+        // Completed
+        a_diff_is_completed();
+
+        // Selected all
+        user_has_selected_all_ready_content();
+
+        // Specified comment
+        user_has_defined_commit_comment(comment);
+
+        // Saved commit
+        user_save_commit();
+
+        // Checked commit
+        CommitDetails commit = getSavedCommit();
+
+        assertThat(getSavedCommit()).isNotNull();
+        assertThat(commit.getComment()).isEqualTo(comment);
+    }
+
+    @Given("^the commit \"(.*)\" has been saved and exported with all the identified initial diff content$")
+    public void new_commit_exported(String comment) throws Throwable {
+        commit_has_been_added_with_comment(comment);
+        Commit specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
+        PushFixtures.currentExport = this.commitService.exportOneCommit(specifiedCommit.getUuid());
     }
 
     @When("^the user accesses to preparation commit page$")
@@ -229,10 +299,39 @@ public class PreparationFixtures extends SystemTest {
                 PreparedIndexEntry diffLine = content.getDiff().get(i);
                 Map<String, String> dataLine = v.get(i);
 
+                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
+                assertThat(diffLine.getAction()).isEqualTo(action);
                 assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
-                assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
+
+                // No need to check payload in delete
+                if (action != REMOVE) {
+                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
+                }
             }
         });
+    }
+
+
+    @Then("^the commit content has these associated lob data :$")
+    public void commit_lob_content(DataTable table) {
+
+        Map<String, String> datas = table.asMaps(String.class, String.class).stream().collect(Collectors.toMap(i -> i.get("hash"),i -> i.get("data")));
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+        assertThat(preparation.getDiffLobs()).hasSize(datas.size());
+
+        preparation.getDiffLobs().forEach((hash, bin) -> {
+
+            // Custom clean message
+            if(datas.get(hash) == null){
+                throw new AssertionError("Cannot found corresponding hash for current lob. Current is "
+                        + hash + " with data \"" + FormatUtils.toString(bin) + "\"");
+            }
+            assertThat(FormatUtils.toString(bin)).isEqualTo(datas.get(hash));
+        });
+
     }
 
     @Then("^the commit comment is empty$")

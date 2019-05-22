@@ -43,7 +43,7 @@ public class ExportImportService extends ExportService {
 	 * @param file
 	 * @return
 	 */
-	List<SharedPackage<?>> importPackages(ExportFile file) {
+	public List<SharedPackage<?>> importPackages(ExportFile file) {
 
 		try {
 			Path path = SharedOutputInputUtils.initTmpFile(FILE_ID, FILE_ZIP_EXT, true);
