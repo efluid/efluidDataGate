@@ -63,8 +63,8 @@ public class ManagedValueConverter {
     private final static String TXT_URL_TEMPLATE = "<a href=\"/lob/%s\" download=\"download\">" + ColumnType.TEXT.getDisplayName()
             + "</a>";
 
-    private final static String LOB_HASH_SEARCH = new StringBuilder(AFFECT).append(ColumnType.BINARY.getRepresent()).append(TYPE_IDENT)
-            .toString();
+    private final static String BLOB_HASH_SEARCH = AFFECT + String.valueOf(ColumnType.BINARY.getRepresent()) + TYPE_IDENT;
+    private final static String CLOB_HASH_SEARCH = AFFECT + String.valueOf(ColumnType.TEXT.getRepresent()) + TYPE_IDENT;
 
     private final static DateTimeFormatter LDT_FORMATTER = DateTimeFormatter.ofPattern(FormatUtils.DATE_TIME_FORMAT);
 
@@ -314,7 +314,9 @@ public class ManagedValueConverter {
     public List<String> extractUsedBinaryHashs(String internalExtracted) {
 
         // To avoid useless expand, check if a hash is used in internal
-        if (internalExtracted != null && internalExtracted.indexOf(LOB_HASH_SEARCH) > 0) {
+        // (double index search is still faster than regexp process in this case)
+        if (internalExtracted != null
+                && (internalExtracted.indexOf(BLOB_HASH_SEARCH) > 0 || internalExtracted.indexOf(CLOB_HASH_SEARCH) > 0)) {
             return expandInternalValue(internalExtracted).stream()
                     .filter(v -> v.getType() == ColumnType.BINARY || v.getType() == ColumnType.TEXT)
                     .map(Value::getValueAsString).collect(Collectors.toList());
@@ -424,7 +426,7 @@ public class ManagedValueConverter {
      */
     private static String renderValue(Value value) {
 
-        if (value.getType() == ColumnType.BINARY || value.getType()  == ColumnType.TEXT) {
+        if (value.getType() == ColumnType.BINARY || value.getType() == ColumnType.TEXT) {
             try {
                 return String.format(value.getType() == ColumnType.BINARY ? LOB_URL_TEMPLATE : TXT_URL_TEMPLATE,
                         URLEncoder.encode(new String(value.getValue(), FormatUtils.CONTENT_ENCODING), FormatUtils.CONTENT_ENCODING.name()));

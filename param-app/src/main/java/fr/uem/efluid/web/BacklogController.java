@@ -236,7 +236,7 @@ public class BacklogController extends CommonController {
 	 * @return
 	 */
 	@RequestMapping(path = { "/prepare/commit", "/merge/commit" }, method = POST)
-	public String preparationLocalCommitPage(Model model, @RequestAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+	public String preparationCommitPage(Model model, @RequestAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
 		if (!controlSelectedProject(model)) {
 			return REDIRECT_SELECT;
@@ -260,7 +260,7 @@ public class BacklogController extends CommonController {
 	 * @return
 	 */
 	@RequestMapping(path = { "/prepare/save", "/merge/save" }, method = POST)
-	public String preparationLocalSave(Model model, @RequestAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+	public String preparationSave(Model model, @RequestAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
 
 		if (!controlSelectedProject(model)) {
 			return REDIRECT_SELECT;
