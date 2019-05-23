@@ -1,6 +1,5 @@
 package fr.uem.efluid.system.common;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
@@ -8,7 +7,6 @@ import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.system.stubs.*;
-import fr.uem.efluid.system.stubs.entities.SimulatedTableOne;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import junit.framework.AssertionFailedError;
@@ -27,28 +25,17 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static fr.uem.efluid.ColumnType.PK_STRING;
-import static fr.uem.efluid.ColumnType.STRING;
+import static fr.uem.efluid.ColumnType.*;
 import static fr.uem.efluid.system.stubs.ManagedDatabaseAccess.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-/**
- * @author elecomte
- * @version 1
- * @since v0.0.8
- */
 
 /**
  * @author elecomte
@@ -61,21 +48,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public abstract class SystemTest {
 
-    protected static final String DEFAULT_USER = "any";
+    private static final String DEFAULT_USER = "any";
 
-    protected static final String DEFAULT_PROJECT = "Default";
+    private static final String DEFAULT_PROJECT = "Default";
 
-    protected static final String DEFAULT_DOMAIN = "Test domain";
+    private static final String DEFAULT_DOMAIN = "Test domain";
 
-    protected static final String DEFAULT_VERSION = "vDefault";
+    private static final String DEFAULT_VERSION = "vDefault";
 
-    protected static final String DEFAULT_TABLE_ONE = "Table One";
-    protected static final String DEFAULT_TABLE_TWO = "Table Two";
-    protected static final String DEFAULT_TABLE_THREE = "Table Three";
-    protected static final String DEFAULT_TABLE_FOUR = "Table Four";
-    protected static final String DEFAULT_TABLE_FIVE = "Table Five";
+    private static final String DEFAULT_TABLE_ONE = "Table One";
+    private static final String DEFAULT_TABLE_TWO = "Table Two";
+    private static final String DEFAULT_TABLE_THREE = "Table Three";
+    private static final String DEFAULT_TABLE_FOUR = "Table Four";
+    private static final String DEFAULT_TABLE_FIVE = "Table Five";
+    private static final String DEFAULT_TABLE_SIX = "Table Six";
 
-    protected static final String DEFAULT_WHERE = "1=1";
+    private static final String DEFAULT_WHERE = "1=1";
 
     protected static ResultActions currentAction;
 
@@ -115,9 +103,6 @@ public abstract class SystemTest {
     private TweakedDatabaseIdentifier databaseIdentifier;
 
     @Autowired
-    private ObjectMapper mapper;
-
-    @Autowired
     protected PilotableCommitPreparationService prep;
 
     @Autowired
@@ -125,6 +110,7 @@ public abstract class SystemTest {
 
     @Autowired
     protected ExportImportService exportImportService;
+
     /**
      *
      */
@@ -180,7 +166,7 @@ public abstract class SystemTest {
         Project newProject = initDefaultProject();
         FunctionalDomain newDomain = initDefaultDomain(newProject);
 
-        modelDatabase().initWizzardData(user, newProject, Arrays.asList(newDomain));
+        modelDatabase().initWizzardData(user, newProject, Collections.singletonList(newDomain));
 
         this.dets.completeWizzard();
     }
@@ -205,7 +191,7 @@ public abstract class SystemTest {
     /**
      *
      */
-    protected void initCompleteDictionaryWith4Tables() {
+    protected void initCompleteDictionaryWith5Tables() {
 
         resetAsyncProcess();
         resetDatabaseIdentifier();
@@ -217,11 +203,11 @@ public abstract class SystemTest {
         // Force cache
         this.desc.getTables();
 
-        modelDatabase().initWizzardData(user, newProject, Arrays.asList(newDomain));
+        modelDatabase().initWizzardData(user, newProject, Collections.singletonList(newDomain));
 
         this.dets.completeWizzard();
 
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TABLE_ONE, TABLE_TWO, TABLE_THREE, TABLE_FIVE);
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TABLE_ONE, TABLE_TWO, TABLE_THREE, TABLE_FIVE, TABLE_SIX);
 
     }
 
@@ -396,7 +382,7 @@ public abstract class SystemTest {
      * @param params
      * @throws Exception
      */
-    private final void post(String url, Collection<Associate<String, String>> params) throws Exception {
+    private void post(String url, Collection<Associate<String, String>> params) throws Exception {
 
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post(url);
 
@@ -418,6 +404,7 @@ public abstract class SystemTest {
      * @param objects
      * @throws Exception
      */
+    @SafeVarargs
     protected final void postObject(String url, Associate<String, Object>... objects) throws Exception {
 
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post(url);
@@ -527,7 +514,7 @@ public abstract class SystemTest {
      * @param newProject
      * @return
      */
-    public static Version initDefaultVersion(Project newProject) {
+    private static Version initDefaultVersion(Project newProject) {
         return version(DEFAULT_VERSION, newProject);
     }
 
@@ -535,7 +522,7 @@ public abstract class SystemTest {
      * @param domain
      * @return
      */
-    public static void initDefaultTables(FunctionalDomain domain, List<DictionaryEntry> tables, List<TableLink> links, String... tableNames) {
+    private static void initDefaultTables(FunctionalDomain domain, List<DictionaryEntry> tables, List<TableLink> links, String... tableNames) {
         for (String tableName : tableNames) {
             switch (tableName) {
                 case TABLE_ONE:
@@ -555,22 +542,14 @@ public abstract class SystemTest {
                 case TABLE_FIVE:
                     tables.add(table(DEFAULT_TABLE_FIVE, TABLE_FIVE, domain, "cur.\"DATA\", cur.\"SIMPLE\"", DEFAULT_WHERE, "KEY", PK_STRING));
                     break;
+                case TABLE_SIX:
+                    tables.add(table(DEFAULT_TABLE_SIX, TABLE_SIX, domain, "cur.\"TEXT\", cur.\"DATE\"", DEFAULT_WHERE, "IDENTIFIER", PK_ATOMIC));
+                    break;
                 default:
                     throw new AssertionError("Unsupported table name " + tableName);
             }
         }
     }
-
-
-    @Id
-    private String key;
-
-    @ManyToOne
-    private SimulatedTableOne otherTable;
-
-    private LocalDateTime contentTime;
-
-    private int contentInt;
 
     /**
      * @param domain
@@ -602,8 +581,8 @@ public abstract class SystemTest {
 
         assertRequestWasOk();
 
-        UUID savedCommitUUID = (UUID) currentAction.andReturn()
-                .getModelAndView().getModel().get("createdUUID");
+        UUID savedCommitUUID = (UUID) Objects.requireNonNull(currentAction.andReturn()
+                .getModelAndView()).getModel().get("createdUUID");
 
         assertThat(savedCommitUUID).isNotNull();
 
@@ -694,7 +673,7 @@ public abstract class SystemTest {
             Collection<K> properties) {
 
         @SuppressWarnings("unchecked")
-        Collection<T> datas = (Collection<T>) currentAction.andReturn().getModelAndView().getModel().get(property);
+        Collection<T> datas = (Collection<T>) Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(property);
 
         Assert.assertNotNull(datas);
         Assert.assertEquals(size, datas.size());
@@ -768,7 +747,7 @@ public abstract class SystemTest {
          * @param method
          * @return
          */
-        private static final String propName(Method method) {
+        private static String propName(Method method) {
             if (method.getName().startsWith("get")) {
                 return method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
             }

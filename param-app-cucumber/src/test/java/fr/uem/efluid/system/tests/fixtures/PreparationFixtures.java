@@ -4,7 +4,6 @@ import cucumber.api.DataTable;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
-import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
@@ -54,7 +53,7 @@ public class PreparationFixtures extends SystemTest {
         select = null;
 
         // Full dic init
-        initCompleteDictionaryWith4Tables();
+        initCompleteDictionaryWith5Tables();
 
         // Authenticated
         implicitlyAuthenticatedAndOnPage("home page");

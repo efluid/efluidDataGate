@@ -60,7 +60,7 @@ Feature: The backlog can be exported
       | TTAB_TWO | JJJ | UPDATE | OTHER:'Other JJJ'=>'Other JJJ updated' |
       | TTAB_TWO | IJK | ADD    | VALUE:'Le new', OTHER:'newnew'         |
 
-  Scenario: All clob content from a commit is exported
+  Scenario: All blob content from a commit is exported
     Given the existing data in managed table "TTAB_FIVE" :
       | key | data                | simple |
       | 1   | ABCDEF1234567ABDDDD | 17.81  |
@@ -89,6 +89,37 @@ Feature: The backlog can be exported
       | ABCDEF1234567ABDDDD | ZVs3L0PiRT7vzgYlGCrAmrqVm643dW1ZwshZNTNmEBc= |
       | ABCDEF1234567ABEEEE | MDOnerGg0ikFARKvihX0fFD8V2mUp4+KHfrji2ByPKE= |
       | ABCDEF1234567ABFFFF | mGb4npkQbRvRJrJWp/QIpwGPqZTFkKhI1FU9l9jNj1M= |
+
+  Scenario: All clob content from a commit is exported
+    Given the existing data in managed table "TTAB_SIX" :
+      | identifier | text                                     | date       |
+      | 7          | Ceci est un text enregistré dans un CLOB | 2012-01-15 |
+      | 8          | Un autre text CLOB                       | 2005-07-08 |
+      | 9          | Encore un autre                          | 2021-12-25 |
+    And the commit ":tada: Test commit init clob" has been saved with all the identified initial diff content
+    When the user request an export of the commit with name ":tada: Test commit init clob"
+    Then the export package contains 1 commit contents
+    And the export package content has these identified changes for commit with name ":tada: Test commit init clob" :
+      | Table      | Key | Action | Payload                                                                                                                         |
+      | TTAB_ONE   | AAA | ADD    | PRESET:'Preset 1', SOMETHING:'AAA'                                                                                              |
+      | TTAB_ONE   | BBB | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'                                                                                              |
+      | TTAB_ONE   | CCC | ADD    | PRESET:'Preset 3', SOMETHING:'CCC'                                                                                              |
+      | TTAB_ONE   | DDD | ADD    | PRESET:'Preset 4', SOMETHING:'DDD'                                                                                              |
+      | TTAB_ONE   | EEE | ADD    | PRESET:'Preset 5', SOMETHING:'EEE'                                                                                              |
+      | TTAB_TWO   | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'                                                                                                  |
+      | TTAB_TWO   | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'                                                                                                  |
+      | TTAB_THREE | A   | ADD    | OTHER:'Other A'                                                                                                                 |
+      | TTAB_THREE | B   | ADD    | OTHER:'Other B'                                                                                                                 |
+      | TTAB_THREE | C   | ADD    | OTHER:'Other C'                                                                                                                 |
+      | TTAB_SIX   | 7   | ADD    | TEXT:<a href="/lob/AyoJCmZNQXwkzt2ZcHgG8cpvUucsbGnanTuQu%2BpaGOs%3D" download="download">TEXT</a>, DATE:2012-01-15 00:00:00     |
+      | TTAB_SIX   | 8   | ADD    | TEXT:<a href="/lob/KOpk7DP9iLnAls5%2FRoF1%2BKRDxWMDaA%2BeSk2bUGo8g3g%3D" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
+      | TTAB_SIX   | 9   | ADD    | TEXT:<a href="/lob/%2BfuDApVm2qHu8BaSOOkKAtICrThc5VM9ESzFM%2FC%2FVGI%3D" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
+    And the export package content has these associated lob data for commit with name ":tada: Test commit init clob" :
+      | data                                     | hash                                         |
+      | Ceci est un text enregistré dans un CLOB | AyoJCmZNQXwkzt2ZcHgG8cpvUucsbGnanTuQu+paGOs= |
+      | Un autre text CLOB                       | KOpk7DP9iLnAls5/RoF1+KRDxWMDaA+eSk2bUGo8g3g= |
+      | Encore un autre                          | +fuDApVm2qHu8BaSOOkKAtICrThc5VM9ESzFM/C/VGI= |
+
 
 
  ## Scenario: All attachment documents from a commit are exported

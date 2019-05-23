@@ -23,7 +23,7 @@ public class CommonFixtures extends SystemTest {
 
     @Given("^the dictionary is fully initialized with tables 1, 2 and 3$")
     public void the_dictionary_is_fully_initialized_with_tables() throws Throwable {
-        initCompleteDictionaryWith4Tables();
+        initCompleteDictionaryWith5Tables();
     }
 
     @Given("^the user accesses to the destination environment with the same dictionary$")

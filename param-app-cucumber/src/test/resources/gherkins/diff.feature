@@ -60,6 +60,27 @@ Feature: The update on parameter tables can be followed, checked and stored as c
       | ABCDEF1234567ABEEEE | MDOnerGg0ikFARKvihX0fFD8V2mUp4+KHfrji2ByPKE= |
       | ABCDEF1234567ABFFFF | mGb4npkQbRvRJrJWp/QIpwGPqZTFkKhI1FU9l9jNj1M= |
 
+  Scenario: A first commit for a single table contains all table content - clob fields
+    Given the existing data in managed table "TTAB_SIX" :
+      | identifier | text                                     | date       |
+      | 7          | Ceci est un text enregistré dans un CLOB | 2012-01-15 |
+      | 8          | Un autre text CLOB                       | 2005-07-08 |
+      | 9          | Encore un autre                          | 2021-12-25 |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table    | Key | Action | Payload                                                                                                                         |
+      | TTAB_SIX | 7   | ADD    | TEXT:<a href="/lob/AyoJCmZNQXwkzt2ZcHgG8cpvUucsbGnanTuQu%2BpaGOs%3D" download="download">TEXT</a>, DATE:2012-01-15 00:00:00     |
+      | TTAB_SIX | 8   | ADD    | TEXT:<a href="/lob/KOpk7DP9iLnAls5%2FRoF1%2BKRDxWMDaA%2BeSk2bUGo8g3g%3D" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
+      | TTAB_SIX | 9   | ADD    | TEXT:<a href="/lob/%2BfuDApVm2qHu8BaSOOkKAtICrThc5VM9ESzFM%2FC%2FVGI%3D" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
+    And the commit content has these associated lob data :
+      | data                                     | hash                                         |
+      | Ceci est un text enregistré dans un CLOB | AyoJCmZNQXwkzt2ZcHgG8cpvUucsbGnanTuQu+paGOs= |
+      | Un autre text CLOB                       | KOpk7DP9iLnAls5/RoF1+KRDxWMDaA+eSk2bUGo8g3g= |
+      | Encore un autre                          | +fuDApVm2qHu8BaSOOkKAtICrThc5VM9ESzFM/C/VGI= |
+
   Scenario: A first commit for multiple tables contains all table contents
     Given the existing data in managed table "TTAB_ONE" :
       | key | value | preset   | something |

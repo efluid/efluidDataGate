@@ -15,6 +15,7 @@ import javax.persistence.EntityManager;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +42,7 @@ public class ManagedDatabaseAccess {
     public static final String TABLE_THREE = "TTAB_THREE";
     public static final String TABLE_FOUR = "TTAB_FOUR";
     public static final String TABLE_FIVE = "TTAB_FIVE";
+    public static final String TABLE_SIX = "TTAB_SIX";
 
     @Autowired
     private SimulatedTableOneRepository tabOne;
@@ -58,9 +60,13 @@ public class ManagedDatabaseAccess {
     private SimulatedTableFiveRepository tabFive;
 
     @Autowired
+    private SimulatedTableSixRepository tabSix;
+
+    @Autowired
     private EntityManager em;
 
     public void dropManaged() {
+        this.tabSix.deleteAll();
         this.tabFive.deleteAll();
         this.tabFour.deleteAll();
         this.tabThree.deleteAll();
@@ -97,6 +103,9 @@ public class ManagedDatabaseAccess {
             case TABLE_FIVE:
                 values.forEach(m -> updateFive(m.get("change"), m));
                 break;
+            case TABLE_SIX:
+                values.forEach(m -> updateSix(m.get("change"), m));
+                break;
             default:
                 throw new AssertionError("Unknown table name " + name);
         }
@@ -129,6 +138,9 @@ public class ManagedDatabaseAccess {
             case TABLE_FIVE:
                 assertFiveComplies(values);
                 break;
+            case TABLE_SIX:
+                assertSixComplies(values);
+                break;
             default:
                 throw new AssertionError("Unknown table name " + name);
         }
@@ -159,6 +171,9 @@ public class ManagedDatabaseAccess {
                 break;
             case TABLE_FIVE:
                 values.forEach(m -> updateFive("add", m));
+                break;
+            case TABLE_SIX:
+                values.forEach(m -> updateSix("add", m));
                 break;
             default:
                 throw new AssertionError("Unknown table name " + name);
@@ -319,6 +334,40 @@ public class ManagedDatabaseAccess {
         });
     }
 
+    private void updateSix(String action, Map<String, String> m) {
+
+        switch (action) {
+            case "add":
+                this.tabSix.save(six(Long.valueOf(m.get("identifier")), m.get("text"), FormatUtils.parseLd(m.get("date"))));
+                break;
+            case "update":
+                SimulatedTableSix six = this.tabSix.getOne(Long.valueOf(m.get("identifier")));
+                six.setText(m.get("text"));
+                six.setDate(FormatUtils.parseLd(m.get("date")));
+                this.tabSix.save(six);
+                break;
+            case "delete":
+            default:
+                this.tabSix.delete(this.tabSix.getOne(Long.valueOf(m.get("identifier"))));
+                break;
+        }
+    }
+
+    private void assertSixComplies(List<Map<String, String>> values) {
+        assertThat(this.tabSix.count()).isEqualTo(values.size());
+
+        values.forEach(m -> {
+            SimulatedTableSix expected = six(Long.valueOf(m.get("identifier")), m.get("text"), FormatUtils.parseLd(m.get("date")));
+            SimulatedTableSix found = this.tabSix.getOne(Long.valueOf(m.get("identifier")));
+            assertThat(found).isNotNull();
+            if (!found.equals(expected)) {
+                throw new AssertionError("Differences found for table " + TABLE_SIX + " on id " + found.getIdentifier() +
+                        ". Found values : text=\"" + found.getText() + "\" (expected=\"" + expected.getText() + "\"), " +
+                        "date=" + found.getDate() + " (expected=" + expected.getDate() + ")");
+            }
+        });
+    }
+
     /**
      * @param nbr
      * @param keyPattern
@@ -400,7 +449,6 @@ public class ManagedDatabaseAccess {
         return data;
     }
 
-
     private static SimulatedTableFive five(String key, byte[] clob, BigDecimal content) {
 
         SimulatedTableFive data = new SimulatedTableFive();
@@ -410,6 +458,17 @@ public class ManagedDatabaseAccess {
 
         return data;
     }
+
+    private static SimulatedTableSix six(Long id, String text, LocalDate date) {
+
+        SimulatedTableSix data = new SimulatedTableSix();
+        data.setIdentifier(id);
+        data.setText(text);
+        data.setDate(date);
+
+        return data;
+    }
+
 
     /**
      * <p>

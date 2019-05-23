@@ -1,6 +1,7 @@
 package fr.uem.efluid.utils;
 
 import java.nio.charset.Charset;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -27,6 +28,9 @@ public final class FormatUtils {
     public static final String TIME_FORMAT = "HH:mm:ss";
 
     public static final String DATE_TIME_FORMAT = DATE_FORMAT + " " + TIME_FORMAT;
+
+
+    private static final DateTimeFormatter LD_FORMATTER = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
     private static final DateTimeFormatter LDT_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
 
@@ -133,6 +137,19 @@ public final class FormatUtils {
         }
 
         return LocalDateTime.parse(date, LDT_FORMATTER);
+    }
+
+    /**
+     * @param date
+     * @return
+     */
+    public static LocalDate parseLd(String date) {
+
+        if (date == null) {
+            return null;
+        }
+
+        return LocalDate.parse(date, LD_FORMATTER);
     }
 
 

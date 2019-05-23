@@ -63,7 +63,7 @@ Feature: The commit can be saved and are historised
       | TTAB_THREE | B   | ADD    | OTHER:'Other B'                    |
       | TTAB_THREE | C   | ADD    | OTHER:'Other C'                    |
 
-  Scenario: The lob data is associated to a saved commit content
+  Scenario: The lob data is associated to a saved commit content - blob content
     Given the existing data in managed table "TTAB_FIVE" :
       | key | data                | simple |
       | 1   | ABCDEF1234567ABDDDD | 17.81  |
@@ -72,12 +72,28 @@ Feature: The commit can be saved and are historised
     And a diff analysis has been started and completed
     And the user has selected all content for commit
     And the user has specified a commit comment ":construction: Test commit"
-    When the user save the merge commit
+    When the user save the commit
     And the saved commit content has these associated lob data :
       | data                | hash                                         |
       | ABCDEF1234567ABDDDD | ZVs3L0PiRT7vzgYlGCrAmrqVm643dW1ZwshZNTNmEBc= |
       | ABCDEF1234567ABEEEE | MDOnerGg0ikFARKvihX0fFD8V2mUp4+KHfrji2ByPKE= |
       | ABCDEF1234567ABFFFF | mGb4npkQbRvRJrJWp/QIpwGPqZTFkKhI1FU9l9jNj1M= |
+
+  Scenario: The lob data is associated to a saved commit content - clob content
+    Given the existing data in managed table "TTAB_SIX" :
+      | identifier | text                                     | date       |
+      | 7          | Ceci est un text enregistré dans un CLOB | 2012-01-15 |
+      | 8          | Un autre text CLOB                       | 2005-07-08 |
+      | 9          | Encore un autre                          | 2021-12-25 |
+    And a diff analysis has been started and completed
+    And the user has selected all content for commit
+    And the user has specified a commit comment ":construction: Test commit"
+    When the user save the commit
+    And the saved commit content has these associated lob data :
+      | data                                     | hash                                         |
+      | Ceci est un text enregistré dans un CLOB | AyoJCmZNQXwkzt2ZcHgG8cpvUucsbGnanTuQu+paGOs= |
+      | Un autre text CLOB                       | KOpk7DP9iLnAls5/RoF1+KRDxWMDaA+eSk2bUGo8g3g= |
+      | Encore un autre                          | +fuDApVm2qHu8BaSOOkKAtICrThc5VM9ESzFM/C/VGI= |
 
   Scenario: A saved commit can be associated to attached documents. The attached documents are then managed in backlog database
     Given a diff analysis has been started and completed
@@ -88,7 +104,7 @@ Feature: The commit can be saved and are historised
       | attachment.md | MD_FILE   | 1500  |
       | script.sql    | SQL_FILE  | 7800  |
       | something.txt | TEXT_FILE | 45000 |
-    When the user save the merge commit
+    When the user save the commit
     Then the commit ":construction: Test commit with attachment" is added to commit list for current project
     And these attachment documents are associated to the commit in the current project backlog:
       | title         | type      |

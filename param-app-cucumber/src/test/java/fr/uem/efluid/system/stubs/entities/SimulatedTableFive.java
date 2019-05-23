@@ -64,15 +64,15 @@ public class SimulatedTableFive {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SimulatedTableFive that = (SimulatedTableFive) o;
-        return Objects.equals(key, that.key) &&
-                Arrays.equals(data, that.data) &&
-                Objects.equals(simple, that.simple);
+        return Objects.equals(getKey(), that.getKey()) &&
+                Arrays.equals(getData(), that.getData()) &&
+                Objects.equals(getSimple(), that.getSimple());
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(key, simple);
-        result = 31 * result + Arrays.hashCode(data);
+        int result = Objects.hash(getKey(), getSimple());
+        result = 31 * result + Arrays.hashCode(getData());
         return result;
     }
 }
