@@ -192,6 +192,18 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
     }
 
     /**
+     * <p>Prepare the query from a line. Produces the SQL code + select the correct lobs to inject as preparedStatment
+     * Args during the query launch. Other "simple" values are directly combined in the query using "protect" rules
+     * from {@link ManagedQueriesGenerator}
+     * </p>
+     * <p>The most complexe part here is the lob processing. The lobs are extracted by their hash (used in diff line
+     * payload) from the map of "all lobs" <code>allLobs</code> and added to specified <code>lobArgs</code>. We have to
+     * manage differently the BLOBs and the CLOBS :
+     * <ul><li>BLOBs are managed in args as simple byte array and used "as this" in prepared statement arg inject</li>
+     * <li>CLOBs are converted to strings and used as string in ps arg inject</li></ul>
+     * </p>
+     * <p>This method is built with performance in mind, but still could be optimized</p>
+     *
      * @param entry
      * @param line
      * @return
@@ -205,6 +217,8 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
             List<Object[]> lobArgs) {
 
         final List<String> refLobKeys = new ArrayList<>();
+
+        // Values may be needed in updates for ar
         List<fr.uem.efluid.services.types.Value> values = null;
         String q;
 
@@ -226,15 +240,18 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
         if (refLobKeys.size() > 0) {
             final Set<String> clobKeys = new HashSet<>();
 
+            // Detect the lobs hash wich are CLOBs (from values details)
             if (values != null) {
                 values.stream().filter(v -> v.getType() == ColumnType.TEXT).forEach(v -> clobKeys.add(v.getValueAsString()));
             }
 
             lobArgs.add(refLobKeys.stream().map(l -> {
+                // If identified as a CLOB, convert to string for PS arg inject
                 if (clobKeys.contains(l)) {
                     LOGGER.debug("Process LOB {} as a CLOB text", l);
                     return FormatUtils.toString(allLobs.get(l));
                 }
+                // Else we use directly the byte[]
                 return allLobs.get(l);
             }).toArray());
         }
