@@ -268,7 +268,7 @@ public class PreparationFixtures extends SystemTest {
         }
 
         // Post prepared data
-        postObject(getCorrespondingLinkForPageName("commit saving page"), p("preparation", preparation));
+        postObject(getCorrespondingLinkForPageName("commit saving page"), p("preparationPush", preparation));
 
         // Refresh preparation editData
         currentCommit = ((PilotedCommitPreparation<?>) currentAction.andReturn()
@@ -310,7 +310,7 @@ public class PreparationFixtures extends SystemTest {
         }
 
         // Post prepared data
-        postObject(getCorrespondingLinkForPageName("commit save"), p("preparation", preparation));
+        postObject(getCorrespondingLinkForPageName("commit save"), p("preparationPush", preparation));
     }
 
     @When("^the user save the merge commit$")

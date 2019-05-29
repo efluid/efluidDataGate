@@ -235,14 +235,14 @@ public class BacklogController extends CommonController {
      * @return
      */
     @RequestMapping(path = {"/prepare/commit", "/merge/commit"}, method = POST)
-    public String preparationCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+    public String preparationCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation,  @RequestAttribute(required =  false) PilotedCommitPreparation<LocalPreparedDiff> preparationPush) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
         }
 
         // Update current preparation with selected attributes
-        this.pilotableCommitService.copyCommitPreparationSelections(preparation);
+        this.pilotableCommitService.copyCommitPreparationSelections(preparationPush != null ? preparationPush : preparation);
 
         // Get updated preparation
         model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
@@ -259,14 +259,14 @@ public class BacklogController extends CommonController {
      * @return
      */
     @RequestMapping(path = {"/prepare/save", "/merge/save"}, method = POST)
-    public String preparationSave(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+    public String preparationSave(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation,  @RequestAttribute(required =  false) PilotedCommitPreparation<LocalPreparedDiff> preparationPush) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
         }
 
         // Update current preparation with selected attributes
-        this.pilotableCommitService.copyCommitPreparationCommitData(preparation);
+        this.pilotableCommitService.copyCommitPreparationCommitData(preparationPush != null ? preparationPush : preparation);
         UUID created = this.pilotableCommitService.saveCommitPreparation();
 
         // Get updated preparation
