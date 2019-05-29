@@ -1,6 +1,7 @@
 package fr.uem.efluid.system.tests.fixtures;
 
 import cucumber.api.DataTable;
+import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import fr.uem.efluid.model.entities.Commit;
@@ -38,6 +39,11 @@ public class PushPullFixtures extends SystemTest {
         currentExport = this.commitService.exportOneCommit(specifiedCommit);
     }
 
+    @Given("^the user has requested an export of the commit with name \"(.*)\"$")
+    public void given_export_one_commit(String name) {
+        UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
+        currentExport = this.commitService.exportOneCommit(specifiedCommit);
+    }
     @When("^the user import the available source package$")
     public void when_import_current_package(){
         this.prep.startMergeCommitPreparation(currentExport.getResult());

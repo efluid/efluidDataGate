@@ -16,6 +16,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 public class CommonFixtures extends SystemTest {
 
+    public static boolean efluidCase = false;
+
+    @Given("^the test is an Efluid standard scenario$")
+    public void efluid_test_case() {
+        efluidCase = true;
+    }
+
     @Given("^the application is after a fresh install$")
     public void the_application_is_after_a_fresh_install() throws Throwable {
         // Nothing : no database init
@@ -23,7 +30,14 @@ public class CommonFixtures extends SystemTest {
 
     @Given("^the dictionary is fully initialized with tables 1, 2 and 3$")
     public void the_dictionary_is_fully_initialized_with_tables() throws Throwable {
-        initCompleteDictionaryWith7Tables();
+
+        if(efluidCase){
+            initCompleteDictionaryWithEfluidTestTables();
+        } else {
+            initCompleteDictionaryWith7Tables();
+        }
+
+        efluidCase = false;
     }
 
     @Given("^the user accesses to the destination environment with the same dictionary$")

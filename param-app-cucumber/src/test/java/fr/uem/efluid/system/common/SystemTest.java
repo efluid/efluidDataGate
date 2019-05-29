@@ -63,6 +63,7 @@ public abstract class SystemTest {
     private static final String DEFAULT_TABLE_FIVE = "Table Five";
     private static final String DEFAULT_TABLE_SIX = "Table Six";
     private static final String DEFAULT_TABLE_SEVEN = "Table Seven";
+    private static final String DEFAULT_TTEST1 = "Table EfluidTest1";
 
     private static final String DEFAULT_WHERE = "1=1";
 
@@ -209,6 +210,28 @@ public abstract class SystemTest {
         this.dets.completeWizzard();
 
         initDictionaryForDefaultVersionWithTables(newDomain, newProject, TABLE_ONE, TABLE_TWO, TABLE_THREE, TABLE_FOUR, TABLE_FIVE, TABLE_SIX, TABLE_SEVEN);
+    }
+
+    /**
+     *
+     */
+    protected void initCompleteDictionaryWithEfluidTestTables() {
+
+        resetAsyncProcess();
+        resetDatabaseIdentifier();
+
+        User user = initDefaultUser();
+        Project newProject = initDefaultProject();
+        FunctionalDomain newDomain = initDefaultDomain(newProject);
+
+        // Force cache
+        this.desc.getTables();
+
+        modelDatabase().initWizzardData(user, newProject, Collections.singletonList(newDomain));
+
+        this.dets.completeWizzard();
+
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1);
     }
 
     protected void initDictionaryForDefaultVersionWithTables(FunctionalDomain domain, Project project, String... tableNames) {
@@ -547,6 +570,9 @@ public abstract class SystemTest {
                     DictionaryEntry tableSeven = table(DEFAULT_TABLE_SEVEN, TABLE_SEVEN, domain, "ln1.\"VALUE\" as ln_OTHER_TABLE_VALUE , cur.\"VALUE\", cur.\"ENABLED\"", DEFAULT_WHERE, "BUSINESS_KEY", STRING);
                     tables.add(tableSeven);
                     links.add(DataGenerationUtils.link(tableSeven, "OTHER_TABLE_VALUE", "VALUE", TABLE_THREE));
+                    break;
+                case TTEST1:
+                    tables.add(table(DEFAULT_TTEST1, TTEST1, domain, "cur.\"COL1\"", DEFAULT_WHERE, "ID", STRING));
                     break;
                 default:
                     throw new AssertionError("Unsupported table name " + tableName);

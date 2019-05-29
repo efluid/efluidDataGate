@@ -49,6 +49,8 @@ public class ManagedDatabaseAccess {
     public static final String TABLE_SIX = "TTAB_SIX"; // Table with CLOB
     public static final String TABLE_SEVEN = "TTAB_SEVEN"; // Table with business join on tab THREE
 
+    public static final String TTEST1 = "TTEST1";
+
     // Table to pair of "order" / type
     public static final Map<String, Pair<Integer, Class<?>>> ENTITY_TYPES = new HashMap<>();
 
@@ -59,7 +61,9 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TABLE_FOUR, Pair.of(4, SimulatedTableFour.class));
         ENTITY_TYPES.put(TABLE_FIVE, Pair.of(5, SimulatedTableFive.class));
         ENTITY_TYPES.put(TABLE_SIX, Pair.of(6, SimulatedTableSix.class));
-        ENTITY_TYPES.put(TABLE_SEVEN, Pair.of(6, SimulatedTableSeven.class));
+        ENTITY_TYPES.put(TABLE_SEVEN, Pair.of(7, SimulatedTableSeven.class));
+        ENTITY_TYPES.put(TTEST1, Pair.of(8, EfluidTest1.class));
+
 
     }
 
