@@ -28,7 +28,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
   * [Transformation de données](transformer-apply.md)
   * Mise à jour de lots à l'import
 * Spécification de dictionnaire par annotations 
-  * API de spécification
+  * [API de spécification](spec-api.md)
   * Plugin maven
 * Développement
   * [Outillage (poste de dev)](dev-tools.md)
