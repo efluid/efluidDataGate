@@ -85,8 +85,6 @@ public class CommitService extends AbstractApplicationService {
     @Autowired
     private AttachmentProcessor.Provider attachProcs;
 
-    @Autowired
-    private FeatureManager features;
 
     /**
      * <p>

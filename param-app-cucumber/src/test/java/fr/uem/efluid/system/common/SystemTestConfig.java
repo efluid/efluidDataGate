@@ -1,13 +1,6 @@
 package fr.uem.efluid.system.common;
 
-import static fr.uem.efluid.Application.Packages.CONFIG;
-import static fr.uem.efluid.Application.Packages.CONVERTERS;
-import static fr.uem.efluid.Application.Packages.ENTITIES;
-import static fr.uem.efluid.Application.Packages.REPOSITORIES;
-import static fr.uem.efluid.Application.Packages.REPOSITORIES_IMPLS;
-import static fr.uem.efluid.Application.Packages.ROOT;
-import static fr.uem.efluid.Application.Packages.SERVICES;
-import static fr.uem.efluid.Application.Packages.TOOLS;
+import static fr.uem.efluid.Application.Packages.*;
 import static fr.uem.efluid.system.common.SystemTestConfig.SYS_TEST_ROOT;
 
 import java.sql.SQLException;
@@ -50,7 +43,7 @@ import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
  */
 @EnableJpaRepositories({ REPOSITORIES, SYS_TEST_ROOT + ".stubs.repositories" })
 @EntityScan({ ENTITIES, CONVERTERS, SYS_TEST_ROOT + ".stubs.entities" })
-@ComponentScan({ CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, SYS_TEST_ROOT + ".stubs" })
+@ComponentScan({ CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, WEB, REST, SYS_TEST_ROOT + ".stubs" })
 @TestConfiguration
 @ConfigurationProperties(prefix = "param-efluid.managed-datasource")
 public class SystemTestConfig extends CustomDataSourceParameters {

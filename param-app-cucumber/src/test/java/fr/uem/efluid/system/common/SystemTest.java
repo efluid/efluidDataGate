@@ -342,7 +342,7 @@ public abstract class SystemTest {
 
         // Add user token anyway
         if (url.startsWith("/rest/")) {
-            builder.header("token", getCurrentUserApiToken());
+            builder.param("token", getCurrentUserApiToken());
         }
 
         builder.accept(MediaType.APPLICATION_JSON_UTF8);
