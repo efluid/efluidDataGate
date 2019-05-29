@@ -34,10 +34,10 @@ Feature: The update on parameter tables can be followed, checked and stored as c
     And the diff is completed
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
-      | Table    | Key   | Payload                                |
-      | TTAB_ONE | One   | PRESET:'Preset One', SOMETHING:'AAA'   |
-      | TTAB_ONE | Two   | PRESET:'Preset Two', SOMETHING:'BBB'   |
-      | TTAB_ONE | Three | PRESET:'Preset Three', SOMETHING:'CCC' |
+      | Table    | Key   | Action | Payload                                |
+      | TTAB_ONE | One   | ADD    | PRESET:'Preset One', SOMETHING:'AAA'   |
+      | TTAB_ONE | Two   | ADD    | PRESET:'Preset Two', SOMETHING:'BBB'   |
+      | TTAB_ONE | Three | ADD    | PRESET:'Preset Three', SOMETHING:'CCC' |
 
   Scenario: A first commit for a single table contains all table content - blob fields
     Given the existing data in managed table "TTAB_FIVE" :

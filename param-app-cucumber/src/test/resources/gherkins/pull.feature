@@ -56,12 +56,15 @@ Feature: The backlog can be imported and merged with local changes
     And the merge diff is completed
     When the user access to diff commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table     | Key | Action | Payload                                                                                                        |
-      | TTAB_TWO  | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'                                                                                 |
-      | TTAB_TWO  | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'                                                                                 |
-      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/lob/ZVs3L0PiRT7vzgYlGCrAmrqVm643dW1ZwshZNTNmEBc%3D" download="download">LOB</a>, SIMPLE:17.81   |
-      | TTAB_FIVE | 2   | ADD    | DATA:<a href="/lob/MDOnerGg0ikFARKvihX0fFD8V2mUp4%2BKHfrji2ByPKE%3D" download="download">LOB</a>, SIMPLE:17.82 |
-      | TTAB_FIVE | 3   | ADD    | DATA:<a href="/lob/mGb4npkQbRvRJrJWp%2FQIpwGPqZTFkKhI1FU9l9jNj1M%3D" download="download">LOB</a>, SIMPLE:17.83 |
+      | Table     | Key | Action | Payload                                                                                                                         |
+      | TTAB_TWO  | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'                                                                                                  |
+      | TTAB_TWO  | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'                                                                                                  |
+      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/lob/ZVs3L0PiRT7vzgYlGCrAmrqVm643dW1ZwshZNTNmEBc%3D" download="download">LOB</a>, SIMPLE:17.81                    |
+      | TTAB_FIVE | 2   | ADD    | DATA:<a href="/lob/MDOnerGg0ikFARKvihX0fFD8V2mUp4%2BKHfrji2ByPKE%3D" download="download">LOB</a>, SIMPLE:17.82                  |
+      | TTAB_FIVE | 3   | ADD    | DATA:<a href="/lob/mGb4npkQbRvRJrJWp%2FQIpwGPqZTFkKhI1FU9l9jNj1M%3D" download="download">LOB</a>, SIMPLE:17.83                  |
+      | TTAB_SIX  | 7   | ADD    | TEXT:<a href="/lob/AyoJCmZNQXwkzt2ZcHgG8cpvUucsbGnanTuQu%2BpaGOs%3D" download="download">TEXT</a>, DATE:2012-01-15 00:00:00     |
+      | TTAB_SIX  | 8   | ADD    | TEXT:<a href="/lob/KOpk7DP9iLnAls5%2FRoF1%2BKRDxWMDaA%2BeSk2bUGo8g3g%3D" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
+      | TTAB_SIX  | 9   | ADD    | TEXT:<a href="/lob/%2BfuDApVm2qHu8BaSOOkKAtICrThc5VM9ESzFM%2FC%2FVGI%3D" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
 
   Scenario: The dedicated merge diff content can be selected to prepare a merge commit
     Given the commit ":tada: Test commit init source" has been saved and exported with all the identified initial diff content
