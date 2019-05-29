@@ -9,7 +9,7 @@
 	<parent>
 		<groupId>fr.uem.efluid</groupId>
 		<artifactId>param-parent</artifactId>
-		<version>0.2.1-SNAPSHOT</version>
+		<version>0.2.2-SNAPSHOT</version>
 	</parent>
 
 
