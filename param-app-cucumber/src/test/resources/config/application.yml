@@ -33,6 +33,10 @@ param-efluid:
     details:
         version: SYSTEM-TEST
 
+    extractor:
+        ## With H2 with need to specify label
+        use-label-for-col-name: true
+
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.system.stubs.TweakedDatabaseIdentifier

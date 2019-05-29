@@ -62,6 +62,7 @@ public abstract class SystemTest {
     private static final String DEFAULT_TABLE_FOUR = "Table Four";
     private static final String DEFAULT_TABLE_FIVE = "Table Five";
     private static final String DEFAULT_TABLE_SIX = "Table Six";
+    private static final String DEFAULT_TABLE_SEVEN = "Table Seven";
 
     private static final String DEFAULT_WHERE = "1=1";
 
@@ -191,7 +192,7 @@ public abstract class SystemTest {
     /**
      *
      */
-    protected void initCompleteDictionaryWith5Tables() {
+    protected void initCompleteDictionaryWith7Tables() {
 
         resetAsyncProcess();
         resetDatabaseIdentifier();
@@ -207,10 +208,8 @@ public abstract class SystemTest {
 
         this.dets.completeWizzard();
 
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TABLE_ONE, TABLE_TWO, TABLE_THREE, TABLE_FIVE, TABLE_SIX);
-
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TABLE_ONE, TABLE_TWO, TABLE_THREE, TABLE_FOUR, TABLE_FIVE, TABLE_SIX, TABLE_SEVEN);
     }
-
 
     protected void initDictionaryForDefaultVersionWithTables(FunctionalDomain domain, Project project, String... tableNames) {
 
@@ -222,7 +221,6 @@ public abstract class SystemTest {
 
         modelDatabase().initDictionary(tables, links, initDefaultVersion(project));
     }
-
 
     /**
      *
@@ -535,7 +533,7 @@ public abstract class SystemTest {
                     tables.add(table(DEFAULT_TABLE_THREE, TABLE_THREE, domain, "cur.\"OTHER\"", DEFAULT_WHERE, "VALUE", STRING));
                     break;
                 case TABLE_FOUR:
-                    DictionaryEntry tableFour = table(DEFAULT_TABLE_FOUR, TABLE_FOUR, domain, "cur.\"CONTENT_TIME\", cur.\"CONTENT_INT\", ln1.\"VALUE\" as ln_OTHER_TABLE_KEY", DEFAULT_WHERE, "KEY", STRING);
+                    DictionaryEntry tableFour = table(DEFAULT_TABLE_FOUR, TABLE_FOUR, domain, "ln1.\"VALUE\" as ln_OTHER_TABLE_KEY , cur.\"CONTENT_TIME\", cur.\"CONTENT_INT\"", DEFAULT_WHERE, "KEY", STRING);
                     tables.add(tableFour);
                     links.add(DataGenerationUtils.link(tableFour, "OTHER_TABLE_KEY", "KEY", TABLE_ONE));
                     break;
@@ -544,6 +542,11 @@ public abstract class SystemTest {
                     break;
                 case TABLE_SIX:
                     tables.add(table(DEFAULT_TABLE_SIX, TABLE_SIX, domain, "cur.\"TEXT\", cur.\"DATE\"", DEFAULT_WHERE, "IDENTIFIER", PK_ATOMIC));
+                    break;
+                case TABLE_SEVEN:
+                    DictionaryEntry tableSeven = table(DEFAULT_TABLE_SEVEN, TABLE_SEVEN, domain, "ln1.\"VALUE\" as ln_OTHER_TABLE_VALUE , cur.\"VALUE\", cur.\"ENABLED\"", DEFAULT_WHERE, "BUSINESS_KEY", STRING);
+                    tables.add(tableSeven);
+                    links.add(DataGenerationUtils.link(tableSeven, "OTHER_TABLE_VALUE", "VALUE", TABLE_THREE));
                     break;
                 default:
                     throw new AssertionError("Unsupported table name " + tableName);

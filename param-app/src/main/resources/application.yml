@@ -49,6 +49,7 @@ param-efluid:
 
     extractor:
         show-sql: true
+        use-label-for-col-name: false
 
     attachments:
         enable-sql-execute: true

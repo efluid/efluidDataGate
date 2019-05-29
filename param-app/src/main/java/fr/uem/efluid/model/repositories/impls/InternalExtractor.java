@@ -35,13 +35,16 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<Str
     private final DictionaryEntry parameterEntry;
     private final ManagedValueConverter valueConverter;
 
+    private final boolean useLabelForColNames;
+
     /**
      * @param parameterEntry
      */
-    public InternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter) {
+    public InternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter, boolean useLabelForColNames) {
         super();
         this.parameterEntry = parameterEntry;
         this.valueConverter = valueConverter;
+        this.useLabelForColNames = useLabelForColNames;
     }
 
     /**
@@ -69,7 +72,7 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<Str
 
         // Identify columns
         for (int i = 0; i < count; i++) {
-            String colname = meta.getColumnName(i + 1).toUpperCase();
+            String colname = extractColumnName(meta,i );
             if (keyNames.contains(colname)) {
                 keyPos.add(i);
             }
@@ -160,4 +163,18 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<Str
      * @return
      */
     protected abstract String getFinalizedPayload(ManagedValueConverter currentValueConverter, T lineHolder);
+
+    /**
+     * Regarding the database type, the behavior of "label" may be different. Can switch between name or label
+     * @param meta
+     * @param index
+     * @return
+     * @throws SQLException
+     */
+    private String extractColumnName(ResultSetMetaData meta, int index) throws SQLException {
+        if(this.useLabelForColNames){
+            return meta.getColumnLabel(index + 1).toUpperCase();
+        }
+        return meta.getColumnName(index + 1).toUpperCase();
+    }
 }

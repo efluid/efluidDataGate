@@ -53,7 +53,7 @@ public class PreparationFixtures extends SystemTest {
         select = null;
 
         // Full dic init
-        initCompleteDictionaryWith5Tables();
+        initCompleteDictionaryWith7Tables();
 
         // Authenticated
         implicitlyAuthenticatedAndOnPage("home page");

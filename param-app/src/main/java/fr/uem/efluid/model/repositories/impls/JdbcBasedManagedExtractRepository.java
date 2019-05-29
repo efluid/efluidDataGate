@@ -64,6 +64,9 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
     @org.springframework.beans.factory.annotation.Value("${param-efluid.extractor.show-sql}")
     private boolean showSql;
 
+    @org.springframework.beans.factory.annotation.Value("${param-efluid.extractor.use-label-for-col-name}")
+    private boolean useLabelForColNames;
+
     /**
      * @param parameterEntry
      * @param tableData
@@ -107,7 +110,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
         // Get columns for all table
         Map<String, String> payloads = this.managedSource.query(query,
-                new ValueInternalExtractor(parameterEntry, this.valueConverter, lobs));
+                new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames ,lobs));
 
         LOGGER.debug("Extracted values from managed table {} with query \"{}\". Found {} results",
                 parameterEntry.getTableName(), query, Integer.valueOf(payloads.size()));
@@ -163,7 +166,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         postProcessQuery(query);
 
         // Get columns for all table
-        Map<String, String> payloads = this.managedSource.query(query, new DisplayInternalExtractor(parameterEntry, this.valueConverter));
+        Map<String, String> payloads = this.managedSource.query(query, new DisplayInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames));
 
         LOGGER.debug("Extracted values from managed table {} on unchecked Join with query \"{}\". Found {} results",
                 parameterEntry.getTableName(), query, Integer.valueOf(payloads.size()));
@@ -200,8 +203,8 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         /**
          * @param parameterEntry
          */
-        public ValueInternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter, Map<String, byte[]> lobs) {
-            super(parameterEntry, valueConverter);
+        public ValueInternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter, boolean useLabelForColNames, Map<String, byte[]> lobs) {
+            super(parameterEntry, valueConverter, useLabelForColNames);
             this.blobs = lobs;
         }
 
@@ -287,8 +290,8 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         /**
          * @param parameterEntry
          */
-        public DisplayInternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter) {
-            super(parameterEntry, valueConverter);
+        public DisplayInternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter,boolean useLabelForColNames) {
+            super(parameterEntry, valueConverter, useLabelForColNames);
         }
 
         /**

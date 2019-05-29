@@ -152,3 +152,55 @@ Feature: The update on parameter tables can be followed, checked and stored as c
       | TTAB_ONE | DDD | UPDATE | PRESET:'Preset 4'=>'Preset 4 updated'  |
       | TTAB_TWO | JJJ | UPDATE | OTHER:'Other JJJ'=>'Other JJJ updated' |
       | TTAB_TWO | IJK | ADD    | VALUE:'Le new', OTHER:'newnew'         |
+
+  Scenario: The diff content for table using links on native FK displays references to other table data
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_FOUR" :
+      | key  | otherTable | contentTime         | contentInt |
+      | A001 | 14         | 2012-02-15 15:24:09 | 12         |
+      | A002 | 25         | 2012-03-15 15:24:28 | 13         |
+      | A003 | 25         | 2012-01-15 15:24:45 | 14         |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table     | Key  | Action | Payload                                                       |
+      | TTAB_ONE  | AAA  | ADD    | PRESET:'Preset 1', SOMETHING:'AAA'                            |
+      | TTAB_ONE  | BBB  | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'                            |
+      | TTAB_ONE  | CCC  | ADD    | PRESET:'Preset 3', SOMETHING:'CCC'                            |
+      | TTAB_ONE  | DDD  | ADD    | PRESET:'Preset 4', SOMETHING:'DDD'                            |
+      | TTAB_ONE  | EEE  | ADD    | PRESET:'Preset 5', SOMETHING:'EEE'                            |
+      | TTAB_FOUR | A001 | ADD    | LN_OTHER_TABLE_KEY:'AAA', CONTENT_TIME:2012-02-15 15:24:09, CONTENT_INT:12 |
+      | TTAB_FOUR | A002 | ADD    | LN_OTHER_TABLE_KEY:'BBB', CONTENT_TIME:2012-03-15 15:24:28, CONTENT_INT:13 |
+      | TTAB_FOUR | A003 | ADD    | LN_OTHER_TABLE_KEY:'BBB', CONTENT_TIME:2012-01-15 15:24:45, CONTENT_INT:14 |
+
+  Scenario: The diff content for table using links on business keys displays references to other table data
+    Given the existing data in managed table "TTAB_THREE" :
+      | key    | value   | other   |
+      | 00AA00 | THREE_A | Other A |
+      | 00BB00 | THREE_B | Other B |
+      | 00CC00 | THREE_C | Other C |
+    And the existing data in managed table "TTAB_SEVEN" :
+      | id | businessKey | otherTableValue | value  | enabled |
+      | 1  | SEVEN_1     | THREE_A         | Truc   | true    |
+      | 2  | SEVEN_2     | THREE_A         | Machin | true    |
+      | 3  | SEVEN_3     | THREE_C         | Bidule | false   |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table      | Key     | Action | Payload                                        |
+      | TTAB_THREE | THREE_A | ADD    | OTHER:'Other A'                                |
+      | TTAB_THREE | THREE_B | ADD    | OTHER:'Other B'                                |
+      | TTAB_THREE | THREE_C | ADD    | OTHER:'Other C'                                |
+      | TTAB_SEVEN | SEVEN_1 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_A', VALUE:'Truc', ENABLED:true    |
+      | TTAB_SEVEN | SEVEN_2 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_A', VALUE:'Machin', ENABLED:true  |
+      | TTAB_SEVEN | SEVEN_3 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_C', VALUE:'Bidule', ENABLED:false |

@@ -41,15 +41,16 @@ import static org.hamcrest.Matchers.*;
 @Transactional
 public class ManagedDatabaseAccess {
 
-    public static final String TABLE_ONE = "TTAB_ONE";
-    public static final String TABLE_TWO = "TTAB_TWO";
-    public static final String TABLE_THREE = "TTAB_THREE";
-    public static final String TABLE_FOUR = "TTAB_FOUR";
-    public static final String TABLE_FIVE = "TTAB_FIVE";
-    public static final String TABLE_SIX = "TTAB_SIX";
+    public static final String TABLE_ONE = "TTAB_ONE"; // Basic table, key is value column
+    public static final String TABLE_TWO = "TTAB_TWO"; // Basic table, key is native pk
+    public static final String TABLE_THREE = "TTAB_THREE"; // Basic table, simplest version
+    public static final String TABLE_FOUR = "TTAB_FOUR"; // Table with native join on tab ONE
+    public static final String TABLE_FIVE = "TTAB_FIVE"; // Table with BLOB
+    public static final String TABLE_SIX = "TTAB_SIX"; // Table with CLOB
+    public static final String TABLE_SEVEN = "TTAB_SEVEN"; // Table with business join on tab THREE
 
     // Table to pair of "order" / type
-    private static final Map<String, Pair<Integer, Class<?>>> ENTITY_TYPES = new HashMap<>();
+    public static final Map<String, Pair<Integer, Class<?>>> ENTITY_TYPES = new HashMap<>();
 
     static {
         ENTITY_TYPES.put(TABLE_ONE, Pair.of(1, SimulatedTableOne.class));
@@ -58,6 +59,7 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TABLE_FOUR, Pair.of(4, SimulatedTableFour.class));
         ENTITY_TYPES.put(TABLE_FIVE, Pair.of(5, SimulatedTableFive.class));
         ENTITY_TYPES.put(TABLE_SIX, Pair.of(6, SimulatedTableSix.class));
+        ENTITY_TYPES.put(TABLE_SEVEN, Pair.of(6, SimulatedTableSeven.class));
 
     }
 
@@ -240,6 +242,10 @@ public class ManagedDatabaseAccess {
             return Long.valueOf(v);
         } else if (paramType == String.class) {
             return v;
+        } else if (paramType == int.class) {
+            return Integer.parseInt(v);
+        } else if (paramType == boolean.class) {
+            return Boolean.parseBoolean(v);
         } else if (paramType.getPackageName().startsWith(this.getClass().getPackageName())) {
 
             // The attribute is another stub type, must find constructor with 1 (key) arg
