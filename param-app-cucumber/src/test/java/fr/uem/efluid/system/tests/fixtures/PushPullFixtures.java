@@ -44,6 +44,13 @@ public class PushPullFixtures extends SystemTest {
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
         currentExport = this.commitService.exportOneCommit(specifiedCommit);
     }
+
+    @Given("^the user has requested an export starting by the commit with name \"(.*)\"$")
+    public void given_export_start_by_commit(String name) {
+        UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
+        currentExport = this.commitService.exportCommits(specifiedCommit);
+    }
+
     @When("^the user import the available source package$")
     public void when_import_current_package(){
         this.prep.startMergeCommitPreparation(currentExport.getResult());

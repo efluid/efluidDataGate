@@ -64,6 +64,9 @@ public abstract class SystemTest {
     private static final String DEFAULT_TABLE_SIX = "Table Six";
     private static final String DEFAULT_TABLE_SEVEN = "Table Seven";
     private static final String DEFAULT_TTEST1 = "Table EfluidTest1";
+    private static final String DEFAULT_EFLUIDTESTNUMBER = "Table EfluidTestNumber";
+    private static final String DEFAULT_TTESTMULTIDATATYPE = "Table EfluidTestMultiDataType";
+    private static final String DEFAULT_EFLUIDTESTPKCOMPOSITE = "Table EfluidTestPkComposite";
 
     private static final String DEFAULT_WHERE = "1=1";
 
@@ -232,6 +235,9 @@ public abstract class SystemTest {
         this.dets.completeWizzard();
 
         initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1);
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, EFLUIDTESTNUMBER);
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTESTMULTIDATATYPE);
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, EFLUIDTESTPKCOMPOSITE);
     }
 
     protected void initDictionaryForDefaultVersionWithTables(FunctionalDomain domain, Project project, String... tableNames) {
@@ -573,6 +579,15 @@ public abstract class SystemTest {
                     break;
                 case TTEST1:
                     tables.add(table(DEFAULT_TTEST1, TTEST1, domain, "cur.\"COL1\"", DEFAULT_WHERE, "ID", STRING));
+                    break;
+                case EFLUIDTESTNUMBER:
+                    tables.add(table(DEFAULT_EFLUIDTESTNUMBER, EFLUIDTESTNUMBER, domain, "cur.\"COL1\", cur.\"COL2\"", DEFAULT_WHERE, "ID", STRING));
+                    break;
+                case TTESTMULTIDATATYPE:
+                    tables.add(table(DEFAULT_TTESTMULTIDATATYPE, TTESTMULTIDATATYPE, domain, "cur.\"COL1\", cur.\"COL2\", cur.\"COL3\", cur.\"COL4\", cur.\"COL5\", cur.\"COL6\", cur.\"COL7\"", DEFAULT_WHERE, "ID", STRING));
+                    break;
+                case EFLUIDTESTPKCOMPOSITE:
+                    tables.add(table(DEFAULT_EFLUIDTESTPKCOMPOSITE, EFLUIDTESTPKCOMPOSITE, domain, "cur.\"ID2\",cur.\"COL1\"", DEFAULT_WHERE, "ID", STRING));
                     break;
                 default:
                     throw new AssertionError("Unsupported table name " + tableName);

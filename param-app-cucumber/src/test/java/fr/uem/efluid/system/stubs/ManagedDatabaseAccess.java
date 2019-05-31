@@ -50,6 +50,9 @@ public class ManagedDatabaseAccess {
     public static final String TABLE_SEVEN = "TTAB_SEVEN"; // Table with business join on tab THREE
 
     public static final String TTEST1 = "TTEST1";
+    public static final String TTESTMULTIDATATYPE = "TTESTMULTIDATATYPE";
+    public static final String EFLUIDTESTPKCOMPOSITE = "EFLUIDTESTPKCOMPOSITE";
+    public static final String EFLUIDTESTNUMBER = "EFLUIDTESTNUMBER";
 
     // Table to pair of "order" / type
     public static final Map<String, Pair<Integer, Class<?>>> ENTITY_TYPES = new HashMap<>();
@@ -63,7 +66,9 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TABLE_SIX, Pair.of(6, SimulatedTableSix.class));
         ENTITY_TYPES.put(TABLE_SEVEN, Pair.of(7, SimulatedTableSeven.class));
         ENTITY_TYPES.put(TTEST1, Pair.of(8, EfluidTest1.class));
-
+        ENTITY_TYPES.put(EFLUIDTESTNUMBER, Pair.of(9, EfluidTestNumber.class));
+        ENTITY_TYPES.put(TTESTMULTIDATATYPE, Pair.of(10, EfluidTestMultiDataType.class));
+        ENTITY_TYPES.put(EFLUIDTESTPKCOMPOSITE, Pair.of(11, EfluidTestPkComposite.class));
 
     }
 
