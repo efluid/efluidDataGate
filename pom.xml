@@ -26,6 +26,7 @@
 		<module>param-app-cucumber</module>
 		<module>param-generator</module>
 		<module>param-generator-example</module>
+		<module>scripts/installeur</module>
 	</modules>
 
 	<properties>

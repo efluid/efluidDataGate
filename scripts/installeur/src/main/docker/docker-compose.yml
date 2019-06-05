@@ -1,0 +1,7 @@
+version: '2.0'
+services:
+  datagate:
+    image: partifactorydocker.uem.lan/datagate
+    container_name: datagate
+    ports:
+      - 8080:8080
