@@ -9,6 +9,7 @@
 		<groupId>fr.uem.efluid</groupId>
 		<artifactId>param-parent</artifactId>
 		<version>0.2.1-SNAPSHOT</version>
+		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
 	<!-- Gestion du build -->
