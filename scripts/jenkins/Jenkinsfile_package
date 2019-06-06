@@ -6,7 +6,7 @@ node('socle-jenkins-maven-docker-14-4G'){
 git branch: env.BRANCH_NAME, credentialsId: '4adbeffc-4d68-43a1-b44e-d3de9ceace04', url: 'https://github.com/Zenika/GestionParamEfluid.git'
 
 try{
-	sh 'mvn clean deploy -DskipTests=true -DidServeurDeploiementDocumentation=scriptInstalleurDocumentation -DurlDeploiementDocumentation=scp://lpsaedt1/htdocs/docInstalleur'
+	sh 'mvn clean deploy -DskipTests=true -DurlArtifactoryRelease=${env.urlArtifactoryRelease} -DurlArtifactorySnapshot=${env.urlArtifactorySnapshot}'
 	sh 'cp param-app/target/param-app-exec.jar param-app/src/docker/build-serv-efluid/standalone-with-h2'
 	sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/datagate param-app/src/docker/build-serv-efluid/standalone-with-h2"
 	sh "docker push ${variables.artifactoryDockerRegistryAlias}/datagate"

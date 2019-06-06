@@ -40,13 +40,13 @@
     <repository>
       <id>releases</id>
       <name>hermesMaven-releases</name>
-      <url>http://eartifact/artifactory/releases</url>
+      <url>${urlArtifactoryRelease}</url>
     </repository>
     <snapshotRepository>
       <uniqueVersion>false</uniqueVersion>
       <id>snapshots</id>
       <name>hermesMaven-snapshots</name>
-      <url>http://eartifact/artifactory/libs-snapshot-local</url>
+      <url>${urlArtifactorySnapshot}</url>
     </snapshotRepository>
   </distributionManagement>
 </project>
