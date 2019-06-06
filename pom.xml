@@ -536,4 +536,10 @@
 
 		</dependencies>
 	</dependencyManagement>
+	<distributionManagement>
+		<site>
+			<id>${idServeurDeploiementDocumentation}</id>
+			<url>${urlDeploiementDocumentation}</url>
+		</site>
+	</distributionManagement>
 </project>
