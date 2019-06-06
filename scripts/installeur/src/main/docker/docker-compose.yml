@@ -5,3 +5,7 @@ services:
     container_name: datagate
     ports:
       - 8080:8080
+    volumes:
+      - /opt/server/paramethor/NB_DEST/cfg/:/cfg/:ro
+      - /opt/server/paramethor/NB_DEST/logs:/tmp
+      - /opt/server/paramethor/NB_DEST/tmp:/logs
