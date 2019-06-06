@@ -37,9 +37,16 @@
 		</plugins>
 	</build>
 	<distributionManagement>
-		<site>
-			<id>${idServeurDeploiementDocumentation}</id>
-			<url>${urlDeploiementDocumentation}</url>
-		</site>
-	</distributionManagement>
+    <repository>
+      <id>releases</id>
+      <name>hermesMaven-releases</name>
+      <url>http://eartifact/artifactory/releases</url>
+    </repository>
+    <snapshotRepository>
+      <uniqueVersion>false</uniqueVersion>
+      <id>snapshots</id>
+      <name>hermesMaven-snapshots</name>
+      <url>http://eartifact/artifactory/libs-snapshot-local</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>
