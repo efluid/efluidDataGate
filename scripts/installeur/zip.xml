@@ -11,5 +11,11 @@
       <filtered>false</filtered>
       <lineEnding>lf</lineEnding>
      </fileSet>
+	  <fileSet>
+      <directory>application.yml</directory>
+      <outputDirectory>.</outputDirectory>
+      <filtered>false</filtered>
+      <lineEnding>lf</lineEnding>
+     </fileSet>
   </fileSets>
 </assembly>
