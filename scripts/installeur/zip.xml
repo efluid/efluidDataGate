@@ -12,8 +12,11 @@
       <lineEnding>lf</lineEnding>
      </fileSet>
 	  <fileSet>
-      <directory>application.yml</directory>
+      <directory>.</directory>
       <outputDirectory>.</outputDirectory>
+	  <includes>
+      	<include>application.yml</include>
+      </includes>
       <filtered>false</filtered>
       <lineEnding>lf</lineEnding>
      </fileSet>
