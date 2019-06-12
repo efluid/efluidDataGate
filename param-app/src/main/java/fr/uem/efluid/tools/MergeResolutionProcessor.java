@@ -7,6 +7,7 @@ import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Collection;
@@ -23,6 +24,9 @@ public class MergeResolutionProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(MergeResolutionProcessor.class);
 
     private final Collection<ResolutionCase> cases;
+
+    @Autowired
+    private ManagedValueConverter valueConverter;
 
     /**
      * Init from loaded configured Resolution cases
@@ -46,8 +50,8 @@ public class MergeResolutionProcessor {
 
         LOGGER.debug("For mineEntry {}, theirEntry {}, found resolution case {}", mineEntry, theirEntry, resolutionCase.getCaseName());
 
-        // If resolution action is null, drop it
-        if (resolutionCase.getResolution().getAction() == null) {
+        // If resolution or resolution action is null, drop it
+        if (resolutionCase.getResolution() == null || resolutionCase.getResolution().getAction() == null) {
             return null;
         }
 
@@ -92,6 +96,16 @@ public class MergeResolutionProcessor {
             switch (resolutionCase.getResolution().getPayload()) {
                 case THEIR_PAYLOAD:
                     copyPayloads(entry, theirEntry);
+                    break;
+                case THEIR_PAYLOAD_REGENERATE_HR_FROM_MINE:
+                    // 1st copy payload from their
+                    copyPayloads(entry, theirEntry);
+
+                    // Then regen HR
+                    entry.setHrPayload(
+                            this.valueConverter.convertToHrPayload(
+                                    theirEntry != null ? theirEntry.getPayload() : null,
+                                    mineEntry != null ? mineEntry.getPayload() : null));
                     break;
                 case MINE_PAYLOAD:
                 default:
@@ -262,7 +276,7 @@ public class MergeResolutionProcessor {
             }
 
             public enum PayloadResultType {
-                THEIR_PAYLOAD, MINE_PAYLOAD
+                THEIR_PAYLOAD, MINE_PAYLOAD, THEIR_PAYLOAD_REGENERATE_HR_FROM_MINE
             }
 
 

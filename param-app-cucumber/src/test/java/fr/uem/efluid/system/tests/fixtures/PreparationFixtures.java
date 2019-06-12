@@ -421,16 +421,20 @@ public class PreparationFixtures extends SystemTest {
 
             // Keep order
             for (int i = 0; i < content.getDiff().size(); i++) {
-                PreparedIndexEntry diffLine = content.getDiff().get(i);
+                PreparedMergeIndexEntry diffLine = (PreparedMergeIndexEntry) content.getDiff().get(i);
                 Map<String, String> dataLine = v.get(i);
 
                 IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
-                assertThat(diffLine.getAction()).isEqualTo(action);
-                assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
+
+                String desc = " on table \"" + content.getDictionaryEntryTableName() + "\" on key \""
+                        + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
+
+                assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
+                assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataLine.get("Key"));
 
                 // No need to check payload in delete
                 if (action != REMOVE) {
-                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
+                    assertThat(diffLine.getHrPayload()).as("Payload" + desc).isEqualTo(dataLine.get("Payload"));
                 }
             }
         });
@@ -459,8 +463,10 @@ public class PreparationFixtures extends SystemTest {
             }
             String type = l.get("Type");
             String actStr = l.get("Action");
-            IndexAction action =StringUtils.hasText(actStr) ? IndexAction.valueOf(actStr) : null;
-            String desc = " on table \"" + table + "\" on key \"" + key + "\" for type " + type + ". Resolution was \"" + entry.getResolutionRule() + "\"";
+            IndexAction action = StringUtils.hasText(actStr) ? IndexAction.valueOf(actStr) : null;
+            String desc = " on table \"" + table + "\" on key \"" + key + "\" for type "
+                    + type + ". Resolution was \"" + entry.getResolutionRule() + "\"";
+
             switch (type) {
                 case "mine":
                     assertThat(entry.getMine().getHrPayload()).as("Payload" + desc).isEqualTo(payload);

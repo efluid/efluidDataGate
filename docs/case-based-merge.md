@@ -67,12 +67,20 @@ Les informations d'identification sont donc :
 * **their** : l'action pour le diff their (`ADD`, `REMOVE`, `UPDATE` ou `null`). Si null, il n'y a donc pas de their
 * **mine** : l'action pour le diff mine (`ADD`, `REMOVE`, `UPDATE` ou `null`). Si null, il n'y a donc pas de their
 * **payload** : `SIMILAR` ou `DIFFERENT`
-* **resolution** : la résolution à réaliser pour le merge
+* **resolution** : la résolution à réaliser pour le merge. 
+
+> Si la résolution est `null`, l'entrée est complétement ignorée (cas où l'on considère que le traitement de la modification est déjà réalisé sur la cible et ne peut être modifié)
 
 Les informations de résolution sont :
 
-* **payload** : `THEIR_PAYLOAD` => on utilise le payload du diff "their", `MINE_PAYLOAD` => on utilise le payload de "mine", `null` => Payload null (pour REMOVE par exemple)
-* **action** : `ADD`, `REMOVE` ou `UPDATE` => L'action finale. Doit correspondre à un changement par rapport au "actual" si on souhaite faire résoudre le changement (donc si on gère un cas où actual)
-* **needAction** : `true` / `false` => indique si une opération de validation du changement sera présentée à l'utilisateur. Si `false`, la modification est considérée "déjà en place" (par exemple quand "mine" et "their" ont réalisé la même opération)  
+* **payload** : 
+  - `THEIR_PAYLOAD` => on utilise le payload du diff "their"
+  - `MINE_PAYLOAD` => on utilise le payload de "mine"
+  - `null` => Payload null (pour REMOVE par exemple)
+  - `THEIR_PAYLOAD_REGENERATE_HR_FROM_MINE` => Cas particulier où le payload est "their" mais le "HR" payload (pour le rendu) est regénéré avec le Their Payload en prenant le change depuis le Mine payload (simule une édition sur une entrée ajoutée)
+* **action** : 
+  - `ADD`, `REMOVE` ou `UPDATE` => L'action finale. Doit correspondre à un changement par rapport au "actual" si on souhaite faire résoudre le changement (donc si on gère un cas où actual)
+* **needAction** : 
+  - `true` / `false` => indique si une opération de validation du changement sera présentée à l'utilisateur. Si `false`, la modification est considérée "déjà en place" (par exemple quand "mine" et "their" ont réalisé la même opération)  
 
-Si un cas n'est pas traité lors du merge, l'erreur `Unsupported merge case resolution` est remontée
+> Si un cas n'est pas traité lors du merge, l'erreur `Unsupported merge case resolution` est remontée
