@@ -27,6 +27,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
   * Import de lots
   * [Transformation de données](transformer-apply.md)
   * Mise à jour de lots à l'import
+  * [Gestion de merge](case-based-merge.md)
 * Spécification de dictionnaire par annotations 
   * [API de spécification](spec-api.md)
   * Plugin maven

@@ -14,6 +14,7 @@ import fr.uem.efluid.utils.FormatUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ public class PreparationFixtures extends SystemTest {
         select = null;
 
         // Full dic init
-        if(CommonFixtures.efluidCase){
+        if (CommonFixtures.efluidCase) {
             initCompleteDictionaryWithEfluidTestTables();
         } else {
             initCompleteDictionaryWith7Tables();
@@ -171,6 +172,7 @@ public class PreparationFixtures extends SystemTest {
 
         user_access_preparation_saving_page();
     }
+
     @Given("^the user has selected all content for merge commit$")
     public void user_has_selected_all_ready_content_for_merge() throws Throwable {
 
@@ -434,6 +436,50 @@ public class PreparationFixtures extends SystemTest {
         });
     }
 
+    @Then("^the merge commit content has these resolution details for table \"(.*)\" on key \"(.*)\" :$")
+    public void merge_commit_content_details(String table, String key, DataTable data) {
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+
+        MergePreparedDiff diff = (MergePreparedDiff) preparation.getDomains().get(0).getPreparedContent().stream()
+                .filter(p -> p.getDictionaryEntryTableName().equals(table))
+                .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + table));
+
+        PreparedMergeIndexEntry entry = diff.getDiff().stream()
+                .filter(d -> d.getKeyValue().equals(key))
+                .findFirst().orElseThrow(() ->
+                        new AssertionError("Cannot find corresponding diff entry for table " + table + " on key " + key));
+
+        data.asMaps(String.class, String.class).forEach(l -> {
+            String payload = l.get("Payload");
+            if (StringUtils.isEmpty(payload)) {
+                payload = null;
+            }
+            String type = l.get("Type");
+            String actStr = l.get("Action");
+            IndexAction action =StringUtils.hasText(actStr) ? IndexAction.valueOf(actStr) : null;
+            String desc = " on table \"" + table + "\" on key \"" + key + "\" for type " + type + ". Resolution was \"" + entry.getResolutionRule() + "\"";
+            switch (type) {
+                case "mine":
+                    assertThat(entry.getMine().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                    assertThat(entry.getMine().getAction()).as("Action" + desc).isEqualTo(action);
+                    break;
+                case "their":
+                    assertThat(entry.getTheir().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                    assertThat(entry.getTheir().getAction()).as("Action" + desc).isEqualTo(action);
+                    break;
+                case "resolution":
+                    assertThat(entry.getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                    assertThat(entry.getAction()).as("Action" + desc).isEqualTo(action);
+                    break;
+                default:
+                    throw new AssertionError("Unsupported data type \"" + type + "\" for resolution details");
+            }
+        });
+
+    }
 
     @Then("^the commit content has these associated lob data :$")
     public void commit_lob_content(DataTable table) {

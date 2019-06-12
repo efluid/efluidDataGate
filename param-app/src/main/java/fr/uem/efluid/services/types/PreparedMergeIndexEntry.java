@@ -7,118 +7,124 @@ import fr.uem.efluid.model.entities.IndexEntry;
  * <p>
  * If result is null after prepare, then this entry is totaly IGNORED
  * </p>
- * 
+ * <p>The resolution is processed with basic rules, from :<ul><li>"Their" type of modif</li><li>"Mine" type of modif</li><li>Temporal</li></ul></p>
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 
-	private PreparedIndexEntry mine;
+    private PreparedIndexEntry mine;
 
-	private PreparedIndexEntry their;
+    private PreparedIndexEntry their;
 
-	private boolean needAction;
+    private boolean needAction;
 
-	/**
-	 * 
-	 */
-	public PreparedMergeIndexEntry() {
-		super();
-	}
+    private String resolutionRule;
 
-	/**
-	 * @return the mine
-	 */
-	public PreparedIndexEntry getMine() {
-		return this.mine;
-	}
+    /**
+     *
+     */
+    public PreparedMergeIndexEntry() {
+        super();
+    }
 
-	/**
-	 * @param mine
-	 *            the mine to set
-	 */
-	public void setMine(PreparedIndexEntry mine) {
-		this.mine = mine;
-	}
+    public String getResolutionRule() {
+        return this.resolutionRule;
+    }
 
-	/**
-	 * @return the their
-	 */
-	public PreparedIndexEntry getTheir() {
-		return this.their;
-	}
+    public void setResolutionRule(String resolutionRule) {
+        this.resolutionRule = resolutionRule;
+    }
 
-	/**
-	 * @param their
-	 *            the their to set
-	 */
-	public void setTheir(PreparedIndexEntry their) {
-		this.their = their;
-	}
+    /**
+     * @return the mine
+     */
+    public PreparedIndexEntry getMine() {
+        return this.mine;
+    }
 
-	/**
-	 * @return the needAction
-	 */
-	public boolean isNeedAction() {
-		return this.needAction;
-	}
+    /**
+     * @param mine the mine to set
+     */
+    public void setMine(PreparedIndexEntry mine) {
+        this.mine = mine;
+    }
 
-	/**
-	 * @param needAction
-	 *            the needAction to set
-	 */
-	public void setNeedAction(boolean needAction) {
-		this.needAction = needAction;
-	}
+    /**
+     * @return the their
+     */
+    public PreparedIndexEntry getTheir() {
+        return this.their;
+    }
 
-	/**
-	 * <p>
-	 * For merge resolution : apply given diff as resolution (change current modification)
-	 * </p>
-	 * 
-	 * @param combined
-	 * @param hrPayload
-	 */
-	public void applyResolution(DiffLine combined, String hrPayload) {
+    /**
+     * @param their the their to set
+     */
+    public void setTheir(PreparedIndexEntry their) {
+        this.their = their;
+    }
 
-		setAction(combined.getAction());
-		setPayload(combined.getPayload());
-		setHrPayload(hrPayload);
-	}
+    /**
+     * @return the needAction
+     */
+    public boolean isNeedAction() {
+        return this.needAction;
+    }
 
-	/**
-	 * Used when reading an imported index content
-	 * 
-	 * @param partial
-	 * @param dict
-	 * @return
-	 */
-	public static PreparedMergeIndexEntry fromImportedEntity(IndexEntry existing) {
+    /**
+     * @param needAction the needAction to set
+     */
+    public void setNeedAction(boolean needAction) {
+        this.needAction = needAction;
+    }
 
-		PreparedMergeIndexEntry data = new PreparedMergeIndexEntry();
+    /**
+     * <p>
+     * For merge resolution : apply given diff as resolution (change current modification)
+     * </p>
+     *
+     * @param combined
+     * @param hrPayload
+     */
+    public void applyResolution(DiffLine combined, String hrPayload) {
 
-		completeFromExistingEntity(data, existing);
+        setAction(combined.getAction());
+        setPayload(combined.getPayload());
+        setHrPayload(hrPayload);
+    }
 
-		return data;
-	}
+    /**
+     * Used when reading an imported index content
+     *
+     * @param existing
+     * @return
+     */
+    public static PreparedMergeIndexEntry fromImportedEntity(IndexEntry existing) {
 
-	/**
-	 * Used when reading an imported index content
-	 * 
-	 * @param combined
-	 * @param hrPayload
-	 * @return
-	 */
-	public static PreparedMergeIndexEntry fromExistingTheir(PreparedIndexEntry their) {
+        PreparedMergeIndexEntry data = new PreparedMergeIndexEntry();
 
-		PreparedMergeIndexEntry merge = new PreparedMergeIndexEntry();
+        completeFromExistingEntity(data, existing);
 
-		merge.setDictionaryEntryUuid(their.getDictionaryEntryUuid());
-		merge.setKeyValue(their.getKeyValue());
-		merge.setTheir(their);
-		merge.setMine(their);
+        return data;
+    }
 
-		return merge;
-	}
+    /**
+     * Used when reading an imported index content
+     *
+     * @param their
+     * @return
+     */
+    public static PreparedMergeIndexEntry fromExistingTheir(PreparedIndexEntry their) {
+
+        PreparedMergeIndexEntry merge = new PreparedMergeIndexEntry();
+
+        merge.setDictionaryEntryUuid(their.getDictionaryEntryUuid());
+        merge.setKeyValue(their.getKeyValue());
+        merge.setTheir(their);
+        merge.setMine(their);
+
+        return merge;
+    }
 }

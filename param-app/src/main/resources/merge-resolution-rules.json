@@ -1,0 +1,234 @@
+[
+  {
+    "caseName": "ADD - same value",
+    "their": "ADD",
+    "mine": "ADD",
+    "payload": "SIMILAR",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "ADD",
+      "needAction": false
+    }
+  },
+  {
+    "caseName": "ADD - different value",
+    "their": "ADD",
+    "mine": "ADD",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "UPDATE",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "ADD - only their",
+    "their": "ADD",
+    "mine": null,
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "ADD",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "ADD - only mine",
+    "their": "ADD",
+    "mine": null,
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "ADD",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "REMOVE - both",
+    "their": "REMOVE",
+    "mine": "REMOVE",
+    "payload": "SIMILAR",
+    "resolution": {
+      "payload": null,
+      "action": "REMOVE",
+      "needAction": false
+    }
+  },
+  {
+    "caseName": "REMOVE - only mine",
+    "their": null,
+    "mine": "REMOVE",
+    "payload": "SIMILAR",
+    "resolution": {
+      "payload": null,
+      "action": null,
+      "needAction": false
+    }
+  },
+  {
+    "caseName": "REMOVE - only their",
+    "their": "REMOVE",
+    "mine": null,
+    "payload": "SIMILAR",
+    "resolution": {
+      "payload": null,
+      "action": "REMOVE",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "REMOVE mine - ADD their",
+    "their": "ADD",
+    "mine": "REMOVE",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "ADD",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "REMOVE their - ADD mine",
+    "their": "REMOVE",
+    "mine": "ADD",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": null,
+      "action": "REMOVE",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "REMOVE mine - UPDATE their",
+    "their": "UPDATE",
+    "mine": "REMOVE",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "ADD",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "REMOVE their - UPDATE mine",
+    "their": "REMOVE",
+    "mine": "UPDATE",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": null,
+      "action": "REMOVE",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "UPDATE - same value",
+    "their": "UPDATE",
+    "mine": "UPDATE",
+    "payload": "SIMILAR",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "UPDATE",
+      "needAction": false
+    }
+  },
+  {
+    "caseName": "UPDATE - different value",
+    "their": "UPDATE",
+    "mine": "UPDATE",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "UPDATE",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "UPDATE - only their",
+    "their": "UPDATE",
+    "mine": null,
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "UPDATE",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "UPDATE - only mine",
+    "their": "UPDATE",
+    "mine": null,
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "MINE_PAYLOAD",
+      "action": "UPDATE",
+      "needAction": false
+    }
+  },
+  {
+    "caseName": "UPDATE mine - REMOVE their",
+    "their": "REMOVE",
+    "mine": "UPDATE",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "REMOVE",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "UPDATE their - REMOVE mine",
+    "their": "UPDATE",
+    "mine": "REMOVE",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "ADD",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "UPDATE mine - ADD their - similar",
+    "their": "ADD",
+    "mine": "UPDATE",
+    "payload": "SIMILAR",
+    "resolution": {
+      "payload": "MINE_PAYLOAD",
+      "action": "ADD",
+      "needAction": false
+    }
+  },
+  {
+    "caseName": "UPDATE mine - ADD their - different",
+    "their": "ADD",
+    "mine": "UPDATE",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "UPDATE",
+      "needAction": true
+    }
+  },
+  {
+    "caseName": "UPDATE their - ADD mine - similar",
+    "their": "UPDATE",
+    "mine": "ADD",
+    "payload": "SIMILAR",
+    "resolution": {
+      "payload": "MINE_PAYLOAD",
+      "action": "ADD",
+      "needAction": false
+    }
+  },
+  {
+    "caseName": "UPDATE their - ADD mine - different",
+    "their": "UPDATE",
+    "mine": "ADD",
+    "payload": "DIFFERENT",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "action": "UPDATE",
+      "needAction": true
+    }
+  }
+]
+

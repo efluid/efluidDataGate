@@ -8,8 +8,7 @@ import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
-import fr.uem.efluid.utils.ApplicationException;
-import fr.uem.efluid.utils.ErrorType;
+import fr.uem.efluid.tools.MergeResolutionProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +16,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -67,6 +66,9 @@ public class PrepareIndexService {
 
     @Autowired
     private ManagedValueConverter valueConverter;
+
+    @Autowired(required = false)
+    private MergeResolutionProcessor mergeResolutionProcessor;
 
     @Value("${param-efluid.display.combine-similar-diff-after}")
     private long maxSimilarBeforeCombined;
@@ -179,6 +181,12 @@ public class PrepareIndexService {
             Project project,
             PilotedCommitPreparation<?> preparation) {
 
+        // Temporary switchable process
+        if (this.mergeResolutionProcessor != null) {
+            newCompleteMergeIndexDiff(diffToComplete, entry, lobs, timeStampForSearch, mergeContent, project, preparation);
+            return;
+        }
+
         LOGGER.debug("Regenerating values from combined local + specified index for managed table \"{}\", using"
                 + " timestamp for local index search {}", entry.getTableName(), timeStampForSearch);
 
@@ -234,6 +242,76 @@ public class PrepareIndexService {
 
         preparation.incrementProcessStep();
     }
+
+
+    /**
+     * <p>
+     * Prepare the diff content, by extracting current content and building value to value
+     * diff regarding the actual index content
+     * </p>
+     * <p>
+     * For merge diff, we run basically the standard process, but building the "knew
+     * content" as a combination of local knew content "until last imported commit" and
+     * the imported diff. => Produces the diff between current real content and "what we
+     * should have if the imported diff was present". This way we produce the exact result
+     * of the merge for an import.
+     * </p>
+     * <p>
+     * Apply also some "remarks" to diff if required
+     * </p>
+     * <p>7 steps</p>
+     *
+     * @param diffToComplete     the specified <tt>MergePreparedDiff</tt> to complete with content and
+     *                           remarks
+     * @param entry              dictionaryEntry
+     * @param lobs               for any extracted lobs
+     * @param timeStampForSearch
+     * @param mergeDiff
+     * @param project
+     */
+    public void newCompleteMergeIndexDiff(
+            MergePreparedDiff diffToComplete,
+            DictionaryEntry entry,
+            Map<String, byte[]> lobs,
+            long timeStampForSearch,
+            List<? extends PreparedIndexEntry> mergeDiff,
+            Project project,
+            PilotedCommitPreparation<?> preparation) {
+
+        // Index "previous"
+        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestamp(entry,
+                timeStampForSearch);
+
+        preparation.incrementProcessStep();
+
+        // Build "previous" content from index
+        Map<String, String> previousContent = this.regeneratedParamaters.regenerateKnewContent(localIndexToTimeStamp);
+
+        preparation.incrementProcessStep();
+
+        // Get actual content
+        Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
+
+        preparation.incrementProcessStep();
+
+        // Build a direct diff between previous content and actual content
+        Collection<PreparedIndexEntry> mineDiff = generateDiffIndexFromContent(PreparedIndexEntry::new, previousContent, actualContent, entry);
+
+        preparation.incrementProcessStep();
+
+        // Build merge diff entries from 2 source of Diff + previous content
+        Collection<PreparedMergeIndexEntry> completedMergeDiff = newCompleteMergeIndexes(entry, mineDiff, mergeDiff, previousContent, preparation);
+
+        preparation.incrementProcessStep();
+
+        // Combine similar
+        diffToComplete.setDiff(
+                combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar).stream()
+                        .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+
+        preparation.incrementProcessStep();
+    }
+
 
     /**
      *
@@ -536,6 +614,55 @@ public class PrepareIndexService {
 
         return entry;
     }
+
+
+    /**
+     * @param dict
+     * @param mines
+     * @param theirs
+     * @param previousContent
+     */
+    private Collection<PreparedMergeIndexEntry> newCompleteMergeIndexes(
+            DictionaryEntry dict,
+            Collection<? extends DiffLine> mines,
+            Collection<? extends DiffLine> theirs,
+            Map<String, String> previousContent,
+            PilotedCommitPreparation<?> preparation) {
+
+        LOGGER.debug("Completing merge data from index for parameter table {}", dict.getTableName());
+
+        Map<String, List<DiffLine>> minesByKey = mines.stream().collect(Collectors.groupingBy(DiffLine::getKeyValue));
+        Map<String, List<DiffLine>> theirsByKey = theirs.stream().collect(Collectors.groupingBy(DiffLine::getKeyValue));
+
+        Set<String> allKeys = new HashSet<>();
+        allKeys.addAll(minesByKey.keySet());
+        allKeys.addAll(theirsByKey.keySet());
+
+        AtomicInteger count = new AtomicInteger(0);
+        int fireIncrem = allKeys.size() / 2;
+
+        // One combined key for each keys
+        return allKeys.stream().map(key -> {
+
+            String previous = previousContent.get(key);
+            DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key));
+            DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key));
+
+            String mineHr = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null, previous);
+            String theirHr = getConverter().convertToHrPayload(their != null ? their.getPayload() : null, previous);
+
+            PreparedIndexEntry mineEntry = mine != null ? PreparedIndexEntry.fromCombined(mine, mineHr) : null;
+            PreparedIndexEntry theirEntry = their != null ? PreparedIndexEntry.fromCombined(their, theirHr) : null;
+
+            // One increment only (when half are processed)
+            if (count.incrementAndGet() == fireIncrem) {
+                preparation.incrementProcessStep();
+            }
+
+            return this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry);
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
 
     /**
      * @param dict
