@@ -26,6 +26,7 @@
 		<module>param-app-cucumber</module>
 		<module>param-generator</module>
 		<module>param-generator-example</module>
+		<module>scripts/installeur</module>
 	</modules>
 
 	<properties>
@@ -346,4 +347,17 @@
 
 		</dependencies>
 	</dependencyManagement>
+	<distributionManagement>
+		<repository>
+			<id>releases</id>
+			<name>hermesMaven-releases</name>
+			<url>${urlArtifactoryRelease}</url>
+		</repository>
+		<snapshotRepository>
+			<uniqueVersion>false</uniqueVersion>
+			<id>snapshots</id>
+			<name>hermesMaven-snapshots</name>
+			<url>${urlArtifactorySnapshot}</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
