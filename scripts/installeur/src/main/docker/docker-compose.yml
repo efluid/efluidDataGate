@@ -1,0 +1,11 @@
+version: '2.0'
+services:
+  datagate-${INSTANCE}:
+    image: partifactorydocker.uem.lan/datagate
+    container_name: datagate-${INSTANCE}
+    ports:
+      - ${PORT}:8080
+    volumes:
+      - /opt/server/paramethor/${INSTANCE}/cfg/:/cfg/:ro
+      - /opt/server/paramethor/${INSTANCE}/logs:/tmp
+      - /opt/server/paramethor/${INSTANCE}/tmp:/logs
