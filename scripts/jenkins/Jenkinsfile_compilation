@@ -1,5 +1,5 @@
 def post_initVars(scriptLoader, scriptParams){
-	scriptParams['destinataireParType'] =  ['TU' : ['m-coste@efluid.fr']]
+	scriptParams['destinataireParType'] =  ['TU' : ['']]
 }
 
 return this;
