@@ -16,6 +16,7 @@
       <outputDirectory>.</outputDirectory>
 	  <includes>
       	<include>application.yml</include>
+		<include>logback.yml</include>
       </includes>
       <filtered>false</filtered>
       <lineEnding>lf</lineEnding>
