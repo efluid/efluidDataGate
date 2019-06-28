@@ -648,6 +648,11 @@ public class PrepareIndexService {
             DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key));
             DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key));
 
+            // Ignore dead entries (ADDED then DELETED in regenerated content)
+            if (mine == null && their == null) {
+                return null;
+            }
+
             String mineHr = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null, previous);
             String theirHr = getConverter().convertToHrPayload(their != null ? their.getPayload() : null, previous);
 

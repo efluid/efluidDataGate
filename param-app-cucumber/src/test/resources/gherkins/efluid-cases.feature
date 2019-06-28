@@ -70,10 +70,10 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to diff commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table            | Key       | Action | Payload                                   |
-      | EFLUIDTESTNUMBER | $testa_d  | REMOVE |                                           |
-      | EFLUIDTESTNUMBER | $testa_u  | UPDATE | COL1:'testa update 1'=>'testa update 1 2' |
-      | EFLUIDTESTNUMBER | $testa_i2 | ADD    | COL1:'testa insert 2'                     |
+      | Table            | Key       | Action | Payload                                                              |
+      | EFLUIDTESTNUMBER | $testa_d  | REMOVE |                                                                      |
+      | EFLUIDTESTNUMBER | $testa_u  | UPDATE | COL1:'testa update 1'=>'testa update 1 2', COL2:123456789=>987654321 |
+      | EFLUIDTESTNUMBER | $testa_i2 | ADD    | COL1:'testa insert 2', COL2:123456789                                |
 
 
   @TestMultiDataType
@@ -86,10 +86,10 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testj_u  | testj update 1 | testj varchar2 | 123456789 | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob update |
     And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
     And these changes are applied to table "TTESTMULTIDATATYPE" :
-      | change | id        | col1             |
-      | delete | $testj_d  |                  |
-      | add    | $testj_i2 | testj insert 2   |
-      | update | $testj_u  | testj update 1 2 |
+      | change | id        | col1             | col2           | col3      | col4       | col5                | col6 | col7        |
+      | delete | $testj_d  |                  |                |           |            |                     |      |             |
+      | add    | $testj_i2 | testj insert 2   |                |           |            |                     |      |             |
+      | update | $testj_u  | testj update 1 2 | testj varchar2 | 123456789 | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob update |
     And a new commit ":construction: Update 1" has been saved with all the new identified diff content
     And the user has requested an export of the commit with name ":construction: Update 1"
     And the user accesses to the destination environment with the same dictionary
@@ -102,10 +102,10 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to diff commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table              | Key       | Action | Payload                                   |
-      | TTESTMULTIDATATYPE | $testj_d  | REMOVE |                                           |
-      | TTESTMULTIDATATYPE | $testj_u  | UPDATE | COL1:'testj update 1'=>'testj update 1 2' |
-      | TTESTMULTIDATATYPE | $testj_i2 | ADD    | COL1:'testj insert 2'                     |
+      | Table              | Key       | Action | Payload                                                               |
+      | TTESTMULTIDATATYPE | $testj_d  | REMOVE |                                                                       |
+      | TTESTMULTIDATATYPE | $testj_u  | UPDATE | COL1:'testj update 1'=>'testj update 1 2'                             |
+      | TTESTMULTIDATATYPE | $testj_i2 | ADD    | COL1:'testj insert 2', COL2:'', COL3:, COL4:, COL5:, COL6:'', COL7:'' |
 
   @TestFusionLot1et2Insert
   Scenario: Efluid test fusion lot 1 insert + lot 2 insert
@@ -322,7 +322,7 @@ Feature: A complete set of test case are specified for Efluid needs
     When the user access to diff commit page
     Then the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload |
-      | TTEST1 | $testa_d3 | REMOVE |         |
+      | TTEST1 | $testa_u3 | REMOVE |         |
 
   @TestFusionLot1et2DeleteInsert
   Scenario: Efluid test fusion lot 1 delete + lot 2 insert

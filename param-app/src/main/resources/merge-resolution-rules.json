@@ -16,7 +16,7 @@
     "mine": "ADD",
     "payload": "DIFFERENT",
     "resolution": {
-      "payload": "THEIR_PAYLOAD",
+      "payload": "THEIR_PAYLOAD_REGENERATE_HR_FROM_MINE",
       "action": "UPDATE",
       "needAction": true
     }

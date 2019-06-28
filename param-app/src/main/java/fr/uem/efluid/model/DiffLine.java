@@ -83,9 +83,12 @@ public interface DiffLine {
 				break;
 			case REMOVE:
 			default:
-				// If was added : drop it totaly
+				// If was added in same scope : drop it totaly
 				if (currentAction == IndexAction.ADD) {
 					currentAction = null;
+				} else {
+					currentAction = line.getAction();
+					currentPayload = line.getPayload();
 				}
 				break;
 			}

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import java.lang.reflect.Constructor;
@@ -237,6 +238,18 @@ public class ManagedDatabaseAccess {
      * @throws InstantiationException
      */
     private Object getMappedValue(Class<?> paramType, String v, String name) {
+
+        // Keep string
+        if (paramType == String.class) {
+            return v;
+        }
+
+        // Remove empty
+        if(!StringUtils.hasText(v)){
+            return null;
+        }
+
+        // Process by type
         if (paramType == LocalDate.class) {
             return FormatUtils.parseLd(v);
         } else if (paramType == LocalDateTime.class) {
@@ -249,8 +262,6 @@ public class ManagedDatabaseAccess {
             return FormatUtils.toBytes(v);
         } else if (paramType == Long.class) {
             return Long.valueOf(v);
-        } else if (paramType == String.class) {
-            return v;
         } else if (paramType == int.class) {
             return Integer.parseInt(v);
         } else if (paramType == boolean.class) {

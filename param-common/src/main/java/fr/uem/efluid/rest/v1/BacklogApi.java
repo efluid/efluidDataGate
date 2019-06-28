@@ -109,7 +109,6 @@ public interface BacklogApi {
     })
     CommitCreatedResultView validateCurrentPreparedCommit(@RequestParam String commitComment);
 
-
     /**
      * <p>
      * Upload a given .par file containing commit items, and start a merge commit prepare
