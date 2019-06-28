@@ -1,5 +1,6 @@
 package fr.uem.efluid.services;
 
+import fr.uem.efluid.model.repositories.FeatureManager;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import fr.uem.efluid.model.entities.User;
@@ -14,6 +15,9 @@ public abstract class AbstractApplicationService {
 
 	@Autowired
 	protected UserHolder holder;
+
+	@Autowired
+	protected FeatureManager features;
 
 	/**
 	 * @return

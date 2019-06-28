@@ -160,9 +160,9 @@
 	</span>
     <script layout:fragment="script" th:inline="javascript">
 		 /*<![CDATA[*/
-		
+
 		/* For pagination */
-		
+
 		const updateSelectItem = (index, selected, rollbacked) => {
 
 			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
@@ -407,16 +407,17 @@
 			
 			var selected = type === "select";
 			var rollbacked = type === "rollback";
-			
-			$.post("/ui/prepare/selection/all?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+
+			$.post("/ui/prepare/selection/all?selected="+ selected + "&rollbacked=" + rollbacked, null);
+
 				if(selected){
-					$("#selectAllButton").click((e) => $("button.select-button").click());
+					$("button.select-button").click();
 				} else if(rollbacked){
-					$("#rollbackAllButton").click((e) => $("button.rollback-button").click());
+					$("button.rollback-button").click();
 				} else {
-					$("#ignoreAllButton").click((e) => $("button.ignore-button").click());
+					$("button.ignore-button").click();
 				}
-			});
+
 		};
 		
     	// Init actions

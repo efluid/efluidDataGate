@@ -30,8 +30,8 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 	 * @param dictionaryEntry
 	 * @return
 	 */
-	@Query("select count(t) > 0 from TableLink t where t.dictionaryEntry = :dictionaryEntry")
-	boolean hasLinksForDictionaryEntry(@Param("dictionaryEntry") DictionaryEntry dictionaryEntry);
+	@Query("select count(t) from TableLink t where t.dictionaryEntry = :dictionaryEntry")
+	long countLinksForDictionaryEntry(@Param("dictionaryEntry") DictionaryEntry dictionaryEntry);
 
 	/**
 	 * @param dictionaryEntry
@@ -56,7 +56,6 @@ public interface TableLinkRepository extends JpaRepository<TableLink, UUID> {
 	 * 
 	 * @return
 	 */
-	// TODO : Once with java9, specify as private
 	@Query(value = "SELECT concat(l.dictionary_entry_uuid,'') as from_col, concat(d.uuid,'') as to_col FROM link l INNER JOIN dictionary d ON d.table_name = l.table_to",
 			nativeQuery = true)
 	List<Object[]> _internal_findAllRelationships();

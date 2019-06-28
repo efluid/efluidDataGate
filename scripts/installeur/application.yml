@@ -1,0 +1,38 @@
+---
+param-efluid:
+
+    managed-datasource:
+       driver-class-name: oracle.jdbc.OracleDriver
+       url: CHANGE_ME
+       username: CHANGE_ME
+       password: CHANGE_ME
+       meta:
+           filterSchema: CHANGE_ME
+           preload: true
+           fixed-cached: false
+
+    security:
+        salt: 12345678901234567890123456789012
+
+    details:
+        instance-name: CHANGE_ME
+
+## TECH FEATURES CUSTOM
+spring:
+    profiles:
+        active: prod
+
+    datasource:
+        url: CHANGE_ME
+        username: CHANGE_ME
+        password: CHANGE_ME
+        driver-class-name: oracle.jdbc.OracleDriver
+
+    jpa:
+        show-sql: false
+        hibernate:
+            ddl-auto: update
+
+## WEB SERVER CONFIG
+server:
+    port: 8080

@@ -2,14 +2,7 @@ package fr.uem.efluid.model.entities;
 
 import java.util.UUID;
 
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -43,10 +36,10 @@ public class IndexEntry implements DiffLine {
 	@Enumerated(EnumType.STRING)
 	private IndexAction action;
 
-	@ManyToOne(optional = false)
+	@ManyToOne
 	private Commit commit;
 
-	@Size(max=4096)
+	@Lob
 	private String payload;
 
 	private String keyValue;

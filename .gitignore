@@ -22,3 +22,4 @@ buildNumber.properties
 **/src/main/resources/config/application*.yml
 **/update-errors.out
 param-generator-example/sonar-project.properties
+update-errors.out

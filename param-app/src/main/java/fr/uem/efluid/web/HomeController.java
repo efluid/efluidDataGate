@@ -1,13 +1,12 @@
 package fr.uem.efluid.web;
 
+import fr.uem.efluid.services.ApplicationDetailsService;
+import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import fr.uem.efluid.services.ApplicationDetailsService;
-import fr.uem.efluid.utils.WebUtils;
 
 /**
  * <p>
@@ -18,90 +17,91 @@ import fr.uem.efluid.utils.WebUtils;
  * Can be seen as the "provider of everything not related to core features for the
  * parameter management"
  * </p>
- * 
+ *
  * @author elecomte
+ * @version 2
  * @since v0.0.1
- * @version 1
  */
 @Controller
 public class HomeController extends CommonController {
 
-	@Autowired
-	private ApplicationDetailsService applicationDetailsService;
+    @Autowired
+    private ApplicationDetailsService applicationDetailsService;
 
-	/**
-	 * @param model
-	 * @return
-	 */
-	@RequestMapping("/")
-	public String index() {
+    /**
+     * @return
+     */
+    @RequestMapping("/")
+    public String index() {
 
-		// If not configured (no data : forward to wizzard)
-		if (this.applicationDetailsService.isNeedWizzard()) {
-			return "forward:/wizzard/";
-		}
+        // If not configured (no data : forward to wizzard)
+        if (this.applicationDetailsService.isNeedWizzard()) {
+            return "forward:/wizzard/";
+        }
 
-		return "redirect:/ui";
-	}
+        return "redirect:/ui";
+    }
 
-	/**
-	 * @param model
-	 * @return
-	 */
-	@RequestMapping("/ui")
-	public String index(Model model) {
+    /**
+     * @param model
+     * @return
+     */
+    @RequestMapping("/ui")
+    public String index(Model model) {
 
-		// If not configured (no data : forward to wizzard)
-		if (this.applicationDetailsService.isNeedWizzard()) {
-			return "forward:/wizzard/";
-		}
+        // If not configured (no data : forward to wizzard)
+        if (this.applicationDetailsService.isNeedWizzard()) {
+            return "forward:/wizzard/";
+        }
 
-		if (!controlSelectedProject(model)) {
-			return REDIRECT_SELECT;
-		}
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
 
-		WebUtils.addTools(model);
-		
-		model.addAttribute("details", this.applicationDetailsService.getCurrentDetails());
+        WebUtils.addTools(model);
 
-		return "pages/index";
-	}
+        model.addAttribute("details", this.applicationDetailsService.getCurrentDetails());
 
-	/**
-	 * <p>
-	 * Authentication error
-	 * </p>
-	 * 
-	 * @param username
-	 * @param error
-	 * @return
-	 */
-	@RequestMapping("/login")
-	public String loginForm(Model model,
-			@RequestParam(name = "username", required = false) String username,
-			@RequestParam(name = "error", required = false) String error) {
+        return "pages/index";
+    }
 
-		// If not configured (no data : forward to wizzard)
-		if (this.applicationDetailsService.isNeedWizzard()) {
-			return "forward:/wizzard/";
-		}
+    /**
+     * <p>
+     * Authentication error
+     * </p>
+     *
+     * @param username
+     * @param error
+     * @return
+     */
+    @RequestMapping("/login")
+    public String loginForm(Model model,
+                            @RequestParam(name = "username", required = false) String username,
+                            @RequestParam(name = "error", required = false) String error) {
 
-		if (username != null) {
-			model.addAttribute("error", username);
-		}
+        // If not configured (no data : forward to wizzard)
+        if (this.applicationDetailsService.isNeedWizzard()) {
+            return "forward:/wizzard/";
+        }
 
-		if (error != null) {
-			model.addAttribute("error", error);
-		}
+        if (username != null) {
+            model.addAttribute("error", username);
+        }
 
-		return "pages/login";
-	}
+        if (error != null) {
+            model.addAttribute("error", error);
+        }
 
-	/**
-	 * @return
-	 */
-	@RequestMapping("/swagger")
-	public String swagger() {
-		return "redirect:/webjars/swagger-ui/2.2.10/index.html?url=/v2/api-docs";
-	}
+        model.addAttribute("info", this.applicationDetailsService.getInfo());
+
+        return "pages/login";
+    }
+
+    /**
+     * @return
+     */
+    @RequestMapping("/swagger")
+    public String swagger() {
+        return "redirect:/webjars/swagger-ui/2.2.10/index.html?url=/v2/api-docs";
+    }
 }

@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html layout:decorate="~{layouts/wizzard.html}">
 <head>
-    <link rel="stylesheet" href="/css/spinning.css" media="screen"/>
 </head>
 <body>
 	<span layout:fragment="content">
@@ -19,22 +18,16 @@
 				</div>
 				<div class="float-right">
 	        		<a href="#" th:href="@{/wizzard/3/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale pour tous les projets</a>&nbsp;
-	        		<a href="/wizzard_user.html" th:href="@{/wizzard/3}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration</a>
+	        		<a href="/wizzard_user.html" th:href="@{/wizzard/4}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration</a>
 				</div>
         	</div>
 	        <div th:if="${preResult != null and preResult.status.name()=='DIFF_RUNNING'}" class="alert alert-secondary" role="alert">
 				<strong>Analyse en cours</strong>. Suivant la volumétrie du paramètrage, l'identification du lot initial peut prendre 
-				un certain temps. Il n'est pas possible d'arrêter un traitement en cours.
-				<div id="floatingCirclesG">
-					<div class="f_circleG" id="frotateG_01"></div>
-					<div class="f_circleG" id="frotateG_02"></div>
-					<div class="f_circleG" id="frotateG_03"></div>
-					<div class="f_circleG" id="frotateG_04"></div>
-					<div class="f_circleG" id="frotateG_05"></div>
-					<div class="f_circleG" id="frotateG_06"></div>
-					<div class="f_circleG" id="frotateG_07"></div>
-					<div class="f_circleG" id="frotateG_08"></div>
-				</div>
+				un certain temps. Il n'est pas possible d'arrêter un traitement en cours. Une fois l'analyse complétée à 100%, un temps supplémentaire peut être nécessaire pour enregistrer les données identifiées
+				<br/><br/>
+			  	<div class="progress">
+					<div id="progressBar" class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width:00%">00%</div>
+			  	</div>
 			</div>
 			<div th:if="${preResult != null and preResult.status.name() != 'DIFF_RUNNING'}">
 				<div class="alert alert-secondary" role="alert">
@@ -54,27 +47,12 @@
 	</span>
 	<script layout:fragment="script">
 		 /*<![CDATA[*/
-    
-		// Repeated check on status using basic rest service
-		const checkProgress = () => {
-			console.info("start a new check");
-			$.get("/wizzard/3/progress", (data, status) => {
-				console.info("Check with data " + data);
-				if(data === 'DIFF_RUNNING' || data === 'NOT_LAUNCHED'){
-					// Add new timeout 
-					setTimeout(checkProgress, 1000);
-				} else {
-					// Reload page for auto commit
-					window.location.replace("/wizzard/3/commit?commitName=Lot%20initial");
-				}
-			});
-		};
-		
+
     	// Start loading
     	$(document).ready(() => {
 			var fromType = /*[[${preResult != null and preResult.status.name()=='DIFF_RUNNING'}?'diff_check':'']]*/ 'diff_check';
 			if(fromType === 'diff_check'){
-				checkProgress();
+				checkProgress('/wizzard/3/progress', '/wizzard/3/commit?commitName=:tada:%20Lot%20initial');
 			}
 		}); 
 		

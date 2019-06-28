@@ -34,7 +34,6 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 	 * 
 	 * @return
 	 */
-	// TODO : Once with java9, specify as private
 	@Query(value = "select distinct "
 			+ "		concat(c.uuid,'') as c_uuid, "
 			+ "		d.name "
@@ -45,7 +44,7 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 			+ "where d.project_uuid = :projectUuid "
 			+ "group by d.name, c.uuid",
 			nativeQuery = true)
-	List<Object[]> _internal_findAllNamesUsedByCommits(UUID projectUuid);
+	List<Object[]> _internal_findAllNamesUsedByCommits(String projectUuid);
 
 	/**
 	 * Provides the domain names for each existing commits
@@ -54,7 +53,7 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 	 */
 	default Map<UUID, List<String>> loadAllDomainNamesByCommitUuids(Project project) {
 
-		return _internal_findAllNamesUsedByCommits(project.getUuid()).stream()
+		return _internal_findAllNamesUsedByCommits(project.getUuid().toString()).stream()
 				.collect(Collectors.groupingBy(t -> dbRawToUuid(t[0]), Collectors.mapping(t -> String.valueOf(t[1]), Collectors.toList())));
 	}
 
@@ -62,7 +61,7 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 	 * @param projectUuid
 	 * @return
 	 */
-	@Query(value = "select count(*) from domain d where d.project_uuid = :projectUuid", nativeQuery = true)
+	@Query("select count(d) from FunctionalDomain d where d.project.uuid = :projectUuid")
 	int countForProject(UUID projectUuid);
 
 	/**

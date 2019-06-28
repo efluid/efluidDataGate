@@ -76,7 +76,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 			+ ") mi on i.id = mi.max_id "
 			+ "where i.key_value in (:keys)", nativeQuery = true)
 	List<IndexEntry> _internal_findAllPreviousIndexEntries(
-			@Param("uuid") UUID dictionaryEntryUuid,
+			@Param("uuid") String dictionaryEntryUuid,
 			@Param("keys") List<String> keyValues);
 
 	/**
@@ -95,7 +95,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 			+ ") mi on i.id = mi.max_id "
 			+ "where i.key_value in (:keys)", nativeQuery = true)
 	List<IndexEntry> _internal_findAllPreviousIndexEntries(
-			@Param("uuid") UUID dictionaryEntryUuid,
+			@Param("uuid") String dictionaryEntryUuid,
 			@Param("keys") List<String> keyValues,
 			@Param("excludeIds") List<Long> excludeIds);
 
@@ -122,11 +122,11 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 		}
 
 		if (excludeIds == null || excludeIds.isEmpty()) {
-			return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid(), keyValues).stream()
+			return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid().toString(), keyValues).stream()
 					.collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v));
 		}
 
-		return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid(), keyValues, excludeIds).stream()
+		return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid().toString(), keyValues, excludeIds).stream()
 				.collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v));
 	}
 }

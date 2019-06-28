@@ -9,7 +9,7 @@ public class ApplicationException extends RuntimeException {
 
 	private final ErrorType error;
 
-	private final Long timestamp = Long.valueOf(System.currentTimeMillis());
+	private final Long timestamp = System.currentTimeMillis();
 
 	private String payload;
 

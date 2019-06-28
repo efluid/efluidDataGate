@@ -19,7 +19,7 @@
 		    </thead>
 		    <tbody>
 		        <tr th:each="commit, cstat : ${commits}">
-		            <td th:text="${commit.comment}">Préchargement configuration</td>
+		            <td th:utext="${custom.processGitmoji(commit.comment)}">Préchargement configuration</td>
 		            <td th:text="${commit.domainNames}">Fonct domains</td>
 		            <td th:text="|${commit.versionName} / ${commit.versionModelId}|">1.0.0</td>
 		            <td th:text="${commit.originalUserEmail}">System</td>
@@ -38,7 +38,10 @@
 		</p>
 	</span>
 	<script layout:fragment="script">
-		
+
+    	$(document).ready(() => {
+    		supportGitmojis();
+		});
 	</script>
 </body>
 </html>

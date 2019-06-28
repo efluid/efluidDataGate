@@ -105,10 +105,10 @@ public class UserController extends CommonController {
 	}
 
 	/**
+	 *
 	 * @param model
 	 * @param login
 	 * @param email
-	 * @param password
 	 * @param prefered
 	 * @return
 	 */

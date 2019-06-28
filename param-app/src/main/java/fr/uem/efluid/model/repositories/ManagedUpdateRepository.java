@@ -16,7 +16,7 @@ import fr.uem.efluid.model.entities.Project;
  * be rollbacked immediatly if failed in application.</font></b>.So this flow is used,
  * with associated rules for caller service :
  * <ul>
- * <li>If the update fail in method {@link #runAllChangesAndCommit(List)} then the changes
+ * <li>If the update fail in method {@link #runAllChangesAndCommit(List, Map, Project)} then the changes
  * are <b>all rollbacked immediately</b>. A TechnicalException is throwed, and can be used
  * to fail caller process (and rollback also caller process, this time using standard
  * Spring transactional process)</li>

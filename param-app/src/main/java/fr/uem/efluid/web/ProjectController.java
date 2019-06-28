@@ -76,7 +76,7 @@ public class ProjectController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param name
+	 * @param prefered
 	 * @return
 	 */
 	@RequestMapping(path = "/projects/prefered/save", method = POST)
@@ -109,7 +109,7 @@ public class ProjectController extends CommonController {
 
 	/**
 	 * @param model
-	 * @param name
+	 * @param uuid
 	 * @return
 	 */
 	@RequestMapping("/projects/select/{uuid}")

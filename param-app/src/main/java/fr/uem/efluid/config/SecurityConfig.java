@@ -79,7 +79,7 @@ public class SecurityConfig {
 
 		FilterRegistrationBean<SecurityFilter> registration = new FilterRegistrationBean<>();
 		registration.setFilter(new SecurityFilter(config(), WEB_CLIENT, AUTHORIZER));
-		registration.addUrlPatterns(new String[] { "/ui", "/ui/*" });
+		registration.addUrlPatterns("/ui", "/ui/*");
 		registration.setName("pac4jWestSecurityFilter");
 		registration.setOrder(1);
 
@@ -92,11 +92,11 @@ public class SecurityConfig {
 	@Bean
 	public FilterRegistrationBean<SecurityFilter> restSecurityFilter() {
 
-		LOGGER.debug("[SECURITY] Mapping rest security on \"/rest/v1/backlog/*\", \"/rest/v1/dictionary/*\", \"/rest/v1/features/*\"");
+		LOGGER.debug("[SECURITY] Mapping rest security on \"/rest/v1/backlog/*\", \"/rest/v1/dictionary/*\", \"/rest/v1/features/*\", \"/rest/v1/projects/*\"");
 
 		FilterRegistrationBean<SecurityFilter> registration = new FilterRegistrationBean<>();
 		registration.setFilter(new SecurityFilter(config(), REST_CLIENT, AUTHORIZER));
-		registration.addUrlPatterns(new String[] { "/rest/v1/backlog/*", "/rest/v1/dictionary/*", "/rest/v1/features/*" });
+		registration.addUrlPatterns("/rest/v1/backlog/*", "/rest/v1/dictionary/*", "/rest/v1/features/*", "/rest/v1/projects/*");
 		registration.setName("pac4jRestSecurityFilter");
 		registration.setOrder(1);
 
@@ -113,7 +113,7 @@ public class SecurityConfig {
 
 		FilterRegistrationBean<CallbackFilter> registration = new FilterRegistrationBean<>();
 		registration.setFilter(new CallbackFilter(config(), "/"));
-		registration.addUrlPatterns(new String[] { "/callback" });
+		registration.addUrlPatterns("/callback");
 		registration.setName("pac4jCallbackFilter");
 		registration.setOrder(1);
 
@@ -130,7 +130,7 @@ public class SecurityConfig {
 
 		FilterRegistrationBean<LogoutFilter> registration = new FilterRegistrationBean<>();
 		registration.setFilter(new LogoutFilter(config(), "/"));
-		registration.addUrlPatterns(new String[] { "/logout" });
+		registration.addUrlPatterns("/logout");
 		registration.setName("pac4jLogoutFilter");
 		registration.setOrder(1);
 

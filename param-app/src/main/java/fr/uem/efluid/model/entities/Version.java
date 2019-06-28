@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 
 import fr.uem.efluid.model.shared.ExportAwareVersion;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.hibernate.annotations.Type;
 
 /**
  * <p>
@@ -26,6 +27,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
 public class Version extends ExportAwareVersion<Project> {
 
 	@Id
+	@Type(type="uuid-char")
 	private UUID uuid;
 
 	@NotNull

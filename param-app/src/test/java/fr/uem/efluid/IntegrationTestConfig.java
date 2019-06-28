@@ -37,66 +37,66 @@ import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
  * <p>
  * Default config for fully contextualised tests
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
-@EnableJpaRepositories({ REPOSITORIES, ROOT + ".stubs" })
-@EntityScan({ ENTITIES, CONVERTERS, ROOT + ".stubs" })
-@ComponentScan({ CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, ROOT + ".stubs" })
+@EnableJpaRepositories({REPOSITORIES, ROOT + ".stubs"})
+@EntityScan({ENTITIES, CONVERTERS, ROOT + ".stubs"})
+@ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, ROOT + ".stubs"})
 @TestConfiguration
 @ConfigurationProperties(prefix = "param-efluid.managed-datasource")
 public class IntegrationTestConfig extends CustomDataSourceParameters {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(IntegrationTestConfig.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(IntegrationTestConfig.class);
 
-	@Autowired
-	private DataSource defaultDataSource;
+    @Autowired
+    private DataSource defaultDataSource;
 
-	@Autowired
-	private EntityManagerFactory defaultEntityManagerFactory;
+    @Autowired
+    private EntityManagerFactory defaultEntityManagerFactory;
 
-	@Bean
-	public JdbcTemplate managedDatabaseJdbcTemplate() {
-		return new JdbcTemplate(this.defaultDataSource);
-	}
+    @Bean
+    public JdbcTemplate managedDatabaseJdbcTemplate() {
+        return new JdbcTemplate(this.defaultDataSource);
+    }
 
-	/**
-	 * @return
-	 */
-	@Bean(name = DatasourceUtils.MANAGED_TRANSACTION_MANAGER)
-	public PlatformTransactionManager managedTransactionManager() {
-		return new DataSourceTransactionManager(this.defaultDataSource);
-	}
+    /**
+     * @return
+     */
+    @Bean(name = DatasourceUtils.MANAGED_TRANSACTION_MANAGER)
+    public PlatformTransactionManager managedTransactionManager() {
+        return new DataSourceTransactionManager(this.defaultDataSource);
+    }
 
-	/**
-	 * @return
-	 */
-	@Bean(name = DatasourceUtils.DEFAULT_TRANSACTION_MANAGER)
-	@Primary
-	public PlatformTransactionManager defaultTransactionManager() {
-		return new JpaTransactionManager(this.defaultEntityManagerFactory);
-	}
+    /**
+     * @return
+     */
+    @Bean(name = DatasourceUtils.DEFAULT_TRANSACTION_MANAGER)
+    @Primary
+    public PlatformTransactionManager defaultTransactionManager() {
+        return new JpaTransactionManager(this.defaultEntityManagerFactory);
+    }
 
-	@Bean
-	public QueryGenerationRules managedQueryGenerationRules() {
-		// Use local query config directly
-		QueryGenerationRules rules = this.getQuery();
-		LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
-				Boolean.valueOf(rules.isColumnNamesProtected()), Boolean.valueOf(rules.isTableNamesProtected()));
-		return rules;
-	}
+    @Bean
+    public QueryGenerationRules managedQueryGenerationRules() {
+        // Use local query config directly
+        QueryGenerationRules rules = this.getQuery();
+        LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
+                rules.isColumnNamesProtected(), rules.isTableNamesProtected());
+        return rules;
+    }
 
-	/**
-	 * <p>
-	 * For integration tests, use standard async model
-	 * </p>
-	 * 
-	 * @return
-	 */
-	@Bean
-	public AsyncDriver futureAsyncDriver() {
-		return new FutureAsyncDriver(4);
-	}
+    /**
+     * <p>
+     * For integration tests, use standard async model
+     * </p>
+     *
+     * @return
+     */
+    @Bean
+    public AsyncDriver futureAsyncDriver() {
+        return new FutureAsyncDriver(4, 5000, 200);
+    }
 }

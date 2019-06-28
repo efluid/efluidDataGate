@@ -37,185 +37,195 @@ import java.time.temporal.Temporal;
  * string-like</li>
  * </ul>
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 2
+ * @since v0.0.1
  */
 public enum ColumnType {
 
-	// TODO : If CLOB and BLOB cannot be managed the same way, use a dedicated type "TEXT"
-	BINARY('B', "LOB", false),
-	ATOMIC('O', "Variable", false),
-	STRING('S', "Litteral", false),
-	BOOLEAN('1', "Booleen", false),
-	TEMPORAL('T', "Temporal", false),
-	UNKNOWN('U', "Unknown", false),
-	PK_ATOMIC('!', "Identifiant", true),
-	PK_STRING('§', "Identifiant", true);
+    // TODO : If CLOB and BLOB cannot be managed the same way, use a dedicated type "TEXT"
+    BINARY('B', "LOB", false),
+    TEXT('X', "TEXT", false),
+    ATOMIC('O', "Variable", false),
+    STRING('S', "Litteral", false),
+    BOOLEAN('1', "Booleen", false),
+    TEMPORAL('T', "Temporal", false),
+    UNKNOWN('U', "Unknown", false),
+    PK_ATOMIC('!', "Identifiant Num", true),
+    PK_STRING('§', "Identifiant Char", true);
 
-	private final char represent;
-	private final String displayName;
-	private final boolean pk;
+    private final char represent;
+    private final String displayName;
+    private final boolean pk;
 
-	/**
-	 * @param represent
-	 */
-	private ColumnType(char represent, String displayName, boolean pk) {
-		this.represent = represent;
-		this.displayName = displayName;
-		this.pk = pk;
-	}
-
-	/**
-	 * @return the represent
-	 */
-	public char getRepresent() {
-		return this.represent;
-	}
-
-	/**
-	 * @return the displayName
-	 */
-	public String getDisplayName() {
-		return this.displayName;
-	}
-
-	/**
-	 * @return the pk
-	 */
-	public boolean isPk() {
-		return this.pk;
-	}
-
-	/**
-	 * <p>
-	 * Utils for getting the corresponding type on an existing object
-	 * </p>
-	 * 
-	 * @param obj
-	 * @return
-	 */
-	public static ColumnType forClass(Class<?> obj) {
-
-		if (obj == String.class || obj == char.class) {
-			return ColumnType.STRING;
-		}
-
-		if (obj == byte[].class) {
-			return ColumnType.BINARY;
-		}
-
-		if (obj == boolean.class || obj == Boolean.class) {
-			return ColumnType.BOOLEAN;
-		}
-
-		if (Temporal.class.isAssignableFrom(obj) || Date.class.isAssignableFrom(obj) || Timestamp.class.isAssignableFrom(obj)) {
-			return ColumnType.TEMPORAL;
-		}
-
-		return ColumnType.ATOMIC;
-	}
-
-	/**
-	 * <p>
-	 * Utils for getting the corresponding type on an existing object
-	 * </p>
-	 * 
-	 * @param obj
-	 * @return
-	 */
-	public static ColumnType forObject(Object obj) {
-
-		if (obj instanceof String) {
-			return ColumnType.STRING;
-		}
-
-		if (obj instanceof byte[]) {
-			return ColumnType.BINARY;
-		}
-
-		if (obj instanceof Boolean) {
-			return ColumnType.BOOLEAN;
-		}
-
-		if (obj instanceof Temporal) {
-			return ColumnType.TEMPORAL;
-		}
-
-		return ColumnType.ATOMIC;
-	}
-
-	/**
-	 * Shortcut to Type from its represent value
-	 * 
-	 * @param represent
-	 * @return
-	 */
-	public static ColumnType forRepresent(char represent) {
-
-		if (represent == STRING.represent) {
-			return ColumnType.STRING;
-		}
-
-		if (represent == ATOMIC.represent) {
-			return ColumnType.ATOMIC;
-		}
-
-		if (represent == BOOLEAN.represent) {
-			return ColumnType.BOOLEAN;
-		}
-
-		if (represent == TEMPORAL.represent) {
-			return ColumnType.TEMPORAL;
-		}
-
-		return BINARY;
-	}
-
-	/**
-	 * @param type
-	 * @return the internal type associated to
-	 */
-	public static ColumnType forJdbcType(int type) {
-
-		/*
-		 * Improved search algorytm based on JDBC SQL Types model, using direct int value
-		 * check for range validation. Indeed, Types values are "almost" well organized,
-		 * with "big types" in limited ranges.
-		 */
-
-		// Explicit codes for boolean
-		if (type == Types.BOOLEAN || type == Types.BIT) {
-			return ColumnType.BOOLEAN;
-		}
-
-		// A Small range for temporals
-		if (type >= Types.DATE && type <= Types.TIMESTAMP) {
-			return ColumnType.TEMPORAL;
-		}
-
-		// A 1st Small range of binaries
-		if (type >= Types.LONGVARBINARY && type <= Types.BINARY) {
-			return ColumnType.BINARY;
-		}
-
-	  // Explicit range for char
-    if ((type == Types.CHAR)) {
-      return ColumnType.STRING;
+    /**
+     * @param represent
+     */
+    private ColumnType(char represent, String displayName, boolean pk) {
+        this.represent = represent;
+        this.displayName = displayName;
+        this.pk = pk;
     }
-    
-		// Explicit identification by type range
-		if ((type >= Types.ROWID && type <= Types.DOUBLE)) {
-			return ColumnType.ATOMIC;
-		}
 
-		// Anything else remeaning <= Types.ARRAY (2003) ar strings
-		if (type <= Types.ARRAY) {
-			return ColumnType.STRING;
-		}
+    /**
+     * @return the represent
+     */
+    public char getRepresent() {
+        return this.represent;
+    }
 
-		// Other (> Types.OTHER) ar large binaries
-		return ColumnType.BINARY;
-	}
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        return this.displayName;
+    }
+
+    /**
+     * @return the pk
+     */
+    public boolean isPk() {
+        return this.pk;
+    }
+
+    /**
+     * <p>
+     * Utils for getting the corresponding type on an existing object
+     * </p>
+     *
+     * @param obj
+     * @return
+     */
+    public static ColumnType forClass(Class<?> obj) {
+
+        if (obj == String.class || obj == char.class) {
+            return ColumnType.STRING;
+        }
+
+        if (obj == byte[].class) {
+            return ColumnType.BINARY;
+        }
+
+        if (obj == boolean.class || obj == Boolean.class) {
+            return ColumnType.BOOLEAN;
+        }
+
+        if (Temporal.class.isAssignableFrom(obj) || Date.class.isAssignableFrom(obj) || Timestamp.class.isAssignableFrom(obj)) {
+            return ColumnType.TEMPORAL;
+        }
+
+        return ColumnType.ATOMIC;
+    }
+
+    /**
+     * <p>
+     * Utils for getting the corresponding type on an existing object
+     * </p>
+     *
+     * @param obj
+     * @return
+     */
+    public static ColumnType forObject(Object obj) {
+
+        if (obj instanceof String) {
+            return ColumnType.STRING;
+        }
+
+        if (obj instanceof byte[]) {
+            return ColumnType.BINARY;
+        }
+
+        if (obj instanceof Boolean) {
+            return ColumnType.BOOLEAN;
+        }
+
+        if (obj instanceof Temporal) {
+            return ColumnType.TEMPORAL;
+        }
+
+        return ColumnType.ATOMIC;
+    }
+
+    /**
+     * Shortcut to Type from its represent value
+     *
+     * @param represent
+     * @return
+     */
+    public static ColumnType forRepresent(char represent) {
+
+        if (represent == STRING.represent) {
+            return ColumnType.STRING;
+        }
+
+        if (represent == TEXT.represent) {
+            return ColumnType.TEXT;
+        }
+
+        if (represent == ATOMIC.represent) {
+            return ColumnType.ATOMIC;
+        }
+
+        if (represent == BOOLEAN.represent) {
+            return ColumnType.BOOLEAN;
+        }
+
+        if (represent == TEMPORAL.represent) {
+            return ColumnType.TEMPORAL;
+        }
+
+        return BINARY;
+    }
+
+    /**
+     * @param type
+     * @return the internal type associated to
+     */
+    public static ColumnType forJdbcType(int type) {
+
+        /*
+         * Improved search algorytm based on JDBC SQL Types model, using direct int value
+         * check for range validation. Indeed, Types values are "almost" well organized,
+         * with "big types" in limited ranges.
+         */
+
+        // Explicit codes for boolean
+        if (type == Types.BOOLEAN || type == Types.BIT) {
+            return ColumnType.BOOLEAN;
+        }
+
+        // A Small range for temporals
+        if (type >= Types.DATE && type <= Types.TIMESTAMP) {
+            return ColumnType.TEMPORAL;
+        }
+
+        // A 1st Small range of binaries
+        if (type >= Types.LONGVARBINARY && type <= Types.BINARY) {
+            return ColumnType.BINARY;
+        }
+
+        // Explicit value for char
+        if (type == Types.CHAR) {
+            return ColumnType.STRING;
+        }
+
+        // Specific for CLOB
+        if (type == Types.CLOB) {
+            return ColumnType.TEXT;
+        }
+
+        // Explicit identification by type range
+        if ((type >= Types.ROWID && type <= Types.DOUBLE)) {
+            return ColumnType.ATOMIC;
+        }
+
+        // Anything else remeaning <= Types.ARRAY (2003) ar strings
+        if (type <= Types.ARRAY) {
+            return ColumnType.STRING;
+        }
+
+        // Other (> Types.OTHER) ar large binaries
+        return ColumnType.BINARY;
+    }
 }

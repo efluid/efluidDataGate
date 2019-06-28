@@ -1,85 +1,145 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
-
-import java.util.Arrays;
-import java.util.UUID;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import cucumber.api.java.en.Given;
+import cucumber.api.DataTable;
 import cucumber.api.java.en.Then;
-import fr.uem.efluid.services.PilotableCommitPreparationService;
-import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.model.entities.AttachmentType;
+import fr.uem.efluid.model.entities.CommitState;
+import fr.uem.efluid.model.entities.IndexAction;
+import fr.uem.efluid.model.entities.LobProperty;
+import fr.uem.efluid.services.types.CommitDetails;
+import fr.uem.efluid.services.types.DiffDisplay;
+import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.system.common.SystemTest;
+import fr.uem.efluid.utils.FormatUtils;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
+import static java.util.stream.Collectors.toMap;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 public class CommitFixtures extends SystemTest {
 
-	private static UUID runningPrep;
 
-	@Autowired
-	private PilotableCommitPreparationService prep;
+    @Then("^the commit \"(.*)\" is added to commit list for current project$")
+    public void then_commit_is_added_with_comment(String comment) {
 
-	@Before
-	public void resetFixture() {
-		resetAsyncProcess();
-		runningPrep = null;
-	}
+        CommitDetails commit = getSavedCommit();
 
-	@Given("^a diff analysis can be started$")
-	public void a_diff_analysis_can_be_started() throws Throwable {
+        assertThat(commit).isNotNull();
+        assertThat(commit.getComment()).isEqualTo(comment);
+    }
 
-		// Full dic init
-		initCompleteDictionaryWith3Tables();
+    @Then("^the merge commit \"(.*)\" is added to commit list for current project$")
+    public void then_merge_commit_is_added_with_comment(String comment) {
 
-		// Authenticated
-		implicitlyAuthenticatedAndOnPage("home page");
+        // Merge is a normal commit
+        then_commit_is_added_with_comment(comment);
+    }
 
-		// Valid version ready
-		modelDatabase().initVersions(getCurrentUserProject(), Arrays.asList("vCurrent"), 0);
+    @Then("^the commit \"(.*)\" from current project is of type \"(.*)\"$")
+    public void then_commit_is_added_with_comment_and_type(String comment, String type) {
 
-		// Mark async to "eternal" process
-		mockEternalAsyncProcess();
-	}
+        CommitDetails commit = this.commitService.getExistingCommitDetails(backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment));
 
-	@Given("^no diff is running$")
-	public void no_diff_is_running() throws Throwable {
-		this.prep.cancelCommitPreparation();
-	}
+        assertThat(commit).isNotNull();
+        assertThat(commit.getState()).isEqualTo(CommitState.valueOf(type));
+    }
 
-	@Given("^a diff has already been launched$")
-	public void a_diff_has_already_been_launched() throws Throwable {
+    @Then("^the commit \"(.*)\" is added to commit list for current project in destination environment$")
+    public void then_commit_is_added_with_comment_in_dest(String comment) {
 
-		// Cancel anything running
-		no_diff_is_running();
+        // Switched env is same db
+        then_commit_is_added_with_comment(comment);
+    }
 
-		// Start new
-		get(getCorrespondingLinkForPageName("diff launch page"));
+    @Then("^the saved commit content has these identified changes :$")
+    public void commit_content_changes(DataTable data) {
 
-		// And get diff uuid for testing
-		runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
-	}
+        // Get by tables
+        Map<String, List<Map<String, String>>> tables = data.asMaps(String.class, String.class).stream().collect(Collectors.groupingBy(i -> i.get("Table")));
 
-	@Then("^a diff is running$")
-	public void a_diff_is_running() throws Throwable {
+        CommitDetails commit = getSavedCommit();
 
-		Assert.assertEquals(PilotedCommitStatus.DIFF_RUNNING, this.prep.getCurrentCommitPreparationStatus());
-	}
+        tables.forEach((t, v) -> {
+            DiffDisplay<?> content = commit.getContent().stream()
+                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
+                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
 
-	@Then("^an alert says that the diff is still running$")
-	public void an_alert_says_that_the_diff_is_still_running() throws Throwable {
+            assertThat(content.getDiff().size()).isEqualTo(v.size());
 
-		// Alert => We are on running diff page
-		currentAction = currentAction.andExpect(view().name(getCorrespondingTemplateForName("diff running")));
+            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
+            v.sort(Comparator.comparing(m -> m.get("Key")));
 
-		// The running preparation is still the previous one
-		Assert.assertEquals(runningPrep, this.prep.getCurrentCommitPreparation().getIdentifier());
-	}
+            // Keep order
+            for (int i = 0; i < content.getDiff().size(); i++) {
+                PreparedIndexEntry diffLine = content.getDiff().get(i);
+                Map<String, String> dataLine = v.get(i);
+
+                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
+                assertThat(diffLine.getAction()).isEqualTo(action);
+                assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
+
+                // No need to check payload in delete
+                if (action != REMOVE) {
+                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
+                }
+            }
+        });
+    }
+
+    @Then("^the saved merge commit content has these identified changes :$")
+    public void merge_commit_content_changes(DataTable data) {
+
+        // Merge is a normal commit
+        commit_content_changes(data);
+    }
+
+
+    @Then("^these attachment documents are associated to the commit in the current project backlog:$")
+    public void then_commit_contains_attachments(DataTable table) {
+
+        CommitDetails commit = getSavedCommit();
+
+        Map<String, AttachmentType> data = table.asMaps(String.class, String.class)
+                .stream()
+                .collect(toMap(m -> m.get("title"), m -> AttachmentType.valueOf(m.get("type"))));
+
+        // Complies to the specified list of attachments
+        assertThat(commit.getAttachments()).hasSize(data.size());
+        commit.getAttachments().forEach(a -> {
+            assertThat(a.getName()).matches(data::containsKey);
+            assertThat(a.getType()).isEqualTo(data.get(a.getName()));
+        });
+    }
+
+    @Then("^the saved commit content has these associated lob data :$")
+    public void then_commit_contains_lobs(DataTable table) {
+
+        CommitDetails commit = getSavedCommit();
+
+        List<LobProperty> lobs = backlogDatabase().loadCommitLobs(commit);
+
+        Map<String, String> datas = table.asMaps(String.class, String.class).stream().collect(Collectors.toMap(i -> i.get("hash"), i -> i.get("data")));
+
+        assertThat(lobs).hasSize(datas.size());
+
+        lobs.forEach((lobProperty) -> {
+
+            // Custom clean message
+            if (datas.get(lobProperty.getHash()) == null) {
+                throw new AssertionError("Cannot found corresponding hash for current lob. Current is "
+                        + lobProperty.getHash() + " with data \"" + FormatUtils.toString(lobProperty.getData()) + "\"");
+            }
+            assertThat(FormatUtils.toString(lobProperty.getData())).isEqualTo(datas.get(lobProperty.getHash()));
+        });
+    }
 }

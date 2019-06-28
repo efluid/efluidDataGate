@@ -12,7 +12,7 @@ import fr.uem.efluid.system.common.SystemTest;
  * @version 1
  */
 @RunWith(Cucumber.class)
-@CucumberOptions(features = "src/test/resources/gherkins")
+@CucumberOptions(features = "src/test/resources/gherkins") //, tags = "@SINGLE")
 public class AllCucumberTest extends SystemTest {
 
 	// Run tests from specified gherkins

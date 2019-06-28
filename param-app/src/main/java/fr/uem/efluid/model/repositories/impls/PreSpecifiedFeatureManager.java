@@ -18,12 +18,16 @@ import fr.uem.efluid.model.entities.ManagedFeature;
 import fr.uem.efluid.model.repositories.FeatureManager;
 import fr.uem.efluid.model.repositories.ManagedFeatureRepository;
 import fr.uem.efluid.services.Feature;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author elecomte
  * @since v0.0.8
  * @version 1
  */
+@Repository
+@Transactional
 public class PreSpecifiedFeatureManager implements FeatureManager {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(PreSpecifiedFeatureManager.class);
@@ -54,7 +58,7 @@ public class PreSpecifiedFeatureManager implements FeatureManager {
 	@Override
 	@CacheEvict(cacheNames = "features", allEntries = true)
 	public void setFeatureState(Feature feature, boolean value) {
-		LOGGER.debug("[FEATURE] Update managed feature {} with value {}", feature, Boolean.valueOf(value));
+		LOGGER.debug("[FEATURE] Update managed feature {} with value {}", feature, value);
 
 		ManagedFeature managed = this.features.getOne(feature);
 
@@ -80,7 +84,7 @@ public class PreSpecifiedFeatureManager implements FeatureManager {
 						feat.toString(), feat.getPropertyKey());
 
 				ManagedFeature managed = new ManagedFeature();
-				managed.setEnabled(this.env.getProperty(feat.getPropertyKey(), Boolean.class).booleanValue());
+				managed.setEnabled(this.env.getProperty(feat.getPropertyKey(), Boolean.class, Boolean.FALSE));
 				managed.setUpdatedTime(LocalDateTime.now());
 				managed.setFeature(feat);
 				this.features.save(managed);
@@ -95,7 +99,7 @@ public class PreSpecifiedFeatureManager implements FeatureManager {
 	 */
 	@Override
 	public Map<Feature, Boolean> getAllFeatureStates() {
-		return Stream.of(Feature.values()).collect(Collectors.toMap(f -> f, f -> Boolean.valueOf(this.features.getManagedState(f))));
+		return Stream.of(Feature.values()).collect(Collectors.toMap(f -> f, f -> this.features.getManagedState(f)));
 	}
 
 }

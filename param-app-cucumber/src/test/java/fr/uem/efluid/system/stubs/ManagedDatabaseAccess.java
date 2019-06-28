@@ -1,269 +1,533 @@
 package fr.uem.efluid.system.stubs;
 
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasProperty;
-
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.hamcrest.Matcher;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
+import cucumber.api.DataTable;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
-import fr.uem.efluid.system.stubs.entities.SimulatedTableOne;
-import fr.uem.efluid.system.stubs.entities.SimulatedTableThree;
-import fr.uem.efluid.system.stubs.entities.SimulatedTableTwo;
-import fr.uem.efluid.system.stubs.repositories.SimulatedTableOneRepository;
-import fr.uem.efluid.system.stubs.repositories.SimulatedTableThreeRepository;
-import fr.uem.efluid.system.stubs.repositories.SimulatedTableTwoRepository;
+import fr.uem.efluid.system.stubs.entities.*;
 import fr.uem.efluid.utils.FormatUtils;
+import org.hamcrest.Matcher;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.persistence.EntityManager;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.Collections.reverseOrder;
+import static java.util.Comparator.comparing;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.*;
 
 /**
  * <p>
  * Component for init and use of the <tt>managed</tt> database (the configured source
  * database, simulated with stubs entity model)
  * </p>
- * 
+ *
  * @author elecomte
+ * @version 2
  * @since v0.0.8
- * @version 1
  */
 @Component
+@Transactional
 public class ManagedDatabaseAccess {
 
-	public static final String TABLE_ONE = "TTAB_ONE";
-	public static final String TABLE_TWO = "TTAB_TWO";
-	public static final String TABLE_THREE = "TTAB_THREE";
+    public static final String TABLE_ONE = "TTAB_ONE"; // Basic table, key is value column
+    public static final String TABLE_TWO = "TTAB_TWO"; // Basic table, key is native pk
+    public static final String TABLE_THREE = "TTAB_THREE"; // Basic table, simplest version
+    public static final String TABLE_FOUR = "TTAB_FOUR"; // Table with native join on tab ONE
+    public static final String TABLE_FIVE = "TTAB_FIVE"; // Table with BLOB
+    public static final String TABLE_SIX = "TTAB_SIX"; // Table with CLOB
+    public static final String TABLE_SEVEN = "TTAB_SEVEN"; // Table with business join on tab THREE
 
-	@Autowired
-	private SimulatedTableOneRepository tabOne;
+    public static final String TTEST1 = "TTEST1";
+    public static final String TTESTMULTIDATATYPE = "TTESTMULTIDATATYPE";
+    public static final String EFLUIDTESTPKCOMPOSITE = "EFLUIDTESTPKCOMPOSITE";
+    public static final String EFLUIDTESTNUMBER = "EFLUIDTESTNUMBER";
 
-	@Autowired
-	private SimulatedTableTwoRepository tabTwo;
+    // Table to pair of "order" / type
+    public static final Map<String, Pair<Integer, Class<?>>> ENTITY_TYPES = new HashMap<>();
 
-	@Autowired
-	private SimulatedTableThreeRepository tabThree;
+    static {
+        ENTITY_TYPES.put(TABLE_ONE, Pair.of(1, SimulatedTableOne.class));
+        ENTITY_TYPES.put(TABLE_TWO, Pair.of(2, SimulatedTableTwo.class));
+        ENTITY_TYPES.put(TABLE_THREE, Pair.of(3, SimulatedTableThree.class));
+        ENTITY_TYPES.put(TABLE_FOUR, Pair.of(4, SimulatedTableFour.class));
+        ENTITY_TYPES.put(TABLE_FIVE, Pair.of(5, SimulatedTableFive.class));
+        ENTITY_TYPES.put(TABLE_SIX, Pair.of(6, SimulatedTableSix.class));
+        ENTITY_TYPES.put(TABLE_SEVEN, Pair.of(7, SimulatedTableSeven.class));
+        ENTITY_TYPES.put(TTEST1, Pair.of(8, EfluidTest1.class));
+        ENTITY_TYPES.put(EFLUIDTESTNUMBER, Pair.of(9, EfluidTestNumber.class));
+        ENTITY_TYPES.put(TTESTMULTIDATATYPE, Pair.of(10, EfluidTestMultiDataType.class));
+        ENTITY_TYPES.put(EFLUIDTESTPKCOMPOSITE, Pair.of(11, EfluidTestPkComposite.class));
 
-	/**
-	 * @param nbr
-	 * @param keyPattern
-	 * @param valuePattern
-	 * @param otherPattern
-	 */
-	public void initTabTwoData(int nbr, String keyPattern, String valuePattern, String otherPattern) {
+    }
 
-		for (int i = 0; i < nbr; i++) {
-			this.tabTwo.save(two(keyPattern + i, valuePattern + i, otherPattern + i));
-		}
-	}
+    @Autowired
+    private EntityManager em;
 
-	/**
-	 * @param nbr
-	 * @param presetPattern
-	 * @param somethingPattern
-	 * @param valuePattern
-	 */
-	public void initTabOneData(int nbr, String presetPattern, String somethingPattern, String valuePattern) {
+    public void dropManaged() {
+        Comparator<Pair<Integer, Class<?>>> comp = reverseOrder(comparing(Pair::getFirst));
 
-		for (int i = 0; i < nbr; i++) {
-			this.tabOne.save(one(i, presetPattern + i, somethingPattern + i, valuePattern + i));
-		}
-	}
+        // Delete all by reverse order
+        ENTITY_TYPES.values().stream()
+                .sorted(comp)
+                .forEach(
+                        p -> this.deleteAll(p.getSecond())
+                );
 
-	/**
-	 * @param nbr
-	 * @param keyPattern
-	 * @param valuePattern
-	 * @param otherPattern
-	 */
-	public void initTabThreeData(int nbr, String keyPattern, String valuePattern, String otherPattern) {
+        this.em.flush();
+    }
 
-		for (int i = 0; i < nbr; i++) {
-			this.tabThree.save(three(keyPattern + i, valuePattern + i, otherPattern + i));
-		}
-	}
 
-	private static SimulatedTableOne one(int key, String preset, String something, String value) {
+    /**
+     * Init from cucumber Datatable
+     *
+     * @param name
+     * @param data
+     */
+    public void updateTab(String name, DataTable data) {
 
-		SimulatedTableOne data = new SimulatedTableOne();
-		data.setKey(Long.valueOf(key));
-		data.setPreset(preset);
-		data.setSomething(something);
-		data.setValue(value);
+        List<Map<String, String>> values = data.asMaps(String.class, String.class);
 
-		return data;
-	}
+        // 1st After "change" (so 2nd col)
+        String firstCol = data.topCells().get(1);
 
-	private static SimulatedTableTwo two(String key, String value, String other) {
+        Class<?> type = ENTITY_TYPES.get(name).getSecond();
+        values.forEach(m -> update(m.get("change"), firstCol, m, type));
 
-		SimulatedTableTwo data = new SimulatedTableTwo();
-		data.setKey(key);
-		data.setValue(value);
-		data.setOther(other);
+        this.em.flush();
+    }
 
-		return data;
-	}
+    /**
+     * Init from cucumber Datatable
+     *
+     * @param name
+     * @param data
+     */
+    public void assertCurrentTabComplies(String name, DataTable data) {
 
-	private static SimulatedTableThree three(String key, String value, String other) {
+        List<Map<String, String>> values = data.asMaps(String.class, String.class);
 
-		SimulatedTableThree data = new SimulatedTableThree();
-		data.setKey(key);
-		data.setValue(value);
-		data.setOther(other);
+        // 1st col
+        String firstCol = data.topCells().get(0);
 
-		return data;
-	}
+        Class<?> type = ENTITY_TYPES.get(name).getSecond();
+        assertComplies(firstCol, values, type);
+    }
 
-	/**
-	 * <p>
-	 * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
-	 * content in an assertion
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<String> getColumnNamesForTable(String tableName) {
 
-		if (tableName.equals(TABLE_ONE))
-			return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
+    private <T> void save(T item) {
+        this.em.merge(item);
+    }
 
-		if (tableName.equals(TABLE_TWO))
-			return Arrays.asList("KEY", "VALUE", "OTHER");
+    private <K, T> T getOne(K key, Class<T> type) {
+        return this.em.find(type, key);
+    }
 
-		return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
-	}
+    private <T> void deleteOne(T item) {
+        this.em.remove(item);
+    }
 
-	@SuppressWarnings("unchecked")
-	public <T> List<T> getAllEntitiesForTable(String tableName) {
+    private <T> void deleteAll(Class<T> type) {
+        findAll(type).forEach(this::deleteOne);
+    }
 
-		if (tableName.equals(TABLE_ONE))
-			return (List<T>) this.tabOne.findAll();
+    private <T> List<T> findAll(Class<T> type) {
+        return this.em.createQuery("select t from " + type.getName() + " t", type).getResultList();
+    }
 
-		if (tableName.equals(TABLE_TWO))
-			return (List<T>) this.tabTwo.findAll();
+    /**
+     * Init from cucumber Datatable
+     *
+     * @param name
+     * @param data
+     */
+    public void initTab(String name, DataTable data) {
 
-		return (List<T>) this.tabThree.findAll();
-	}
+        List<Map<String, String>> values = data.asMaps(String.class, String.class);
 
-	/**
-	 * @return
-	 */
-	public long countTable(String tableName) {
+        // 1st cel
+        String firstCol = data.topCells().get(0);
 
-		if (tableName.equals(TABLE_ONE))
-			return this.tabOne.count();
+        Class<?> type = ENTITY_TYPES.get(name).getSecond();
+        values.forEach(m -> update("add", firstCol, m, type));
 
-		if (tableName.equals(TABLE_TWO))
-			return this.tabTwo.count();
+        this.em.flush();
+    }
 
-		return this.tabThree.count();
-	}
+    private <T> T load(Class<T> type, Map<String, String> m) {
 
-	/**
-	 * <p>
-	 * Get easy to use content for Tab 1
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<Map<String, String>> getAllContentForTable(String tableName) {
+        try {
+            // Default constructor call
+            T entity = type.getConstructor().newInstance();
 
-		List<String> cols = getColumnNamesForTable(tableName);
+            // Search setters
+            Map<String, Method> setters = loadSetters(type);
 
-		return getAllEntitiesForTable(tableName).stream().map(i -> {
-			Map<String, String> vals = new HashMap<>();
-			cols.forEach(c -> vals.put(c, getPropertyValueByColumnName(i, c)));
-			return vals;
-		})
-				.sorted(Comparator.comparing(m -> m.get("KEY")))
-				.collect(Collectors.toList());
-	}
+            // apply all setters
+            m.forEach((k, v) -> {
+                // Ignore change
+                if (!k.equals("change")) {
+                    Method setter = setters.get(k);
+                    if (setter == null) {
+                        throw new UnsupportedOperationException("The column " + k
+                                + " has no corresponding setter in type " + type
+                                + ": add it as exclude type in fr.uem.efluid.system.stubs." +
+                                "ManagedDatabaseAccess.load or check datatable");
+                    }
 
-	/**
-	 * <p>
-	 * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
-	 * content in an assertion
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableOne() {
-		return Arrays.asList(
-				columnMatcher("KEY", ColumnType.PK_ATOMIC),
-				columnMatcher("VALUE", ColumnType.STRING),
-				columnMatcher("PRESET", ColumnType.STRING),
-				columnMatcher("SOMETHING", ColumnType.STRING));
-	}
+                    Object val = getValForSetter(setter, v, k);
+                    try {
+                        setter.invoke(entity, val);
+                    } catch (Exception e) {
+                        throw new UnsupportedOperationException("Cannot call setter "
+                                + setter.getName() + " on entity of type " + type, e);
+                    }
+                }
+            });
 
-	/**
-	 * <p>
-	 * Matcher spec for the columns for TABLE_TWO. Allows to check Column / ColumnEditData
-	 * content in an assertion
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableTwo() {
-		return Arrays.asList(
-				columnMatcher("KEY", ColumnType.PK_STRING),
-				columnMatcher("VALUE", ColumnType.STRING),
-				columnMatcher("OTHER", ColumnType.STRING));
-	}
+            return entity;
 
-	/**
-	 * <p>
-	 * Matcher spec for the columns for TABLE_THREE. Allows to check Column /
-	 * ColumnEditData content in an assertion
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableThree() {
-		return Arrays.asList(
-				columnMatcher("KEY", ColumnType.PK_STRING),
-				columnMatcher("VALUE", ColumnType.STRING),
-				columnMatcher("OTHER", ColumnType.STRING));
-	}
+        } catch (Throwable t) {
+            throw new AssertionError("Cannot populate test entity of type " + type, t);
+        }
+    }
 
-	/**
-	 * @param rawObject
-	 * @param propertyAsColumnName
-	 * @return
-	 */
-	private static String getPropertyValueByColumnName(Object rawObject, String propertyAsColumnName) {
-		try {
-			Method getter = rawObject.getClass().getMethod(
-					"get" + propertyAsColumnName.substring(0, 1).toUpperCase() + propertyAsColumnName.substring(1).toLowerCase());
+    /**
+     * @param setter
+     * @param rawVal
+     * @return
+     */
+    private Object getValForSetter(Method setter, String rawVal, String name) {
+        Class<?> paramType = setter.getParameterTypes()[0];
+        return getMappedValue(paramType, rawVal, name);
+    }
 
-			Object res = getter.invoke(rawObject);
+    /**
+     * @param type
+     * @return
+     */
+    private static Map<String, Method> loadSetters(Class<?> type) {
+        return Stream.of(type.getMethods())
+                .filter(met -> met.getName().startsWith("set"))
+                .collect(Collectors.toMap(met -> {
+                    String name = met.getName();
+                    return name.substring(3, 4).toLowerCase() + name.substring(4);
+                }, met -> met));
+    }
 
-			if (res instanceof LocalDateTime) {
-				return FormatUtils.format((LocalDateTime) res);
-			}
+    /**
+     * For a value from a datatable, get the corresponding object of specified type. Can be a basic field type, or another stub type
+     *
+     * @param paramType
+     * @param v
+     * @return
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     * @throws InstantiationException
+     */
+    private Object getMappedValue(Class<?> paramType, String v, String name) {
+        if (paramType == LocalDate.class) {
+            return FormatUtils.parseLd(v);
+        } else if (paramType == LocalDateTime.class) {
+            return FormatUtils.parse(v);
+        } else if (paramType == BigDecimal.class) {
+            return new BigDecimal(v);
+        } else if (paramType == Integer.class) {
+            return Integer.valueOf(v);
+        } else if (paramType == byte[].class) {
+            return FormatUtils.toBytes(v);
+        } else if (paramType == Long.class) {
+            return Long.valueOf(v);
+        } else if (paramType == String.class) {
+            return v;
+        } else if (paramType == int.class) {
+            return Integer.parseInt(v);
+        } else if (paramType == boolean.class) {
+            return Boolean.parseBoolean(v);
+        } else if (paramType.getPackageName().startsWith(this.getClass().getPackageName())) {
 
-			return String.valueOf(res);
-		} catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
-				| InvocationTargetException e) {
-			throw new AssertionError("Cannot get getter for " + propertyAsColumnName + " into object of type " + rawObject);
-		}
-	}
+            // The attribute is another stub type, must find constructor with 1 (key) arg
+            Constructor<?> inCons = Stream.of(paramType.getConstructors())
+                    .filter(c -> c.getParameterCount() == 1)
+                    .findFirst()
+                    .orElseThrow(() -> new UnsupportedOperationException("Cannot init inner type \""
+                            + paramType + "\" for field \"" + name + "\" : need a single key constructor"));
 
-	/**
-	 * @param name
-	 * @param type
-	 * @return
-	 */
-	private static Matcher<DictionaryEntryEditData.ColumnEditData> columnMatcher(String name, ColumnType type) {
-		return allOf(hasProperty("name", equalTo(name)), hasProperty("type", equalTo(type)));
-	}
+            Class<?> conArg = inCons.getParameterTypes()[0];
+            try {
+                return inCons.newInstance(getMappedValue(conArg, v, name));
+            } catch (Exception e) {
+                throw new UnsupportedOperationException("Cannot init inner type \"" + paramType.getName()
+                        + "\" with value \"" + v + "\" of type \"" + conArg.getName() + "\" for field \"" + name + "\"", e);
+            }
+        } else {
+            throw new UnsupportedOperationException("Cannot process field of type \"" + paramType.getName()
+                    + "\" for field \"" + name + "\" : need to add a clean mapper code in ManagedDatabaseAccess");
+        }
+    }
+
+
+    private <T> void assertComplies(String firstCol, List<Map<String, String>> values, Class<T> type) {
+        assertThat(findAll(type).size()).isEqualTo(values.size());
+
+        Map<String, Method> setters = loadSetters(type);
+
+        values.forEach(m -> {
+            Object keyVal = getValForSetter(setters.get(firstCol), m.get(firstCol), firstCol);
+            T expected = load(type, m);
+            T found = this.getOne(keyVal, type);
+            assertThat(found).isNotNull();
+            assertThat(found).isEqualTo(expected);
+        });
+    }
+
+    private <T> void update(String action, String firstCol, Map<String, String> m, Class<T> type) {
+
+        Map<String, Method> setters;
+        Object keyVal;
+        T entity;
+        switch (action) {
+            case "add":
+                save(load(type, m));
+                break;
+            case "update":
+
+                // Search setters
+                setters = loadSetters(type);
+
+                // Prepare key val (search type from setter)
+                keyVal = getValForSetter(setters.get(firstCol), m.get(firstCol), firstCol);
+
+                // Get existing entry
+                entity = getOne(keyVal, type);
+
+                // Call setters on entry (except on key) to update it
+                setters.entrySet().stream()
+                        .filter(s -> !s.getKey().equals(firstCol))
+                        .forEach(e -> {
+                            Method setter = setters.get(e.getKey());
+                            Object val = getValForSetter(setter, m.get(e.getKey()), e.getKey());
+                            try {
+                                setter.invoke(entity, val);
+                            } catch (Exception ex) {
+                                throw new UnsupportedOperationException("Cannot call setter "
+                                        + setter.getName() + " on entity of type " + type, ex);
+                            }
+                        });
+
+                // Save updated
+                this.save(entity);
+                break;
+            case "delete":
+            default:
+                // Search setters
+                setters = loadSetters(type);
+
+                // Prepare key val (search type from setter)
+                keyVal = getValForSetter(setters.get(firstCol), m.get(firstCol), firstCol);
+
+                // Get existing entry
+                entity = getOne(keyVal, type);
+
+                // Delete it
+                this.deleteOne(entity);
+                break;
+        }
+    }
+
+    /**
+     * @param nbr
+     * @param keyPattern
+     * @param valuePattern
+     * @param otherPattern
+     */
+    public void initTabTwoData(int nbr, String keyPattern, String valuePattern, String otherPattern) {
+
+        for (int i = 0; i < nbr; i++) {
+            this.save(two(keyPattern + i, valuePattern + i, otherPattern + i));
+        }
+    }
+
+    /**
+     * @param nbr
+     * @param presetPattern
+     * @param somethingPattern
+     * @param valuePattern
+     */
+    public void initTabOneData(int nbr, String presetPattern, String somethingPattern, String valuePattern) {
+
+        for (int i = 0; i < nbr; i++) {
+            this.save(one(i, presetPattern + i, somethingPattern + i, valuePattern + i));
+        }
+    }
+
+    private static SimulatedTableOne one(int key, String preset, String something, String value) {
+
+        SimulatedTableOne data = new SimulatedTableOne();
+        data.setKey((long) key);
+        data.setPreset(preset);
+        data.setSomething(something);
+        data.setValue(value);
+
+        return data;
+    }
+
+    private static SimulatedTableTwo two(String key, String value, String other) {
+
+        SimulatedTableTwo data = new SimulatedTableTwo();
+        data.setKey(key);
+        data.setValue(value);
+        data.setOther(other);
+
+        return data;
+    }
+
+    /**
+     * <p>
+     * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
+     * content in an assertion
+     * </p>
+     *
+     * @return
+     */
+    public List<String> getColumnNamesForTable(String tableName) {
+
+        if (tableName.equals(TABLE_ONE))
+            return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
+
+        if (tableName.equals(TABLE_TWO))
+            return Arrays.asList("KEY", "VALUE", "OTHER");
+
+        if (tableName.equals(TABLE_FOUR))
+            return Arrays.asList("KEY", "SIMULATEDTABLEONE_KEY", "CONTENT_TIME", "CONTENT_INT");
+
+        if (tableName.equals(TABLE_FIVE))
+            return Arrays.asList("KEY", "DATA", "SIMPLE");
+
+        return Arrays.asList("KEY", "VALUE", "PRESET", "SOMETHING");
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> List<T> getAllEntitiesForTable(String tableName) {
+
+        Class<?> type = ENTITY_TYPES.get(tableName).getSecond();
+
+        return (List<T>) findAll(type);
+    }
+
+    /**
+     * @return
+     */
+    public long countTable(String tableName) {
+        return getAllEntitiesForTable(tableName).size();
+    }
+
+    /**
+     * <p>
+     * Get easy to use content for Tab 1
+     * </p>
+     *
+     * @return
+     */
+    public List<Map<String, String>> getAllContentForTable(String tableName) {
+
+        List<String> cols = getColumnNamesForTable(tableName);
+
+        return getAllEntitiesForTable(tableName).stream().map(i -> {
+            Map<String, String> vals = new HashMap<>();
+            cols.forEach(c -> vals.put(c, getPropertyValueByColumnName(i, c)));
+            return vals;
+        })
+                .sorted(comparing(m -> m.get("KEY")))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * <p>
+     * Matcher spec for the columns for TABLE_ONE. Allows to check Column / ColumnEditData
+     * content in an assertion
+     * </p>
+     *
+     * @return
+     */
+    public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableOne() {
+        return Arrays.asList(
+                columnMatcher("KEY", ColumnType.PK_ATOMIC),
+                columnMatcher("VALUE", ColumnType.STRING),
+                columnMatcher("PRESET", ColumnType.STRING),
+                columnMatcher("SOMETHING", ColumnType.STRING));
+    }
+
+    /**
+     * <p>
+     * Matcher spec for the columns for TABLE_TWO. Allows to check Column / ColumnEditData
+     * content in an assertion
+     * </p>
+     *
+     * @return
+     */
+    public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableTwo() {
+        return Arrays.asList(
+                columnMatcher("KEY", ColumnType.PK_STRING),
+                columnMatcher("VALUE", ColumnType.STRING),
+                columnMatcher("OTHER", ColumnType.STRING));
+    }
+
+    /**
+     * <p>
+     * Matcher spec for the columns for TABLE_THREE. Allows to check Column /
+     * ColumnEditData content in an assertion
+     * </p>
+     *
+     * @return
+     */
+    public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableThree() {
+        return Arrays.asList(
+                columnMatcher("KEY", ColumnType.PK_STRING),
+                columnMatcher("VALUE", ColumnType.STRING),
+                columnMatcher("OTHER", ColumnType.STRING));
+    }
+
+    /**
+     * @param rawObject
+     * @param propertyAsColumnName
+     * @return
+     */
+    private static String getPropertyValueByColumnName(Object rawObject, String propertyAsColumnName) {
+        try {
+            Method getter = rawObject.getClass().getMethod(
+                    "get" + propertyAsColumnName.substring(0, 1).toUpperCase() + propertyAsColumnName.substring(1).toLowerCase());
+
+            Object res = getter.invoke(rawObject);
+
+            if (res instanceof LocalDateTime) {
+                return FormatUtils.format((LocalDateTime) res);
+            }
+
+            return String.valueOf(res);
+        } catch (NoSuchMethodException | SecurityException | IllegalArgumentException | IllegalAccessException
+                | InvocationTargetException e) {
+            throw new AssertionError("Cannot get getter for " + propertyAsColumnName + " into object of type " + rawObject);
+        }
+    }
+
+    /**
+     * @param name
+     * @param type
+     * @return
+     */
+    private static Matcher<DictionaryEntryEditData.ColumnEditData> columnMatcher(String name, ColumnType type) {
+        return allOf(hasProperty("name", equalTo(name)), hasProperty("type", equalTo(type)));
+    }
 }

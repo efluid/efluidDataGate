@@ -46,7 +46,7 @@ public class WebUtils {
 	 * {@link ExportFile}.
 	 * </p>
 	 * 
-	 * @param request
+	 * @param file
 	 *            the request provided in Spring-mvc Rest controller action on uploads
 	 * @return a standard {@link ExportFile} with access to content.
 	 */
@@ -293,7 +293,7 @@ public class WebUtils {
 		static void addItems(List<NavBarItem> items, String pattern, int start, int end, int currentPage) {
 
 			for (int i = start; i < end; i++) {
-				items.add(NavBarItem.item(String.valueOf(i + 1), String.format(pattern, Integer.valueOf(i)), currentPage == i));
+				items.add(NavBarItem.item(String.valueOf(i + 1), String.format(pattern, i), currentPage == i));
 			}
 
 		}
@@ -310,6 +310,13 @@ public class WebUtils {
 
 		public String format(LocalDateTime date) {
 			return FormatUtils.format(date);
+		}
+
+		public String processGitmoji(String title) {
+			if(title != null && title.trim().startsWith(":") && title.indexOf(":", 2) > 0){
+				return title.replaceAll(":(\\w*):", "<span class=\"gitmoji\" code=\":$1:\">:$1:</span>");
+			}
+			return title;
 		}
 
 		public boolean containsProjectData(ProjectData data, List<ProjectData> mayContain) {

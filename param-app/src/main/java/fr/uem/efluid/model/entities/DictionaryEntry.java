@@ -1,24 +1,20 @@
 package fr.uem.efluid.model.entities;
 
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.hibernate.annotations.Type;
+import org.hibernate.validator.constraints.Length;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.Spliterators;
 import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
-import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * <p>
@@ -32,599 +28,560 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * ext keys are added to ref key for composite definition. Support limited to 5 used
  * properties for key composition (standard key + 4 ext keys)
  * </p>
- * 
+ *
  * @author elecomte
+ * @version 3
  * @since v0.0.1
- * @version 2
  */
 @Entity
 @Table(name = "dictionary")
 public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain> {
 
-	@Id
-	private UUID uuid;
+    @Id
+    @Type(type = "uuid-char")
+    private UUID uuid;
 
-	@NotNull
-	private String parameterName;
-
-	// TODO : add protection against SQL Injection
-
-	@NotNull
-	private String tableName;
-
-	private String whereClause;
-
-	@Size(max = 4096)
-	private String selectClause;
-
-	@NotNull
-	private String keyName;
-
-	@Enumerated(EnumType.STRING)
-	@NotNull
-	private ColumnType keyType;
-
-	private String ext1KeyName;
-
-	@Enumerated(EnumType.STRING)
-	private ColumnType ext1KeyType;
-
-	private String ext2KeyName;
-
-	@Enumerated(EnumType.STRING)
-	private ColumnType ext2KeyType;
-
-	private String ext3KeyName;
-
-	@Enumerated(EnumType.STRING)
-	private ColumnType ext3KeyType;
-
-	private String ext4KeyName;
-
-	@Enumerated(EnumType.STRING)
-	private ColumnType ext4KeyType;
-
-	@NotNull
-	private LocalDateTime createdTime;
-
-	@NotNull
-	private LocalDateTime updatedTime;
-
-	private LocalDateTime importedTime;
-
-	@ManyToOne(optional = false)
-	private FunctionalDomain domain;
-
-	/**
-	 * @param uuid
-	 */
-	public DictionaryEntry(UUID uuid) {
-		super();
-		this.uuid = uuid;
-	}
-
-	/**
-	 * 
-	 */
-	public DictionaryEntry() {
-		super();
-	}
-
-	/**
-	 * @return the uuid
-	 */
-	@Override
-	public UUID getUuid() {
-		return this.uuid;
-	}
-
-	/**
-	 * @param uuid
-	 *            the uuid to set
-	 */
-	public void setUuid(UUID uuid) {
-		this.uuid = uuid;
-	}
-
-	/**
-	 * @return the parameterName
-	 */
-	@Override
-	public String getParameterName() {
-		return this.parameterName;
-	}
-
-	/**
-	 * @param parameterName
-	 *            the parameterName to set
-	 */
-	public void setParameterName(String parameterName) {
-		this.parameterName = parameterName;
-	}
-
-	/**
-	 * @return the tableName
-	 */
-	@Override
-	public String getTableName() {
-		return this.tableName;
-	}
-
-	/**
-	 * @param tableName
-	 *            the tableName to set
-	 */
-	public void setTableName(String tableName) {
-		this.tableName = tableName;
-	}
-
-	/**
-	 * @return the whereClause
-	 */
-	@Override
-	public String getWhereClause() {
-		return this.whereClause;
-	}
-
-	/**
-	 * @param whereClause
-	 *            the whereClause to set
-	 */
-	public void setWhereClause(String whereClause) {
-		this.whereClause = whereClause;
-	}
-
-	/**
-	 * @return the selectClause
-	 */
-	@Override
-	public String getSelectClause() {
-		return this.selectClause;
-	}
-
-	/**
-	 * @param selectClause
-	 *            the selectClause to set
-	 */
-	public void setSelectClause(String selectClause) {
-		this.selectClause = selectClause;
-	}
-
-	/**
-	 * @return the keyName
-	 */
-	@Override
-	public String getKeyName() {
-		return this.keyName;
-	}
-
-	/**
-	 * @param keyName
-	 *            the keyName to set
-	 */
-	public void setKeyName(String keyName) {
-		this.keyName = keyName;
-	}
-
-	/**
-	 * @return the createdTime
-	 */
-	@Override
-	public LocalDateTime getCreatedTime() {
-		return this.createdTime;
-	}
-
-	/**
-	 * @param createdTime
-	 *            the createdTime to set
-	 */
-	public void setCreatedTime(LocalDateTime createdTime) {
-		this.createdTime = createdTime;
-	}
-
-	/**
-	 * @return the importedTime
-	 */
-	@Override
-	public LocalDateTime getImportedTime() {
-		return this.importedTime;
-	}
-
-	/**
-	 * @param importedTime
-	 *            the importedTime to set
-	 */
-	public void setImportedTime(LocalDateTime importedTime) {
-		this.importedTime = importedTime;
-	}
-
-	/**
-	 * @return the updatedTime
-	 */
-	@Override
-	public LocalDateTime getUpdatedTime() {
-		return this.updatedTime;
-	}
-
-	/**
-	 * @param updatedTime
-	 *            the updatedTime to set
-	 */
-	public void setUpdatedTime(LocalDateTime updatedTime) {
-		this.updatedTime = updatedTime;
-	}
-
-	/**
-	 * @return the ext1KeyName
-	 */
-	@Override
-	public String getExt1KeyName() {
-		return this.ext1KeyName;
-	}
-
-	/**
-	 * @param ext1KeyName
-	 *            the ext1KeyName to set
-	 */
-	public void setExt1KeyName(String ext1KeyName) {
-		this.ext1KeyName = ext1KeyName;
-	}
-
-	/**
-	 * @return the ext1KeyType
-	 */
-	@Override
-	public ColumnType getExt1KeyType() {
-		return this.ext1KeyType;
-	}
-
-	/**
-	 * @param ext1KeyType
-	 *            the ext1KeyType to set
-	 */
-	public void setExt1KeyType(ColumnType ext1KeyType) {
-		this.ext1KeyType = ext1KeyType;
-	}
-
-	/**
-	 * @return the ext2KeyName
-	 */
-	@Override
-	public String getExt2KeyName() {
-		return this.ext2KeyName;
-	}
-
-	/**
-	 * @param ext2KeyName
-	 *            the ext2KeyName to set
-	 */
-	public void setExt2KeyName(String ext2KeyName) {
-		this.ext2KeyName = ext2KeyName;
-	}
-
-	/**
-	 * @return the ext2KeyType
-	 */
-	@Override
-	public ColumnType getExt2KeyType() {
-		return this.ext2KeyType;
-	}
-
-	/**
-	 * @param ext2KeyType
-	 *            the ext2KeyType to set
-	 */
-	public void setExt2KeyType(ColumnType ext2KeyType) {
-		this.ext2KeyType = ext2KeyType;
-	}
-
-	/**
-	 * @return the ext3KeyName
-	 */
-	@Override
-	public String getExt3KeyName() {
-		return this.ext3KeyName;
-	}
-
-	/**
-	 * @param ext3KeyName
-	 *            the ext3KeyName to set
-	 */
-	public void setExt3KeyName(String ext3KeyName) {
-		this.ext3KeyName = ext3KeyName;
-	}
-
-	/**
-	 * @return the ext3KeyType
-	 */
-	@Override
-	public ColumnType getExt3KeyType() {
-		return this.ext3KeyType;
-	}
-
-	/**
-	 * @param ext3KeyType
-	 *            the ext3KeyType to set
-	 */
-	public void setExt3KeyType(ColumnType ext3KeyType) {
-		this.ext3KeyType = ext3KeyType;
-	}
-
-	/**
-	 * @return the ext4KeyName
-	 */
-	@Override
-	public String getExt4KeyName() {
-		return this.ext4KeyName;
-	}
-
-	/**
-	 * @param ext4KeyName
-	 *            the ext4KeyName to set
-	 */
-	public void setExt4KeyName(String ext4KeyName) {
-		this.ext4KeyName = ext4KeyName;
-	}
-
-	/**
-	 * @return the ext4KeyType
-	 */
-	@Override
-	public ColumnType getExt4KeyType() {
-		return this.ext4KeyType;
-	}
-
-	/**
-	 * @param ext4KeyType
-	 *            the ext4KeyType to set
-	 */
-	public void setExt4KeyType(ColumnType ext4KeyType) {
-		this.ext4KeyType = ext4KeyType;
-	}
-
-	/**
-	 * @return the domain
-	 */
-	@Override
-	public FunctionalDomain getDomain() {
-		return this.domain;
-	}
-
-	/**
-	 * @param domain
-	 *            the domain to set
-	 */
-	public void setDomain(FunctionalDomain domain) {
-		this.domain = domain;
-	}
-
-	/**
-	 * @return the keyType
-	 */
-	@Override
-	public ColumnType getKeyType() {
-		return this.keyType;
-	}
-
-	/**
-	 * @param keyType
-	 *            the keyType to set
-	 */
-	public void setKeyType(ColumnType keyType) {
-		this.keyType = keyType;
-	}
-
-	/**
-	 * @return
-	 */
-	public Stream<String> keyNames() {
-
-		// For composite, use advanced building from iterator
-		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new EntryKeyNameIterator(this), 0), false);
-	}
-
-	/**
-	 * @return
-	 */
-	public Stream<ColumnType> keyTypes() {
-
-		// For composite, use advanced building from iterator
-		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new EntryKeyTypeIterator(this), 0), false);
-	}
-
-	/**
-	 * @return
-	 */
-	public boolean isCompositeKey() {
-		// If at least ext1 is set => composite
-		return this.getExt1KeyName() != null;
-	}
-
-	/**
-	 * @param raw
-	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
-	 */
-	@Override
-	public void deserialize(String raw) {
-
-		SharedOutputInputUtils.fromJson(raw)
-				.applyUUID("uid", v -> setUuid(v))
-				.applyLdt("cre", v -> setCreatedTime(v))
-				.applyLdt("upd", v -> setUpdatedTime(v))
-				.applyUUID("dom", v -> setDomain(new FunctionalDomain(v)))
-				.applyString("kna", v -> setKeyName(v))
-				.applyString("kty", v -> setKeyType(ColumnType.valueOf(v)))
-				.applyString("k1n", v -> setExt1KeyName(v))
-				.applyString("k1t", v -> setExt1KeyType(ColumnType.valueOf(v)))
-				.applyString("k2n", v -> setExt2KeyName(v))
-				.applyString("k2t", v -> setExt2KeyType(ColumnType.valueOf(v)))
-				.applyString("k3n", v -> setExt3KeyName(v))
-				.applyString("k3t", v -> setExt3KeyType(ColumnType.valueOf(v)))
-				.applyString("k4n", v -> setExt4KeyName(v))
-				.applyString("k4t", v -> setExt4KeyType(ColumnType.valueOf(v)))
-				.applyString("nam", v -> setParameterName(v))
-				.applyString("sel", v -> setSelectClause(v))
-				.applyString("tab", v -> setTableName(v))
-				.applyString("whe", v -> setWhereClause(v));
-	}
-
-	/**
-	 * <p>
-	 * For easy use of composite key model
-	 * </p>
-	 * 
-	 * @author elecomte
-	 * @since v0.0.8
-	 * @version 1
-	 */
-	private static final class EntryKeyNameIterator implements Iterator<String> {
-
-		private int max = 0;
-		private int pos = 0;
-
-		private final DictionaryEntry dic;
-
-		/**
-		 * @param dic
-		 */
-		public EntryKeyNameIterator(DictionaryEntry dic) {
-			super();
-			this.dic = dic;
-
-			// Standard key - not composite
-			if (!dic.isCompositeKey()) {
-				this.max = 1;
-			}
-
-			// Composite, search for key defs
-			else {
-				if (dic.getExt4KeyName() != null) {
-					this.max = 5;
-				} else if (dic.getExt3KeyName() != null) {
-					this.max = 4;
-				} else if (dic.getExt3KeyName() != null) {
-					this.max = 3;
-				} else {
-					this.max = 2;
-				}
-			}
-		}
-
-		/**
-		 * @return
-		 * @see java.util.Iterator#hasNext()
-		 */
-		@Override
-		public boolean hasNext() {
-			return this.pos < this.max;
-		}
-
-		/**
-		 * @return
-		 * @see java.util.Iterator#next()
-		 */
-		@Override
-		public String next() {
-
-			switch (this.pos) {
-			case 0:
-				this.pos++;
-				return this.dic.getKeyName();
-			case 1:
-				this.pos++;
-				return this.dic.getExt1KeyName();
-			case 2:
-				this.pos++;
-				return this.dic.getExt2KeyName();
-			case 3:
-				this.pos++;
-				return this.dic.getExt3KeyName();
-			case 4:
-			default:
-				this.pos++;
-				return this.dic.getExt4KeyName();
-			}
-		}
-
-	}
-
-	/**
-	 * <p>
-	 * Like for keyName
-	 * </p>
-	 * 
-	 * @author elecomte
-	 * @since v0.0.8
-	 * @version 1
-	 */
-	private static final class EntryKeyTypeIterator implements Iterator<ColumnType> {
-
-		private int max = 0;
-		private int pos = 0;
-
-		private final DictionaryEntry dic;
-
-		/**
-		 * @param dic
-		 */
-		public EntryKeyTypeIterator(DictionaryEntry dic) {
-			super();
-			this.dic = dic;
-
-			// Standard key - not composite
-			if (dic.getExt1KeyName() == null) {
-				this.max = 1;
-			}
-
-			// Composite, search for key defs
-			else {
-				if (dic.getExt4KeyName() != null) {
-					this.max = 5;
-				} else if (dic.getExt3KeyName() != null) {
-					this.max = 4;
-				} else if (dic.getExt3KeyName() != null) {
-					this.max = 3;
-				} else {
-					this.max = 2;
-				}
-			}
-		}
-
-		/**
-		 * @return
-		 * @see java.util.Iterator#hasNext()
-		 */
-		@Override
-		public boolean hasNext() {
-			return this.pos < this.max;
-		}
-
-		/**
-		 * @return
-		 * @see java.util.Iterator#next()
-		 */
-		@Override
-		public ColumnType next() {
-
-			switch (this.pos) {
-			case 0:
-				this.pos++;
-				return this.dic.getKeyType();
-			case 1:
-				this.pos++;
-				return this.dic.getExt1KeyType();
-			case 2:
-				this.pos++;
-				return this.dic.getExt2KeyType();
-			case 3:
-				this.pos++;
-				return this.dic.getExt3KeyType();
-			case 4:
-			default:
-				this.pos++;
-				return this.dic.getExt4KeyType();
-			}
-		}
-
-	}
+    @NotNull
+    private String parameterName;
+
+    // TODO : add protection against SQL Injection
+
+    @NotNull
+    private String tableName;
+
+    private String whereClause;
+
+    // If need more, check type compliance - Oracle can have 32k varchar2 but the
+    // hibernate dialect seems to check it as a varchar() with a limited size of 4k
+    @Column(length = 2048)
+    private String selectClause;
+
+    @NotNull
+    private String keyName;
+
+    @Enumerated(EnumType.STRING)
+    @NotNull
+    private ColumnType keyType;
+
+    private String ext1KeyName;
+
+    @Enumerated(EnumType.STRING)
+    private ColumnType ext1KeyType;
+
+    private String ext2KeyName;
+
+    @Enumerated(EnumType.STRING)
+    private ColumnType ext2KeyType;
+
+    private String ext3KeyName;
+
+    @Enumerated(EnumType.STRING)
+    private ColumnType ext3KeyType;
+
+    private String ext4KeyName;
+
+    @Enumerated(EnumType.STRING)
+    private ColumnType ext4KeyType;
+
+    @NotNull
+    private LocalDateTime createdTime;
+
+    @NotNull
+    private LocalDateTime updatedTime;
+
+    private LocalDateTime importedTime;
+
+    @ManyToOne(optional = false)
+    private FunctionalDomain domain;
+
+    /**
+     * @param uuid shareable identifier
+     */
+    public DictionaryEntry(UUID uuid) {
+        super();
+        this.uuid = uuid;
+    }
+
+    /**
+     *
+     */
+    public DictionaryEntry() {
+        super();
+    }
+
+    /**
+     * @return the uuid
+     */
+    @Override
+    public UUID getUuid() {
+        return this.uuid;
+    }
+
+    /**
+     * @param uuid the uuid to set
+     */
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
+
+    /**
+     * @return the parameterName
+     */
+    @Override
+    public String getParameterName() {
+        return this.parameterName;
+    }
+
+    /**
+     * @param parameterName the parameterName to set
+     */
+    public void setParameterName(String parameterName) {
+        this.parameterName = parameterName;
+    }
+
+    /**
+     * @return the tableName
+     */
+    @Override
+    public String getTableName() {
+        return this.tableName;
+    }
+
+    /**
+     * @param tableName the tableName to set
+     */
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    /**
+     * @return the whereClause
+     */
+    @Override
+    public String getWhereClause() {
+        return this.whereClause;
+    }
+
+    /**
+     * @param whereClause the whereClause to set
+     */
+    public void setWhereClause(String whereClause) {
+        this.whereClause = whereClause;
+    }
+
+    /**
+     * @return the selectClause
+     */
+    @Override
+    public String getSelectClause() {
+        return this.selectClause;
+    }
+
+    /**
+     * @param selectClause the selectClause to set
+     */
+    public void setSelectClause(String selectClause) {
+        this.selectClause = selectClause;
+    }
+
+    /**
+     * @return the keyName
+     */
+    @Override
+    public String getKeyName() {
+        return this.keyName;
+    }
+
+    /**
+     * @param keyName the keyName to set
+     */
+    public void setKeyName(String keyName) {
+        this.keyName = keyName;
+    }
+
+    /**
+     * @return the createdTime
+     */
+    @Override
+    public LocalDateTime getCreatedTime() {
+        return this.createdTime;
+    }
+
+    /**
+     * @param createdTime the createdTime to set
+     */
+    public void setCreatedTime(LocalDateTime createdTime) {
+        this.createdTime = createdTime;
+    }
+
+    /**
+     * @return the importedTime
+     */
+    @Override
+    public LocalDateTime getImportedTime() {
+        return this.importedTime;
+    }
+
+    /**
+     * @param importedTime the importedTime to set
+     */
+    public void setImportedTime(LocalDateTime importedTime) {
+        this.importedTime = importedTime;
+    }
+
+    /**
+     * @return the updatedTime
+     */
+    @Override
+    public LocalDateTime getUpdatedTime() {
+        return this.updatedTime;
+    }
+
+    /**
+     * @param updatedTime the updatedTime to set
+     */
+    public void setUpdatedTime(LocalDateTime updatedTime) {
+        this.updatedTime = updatedTime;
+    }
+
+    /**
+     * @return the ext1KeyName
+     */
+    @Override
+    public String getExt1KeyName() {
+        return this.ext1KeyName;
+    }
+
+    /**
+     * @param ext1KeyName the ext1KeyName to set
+     */
+    public void setExt1KeyName(String ext1KeyName) {
+        this.ext1KeyName = ext1KeyName;
+    }
+
+    /**
+     * @return the ext1KeyType
+     */
+    @Override
+    public ColumnType getExt1KeyType() {
+        return this.ext1KeyType;
+    }
+
+    /**
+     * @param ext1KeyType the ext1KeyType to set
+     */
+    public void setExt1KeyType(ColumnType ext1KeyType) {
+        this.ext1KeyType = ext1KeyType;
+    }
+
+    /**
+     * @return the ext2KeyName
+     */
+    @Override
+    public String getExt2KeyName() {
+        return this.ext2KeyName;
+    }
+
+    /**
+     * @param ext2KeyName the ext2KeyName to set
+     */
+    public void setExt2KeyName(String ext2KeyName) {
+        this.ext2KeyName = ext2KeyName;
+    }
+
+    /**
+     * @return the ext2KeyType
+     */
+    @Override
+    public ColumnType getExt2KeyType() {
+        return this.ext2KeyType;
+    }
+
+    /**
+     * @param ext2KeyType the ext2KeyType to set
+     */
+    public void setExt2KeyType(ColumnType ext2KeyType) {
+        this.ext2KeyType = ext2KeyType;
+    }
+
+    /**
+     * @return the ext3KeyName
+     */
+    @Override
+    public String getExt3KeyName() {
+        return this.ext3KeyName;
+    }
+
+    /**
+     * @param ext3KeyName the ext3KeyName to set
+     */
+    public void setExt3KeyName(String ext3KeyName) {
+        this.ext3KeyName = ext3KeyName;
+    }
+
+    /**
+     * @return the ext3KeyType
+     */
+    @Override
+    public ColumnType getExt3KeyType() {
+        return this.ext3KeyType;
+    }
+
+    /**
+     * @param ext3KeyType the ext3KeyType to set
+     */
+    public void setExt3KeyType(ColumnType ext3KeyType) {
+        this.ext3KeyType = ext3KeyType;
+    }
+
+    /**
+     * @return the ext4KeyName
+     */
+    @Override
+    public String getExt4KeyName() {
+        return this.ext4KeyName;
+    }
+
+    /**
+     * @param ext4KeyName the ext4KeyName to set
+     */
+    public void setExt4KeyName(String ext4KeyName) {
+        this.ext4KeyName = ext4KeyName;
+    }
+
+    /**
+     * @return the ext4KeyType
+     */
+    @Override
+    public ColumnType getExt4KeyType() {
+        return this.ext4KeyType;
+    }
+
+    /**
+     * @param ext4KeyType the ext4KeyType to set
+     */
+    public void setExt4KeyType(ColumnType ext4KeyType) {
+        this.ext4KeyType = ext4KeyType;
+    }
+
+    /**
+     * @return the domain
+     */
+    @Override
+    public FunctionalDomain getDomain() {
+        return this.domain;
+    }
+
+    /**
+     * @param domain the domain to set
+     */
+    public void setDomain(FunctionalDomain domain) {
+        this.domain = domain;
+    }
+
+    /**
+     * @return the keyType
+     */
+    @Override
+    public ColumnType getKeyType() {
+        return this.keyType;
+    }
+
+    /**
+     * @param keyType the keyType to set
+     */
+    public void setKeyType(ColumnType keyType) {
+        this.keyType = keyType;
+    }
+
+    /**
+     * @return
+     */
+    public Stream<String> keyNames() {
+
+        // For composite, use advanced building from iterator
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new EntryKeyNameIterator(this), 0), false);
+    }
+
+    /**
+     * @return
+     */
+    public Stream<ColumnType> keyTypes() {
+
+        // For composite, use advanced building from iterator
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new EntryKeyTypeIterator(this), 0), false);
+    }
+
+    /**
+     * @return
+     */
+    public boolean isCompositeKey() {
+        // If at least ext1 is set => composite
+        return this.getExt1KeyName() != null;
+    }
+
+    /**
+     * @param raw
+     * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
+     */
+    @Override
+    public void deserialize(String raw) {
+
+        SharedOutputInputUtils.fromJson(raw)
+                .applyUUID("uid", v -> setUuid(v))
+                .applyLdt("cre", v -> setCreatedTime(v))
+                .applyLdt("upd", v -> setUpdatedTime(v))
+                .applyUUID("dom", v -> setDomain(new FunctionalDomain(v)))
+                .applyString("kna", v -> setKeyName(v))
+                .applyString("kty", v -> setKeyType(ColumnType.valueOf(v)))
+                .applyString("k1n", v -> setExt1KeyName(v))
+                .applyString("k1t", v -> setExt1KeyType(ColumnType.valueOf(v)))
+                .applyString("k2n", v -> setExt2KeyName(v))
+                .applyString("k2t", v -> setExt2KeyType(ColumnType.valueOf(v)))
+                .applyString("k3n", v -> setExt3KeyName(v))
+                .applyString("k3t", v -> setExt3KeyType(ColumnType.valueOf(v)))
+                .applyString("k4n", v -> setExt4KeyName(v))
+                .applyString("k4t", v -> setExt4KeyType(ColumnType.valueOf(v)))
+                .applyString("nam", v -> setParameterName(v))
+                .applyString("sel", v -> setSelectClause(v))
+                .applyString("tab", v -> setTableName(v))
+                .applyString("whe", v -> setWhereClause(v));
+    }
+
+    /**
+     * <p>
+     * For easy use of composite key model - process iteration over 5 key properties
+     * </p>
+     *
+     * @author elecomte
+     * @version 1
+     * @since v0.0.8
+     */
+    private static abstract class FiveEntryKeyIterator<T> implements Iterator<T> {
+
+        private int max = 0;
+        private int pos = 0;
+
+        protected final DictionaryEntry dic;
+
+        /**
+         * @param dic
+         */
+        protected FiveEntryKeyIterator(DictionaryEntry dic) {
+            super();
+            this.dic = dic;
+
+            // Standard key - not composite
+            if (!dic.isCompositeKey()) {
+                this.max = 1;
+            }
+
+            // Composite, search for key defs
+            else {
+                if (dic.getExt4KeyName() != null) {
+                    this.max = 5;
+                } else if (dic.getExt3KeyName() != null) {
+                    this.max = 4;
+                } else if (dic.getExt2KeyName() != null) {
+                    this.max = 3;
+                } else {
+                    this.max = 2;
+                }
+            }
+        }
+
+        /**
+         * @return
+         * @see java.util.Iterator#hasNext()
+         */
+        @Override
+        public boolean hasNext() {
+            return this.pos < this.max;
+        }
+
+        protected abstract T getValue(int index);
+
+        /**
+         * @return
+         * @see java.util.Iterator#next()
+         */
+        @Override
+        public T next() {
+            this.pos++;
+            return getValue(this.pos - 1);
+        }
+
+    }
+
+    /**
+     * <p>
+     * Access to the 5 possible key name in composite key dict entry
+     * </p>
+     *
+     * @author elecomte
+     * @version 1
+     * @since v0.0.8
+     */
+    private static final class EntryKeyNameIterator extends FiveEntryKeyIterator<String> {
+        /**
+         * @param dic
+         */
+        public EntryKeyNameIterator(DictionaryEntry dic) {
+            super(dic);
+        }
+
+        @Override
+        protected String getValue(int index) {
+            switch (index) {
+                case 0:
+                    return this.dic.getKeyName();
+                case 1:
+                    return this.dic.getExt1KeyName();
+                case 2:
+                    return this.dic.getExt2KeyName();
+                case 3:
+                    return this.dic.getExt3KeyName();
+                case 4:
+                default:
+                    return this.dic.getExt4KeyName();
+            }
+        }
+
+    }
+
+    /**
+     * <p>
+     * Like for keyName, but with types
+     * </p>
+     *
+     * @author elecomte
+     * @version 1
+     * @since v0.0.8
+     */
+    private static final class EntryKeyTypeIterator extends FiveEntryKeyIterator<ColumnType> {
+
+        /**
+         * @param dic
+         */
+        public EntryKeyTypeIterator(DictionaryEntry dic) {
+            super(dic);
+        }
+
+        @Override
+        protected ColumnType getValue(int index) {
+            switch (index) {
+                case 0:
+                    return this.dic.getKeyType();
+                case 1:
+                    return this.dic.getExt1KeyType();
+                case 2:
+                    return this.dic.getExt2KeyType();
+                case 3:
+                    return this.dic.getExt3KeyType();
+                case 4:
+                default:
+                    return this.dic.getExt4KeyType();
+            }
+        }
+    }
 }

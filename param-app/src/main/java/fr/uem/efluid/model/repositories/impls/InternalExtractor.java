@@ -1,5 +1,15 @@
 package fr.uem.efluid.model.repositories.impls;
 
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.utils.IntSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DataRetrievalFailureException;
+import org.springframework.jdbc.core.ResultSetExtractor;
+
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -8,146 +18,163 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ResultSetExtractor;
-
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.tools.ManagedValueConverter;
-import fr.uem.efluid.utils.IntSet;
-
 /**
  * <p>
  * Standardized model for managed database value extractor. Produces a payload for each RS
  * line, mapped to key
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<String, String>> {
 
-	protected static final Logger LOGGER = LoggerFactory.getLogger(InternalExtractor.class);
+    protected static final Logger LOGGER = LoggerFactory.getLogger(InternalExtractor.class);
 
-	private final DictionaryEntry parameterEntry;
-	private final ManagedValueConverter valueConverter;
+    private final DictionaryEntry parameterEntry;
+    private final ManagedValueConverter valueConverter;
 
-	/**
-	 * @param parameterEntry
-	 */
-	public InternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter) {
-		super();
-		this.parameterEntry = parameterEntry;
-		this.valueConverter = valueConverter;
-	}
+    private final boolean useLabelForColNames;
 
-	/**
-	 * @param rs
-	 * @return
-	 * @throws SQLException
-	 * @throws DataAccessException
-	 * @see org.springframework.jdbc.core.ResultSetExtractor#extractData(java.sql.ResultSet)
-	 */
-	@Override
-	public Map<String, String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    /**
+     * @param parameterEntry
+     */
+    public InternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter, boolean useLabelForColNames) {
+        super();
+        this.parameterEntry = parameterEntry;
+        this.valueConverter = valueConverter;
+        this.useLabelForColNames = useLabelForColNames;
+    }
 
-		int totalSize = 1;
-		Map<String, String> extraction = new HashMap<>();
+    /**
+     * @param rs
+     * @return
+     * @throws SQLException
+     * @throws DataAccessException
+     * @see org.springframework.jdbc.core.ResultSetExtractor#extractData(java.sql.ResultSet)
+     */
+    @Override
+    public Map<String, String> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
-		final Set<String> keyNames = this.parameterEntry.keyNames().map(String::toUpperCase).collect(Collectors.toSet());
-		ResultSetMetaData meta = rs.getMetaData();
+        int totalSize = 1;
+        Map<String, String> extraction = new HashMap<>();
 
-		// Prepare data definition from meta
-		final int count = meta.getColumnCount();
-		String[] columnNames = new String[count];
-		ColumnType[] columnType = new ColumnType[count];
-		IntSet keyPos = new IntSet();
+        final Set<String> keyNames = this.parameterEntry.keyNames().map(String::toUpperCase).collect(Collectors.toSet());
+        ResultSetMetaData meta = rs.getMetaData();
 
-		// Identify columns
-		for (int i = 0; i < count; i++) {
-			String colname = meta.getColumnName(i + 1).toUpperCase();
-			if (keyNames.contains(colname)) {
-				keyPos.add(i);
-			}
-			columnNames[i] = colname;
-			columnType[i] = ColumnType.forJdbcType(meta.getColumnType(i + 1));
-		}
+        // Prepare data definition from meta
+        final int count = meta.getColumnCount();
+        String[] columnNames = new String[count];
+        ColumnType[] columnType = new ColumnType[count];
+        int[] nativeTypes = new int[count];
+        IntSet keyPos = new IntSet();
 
-		// Process content
-		while (rs.next()) {
-			T payload = initLineHolder();
-			StringBuilder keyValue = new StringBuilder();
-			for (int i = 0; i < count; i++) {
-				if (!keyPos.contains(i)) {
-					// Internally specified extractor process
-					appendProcessValue(this.valueConverter, payload, columnType[i], columnNames[i], i + 1, rs);
+        // Identify columns
+        for (int i = 0; i < count; i++) {
+            String colname = extractColumnName(meta,i );
+            if (keyNames.contains(colname)) {
+                keyPos.add(i);
+            }
+            columnNames[i] = colname;
 
-				} else {
-					this.valueConverter.appendExtractedKeyValue(keyValue, rs.getString(i + 1));
-				}
+            int nativeType = meta.getColumnType(i + 1);
+            nativeTypes[i] = nativeType;
+            columnType[i] = ColumnType.forJdbcType(nativeType);
+        }
 
-			}
+        // Process content
+        while (rs.next()) {
+            T payload = initLineHolder();
+            StringBuilder keyValue = new StringBuilder();
+            for (int i = 0; i < count; i++) {
+                try {
+                    if (!keyPos.contains(i)) {
+                        // Internally specified extractor process
+                        appendProcessValue(this.valueConverter, payload, columnType[i], nativeTypes[i], columnNames[i], i + 1, rs);
 
-			extraction.put(keyValue.toString(), getFinalizedPayload(this.valueConverter, payload));
+                    } else {
+                        this.valueConverter.appendExtractedKeyValue(keyValue, rs.getString(i + 1));
+                    }
 
-			// Only on debug : alert on large data load
-			if (LOGGER.isDebugEnabled()) {
-				if (totalSize % 100000 == 0) {
-					LOGGER.debug("Large data extraction - table \"{}\" - extracted {} items", this.parameterEntry.getTableName(),
-							Integer.valueOf(totalSize));
-				}
-				totalSize++;
-			}
-		}
+                } catch (SQLException s) {
+                    throw new DataRetrievalFailureException("Cannot process append on value #" + i + " from dataset, of type "
+                            + nativeTypes[i] + " at column " + columnNames[i] + ". Identified as internal type " + columnType[i], s);
+                }
+            }
 
-		return extraction;
-	}
+            extraction.put(keyValue.toString(), getFinalizedPayload(this.valueConverter, payload));
 
-	/**
-	 * <p>
-	 * As the holder for a line payload before finalization depends on internal extraction
-	 * process, this method inits the required holder. Called at each line
-	 * </p>
-	 * 
-	 * @return
-	 */
-	protected abstract T initLineHolder();
+            // Only on debug : alert on large data load
+            if (LOGGER.isDebugEnabled()) {
+                if (totalSize % 100000 == 0) {
+                    LOGGER.debug("Large data extraction - table \"{}\" - extracted {} items", this.parameterEntry.getTableName(), totalSize);
+                }
+                totalSize++;
+            }
+        }
 
-	/**
-	 * <p>
-	 * From current converter, process completion of value payload. Called at each column
-	 * except key col
-	 * </p>
-	 * 
-	 * @param currentValueConverter
-	 * @param lineHolder
-	 * @param type
-	 * @param columnName
-	 * @param colPosition
-	 * @param rs
-	 * @throws SQLException
-	 */
-	protected abstract void appendProcessValue(
-			ManagedValueConverter currentValueConverter,
-			T lineHolder,
-			ColumnType type,
-			String columnName,
-			int colPosition,
-			ResultSet rs) throws SQLException;
+        return extraction;
+    }
 
-	/**
-	 * <p>
-	 * Finalize the holder for string payload generate. As the holder and the payload
-	 * models can depends on extractor process, this abstract method allows to customize
-	 * the completion of a line. Called after each line
-	 * </p>
-	 * 
-	 * @param currentValueConverter
-	 * @param lineHolder
-	 * @return
-	 */
-	protected abstract String getFinalizedPayload(ManagedValueConverter currentValueConverter, T lineHolder);
+    /**
+     * <p>
+     * As the holder for a line payload before finalization depends on internal extraction
+     * process, this method inits the required holder. Called at each line
+     * </p>
+     *
+     * @return
+     */
+    protected abstract T initLineHolder();
+
+    /**
+     * <p>
+     * From current converter, process completion of value payload. Called at each column
+     * except key col
+     * </p>
+     *
+     * @param currentValueConverter
+     * @param lineHolder
+     * @param type
+     * @param nativeJdbcType
+     * @param columnName
+     * @param colPosition
+     * @param rs
+     * @throws DataAccessException
+     */
+    protected abstract void appendProcessValue(
+            ManagedValueConverter currentValueConverter,
+            T lineHolder,
+            ColumnType type,
+            int nativeJdbcType,
+            String columnName,
+            int colPosition,
+            ResultSet rs) throws SQLException;
+
+    /**
+     * <p>
+     * Finalize the holder for string payload generate. As the holder and the payload
+     * models can depends on extractor process, this abstract method allows to customize
+     * the completion of a line. Called after each line
+     * </p>
+     *
+     * @param currentValueConverter
+     * @param lineHolder
+     * @return
+     */
+    protected abstract String getFinalizedPayload(ManagedValueConverter currentValueConverter, T lineHolder);
+
+    /**
+     * Regarding the database type, the behavior of "label" may be different. Can switch between name or label
+     * @param meta
+     * @param index
+     * @return
+     * @throws SQLException
+     */
+    private String extractColumnName(ResultSetMetaData meta, int index) throws SQLException {
+        if(this.useLabelForColNames){
+            return meta.getColumnLabel(index + 1).toUpperCase();
+        }
+        return meta.getColumnName(index + 1).toUpperCase();
+    }
 }

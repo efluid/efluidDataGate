@@ -1,10 +1,10 @@
 package fr.uem.efluid.web;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
-
-import java.util.UUID;
-
+import fr.uem.efluid.services.*;
+import fr.uem.efluid.services.types.PilotedCommitStatus;
+import fr.uem.efluid.services.types.PreparationState;
+import fr.uem.efluid.services.types.ProjectData;
+import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,207 +14,200 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import fr.uem.efluid.services.ApplicationDetailsService;
-import fr.uem.efluid.services.DictionaryManagementService;
-import fr.uem.efluid.services.PilotableCommitPreparationService;
-import fr.uem.efluid.services.ProjectManagementService;
-import fr.uem.efluid.services.SecurityService;
-import fr.uem.efluid.services.types.PilotedCommitStatus;
-import fr.uem.efluid.services.types.ProjectData;
-import fr.uem.efluid.utils.WebUtils;
+import java.util.UUID;
+
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 /**
  * <p>
  * For all wizzard features : allows to specify minimal config + prepare the 1st mandatory
  * initial commit
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 @Controller
 @RequestMapping("/wizzard")
 public class WizzardController {
 
-	@Autowired
-	private ApplicationDetailsService applicationDetailsService;
-	
-	@Autowired
-	private DictionaryManagementService dictionaryManagementService;
+    @Autowired
+    private ApplicationDetailsService applicationDetailsService;
 
-	@Autowired
-	private PilotableCommitPreparationService pilotableCommitService;
+    @Autowired
+    private DictionaryManagementService dictionaryManagementService;
 
-	@Autowired
-	private SecurityService security;
+    @Autowired
+    private PilotableCommitPreparationService pilotableCommitService;
 
-	@Autowired
-	private ApplicationDetailsService detailsService;
+    @Autowired
+    private SecurityService security;
 
-	@Autowired
-	private ProjectManagementService projectService;
+    @Autowired
+    private ApplicationDetailsService detailsService;
 
-	/**
-	 * @return
-	 */
-	@RequestMapping(path = "/", method = GET)
-	public String welcome(Model model) {
+    @Autowired
+    private ProjectManagementService projectService;
 
-		model.addAttribute("info", this.applicationDetailsService.getInfo());
+    /**
+     * @return
+     */
+    @RequestMapping(path = "/", method = GET)
+    public String welcome(Model model) {
 
-		return "wizzard/welcome";
-	}
+        model.addAttribute("info", this.applicationDetailsService.getInfo());
 
-	/**
-	 * @return
-	 */
-	@RequestMapping(path = "/1", method = GET)
-	public String userPage() {
+        return "wizzard/welcome";
+    }
 
-		return "wizzard/user";
-	}
+    /**
+     * @return
+     */
+    @RequestMapping(path = "/1", method = GET)
+    public String userPage() {
 
-	/**
-	 * @param login
-	 * @param password
-	 * @param email
-	 * @return
-	 */
-	@RequestMapping(path = "/1", method = POST)
-	public String userSave(
-			@RequestParam("login") String login,
-			@RequestParam("password") String password,
-			@RequestParam("email") String email) {
+        return "wizzard/user";
+    }
 
-		this.security.addSimpleUser(login, email, password, true);
+    /**
+     * @param login
+     * @param password
+     * @param email
+     * @return
+     */
+    @RequestMapping(path = "/1", method = POST)
+    public String userSave(
+            @RequestParam("login") String login,
+            @RequestParam("password") String password,
+            @RequestParam("email") String email) {
 
-		return "wizzard/projects";
-	}
+        this.security.addSimpleUser(login, email, password, true);
 
-	/**
-	 * @param login
-	 * @param password
-	 * @param email
-	 * @return
-	 */
-	@RequestMapping(path = "/2", method = POST)
-	public String projectSave(Model model, @RequestParam("selected") String selected) {
+        return "wizzard/projects";
+    }
 
-		UUID uuid = UUID.fromString(selected);
+    /**
+     * @param selected
+     * @return
+     */
+    @RequestMapping(path = "/2", method = POST)
+    public String projectSave(Model model, @RequestParam("selected") String selected) {
 
-		// User already has all created projects as prefered
+        UUID uuid = UUID.fromString(selected);
 
-		// Select is automatically marked as selected
-		this.projectService.selectProject(uuid);
+        // User already has all created projects as prefered
 
-		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
+        // Select is automatically marked as selected
+        this.projectService.selectProject(uuid);
 
-		return "wizzard/initial_dictionary";
-	}
+        model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
 
-	/**
-	 * Rest Method for AJAX push
-	 * 
-	 * @param name
-	 * @return
-	 */
-	@RequestMapping(value = "/2/add/{name}/{color}", method = POST)
-	@ResponseBody
-	public ProjectData addProjectData(@PathVariable("name") String name, @PathVariable("color") int color) {
-		return this.projectService.createNewProject(name, color);
-	}
+        return "wizzard/initial_dictionary";
+    }
 
-	/**
-	 * @param model
-	 * @param domainName
-	 * @return
-	 */
-	@RequestMapping(value = "/3", method = GET)
-	public String initialCommitPage(Model model) {
+    /**
+     * Rest Method for AJAX push
+     *
+     * @param name
+     * @return
+     */
+    @RequestMapping(value = "/2/add/{name}/{color}", method = POST)
+    @ResponseBody
+    public ProjectData addProjectData(@PathVariable("name") String name, @PathVariable("color") int color) {
+        return this.projectService.createNewProject(name, color);
+    }
 
-		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
-		model.addAttribute("dictionaryExists", Boolean.valueOf(this.dictionaryManagementService.isDictionnaryExists()));
+    /**
+     * @param model
+     * @return
+     */
+    @RequestMapping(value = "/3", method = GET)
+    public String initialCommitPage(Model model) {
 
-		return "wizzard/initial_commit";
-	}
+        model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
+        model.addAttribute("dictionaryExists", this.dictionaryManagementService.isDictionnaryExists());
 
-	/**
-	 * @param model
-	 * @param domainName
-	 * @return
-	 */
-	@RequestMapping(value = "/3/create", method = POST)
-	public String addFunctionalDomainData(Model model, @RequestParam("domainName") String domainName) {
+        return "wizzard/initial_commit";
+    }
 
-		this.dictionaryManagementService.createNewFunctionalDomain(domainName);
+    /**
+     * @param model
+     * @param domainName
+     * @return
+     */
+    @RequestMapping(value = "/3/create", method = POST)
+    public String addFunctionalDomainData(Model model, @RequestParam("domainName") String domainName) {
 
-		return initialCommitPage(model);
-	}
+        this.dictionaryManagementService.createNewFunctionalDomain(domainName);
 
-	/**
-	 * @param model
-	 * @param request
-	 * @return
-	 */
-	@RequestMapping(value = "/3/upload", method = POST)
-	public String uploadDictionary(Model model, MultipartHttpServletRequest request) {
+        return initialCommitPage(model);
+    }
 
-		this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request));
+    /**
+     * @param model
+     * @param request
+     * @return
+     */
+    @RequestMapping(value = "/3/upload", method = POST)
+    public String uploadDictionary(Model model, MultipartHttpServletRequest request) {
 
-		return initialCommitPage(model);
-	}
+        this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request));
 
-	/**
-	 * @param model
-	 * @return
-	 */
-	@RequestMapping(value = "/3/init", method = GET)
-	public String startInitialCommit(Model model) {
+        return initialCommitPage(model);
+    }
 
-		model.addAttribute("preResult", this.pilotableCommitService.startWizzardLocalCommitPreparation());
+    /**
+     * @param model
+     * @return
+     */
+    @RequestMapping(value = "/3/init", method = GET)
+    public String startInitialCommit(Model model) {
 
-		return initialCommitPage(model);
-	}
+        model.addAttribute("preResult", this.pilotableCommitService.startWizzardLocalCommitPreparation());
 
-	/**
-	 * @return status as a value
-	 */
-	@RequestMapping(path = { "/3/progress" }, method = GET)
-	@ResponseBody
-	public PilotedCommitStatus preparationGetStatus() {
-		return this.pilotableCommitService.getAllCommitPreparationStatus();
-	}
+        return initialCommitPage(model);
+    }
 
-	/**
-	 * @param model
-	 * @param commitName
-	 * @return
-	 */
-	@RequestMapping(value = "/3/commit", method = GET)
-	public String completedInitialCommit(Model model, @RequestParam("commitName") String commitName) {
+    /**
+     * @return status as a value
+     */
+    @RequestMapping(path = {"/3/progress"}, method = GET)
+    @ResponseBody
+    public PreparationState preparationGetState() {
+        return this.pilotableCommitService.getAllCommitPreparationStates();
+    }
 
-		// Finalize dedicated for wizzard initial commit (auto select all)
-		this.pilotableCommitService.finalizeWizzardCommitPreparation(commitName);
+    /**
+     * @param model
+     * @param commitName
+     * @return
+     */
+    @RequestMapping(value = "/3/commit", method = GET)
+    public String completedInitialCommit(Model model, @RequestParam("commitName") String commitName) {
 
-		// And auto-select all content
-		model.addAttribute("preResult", this.pilotableCommitService.saveWizzardCommitPreparations());
+        // Finalize dedicated for wizzard initial commit (auto select all)
+        this.pilotableCommitService.finalizeWizzardCommitPreparation(commitName);
 
-		return initialCommitPage(model);
-	}
+        // And auto-select all content
+        model.addAttribute("preResult", this.pilotableCommitService.saveWizzardCommitPreparations());
 
-	/**
-	 * @return
-	 */
-	@RequestMapping(value = "/4", method = GET)
-	public String completedWizzard(Model model) {
+        return initialCommitPage(model);
+    }
 
-		model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
+    /**
+     * @return
+     */
+    @RequestMapping(value = "/4", method = GET)
+    public String completedWizzard(Model model) {
 
-		// Finalize temp wizzard data
-		this.security.completeWizzardUserMode();
-		this.detailsService.completeWizzard();
+        model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
 
-		return "wizzard/completed";
-	}
+        // Finalize temp wizzard data
+        this.security.completeWizzardUserMode();
+        this.detailsService.completeWizzard();
+
+        return "wizzard/completed";
+    }
 }
