@@ -7,5 +7,5 @@ services:
       - ${PORT}:8080
     volumes:
       - /opt/server/paramethor/${INSTANCE}/cfg/:/cfg/:ro
-      - /opt/server/paramethor/${INSTANCE}/logs:/tmp
-      - /opt/server/paramethor/${INSTANCE}/tmp:/logs
+      - /opt/server/paramethor/${INSTANCE}/logs:/logs
+      - /opt/server/paramethor/${INSTANCE}/tmp:/tmp
