@@ -1,0 +1,25 @@
+<assembly>
+  <id>zip</id>
+  <formats>
+    <format>zip</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <fileSets>
+	 <fileSet>
+      <directory>src/main/docker</directory>
+      <outputDirectory>.</outputDirectory>
+      <filtered>false</filtered>
+      <lineEnding>lf</lineEnding>
+     </fileSet>
+	  <fileSet>
+      <directory>.</directory>
+      <outputDirectory>.</outputDirectory>
+	  <includes>
+      	<include>application.yml</include>
+		<include>logback.xml</include>
+      </includes>
+      <filtered>false</filtered>
+      <lineEnding>lf</lineEnding>
+     </fileSet>
+  </fileSets>
+</assembly>

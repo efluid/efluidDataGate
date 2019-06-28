@@ -1,0 +1,29 @@
+import com.efluid.jenkinsfile.Jenkinsfile
+
+// variables globales
+node('socle-jenkins-maven-docker-14-4G'){
+def credentialsId = env.credentialsId
+git branch: env.BRANCH_NAME, credentialsId: credentialsId, url: 'https://github.com/Zenika/GestionParamEfluid.git'
+
+withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.httpProxyAuthentication, passwordVariable: 'proxyPassword', usernameVariable: 'proxyUsername']]) {
+           env.HTTP_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
+           env.HTTPS_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
+}
+try{
+    def urlArtifactoryRelease = env.urlArtifactoryRelease
+	def urlArtifactorySnapshot = env.urlArtifactorySnapshot
+	def adressMailFrom = env.adressMailFrom
+	def adressMailTo = env.adressMailTo
+	sh 'mvn clean deploy -DskipTests=true -DurlArtifactoryRelease=${urlArtifactoryRelease} -DurlArtifactorySnapshot=${urlArtifactorySnapshot}'
+	sh 'cp param-app/target/param-app-exec.jar param-app/src/docker/build-serv-efluid/standalone-with-h2'
+	sh 'cp param-app/src/docker/build-serv-efluid/logback.xml param-app/src/docker/build-serv-efluid/standalone-with-h2'
+	sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/datagate param-app/src/docker/build-serv-efluid/standalone-with-h2"
+	sh "docker push ${variables.artifactoryDockerRegistryAlias}/datagate"
+} catch (Exception e) {
+	mail bcc: '', body: """GestionParamEfluid en erreur 
+
+	${env.BUILD_URL}""", cc: '', from: adressMailFrom, replyTo: '', subject: 'Test GestionParamEfluid', to: adressMailTo
+	throw e
+}
+}
+return this;

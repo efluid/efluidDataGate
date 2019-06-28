@@ -1,3 +1,8 @@
+.container-fluid {
+    padding-left: 0!important;
+    padding-right: 0!important;
+}
+
 .add {
     color:green;
     font-weight: bold;
@@ -436,5 +441,11 @@ select.select-column {
 
 .sql-comment {
 	color: DarkGreen;
+    font-style: italic;
+}
+
+.empty-list-message {
+    text-align: center;
+	color: Gray;
     font-style: italic;
 }

@@ -16,6 +16,9 @@
 				</tr>
 			</thead>
 			<tbody>
+				<tr th:if="${dictionary.empty}">
+					<td colspan="100%" class="empty-list-message">Aucune table de paramètrage spécifiée</td>
+				</tr>
 				<tr th:each="entry : ${dictionary}" th:id="${entry.uuid}">
 					<td th:text="${entry.domainName}">Gestion du matériel</td>
 					<td th:text="${entry.name}">Catégorie de matériel</td>

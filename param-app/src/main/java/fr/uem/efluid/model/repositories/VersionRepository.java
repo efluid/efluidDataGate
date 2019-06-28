@@ -102,4 +102,20 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 	@Query("select count(v) from Version v where v.project.uuid = :projectUuid")
 	int countVersionsForProject(@Param("projectUuid") UUID projectUuid);
 
+	/**
+	 * @param versionUuid
+	 * @return
+	 */
+	@Query(value = "select count(*) from commits where version_uuid = :versionUuid", nativeQuery = true)
+	int countVersionUseIn(@Param("versionUuid") UUID versionUuid);
+
+
+	/**
+	 * @param versionUuid
+	 * @return true if specified version can be updated
+	 */
+	default boolean isVersionUpdatable(UUID versionUuid) {
+		return countVersionUseIn(versionUuid) == 0;
+	}
+
 }

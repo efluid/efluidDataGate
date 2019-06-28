@@ -18,6 +18,9 @@
 		        </tr>
 		    </thead>
 		    <tbody>
+				<tr th:if="${commits.empty}">
+					<td colspan="100%" class="empty-list-message">Aucun lot existant</td>
+				</tr>
 		        <tr th:each="commit, cstat : ${commits}">
 		            <td th:utext="${custom.processGitmoji(commit.comment)}">Préchargement configuration</td>
 		            <td th:text="${commit.domainNames}">Fonct domains</td>

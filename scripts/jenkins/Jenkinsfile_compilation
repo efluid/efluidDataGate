@@ -1,0 +1,5 @@
+def post_initVars(scriptLoader, scriptParams){
+	scriptParams['destinataireParType'] =  ['TU' : ['']]
+}
+
+return this;
