@@ -3,6 +3,7 @@ package fr.uem.efluid.system.tests.fixtures;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cucumber.api.DataTable;
+import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import fr.uem.efluid.system.common.SystemTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,12 @@ public class FeaturesFixtures extends SystemTest {
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Given("^the feature \"(.*)\" is (.*)$")
+    public void then_feature_state(String feature, String action) throws Exception {
+        post("/rest/v1/features/" + action.substring(0, action.length() -1) + "/" + feature);
+        assertRequestWasOk();
+    }
 
     @Then("^there are the listed features:$")
     public void there_are_the_listed_features(DataTable data) throws Throwable {

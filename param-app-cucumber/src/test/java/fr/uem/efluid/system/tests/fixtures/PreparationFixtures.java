@@ -10,6 +10,8 @@ import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.system.common.ImportExportHelper;
 import fr.uem.efluid.system.common.SystemTest;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import org.junit.Assert;
 import org.junit.Before;
@@ -337,15 +339,23 @@ public class PreparationFixtures extends SystemTest {
 
     @Then("^a diff is running$")
     public void a_diff_is_running() {
-
+        assertThat(PushPullFixtures.currentException).isNull();
+        PushPullFixtures.currentException = null;
         Assert.assertEquals(PilotedCommitStatus.DIFF_RUNNING, this.prep.getCurrentCommitPreparationState().getStatus());
     }
 
     @Then("^a merge diff is running$")
     public void a_merge_diff_is_running() {
-
         a_diff_is_running();
         assertThat(this.prep.getCurrentCommitPreparation().getPreparingState()).isEqualTo(CommitState.MERGED);
+    }
+
+    @Then("^a merge diff fail with error code (.*)$")
+    public void a_merge_diff_fail_with_error(String error) {
+        assertThat(PushPullFixtures.currentException).isNotNull();
+        assertThat(PushPullFixtures.currentException).isInstanceOf(ApplicationException.class);
+        assertThat(((ApplicationException) PushPullFixtures.currentException).getError()).isEqualTo(ErrorType.valueOf(error));
+        PushPullFixtures.currentException = null;
     }
 
     @Then("^an alert says that the diff is still running$")

@@ -6,7 +6,6 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.system.common.SystemTest;
@@ -16,7 +15,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
-import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -27,6 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PushPullFixtures extends SystemTest {
 
     static ExportImportResult<ExportFile> currentExport;
+
+    static Exception currentException;
 
     @When("^the user request an export of all the commits$")
     public void when_export_all_commits() {
@@ -52,8 +52,13 @@ public class PushPullFixtures extends SystemTest {
     }
 
     @When("^the user import the available source package$")
-    public void when_import_current_package(){
-        this.prep.startMergeCommitPreparation(currentExport.getResult());
+    public void when_import_current_package() {
+        try {
+            this.prep.startMergeCommitPreparation(currentExport.getResult());
+        } catch (Exception e) {
+            // Do not fail at launch
+            currentException = e;
+        }
     }
 
     @Then("^an export package \"(.*)\" is available$")

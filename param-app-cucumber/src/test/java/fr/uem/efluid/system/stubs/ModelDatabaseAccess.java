@@ -1,24 +1,19 @@
 package fr.uem.efluid.system.stubs;
 
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.security.UserHolder;
 import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import fr.uem.efluid.security.UserHolder;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -165,5 +160,18 @@ public class ModelDatabaseAccess {
                 .orElseThrow(() -> new AssertionError("Cannot find entry for table name " + tablename));
     }
 
+    public void forceUpdateVersion(Project project) {
+        Version lastVersion = this.versions.getLastVersionForProject(project);
 
+        Version newVersion = new Version();
+        newVersion.setName(lastVersion.getName() + "_UPD");
+        newVersion.setUpdatedTime(LocalDateTime.now());
+        newVersion.setUuid(UUID.randomUUID());
+        newVersion.setProject(project);
+        newVersion.setModelIdentity("1234");
+        newVersion.setCreatedTime(LocalDateTime.now());
+
+        this.versions.delete(lastVersion);
+        this.versions.save(newVersion);
+    }
 }

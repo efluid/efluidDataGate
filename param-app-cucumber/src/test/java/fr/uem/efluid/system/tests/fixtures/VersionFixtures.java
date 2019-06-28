@@ -1,106 +1,111 @@
 package fr.uem.efluid.system.tests.fixtures;
 
-import java.net.URLEncoder;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Before;
-
 import cucumber.api.Delimiter;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.system.common.SystemTest;
+import org.junit.Assert;
+import org.junit.Before;
+
+import java.net.URLEncoder;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 public class VersionFixtures extends SystemTest {
 
-	private static List<String> specifiedVersions;
+    private static List<String> specifiedVersions;
 
-	private static LocalDateTime initUpdatedTime;
+    private static LocalDateTime initUpdatedTime;
 
-	@Before
-	public void resetFixture() {
-		specifiedVersions = null;
-		initUpdatedTime = null;
-	}
+    @Before
+    public void resetFixture() {
+        specifiedVersions = null;
+        initUpdatedTime = null;
+    }
 
-	@Given("^the existing versions (.*)$")
-	public void the_existing_versions(@Delimiter(", ") List<String> versions) throws Throwable {
+    @Given("^the existing versions (.*)$")
+    public void the_existing_versions(@Delimiter(", ") List<String> versions) throws Throwable {
 
-		// Implicit init with default domain / project
-		initMinimalWizzardData();
+        // Implicit init with default domain / project
+        initMinimalWizzardData();
 
-		// Implicit authentication and on page
-		implicitlyAuthenticatedAndOnPage("list of versions");
+        // Implicit authentication and on page
+        implicitlyAuthenticatedAndOnPage("list of versions");
 
-		// Init with specified versions
-		modelDatabase().initVersions(getCurrentUserProject(), versions, 1);
+        // Init with specified versions
+        modelDatabase().initVersions(getCurrentUserProject(), versions, 1);
 
-		// Keep version for update check
-		specifiedVersions = versions;
-	}
+        // Keep version for update check
+        specifiedVersions = versions;
+    }
 
-	@Given("^a version \"(.*)\" is defined$")
-	public void a_version_x_is_defined(String name) throws Throwable {
+    @Given("^a version \"(.*)\" is defined$")
+    public void a_version_x_is_defined(String name) throws Throwable {
 
-		// Just setup a new update version
-		modelDatabase().initVersions(getCurrentUserProject(), Arrays.asList(name), 50);
-	}
+        // Just setup a new update version
+        modelDatabase().initVersions(getCurrentUserProject(), Arrays.asList(name), 50);
+    }
 
-	@When("^the user add new version (.*)$")
-	public void the_user_add_new_version(String name) throws Throwable {
+    @When("^the user add new version (.*)$")
+    public void the_user_add_new_version(String name) throws Throwable {
 
-		// Add new
-		post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
+        // Add new
+        post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
 
-		// List can be unmodifiable, reset it
-		List<String> updatedVersions = new ArrayList<>();
+        // List can be unmodifiable, reset it
+        List<String> updatedVersions = new ArrayList<>();
 
-		updatedVersions.addAll(specifiedVersions);
-		updatedVersions.add(name);
+        updatedVersions.addAll(specifiedVersions);
+        updatedVersions.add(name);
 
-		specifiedVersions = updatedVersions;
+        specifiedVersions = updatedVersions;
 
-		// Update is REST only, update page
-		get(getCorrespondingLinkForPageName("list of versions"));
-	}
+        // Update is REST only, update page
+        get(getCorrespondingLinkForPageName("list of versions"));
+    }
 
-	@When("^the user update version (.*)$")
-	public void the_user_update_version(String name) throws Throwable {
+    @Given("^the existing version in destination environment is different$")
+    public void given_modified_version() {
+        // Force modify version to make it different
+        modelDatabase().forceUpdateVersion(getCurrentUserProject());
+    }
 
-		// Get actual update date
-		initUpdatedTime = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime();
+    @When("^the user update version (.*)$")
+    public void the_user_update_version(String name) throws Throwable {
 
-		// Update
-		post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
+        // Get actual update date
+        initUpdatedTime = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime();
 
-		// Update is REST only, update page
-		get(getCorrespondingLinkForPageName("list of versions"));
-	}
+        // Update
+        post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
 
-	@Then("^the (\\d+) \\w+ versions are displayed$")
-	public void the_x_versions_are_displayed(int nbr) throws Throwable {
+        // Update is REST only, update page
+        get(getCorrespondingLinkForPageName("list of versions"));
+    }
 
-		assertModelIsSpecifiedListWithProperties(
-				"versions",
-				nbr,
-				VersionData::getName,
-				specifiedVersions);
-	}
+    @Then("^the (\\d+) \\w+ versions are displayed$")
+    public void the_x_versions_are_displayed(int nbr) throws Throwable {
 
-	@Then("^the update date of version (.*) is updated$")
-	public void the_update_date_of_version_is_updated(String name) throws Throwable {
+        assertModelIsSpecifiedListWithProperties(
+                "versions",
+                nbr,
+                VersionData::getName,
+                specifiedVersions);
+    }
 
-		Assert.assertNotEquals(initUpdatedTime,
-				modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime());
-	}
+    @Then("^the update date of version (.*) is updated$")
+    public void the_update_date_of_version_is_updated(String name) throws Throwable {
+
+        Assert.assertNotEquals(initUpdatedTime,
+                modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime());
+    }
 }
