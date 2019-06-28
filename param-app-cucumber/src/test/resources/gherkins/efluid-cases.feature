@@ -366,3 +366,34 @@ Feature: A complete set of test case are specified for Efluid needs
     Then the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload                                                                 |
       | TTEST1 | $testa_d3 | UPDATE | COL1:'testa delete 3'=>'testp : delete lot 2 + insert lot 3 ---> lot 3' |
+
+  @TestDoublePk
+  Scenario: Efluid merge cas double Pk
+    Given the test is an Efluid standard scenario
+    And the existing data in managed table "EFLUIDTESTPKCOMPOSITE" :
+      | id            | id2           | col1           |
+      | $testb_id1_d  | $testb_id1_d  | testb delete   |
+      | $testb_id1_i1 | $testb_id2_i1 | testb insert 1 |
+      | $testb_id1_u  | $testb_id2_u  | testb update 1 |
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "EFLUIDTESTPKCOMPOSITE" :
+      | change | id            | id2           | col1             |
+      | delete | $testb_id1_d  | $testb_id1_d  | testb delete     |
+      | add    | $testb_id1_i2 | $testb_id2_i2 | testb insert 2   |
+      | update | $testb_id1_u  | $testb_id2_u  | testb update 1 2 |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 1"
+    And the user accesses to the destination environment with the same dictionary
+    And the existing data in managed table "EFLUIDTESTPKCOMPOSITE" in destination environment :
+      | id            | id2           | col1           |
+      | $testb_id1_d  | $testb_id1_d  | testb delete   |
+      | $testb_id1_i1 | $testb_id2_i1 | testb insert 1 |
+      | $testb_id1_u  | $testb_id2_u  | testb update 1 |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table                 | Key                           | Action | Payload                                   |
+      | EFLUIDTESTPKCOMPOSITE | $testb_id1_d / $testb_id1_d   | REMOVE |                                           |
+      | EFLUIDTESTPKCOMPOSITE | $testb_id1_u / $testb_id2_u   | UPDATE | COL1:'testb update 1'=>'testb update 1 2' |
+      | EFLUIDTESTPKCOMPOSITE | $testb_id1_i2 / $testb_id2_i2 | ADD    | COL1:'testb insert 2'                     |

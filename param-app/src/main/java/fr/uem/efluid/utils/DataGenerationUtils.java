@@ -1,23 +1,13 @@
 package fr.uem.efluid.utils;
 
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.tools.ManagedValueConverter;
+import org.pac4j.core.credentials.password.PasswordEncoder;
+
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.UUID;
-
-import org.pac4j.core.credentials.password.PasswordEncoder;
-
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.model.entities.Commit;
-import fr.uem.efluid.model.entities.CommitState;
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.FunctionalDomain;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.IndexEntry;
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.entities.TableLink;
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.entities.Version;
-import fr.uem.efluid.tools.ManagedValueConverter;
 
 /**
  * @author elecomte
@@ -115,6 +105,42 @@ public class DataGenerationUtils {
         entry.setKeyType(keyType);
         return entry;
     }
+
+
+    /**
+     * 2 PK
+     *
+     * @param name
+     * @param domain
+     * @param select
+     * @param table
+     * @param where
+     * @param keyName
+     * @param keyType
+     * @param keyName2
+     * @param keyType2
+     * @return
+     */
+    public static DictionaryEntry entry(String name, FunctionalDomain domain, String select, String table, String where, String keyName,
+                                        ColumnType keyType, String keyName2, ColumnType keyType2) {
+
+        DictionaryEntry entry = new DictionaryEntry();
+
+        entry.setCreatedTime(LocalDateTime.now().minusDays(name.length()));
+        entry.setUpdatedTime(entry.getCreatedTime().plusMinutes(1));
+        entry.setUuid(UUID.randomUUID());
+        entry.setParameterName(name);
+        entry.setDomain(domain);
+        entry.setSelectClause(select != null ? select.toUpperCase() : null);
+        entry.setTableName(table);
+        entry.setWhereClause(where);
+        entry.setKeyName(keyName != null ? keyName.toUpperCase() : null);
+        entry.setKeyType(keyType);
+        entry.setExt1KeyName(keyName2 != null ? keyName2.toUpperCase() : null);
+        entry.setExt1KeyType(keyType2);
+        return entry;
+    }
+
 
     /**
      * @param key

@@ -16,13 +16,19 @@ import fr.uem.efluid.utils.FormatUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.util.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.core.StringContains.containsString;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 /**
@@ -555,6 +561,20 @@ public class PreparationFixtures extends SystemTest {
 
         assertThat(preparation).isNotNull();
         assertThat(preparation.getPreparingState()).isEqualTo(CommitState.valueOf(type));
+    }
+    @Then("^the paginated json content rendering on page (.*) for table \"(.*)\" is equals to \"(.*)\"$")
+    public void then_display_paginated_content(int page, String tablename, String file) throws Exception {
+        File contentFile = new File("src/test/resources/datasets/" + file);
+        String content = String.join("\n", Files.readAllLines(contentFile.toPath()));
+
+        Optional<UUID> tabUuid = this.prep.getCurrentCommitPreparation().getDomains().stream().flatMap(d -> d.getPreparedContent().stream()).filter(c -> ((DiffDisplay) c).getDictionaryEntryTableName().equals(tablename)).map(c -> ((DiffDisplay) c).getDictionaryEntryUuid()).findFirst();
+
+        assertThat(tabUuid).as("Table identifier in current diff for name " + tablename).isPresent();
+
+        get("/ui/prepare/page/" + tabUuid.get() + "/" + page);
+        assertRequestWasOk();
+        currentAction.andDo(MockMvcResultHandlers.print());
+        currentAction.andExpect(content().string(containsString(content)));
     }
 
 }

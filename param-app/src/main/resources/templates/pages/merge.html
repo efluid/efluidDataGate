@@ -245,9 +245,17 @@
 						var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
 						var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
 						var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
-						var actionMineDisplay = e.mine && e.mine.action === 'ADD' ? 'Ajout' : e.mine && e.mine.action === 'REMOVE' ? 'Suppression' : 'Modification';
-						var actionTheirDisplay = e.their && e.their.action === 'ADD' ? 'Ajout' : e.their && e.their.action === 'REMOVE' ? 'Suppression' : 'Modification';
-					
+
+						var actionMineDisplay = 'Absent';
+						if(e.mine && e.mine.action != null){
+							actionMineDisplay = e.mine && e.mine.action === 'ADD' ? 'Ajout' : e.mine && e.mine.action === 'REMOVE' ? 'Suppression' : 'Modification';
+						}
+
+						var actionTheirDisplay = 'Absent';
+						if(e.their && e.their.action != null){
+							actionTheirDisplay = e.their && e.their.action === 'ADD' ? 'Ajout' : e.their && e.their.action === 'REMOVE' ? 'Suppression' : 'Modification';
+						}
+
 						var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
 						var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
 					
@@ -262,7 +270,7 @@
 									'<span class="reducer reducer-sm reducer-open float-right" onclick="hideAndShowDisplayAction(\'' + e.indexForDiff + '_item\')">&nbsp;</span>' +
 									'<span class="change-details" style="display: none;">' +
 										'<span class="change-title">Modification locale</span> : ' + 
-										(e.mine
+										(e.mine && e.mine.action != null
 											 ? '<span class="mine action-line ' + e.mine.action.toLowerCase() + '">' +
 													'<span class="change-display">' +
 														'<span class="action-display">' + actionMineDisplay + ' </span>' +
@@ -272,14 +280,14 @@
 											 : '<span class="mine change-display-none">Ligne non présente dans l\'index (ligne supprimée ou non créée)</span>'
 										) +
 										'<span class="change-title">Modification importée</span> : ' +
-										(e.their 
+										(e.their && e.their.action != null
 											 ? '<span class="their change-display action-line ' + e.mine.action.toLowerCase() + '">' +
 													'<span class="change-display">' +
 														'<span class="action-display">' + actionTheirDisplay + ' </span>' +
 														'<span>' + theirPayload + '</span>' +
 													'</span>' + 
 												'</span>'
-											 : 	'<span class="mine change-display-none">Non présente dans l\'import</span>'
+											 : 	'<span class="their change-display-none">Non présente dans l\'import</span>'
 										) +
 										'<span class="change-title">Proposition</span> : ' +
 									'</span>' ;

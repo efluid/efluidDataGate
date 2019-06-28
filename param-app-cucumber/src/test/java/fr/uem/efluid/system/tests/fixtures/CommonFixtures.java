@@ -5,6 +5,7 @@ import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import fr.uem.efluid.system.common.SystemTest;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -73,6 +74,11 @@ public class CommonFixtures extends SystemTest {
         } else {
             currentAction = currentAction.andExpect(status().is3xxRedirection()).andExpect(redirectedUrl(link));
         }
+    }
+
+    @Then("^the page is displayed$")
+    public void page_content_is_rendered() throws Exception {
+          currentAction.andDo(MockMvcResultHandlers.print());
     }
 
     @Then("^the provided template is (.*)$")

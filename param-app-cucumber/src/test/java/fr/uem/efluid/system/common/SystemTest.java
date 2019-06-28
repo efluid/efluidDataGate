@@ -587,7 +587,7 @@ public abstract class SystemTest {
                     tables.add(table(DEFAULT_TTESTMULTIDATATYPE, TTESTMULTIDATATYPE, domain, "cur.\"COL1\", cur.\"COL2\", cur.\"COL3\", cur.\"COL4\", cur.\"COL5\", cur.\"COL6\", cur.\"COL7\"", DEFAULT_WHERE, "ID", STRING));
                     break;
                 case EFLUIDTESTPKCOMPOSITE:
-                    tables.add(table(DEFAULT_EFLUIDTESTPKCOMPOSITE, EFLUIDTESTPKCOMPOSITE, domain, "cur.\"ID2\",cur.\"COL1\"", DEFAULT_WHERE, "ID", STRING));
+                    tables.add(table(DEFAULT_EFLUIDTESTPKCOMPOSITE, EFLUIDTESTPKCOMPOSITE, domain, "cur.\"COL1\"", DEFAULT_WHERE, "ID", STRING, "ID2", STRING));
                     break;
                 default:
                     throw new AssertionError("Unsupported table name " + tableName);
@@ -646,6 +646,25 @@ public abstract class SystemTest {
     protected static DictionaryEntry table(String name, String tableName, FunctionalDomain domain, String select, String where, String key,
                                            ColumnType keyType) {
         return DataGenerationUtils.entry(name, domain, select, tableName, where, key, keyType);
+    }
+
+    /**
+     * 2 PK
+     *
+     * @param name
+     * @param tableName
+     * @param domain
+     * @param select
+     * @param where
+     * @param key
+     * @param keyType
+     * @param key2
+     * @param keyType2
+     * @return
+     */
+    protected static DictionaryEntry table(String name, String tableName, FunctionalDomain domain, String select, String where,
+                                           String key, ColumnType keyType, String key2, ColumnType keyType2) {
+        return DataGenerationUtils.entry(name, domain, select, tableName, where, key, keyType, key2, keyType2);
     }
 
     /**

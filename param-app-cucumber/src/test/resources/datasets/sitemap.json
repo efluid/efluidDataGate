@@ -18,9 +18,9 @@
   "/ui/versions": ["list of versions"],
   "/ui/dictionary/save" : ["save parameter table", "saved parameter table"],
   "/ui/dictionary/test" : ["test parameter table", "tested parameter table"],
-  "/ui/prepare" : ["diff launch page"],
-  "/ui/preparing" : ["diff commit page"],
+  "/ui/prepare" : ["diff launch page", "diff commit page"],
   "/ui/prepare/commit" : ["commit saving page"],
   "/ui/prepare/save" : ["commit save"],
+  "/ui/merge" : ["merge commit page"],
   "/rest/v1/features/" : ["feature listing rest service"]
 }
