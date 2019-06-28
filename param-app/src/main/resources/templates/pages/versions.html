@@ -32,6 +32,9 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
                 </tr>
             </thead>
             <tbody>
+				<tr th:if="${versions.empty}">
+					<td colspan="100%" class="empty-list-message">Aucune version</td>
+				</tr>
                 <tr th:each="version : ${versions}" th:id="${version.name}">
                      <td class="version-name" th:text="${version.name}">
                      	1.2.5-SNAPSHOT
@@ -45,7 +48,7 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
 			     </tr>
 			     <tr id="versionListInjectBefore">
 			         <td><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
-			         <td colspan="3"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+			         <td colspan="4"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
 			     </tr>
 			</tbody>
 		</table>
@@ -66,6 +69,7 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
 				$("button.updateButton").remove();
 		        var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>' + data.modelId + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
 				$("#versionListInjectBefore").before(newVersionRow);
+				$(".empty-list-message").remove();
 				inputName.val("");
 				$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.parentElement.id)); // Refresh updates
 		    });
