@@ -10,8 +10,8 @@
 		<ul>
 			<li>Base de données source : <span th:text="${details.dbUrl}">ORACLE_DB_SERVER_123, schéma ABCDEF</span></li>
 			<li th:if="${details.modelDesc != null}">Modèle de données identifié : 
-				<span th:text="${details.modelDesc.identity}">v1.2.2, schéma ABCDEF</span>, 
-				<span th:if="${details.modelDesc.details != null}" th:text="| - ${details.modelDesc.details}|"> - détails</span>, 
+				<span th:text="${details.modelDesc.identity}">v1.2.2, schéma ABCDEF</span>
+				<span th:if="${details.modelDesc.details != null}" th:text="| - ${details.modelDesc.details}|"> - détails</span>
 				<span th:if="${details.modelDesc.updatedTime != null}" th:text="| (dernière mise à jour : ${custom.format(details.modelDesc.updatedTime)})|">(dernier maj : 01/02/2018)</span>
 			</li>
 			<li>Lots de paramètrage gérés : <span th:text="${details.commitsCount}">12</span></li>
