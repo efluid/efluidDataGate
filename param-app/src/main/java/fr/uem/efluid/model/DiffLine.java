@@ -47,7 +47,7 @@ public interface DiffLine {
 	 * @param linesOnSameTableSameKey
 	 * @return
 	 */
-	public static DiffLine combinedOnSameTableAndKey(List<? extends DiffLine> linesOnSameTableSameKey) {
+	public static DiffLine combinedOnSameTableAndKey(List<? extends DiffLine> linesOnSameTableSameKey, boolean keepDeleted) {
 
 		if (linesOnSameTableSameKey == null || linesOnSameTableSameKey.size() == 0) {
 			return null;
@@ -84,7 +84,7 @@ public interface DiffLine {
 			case REMOVE:
 			default:
 				// If was added in same scope : drop it totaly
-				if (currentAction == IndexAction.ADD) {
+				if (!keepDeleted && currentAction == IndexAction.ADD) {
 					currentAction = null;
 				} else {
 					currentAction = line.getAction();

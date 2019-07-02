@@ -645,8 +645,8 @@ public class PrepareIndexService {
         return allKeys.stream().map(key -> {
 
             String previous = previousContent.get(key);
-            DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key));
-            DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key));
+            DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key), false);
+            DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key), true);
 
             // Ignore dead entries (ADDED then DELETED in regenerated content)
             if (mine == null && their == null) {
@@ -699,12 +699,16 @@ public class PrepareIndexService {
         // For each merge result (Only one possible for each keyValue)
         preparingMergeIndexToComplete.forEach(mergeEntry -> {
 
+            // Expose properties for debug
+            String key = mergeEntry.getKeyValue();
+            List<? extends DiffLine> mineDiff = minesByKey.get(key);
+            List<? extends DiffLine> theirDiff = theirsByKey.remove(key);
+            IndexEntry previous = previouses.get(key);
+            DiffLine mineCombined = DiffLine.combinedOnSameTableAndKey(mineDiff, false);
+            DiffLine theirCombined = DiffLine.combinedOnSameTableAndKey(theirDiff, true);
+
             // Adapt auto-resolution of entry
-            mergeResolution(
-                    mergeEntry,
-                    previouses.get(mergeEntry.getKeyValue()),
-                    DiffLine.combinedOnSameTableAndKey(minesByKey.get(mergeEntry.getKeyValue())),
-                    DiffLine.combinedOnSameTableAndKey(theirsByKey.remove(mergeEntry.getKeyValue())));
+            mergeResolution(mergeEntry, previous, mineCombined, theirCombined);
 
             // Mark as a diff which need action
             mergeEntry.setNeedAction(true);
@@ -717,7 +721,7 @@ public class PrepareIndexService {
         theirsByKey.forEach((key, value) -> {
 
             IndexEntry localPrevious = previouses.get(key);
-            DiffLine foundTheir = DiffLine.combinedOnSameTableAndKey(value);
+            DiffLine foundTheir = DiffLine.combinedOnSameTableAndKey(value, true);
 
             // Ignore when no "mine" and "auto-erased" import
             if (localPrevious != null && foundTheir != null) {

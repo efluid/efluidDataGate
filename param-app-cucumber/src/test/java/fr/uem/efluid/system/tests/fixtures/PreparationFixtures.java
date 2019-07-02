@@ -20,7 +20,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -452,6 +451,10 @@ public class PreparationFixtures extends SystemTest {
                 if (action != REMOVE) {
                     assertThat(diffLine.getHrPayload()).as("Payload" + desc).isEqualTo(dataLine.get("Payload"));
                 }
+
+                if (dataLine.get("Need Resolve") != null) {
+                    assertThat(diffLine.isNeedAction()).isEqualTo("true".equals(dataLine.get("Need Resolve")));
+                }
             }
         });
     }
@@ -562,6 +565,7 @@ public class PreparationFixtures extends SystemTest {
         assertThat(preparation).isNotNull();
         assertThat(preparation.getPreparingState()).isEqualTo(CommitState.valueOf(type));
     }
+
     @Then("^the paginated json content rendering on page (.*) for table \"(.*)\" is equals to \"(.*)\"$")
     public void then_display_paginated_content(int page, String tablename, String file) throws Exception {
         File contentFile = new File("src/test/resources/datasets/" + file);
