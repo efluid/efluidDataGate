@@ -44,7 +44,7 @@ public class MergeResolutionProcessor {
      * @param theirEntry
      * @return built merge entry
      */
-    public PreparedMergeIndexEntry resolveMerge(PreparedIndexEntry mineEntry, PreparedIndexEntry theirEntry) {
+    public PreparedMergeIndexEntry resolveMerge(PreparedIndexEntry mineEntry, PreparedIndexEntry theirEntry, String actualContent) {
 
         ResolutionCase resolutionCase = searchResolutionCase(mineEntry, theirEntry);
 
@@ -55,7 +55,15 @@ public class MergeResolutionProcessor {
             return null;
         }
 
-        return applyResolutionResult(resolutionCase, mineEntry, theirEntry);
+        PreparedMergeIndexEntry entry = applyResolutionResult(resolutionCase, mineEntry, theirEntry);
+
+        if (actualContent == null && entry.getAction() != IndexAction.ADD) {
+            LOGGER.debug("Drop unknown update on entry {} for dict entry {} with update {} as this key doesn't exist at all locally",
+                    entry.getKeyValue(), entry.getDictionaryEntryUuid(), entry.getAction());
+            return null;
+        }
+
+        return entry;
     }
 
     /**

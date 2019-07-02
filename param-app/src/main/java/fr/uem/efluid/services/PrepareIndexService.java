@@ -300,7 +300,7 @@ public class PrepareIndexService {
         preparation.incrementProcessStep();
 
         // Build merge diff entries from 2 source of Diff + previous content
-        Collection<PreparedMergeIndexEntry> completedMergeDiff = newCompleteMergeIndexes(entry, mineDiff, mergeDiff, previousContent, preparation);
+        Collection<PreparedMergeIndexEntry> completedMergeDiff = newCompleteMergeIndexes(entry, actualContent, mineDiff, mergeDiff, previousContent, preparation);
 
         preparation.incrementProcessStep();
 
@@ -617,13 +617,18 @@ public class PrepareIndexService {
 
 
     /**
+     *
      * @param dict
+     * @param actualContent
      * @param mines
      * @param theirs
      * @param previousContent
+     * @param preparation
+     * @return
      */
     private Collection<PreparedMergeIndexEntry> newCompleteMergeIndexes(
             DictionaryEntry dict,
+            Map<String, String> actualContent,
             Collection<? extends DiffLine> mines,
             Collection<? extends DiffLine> theirs,
             Map<String, String> previousContent,
@@ -664,7 +669,7 @@ public class PrepareIndexService {
                 preparation.incrementProcessStep();
             }
 
-            return this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry);
+            return this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actualContent.get(key));
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 

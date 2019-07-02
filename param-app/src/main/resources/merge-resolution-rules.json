@@ -62,11 +62,7 @@
     "their": "REMOVE",
     "mine": null,
     "payload": "SIMILAR",
-    "resolution": {
-      "payload": null,
-      "action": "REMOVE",
-      "needAction": true
-    }
+    "resolution": null
   },
   {
     "caseName": "REMOVE mine - ADD their",
