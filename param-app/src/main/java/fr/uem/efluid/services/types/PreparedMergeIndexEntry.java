@@ -127,4 +127,16 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 
         return merge;
     }
+
+    @Override
+    public boolean isSelected() {
+
+        // If no need for action, never selected
+        
+        if(isNeedAction()) {
+            return super.isSelected();
+        }
+
+        return false;
+    }
 }
