@@ -14,10 +14,10 @@ L'API est par défaut disponible via une UI Swagger 2 standard : une fois connec
 
 ## Services disponibles
 
-### Fonctions de base de l'application
+### Fonctions de base de l'application / *Application Api Controller*
 
-**Nom du point d'entrée** : *Application Api Controller*
- 
+Les fonctions proposées ici sont génériques et permettent quelques opérations d'administration de l'application.
+
 **Services disponibles :**
 
 * `get /rest/v1/app/` : Fourni le nom et la version de l'instance active
@@ -26,10 +26,10 @@ L'API est par défaut disponible via une UI Swagger 2 standard : une fois connec
 * `get /rest/v1/app/state` : Etat général de l'application (HEALTHCHECK)
 
 
-### Fonctions de gestion du dictionnaire
+### Fonctions de gestion du dictionnaire / *Dictionary Api Controller*
 
-**Nom du point d'entrée** : *Dictionary Api Controller*
- 
+Le dictionnaire définie les tables de paramètrage. Il est versionné. L'API REST permet de spécifier un dictionnaire par import, et de mettre à jour les versions.
+
 **Services disponibles :**
 
 * `post /rest/v1/dictionary/upload` - `authentifié` : Importe un fichier .par de dictionnaire. Utilisé en particuliers par le générateur de dictionnaire par API de code, qui produit un fichier .par directement compatible, et peut directement l'uploader sur une instance cible via ce point d'entrée
@@ -37,10 +37,10 @@ L'API est par défaut disponible via une UI Swagger 2 standard : une fois connec
 * `put /rest/v1/dictionary/version/{name}` - `authentifié` : Créé une nouvelle version courante du dictionnaire
 * `get /rest/v1/dictionary/versions` - `authentifié` : Liste toutes les versions connues du dictionnaire
 
-### Fonctions de gestion du backlog (index, lots ...)
+### Fonctions de gestion du backlog (index, lots ...) / *Backlog Api Controller*
 
-**Nom du point d'entrée** : *Backlog Api Controller*
- 
+Des fonctions de création de nouveaux lots sont disponibles. Les opérations de consultation ou d'export nécessitent de passer par l'UI.
+
 **Services disponibles :**
 
 * `post /rest/v1/backlog/diff` - `authentifié` : Démarre un nouveau diff (préparation de lot) asynchrone dans le projet actif de l'utilisateur.
@@ -50,31 +50,25 @@ L'API est par défaut disponible via une UI Swagger 2 standard : une fois connec
 * `get /rest/v1/backlog/details` - `authentifié` : Fourni le détail du contenu du lot (après diff ou merge) quand il a le statut `COMMIT_CAN_PREPARE`. Si le statut est différent aucun résultat n'est fourni
 * `post /rest/v1/backlog/commit` - `authentifié` : Approuve tout le contenu du diff ou du merge préparé de statut `COMMIT_CAN_PREPARE`, spécifie un commentaire de lot, et sauvegarde le lot. Si des changements sont à réaliser sur la bdd managée, ils sont également appliqués. Le traitement est transactionnel (non asynchrone) et peut donc être assez long, attention au timeout.
 
-### Feature flipping
+### Feature flipping / *Features Api Controller*
 
-Certains comportements de l'application peuvent être modifiés "à chaud" grace à un système de feature-flipping : 
-
-Les codes de features supportés sont :
+Certains comportements de l'application peuvent être modifiés "à chaud" grace à un système de feature-flipping. Les codes de features supportés sont :
 
 * `SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY` 
 * `VALIDATE_VERSION_FOR_IMPORT`: Permet de désactiver la validation de version du dictionnaire lors de l'import d'un lot. **Permet donc d'appliquer un lot avec un dictionnaire non cohérent : attention !**
 * `CHECK_MISSING_IDS_AT_MANAGED_UPDATE`
 * `CHECK_MISSING_IDS_AT_MANAGED_DELETE`
 
-**Nom du point d'entrée** : *Features Api Controller*
- 
 **Services disponibles :**
 
 * `get /rest/v1/features/` - `authentifié` : Liste les features et leurs états pour l'application
 * `post /rest/v1/features/disable/{feature}` - `authentifié` : Désactive la feature indiquée
 * `post /rest/v1/features/enable/{feature}` - `authentifié` : Active la feature indiquée
 
-### Gestion des projets
+### Gestion des projets / *Project Api Controller*
 
-Par défaut tous les utilisateurs sont dans le pro
+Par défaut tous les utilisateurs sont dans le projet unique si il y en a un seul. Si plusieurs projets existent, il faut sélectionner le projet actif soit depuis l'UI, soit avec ces services. Dictionnaire et lots sont gérés par projet.
 
-**Nom du point d'entrée** : *Project Api Controller*
- 
 **Services disponibles :**
 
 * `get /rest/v1/projects/active` - `authentifié` : Donne le projet actif pour l'utilisateur
