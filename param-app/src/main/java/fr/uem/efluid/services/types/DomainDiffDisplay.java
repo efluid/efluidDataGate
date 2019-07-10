@@ -95,11 +95,40 @@ public class DomainDiffDisplay<T extends DiffDisplay<?>> implements Comparable<D
 	/**
 	 * @return
 	 */
+	public long getNeedActionTotalCount() {
+		return this.preparedContent != null
+				? this.preparedContent.stream().mapToLong(d -> d.getNeedActionItemsCount()).sum()
+				: 0;
+	}
+	/**
+	 * @return
+	 */
+	public boolean isDomainNeedAction() {
+		return getNeedActionTablesWithContentCount() > 0;
+	}
+
+
+	/**
+	 * @return
+	 */
 	public long getTotalCount() {
 		return this.preparedContent != null
 				? this.preparedContent.stream().flatMap(d -> d.getDiff() != null ? d.getDiff().stream() : Stream.of()).count()
 				: 0;
 	}
+
+	/**
+	 * @return
+	 */
+	public int getNeedActionTablesWithContentCount() {
+		return this.preparedContent != null
+				? this.preparedContent.stream()
+				.filter(d -> d.getNeedActionItemsCount() > 0)
+				.mapToInt(t -> 1)
+				.sum()
+				: 0;
+	}
+
 
 	/**
 	 * @return

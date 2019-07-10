@@ -69,6 +69,7 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
     /**
      * @return the needAction
      */
+    @Override
     public boolean isNeedAction() {
         return this.needAction;
     }

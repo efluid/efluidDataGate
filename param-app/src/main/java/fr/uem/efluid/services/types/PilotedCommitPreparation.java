@@ -74,6 +74,9 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     private boolean attachmentDisplaySupport;
     private boolean attachmentExecuteSupport;
 
+    // For simplification of rendering
+    private boolean displayAll = true;
+
 
     /**
      *
@@ -459,6 +462,14 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList())
                 : Collections.emptyList();
+    }
+
+    public boolean isDisplayAll() {
+        return this.displayAll;
+    }
+
+    public void setDisplayAll(boolean displayAll) {
+        this.displayAll = displayAll;
     }
 
     /**

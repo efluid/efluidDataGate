@@ -507,9 +507,10 @@ public class BacklogController extends CommonController {
             return REDIRECT_SELECT;
         }
 
+        this.pilotableCommitService.setCurrentDisplayAllIncludingSimilar(showAll);
+
         model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
         model.addAttribute("needsAction", this.pilotableCommitService.isCurrentMergeCommitNeedsAction());
-        model.addAttribute("showAll", showAll);
 
         return "pages/merge";
     }
