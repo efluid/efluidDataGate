@@ -183,6 +183,15 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
     }
 
     /**
+     * Default is always true for diff
+     *
+     * @return
+     */
+    public boolean isNeedAction() {
+        return true;
+    }
+
+    /**
      * @param rollbacked the rollbacked to set
      */
     public void setRollbacked(boolean rollbacked) {

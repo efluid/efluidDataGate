@@ -260,7 +260,11 @@ public class DictionaryController extends CommonController {
             return REDIRECT_SELECT;
         }
 
+        WebUtils.addTools(model);
+
         model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
+        model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
+        model.addAttribute("version", this.dictionaryManagementService.getLastVersion());
 
         return "pages/share";
     }
@@ -269,31 +273,31 @@ public class DictionaryController extends CommonController {
      * @param uuid
      * @return
      */
-    @RequestMapping(value = "/share/{uuid}-dictionary.par", method = GET)
+    @RequestMapping(value = "/share/{uuid}/{name}.par", method = GET)
     @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportOneDomain(@PathVariable("uuid") UUID uuid) {
+    public ResponseEntity<InputStreamResource> downloadExportOneDomain(@PathVariable("uuid") UUID uuid,@PathVariable("name")  String name) {
 
-        return WebUtils.outputExportImportFile(this.dictionaryManagementService.exportFonctionalDomains(uuid).getResult());
+        return WebUtils.outputExportImportFile(name, this.dictionaryManagementService.exportFonctionalDomains(uuid).getResult());
     }
 
     /**
      * @return
      */
-    @RequestMapping(value = "/share/project-dictionary.par", method = GET)
+    @RequestMapping(value = "/share/project/{name}.par", method = GET)
     @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportAllDomainsInCurrentProject() {
+    public ResponseEntity<InputStreamResource> downloadExportAllDomainsInCurrentProject(@PathVariable("name") String name) {
 
-        return WebUtils.outputExportImportFile(this.dictionaryManagementService.exportCurrentProject().getResult());
+        return WebUtils.outputExportImportFile(name, this.dictionaryManagementService.exportCurrentProject().getResult());
     }
 
     /**
      * @return
      */
-    @RequestMapping(value = "/share/all-dictionary.par", method = GET)
+    @RequestMapping(value = "/share/all/{name}.par", method = GET)
     @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportAllDomainsAllProject() {
+    public ResponseEntity<InputStreamResource> downloadExportAllDomainsAllProject(@PathVariable("name") String name) {
 
-        return WebUtils.outputExportImportFile(this.dictionaryManagementService.exportAll().getResult());
+        return WebUtils.outputExportImportFile(name, this.dictionaryManagementService.exportAll().getResult());
     }
 
     /**

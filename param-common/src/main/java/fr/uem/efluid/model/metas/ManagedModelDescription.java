@@ -4,47 +4,54 @@ import java.time.LocalDateTime;
 
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 public class ManagedModelDescription {
 
-	private final String identity;
+    private final String identity;
 
-	private final LocalDateTime updatedTime;
+    private final LocalDateTime updatedTime;
 
-	private final String details;
+    private final String details;
 
-	/**
-	 * @param identity
-	 * @param updatedTime
-	 * @param details
-	 */
-	public ManagedModelDescription(String identity, LocalDateTime updatedTime, String details) {
-		super();
-		this.identity = identity;
-		this.updatedTime = updatedTime;
-		this.details = details;
-	}
+    private final String schema;
 
-	/**
-	 * @return the identity
-	 */
-	public String getIdentity() {
-		return this.identity;
-	}
+    /**
+     * @param identity
+     * @param updatedTime
+     * @param details
+     */
+    public ManagedModelDescription(String identity, LocalDateTime updatedTime, String details, String schema) {
+        super();
+        this.identity = identity;
+        this.updatedTime = updatedTime;
+        this.details = details;
+        this.schema = schema;
+    }
 
-	/**
-	 * @return the updatedTime
-	 */
-	public LocalDateTime getUpdatedTime() {
-		return this.updatedTime;
-	}
+    /**
+     * @return the identity
+     */
+    public String getIdentity() {
+        return this.identity;
+    }
 
-	/**
-	 * @return the details
-	 */
-	public String getDetails() {
-		return this.details;
-	}
+    /**
+     * @return the updatedTime
+     */
+    public LocalDateTime getUpdatedTime() {
+        return this.updatedTime;
+    }
+
+    /**
+     * @return the details
+     */
+    public String getDetails() {
+        return this.details;
+    }
+
+    public String getSchema() {
+        return this.schema;
+    }
 }

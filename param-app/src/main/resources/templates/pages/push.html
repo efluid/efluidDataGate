@@ -4,7 +4,8 @@
 </head>
 <body>
     <span layout:fragment="content">
-		<h5>Export de lots de modifications pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
+		<h5>Export de lots de modifications pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span>,
+			pour la version <span class="version-name" th:text="${version.name}"></span></h5>
 		<span class="help">L'export complet se fait à partir du 1er lot selectionné. Les exports de lots ne comportent que les données du projet courant.</span>
         <div th:if="${checkVersion}" class="alert alert-danger">
         	Attention, l'export va être associé à la dernière version identifiée <span th:text="${version.name}">1.2.4</span>, or des mises à jour ont été apportées
@@ -12,6 +13,7 @@
 	        L'import pourra être en erreur si la version du dictionnaire cible n'intègre pas ces changements.
 	        Merci de vérifier qu'un import / export de dictionnaire n'est pas nécessaire en même temps.
 	    </div>
+		<a hidden="true" id="exportAllSrcLink" th:href="@{/ui/push/all/{name}.par(name=${custom.exportName('commits', modelDesc.schema, 'all')})}">&nbsp;</a>
 		<table class="table table-sm">
 			<thead>
 				<tr>
@@ -19,9 +21,10 @@
 		            <th scope="col">Domains couverts</th>
 		            <th scope="col">Créé par</th>
 		            <th scope="col">Le</th>
-		            <th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/ui/push/all-commits.par}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
+		            <th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/ui/push/all/{name}.par(name=${custom.exportName('commits', modelDesc.schema, 'all')})}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
 				</tr>
 			</thead>
+
 			<tbody>
 				<tr th:if="${commits.empty}">
 					<td colspan="100%" class="empty-list-message">Aucun lot existant</td>
@@ -34,7 +37,8 @@
 					<td>
 						<div class="float-right">
 							<div th:id="|selecterFor${commit.uuid}|" class="selecter selected" title="Activer l'export complet à partir de ce lot">&nbsp;</div>&nbsp;&nbsp;
-							<a href="#" th:href="@{/ui/push/{id}-commit.par(id=${commit.uuid})}" class="btn btn-primary btn-sm">Exporter seul</a>
+							<a href="#" th:href="@{/ui/push/{id}/{name}.par(id=${commit.uuid}, name=${custom.exportName('commits', modelDesc.schema, 'single', commit.uuid)})}" class="btn btn-primary btn-sm">Exporter seul</a>
+							<a hidden="true" th:id="|exportUntilSrcLink${commit.uuid}|" th:href="@{/ui/push/until-{id}/{name}.par(id=${commit.uuid},name=${custom.exportName('commits', modelDesc.schema, 'until', commit.uuid)})}">&nbsp;</a>
 						</div>
 					</td>
 				</tr>
@@ -68,13 +72,17 @@
        			});
        			var exportAllB = $("#exportAll");
        			if(i === 0){
+       				var link = $('#exportAllSrcLink').prop('href');
+       				console.log("link : " + link);
        				exportAllB.text("Exporter tous les lots");
 					exportAllB.removeClass("btn-primary").addClass("btn-success");
-					exportAllB.prop('href','/ui/push/all-commits.par');
+					exportAllB.prop('href',link);
        			}else{
+       				var link = $('#exportUntilSrcLink' + item).prop('href');
+       				console.log("link : " + link);
        				exportAllB.text("Exporter à partir du lot");
 					exportAllB.removeClass("btn-success").addClass("btn-primary");
-					exportAllB.prop('href','/ui/push/until-' + item + '-commits.par');
+					exportAllB.prop('href',link);
        			}
 			}
         };
