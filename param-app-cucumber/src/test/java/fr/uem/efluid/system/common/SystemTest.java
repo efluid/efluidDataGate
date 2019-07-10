@@ -10,7 +10,6 @@ import fr.uem.efluid.system.stubs.*;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import junit.framework.AssertionFailedError;
-import org.junit.Assert;
 import org.junit.Before;
 import org.pac4j.core.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static fr.uem.efluid.ColumnType.*;
@@ -738,9 +738,32 @@ public abstract class SystemTest {
         @SuppressWarnings("unchecked")
         Collection<T> datas = (Collection<T>) Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(property);
 
-        Assert.assertNotNull(datas);
-        Assert.assertEquals(size, datas.size());
-        Assert.assertTrue(datas.stream().map(propertyAccess).allMatch(properties::contains));
+        assertThat(datas).isNotNull();
+        assertThat(datas).hasSize(datas.size());
+        assertThat(datas).allMatch(i -> properties.contains(propertyAccess.apply(i)));
+    }
+
+    /**
+     * @param propertyName
+     * @param propertyMatch
+     * @param <K>
+     */
+    @SuppressWarnings("unchecked")
+    protected static <K> void assertModelIsSpecifiedProperty(
+            String propertyName,
+            Class<K> type,
+            Predicate<K> propertyMatch) {
+
+        @SuppressWarnings("unchecked")
+        Object data = Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName);
+
+        assertThat(data).isNotNull();
+        assertThat(data).isInstanceOf(type);
+
+
+        K matched = (K) data;
+
+        assertThat(matched).matches(propertyMatch);
     }
 
 

@@ -1,6 +1,7 @@
 package fr.uem.efluid.tools;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
+import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.FormatUtils;
 
 import java.sql.ResultSet;
@@ -21,7 +22,11 @@ import java.util.List;
  * @version 2
  * @since v0.0.8
  */
-public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
+public class EfluidDatabaseIdentifier extends ManagedModelIdentifier {
+
+    public EfluidDatabaseIdentifier(DatasourceUtils.CustomDataSourceParameters parameters) {
+        super(parameters);
+    }
 
     /**
      * @return
@@ -48,7 +53,8 @@ public class EfluidDatabaseIdentifier implements ManagedModelIdentifier {
         return new ManagedModelDescription(
                 lineResultSet.getString("VERSION"),
                 dateModification != null ? FormatUtils.toLdt(dateModification) : LocalDateTime.now(),
-                lineResultSet.getString("DETAILS"));
+                lineResultSet.getString("DETAILS"),
+                getDataSourceParameters().getUsername());
     }
 
     /**

@@ -1,14 +1,14 @@
 package fr.uem.efluid.utils;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
+import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.services.types.ExportFile;
+import fr.uem.efluid.services.types.ExportImportFile;
+import fr.uem.efluid.services.types.ProjectData;
 import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.definition.CommonProfileDefinition;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,312 +16,327 @@ import org.springframework.ui.Model;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.services.types.ExportFile;
-import fr.uem.efluid.services.types.ExportImportFile;
-import fr.uem.efluid.services.types.ProjectData;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * For REST / WEB needs
- * 
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public class WebUtils {
 
-	private static final Formatter DEFAULT_FORMATTER = new Formatter();
+    private static final Logger LOGGER = LoggerFactory.getLogger(WebUtils.class);
 
-	public static final String TH_FORMATTER = "custom";
+    private static final Formatter DEFAULT_FORMATTER = new Formatter();
 
-	public static final String NAV_BAR = "navBar";
+    public static final String TH_FORMATTER = "custom";
 
-	public static final String PROFIL_TOKEN = "_token_";
+    public static final String NAV_BAR = "navBar";
 
-	public static final int MAX_BEFORE_SPACER = 8;
+    public static final String PROFIL_TOKEN = "_token_";
 
-	/**
-	 * <p>
-	 * Read a spring-mvc processed Multipart upload request, and provides it as a standard
-	 * {@link ExportFile}.
-	 * </p>
-	 * 
-	 * @param file
-	 *            the request provided in Spring-mvc Rest controller action on uploads
-	 * @return a standard {@link ExportFile} with access to content.
-	 */
-	public static ExportFile inputExportImportFile(MultipartFile file) {
+    public static final int MAX_BEFORE_SPACER = 8;
 
-		if (file == null) {
-			throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "No available file for parameter files");
-		}
+    /**
+     * <p>
+     * Read a spring-mvc processed Multipart upload request, and provides it as a standard
+     * {@link ExportFile}.
+     * </p>
+     *
+     * @param file the request provided in Spring-mvc Rest controller action on uploads
+     * @return a standard {@link ExportFile} with access to content.
+     */
+    public static ExportFile inputExportImportFile(MultipartFile file) {
 
-		// Standard wrapper for spring-mvc data model
-		try {
-			return new ExportImportFile(file, file.getContentType());
-		} catch (IOException e) {
-			throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "Cannot process data read for imported file " + file.getName(), e);
-		}
-	}
+        if (file == null) {
+            throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "No available file for parameter files");
+        }
 
-	/**
-	 * <p>
-	 * Read a spring-mvc processed Multipart upload request, and provides it as a standard
-	 * {@link ExportFile}.
-	 * </p>
-	 * 
-	 * @param request
-	 *            the request provided in Spring-mvc Rest controller action on uploads
-	 * @return a standard {@link ExportFile} with access to content.
-	 */
-	public static ExportFile inputExportImportFile(MultipartHttpServletRequest request) {
+        // Standard wrapper for spring-mvc data model
+        try {
+            return new ExportImportFile(file, file.getContentType());
+        } catch (IOException e) {
+            throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "Cannot process data read for imported file " + file.getName(), e);
+        }
+    }
 
-		// Assume only one uploaded file param
-		String fname = request.getFileNames().next();
+    /**
+     * <p>
+     * Read a spring-mvc processed Multipart upload request, and provides it as a standard
+     * {@link ExportFile}.
+     * </p>
+     *
+     * @param request the request provided in Spring-mvc Rest controller action on uploads
+     * @return a standard {@link ExportFile} with access to content.
+     */
+    public static ExportFile inputExportImportFile(MultipartHttpServletRequest request) {
 
-		if (fname == null) {
-			throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "No specified upload name");
-		}
+        // Assume only one uploaded file param
+        String fname = request.getFileNames().next();
 
-		// Get the spring-mvc wrapper to data for the param
-		MultipartFile file = request.getFile(fname);
+        if (fname == null) {
+            throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "No specified upload name");
+        }
 
-		if (file == null) {
-			throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "No available file for parameter " + fname);
-		}
+        // Get the spring-mvc wrapper to data for the param
+        MultipartFile file = request.getFile(fname);
 
-		// Standard wrapper for spring-mvc data model
-		try {
-			return new ExportImportFile(file, request.getContentType());
-		} catch (IOException e) {
-			throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "Cannot process data read for imported file " + fname, e);
-		}
-	}
+        if (file == null) {
+            throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "No available file for parameter " + fname);
+        }
 
-	/**
-	 * Produces a spring-mvc compliant response for the binary data
-	 * 
-	 * @param data
-	 *            to output as file
-	 * @return spring mvc response
-	 */
-	public static ResponseEntity<InputStreamResource> outputData(byte[] data) {
+        // Standard wrapper for spring-mvc data model
+        try {
+            return new ExportImportFile(file, request.getContentType());
+        } catch (IOException e) {
+            throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "Cannot process data read for imported file " + fname, e);
+        }
+    }
 
-		// Produces the response body with file content
-		return ResponseEntity
-				.ok()
-				.contentLength(data.length)
-				.contentType(MediaType.APPLICATION_OCTET_STREAM)
-				.body(new InputStreamResource(new ByteArrayInputStream(data)));
-	}
+    /**
+     * Produces a spring-mvc compliant response for the binary data
+     *
+     * @param data to output as file
+     * @return spring mvc response
+     */
+    public static ResponseEntity<InputStreamResource> outputData(byte[] data) {
 
-	/**
-	 * Produces a spring-mvc compliant response for the export file
-	 * 
-	 * @param file
-	 *            a standard {@link ExportFile} with access to content.
-	 * @return spring mvc response
-	 */
-	public static ResponseEntity<InputStreamResource> outputExportImportFile(ExportFile file) {
+        // Produces the response body with file content
+        return ResponseEntity
+                .ok()
+                .contentLength(data.length)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new InputStreamResource(new ByteArrayInputStream(data)));
+    }
 
-		// Produces the response body with file content
-		return outputData(file.getData());
-	}
+    /**
+     * Produces a spring-mvc compliant response for the export file
+     *
+     * @param file a standard {@link ExportFile} with access to content.
+     * @return spring mvc response
+     */
+    public static ResponseEntity<InputStreamResource> outputExportImportFile(String name, ExportFile file) {
 
-	/**
-	 * <p>
-	 * Add tools to use in templates
-	 * </p>
-	 * 
-	 * @param model
-	 */
-	public static void addTools(Model model) {
-		model.addAttribute(TH_FORMATTER, DEFAULT_FORMATTER);
-	}
+        LOGGER.debug("[EXPORT] Process export of data through name {}", name);
 
-	/**
-	 * <p>
-	 * Add items for producing a clean pagination bar : create items to display as links
-	 * of each available page
-	 * </p>
-	 * 
-	 * @param model
-	 */
-	public static void addPageNavBarItems(Model model, String pageUri, String search, int currentPage, int pageCount) {
+        // Produces the response body with file content
+        return outputData(file.getData());
+    }
 
-		List<NavBarItem> items = new ArrayList<>();
+    /**
+     * <p>
+     * Add tools to use in templates
+     * </p>
+     *
+     * @param model
+     */
+    public static void addTools(Model model) {
+        model.addAttribute(TH_FORMATTER, DEFAULT_FORMATTER);
+    }
 
-		String pattern = pageUri + "/%s" + (search != null ? "/" + search : "");
+    /**
+     * <p>
+     * Add items for producing a clean pagination bar : create items to display as links
+     * of each available page
+     * </p>
+     *
+     * @param model
+     */
+    public static void addPageNavBarItems(Model model, String pageUri, String search, int currentPage, int pageCount) {
 
-		// No spacer (few pages)
-		if (pageCount < MAX_BEFORE_SPACER) {
-			NavBarItem.addItems(items, pattern, 0, pageCount, currentPage);
-		}
+        List<NavBarItem> items = new ArrayList<>();
 
-		// With spacer
-		else {
+        String pattern = pageUri + "/%s" + (search != null ? "/" + search : "");
 
-			// Current at the beginning : 1 spacer
-			if (currentPage < 4) {
-				NavBarItem.addItems(items, pattern, 0, 4, currentPage);
-				items.add(NavBarItem.spacer());
-				NavBarItem.addItems(items, pattern, pageCount - 2, pageCount, currentPage);
-			}
+        // No spacer (few pages)
+        if (pageCount < MAX_BEFORE_SPACER) {
+            NavBarItem.addItems(items, pattern, 0, pageCount, currentPage);
+        }
 
-			// Current at the end : 1 spacer
-			else if (currentPage > pageCount - 4) {
-				NavBarItem.addItems(items, pattern, 0, 2, currentPage);
-				items.add(NavBarItem.spacer());
-				NavBarItem.addItems(items, pattern, pageCount - 4, pageCount, currentPage);
-			}
+        // With spacer
+        else {
 
-			// Current elsewhere : 2 spacers around
-			else {
-				NavBarItem.addItems(items, pattern, 0, 2, currentPage);
-				items.add(NavBarItem.spacer());
-				NavBarItem.addItems(items, pattern, currentPage - 1, currentPage + 2, currentPage);
-				items.add(NavBarItem.spacer());
-				NavBarItem.addItems(items, pattern, pageCount - 2, pageCount, currentPage);
-			}
-		}
+            // Current at the beginning : 1 spacer
+            if (currentPage < 4) {
+                NavBarItem.addItems(items, pattern, 0, 4, currentPage);
+                items.add(NavBarItem.spacer());
+                NavBarItem.addItems(items, pattern, pageCount - 2, pageCount, currentPage);
+            }
 
-		model.addAttribute(NAV_BAR, items);
-	}
+            // Current at the end : 1 spacer
+            else if (currentPage > pageCount - 4) {
+                NavBarItem.addItems(items, pattern, 0, 2, currentPage);
+                items.add(NavBarItem.spacer());
+                NavBarItem.addItems(items, pattern, pageCount - 4, pageCount, currentPage);
+            }
 
-	/**
-	 * <p>
-	 * Prepare a Pac4j CommonProfile for specified authenticated user during web
-	 * authentication
-	 * </p>
-	 * 
-	 * @param user
-	 * @return
-	 */
-	public static CommonProfile webSecurityProfileFromUser(User user) {
+            // Current elsewhere : 2 spacers around
+            else {
+                NavBarItem.addItems(items, pattern, 0, 2, currentPage);
+                items.add(NavBarItem.spacer());
+                NavBarItem.addItems(items, pattern, currentPage - 1, currentPage + 2, currentPage);
+                items.add(NavBarItem.spacer());
+                NavBarItem.addItems(items, pattern, pageCount - 2, pageCount, currentPage);
+            }
+        }
 
-		final CommonProfile profile = new CommonProfile();
-		profile.setId(user.getLogin());
-		profile.addAttribute(Pac4jConstants.USERNAME, user.getLogin());
-		profile.addAttribute(CommonProfileDefinition.EMAIL, user.getEmail());
-		profile.addAttribute(PROFIL_TOKEN, user.getToken());
+        model.addAttribute(NAV_BAR, items);
+    }
 
-		return profile;
-	}
+    /**
+     * <p>
+     * Prepare a Pac4j CommonProfile for specified authenticated user during web
+     * authentication
+     * </p>
+     *
+     * @param user
+     * @return
+     */
+    public static CommonProfile webSecurityProfileFromUser(User user) {
 
-	/**
-	 * <p>
-	 * For paginated search nav bar
-	 * </p>
-	 * 
-	 * @author elecomte
-	 * @since v0.0.8
-	 * @version 1
-	 */
-	public static class NavBarItem {
+        final CommonProfile profile = new CommonProfile();
+        profile.setId(user.getLogin());
+        profile.addAttribute(Pac4jConstants.USERNAME, user.getLogin());
+        profile.addAttribute(CommonProfileDefinition.EMAIL, user.getEmail());
+        profile.addAttribute(PROFIL_TOKEN, user.getToken());
 
-		public final String title;
-		public final String uri;
-		public final boolean spacer;
-		public final boolean selected;
+        return profile;
+    }
 
-		/**
-		 * @param title
-		 * @param uri
-		 * @param spacer
-		 * @param selected
-		 */
-		private NavBarItem(String title, String uri, boolean spacer, boolean selected) {
-			super();
-			this.title = title;
-			this.uri = uri;
-			this.spacer = spacer;
-			this.selected = selected;
-		}
+    /**
+     * <p>
+     * For paginated search nav bar
+     * </p>
+     *
+     * @author elecomte
+     * @version 1
+     * @since v0.0.8
+     */
+    public static class NavBarItem {
 
-		/**
-		 * @return the title
-		 */
-		public String getTitle() {
-			return this.title;
-		}
+        public final String title;
+        public final String uri;
+        public final boolean spacer;
+        public final boolean selected;
 
-		/**
-		 * @return the uri
-		 */
-		public String getUri() {
-			return this.uri;
-		}
+        /**
+         * @param title
+         * @param uri
+         * @param spacer
+         * @param selected
+         */
+        private NavBarItem(String title, String uri, boolean spacer, boolean selected) {
+            super();
+            this.title = title;
+            this.uri = uri;
+            this.spacer = spacer;
+            this.selected = selected;
+        }
 
-		/**
-		 * @return the spacer
-		 */
-		public boolean isSpacer() {
-			return this.spacer;
-		}
+        /**
+         * @return the title
+         */
+        public String getTitle() {
+            return this.title;
+        }
 
-		/**
-		 * @return the selected
-		 */
-		public boolean isSelected() {
-			return this.selected;
-		}
+        /**
+         * @return the uri
+         */
+        public String getUri() {
+            return this.uri;
+        }
 
-		/**
-		 * @return
-		 */
-		static NavBarItem spacer() {
-			return new NavBarItem(null, null, true, false);
-		}
+        /**
+         * @return the spacer
+         */
+        public boolean isSpacer() {
+            return this.spacer;
+        }
 
-		/**
-		 * @param title
-		 * @param uri
-		 * @param selected
-		 * @return
-		 */
-		static NavBarItem item(String title, String uri, boolean selected) {
-			return new NavBarItem(title, uri, false, selected);
-		}
+        /**
+         * @return the selected
+         */
+        public boolean isSelected() {
+            return this.selected;
+        }
 
-		/**
-		 * @param items
-		 * @param pattern
-		 * @param start
-		 * @param end
-		 * @param currentPage
-		 */
-		static void addItems(List<NavBarItem> items, String pattern, int start, int end, int currentPage) {
+        /**
+         * @return
+         */
+        static NavBarItem spacer() {
+            return new NavBarItem(null, null, true, false);
+        }
 
-			for (int i = start; i < end; i++) {
-				items.add(NavBarItem.item(String.valueOf(i + 1), String.format(pattern, i), currentPage == i));
-			}
+        /**
+         * @param title
+         * @param uri
+         * @param selected
+         * @return
+         */
+        static NavBarItem item(String title, String uri, boolean selected) {
+            return new NavBarItem(title, uri, false, selected);
+        }
 
-		}
-	}
+        /**
+         * @param items
+         * @param pattern
+         * @param start
+         * @param end
+         * @param currentPage
+         */
+        static void addItems(List<NavBarItem> items, String pattern, int start, int end, int currentPage) {
 
-	/**
-	 * Usefull for easy access in Thymeleaf template
-	 * 
-	 * @author elecomte
-	 * @since v0.0.1
-	 * @version 1
-	 */
-	public static class Formatter {
+            for (int i = start; i < end; i++) {
+                items.add(NavBarItem.item(String.valueOf(i + 1), String.format(pattern, i), currentPage == i));
+            }
 
-		public String format(LocalDateTime date) {
-			return FormatUtils.format(date);
-		}
+        }
+    }
 
-		public String processGitmoji(String title) {
-			if(title != null && title.trim().startsWith(":") && title.indexOf(":", 2) > 0){
-				return title.replaceAll(":(\\w*):", "<span class=\"gitmoji\" code=\":$1:\">:$1:</span>");
-			}
-			return title;
-		}
+    /**
+     * Usefull for easy access in Thymeleaf template
+     *
+     * @author elecomte
+     * @version 1
+     * @since v0.0.1
+     */
+    public static class Formatter {
 
-		public boolean containsProjectData(ProjectData data, List<ProjectData> mayContain) {
-			return mayContain.stream().map(ProjectData::getUuid).anyMatch(p -> data.getUuid().equals(p));
-		}
-	}
+        public String format(LocalDateTime date) {
+            return FormatUtils.format(date);
+        }
+
+        /**
+         * For file exports : .par filename build
+         * @param parts
+         * @return
+         */
+        public String exportName(String... parts) {
+            return Stream.of(parts)
+                    .map(s -> s.replaceAll(" ", "-"))
+                    .collect(Collectors.joining("-"))
+                    + "-" + FormatUtils.formatForUri(LocalDateTime.now());
+        }
+
+        public String processGitmoji(String title) {
+            if (title != null && title.trim().startsWith(":") && title.indexOf(":", 2) > 0) {
+                return title.replaceAll(":(\\w*):", "<span class=\"gitmoji\" code=\":$1:\">:$1:</span>");
+            }
+            return title;
+        }
+
+        public boolean containsProjectData(ProjectData data, List<ProjectData> mayContain) {
+            return mayContain.stream().map(ProjectData::getUuid).anyMatch(p -> data.getUuid().equals(p));
+        }
+    }
 
 }

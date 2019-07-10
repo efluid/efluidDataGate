@@ -4,23 +4,23 @@
 </head>
 <body>
     <span layout:fragment="content">
-		<h5>Export complet pour tous les projets<a href="#" th:href="@{/ui/share/all-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines pour tous les projets</a></h5>
+		<h5>Export complet pour tous les projets<a href="#" th:href="@{/ui/share/all/{name}.par(name=${custom.exportName('dictionary',modelDesc.schema, 'all')})}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines pour tous les projets</a></h5>
 		<br/><br/>
-		<h5>Export pour le projet <b><span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></b> par domaines fonctionnels</h5>
+		<h5>Export pour le projet <b><span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></b> par domaines fonctionnels pour la version <span class="version-name" th:text="${version.name}"></span></h5>
 		<p>
 			<table class="table table-sm">
 			    <thead>
 			        <tr>
 			            <th scope="col">Domaines fonctionnels</th>
 			            <th scope="col" width="10%">
-			                <a href="#" th:href="@{/ui/share/project-dictionary.par}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines</a>
+			                <a href="#" th:href="@{/ui/share/project/{name}.par(name=${custom.exportName('dictionary',modelDesc.schema, 'project', project.name)})}" class="btn btn-primary btn-sm float-right">Exporter tous les domaines</a>
 			            </th>
 			        </tr>
 			    </thead>
 			    <tbody>
 			        <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
 			            <td th:text="${domain.name}">Gestion du matériel</td>
-			            <td><a href="#" th:href="@{/ui/share/{id}-dictionary.par(id=${domain.uuid})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
+			            <td><a href="#" th:href="@{/ui/share/{id}/{name}.par(id=${domain.uuid},name=${custom.exportName('dictionary',modelDesc.schema, 'domain', domain.name)})}" class="btn btn-primary btn-sm float-right">Exporter</a></td>
 			        </tr>
 			    </tbody>
 			</table>
