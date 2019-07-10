@@ -266,6 +266,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         data.setPayload(combined.getPayload());
         data.setKeyValue(combined.getKeyValue());
         data.setHrPayload(hrPayload);
+        data.setTimestamp(combined.getTimestamp());
 
         return data;
     }

@@ -431,7 +431,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | EFLUIDTESTPKCOMPOSITE | $testb_id1_i2 / $testb_id2_i2 | ADD    | true         | COL1:'testb insert 2'                     |
 
   @TestDoublePk
-  Scenario: Efluid merge cas double Pk - tous les commits puis save
+  Scenario: Efluid merge cas double Pk - tous les commits puis save et autre update
     Given the test is an Efluid standard scenario
     And the existing data in managed table "EFLUIDTESTPKCOMPOSITE" :
       | id            | id2           | col1           |
@@ -456,8 +456,8 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     And the user has selected all content for merge commit
     And the user has specified a commit comment ":construction: merge commit test with changes"
-    When the user save the merge commit
-    Then the saved merge commit content has these identified changes :
+    And the user save the merge commit
+    And the saved merge commit content has these identified changes :
       | Table                 | Key                           | Action | Payload                                   |
       | EFLUIDTESTPKCOMPOSITE | $testb_id1_d / $testb_id1_d   | REMOVE |                                           |
       | EFLUIDTESTPKCOMPOSITE | $testb_id1_u / $testb_id2_u   | UPDATE | COL1:'testb update 1'=>'testb update 1 2' |
@@ -467,3 +467,14 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testb_id1_i1 | $testb_id2_i1 | testb insert 1   |
       | $testb_id1_i2 | $testb_id2_i2 | testb insert 2   |
       | $testb_id1_u  | $testb_id2_u  | testb update 1 2 |
+    And these changes are applied to table "TTEST1" :
+      | change | id       | col1  |
+      | add    | $testa_1 | test1 |
+      | add    | $testa_2 | test2 |
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table  | Key      | Action | Payload      |
+      | TTEST1 | $testa_1 | ADD    | COL1:'test1' |
+      | TTEST1 | $testa_2 | ADD    | COL1:'test2' |

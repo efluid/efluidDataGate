@@ -34,8 +34,6 @@ public interface ManagedRegenerateRepository {
 	 * until specified ldt, then with specified index (adapted for merge process)
 	 * </p>
 	 * 
-	 * @param parameterEntry
-	 * @param endOfParameterIndexProcessTimestamp
 	 * @param specifiedIndex
 	 * @return
 	 */

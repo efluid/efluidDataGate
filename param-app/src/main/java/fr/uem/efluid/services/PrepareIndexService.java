@@ -194,7 +194,7 @@ public class PrepareIndexService {
         // can be related themselves to a content diff previously generated. Used for
         // merging process
 
-        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampGreaterThanEqualOrderByTimestamp(entry,
+        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampGreaterThanEqual(entry,
                 timeStampForSearch);
 
         preparation.incrementProcessStep();
@@ -279,7 +279,7 @@ public class PrepareIndexService {
             PilotedCommitPreparation<?> preparation) {
 
         // Index "previous"
-        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestamp(entry,
+        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqual(entry,
                 timeStampForSearch);
 
         preparation.incrementProcessStep();

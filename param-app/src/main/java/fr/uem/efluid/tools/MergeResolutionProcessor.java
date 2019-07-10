@@ -86,6 +86,9 @@ public class MergeResolutionProcessor {
 
         PreparedMergeIndexEntry entry = new PreparedMergeIndexEntry();
 
+        // Always requires timestamp
+        entry.setTimestamp(System.currentTimeMillis());
+
         // All are selected as default in merge
         entry.setSelected(true);
 
@@ -139,7 +142,6 @@ public class MergeResolutionProcessor {
             resultEntry.setKeyValue(source.getKeyValue());
             resultEntry.setDictionaryEntryUuid(source.getDictionaryEntryUuid());
             resultEntry.setCommitUuid(source.getCommitUuid());
-            resultEntry.setTimestamp(source.getTimestamp());
         }
     }
 
