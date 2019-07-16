@@ -1,0 +1,31 @@
+import com.efluid.mail.legacy.MailUtils
+
+node('socle-jenkins-maven-docker-14-4G') {
+
+  MailUtils mailUtils = new MailUtils(this)
+
+  git branch: branch, credentialsId: credentials.efluidGithubAccount, url: 'https://github.com/efluid/datagate'
+  String subject = "Release datagate ${releaseVersion}"
+
+  try{
+    env.JAVA_HOME = "${variables.jdkPathPrefix}11.0.1"
+    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.httpProxyAuthentication, passwordVariable: 'proxyPassword', usernameVariable: 'proxyUsername']]) {
+      env.HTTP_PROXY="http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
+      env.HTTPS_PROXY="http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
+    }
+    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.gpgMavenCentralPassphrase, passwordVariable: 'gpgPassword', usernameVariable: 'gpgUsername']]) {
+      sh "mvn -B release:prepare release:perform -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion}"
+    }
+    withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
+      sh('git push --all --tags https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/datagate.git')
+    }
+
+    String mailDetail = "datagate tool from open source project https://github.com/efluid/datagate was successfull released in version ${releaseVersion}"
+    mailUtils.mailInfo(subject, mailDetail, destinatairesMail, false)
+  } catch (Exception e) {
+    String mailDetail = "datagate tool from open source project https://github.com/efluid/datagate was in error during release ${releaseVersion}"
+    mailUtils.mailError(subject, mailDetail, 'datagate', releaseVersion, null, destinatairesMail, null)
+    throw e
+  }
+}
+return this;

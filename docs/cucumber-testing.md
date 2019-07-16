@@ -8,7 +8,7 @@ L'application a été développée en mode proto technique, code first. Les fonc
 
 ### Depuis eclipse (Lancement manuel)
 
-Les tests cucumber sont des tests Junit. Il y a une seule classe point d'entrée pour tous les tests : ``/param-app-cucumber/src/test/java/fr/uem/efluid/system/tests/AllCucumberTest.java``. Le runner est bien géré par le plugin Junit de eclipse et permet de suivre l'avancement.
+Les tests cucumber sont des tests Junit. Il y a une seule classe point d'entrée pour tous les tests : ``/datagate-app-cucumber/src/test/java/fr/uem/efluid/system/tests/AllCucumberTest.java``. Le runner est bien géré par le plugin Junit de eclipse et permet de suivre l'avancement.
 
 ### Au build
 
@@ -18,7 +18,7 @@ Les tests sont exécutés automatiquement lors du build maven
 
 ### Fichiers Gherkins
 
-Les behaviors sont spécifiées en syntaxe Gherkin dans le dossier ``/param-app-cucumber/src/test/resources/gherkins``. Il y a un fichier .feature par ensemble de fonctionnalité
+Les behaviors sont spécifiées en syntaxe Gherkin dans le dossier ``/datagate-app-cucumber/src/test/resources/gherkins``. Il y a un fichier .feature par ensemble de fonctionnalité
 
 Exemple de syntaxe : 
 

@@ -1,0 +1,114 @@
+---
+## PARAMETER MANAGER CONFIG
+datagate-efluid:
+
+    managed-datasource:
+        driver-class-name: oracle.jdbc.OracleDriver
+        url: jdbc:oracle:thin:@CHANGE_ME:49161:xe
+        username: CHANGE_ME
+        password: CHANGE_ME
+        connection-test-query: SELECT 1 from DUAL
+        minimum-idle: 5
+        max-pool-size: 50
+        timeout: 60000
+        meta:
+            filter-schema: CHANGE_ME
+            search-fk-type: oracle-by-name
+            preload: false
+        query:
+            table-names-protected: true
+            column-names-protected: true
+            database-date-format: dd-MM-yyyy HH:mm:ss
+        value:
+            keep-empty: false
+
+    managed-updates:
+        check-update-missing-ids: true
+        check-delete-missing-ids: true
+        output-failed-query-set: true
+        output-failed-query-set-file: update-errors.out
+
+    display:
+        details-index-max: 10000
+        combine-similar-diff-after: 10
+        history-page-size: 20
+        diff-page-size: 10
+        test-row-max-size: 10
+
+    web-options:
+        enable-custom-h2-console: false
+
+    dictionary:
+        select-pk-as-default-keys: true
+
+    security:
+        salt: 12345678901234567890123456789012
+
+    details:
+        version: @project.version@
+
+    extractor:
+        show-sql: true
+        use-label-for-col-name: false
+
+    attachments:
+        enable-sql-execute: true
+        enable-display: true
+
+    imports:
+        check-model-version: true
+
+    async-preparation:
+        thread-pool-size: 8
+        timeout-seconds: 1200
+
+    model-identifier:
+        enabled: true
+        class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
+        show-sql: true
+
+    merge:
+        use-new-process: true
+        rule-file: classpath:merge-resolution-rules.json
+
+## TECH FEATURES CUSTOM
+spring:
+    profiles:
+        active: prod
+
+    thymeleaf:
+        cache: false
+        check-template: true
+        check-template-location: true
+        content-type: text/html
+        encoding: UTF-8
+        mode: HTML
+        enabled: true
+
+    datasource:
+        url: jdbc:postgresql://CHANGE_ME/MANAGED
+        driver-class-name: org.postgresql.Driver
+        username: CHANGE_ME
+        password: CHANGE_ME
+
+    servlet:
+        multipart:
+            max-request-size: 51MB
+            max-file-size: 50MB
+
+    jpa:
+        open-in-view: false
+        show-sql: true
+        hibernate:
+            ddl-auto: validate
+
+    flyway:
+        enabled: false
+        url: ${spring.datasource.url}
+        user: ${spring.datasource.username}
+        password: ${spring.datasource.password}
+
+## WEB SERVER CONFIG
+server:
+    contextPath:
+    port: 8081

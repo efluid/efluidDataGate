@@ -10,7 +10,7 @@ Les données utilisées sont gérées avec des **entités jpa** représentant le
 
 ### Projet utilisé
 
-Toutes les opérations sont réalisées dans le [projet param-app-cucumber](../param-app-cucumber/README.md)
+Toutes les opérations sont réalisées dans le [projet datagate-app-cucumber](../datagate-app-cucumber/README.md)
 
 ### Ajouter une table - code java
 
@@ -69,7 +69,7 @@ initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1, TESTC);
 
 ### Ecriture du scénario
 
-Ajouter le nouveau scénario dans `param-app-cucumber\src\test\resources\gherkins\efluid-cases.feature`, en reprenant les exemples existants.
+Ajouter le nouveau scénario dans `datagate-app-cucumber\src\test\resources\gherkins\efluid-cases.feature`, en reprenant les exemples existants.
 
 Les scénarios ont tous ce modèle pour valider un résultat de diff : 
 

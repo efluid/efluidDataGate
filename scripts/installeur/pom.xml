@@ -6,9 +6,9 @@
 	<packaging>pom</packaging>
 
 	<parent>
-		<groupId>fr.uem.efluid</groupId>
-		<artifactId>param-parent</artifactId>
-		<version>0.2.1-SNAPSHOT</version>
+		<groupId>com.efluid.oss</groupId>
+		<artifactId>datagate-parent</artifactId>
+		<version>0.2.2-SNAPSHOT</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 

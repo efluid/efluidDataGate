@@ -8,8 +8,8 @@
 		<maven>3.0.4</maven>
 	</prerequisites>
 
-	<groupId>fr.uem.efluid</groupId>
-	<artifactId>param-parent</artifactId>
+	<groupId>com.efluid.oss</groupId>
+	<artifactId>datagate-parent</artifactId>
 	<version>0.2.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
@@ -20,12 +20,12 @@
 	</parent>
 
 	<modules>
-		<module>param-common</module>
-		<module>param-api</module>
-		<module>param-app</module>
-		<module>param-app-cucumber</module>
-		<module>param-generator</module>
-		<module>param-generator-example</module>
+		<module>datagate-common</module>
+		<module>datagate-api</module>
+		<module>datagate-app</module>
+		<module>datagate-app-cucumber</module>
+		<module>datagate-generator</module>
+		<module>datagate-generator-example</module>
 		<module>scripts/installeur</module>
 	</modules>
 
@@ -109,7 +109,7 @@
 				<!-- Inter-dependency - param dic generator -->
 				<plugin>
 					<groupId>${project.groupId}</groupId>
-					<artifactId>param-generator</artifactId>
+					<artifactId>datagate-generator</artifactId>
 					<version>${project.version}</version>
 				</plugin>
 
@@ -322,25 +322,25 @@
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>param-common</artifactId>
+				<artifactId>datagate-common</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>param-api</artifactId>
+				<artifactId>datagate-api</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>param-generator</artifactId>
+				<artifactId>datagate-generator</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>param-app</artifactId>
+				<artifactId>datagate-app</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 

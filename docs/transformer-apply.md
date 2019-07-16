@@ -11,7 +11,7 @@ Quand il y a des données sources à prendre en compte, DataGate s'appuie sur le
 **Le paramètrage des transformations est donné ici** : 
 
 ```
-param-efluid:
+datagate-efluid:
 
     # ...
 

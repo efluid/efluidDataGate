@@ -24,56 +24,56 @@ Pour utiliser le build sur un poste de dev windows, par exemple pour la version 
     ## être dans le dossier racine du projet
     cd GestionParamEfluid
     ## lancer le script de build depuis le dossier racine
-    ./param-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
+    ./datagate-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
 
 Pour builder une version avec H2 sur un serveur efluid :
 
     ## être dans le dossier racine du projet
     cd GestionParamEfluid
     ## lancer le script de build depuis le dossier racine
-    ./param-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
+    ./datagate-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
 
-L'instance est déployée dans le répo local docker sous le nom **paramethor**:*latest*
+L'instance est déployée dans le répo local docker sous le nom **datagate**:*latest*
 
 **Pour démarrer la version standalone server avec les scripts fournis**
 
-S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de datagate, comme ``/opt/server/paramethor``
+S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de datagate, comme ``/opt/server/datagate``
 
 Après build, faire : 
     
-    cp ./param-app/src/docker/start-paramethor.sh /opt/server/paramethor/
+    cp ./datagate-app/src/docker/start-datagate.sh /opt/server/datagate/
 
-Copier éventuellement la configuration désirée dans ``/opt/server/paramethor/dest/cfg/application.yml`` et ``/opt/server/paramethor/src/cfg/application.yml`` et lancer avec :
+Copier éventuellement la configuration désirée dans ``/opt/server/datagate/dest/cfg/application.yml`` et ``/opt/server/datagate/src/cfg/application.yml`` et lancer avec :
 
     ## Exemple de création / lancement d'une instance "src" sur le port 8080
-    sudo /opt/server/paramethor/start-paramethor.sh src 8080
+    sudo /opt/server/datagate/start-datagate.sh src 8080
 
     ## Exemple de création / lancement d'une instance "dest" sur le port 808&
-    sudo /opt/server/paramethor/start-paramethor.sh dest 8081
+    sudo /opt/server/datagate/start-datagate.sh dest 8081
 
 
 **Pour démarrer la version standalone - A LA MAIN**
 
 Sous linux / windows, par exemple pour la version avec h2 : 
 
-    docker run -it --rm -p 8080:8080 paramethor:latest-h2
+    docker run -it --rm -p 8080:8080 datagate:latest-h2
 
 Pour utiliser un fichier de configuration spécifique, le monter sous *"/cfg/application.yml"*. Par exemple : 
 
 Sous linux :
 
-    docker run -it --rm -p 8080:8080 -v $pwd/param-app/src/main/resources/config/application.yml:/cfg/application.yml paramethor:latest-h2
+    docker run -it --rm -p 8080:8080 -v $pwd/datagate-app/src/main/resources/config/application.yml:/cfg/application.yml datagate:latest-h2
 
 Ou sous windows : 
 
-    docker run -it --rm -p 8080:8080 -v ${pwd}\param-app\src\main\resources\config\application.yml:/cfg/application.yml paramethor:latest-h2
+    docker run -it --rm -p 8080:8080 -v ${pwd}\datagate-app\src\main\resources\config\application.yml:/cfg/application.yml datagate:latest-h2
 
 Les BDD sont initialisées, puis l'application démarre. Elle est ensuite accessible sur [http://localhost:8080](http://localhost:8080) Elle démarre en mode Wizzard avec en BDD gérée par défault l'instance local PGSQL
 
 Il existe 2 variantes à ce stade pour la version standalone :
 
-* paramethor:latest-h2 : avec BDD H2 embarquée
-* paramethor:latest-pgsql : avec BDD Postgres complète embarquée dans le même container
+* datagate:latest-h2 : avec BDD H2 embarquée
+* datagate:latest-pgsql : avec BDD Postgres complète embarquée dans le même container
 
 ### Version struff
 
@@ -136,7 +136,7 @@ Pour intiliser l'instance demo : Elle est utilisée pour représenter une applic
 Ce sont les mêmes modèles, les mêmes données pour les 2 scripts
 
 ### Genération de dictionnaire à partir de l'API
-Une API permettant de spécifier un dictionnaire complet (table, domaines et liens) est fournie dans le module **param-api**
+Une API permettant de spécifier un dictionnaire complet (table, domaines et liens) est fournie dans le module **datagate-api**
 
 Voici un exemple de mise en oeuvre : 
     
@@ -155,11 +155,11 @@ Voici un exemple de mise en oeuvre :
        // ...
     }
 
-L'API est utilisée par un générateur dédié spécifié dans le module **param-generator**. Celui ci est avant tout un plugin maven, mis en oeuvre avec la configuration suivante : 
+L'API est utilisée par un générateur dédié spécifié dans le module **datagate-generator**. Celui ci est avant tout un plugin maven, mis en oeuvre avec la configuration suivante : 
 
     <plugin>
        <groupId>${project.groupId}</groupId>
-       <artifactId>param-generator</artifactId>
+       <artifactId>datagate-generator</artifactId>
        <executions>
           <execution>
              <id>generate</id>
@@ -189,7 +189,7 @@ Les propriétés de configuration sont :
 * **uploadToServer** : Si true, va uploader le .par dans une instance de l'application. Par défaut false
 * **uploadEntryPointUri** : Url du point d'entrée du service REST "dictionnaire" de l'application où le .par sera uploadé. Exemple : "http://127.0.0.1:8080/rest/v1/dictionary"
 
-Un projet exemple est fourni : **param-generator-example**, avec un modèle complet. Un script SQL (oracle) d'initialisation des tables correspondantes est fourni dans src/database
+Un projet exemple est fourni : **datagate-generator-example**, avec un modèle complet. Un script SQL (oracle) d'initialisation des tables correspondantes est fourni dans src/database
 
 ### Services REST
 Une API de services **REST** est intégrée. 
@@ -232,7 +232,7 @@ Le fichier est au format YAML.
 
     ---
     ## PARAMETER MANAGER CONFIG
-    param-efluid:
+    datagate-efluid:
     
        ### BDD "MANAGED" avec JDBC
        managed-datasource:

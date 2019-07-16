@@ -31,7 +31,7 @@ Elles comportent :
 * Un composant de transformation à appliquer.
 * Un paramètrage pour le composant
 
-La liste des composants de transformation est issue de la clé de paramètrage `param-efluid.transformers.sourced-transformers`
+La liste des composants de transformation est issue de la clé de paramètrage `datagate-efluid.transformers.sourced-transformers`
 
 Le détail sur le fonctionnement même des transformers est donné dans le chapitre [Transformation de données](transformer-apply.md)
 

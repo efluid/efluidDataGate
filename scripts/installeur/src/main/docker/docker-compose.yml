@@ -6,6 +6,6 @@ services:
     ports:
       - ${PORT}:8080
     volumes:
-      - /opt/server/paramethor/${INSTANCE}/cfg/:/cfg/:ro
-      - /opt/server/paramethor/${INSTANCE}/logs:/logs
-      - /opt/server/paramethor/${INSTANCE}/tmp:/tmp
+      - /opt/server/datagate/${INSTANCE}/cfg/:/cfg/:ro
+      - /opt/server/datagate/${INSTANCE}/logs:/logs
+      - /opt/server/datagate/${INSTANCE}/tmp:/tmp
