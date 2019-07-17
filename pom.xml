@@ -19,6 +19,37 @@
 		<version>2.1.0.RELEASE</version>
 	</parent>
 
+	<name>datagate</name>
+	<description>datagate is a tool to manage data of one database to another
+	</description>
+	<url>https://github.com/efluid/datagate</url>
+	<developers>
+		<developer>
+			<id>elecompte-pro</id>
+			<name>Emmanuel Lecompte</name>
+		</developer>
+		<developer>
+			<id>MCO</id>
+			<name>Marie Coste</name>
+		</developer>
+	</developers>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<organization>
+		<name>efluidSAS</name>
+		<url>https://www.efluid.com/</url>
+	</organization>
+	<scm>
+		<connection>scm:git:git://github.com/efluid/datagate</connection>
+		<developerConnection>scm:git:git@github.com/efluid/datagate</developerConnection>
+		<url>https://github.com/efluid/datagate</url>
+		<tag>HEAD</tag>
+	</scm>
+
 	<modules>
 		<module>datagate-common</module>
 		<module>datagate-api</module>
@@ -28,6 +59,7 @@
 		<module>datagate-generator-example</module>
 		<module>scripts/installeur</module>
 	</modules>
+
 
 	<properties>
 
