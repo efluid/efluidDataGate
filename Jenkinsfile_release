@@ -17,7 +17,7 @@ node('socle-jenkins-maven-docker-14-4G') {
       sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion}"
     }
     withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-      sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com:efluid/datagate.git')
+      sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/datagate.git')
     }
 
     String mailDetail = "datagate tool from open source project https://github.com/efluid/datagate was successfull released in version ${releaseVersion}"
