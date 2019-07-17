@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>com.efluid.oss</groupId>
 		<artifactId>datagate-parent</artifactId>
-		<version>0.2.2-SNAPSHOT</version>
+		<version>1.0.0-beta-1</version>
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
