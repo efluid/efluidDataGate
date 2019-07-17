@@ -22,14 +22,14 @@ Aucun autre pré-requis que la présence de docker sur le poste de build n'est n
 Pour utiliser le build sur un poste de dev windows, par exemple pour la version avec postgres embarqué : 
 
     ## être dans le dossier racine du projet
-    cd GestionParamEfluid
+    cd datagate
     ## lancer le script de build depuis le dossier racine
     ./datagate-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
 
 Pour builder une version avec H2 sur un serveur efluid :
 
     ## être dans le dossier racine du projet
-    cd GestionParamEfluid
+    cd datagate
     ## lancer le script de build depuis le dossier racine
     ./datagate-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
 

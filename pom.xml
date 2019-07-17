@@ -348,16 +348,14 @@
 		</dependencies>
 	</dependencyManagement>
 	<distributionManagement>
-		<repository>
-			<id>releases</id>
-			<name>hermesMaven-releases</name>
-			<url>${urlArtifactoryRelease}</url>
-		</repository>
 		<snapshotRepository>
-			<uniqueVersion>false</uniqueVersion>
-			<id>snapshots</id>
-			<name>hermesMaven-snapshots</name>
-			<url>${urlArtifactorySnapshot}</url>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
 		</snapshotRepository>
+
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
 	</distributionManagement>
 </project>
