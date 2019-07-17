@@ -116,7 +116,7 @@
 						<localCheckout>true</localCheckout>
 						<pushChanges>false</pushChanges>
 						<mavenExecutorId>forked-path</mavenExecutorId>
-						<arguments>-Dgpg.passphrase=${gpgPassphrase}</arguments>
+						<arguments>-Dgpg.passphrase=${gpgPassphrase} -Dmaven.test.skip=${skipTest}</arguments>
 					</configuration>
 					<dependencies>
 						<dependency>
