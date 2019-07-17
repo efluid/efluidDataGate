@@ -44,8 +44,8 @@
 		<url>https://www.efluid.com/</url>
 	</organization>
 	<scm>
-		<connection>scm:git:git://github.com:efluid/datagate</connection>
-		<developerConnection>scm:git:git@github.com:efluid/datagate</developerConnection>
+		<connection>scm:git:git://github.com/efluid/datagate</connection>
+		<developerConnection>scm:git:git@github.com/efluid/datagate</developerConnection>
 		<url>https://github.com/efluid/datagate</url>
 		<tag>HEAD</tag>
 	</scm>
