@@ -462,8 +462,10 @@
 	</dependencyManagement>
 	<distributionManagement>
 		<snapshotRepository>
-			<id>ossrh</id>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<uniqueVersion>false</uniqueVersion>
+			<id>snapshots</id>
+			<name>hermesMaven-snapshots</name>
+			<url>${urlArtifactorySnapshot}</url>
 		</snapshotRepository>
 
 		<repository>
