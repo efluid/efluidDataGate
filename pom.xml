@@ -49,13 +49,13 @@
 	</scm>
 
 	<modules>
+		<module>scripts/installeur</module>
 		<module>efluid-datagate-common</module>
 		<module>efluid-datagate-api</module>
 		<module>efluid-datagate-app</module>
 		<module>efluid-datagate-app-cucumber</module>
 		<module>efluid-datagate-generator</module>
 		<module>efluid-datagate-generator-example</module>
-		<module>scripts/installeur</module>
 	</modules>
 
 

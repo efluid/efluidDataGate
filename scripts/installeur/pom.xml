@@ -12,7 +12,9 @@
 		<relativePath>../../pom.xml</relativePath>
 	</parent>
 
-	
+	<properties>
+		<skipNexusStagingDeployMojo>true</skipNexusStagingDeployMojo>
+	</properties>
 	<!-- Gestion du build -->
 	<build>
 		<plugins>
