@@ -4,8 +4,8 @@ node('socle-jenkins-maven-docker-14-4G') {
 
   MailUtils mailUtils = new MailUtils(this)
 
-  git branch: branch, credentialsId: credentials.efluidGithubAccount, url: 'https://github.com/efluid/datagate'
-  String subject = "Release datagate ${releaseVersion}"
+  git branch: branch, credentialsId: credentials.efluidGithubAccount, url: 'https://github.com/efluid/efluidDataGate'
+  String subject = "Release efluidDataGate ${releaseVersion}"
 
   try{
     env.JAVA_HOME = "${variables.jdkPathPrefix}11.0.1"
@@ -17,14 +17,14 @@ node('socle-jenkins-maven-docker-14-4G') {
       sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion}"
     }
     withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-      sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/datagate.git')
+      sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/efluidDataGate.git')
     }
 
-    String mailDetail = "datagate tool from open source project https://github.com/efluid/datagate was successfull released in version ${releaseVersion}"
+    String mailDetail = "efluidDataGate tool from open source project https://github.com/efluid/efluidDataGate was successfull released in version ${releaseVersion}"
     mailUtils.mailInfo(subject, mailDetail, destinatairesMail, false)
   } catch (Exception e) {
-    String mailDetail = "datagate tool from open source project https://github.com/efluid/datagate was in error during release ${releaseVersion}"
-    mailUtils.mailError(subject, mailDetail, 'datagate', releaseVersion, null, destinatairesMail, null)
+    String mailDetail = "efluidDataGate tool from open source project https://github.com/efluid/efluidDataGate was in error during release ${releaseVersion}"
+    mailUtils.mailError(subject, mailDetail, 'efluidDataGate', releaseVersion, null, destinatairesMail, null)
     throw e
   }
 }
