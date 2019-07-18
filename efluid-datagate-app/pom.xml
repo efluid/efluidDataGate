@@ -191,7 +191,7 @@
 			<artifactId>swagger-ui</artifactId>
 		</dependency>
 
-		<!-- Test tools -->da
+		<!-- Test tools -->
 
 		<dependency>
 			<groupId>junit</groupId>
