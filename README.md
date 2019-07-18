@@ -24,14 +24,14 @@ Pour utiliser le build sur un poste de dev windows, par exemple pour la version 
     ## être dans le dossier racine du projet
     cd datagate
     ## lancer le script de build depuis le dossier racine
-    ./datagate-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
+    ./efluid-datagate-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
 
 Pour builder une version avec H2 sur un serveur efluid :
 
     ## être dans le dossier racine du projet
     cd datagate
     ## lancer le script de build depuis le dossier racine
-    ./datagate-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
+    ./efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
 
 L'instance est déployée dans le répo local docker sous le nom **datagate**:*latest*
 
@@ -41,7 +41,7 @@ S'assurer au préalable qu'un dossier est prévu pour stocker les éléments log
 
 Après build, faire : 
     
-    cp ./datagate-app/src/docker/start-datagate.sh /opt/server/datagate/
+    cp ./efluid-datagate-app/src/docker/start-datagate.sh /opt/server/datagate/
 
 Copier éventuellement la configuration désirée dans ``/opt/server/datagate/dest/cfg/application.yml`` et ``/opt/server/datagate/src/cfg/application.yml`` et lancer avec :
 
@@ -62,11 +62,11 @@ Pour utiliser un fichier de configuration spécifique, le monter sous *"/cfg/app
 
 Sous linux :
 
-    docker run -it --rm -p 8080:8080 -v $pwd/datagate-app/src/main/resources/config/application.yml:/cfg/application.yml datagate:latest-h2
+    docker run -it --rm -p 8080:8080 -v $pwd/efluid-datagate-app/src/main/resources/config/application.yml:/cfg/application.yml datagate:latest-h2
 
 Ou sous windows : 
 
-    docker run -it --rm -p 8080:8080 -v ${pwd}\datagate-app\src\main\resources\config\application.yml:/cfg/application.yml datagate:latest-h2
+    docker run -it --rm -p 8080:8080 -v ${pwd}\efluid-datagate-app\src\main\resources\config\application.yml:/cfg/application.yml datagate:latest-h2
 
 Les BDD sont initialisées, puis l'application démarre. Elle est ensuite accessible sur [http://localhost:8080](http://localhost:8080) Elle démarre en mode Wizzard avec en BDD gérée par défault l'instance local PGSQL
 
@@ -136,7 +136,7 @@ Pour intiliser l'instance demo : Elle est utilisée pour représenter une applic
 Ce sont les mêmes modèles, les mêmes données pour les 2 scripts
 
 ### Genération de dictionnaire à partir de l'API
-Une API permettant de spécifier un dictionnaire complet (table, domaines et liens) est fournie dans le module **datagate-api**
+Une API permettant de spécifier un dictionnaire complet (table, domaines et liens) est fournie dans le module **efluid-datagate-api**
 
 Voici un exemple de mise en oeuvre : 
     
@@ -155,11 +155,11 @@ Voici un exemple de mise en oeuvre :
        // ...
     }
 
-L'API est utilisée par un générateur dédié spécifié dans le module **datagate-generator**. Celui ci est avant tout un plugin maven, mis en oeuvre avec la configuration suivante : 
+L'API est utilisée par un générateur dédié spécifié dans le module **efluid-datagate-generator**. Celui ci est avant tout un plugin maven, mis en oeuvre avec la configuration suivante : 
 
     <plugin>
        <groupId>${project.groupId}</groupId>
-       <artifactId>datagate-generator</artifactId>
+       <artifactId>efluid-datagate-generator</artifactId>
        <executions>
           <execution>
              <id>generate</id>
@@ -189,7 +189,7 @@ Les propriétés de configuration sont :
 * **uploadToServer** : Si true, va uploader le .par dans une instance de l'application. Par défaut false
 * **uploadEntryPointUri** : Url du point d'entrée du service REST "dictionnaire" de l'application où le .par sera uploadé. Exemple : "http://127.0.0.1:8080/rest/v1/dictionary"
 
-Un projet exemple est fourni : **datagate-generator-example**, avec un modèle complet. Un script SQL (oracle) d'initialisation des tables correspondantes est fourni dans src/database
+Un projet exemple est fourni : **efluid-datagate-generator-example**, avec un modèle complet. Un script SQL (oracle) d'initialisation des tables correspondantes est fourni dans src/database
 
 ### Services REST
 Une API de services **REST** est intégrée. 

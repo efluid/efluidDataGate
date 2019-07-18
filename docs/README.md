@@ -1,4 +1,4 @@
-# Datagate - documentation générale
+# efluidDataGate - documentation générale
 
 Documentation en cours de mise en place. Les sections non cliquables dans l'index n'ont pas été spécifiées dans cette documentation (mais elles peuvent être détaillées ailleurs dans les README de l'application)
 

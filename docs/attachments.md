@@ -8,7 +8,7 @@ L'objectif est de permettre de joindre des scripts correctifs de données aux pa
 
 ## Fonctionnement de la spécification de PJ
 
-Le formulaire de saisie de lot (/datagate-app/src/main/resources/templates/pages/commit.html) intègre une zone d'upload de PJ.
+Le formulaire de saisie de lot (/efluid-datagate-app/src/main/resources/templates/pages/commit.html) intègre une zone d'upload de PJ.
 
 Les PJ sont traitées par ``fr.uem.efluid.services.PilotableCommitPreparationService.addAttachmentOnCurrentCommitPreparation(ExportFile)`` et stockées comme fichier temporaire par le code suivant :
 
