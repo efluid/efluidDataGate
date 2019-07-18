@@ -1,4 +1,4 @@
-# DATAGATE
+# EFLUID-DATAGATE
 
 Application dédiée à l'identification, au packaging et au déploiement de paramètrage pour une instance Efluid.
 
@@ -22,58 +22,58 @@ Aucun autre pré-requis que la présence de docker sur le poste de build n'est n
 Pour utiliser le build sur un poste de dev windows, par exemple pour la version avec postgres embarqué : 
 
     ## être dans le dossier racine du projet
-    cd datagate
+    cd efluidDataGate
     ## lancer le script de build depuis le dossier racine
     ./efluid-datagate-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
 
 Pour builder une version avec H2 sur un serveur efluid :
 
     ## être dans le dossier racine du projet
-    cd datagate
+    cd efluidDataGate
     ## lancer le script de build depuis le dossier racine
     ./efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
 
-L'instance est déployée dans le répo local docker sous le nom **datagate**:*latest*
+L'instance est déployée dans le répo local docker sous le nom **efluid-datagate**:*latest*
 
 **Pour démarrer la version standalone server avec les scripts fournis**
 
-S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de datagate, comme ``/opt/server/datagate``
+S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de efluidDataGate, comme ``/opt/server/efluidDataGate``
 
 Après build, faire : 
     
-    cp ./efluid-datagate-app/src/docker/start-datagate.sh /opt/server/datagate/
+    cp ./efluid-datagate-app/src/docker/start-efluidDataGate.sh /opt/server/efluidDataGate/
 
-Copier éventuellement la configuration désirée dans ``/opt/server/datagate/dest/cfg/application.yml`` et ``/opt/server/datagate/src/cfg/application.yml`` et lancer avec :
+Copier éventuellement la configuration désirée dans ``/opt/server/efluidDataGate/dest/cfg/application.yml`` et ``/opt/server/efluidDataGate/src/cfg/application.yml`` et lancer avec :
 
     ## Exemple de création / lancement d'une instance "src" sur le port 8080
-    sudo /opt/server/datagate/start-datagate.sh src 8080
+    sudo /opt/server/efluidDataGate/start-efluidDataGate.sh src 8080
 
     ## Exemple de création / lancement d'une instance "dest" sur le port 808&
-    sudo /opt/server/datagate/start-datagate.sh dest 8081
+    sudo /opt/server/efluidDataGate/start-efluidDataGate.sh dest 8081
 
 
 **Pour démarrer la version standalone - A LA MAIN**
 
 Sous linux / windows, par exemple pour la version avec h2 : 
 
-    docker run -it --rm -p 8080:8080 datagate:latest-h2
+    docker run -it --rm -p 8080:8080 efluid-datagate:latest-h2
 
 Pour utiliser un fichier de configuration spécifique, le monter sous *"/cfg/application.yml"*. Par exemple : 
 
 Sous linux :
 
-    docker run -it --rm -p 8080:8080 -v $pwd/efluid-datagate-app/src/main/resources/config/application.yml:/cfg/application.yml datagate:latest-h2
+    docker run -it --rm -p 8080:8080 -v $pwd/efluid-datagate-app/src/main/resources/config/application.yml:/cfg/application.yml efluid-datagate:latest-h2
 
 Ou sous windows : 
 
-    docker run -it --rm -p 8080:8080 -v ${pwd}\efluid-datagate-app\src\main\resources\config\application.yml:/cfg/application.yml datagate:latest-h2
+    docker run -it --rm -p 8080:8080 -v ${pwd}\efluid-datagate-app\src\main\resources\config\application.yml:/cfg/application.yml efluid-datagate:latest-h2
 
 Les BDD sont initialisées, puis l'application démarre. Elle est ensuite accessible sur [http://localhost:8080](http://localhost:8080) Elle démarre en mode Wizzard avec en BDD gérée par défault l'instance local PGSQL
 
 Il existe 2 variantes à ce stade pour la version standalone :
 
-* datagate:latest-h2 : avec BDD H2 embarquée
-* datagate:latest-pgsql : avec BDD Postgres complète embarquée dans le même container
+* efluid-datagate:latest-h2 : avec BDD H2 embarquée
+* efluid-datagate:latest-pgsql : avec BDD Postgres complète embarquée dans le même container
 
 ### Version struff
 
