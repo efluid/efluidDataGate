@@ -18,7 +18,7 @@ try{
 	sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
 	sh 'cp efluid-datagate-app/src/docker/build-serv-efluid/logback.xml efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
 	sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluidDataGate efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
-	sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluidDataGate"
+	sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate"
 } catch (Exception e) {
 	mail bcc: '', body: """EfluidDataGate en erreur
 

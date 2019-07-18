@@ -1,11 +1,11 @@
 version: '2.0'
 services:
-  datagate-${INSTANCE}:
-    image: partifactorydocker.uem.lan/datagate
-    container_name: datagate-${INSTANCE}
+  efluidDataGate-${INSTANCE}:
+    image: partifactorydocker.uem.lan/efluid-datagate
+    container_name: efluidDataGate-${INSTANCE}
     ports:
       - ${PORT}:8080
     volumes:
-      - /opt/server/datagate/${INSTANCE}/cfg/:/cfg/:ro
-      - /opt/server/datagate/${INSTANCE}/logs:/logs
-      - /opt/server/datagate/${INSTANCE}/tmp:/tmp
+      - /opt/server/efluidDataGate/${INSTANCE}/cfg/:/cfg/:ro
+      - /opt/server/efluidDataGate/${INSTANCE}/logs:/logs
+      - /opt/server/efluidDataGate/${INSTANCE}/tmp:/tmp
