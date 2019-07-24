@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
+import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.FormatUtils;
 
 /**
@@ -16,7 +17,11 @@ import fr.uem.efluid.utils.FormatUtils;
  * @since v0.0.8
  * @version 1
  */
-public class DemoDatabaseIdentifier implements ManagedModelIdentifier {
+public class DemoDatabaseIdentifier extends ManagedModelIdentifier {
+
+	public DemoDatabaseIdentifier(DatasourceUtils.CustomDataSourceParameters parameters) {
+		super(parameters);
+	}
 
 	/**
 	 * @return
@@ -41,7 +46,8 @@ public class DemoDatabaseIdentifier implements ManagedModelIdentifier {
 		return new ManagedModelDescription(
 				lineResultSet.getString("VERSION"),
 				FormatUtils.toLdt(lineResultSet.getTimestamp("UPDATE_TIME")),
-				lineResultSet.getString("DETAIL"));
+				lineResultSet.getString("DETAIL"),
+				getDataSourceParameters().getUsername());
 	}
 
 	/**

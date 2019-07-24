@@ -6,7 +6,6 @@ import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.system.common.ImportExportHelper;
 import fr.uem.efluid.system.common.SystemTest;
@@ -15,7 +14,6 @@ import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import org.junit.Assert;
 import org.junit.Before;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.util.StringUtils;
 
@@ -42,9 +40,6 @@ public class PreparationFixtures extends SystemTest {
     private static String select = null;
 
     private static CommitEditData currentCommit;
-
-    @Autowired
-    private PilotableCommitPreparationService prep;
 
     @Before
     public void resetFixture() {
@@ -131,7 +126,7 @@ public class PreparationFixtures extends SystemTest {
     }
 
     @Given("^a merge diff has already been launched with the available source package$")
-    public void a_merge_diff_has_already_been_launched() throws Throwable {
+    public void a_merge_diff_has_already_been_launched() {
 
         // Cancel anything running
         no_diff_is_running();
@@ -192,7 +187,7 @@ public class PreparationFixtures extends SystemTest {
     }
 
     @Given("^the user has specified a commit comment \"(.*)\"$")
-    public void user_has_defined_commit_comment(String comment) throws Exception {
+    public void user_has_defined_commit_comment(String comment) {
 
         currentCommit.setComment(comment);
     }
@@ -293,8 +288,8 @@ public class PreparationFixtures extends SystemTest {
         postObject(getCorrespondingLinkForPageName("commit saving page"), p("preparationPush", preparation));
 
         // Refresh preparation editData
-        currentCommit = ((PilotedCommitPreparation<?>) currentAction.andReturn()
-                .getModelAndView().getModel().get("preparation")).getCommitData();
+        currentCommit = ((PilotedCommitPreparation<?>) Objects.requireNonNull(currentAction.andReturn()
+                .getModelAndView()).getModel().get("preparation")).getCommitData();
     }
 
     @When("^the user do not select any prepared diff content for commit$")
@@ -418,10 +413,17 @@ public class PreparationFixtures extends SystemTest {
         // Get by tables
         Map<String, List<Map<String, String>>> tables = data.asMaps(String.class, String.class).stream().collect(Collectors.groupingBy(i -> i.get("Table")));
 
+        boolean needResolveSpecified = data.topCells().contains("Need Resolve");
+
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
+        // If "need resolve" is specified, we want all lines, else only the ones "needing action"
+        long currentCount = needResolveSpecified
+                ? preparation.getTotalCount()
+                : preparation.getDomains().stream().mapToLong(DomainDiffDisplay::getNeedActionTotalCount).sum();
+
         assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
-        assertThat(preparation.getTotalCount()).isEqualTo(data.asMaps(String.class, String.class).size());
+        assertThat(currentCount).isEqualTo(data.asMaps(String.class, String.class).size());
         assertThat(preparation.getDomains().size()).isEqualTo(1);
 
         tables.forEach((t, v) -> {
@@ -429,31 +431,40 @@ public class PreparationFixtures extends SystemTest {
                     .filter(p -> p.getDictionaryEntryTableName().equals(t))
                     .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
 
-            assertThat(content.getDiff().size()).isEqualTo(v.size());
+            List<? extends PreparedIndexEntry> indexEntries = needResolveSpecified
+                    ? content.getDiff()
+                    : content.getDiff().stream().filter(PreparedIndexEntry::isNeedAction).collect(Collectors.toList());
 
-            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
+            assertThat(indexEntries.size()).isEqualTo(v.size());
+
+            indexEntries.sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
             v.sort(Comparator.comparing(m -> m.get("Key")));
 
             // Keep order
-            for (int i = 0; i < content.getDiff().size(); i++) {
-                PreparedMergeIndexEntry diffLine = (PreparedMergeIndexEntry) content.getDiff().get(i);
-                Map<String, String> dataLine = v.get(i);
+            for (int i = 0; i < indexEntries.size(); i++) {
 
-                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
+                PreparedMergeIndexEntry diffLine = (PreparedMergeIndexEntry) indexEntries.get(i);
 
-                String desc = " on table \"" + content.getDictionaryEntryTableName() + "\" on key \""
-                        + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
+                // If "need Resolve" not specified, only check the lines needing action
+                if (needResolveSpecified || diffLine.isNeedAction()) {
+                    Map<String, String> dataLine = v.get(i);
 
-                assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
-                assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataLine.get("Key"));
+                    IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
 
-                // No need to check payload in delete
-                if (action != REMOVE) {
-                    assertThat(diffLine.getHrPayload()).as("Payload" + desc).isEqualTo(dataLine.get("Payload"));
-                }
+                    String desc = " on table \"" + content.getDictionaryEntryTableName() + "\" on key \""
+                            + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
 
-                if (dataLine.get("Need Resolve") != null) {
-                    assertThat(diffLine.isNeedAction()).isEqualTo("true".equals(dataLine.get("Need Resolve")));
+                    assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
+                    assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataLine.get("Key"));
+
+                    // No need to check payload in delete
+                    if (action != REMOVE) {
+                        assertThat(diffLine.getHrPayload()).as("Payload" + desc).isEqualTo(dataLine.get("Payload"));
+                    }
+
+                    if (dataLine.get("Need Resolve") != null) {
+                        assertThat(diffLine.isNeedAction()).isEqualTo("true".equals(dataLine.get("Need Resolve")));
+                    }
                 }
             }
         });
@@ -552,10 +563,14 @@ public class PreparationFixtures extends SystemTest {
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
         assertThat(preparation).isNotNull();
-        preparation.getDomains().forEach(d -> d.getPreparedContent().forEach(c -> c.getDiff().forEach(l -> {
-            assertThat(l.isSelected()).isTrue();
-            assertThat(l.isRollbacked()).isFalse();
-        })));
+        preparation.getDomains().forEach(d -> d.getPreparedContent()
+                .forEach(c ->
+                        c.getDiff().stream()
+                                .filter(PreparedIndexEntry::isNeedAction)
+                                .forEach(l -> {
+                                    assertThat(l.isSelected()).isTrue();
+                                    assertThat(l.isRollbacked()).isFalse();
+                                })));
     }
 
     @Then("^the commit type is \"(.*)\"$")
@@ -571,14 +586,16 @@ public class PreparationFixtures extends SystemTest {
         File contentFile = new File("src/test/resources/datasets/" + file);
         String content = String.join("\n", Files.readAllLines(contentFile.toPath()));
 
-        Optional<UUID> tabUuid = this.prep.getCurrentCommitPreparation().getDomains().stream().flatMap(d -> d.getPreparedContent().stream()).filter(c -> ((DiffDisplay) c).getDictionaryEntryTableName().equals(tablename)).map(c -> ((DiffDisplay) c).getDictionaryEntryUuid()).findFirst();
+        Optional<UUID> tabUuid = this.prep.getCurrentCommitPreparation().getDomains().stream().flatMap(d -> d.getPreparedContent().stream()).filter(c -> c.getDictionaryEntryTableName().equals(tablename)).map(c -> ((DiffDisplay) c).getDictionaryEntryUuid()).findFirst();
 
         assertThat(tabUuid).as("Table identifier in current diff for name " + tablename).isPresent();
 
-        get("/ui/prepare/page/" + tabUuid.get() + "/" + page);
-        assertRequestWasOk();
-        currentAction.andDo(MockMvcResultHandlers.print());
-        currentAction.andExpect(content().string(containsString(content)));
+        if (tabUuid.isPresent()) {
+            get("/ui/prepare/page/" + tabUuid.get() + "/" + page);
+            assertRequestWasOk();
+            currentAction.andDo(MockMvcResultHandlers.print());
+            currentAction.andExpect(content().string(containsString(content)));
+        }
     }
 
 }

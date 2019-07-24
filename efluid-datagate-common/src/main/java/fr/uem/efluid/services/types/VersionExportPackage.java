@@ -30,7 +30,6 @@ public abstract class VersionExportPackage<D extends ExportAwareVersion<? extend
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#getVersion()
 	 */
 	@Override
 	public final String getVersion() {

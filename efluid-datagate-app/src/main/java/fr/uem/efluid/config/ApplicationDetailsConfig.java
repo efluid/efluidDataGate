@@ -38,8 +38,7 @@ public class ApplicationDetailsConfig {
 		private String instanceName;
 
 		/**
-		 * @param version
-		 * @param instanceName
+		 *
 		 */
 		public DetailProperties() {
 			super();

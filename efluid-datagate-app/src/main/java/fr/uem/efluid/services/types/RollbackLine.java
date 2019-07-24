@@ -44,11 +44,11 @@ public class RollbackLine {
 	 * (managed DB updates are always processed from DiffLine). So use basic rules to
 	 * define how the rollback can be applied :
 	 * <ul>
-	 * <li>If current data is null and previous are not, parameter was deleted => rollback
+	 * <li>If current data is null and previous are not, parameter was deleted =&gt; rollback
 	 * is an add, to set back previous values</li>
-	 * <li>If current is not null but previous, parameter was added => rollback is a
+	 * <li>If current is not null but previous, parameter was added =&gt; rollback is a
 	 * delete</li>
-	 * <li>If both are present, it was an update => rollback is an other "reverted"
+	 * <li>If both are present, it was an update =&gt; rollback is an other "reverted"
 	 * update</li>
 	 * </ul>
 	 * </p>

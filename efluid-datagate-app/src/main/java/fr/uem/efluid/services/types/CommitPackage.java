@@ -21,7 +21,6 @@ public class CommitPackage extends SharedPackage<Commit> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#getVersion()
 	 */
 	@Override
 	public String getVersion() {
@@ -30,7 +29,6 @@ public class CommitPackage extends SharedPackage<Commit> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected Commit initContent() {

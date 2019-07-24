@@ -1,12 +1,12 @@
 package fr.uem.efluid;
 
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * <p>
@@ -26,21 +26,21 @@ import java.lang.annotation.Target;
  * <li>For improved consistency, the domain can be also specified using a custom
  * annotation annotated with the meta annotation {@link ParameterDomain} : All
  * <tt>ParameterTable</tt> annotated with it will be associated to the domain specified
- * once for all in {@link ParameterDomain#value()}</li>
+ * once for all in {@link ParameterDomain#name()} </li>
  * <li>For simplicity, the domain can be also specified at package level, once again with
  * annotation {@link ParameterDomain} : All <tt>ParameterTable</tt> from the same package
  * will be associated to the domain specified once for all in
- * {@link ParameterDomain#value()}</li>
+ * {@link ParameterDomain#name()}</li>
  * </ul>
  * </p>
  * <p>
  * Properties can be inherited : all annotated inherited properties are "added" to current
  * type definition. But the annotation itself is <b>not</b> inherited
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 2
+ * @since v0.0.1
  */
 @Documented
 @Retention(RUNTIME)
@@ -48,99 +48,99 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface ParameterTable {
 
-	/**
-	 * <p>
-	 * Specify the business name for the parameter table (how it will be identified in
-	 * Dictionary management). Unique : if the value is not unique, the dictionary build
-	 * will fail. If not set, will use the annotated type name as parameter name
-	 * </p>
-	 * 
-	 * @return a specified business name for the parameter table in the dictionary
-	 */
-	String name() default "";
+    /**
+     * <p>
+     * Specify the business name for the parameter table (how it will be identified in
+     * Dictionary management). Unique : if the value is not unique, the dictionary build
+     * will fail. If not set, will use the annotated type name as parameter name
+     * </p>
+     *
+     * @return a specified business name for the parameter table in the dictionary
+     */
+    String name() default "";
 
-	/**
-	 * <p>
-	 * Specify the technical table name for the parameter table. Please use UPPERCASE
-	 * value only. If not set, will use the parameter name (as specified with
-	 * {@link #name()} or from annotated type name), UPPERCASE.
-	 * </p>
-	 */
-	String tableName() default "";
+    /**
+     * <p>
+     * Specify the technical table name for the parameter table. Please use UPPERCASE
+     * value only. If not set, will use the parameter name (as specified with
+     * {@link #name()} or from annotated type name), UPPERCASE.
+     * </p>
+     */
+    String tableName() default "";
 
-	/**
-	 * <p>
-	 * Custom filter clause to apply at SQL level for data filtering. Default is "1=1",
-	 * meaning "get all lines from the table". See dictionary management rules for custom
-	 * filter
-	 * </p>
-	 * </p>
-	 * 
-	 * @return
-	 */
-	String filterClause() default "1=1";
+    /**
+     * <p>
+     * Custom filter clause to apply at SQL level for data filtering. Default is "1=1",
+     * meaning "get all lines from the table". See dictionary management rules for custom
+     * filter
+     * </p>
+     * </p>
+     *
+     * @return
+     */
+    String filterClause() default "1=1";
 
-	/**
-	 * <p>
-	 * Domain to associate to the parameter table. Mandatory if not specified with custom
-	 * annotation or at package level
-	 * </p>
-	 * 
-	 * @return
-	 */
-	String domainName() default "";
+    /**
+     * <p>
+     * Domain to associate to the parameter table. Mandatory if not specified with custom
+     * annotation or at package level
+     * </p>
+     *
+     * @return
+     */
+    String domainName() default "";
 
-	/**
-	 * <p>
-	 * Allows to set the <tt>ParameterKey</tt> at table definition level, using a fixed
-	 * field name. If the field doesn't exist, dictionary definition will fail. The key
-	 * specified at table level can be overridden by a directly set <tt>ParameterKey</tt>
-	 * </p>
-	 * <p>
-	 * If the key type cannot be found from the field definition, then the generation will
-	 * fail. Non identifiable key type must be defined with property {@link #keyType()} or
-	 * by definition of <tt>ParameterKey</tt>
-	 * </p>
-	 * 
-	 * @return
-	 */
-	String keyField() default "";
+    /**
+     * <p>
+     * Allows to set the <tt>ParameterKey</tt> at table definition level, using a fixed
+     * field name. If the field doesn't exist, dictionary definition will fail. The key
+     * specified at table level can be overridden by a directly set <tt>ParameterKey</tt>
+     * </p>
+     * <p>
+     * If the key type cannot be found from the field definition, then the generation will
+     * fail. Non identifiable key type must be defined with property {@link #keyType()} or
+     * by definition of <tt>ParameterKey</tt>
+     * </p>
+     *
+     * @return
+     */
+    String keyField() default "";
 
-	/**
-	 * <p>
-	 * When the type for the table-specified key cannot be defined automatically, specify
-	 * it directly with this parameter. Useful for "non standard" property types. If not
-	 * set, will define it using rules specified in {@link ColumnType#forClass(Class)}
-	 * </p>
-	 * 
-	 * @return
-	 */
-	ColumnType keyType() default ColumnType.UNKNOWN;
+    /**
+     * <p>
+     * When the type for the table-specified key cannot be defined automatically, specify
+     * it directly with this parameter. Useful for "non standard" property types. If not
+     * set, will define it using rules specified in {@link ColumnType#forClass(Class)}
+     * </p>
+     *
+     * @return
+     */
+    ColumnType keyType() default ColumnType.UNKNOWN;
 
-	/**
-	 * <p>
-	 * If set to true, all the fields of the annotated table definition class are
-	 * identified as <tt>ParameterValue</tt> with the field name as column name. The
-	 * <tt>ParameterKey</tt> can be specified
-	 * </p>
-	 * <p>
-	 * Default is true : all fields are automatically mapped. Specified
-	 * <tt>ParameterValue</tt> add specific features. The annotation
-	 * <tt>ParameterIgnored</tt> can also be used to ignore some specific fields from
-	 * automatic use as property value
-	 * </p>
-	 * 
-	 * @return
-	 */
-	boolean useAllFields() default true;
+    /**
+     * <p>
+     * If set to true, all the fields of the annotated table definition class are
+     * identified as <tt>ParameterValue</tt> with the field name as column name. The
+     * <tt>ParameterKey</tt> can be specified
+     * </p>
+     * <p>
+     * Default is true : all fields are automatically mapped. Specified
+     * <tt>ParameterValue</tt> add specific features. The annotation
+     * <tt>ParameterIgnored</tt> can also be used to ignore some specific fields from
+     * automatic use as property value
+     * </p>
+     *
+     * @return
+     */
+    boolean useAllFields() default true;
 
-	/**
-	 * <p>
-	 * When a parameter table is identified with <tt>ParameterTableSet</tt> then the
-	 * values can be directly identified here
-	 * </p>
-	 * 
-	 * @return
-	 */
-	ParameterValue[] values() default {};
+    /**
+     * <p>
+     * When a parameter table is identified with <tt>ParameterTableSet</tt> then the
+     * values can be directly identified here
+     * </p>
+     *
+     * @return
+     */
+    ParameterValue[] values() default {};
 }

@@ -17,8 +17,8 @@ public class GeneratedFunctionalDomainPackage extends FunctionalDomainExportPack
 	private static final String RELOADABLE_TYPE = "fr.uem.efluid.services.types.FunctionalDomainPackage";
 
 	/**
-	 * @param name
-	 * @param exportDate
+	 *
+	 * @param allDomains
 	 */
 	public GeneratedFunctionalDomainPackage(Collection<ParameterDomainDefinition> allDomains) {
 		super(FunctionalDomainExportPackage.DOMAINS_EXPORT, LocalDateTime.now());

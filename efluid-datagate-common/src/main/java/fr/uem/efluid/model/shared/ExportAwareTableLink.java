@@ -11,16 +11,8 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  */
 public abstract class ExportAwareTableLink<D extends ExportAwareDictionaryEntry<?>> implements CompositeRefSupport<D> {
 
-	/**
-	 * @param createdTime
-	 *            the createdTime to set
-	 */
 	public abstract LocalDateTime getCreatedTime();
 
-	/**
-	 * @param updatedTime
-	 *            the updatedTime to set
-	 */
 	public abstract LocalDateTime getUpdatedTime();
 
 	/**

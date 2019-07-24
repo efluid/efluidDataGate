@@ -62,17 +62,17 @@
 								<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
 							</div>&nbsp;
 							<a th:href="@{/ui/merge/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
-							<a th:if="!${showAll}" th:href="@{/ui/merge?showAll=true}" href="/merge?showAll=true" class="btn btn-dark btn-sm">Afficher les égalités</a>
-							<a th:if="${showAll}" th:href="@{/ui/merge?showAll=false}" href="/merge?showAll=false" class="btn btn-dark btn-sm">Masquer les égalités</a>
+							<a th:if="!${preparation.displayAll}" th:href="@{/ui/merge?showAll=true}" href="/merge?showAll=true" class="btn btn-dark btn-sm">Afficher les égalités</a>
+							<a th:if="${preparation.displayAll}" th:href="@{/ui/merge?showAll=false}" href="/merge?showAll=false" class="btn btn-dark btn-sm">Masquer les égalités</a>
 						</div>
 					</h5>
 				</p>
 				<div th:each="domain, dstat : ${preparation.domains}" th:id="|domain_${dstat.index}|">
-					<div th:if="${domain.hasContent}" class="domain-area" >
+					<div th:if="${domain.hasContent and (preparation.displayAll or domain.domainNeedAction )}" class="domain-area" >
 					
 						<div class="domain-summary">
 							<span class="domain-name" th:text="|Domaine : ${domain.domainName}|">Gestion du matériel</span>&nbsp;
-							<span class="domain-size" th:text="|- ${domain.tablesWithContentCount} table(s) / ${domain.totalCount} entrée(s)|">15 tables</span>
+							<span class="domain-size" th:text="|- ${preparation.displayAll ? domain.tablesWithContentCount : domain.needActionTablesWithContentCount} table(s) / ${preparation.displayAll ? domain.totalCount : domain.needActionTotalCount} entrée(s)|">15 tables</span>
 							<span class="domain-reducer reducer reducer-close float-right" th:id="|reducer_domain_${dstat.index}|" title="afficher / masquer le détail pour le domain">&nbsp;</span>
 						</div>
 						
@@ -94,11 +94,11 @@
 							
 							<div class="domain-diffs">
 								<div th:each="diffDisplay, tstat : ${domain.preparedContent}" th:id="|${dstat.index}_${tstat.index}|">
-									<div th:if="${!diffDisplay.diff.isEmpty() and (showAll or diffDisplay.diffNeedAction )}" class="dictionary-content" >
+									<div th:if="${!diffDisplay.diff.isEmpty() and (preparation.displayAll or diffDisplay.diffNeedAction )}" class="dictionary-content" >
 										<div class="dictionary-summary">
 											<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
 											<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName}|">Table TTAAA</span>&nbsp;
-											<span class="dictionary-diff-size" th:text="|${diffDisplay.realDiffSize} valeur(s)|">15 valeurs</span>
+											<span class="dictionary-diff-size" th:text="|${preparation.displayAll ? diffDisplay.realDiffSize : diffDisplay.needActionItemsCount} valeur(s)|">15 valeurs</span>
 											<span class="table-reducer reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
 										</div>
 										<table class="table table-sm">
@@ -174,7 +174,7 @@
 		 /* For pagination */
 		
 		var hasPreparation = /*[[${preparation != null}]]*/ true ;
-		var defaultShow = /*[[${showAll}?'show':'hide']]*/ 'hide';
+		var defaultShow = /*[[${preparation != null && preparation.displayAll}?'show':'hide']]*/ 'hide';
 			
 		const updateSelectItem = (index, selected, rollbacked) => {
 

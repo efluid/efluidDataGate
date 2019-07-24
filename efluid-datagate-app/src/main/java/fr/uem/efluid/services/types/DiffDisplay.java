@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author elecomte
@@ -180,6 +181,16 @@ public class DiffDisplay<T extends PreparedIndexEntry> implements Comparable<Dif
      */
     public boolean isHasContent() {
         return this.diff != null && this.diff.size() > 0;
+    }
+
+    /**
+     * For filtered display
+     * @return
+     */
+    public long getNeedActionItemsCount() {
+        return this.diff != null
+                ? this.diff.stream().filter(PreparedIndexEntry::isNeedAction).count()
+                : 0;
     }
 
     /**

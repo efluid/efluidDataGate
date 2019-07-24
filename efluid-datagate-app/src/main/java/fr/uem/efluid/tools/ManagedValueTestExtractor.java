@@ -159,7 +159,7 @@ public class ManagedValueTestExtractor {
      * @param builder current line builder. One builder for each content line
      * @param colName name of the cell
      * @param value   raw content of the cell
-     * @param type    type of supported value, as specified in <tt>ColumnType</tt>
+     * @param lobs    LOB contents to complete
      */
     public void appendBinaryValue(
             final StringBuilder builder,
@@ -336,7 +336,7 @@ public class ManagedValueTestExtractor {
      * <li>If activePayload is not empty and existing is, it is seen as an addition : the
      * active payload is displayed.</li>
      * <li>If both are present, it is seen as a modification. It will detect then the
-     * modified values and display them this way <code>column:"old"=>"new"</code>, only on
+     * modified values and display them this way <code>column:"old"=&gt;"new"</code>, only on
      * modified columns.</li>
      * </ul>
      * </p>

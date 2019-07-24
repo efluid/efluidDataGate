@@ -34,6 +34,8 @@ public final class FormatUtils {
 
     private static final DateTimeFormatter LDT_FORMATTER = DateTimeFormatter.ofPattern(DATE_TIME_FORMAT);
 
+    private static final DateTimeFormatter LDT_URI_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss");
+
     private final static Decoder B64_DECODER = Base64.getDecoder();
 
     private final static Encoder B64_ENCODER = Base64.getEncoder();
@@ -95,6 +97,21 @@ public final class FormatUtils {
      */
     public static byte[] toBytes(String value) {
         return value.getBytes(CONTENT_ENCODING);
+    }
+
+    /**
+     * With format compliant with uri
+     *
+     * @param date
+     * @return
+     */
+    public static String formatForUri(LocalDateTime date) {
+
+        if (date == null) {
+            return null;
+        }
+
+        return LDT_URI_FORMATTER.format(date);
     }
 
     /**

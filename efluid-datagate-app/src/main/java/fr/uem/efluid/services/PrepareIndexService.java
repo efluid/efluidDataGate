@@ -155,7 +155,7 @@ public class PrepareIndexService {
      * <p>
      * For merge diff, we run basically the standard process, but building the "knew
      * content" as a combination of local knew content "until last imported commit" and
-     * the imported diff. => Produces the diff between current real content and "what we
+     * the imported diff. =&gt; Produces the diff between current real content and "what we
      * should have if the imported diff was present". This way we produce the exact result
      * of the merge for an import.
      * </p>
@@ -252,7 +252,7 @@ public class PrepareIndexService {
      * <p>
      * For merge diff, we run basically the standard process, but building the "knew
      * content" as a combination of local knew content "until last imported commit" and
-     * the imported diff. => Produces the diff between current real content and "what we
+     * the imported diff. =&gt; Produces the diff between current real content and "what we
      * should have if the imported diff was present". This way we produce the exact result
      * of the merge for an import.
      * </p>

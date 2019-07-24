@@ -32,7 +32,6 @@ public class AttachmentPackage extends SharedPackage<Attachment> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#getVersion()
 	 */
 	@Override
 	public String getVersion() {
@@ -41,7 +40,6 @@ public class AttachmentPackage extends SharedPackage<Attachment> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected Attachment initContent() {

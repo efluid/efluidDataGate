@@ -27,7 +27,6 @@ public abstract class DictionaryExportPackage<D extends ExportAwareDictionaryEnt
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#getVersion()
 	 */
 	@Override
 	public final String getVersion() {

@@ -26,16 +26,8 @@ public abstract class ExportAwareTableMapping<D extends ExportAwareDictionaryEnt
 	 */
 	public abstract String getMapTableColumnTo();
 
-	/**
-	 * @param createdTime
-	 *            the createdTime to set
-	 */
 	public abstract LocalDateTime getCreatedTime();
 
-	/**
-	 * @param updatedTime
-	 *            the updatedTime to set
-	 */
 	public abstract LocalDateTime getUpdatedTime();
 
 	/**

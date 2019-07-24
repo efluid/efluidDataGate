@@ -26,7 +26,6 @@ public abstract class FunctionalDomainExportPackage<D extends ExportAwareFunctio
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#getVersion()
 	 */
 	@Override
 	public final String getVersion() {

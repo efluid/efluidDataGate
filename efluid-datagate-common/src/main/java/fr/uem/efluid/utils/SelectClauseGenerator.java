@@ -57,7 +57,6 @@ public class SelectClauseGenerator {
 
 	/**
 	 * @param protectColumns
-	 * @param selectLinkValueModel
 	 */
 	public SelectClauseGenerator(boolean protectColumns) {
 		super();
@@ -161,11 +160,11 @@ public class SelectClauseGenerator {
 		// No linkeds : default select
 		if (this.protectColumns) {
 			return CURRENT_TAB_ALIAS + ITEM_PROTECT
-					+ selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_PROTECT_ALIAS))
+					+ String.join(SELECT_CLAUSE_SEP_PROTECT_ALIAS, selectedColumnNames)
 					+ ITEM_PROTECT;
 		}
 
-		return CURRENT_TAB_ALIAS + selectedColumnNames.stream().collect(Collectors.joining(SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS));
+		return CURRENT_TAB_ALIAS + String.join(SELECT_CLAUSE_SEP_NO_PROTECT_ALIAS, selectedColumnNames);
 	}
 
 	/**
@@ -281,7 +280,7 @@ public class SelectClauseGenerator {
 	 * keys
 	 * </p>
 	 * 
-	 * @param dic
+	 * @param keyName
 	 * @param pos
 	 * @param columnFrom
 	 * @return
@@ -295,11 +294,11 @@ public class SelectClauseGenerator {
 	/**
 	 * Join selected value
 	 * 
-	 * @param rules
+	 * @param columnNamesProtected
 	 * @return
 	 */
 	private static final String generateSelectLinkValue(boolean columnNamesProtected) {
-		return new StringBuilder(LINK_TAB_ALIAS + "%s.").append(columnNamesProtected ? "\"%s\"" : "%s")
-				.append(LINK_VAL_ALIAS_START + "%s ").toString();
+		return LINK_TAB_ALIAS + "%s." + (columnNamesProtected ? "\"%s\"" : "%s") +
+				LINK_VAL_ALIAS_START + "%s ";
 	}
 }

@@ -326,7 +326,9 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	}
 
 	/**
-	 * @return the columnFrom for indexed position
+	 *
+	 * @param index
+	 * @param col
 	 */
 	public void setColumnFrom(int index, String col) {
 
@@ -351,7 +353,9 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
 	}
 
 	/**
-	 * @return the columnTo for indexed position
+	 *
+	 * @param index
+	 * @param col
 	 */
 	public void setColumnTo(int index, String col) {
 

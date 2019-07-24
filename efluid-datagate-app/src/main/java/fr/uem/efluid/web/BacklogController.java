@@ -1,10 +1,7 @@
 package fr.uem.efluid.web;
 
 import fr.uem.efluid.model.entities.CommitState;
-import fr.uem.efluid.services.ApplyDiffService;
-import fr.uem.efluid.services.CommitService;
-import fr.uem.efluid.services.DictionaryManagementService;
-import fr.uem.efluid.services.PilotableCommitPreparationService;
+import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +43,9 @@ public class BacklogController extends CommonController {
 
     @Autowired
     private DictionaryManagementService dictService;
+
+    @Autowired
+    private ApplicationDetailsService applicationDetailsService;
 
     @Autowired
     private ApplyDiffService diffService;
@@ -322,6 +322,7 @@ public class BacklogController extends CommonController {
         model.addAttribute("commits", this.commitService.getAvailableCommits());
         model.addAttribute("checkVersion", this.dictService.isDictionaryUpdatedAfterLastVersion());
         model.addAttribute("version", this.dictService.getLastVersion());
+        model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
 
         return "pages/push";
     }
@@ -330,32 +331,32 @@ public class BacklogController extends CommonController {
      * @param uuid
      * @return
      */
-    @RequestMapping(value = "/push/{uuid}-commit.par", method = GET)
+    @RequestMapping(value = "/push/{uuid}/{name}.par", method = GET)
     @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportOneCommit(@PathVariable("uuid") UUID uuid) {
+    public ResponseEntity<InputStreamResource> downloadExportOneCommit(@PathVariable("uuid") UUID uuid, @PathVariable("name") String name) {
 
-        return WebUtils.outputExportImportFile(this.commitService.exportOneCommit(uuid).getResult());
+        return WebUtils.outputExportImportFile(name, this.commitService.exportOneCommit(uuid).getResult());
     }
 
     /**
      * @return
      */
-    @RequestMapping(value = "/push/all-commits.par", method = GET)
+    @RequestMapping(value = "/push/all/{name}.par", method = GET)
     @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportAllCommits() {
+    public ResponseEntity<InputStreamResource> downloadExportAllCommits( @PathVariable("name") String name) {
 
-        return WebUtils.outputExportImportFile(this.commitService.exportCommits(null).getResult());
+        return WebUtils.outputExportImportFile(name, this.commitService.exportCommits(null).getResult());
     }
 
     /**
      * @param uuid
      * @return
      */
-    @RequestMapping(value = "/push/until-{uuid}-commits.par", method = GET)
+    @RequestMapping(value = "/push/until-{uuid}/{name}.par", method = GET)
     @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportUntil(@PathVariable("uuid") UUID uuid) {
+    public ResponseEntity<InputStreamResource> downloadExportUntil(@PathVariable("uuid") UUID uuid, @PathVariable("name") String name) {
 
-        return WebUtils.outputExportImportFile(this.commitService.exportCommits(uuid).getResult());
+        return WebUtils.outputExportImportFile(name, this.commitService.exportCommits(uuid).getResult());
     }
 
     /**
@@ -506,9 +507,10 @@ public class BacklogController extends CommonController {
             return REDIRECT_SELECT;
         }
 
+        this.pilotableCommitService.setCurrentDisplayAllIncludingSimilar(showAll);
+
         model.addAttribute("preparation", this.pilotableCommitService.getCurrentCommitPreparation());
         model.addAttribute("needsAction", this.pilotableCommitService.isCurrentMergeCommitNeedsAction());
-        model.addAttribute("showAll", showAll);
 
         return "pages/merge";
     }

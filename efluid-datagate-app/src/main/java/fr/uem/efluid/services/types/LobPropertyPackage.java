@@ -27,7 +27,6 @@ public class LobPropertyPackage extends SharedPackage<LobProperty> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#getVersion()
 	 */
 	@Override
 	public String getVersion() {
@@ -36,7 +35,6 @@ public class LobPropertyPackage extends SharedPackage<LobProperty> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected LobProperty initContent() {

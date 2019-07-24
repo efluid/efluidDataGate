@@ -283,6 +283,9 @@ public class PilotableCommitPreparationService {
         PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
         preparation.setProjectUuid(projectUuid);
 
+        // Default filtered on needAction onlys
+        preparation.setDisplayAll(false);
+
         // Init domain data
         preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
 
@@ -306,6 +309,38 @@ public class PilotableCommitPreparationService {
      */
     public PilotedCommitPreparation<?> getCurrentCommitPreparation() {
         return this.currents.get(getActiveProjectUuid());
+    }
+
+    /**
+     * For rendering of "ignored" items
+     *
+     * @param displayAll
+     */
+    public void setCurrentDisplayAllIncludingSimilar(boolean displayAll) {
+        getCurrentCommitPreparation().setDisplayAll(displayAll);
+    }
+
+    /**
+     * For access to filtered preparation content
+     *
+     * @param diffDisplay
+     * @param search
+     * @param displayAllIncludingSimilar
+     * @return
+     */
+    private static List<? extends PreparedIndexEntry> filterDiffDisplay(DiffDisplay<?> diffDisplay, String search, boolean displayAllIncludingSimilar) {
+
+        // Display all : quickly ignore filtering
+        if (search == null && displayAllIncludingSimilar) {
+            return diffDisplay.getDiff();
+        }
+
+        // If required, filter content
+        return diffDisplay.getDiff().stream()
+                .filter(i ->
+                        (search == null || i.getKeyValue().contains(search))
+                                && (displayAllIncludingSimilar || i.isNeedAction()))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -336,9 +371,7 @@ public class PilotableCommitPreparationService {
                 DiffDisplay<?> diffDisplay = searchDiffDisplay.get();
 
                 // If required, filter content
-                List<? extends PreparedIndexEntry> diffDisplayContent = search == null
-                        ? diffDisplay.getDiff()
-                        : diffDisplay.getDiff().stream().filter(i -> i.getKeyValue().contains(search)).collect(Collectors.toList());
+                List<? extends PreparedIndexEntry> diffDisplayContent = filterDiffDisplay(diffDisplay, search, current.isDisplayAll());
 
                 int pageCount = (int) Math.round(Math.ceil((double) diffDisplayContent.size() / this.diffDisplayPageSize));
 

@@ -47,12 +47,15 @@ import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
 @ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, ROOT + ".stubs"})
 @TestConfiguration
 @ConfigurationProperties(prefix = "datagate-efluid.managed-datasource")
-public class IntegrationTestConfig extends CustomDataSourceParameters {
+public class IntegrationTestConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IntegrationTestConfig.class);
 
     @Autowired
     private DataSource defaultDataSource;
+
+    @Autowired
+    private CustomDataSourceParameters dsParams;
 
     @Autowired
     private EntityManagerFactory defaultEntityManagerFactory;
@@ -82,7 +85,7 @@ public class IntegrationTestConfig extends CustomDataSourceParameters {
     @Bean
     public QueryGenerationRules managedQueryGenerationRules() {
         // Use local query config directly
-        QueryGenerationRules rules = this.getQuery();
+        QueryGenerationRules rules = this.dsParams.getQuery();
         LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
                 rules.isColumnNamesProtected(), rules.isTableNamesProtected());
         return rules;

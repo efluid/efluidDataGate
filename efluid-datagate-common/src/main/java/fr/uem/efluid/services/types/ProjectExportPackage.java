@@ -24,7 +24,6 @@ public abstract class ProjectExportPackage<P extends ExportAwareProject> extends
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#getVersion()
 	 */
 	@Override
 	public final String getVersion() {
