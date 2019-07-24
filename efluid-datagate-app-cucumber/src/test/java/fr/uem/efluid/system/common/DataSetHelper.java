@@ -46,6 +46,7 @@ final class DataSetHelper {
 					.flatMap(e -> Stream.of(e.getValue()).map(v -> Associate.of(e.getKey(), v)))
 					.collect(Collectors.toMap(Associate::getTwo, Associate::getOne));
 		} catch (IOException e) {
+			System.out.println("Couldn't read page maps from \"src/test/resources/datasets/" + name + ".json\"");
 			throw new ApplicationException(ErrorType.OTHER, "Error on test " + name + ".json", e);
 		}
 	}
@@ -64,6 +65,7 @@ final class DataSetHelper {
 						// Nope
 					});
 		} catch (IOException e) {
+			System.out.println("Couldn't read users from \"src/test/resources/datasets/users.json\"");
 			throw new ApplicationException(ErrorType.OTHER, "Error on test user.json", e);
 		}
 	}

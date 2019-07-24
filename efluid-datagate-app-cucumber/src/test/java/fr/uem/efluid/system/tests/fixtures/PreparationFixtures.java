@@ -552,7 +552,13 @@ public class PreparationFixtures extends SystemTest {
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
         assertThat(preparation).isNotNull();
-        preparation.getDomains().forEach(d -> d.getPreparedContent().forEach(c -> c.getDiff().forEach(l -> {
+        preparation.getDomains().forEach(d -> d.getPreparedContent().forEach(c -> c.getDiff().stream().filter(d -> {
+            // On merge, keep only when need action
+            if (d instanceof PreparedMergeIndexEntry) {
+                return ((PreparedMergeIndexEntry) d).isNeedAction();
+            }
+            return true;
+        }).forEach(l -> {
             assertThat(l.isSelected()).isTrue();
             assertThat(l.isRollbacked()).isFalse();
         })));

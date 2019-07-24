@@ -28,10 +28,10 @@ import java.lang.annotation.Target;
  * })
  * public class TypeOnMultipleTablesFirst {
  * 
- *       &#64;ParameterKey // Si pas indiqué => Commun à toutes les tables du set
+ *       &#64;ParameterKey // Si pas indiqué =&gt; Commun à toutes les tables du set
  *       private Long key;
  *       
- *       &#64;ParameterValue // Si pas indiqué => Commun à toutes les tables du set
+ *       &#64;ParameterValue // Si pas indiqué =&gt; Commun à toutes les tables du set
  *       private String valueOnAll;
  *       
  *       &#64;ParameterValue(forTable="T_TABLE_ONE")

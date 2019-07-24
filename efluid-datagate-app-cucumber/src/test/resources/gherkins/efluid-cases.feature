@@ -478,3 +478,47 @@ Feature: A complete set of test case are specified for Efluid needs
       | Table  | Key      | Action | Payload      |
       | TTEST1 | $testa_1 | ADD    | COL1:'test1' |
       | TTEST1 | $testa_2 | ADD    | COL1:'test2' |
+
+  @TestFusionLot1et2InsertInsert
+  Scenario: Efluid test fusion lot 1 insert + lot 2 insert
+    Given the test is an Efluid standard scenario
+    And the existing data in managed table "TTEST1" :
+      | id        | col1           |
+      | $testa_d1 | testa delete 1 |
+      | $testa_d2 | testa delete 2 |
+      | $testa_d3 | testa delete 3 |
+      | $testa_i1 | testa insert 1 |
+      | $testa_i2 | testa insert 2 |
+      | $testa_i3 | testa insert 3 |
+      | $testa_u1 | testa update 1 |
+      | $testa_u2 | testa update 2 |
+      | $testa_u3 | testa update 3 |
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTEST1" :
+      | change | id        | col1                                           |
+      | add    | $testa_i4 | testp : delete lot 2 + insert lot 3 ---> lot 3 |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "TTEST1" :
+      | change | id        | col1                                           |
+      | add    | $testa_i5 | testp : delete lot 2 + insert lot 3 ---> lot 3 |
+    And a new commit ":construction: Update 2" has been saved with all the new identified diff content
+    And the user has requested an export starting by the commit with name ":tada: Test commit init"
+    And the user accesses to the destination environment with the same dictionary
+    And the existing data in managed table "TTEST1" in destination environment :
+      | id        | col1           |
+      | $testa_d1 | testa delete 1 |
+      | $testa_d2 | testa delete 2 |
+      | $testa_d3 | testa delete 3 |
+      | $testa_i1 | testa insert 1 |
+      | $testa_i2 | testa insert 2 |
+      | $testa_i3 | testa insert 3 |
+      | $testa_u1 | testa update 1 |
+      | $testa_u2 | testa update 2 |
+      | $testa_u3 | testa update 3 |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to diff commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table  | Key       | Action | Payload                                               |
+      | TTEST1 | $testa_i4 | ADD    | COL1:'testp : delete lot 2 + insert lot 3 ---> lot 3' |
+      | TTEST1 | $testa_i5 | ADD    | COL1:'testp : delete lot 2 + insert lot 3 ---> lot 3' |
