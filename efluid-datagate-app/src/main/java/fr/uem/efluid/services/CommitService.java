@@ -719,7 +719,7 @@ public class CommitService extends AbstractApplicationService {
      */
     private static String generateMergeCommitComment(List<Commit> sources) {
 
-        return ":twisted_rightwards_arrows: Merging Sources :\n * " + sources.stream().map(Commit::getComment).collect(Collectors.joining("\n * "));
+        return ":twisted_rightwards_arrows: Merging Sources :\n * " + sources.stream().filter(c -> c.getComment() != null).map(Commit::getComment).collect(Collectors.joining("\n * "));
     }
 
     /**
