@@ -4,14 +4,14 @@ Lorsque des données doivent être adaptées à partir de la source pour une des
 
 Ces transformers peuvent utiliser des données d'une table source (ce sont alors des *Sourced Transformers*) ou être autonome (*Direct Transformers*)
 
-Quand il y a des données sources à prendre en compte, DataGate s'appuie sur les informations des [Sources de transformation](transformer-source.md) du dictionnaire. C'est le type de transformation mise en oeuvre pour la régionalisation des données dans Efluid.
+Quand il y a des données sources à prendre en compte, efluidDataGate s'appuie sur les informations des [Sources de transformation](transformer-source.md) du dictionnaire. C'est le type de transformation mise en oeuvre pour la régionalisation des données dans Efluid.
 
 ## Paramètrage des transformations
 
 **Le paramètrage des transformations est donné ici** : 
 
 ```
-param-efluid:
+datagate-efluid:
 
     # ...
 
@@ -38,7 +38,7 @@ Le traitement est libre. Un exemple est le UpperCaseValueApplyTranformer qui pas
 
 ## Fonctionnement d'un transformer sourcé
 
-La régionalisation Efluid nécessite d'appliquer les transformations à partir d'une table de données qui n'est présente que dans la BDD source. Les données sont historiquement préparées de manière spécifique pour un client ou un réseau à partir de la source. Avec DataGate il n'y a pas de variété de format à partir de la source : l'instance cible doit être autonome pour transformer les données importées.
+La régionalisation Efluid nécessite d'appliquer les transformations à partir d'une table de données qui n'est présente que dans la BDD source. Les données sont historiquement préparées de manière spécifique pour un client ou un réseau à partir de la source. Avec efluidDataGate il n'y a pas de variété de format à partir de la source : l'instance cible doit être autonome pour transformer les données importées.
 
 C'est pourquoi le dictionnaire permet de spécifier une source qui se retrouve partiellement exportée avec les lots pour pouvoir être prise en compte dans la destination.
 

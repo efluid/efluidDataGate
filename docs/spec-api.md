@@ -535,7 +535,7 @@ Ajouter au build du pom de votre projet :
 
     <plugin>
         <groupId>${project.groupId}</groupId>
-        <artifactId>param-generator</artifactId>
+        <artifactId>efluid-datagate-generator</artifactId>
             <executions>
                 <execution>
                     <id>generate</id>

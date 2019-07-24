@@ -1,4 +1,4 @@
-# Mise à jour de l'application Paramethor
+# Mise à jour de l'application efluidDataGate
 
 L'application est fournie sous la forme d'un jar executable. Utiliser une nouvelle version signifie executer une nouvelle version du jar.
 

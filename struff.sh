@@ -18,10 +18,10 @@ docker run -it --rm \
     -c "mvn --batch-mode install; cp /usr/src/mymaven/src/docker/* /usr/src/mymaven/target"
 
 ## Docker build
-docker build -t param-gest:latest ./target
+docker build -t efluid-datagate-gest:latest ./target
 
 ## Prepare instance
 cp /project/src/docker/docker-compose.yml /instance/docker-compose.yml
 
 ## Completed
-echo "param-gest build completed"
+echo "efluid-datagate-gest build completed"

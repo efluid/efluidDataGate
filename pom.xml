@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<prerequisites>
 		<maven>3.0.4</maven>
 	</prerequisites>
 
-	<groupId>fr.uem.efluid</groupId>
-	<artifactId>param-parent</artifactId>
-	<version>0.2.2-SNAPSHOT</version>
+	<groupId>com.efluid.oss</groupId>
+	<artifactId>efluid-datagate-parent</artifactId>
+	<version>1.1.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<parent>
@@ -19,15 +17,47 @@
 		<version>2.1.0.RELEASE</version>
 	</parent>
 
+	<name>datagate</name>
+	<description>datagate is a tool to manage data of one database to another
+	</description>
+	<url>https://github.com/efluid/datagate</url>
+	<developers>
+		<developer>
+			<id>elecompte-pro</id>
+			<name>Emmanuel Lecompte</name>
+		</developer>
+		<developer>
+			<id>MCO</id>
+			<name>Marie Coste</name>
+		</developer>
+	</developers>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+		</license>
+	</licenses>
+	<organization>
+		<name>efluidSAS</name>
+		<url>https://www.efluid.com/</url>
+	</organization>
+	<scm>
+		<connection>scm:git:git://github.com/efluid/datagate</connection>
+		<developerConnection>scm:git:git@github.com/efluid/datagate</developerConnection>
+		<url>https://github.com/efluid/datagate</url>
+		<tag>HEAD</tag>
+	</scm>
+
 	<modules>
-		<module>param-common</module>
-		<module>param-api</module>
-		<module>param-app</module>
-		<module>param-app-cucumber</module>
-		<module>param-generator</module>
-		<module>param-generator-example</module>
 		<module>scripts/installeur</module>
+		<module>efluid-datagate-common</module>
+		<module>efluid-datagate-api</module>
+		<module>efluid-datagate-app</module>
+		<module>efluid-datagate-app-cucumber</module>
+		<module>efluid-datagate-generator</module>
+		<module>efluid-datagate-generator-example</module>
 	</modules>
+
 
 	<properties>
 
@@ -75,7 +105,6 @@
 
 		<pluginManagement>
 			<plugins>
-
 				<!-- Complete default informations about used source code -->
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -109,12 +138,75 @@
 				<!-- Inter-dependency - param dic generator -->
 				<plugin>
 					<groupId>${project.groupId}</groupId>
-					<artifactId>param-generator</artifactId>
+					<artifactId>efluid-datagate-generator</artifactId>
 					<version>${project.version}</version>
 				</plugin>
 
+				
 			</plugins>
 		</pluginManagement>
+
+		<plugins>
+
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-release-plugin</artifactId>
+			<version>2.5.3</version>
+			<configuration>
+				<localCheckout>true</localCheckout>
+				<pushChanges>false</pushChanges>
+				<mavenExecutorId>forked-path</mavenExecutorId>
+				<arguments>-Dgpg.passphrase=${gpgPassphrase} -Dmaven.test.skip=${skipTest} -Dmaven.javadoc.skip=${skipJavaDoc}</arguments>
+			</configuration>
+			<dependencies>
+				<dependency>
+					<groupId>org.apache.maven.scm</groupId>
+					<artifactId>maven-scm-provider-gitexe</artifactId>
+					<version>1.9.5</version>
+				</dependency>
+			</dependencies>
+		</plugin>
+		<plugin>
+			<groupId>org.sonatype.plugins</groupId>
+			<artifactId>nexus-staging-maven-plugin</artifactId>
+			<version>1.6.8</version>
+			<extensions>true</extensions>
+			<configuration>
+				<serverId>ossrh</serverId>
+				<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+				<autoReleaseAfterClose>true</autoReleaseAfterClose>
+			</configuration>
+		</plugin>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-source-plugin</artifactId>
+			<version>2.2.1</version>
+			<executions>
+				<execution>
+					<id>attach-sources</id>
+					<goals>
+						<goal>jar-no-fork</goal>
+					</goals>
+				</execution>
+			</executions>
+		</plugin>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-javadoc-plugin</artifactId>
+			<version>2.9.1</version>
+			<executions>
+				<execution>
+					<id>attach-javadocs</id>
+					<goals>
+						<goal>jar</goal>
+					</goals>
+				</execution>
+			</executions>
+			<configuration>
+				<additionalparam>-Xdoclint:none</additionalparam>
+			</configuration>
+		</plugin>
+		</plugins>
 
 		<!-- Always filter resources for build stamping -->
 		<resources>
@@ -125,6 +217,43 @@
 		</resources>
 
 	</build>
+
+	<profiles>
+
+		<!-- GPG Signature on release -->
+		<profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.6</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<homedir>/opt/mvnDockerDefault/conf/gpg</homedir>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+
+	</profiles>
 
 	<dependencyManagement>
 
@@ -322,25 +451,25 @@
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>param-common</artifactId>
+				<artifactId>efluid-datagate-common</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>param-api</artifactId>
+				<artifactId>efluid-datagate-api</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>param-generator</artifactId>
+				<artifactId>efluid-datagate-generator</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>param-app</artifactId>
+				<artifactId>efluid-datagate-app</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 
@@ -348,16 +477,16 @@
 		</dependencies>
 	</dependencyManagement>
 	<distributionManagement>
-		<repository>
-			<id>releases</id>
-			<name>hermesMaven-releases</name>
-			<url>${urlArtifactoryRelease}</url>
-		</repository>
 		<snapshotRepository>
 			<uniqueVersion>false</uniqueVersion>
 			<id>snapshots</id>
 			<name>hermesMaven-snapshots</name>
 			<url>${urlArtifactorySnapshot}</url>
 		</snapshotRepository>
+
+		<repository>
+			<id>ossrh</id>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
 	</distributionManagement>
 </project>

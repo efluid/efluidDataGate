@@ -1,0 +1,34 @@
+---
+## PARAMETER MANAGER CONFIG
+datagate-efluid:
+
+    managed-datasource:
+        driver-class-name: org.postgresql.Driver
+        url: jdbc:postgresql://127.0.0.1/demo?searchpath=public
+        username: docker
+        password: docker
+        meta:
+            filter-schema: DEMO
+    
+    details:
+        instance-name: SOURCE-DOCKER
+    
+## TECH FEATURES CUSTOM
+spring:
+    profiles:
+        active: prod
+    
+    datasource:
+        url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
+        username: sa
+        password: 
+        driver-class-name: org.h2.Driver
+    
+    jpa:
+        show-sql: false
+        hibernate:
+            ddl-auto: create
+    
+## WEB SERVER CONFIG
+server:
+    port: 8080

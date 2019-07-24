@@ -10,7 +10,7 @@ Les données utilisées sont gérées avec des **entités jpa** représentant le
 
 ### Projet utilisé
 
-Toutes les opérations sont réalisées dans le [projet param-app-cucumber](../param-app-cucumber/README.md)
+Toutes les opérations sont réalisées dans le [projet efluid-datagate-app-cucumber](../efluid-datagate-app-cucumber/README.md)
 
 ### Ajouter une table - code java
 
@@ -69,7 +69,7 @@ initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1, TESTC);
 
 ### Ecriture du scénario
 
-Ajouter le nouveau scénario dans `param-app-cucumber\src\test\resources\gherkins\efluid-cases.feature`, en reprenant les exemples existants.
+Ajouter le nouveau scénario dans `efluid-datagate-app-cucumber\src\test\resources\gherkins\efluid-cases.feature`, en reprenant les exemples existants.
 
 Les scénarios ont tous ce modèle pour valider un résultat de diff : 
 
@@ -113,7 +113,7 @@ Le nom du scénario doit être unique
 
 Les opérations de changes nécessite en 1ère colonne "`change`" une des trois valeur exacte : `delete` / `add` / `update`
 
-Le contenu du diff pour le `Then` de validation doit reprendre le format "HR" (Human Readable) présenté à l'écran dans DataGate. L'`Action` est un code interne de DataGate : `REMOVE` / `ADD` / `UPDATE`.
+Le contenu du diff pour le `Then` de validation doit reprendre le format "HR" (Human Readable) présenté à l'écran dans efluidDataGate. L'`Action` est un code interne de DataGate : `REMOVE` / `ADD` / `UPDATE`.
 
 > Attention à la case.
 
