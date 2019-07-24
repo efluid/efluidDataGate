@@ -58,10 +58,10 @@ spring:
         username: sa
         password:
         driver-class-name: org.h2.Driver
-        max-pool-size: 50
+        max-pool-size: 100
 
     jpa:
-        show-sql: true
+        show-sql: false
         hibernate:
             ddl-auto: create
 

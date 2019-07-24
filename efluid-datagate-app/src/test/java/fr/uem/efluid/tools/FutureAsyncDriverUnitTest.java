@@ -69,6 +69,9 @@ public class FutureAsyncDriverUnitTest {
         // Manual kill
         driver.kill(proc.getIdentifier());
 
+        // Let it kill
+        Thread.sleep(200);
+
         // Must be active
         assertThat(driver.listCurrentInSurvey()).isEmpty();
 

@@ -6,16 +6,6 @@
 			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
 		</encoder>
 	</appender>
-    
-	<logger name="fr.uem.efluid" additivity="false">
-		<level value="INFO" />
-		<appender-ref ref="STDOUT" />
-	</logger>
-
-	<logger name="fr.uem.efluid.model.repositories.impls.JdbcBasedManagedUpdateRepository" additivity="false">
-		<level value="DEBUG" />
-		<appender-ref ref="STDOUT" />
-	</logger>
 
 	<root level="WARN">
 		<appender-ref ref="STDOUT" />
