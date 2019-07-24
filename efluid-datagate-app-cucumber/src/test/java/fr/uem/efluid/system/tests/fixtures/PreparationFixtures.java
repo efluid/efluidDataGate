@@ -413,10 +413,17 @@ public class PreparationFixtures extends SystemTest {
         // Get by tables
         Map<String, List<Map<String, String>>> tables = data.asMaps(String.class, String.class).stream().collect(Collectors.groupingBy(i -> i.get("Table")));
 
+        boolean needResolveSpecified = data.topCells().contains("Need Resolve");
+
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
+        // If "need resolve" is specified, we want all lines, else only the ones "needing action"
+        long currentCount = needResolveSpecified
+                ? preparation.getTotalCount()
+                : preparation.getDomains().stream().mapToLong(DomainDiffDisplay::getNeedActionTotalCount).sum();
+
         assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
-        assertThat(preparation.getTotalCount()).isEqualTo(data.asMaps(String.class, String.class).size());
+        assertThat(currentCount).isEqualTo(data.asMaps(String.class, String.class).size());
         assertThat(preparation.getDomains().size()).isEqualTo(1);
 
         tables.forEach((t, v) -> {
@@ -424,31 +431,40 @@ public class PreparationFixtures extends SystemTest {
                     .filter(p -> p.getDictionaryEntryTableName().equals(t))
                     .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
 
-            assertThat(content.getDiff().size()).isEqualTo(v.size());
+            List<? extends PreparedIndexEntry> indexEntries = needResolveSpecified
+                    ? content.getDiff()
+                    : content.getDiff().stream().filter(PreparedIndexEntry::isNeedAction).collect(Collectors.toList());
 
-            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
+            assertThat(indexEntries.size()).isEqualTo(v.size());
+
+            indexEntries.sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
             v.sort(Comparator.comparing(m -> m.get("Key")));
 
             // Keep order
-            for (int i = 0; i < content.getDiff().size(); i++) {
-                PreparedMergeIndexEntry diffLine = (PreparedMergeIndexEntry) content.getDiff().get(i);
-                Map<String, String> dataLine = v.get(i);
+            for (int i = 0; i < indexEntries.size(); i++) {
 
-                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
+                PreparedMergeIndexEntry diffLine = (PreparedMergeIndexEntry) indexEntries.get(i);
 
-                String desc = " on table \"" + content.getDictionaryEntryTableName() + "\" on key \""
-                        + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
+                // If "need Resolve" not specified, only check the lines needing action
+                if (needResolveSpecified || diffLine.isNeedAction()) {
+                    Map<String, String> dataLine = v.get(i);
 
-                assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
-                assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataLine.get("Key"));
+                    IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
 
-                // No need to check payload in delete
-                if (action != REMOVE) {
-                    assertThat(diffLine.getHrPayload()).as("Payload" + desc).isEqualTo(dataLine.get("Payload"));
-                }
+                    String desc = " on table \"" + content.getDictionaryEntryTableName() + "\" on key \""
+                            + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
 
-                if (dataLine.get("Need Resolve") != null) {
-                    assertThat(diffLine.isNeedAction()).isEqualTo("true".equals(dataLine.get("Need Resolve")));
+                    assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
+                    assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataLine.get("Key"));
+
+                    // No need to check payload in delete
+                    if (action != REMOVE) {
+                        assertThat(diffLine.getHrPayload()).as("Payload" + desc).isEqualTo(dataLine.get("Payload"));
+                    }
+
+                    if (dataLine.get("Need Resolve") != null) {
+                        assertThat(diffLine.isNeedAction()).isEqualTo("true".equals(dataLine.get("Need Resolve")));
+                    }
                 }
             }
         });

@@ -44,11 +44,14 @@ import static fr.uem.efluid.system.common.SystemTestConfig.SYS_TEST_ROOT;
 @ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, WEB, REST, SYS_TEST_ROOT + ".stubs"})
 @TestConfiguration
 @ConfigurationProperties(prefix = "datagate-efluid.managed-datasource")
-public class SystemTestConfig extends CustomDataSourceParameters {
+public class SystemTestConfig {
 
-    public static final String SYS_TEST_ROOT = ROOT + ".system";
+    static final String SYS_TEST_ROOT = ROOT + ".system";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SystemTestConfig.class);
+
+    @Autowired
+    private CustomDataSourceParameters dsParams;
 
     @Autowired
     private DataSource defaultDataSource;
@@ -62,8 +65,9 @@ public class SystemTestConfig extends CustomDataSourceParameters {
     }
 
     /**
-     * @return
-     * @throws SQLException
+     *
+     * @return Active H2 server instance
+     * @throws SQLException for server init error
      */
     @Bean(initMethod = "start", destroyMethod = "stop")
     public Server h2WebConsole() throws SQLException {
@@ -72,7 +76,7 @@ public class SystemTestConfig extends CustomDataSourceParameters {
     }
 
     /**
-     * @return
+     * @return injected TM for managed db, simulated with JPA
      */
     @Bean(name = DatasourceUtils.MANAGED_TRANSACTION_MANAGER)
     public PlatformTransactionManager managedTransactionManager() {
@@ -80,7 +84,7 @@ public class SystemTestConfig extends CustomDataSourceParameters {
     }
 
     /**
-     * @return
+     * @return default TM for core features
      */
     @Bean(name = DatasourceUtils.DEFAULT_TRANSACTION_MANAGER)
     @Primary
@@ -91,14 +95,14 @@ public class SystemTestConfig extends CustomDataSourceParameters {
     @Bean
     public QueryGenerationRules managedQueryGenerationRules() {
         // Use local query config directly
-        QueryGenerationRules rules = this.getQuery();
+        QueryGenerationRules rules = this.dsParams.getQuery();
         LOGGER.info("[MANAGED DB] Using these query generation rules : columnProtected:{}, tableProtected:{}",
-                Boolean.valueOf(rules.isColumnNamesProtected()), Boolean.valueOf(rules.isTableNamesProtected()));
+                rules.isColumnNamesProtected(), rules.isTableNamesProtected());
         return rules;
     }
 
     /**
-     * @return
+     * @return configured filter to control session content
      */
     @Bean
     public FilterRegistrationBean<InspectSessionFilter> inspectSessionFilter() {
@@ -118,7 +122,7 @@ public class SystemTestConfig extends CustomDataSourceParameters {
      * For system tests, use a specific "programable" async driver
      * </p>
      *
-     * @return
+     * @return adapted asynchronous driver
      */
     @Bean
     public AsyncDriver futureAsyncDriver() {
