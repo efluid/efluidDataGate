@@ -17,8 +17,8 @@ public class GeneratedTableLinkPackage extends TableLinkExportPackage<ParameterL
 	private static final String RELOADABLE_TYPE = "fr.uem.efluid.services.types.TableLinkPackage";
 
 	/**
-	 * @param name
-	 * @param exportDate
+	 *
+	 * @param allLinks
 	 */
 	public GeneratedTableLinkPackage(Collection<ParameterLinkDefinition> allLinks) {
 		super(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now());

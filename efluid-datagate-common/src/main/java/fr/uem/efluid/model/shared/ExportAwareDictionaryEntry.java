@@ -25,58 +25,22 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  */
 public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctionalDomain<?>> implements Shared {
 
-	/**
-	 * @param parameterName
-	 *            the parameterName to set
-	 */
 	public abstract String getParameterName();
 
-	/**
-	 * @param tableName
-	 *            the tableName to set
-	 */
 	public abstract String getTableName();
 
-	/**
-	 * @param whereClause
-	 *            the whereClause to set
-	 */
 	public abstract String getWhereClause();
 
-	/**
-	 * @param selectClause
-	 *            the selectClause to set
-	 */
 	public abstract String getSelectClause();
 
-	/**
-	 * @param keyName
-	 *            the keyName to set
-	 */
 	public abstract String getKeyName();
 
-	/**
-	 * @param createdTime
-	 *            the createdTime to set
-	 */
 	public abstract LocalDateTime getCreatedTime();
 
-	/**
-	 * @param updatedTime
-	 *            the updatedTime to set
-	 */
 	public abstract LocalDateTime getUpdatedTime();
 
-	/**
-	 * @param domain
-	 *            the domain to set
-	 */
 	public abstract D getDomain();
 
-	/**
-	 * @param keyType
-	 *            the keyType to set
-	 */
 	public abstract ColumnType getKeyType();
 
 	/**

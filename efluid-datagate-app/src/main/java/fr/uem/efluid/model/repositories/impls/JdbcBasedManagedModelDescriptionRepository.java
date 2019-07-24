@@ -1,10 +1,8 @@
 package fr.uem.efluid.model.repositories.impls;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
+import fr.uem.efluid.model.metas.ManagedModelDescription;
+import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository;
+import fr.uem.efluid.tools.ManagedModelIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,175 +12,177 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Repository;
 
-import fr.uem.efluid.model.metas.ManagedModelDescription;
-import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository;
-import fr.uem.efluid.tools.ManagedModelIdentifier;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
  * Uses a specified <tt>ManagedModelIdentifier</tt> found in context
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 @Repository
 public class JdbcBasedManagedModelDescriptionRepository implements ManagedModelDescriptionRepository {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedModelDescriptionRepository.class);
-	protected static final Logger QUERRY_LOGGER = LoggerFactory.getLogger("identifier.queries");
-	
-	@Autowired
-	private JdbcTemplate managedSource;
+    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcBasedManagedModelDescriptionRepository.class);
+    private static final Logger QUERRY_LOGGER = LoggerFactory.getLogger("identifier.queries");
 
-	@Autowired
-	private ManagedModelIdentifier identifier;
+    @Autowired
+    private JdbcTemplate managedSource;
 
-	@Value("${datagate-efluid.model-identifier.enabled}")
-	private boolean checkEnabled;
+    @Autowired
+    private ManagedModelIdentifier identifier;
 
-	@Value("${datagate-efluid.model-identifier.show-sql}")
-	private boolean showSql;
-	
-	/**
-	 * @return
-	 * @see fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository#getModelDescriptions()
-	 */
-	@Override
-	public List<ManagedModelDescription> getModelDescriptions() {
+    @Value("${datagate-efluid.model-identifier.enabled}")
+    private boolean checkEnabled;
 
-		String query = this.identifier.getAllModelDescriptionQuery();
-		postProcessQuery(query);
-		LOGGER.debug("Extracting Managed Model descriptions using query \"{}\"", query);
+    @Value("${datagate-efluid.model-identifier.show-sql}")
+    private boolean showSql;
 
-		// Get columns for all table
-		List<ManagedModelDescription> descriptions = this.managedSource.query(query, new DescriptionExtractor(this.identifier));
+    /**
+     * @return
+     * @see fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository#getModelDescriptions()
+     */
+    @Override
+    public List<ManagedModelDescription> getModelDescriptions() {
 
-		if (descriptions.isEmpty()) {
-			LOGGER.warn("Cannot found any managed model description with specified identifier. Check if the"
-					+ " access query \"{}\" is valid. Will continue with \"not found\" model versionning", query);
-		} else if (LOGGER.isDebugEnabled()) {
+        String query = this.identifier.getAllModelDescriptionQuery();
+        postProcessQuery(query);
+        LOGGER.debug("Extracting Managed Model descriptions using query \"{}\"", query);
 
-			ManagedModelDescription last = descriptions.get(descriptions.size() - 1);
-			LOGGER.debug("Extracted {} descriptions from managed model. Last one is \"{}\".",
-					Integer.valueOf(descriptions.size()), last.getIdentity());
-		}
+        // Get columns for all table
+        List<ManagedModelDescription> descriptions = this.managedSource.query(query, new DescriptionExtractor(this.identifier));
 
-		return descriptions;
-	}
+        if (descriptions.isEmpty()) {
+            LOGGER.warn("Cannot found any managed model description with specified identifier. Check if the"
+                    + " access query \"{}\" is valid. Will continue with \"not found\" model versionning", query);
+        } else if (LOGGER.isDebugEnabled()) {
 
-	/**
-	 * @return
-	 * @see fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository#hasToCheckDescriptions()
-	 */
-	@Override
-	public boolean hasToCheckDescriptions() {
-		return this.checkEnabled;
-	}
+            ManagedModelDescription last = descriptions.get(descriptions.size() - 1);
+            LOGGER.debug("Extracted {} descriptions from managed model. Last one is \"{}\".",
+                    Integer.valueOf(descriptions.size()), last.getIdentity());
+        }
 
-	/**
-	 * @return
-	 * @see fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository#getCurrentModelIdentifier()
-	 */
-	@Override
-	public String getCurrentModelIdentifier() {
+        return descriptions;
+    }
 
-		if (!hasToCheckDescriptions()) {
-			return null;
-		}
+    /**
+     * @return
+     * @see fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository#hasToCheckDescriptions()
+     */
+    @Override
+    public boolean hasToCheckDescriptions() {
+        return this.checkEnabled;
+    }
 
-		List<ManagedModelDescription> descs = getModelDescriptions();
+    /**
+     * @return
+     * @see fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository#getCurrentModelIdentifier()
+     */
+    @Override
+    public String getCurrentModelIdentifier() {
 
-		if (descs.size() == 0) {
-			return null;
-		}
+        if (!hasToCheckDescriptions()) {
+            return null;
+        }
 
-		// Basic access. Always use last
-		return descs.get(descs.size() - 1).getIdentity();
-	}
+        List<ManagedModelDescription> descs = getModelDescriptions();
 
-	/**
-	 * @return
-	 * @see fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository#getModelIdentifierType()
-	 */
-	@Override
-	public IdentifierType getModelIdentifierType(String modelIdentifier) {
+        if (descs.size() == 0) {
+            return null;
+        }
 
-		if (this.checkEnabled) {
+        // Basic access. Always use last
+        return descs.get(descs.size() - 1).getIdentity();
+    }
 
-			// Current descs
-			List<ManagedModelDescription> descs = getModelDescriptions();
+    /**
+     * @param modelIdentifier
+     * @return
+     */
+    @Override
+    public IdentifierType getModelIdentifierType(String modelIdentifier) {
 
-			if (!descs.isEmpty()) {
+        if (this.checkEnabled) {
 
-				if (descs.get(descs.size() - 1).getIdentity().equals(modelIdentifier)) {
-					return IdentifierType.CURRENT;
-				}
+            // Current descs
+            List<ManagedModelDescription> descs = getModelDescriptions();
 
-				if (this.identifier.isValidPastModelIdentifier(modelIdentifier, descs)) {
-					return IdentifierType.OLD_ONE;
-				}
-			}
-		}
+            if (!descs.isEmpty()) {
 
-		// Default unprocessed - unknown
-		return IdentifierType.UNKNOWN;
-	}
+                if (descs.get(descs.size() - 1).getIdentity().equals(modelIdentifier)) {
+                    return IdentifierType.CURRENT;
+                }
 
-	/**
-	 * @param query
-	 */
-	private void postProcessQuery(String query) {
+                if (this.identifier.isValidPastModelIdentifier(modelIdentifier, descs)) {
+                    return IdentifierType.OLD_ONE;
+                }
+            }
+        }
 
-		// Can output query (using a similar logger than the one from Hibernate on
-		// show-sql configuration parameter)
-		if (this.showSql) {
-			QUERRY_LOGGER.info(query);
-		}
-	}
-	/**
-	 * <p>
-	 * Processing component for description query result. Process the result set and call
-	 * for available <tt>ManagedModelIdentifier</tt> to extract version one by one
-	 * </p>
-	 * 
-	 * @author elecomte
-	 * @since v0.0.8
-	 * @version 1
-	 */
-	private static class DescriptionExtractor implements ResultSetExtractor<List<ManagedModelDescription>> {
+        // Default unprocessed - unknown
+        return IdentifierType.UNKNOWN;
+    }
 
-		private final ManagedModelIdentifier identifier;
+    /**
+     * @param query
+     */
+    private void postProcessQuery(String query) {
 
-		/**
-		 * @param identifier
-		 */
-		public DescriptionExtractor(ManagedModelIdentifier identifier) {
-			super();
-			this.identifier = identifier;
-		}
+        // Can output query (using a similar logger than the one from Hibernate on
+        // show-sql configuration parameter)
+        if (this.showSql) {
+            QUERRY_LOGGER.info(query);
+        }
+    }
 
-		/**
-		 * @param rs
-		 * @return
-		 * @throws SQLException
-		 * @throws DataAccessException
-		 * @see org.springframework.jdbc.core.ResultSetExtractor#extractData(java.sql.ResultSet)
-		 */
-		@Override
-		public List<ManagedModelDescription> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    /**
+     * <p>
+     * Processing component for description query result. Process the result set and call
+     * for available <tt>ManagedModelIdentifier</tt> to extract version one by one
+     * </p>
+     *
+     * @author elecomte
+     * @version 1
+     * @since v0.0.8
+     */
+    private static class DescriptionExtractor implements ResultSetExtractor<List<ManagedModelDescription>> {
 
-			List<ManagedModelDescription> descriptions = new ArrayList<>();
+        private final ManagedModelIdentifier identifier;
 
-			int line = 0;
-			while (rs.next()) {
-				// Basic extract, line after line
-				descriptions.add(this.identifier.extractFromLine(rs, line));
-				line++;
-			}
+        /**
+         * @param identifier
+         */
+        public DescriptionExtractor(ManagedModelIdentifier identifier) {
+            super();
+            this.identifier = identifier;
+        }
 
-			return descriptions;
-		}
-	}
+        /**
+         * @param rs
+         * @return
+         * @throws SQLException
+         * @throws DataAccessException
+         * @see org.springframework.jdbc.core.ResultSetExtractor#extractData(java.sql.ResultSet)
+         */
+        @Override
+        public List<ManagedModelDescription> extractData(ResultSet rs) throws SQLException, DataAccessException {
+
+            List<ManagedModelDescription> descriptions = new ArrayList<>();
+
+            int line = 0;
+            while (rs.next()) {
+                // Basic extract, line after line
+                descriptions.add(this.identifier.extractFromLine(rs, line));
+                line++;
+            }
+
+            return descriptions;
+        }
+    }
 }

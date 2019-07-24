@@ -21,7 +21,6 @@ public class FunctionalDomainPackage extends FunctionalDomainExportPackage<Funct
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected FunctionalDomain initContent() {

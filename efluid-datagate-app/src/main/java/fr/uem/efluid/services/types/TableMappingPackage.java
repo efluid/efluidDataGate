@@ -21,7 +21,6 @@ public class TableMappingPackage extends TableMappingExportPackage<TableMapping>
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected TableMapping initContent() {

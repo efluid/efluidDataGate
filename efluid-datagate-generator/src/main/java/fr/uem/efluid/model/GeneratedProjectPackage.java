@@ -17,8 +17,8 @@ public class GeneratedProjectPackage extends ProjectExportPackage<ParameterProje
 	private static final String RELOADABLE_TYPE = "fr.uem.efluid.services.types.ProjectPackage";
 
 	/**
-	 * @param name
-	 * @param exportDate
+	 *
+	 * @param allProjects
 	 */
 	public GeneratedProjectPackage(Collection<ParameterProjectDefinition> allProjects) {
 		super(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now());

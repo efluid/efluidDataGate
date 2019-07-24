@@ -17,8 +17,8 @@ public class GeneratedVersionPackage extends VersionExportPackage<ParameterVersi
 	private static final String RELOADABLE_TYPE = "fr.uem.efluid.services.types.VersionPackage";
 
 	/**
-	 * @param name
-	 * @param exportDate
+	 *
+	 * @param allVersion
 	 */
 	public GeneratedVersionPackage(Collection<ParameterVersionDefinition> allVersion) {
 		super(VersionExportPackage.VERSIONS_EXPORT, LocalDateTime.now());

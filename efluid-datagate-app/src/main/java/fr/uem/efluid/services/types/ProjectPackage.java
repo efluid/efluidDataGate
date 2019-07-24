@@ -21,7 +21,6 @@ public class ProjectPackage extends ProjectExportPackage<Project> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected Project initContent() {

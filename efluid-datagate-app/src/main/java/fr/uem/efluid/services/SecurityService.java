@@ -88,7 +88,6 @@ public class SecurityService extends AbstractApplicationService {
 	 * 
 	 * @param login
 	 * @param email
-	 * @param password
 	 * @param preferedProjects
 	 *            Selected prefered projects for the new user
 	 */

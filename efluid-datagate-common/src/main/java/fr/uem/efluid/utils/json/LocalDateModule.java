@@ -50,13 +50,12 @@ public class LocalDateModule extends SimpleModule {
 		}
 
 		/**
+		 *
 		 * @param jsonParser
 		 * @param deserializationContext
 		 * @return
 		 * @throws IOException
 		 * @throws JsonProcessingException
-		 * @see com.fasterxml.jackson.databind.JsonDeserializer#deserialize(com.fasterxml.jackson.core.JsonParser,
-		 *      com.fasterxml.jackson.databind.DeserializationContext)
 		 */
 		@Override
 		public LocalDate deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
@@ -88,14 +87,12 @@ public class LocalDateModule extends SimpleModule {
 		}
 
 		/**
-		 * @param dateTime
+		 *
+		 * @param date
 		 * @param jsonGenerator
 		 * @param provider
 		 * @throws IOException
 		 * @throws JsonGenerationException
-		 * @see com.fasterxml.jackson.databind.ser.std.StdSerializer#serialize(java.lang.Object,
-		 *      com.fasterxml.jackson.core.JsonGenerator,
-		 *      com.fasterxml.jackson.databind.SerializerProvider)
 		 */
 		@Override
 		public void serialize(LocalDate date, JsonGenerator jsonGenerator, SerializerProvider provider)

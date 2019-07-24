@@ -54,9 +54,9 @@ public class SharedOutputInputUtils {
 
 	private static final String MERGER = "£;£";
 
-	static final ObjectMapper MAPPER = preparedObjectMapper();
+	private static final ObjectMapper MAPPER = preparedObjectMapper();
 
-	static final DateTimeFormatter DATE_TIME_FORMATER = DateTimeFormatter.ofPattern(FormatUtils.DATE_TIME_FORMAT);
+	private static final DateTimeFormatter DATE_TIME_FORMATER = DateTimeFormatter.ofPattern(FormatUtils.DATE_TIME_FORMAT);
 
 	/**
 	 * <p>
@@ -77,7 +77,7 @@ public class SharedOutputInputUtils {
 	 * Revert {@link #mergeValues(String, String)}
 	 * </p>
 	 * 
-	 * @param value
+	 * @param merged
 	 * @return
 	 */
 	public static String[] splitValues(String merged) {
@@ -85,7 +85,6 @@ public class SharedOutputInputUtils {
 	}
 
 	/**
-	 * @param properties
 	 * @return
 	 */
 	public static JsonPropertiesWriter newJson() {
@@ -105,7 +104,7 @@ public class SharedOutputInputUtils {
 	 * When serialize is done as a tmp file
 	 * </p>
 	 * 
-	 * @param name
+	 * @param pathPaths
 	 * @param data
 	 * @return
 	 */
@@ -182,8 +181,7 @@ public class SharedOutputInputUtils {
 	 * When serialize is done as a tmp file
 	 * </p>
 	 * 
-	 * @param name
-	 * @param data
+	 * @param path
 	 * @return
 	 */
 	public static byte[] deserializeDataFromTmpFile(Path path) {
@@ -212,7 +210,6 @@ public class SharedOutputInputUtils {
 	}
 
 	/**
-	 * @param zipped
 	 * @return
 	 */
 	public static Path initTmpFolder() {
@@ -284,7 +281,7 @@ public class SharedOutputInputUtils {
 		 * Dedicated for LocalDateTime
 		 * 
 		 * @param key
-		 * @param uuid
+		 * @param ldt
 		 * @return
 		 */
 		public JsonPropertiesWriter with(String key, LocalDateTime ldt) {

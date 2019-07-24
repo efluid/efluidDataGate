@@ -120,8 +120,7 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 	}
 
 	/**
-	 * @param file
-	 * @param tmpPath
+	 * @param att
 	 * @return
 	 */
 	public static AttachmentLine fromEntity(Attachment att) {

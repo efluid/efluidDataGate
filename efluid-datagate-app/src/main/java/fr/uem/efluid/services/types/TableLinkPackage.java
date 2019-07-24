@@ -21,7 +21,6 @@ public class TableLinkPackage extends TableLinkExportPackage<TableLink> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected TableLink initContent() {

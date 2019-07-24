@@ -53,7 +53,6 @@ public interface DictionaryApi {
 
 	/**
 	 * @param versionName
-	 * @return
 	 * @throws ApplicationException
 	 */
 	@RequestMapping(value = "/version/{name}", method = PUT)

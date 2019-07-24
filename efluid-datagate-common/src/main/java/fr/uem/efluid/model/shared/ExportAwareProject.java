@@ -26,10 +26,6 @@ public abstract class ExportAwareProject implements Shared {
 	 */
 	public abstract int getColor();
 
-	/**
-	 * @param createdTime
-	 *            the createdTime to set
-	 */
 	public abstract LocalDateTime getCreatedTime();
 
 	/**

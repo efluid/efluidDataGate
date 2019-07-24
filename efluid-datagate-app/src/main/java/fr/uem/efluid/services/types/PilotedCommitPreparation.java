@@ -302,7 +302,6 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
      * </p>
      *
      * @param fullDiff
-     * @return
      */
     public void applyDiffDisplayContent(Collection<T> fullDiff) {
 

@@ -12,7 +12,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * <p>
  * Specify a <b>link</b> from a mapped property <b>value</b> (annotated with
- * {@link fr.uem.efluid.ParameterValue}) to another table or {@link fr.uem.efluid.ParameterTable}. The link can be
+ * <tt>ParameterValue</tt> to another table or <tt>ParameterTable</tt>. The link can be
  * defined by a java type, which must be annotated itself with
  * <code>&#64;ParameterTable</code>, or by a manually set table name. If type or table
  * name are not set, the linked parameter type will be assumed to be the annotated field /
@@ -20,7 +20,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * </p>
  * <p>
  * The property annotated with <code>&#64;ParameterLink</code> must be itself annotated
- * with {@link fr.uem.efluid.ParameterValue} to be used.
+ * with <tt>ParameterValue</tt> to be used.
  * </p>
  * <p>
  * In case of "composite-key" used for link association, you simply have to annotate each
@@ -52,7 +52,7 @@ public @interface ParameterLink {
 
     /**
      * <p>
-     * Instead of {@link #value()}, can be used to define the associated parameter table
+     * Define the associated parameter table
      * directly with the table name
      * </p>
      *

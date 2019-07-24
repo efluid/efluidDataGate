@@ -21,7 +21,6 @@ public class VersionPackage extends VersionExportPackage<Version> {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected Version initContent() {

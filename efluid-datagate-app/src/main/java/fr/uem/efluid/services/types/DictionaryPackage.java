@@ -21,7 +21,6 @@ public class DictionaryPackage extends DictionaryExportPackage<DictionaryEntry> 
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#initContent()
 	 */
 	@Override
 	protected DictionaryEntry initContent() {

@@ -360,8 +360,9 @@ public class DictionaryEntryEditData {
          * </p>
          *
          * @param selected
-         * @param keyname
-         * @param linkedTable from existing link
+         * @param keyNames
+         * @param keyTypes
+         * @param linkUpdate
          * @return
          */
         public static ColumnEditData fromSelecteds(

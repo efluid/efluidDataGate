@@ -300,7 +300,6 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
      *
      * @param data
      * @param existing
-     * @return
      */
     protected static void completeFromExistingEntity(PreparedIndexEntry data, IndexEntry existing) {
 

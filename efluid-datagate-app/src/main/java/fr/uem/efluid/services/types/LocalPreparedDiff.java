@@ -12,7 +12,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 public class LocalPreparedDiff extends DiffDisplay<PreparedIndexEntry> {
 
 	/**
-	 * @param dict
+	 * @param dictUuid
 	 */
 	public LocalPreparedDiff(UUID dictUuid) {
 		super(dictUuid);

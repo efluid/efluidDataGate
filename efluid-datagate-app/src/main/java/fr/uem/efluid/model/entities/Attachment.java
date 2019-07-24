@@ -195,7 +195,7 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
     }
 
     /**
-     * @param raw
+     * @param mixedContent
      * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
      */
     @Override

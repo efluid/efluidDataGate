@@ -49,7 +49,6 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 
 	/**
 	 * @param att
-	 * @see fr.uem.efluid.tools.AttachmentProcessor#execute(fr.uem.efluid.tools.AttachmentProcessor.Compliant)
 	 */
 	@Override
 	public void execute(User user, Compliant att) {

@@ -339,7 +339,7 @@ public class ManagedValueConverter {
      * <li>If activePayload is not empty and existing is, it is seen as an addition : the
      * active payload is displayed.</li>
      * <li>If both are present, it is seen as a modification. It will detect then the
-     * modified values and display them this way <code>column:"old"=>"new"</code>, only on
+     * modified values and display them this way <code>column:"old"=&gt;"new"</code>, only on
      * modified columns.</li>
      * </ul>
      * </p>

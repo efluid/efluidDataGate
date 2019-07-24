@@ -29,7 +29,6 @@ public final class DictionaryEntrySummary implements Comparable<DictionaryEntryS
 	 * @param domainName
 	 * @param name
 	 * @param query
-	 * @param canDelete
 	 */
 	public DictionaryEntrySummary(UUID uuid, UUID domainUuid, String domainName, String name, String query) {
 		super();

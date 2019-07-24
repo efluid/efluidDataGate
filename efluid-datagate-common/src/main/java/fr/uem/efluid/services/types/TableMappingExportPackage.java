@@ -24,7 +24,6 @@ public abstract class TableMappingExportPackage<D extends ExportAwareTableMappin
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.model.SharedPackage#getVersion()
 	 */
 	@Override
 	public final String getVersion() {
