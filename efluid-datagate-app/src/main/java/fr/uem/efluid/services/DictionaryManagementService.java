@@ -72,6 +72,8 @@ import static fr.uem.efluid.utils.ErrorType.*;
 @Transactional
 public class DictionaryManagementService extends AbstractApplicationService {
 
+    private static final VersionData NOT_SET_VERSION = new VersionData("NOT SET", "", null, null, false);
+
     private static final String DEDUPLICATED_DOMAINS = "deduplicated-domains";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryManagementService.class);
@@ -162,10 +164,18 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
-        Version last = this.versions.getLastVersionForProject(project);
 
-        // Must have no commit for version
-        return VersionData.fromEntity(last, this.commits.countCommitsForVersion(last.getUuid()) == 0);
+        if(project != null) {
+            Version last = this.versions.getLastVersionForProject(project);
+
+            if(last != null) {
+
+                // Must have no commit for version
+                return VersionData.fromEntity(last, this.commits.countCommitsForVersion(last.getUuid()) == 0);
+            }
+        }
+
+        return NOT_SET_VERSION;
     }
 
     /**
