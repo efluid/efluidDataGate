@@ -33,7 +33,7 @@ Pour builder une version avec H2 sur un serveur efluid :
     ## lancer le script de build depuis le dossier racine
     ./efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
 
-L'instance est déployée dans le répo local docker sous le nom **efluid-datagate**:*latest*
+L'instance est déployée dans le répo local docker sous le nom **efluid-datagate**:*${PROJECT_VERSION}*
 
 **Pour démarrer la version standalone server avec les scripts fournis**
 

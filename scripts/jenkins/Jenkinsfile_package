@@ -10,6 +10,7 @@ withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credent
            env.HTTPS_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
 }
 try{
+	def applicationVersion = readMavenPom().getVersion()
     def urlArtifactoryRelease = env.urlArtifactoryRelease
 	def urlArtifactorySnapshot = env.urlArtifactorySnapshot
 	def adressMailFrom = env.adressMailFrom
@@ -17,8 +18,8 @@ try{
 	sh 'mvn clean deploy -DskipNexusStagingDeployMojo=false -DskipTests=true -DurlArtifactoryRelease=${urlArtifactoryRelease} -DurlArtifactorySnapshot=${urlArtifactorySnapshot}'
 	sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
 	sh 'cp efluid-datagate-app/src/docker/build-serv-efluid/logback.xml efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
-	sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
-	sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate"
+	sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
+	sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion}"
 } catch (Exception e) {
 	mail bcc: '', body: """EfluidDataGate en erreur
 
