@@ -17,7 +17,7 @@ node('socle-jenkins-maven-docker-14-4G') {
       sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion}"
     }
 	
-	sh "mvn deploy:deploy-file -B -DgroupId=com.efluid.oss -DartifactId=efluid-datagate-scriptInstalleur -DrepositoryId=releases -Dversion=${releaseVersion} -Dfile=scripts/installeur/target/efluid-datagate-scriptInstalleur-${releaseVersion} -Dpackaging=zip -Durl=${urlArtifactoryRelease}"
+	sh "mvn deploy:deploy-file -B -DgroupId=com.efluid.oss -DartifactId=efluid-datagate-scriptInstalleur -DrepositoryId=releases -Dversion=${releaseVersion} -Dfile=scripts/installeur/target/efluid-datagate-scriptInstalleur-${releaseVersion}.zip -Dpackaging=zip -Durl=${urlArtifactoryRelease}"
     
     withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
       sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/efluidDataGate.git')
