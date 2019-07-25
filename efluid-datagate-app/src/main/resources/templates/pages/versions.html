@@ -28,7 +28,8 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
                     <th scope="col">App. Modèle</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
-                    <th scope="col" width="10%">&nbsp;</th>
+                    <th scope="col" colspan="2">Comparer</th>
+                    <th scope="col"width="10%"><a id="compareButton" class="btn btn-outline-secondary btn-sm float-right">Voir les différences</a></th>
                 </tr>
             </thead>
             <tbody>
@@ -42,18 +43,23 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
                      <td th:text="${version.modelId}">1.2.3</td>
                      <td th:text="${custom.format(version.createdTime)}">Lundi</td>
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
+                    <td><div th:id="|oneselecterFor${version.name}|" class="selecter unselected" title="Comparer entre cette version ...">&nbsp;</div>&nbsp;&nbsp;</td>
+                    <td><div th:id="|twoselecterFor${version.name}|" class="selecter unselected" title="... et cette version">&nbsp;</div>&nbsp;&nbsp;</td>
                      <td>
                      	<button th:if="${version.isCanUpdate()}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
                      </td>
 			     </tr>
 			     <tr id="versionListInjectBefore">
-			         <td><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
-			         <td colspan="4"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+			         <td colspan="2"><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
+			         <td colspan="5"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
 			     </tr>
 			</tbody>
 		</table>
     </span>
     <script layout:fragment="script">
+
+        var selectOne;
+        var selectTwo;
 
 		// Add row button
 		const addButtonAction = () => {
@@ -82,9 +88,49 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
 				window.location.replace("/ui/versions"); // Refresh page
 		    });
 		};
-		
+
+		 // When selecting
+        const selectAction = (item) => {
+			hideDisplays();
+
+			var name = item.id.substring(14);
+            var type = item.id.substring(0,3);
+
+            console.log(type + " => " + name);
+
+            if(type === "one"){
+                if(selectOne === name){
+                    selectOne = null;
+                    item.className = "selecter unselected" ;
+                } else {
+                    selectOne = name;
+                    item.className = "selecter selected" ;
+                }
+            } else {
+                if(selectTwo === name){
+                    selectTwo = null;
+                    item.className = "selecter unselected" ;
+                } else {
+                    selectTwo = name;
+                    item.className = "selecter selected" ;
+                }
+            }
+
+            var button = $("#compareButton");
+
+            if(selectOne != null && selectTwo != null){
+                var link = "/ui/versions/compare/" + selectOne + "/" + selectTwo;
+				button.removeClass("btn-outline-secondary").addClass("btn-secondary");
+				button.prop('href',link);
+       		} else {
+                button.removeAttr('href');
+    			button.removeClass("btn-secondary").addClass("btn-outline-secondary");
+            }
+        };
+
     	// Init actions
     	$(document).ready(() => {
+			$("div.selecter").click((e) => selectAction(e.target));
 			$("#addButton").click(addButtonAction);
 			$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.id));
 		}); 

@@ -165,10 +165,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
-        if(project != null) {
+        if (project != null) {
             Version last = this.versions.getLastVersionForProject(project);
 
-            if(last != null) {
+            if (last != null) {
 
                 // Must have no commit for version
                 return VersionData.fromEntity(last, this.commits.countCommitsForVersion(last.getUuid()) == 0);
@@ -294,6 +294,33 @@ public class DictionaryManagementService extends AbstractApplicationService {
      */
     public boolean isDictionnaryExists() {
         return this.dictionary.count() > 0;
+    }
+
+    /**
+     * Process a full compare between 2 selected versions for a dictionnary update following
+     *
+     * @param oneName
+     * @param twoName
+     * @return
+     */
+    public VersionCompare compareVersions(String oneName, String twoName) {
+
+        // Requires project
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        Version one = this.versions.findByNameAndProject(oneName, project);
+        Version two = this.versions.findByNameAndProject(twoName, project);
+
+        if (one != null && two != null) {
+            VersionCompare compare = new VersionCompare(
+                    VersionData.fromEntity(one, false),
+                    VersionData.fromEntity(two, false));
+
+            return compare;
+        } else {
+            throw new ApplicationException(VERSION_NOT_EXIST, "Selected version(s) doesn't exist (" + oneName + " - " + twoName + ")");
+        }
     }
 
     /**
