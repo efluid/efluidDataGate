@@ -16,10 +16,18 @@ node('socle-jenkins-maven-docker-14-4G') {
     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.gpgMavenCentralPassphrase, passwordVariable: 'gpgPassword', usernameVariable: 'gpgUsername']]) {
       sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion}"
     }
+	
+	sh "mvn deploy:deploy-file -B -DgroupId=com.efluid.oss -DartifactId=efluid-datagate-scriptInstalleur -DrepositoryId=releases -Dversion=${releaseVersion} -Dfile=scripts/installeur/target/efluid-datagate-scriptInstalleur-${releaseVersion}.zip -Dpackaging=zip -Durl=${urlArtifactoryRelease}"
+    
     withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
       sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/efluidDataGate.git')
     }
-
+	
+	sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
+	sh 'cp efluid-datagate-app/src/docker/build-serv-efluid/logback.xml efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
+	sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
+	sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion}"
+	
     String mailDetail = "efluidDataGate tool from open source project https://github.com/efluid/efluidDataGate was successfull released in version ${releaseVersion}"
     mailUtils.mailInfo(subject, mailDetail, destinatairesMail, false)
   } catch (Exception e) {
