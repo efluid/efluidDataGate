@@ -235,12 +235,14 @@
 					var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
 					var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
 					var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
+
+					var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
 				
 					var itemRow = 
 						'<tr id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' ' + id + '_added">' +
 						 	'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
 						 	'<td class="action-display">' + actionDisplay + '</td>' +
-						 	'<td><span class="change-display" title="payload technique=' + e.payload + '">' + e.hrPayload + '</span></td>' + 
+						 	'<td><span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload + '</span></td>' +
 						 	'<td>' +
 							 	'<div class="btn-group float-right" role="group">' +
 									'<button type="button" class="' + butSelecClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',true,false)">Garder</button>' +

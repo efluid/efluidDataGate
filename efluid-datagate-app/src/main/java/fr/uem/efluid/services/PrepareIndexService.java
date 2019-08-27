@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -556,13 +557,13 @@ public class PrepareIndexService {
             final Set<T> diff,
             final DictionaryEntry dic) {
 
+        boolean wasKnew = knewContent.containsKey(actualOne.getKey());
+
         // Found : for delete identification immediately remove from found ones
         String knewPayload = knewContent.remove(actualOne.getKey());
 
         // Exist already
-        if (knewPayload != null) {
-
-            // TODO : add independency over column model
+        if (!StringUtils.isEmpty(knewPayload)) {
 
             // Content is different : it's an Update
             if (!actualOne.getValue().equals(knewPayload)) {
@@ -575,8 +576,12 @@ public class PrepareIndexService {
 
         // Doesn't exist already : it's an addition
         else {
-            LOGGER.debug("New endex entry for {} : ADD with \"{}\"", actualOne.getKey(), actualOne.getValue());
-            diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKey(), actualOne.getValue(), null, dic));
+
+            // Except if new is also empty will content is knew : it's a managed empty line
+            if(!(wasKnew && StringUtils.isEmpty(actualOne.getValue()))) {
+                LOGGER.debug("New endex entry for {} : ADD with \"{}\"", actualOne.getKey(), actualOne.getValue());
+                diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKey(), actualOne.getValue(), null, dic));
+            }
         }
     }
 

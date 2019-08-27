@@ -407,6 +407,12 @@ public class PreparationFixtures extends SystemTest {
         });
     }
 
+    @Then("^no diff content has been found$")
+    public void commit_empty() {
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+        assertThat(preparation.isEmptyDiff()).isTrue();
+    }
+
     @Then("^the merge commit content is rendered with these identified changes :$")
     public void merge_commit_content_ready(DataTable data) {
 

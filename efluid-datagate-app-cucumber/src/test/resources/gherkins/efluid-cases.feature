@@ -522,3 +522,78 @@ Feature: A complete set of test case are specified for Efluid needs
       | Table  | Key       | Action | Payload                                               |
       | TTEST1 | $testa_i4 | ADD    | COL1:'testp : delete lot 2 + insert lot 3 ---> lot 3' |
       | TTEST1 | $testa_i5 | ADD    | COL1:'testp : delete lot 2 + insert lot 3 ---> lot 3' |
+
+
+  @TestDiffTableVide
+  Scenario: Efluid diff table vide 1
+    Given the test is an Efluid standard scenario
+    And the existing data in managed table "TTEST1" :
+      | id | col1 |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then no diff content has been found
+
+  @TestDiffTableDataVide
+  Scenario: Efluid diff table vide 1 - data null standard
+    Given the test is an Efluid standard scenario
+    And the existing data in managed table "TTEST1" :
+      | id | col1 |
+      | 1  |      |
+      | 2  |      |
+      | 3  |      |
+      | 4  |      |
+      | 5  |      |
+      | 6  |      |
+      | 7  |      |
+      | 8  |      |
+      | 9  |      |
+      | 10 |      |
+      | 11 |      |
+      | 12 |      |
+      | 13 |      |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table  | Key | Action | Payload |
+      | TTEST1 | 1   | ADD    | COL1:'' |
+      | TTEST1 | 2   | ADD    | COL1:'' |
+      | TTEST1 | 3   | ADD    | COL1:'' |
+      | TTEST1 | 4   | ADD    | COL1:'' |
+      | TTEST1 | 5   | ADD    | COL1:'' |
+      | TTEST1 | 6   | ADD    | COL1:'' |
+      | TTEST1 | 7   | ADD    | COL1:'' |
+      | TTEST1 | 8   | ADD    | COL1:'' |
+      | TTEST1 | 9   | ADD    | COL1:'' |
+      | TTEST1 | 10  | ADD    | COL1:'' |
+      | TTEST1 | 11  | ADD    | COL1:'' |
+      | TTEST1 | 12  | ADD    | COL1:'' |
+      | TTEST1 | 13  | ADD    | COL1:'' |
+
+  @TestDiffTableDataVideNonRedite
+  Scenario: Efluid diff table vide 2 - non redite
+    Given the test is an Efluid standard scenario
+    And the existing data in managed table "TTEST1" :
+      | id | col1 |
+      | 1  |      |
+      | 2  |      |
+      | 3  |      |
+      | 4  |      |
+      | 5  |      |
+      | 6  |      |
+      | 7  |      |
+      | 8  |      |
+      | 9  |      |
+      | 10 |      |
+      | 11 |      |
+      | 12 |      |
+      | 13 |      |
+    And the commit ":tada: Test commit init with empty data" has been saved with all the identified initial diff content
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then no diff content has been found

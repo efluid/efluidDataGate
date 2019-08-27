@@ -1,29 +1,18 @@
 package fr.uem.efluid.tools;
 
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.utils.*;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Component;
-
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.services.types.Value;
-import fr.uem.efluid.utils.ApplicationException;
-import fr.uem.efluid.utils.ErrorType;
-import fr.uem.efluid.utils.FormatUtils;
-import fr.uem.efluid.utils.SelectClauseGenerator;
-import fr.uem.efluid.utils.StringSplitter;
 
 /**
  * <p>
@@ -354,14 +343,14 @@ public class ManagedValueConverter {
      */
     public String convertToHrPayload(String activePayload, String existingPayload) {
 
-        if (activePayload == null) {
-            if (existingPayload == null) {
+        if (StringUtils.isEmpty(activePayload)) {
+            if (StringUtils.isEmpty(existingPayload)) {
                 return null;
             }
             return displayInternalValue(expandInternalValue(existingPayload));
         }
 
-        if (existingPayload == null) {
+        if (StringUtils.isEmpty(existingPayload)) {
             return displayInternalValue(expandInternalValue(activePayload));
         }
 
