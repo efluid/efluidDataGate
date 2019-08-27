@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.model.UpdateChecked;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
@@ -23,7 +24,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @since v0.0.1
  * @version 2
  */
-public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctionalDomain<?>> implements Shared {
+public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctionalDomain<?>> implements Shared, UpdateChecked {
 
 	public abstract String getParameterName();
 
@@ -35,9 +36,8 @@ public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctional
 
 	public abstract String getKeyName();
 
+	@Override
 	public abstract LocalDateTime getCreatedTime();
-
-	public abstract LocalDateTime getUpdatedTime();
 
 	public abstract D getDomain();
 
