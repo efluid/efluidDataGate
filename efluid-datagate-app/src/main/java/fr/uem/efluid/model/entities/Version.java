@@ -48,8 +48,18 @@ public class Version extends ExportAwareVersion<Project> {
 
     private String modelIdentity;
 
-    @Lob // Stored export of version content, generated at init / import
-    private String versionContent;
+
+    @Lob // Stored export of version content - domains, generated at init / import
+    private String domainsContent;
+
+    @Lob // Stored export of version content - dict, generated at init / import
+    private String dictionaryContent;
+
+    @Lob // Stored export of version content - links, generated at init / import
+    private String linksContent;
+
+    @Lob // Stored export of version content - mappings, generated at init / import
+    private String mappingsContent;
 
     /**
      * @param uuid
@@ -171,12 +181,36 @@ public class Version extends ExportAwareVersion<Project> {
         this.modelIdentity = modelIdentity;
     }
 
-    public String getVersionContent() {
-        return this.versionContent;
+    public String getDomainsContent() {
+        return domainsContent;
     }
 
-    public void setVersionContent(String versionContent) {
-        this.versionContent = versionContent;
+    public void setDomainsContent(String domainsContent) {
+        this.domainsContent = domainsContent;
+    }
+
+    public String getDictionaryContent() {
+        return dictionaryContent;
+    }
+
+    public void setDictionaryContent(String dictionaryContent) {
+        this.dictionaryContent = dictionaryContent;
+    }
+
+    public String getLinksContent() {
+        return linksContent;
+    }
+
+    public void setLinksContent(String linksContent) {
+        this.linksContent = linksContent;
+    }
+
+    public String getMappingsContent() {
+        return mappingsContent;
+    }
+
+    public void setMappingsContent(String mappingsContent) {
+        this.mappingsContent = mappingsContent;
     }
 
     /**

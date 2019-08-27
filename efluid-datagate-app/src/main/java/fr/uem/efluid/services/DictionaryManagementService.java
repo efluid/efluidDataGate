@@ -6,6 +6,10 @@ import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository.IdentifierType;
+import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
+import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
+import fr.uem.efluid.model.shared.ExportAwareTableLink;
+import fr.uem.efluid.model.shared.ExportAwareTableMapping;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
@@ -154,6 +158,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
             version.setModelIdentity(modelId);
         }
 
+        // And finally, extract the content for validity
+        completeVersionContents(version);
+
         this.versions.save(version);
     }
 
@@ -162,17 +169,12 @@ public class DictionaryManagementService extends AbstractApplicationService {
      */
     public VersionData getLastVersion() {
 
-        this.projectService.assertCurrentUserHasSelectedProject();
-        Project project = this.projectService.getCurrentSelectedProjectEntity();
+        Version last = getLastUpdatedVersion();
 
-        if (project != null) {
-            Version last = this.versions.getLastVersionForProject(project);
+        if (last != null) {
 
-            if (last != null) {
-
-                // Must have no commit for version
-                return VersionData.fromEntity(last, this.commits.countCommitsForVersion(last.getUuid()) == 0);
-            }
+            // Must have no commit for version
+            return VersionData.fromEntity(last, this.commits.countCommitsForVersion(last.getUuid()) == 0);
         }
 
         return NOT_SET_VERSION;
@@ -824,6 +826,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
             deduplicateDomains(importedDomains, deduplicatedDomainsCount);
         }
 
+        // Finally update last version after import
+        Version last = getLastUpdatedVersion();
+        if (last != null) {
+            completeVersionContents(last);
+            this.versions.save(last); // Refresh
+        }
+
         // Details on imported counts (add vs updated items)
         if (importedProjects.size() > 0) {
             result.addCount(ProjectExportPackage.PROJECTS_EXPORT, newProjsCount.get(),
@@ -1360,6 +1369,21 @@ public class DictionaryManagementService extends AbstractApplicationService {
     }
 
     /**
+     * @return
+     */
+    public Version getLastUpdatedVersion() {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        if (project != null) {
+            return this.versions.getLastVersionForProject(project);
+        }
+
+        return null;
+    }
+
+    /**
      * @param tableName
      * @return
      */
@@ -1369,6 +1393,32 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 .filter(t -> t.getName().equalsIgnoreCase(tableName))
                 .findFirst()
                 .orElse(TableDescription.MISSING);
+    }
+
+    /**
+     * Extract and apply the content for an updated version (everything present when the version is updated)
+     *
+     * @param version
+     */
+    private void completeVersionContents(Version version) {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        // All contents
+        Map<String, List<UUID>> contentUuids = this.versions.findLastVersionContents(project, version.getUpdatedTime());
+
+        // Separated extracts
+        List<UUID> domsUuids = contentUuids.get(VersionRepository.MAPPED_TYPE_DOMAIN);
+        List<UUID> dictUuids = contentUuids.get(VersionRepository.MAPPED_TYPE_DICT);
+        List<UUID> linksUuids = contentUuids.get(VersionRepository.MAPPED_TYPE_LINK);
+        List<UUID> mappingsUuids = contentUuids.get(VersionRepository.MAPPED_TYPE_MAPPING);
+
+        // Apply all contents
+        version.setDomainsContent(this.domains.findAllById(domsUuids).stream().map(ExportAwareFunctionalDomain::serialize).collect(Collectors.joining(";")));
+        version.setDictionaryContent(this.dictionary.findAllById(dictUuids).stream().map(ExportAwareDictionaryEntry::serialize).collect(Collectors.joining(";")));
+        version.setLinksContent(this.links.findAllById(linksUuids).stream().map(ExportAwareTableLink::serialize).collect(Collectors.joining(";")));
+        version.setMappingsContent(this.mappings.findAllById(mappingsUuids).stream().map(ExportAwareTableMapping::serialize).collect(Collectors.joining(";")));
     }
 
     /**
