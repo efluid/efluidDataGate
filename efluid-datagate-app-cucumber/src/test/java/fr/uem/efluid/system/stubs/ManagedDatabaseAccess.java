@@ -166,6 +166,23 @@ public class ManagedDatabaseAccess {
         this.em.flush();
     }
 
+
+    /**
+     * Init from cucumber Datatable
+     *
+     * @param name
+     * @param data
+     */
+    public void initHeavyTab(int count, String name, DataTable data) {
+
+        List<Map<String, String>> values = data.asMaps(String.class, String.class);
+        Class<?> type = ENTITY_TYPES.get(name).getSecond();
+        values.forEach(m -> initHeavy(count,  m, type));
+
+        this.em.flush();
+    }
+
+
     private <T> T load(Class<T> type, Map<String, String> m) {
 
         try {
@@ -188,6 +205,45 @@ public class ManagedDatabaseAccess {
                     }
 
                     Object val = getValForSetter(setter, v, k);
+                    try {
+                        setter.invoke(entity, val);
+                    } catch (Exception e) {
+                        throw new UnsupportedOperationException("Cannot call setter "
+                                + setter.getName() + " on entity of type " + type, e);
+                    }
+                }
+            });
+
+            return entity;
+
+        } catch (Throwable t) {
+            throw new AssertionError("Cannot populate test entity of type " + type, t);
+        }
+    }
+
+
+    private <T> T loadPattern(Class<T> type, Map<String, String> m, String replace) {
+
+        try {
+            // Default constructor call
+            T entity = type.getConstructor().newInstance();
+
+            // Search setters
+            Map<String, Method> setters = loadSetters(type);
+
+            // apply all setters
+            m.forEach((k, v) -> {
+                // Ignore change
+                if (!k.equals("change")) {
+                    Method setter = setters.get(k);
+                    if (setter == null) {
+                        throw new UnsupportedOperationException("The column " + k
+                                + " has no corresponding setter in type " + type
+                                + ": add it as exclude type in fr.uem.efluid.system.stubs." +
+                                "ManagedDatabaseAccess.load or check datatable");
+                    }
+
+                    Object val = getValForSetter(setter, v.replaceAll("%%", replace), k);
                     try {
                         setter.invoke(entity, val);
                     } catch (Exception e) {
@@ -245,7 +301,7 @@ public class ManagedDatabaseAccess {
         }
 
         // Remove empty
-        if(!StringUtils.hasText(v)){
+        if (!StringUtils.hasText(v)) {
             return null;
         }
 
@@ -301,6 +357,13 @@ public class ManagedDatabaseAccess {
             assertThat(found).isNotNull();
             assertThat(found).isEqualTo(expected);
         });
+    }
+
+    private <T> void initHeavy(int count, Map<String, String> m, Class<T> type) {
+
+        for (int i = 0; i < count; i++) {
+            save(loadPattern(type, m, String.valueOf(i+1)));
+        }
     }
 
     private <T> void update(String action, String firstCol, Map<String, String> m, Class<T> type) {

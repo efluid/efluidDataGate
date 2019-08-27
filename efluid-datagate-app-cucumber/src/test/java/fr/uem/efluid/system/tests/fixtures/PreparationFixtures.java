@@ -407,6 +407,23 @@ public class PreparationFixtures extends SystemTest {
         });
     }
 
+    @Then("^the commit content has (.*) entries for managed table \"(.*)\"$")
+    public void commit_content_size(int size, String table){
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        var diff = preparation.getDomains().stream().flatMap(d -> d.getPreparedContent().stream()).filter(c -> ((DiffDisplay) c).getDictionaryEntryTableName().equals(table)).findFirst();
+
+        assertThat(diff).isPresent();
+        assertThat(diff.get().getDiff()).hasSize(size);
+    }
+
+    @Then("^no diff content has been found$")
+    public void commit_empty() {
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+        assertThat(preparation.isEmptyDiff()).isTrue();
+    }
+
     @Then("^the merge commit content is rendered with these identified changes :$")
     public void merge_commit_content_ready(DataTable data) {
 
