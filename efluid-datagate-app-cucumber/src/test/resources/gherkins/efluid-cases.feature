@@ -597,3 +597,32 @@ Feature: A complete set of test case are specified for Efluid needs
     And the diff is completed
     When the user access to diff commit page
     Then no diff content has been found
+
+  @TestBigData
+  Scenario: Efluid diff large 1 - test loader
+    Given the test is an Efluid standard scenario
+    And the 5 generated data in managed table "TTESTMULTIDATATYPE" :
+      | id         | col1     | col2           | col3 | col4       | col5                | col6 | col7    |
+      | $testj_d%% | testj %% | testj varchar2 | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table              | Key       | Action | Payload                                                                                                                 |
+      | TTESTMULTIDATATYPE | $testj_d1 | ADD    | COL1:'testj 1', COL2:'testj varchar2', COL3:121, COL4:2012-01-15 00:00:00, COL5:2012-01-15 00:00:00, COL6:'y', COL7:'clob 1' |
+      | TTESTMULTIDATATYPE | $testj_d2 | ADD    | COL1:'testj 2', COL2:'testj varchar2', COL3:122, COL4:2012-01-15 00:00:00, COL5:2012-01-15 00:00:00, COL6:'y', COL7:'clob 2' |
+      | TTESTMULTIDATATYPE | $testj_d3 | ADD    | COL1:'testj 3', COL2:'testj varchar2', COL3:123, COL4:2012-01-15 00:00:00, COL5:2012-01-15 00:00:00, COL6:'y', COL7:'clob 3' |
+      | TTESTMULTIDATATYPE | $testj_d4 | ADD    | COL1:'testj 4', COL2:'testj varchar2', COL3:124, COL4:2012-01-15 00:00:00, COL5:2012-01-15 00:00:00, COL6:'y', COL7:'clob 4' |
+      | TTESTMULTIDATATYPE | $testj_d5 | ADD    | COL1:'testj 5', COL2:'testj varchar2', COL3:125, COL4:2012-01-15 00:00:00, COL5:2012-01-15 00:00:00, COL6:'y', COL7:'clob 5' |
+
+  @TestBigData
+  Scenario: Efluid diff large 2 - loader use
+    Given the test is an Efluid standard scenario
+    And the 50000 generated data in managed table "TTESTMULTIDATATYPE" :
+      | id         | col1     | col2           | col3 | col4       | col5                | col6 | col7    |
+      | $testj_d%% | testj %% | testj varchar2 | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    Then the commit content has 50000 entries for managed table "TTESTMULTIDATATYPE"

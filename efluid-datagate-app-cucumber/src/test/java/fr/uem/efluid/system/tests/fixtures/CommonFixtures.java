@@ -32,7 +32,7 @@ public class CommonFixtures extends SystemTest {
     @Given("^the dictionary is fully initialized with tables 1, 2 and 3$")
     public void the_dictionary_is_fully_initialized_with_tables() throws Throwable {
 
-        if(efluidCase){
+        if (efluidCase) {
             initCompleteDictionaryWithEfluidTestTables();
         } else {
             initCompleteDictionaryWith7Tables();
@@ -78,7 +78,7 @@ public class CommonFixtures extends SystemTest {
 
     @Then("^the page is displayed$")
     public void page_content_is_rendered() throws Exception {
-          currentAction.andDo(MockMvcResultHandlers.print());
+        currentAction.andDo(MockMvcResultHandlers.print());
     }
 
     @Then("^the provided template is (.*)$")
@@ -98,6 +98,11 @@ public class CommonFixtures extends SystemTest {
     @Given("^the existing data in managed table \"(.*)\" :$")
     public void existing_data_in_managed_table(String name, DataTable data) {
         managedDatabase().initTab(name, data);
+    }
+
+    @Given("^the (.*) generated data in managed table \"(.*)\" :$")
+    public void existing_data_in_managed_table(int count, String name, DataTable data) {
+        managedDatabase().initHeavyTab(count, name, data);
     }
 
     @Given("^the data in managed table \"(.*)\" is now :$")
