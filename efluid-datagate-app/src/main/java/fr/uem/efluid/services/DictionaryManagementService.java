@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.uem.efluid.utils.ErrorType.*;
 
@@ -81,6 +82,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
     private static final String DEDUPLICATED_DOMAINS = "deduplicated-domains";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryManagementService.class);
+
+    private static final String VERSION_CONTENT_ITEM_SEP = ";";
 
     @Autowired
     private FunctionalDomainRepository domains;
@@ -323,6 +326,24 @@ public class DictionaryManagementService extends AbstractApplicationService {
         } else {
             throw new ApplicationException(VERSION_NOT_EXIST, "Selected version(s) doesn't exist (" + oneName + " - " + twoName + ")");
         }
+    }
+
+    private List<VersionCompare.DomainChanges> produceVersionChanges(Version one, Version two) {
+
+        List<FunctionalDomain> oneDomains = Stream.of(one.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+            FunctionalDomain domain = new FunctionalDomain();
+            domain.deserialize(s);
+            return domain;
+        }).collect(Collectors.toList());
+
+        List<FunctionalDomain> twoDomains = Stream.of(one.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+            FunctionalDomain domain = new FunctionalDomain();
+            domain.deserialize(s);
+            return domain;
+        }).collect(Collectors.toList());
+
+        return null;
+
     }
 
     /**
@@ -1415,10 +1436,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
         List<UUID> mappingsUuids = contentUuids.get(VersionRepository.MAPPED_TYPE_MAPPING);
 
         // Apply all contents
-        version.setDomainsContent(this.domains.findAllById(domsUuids).stream().map(ExportAwareFunctionalDomain::serialize).collect(Collectors.joining(";")));
-        version.setDictionaryContent(this.dictionary.findAllById(dictUuids).stream().map(ExportAwareDictionaryEntry::serialize).collect(Collectors.joining(";")));
-        version.setLinksContent(this.links.findAllById(linksUuids).stream().map(ExportAwareTableLink::serialize).collect(Collectors.joining(";")));
-        version.setMappingsContent(this.mappings.findAllById(mappingsUuids).stream().map(ExportAwareTableMapping::serialize).collect(Collectors.joining(";")));
+        version.setDomainsContent(this.domains.findAllById(domsUuids).stream().map(ExportAwareFunctionalDomain::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
+        version.setDictionaryContent(this.dictionary.findAllById(dictUuids).stream().map(ExportAwareDictionaryEntry::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
+        version.setLinksContent(this.links.findAllById(linksUuids).stream().map(ExportAwareTableLink::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
+        version.setMappingsContent(this.mappings.findAllById(mappingsUuids).stream().map(ExportAwareTableMapping::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
     }
 
     /**
