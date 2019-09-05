@@ -30,7 +30,7 @@ node('socle-jenkins-maven-docker-14-4G') {
 	sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
 	sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion}"
 	
-	gitHubUtils.createRelease(efluidDataGate,releaseVersion)
+	gitHubUtils.createRelease('efluidDataGate',releaseVersion)
 	
     String mailDetail = "efluidDataGate tool from open source project https://github.com/efluid/efluidDataGate was successfull released in version ${releaseVersion}"
     mailUtils.mailInfo(subject, mailDetail, destinatairesMail, false)
