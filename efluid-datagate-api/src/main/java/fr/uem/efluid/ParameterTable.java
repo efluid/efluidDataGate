@@ -5,6 +5,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -44,7 +45,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Documented
 @Retention(RUNTIME)
-@Target(TYPE)
+@Target({ANNOTATION_TYPE, TYPE})
 @Inherited
 public @interface ParameterTable {
 
@@ -133,6 +134,17 @@ public @interface ParameterTable {
      * @return
      */
     boolean useAllFields() default true;
+
+    /**
+     * <p>
+     * To force exclusion for default fields from specified inherited type.
+     * Allows to specify a table mapping on a type will excluding any technical field from,
+     * for example, a technical top level type (like with some Efluid ORM model types)
+     * </p>
+     *
+     * @return array of types to exclude from field inclusion
+     */
+    Class<?>[] excludeInheritedFrom() default {};
 
     /**
      * <p>
