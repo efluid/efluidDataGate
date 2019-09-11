@@ -13,6 +13,7 @@ import fr.uem.efluid.model.shared.ExportAwareTableMapping;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.SelectClauseGenerator;
 import org.slf4j.Logger;
@@ -26,7 +27,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static fr.uem.efluid.utils.ErrorType.*;
 
@@ -126,6 +126,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
     @Autowired
     private FeatureManager features;
+
+    private VersionContentChangesGenerator changesGenerator;
 
     /**
      * @param name
@@ -304,9 +306,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
     /**
      * Process a full compare between 2 selected versions for a dictionnary update following
      *
-     * @param oneName
-     * @param twoName
-     * @return
+     * @param oneName identified version to compare, "left"
+     * @param twoName identified version to compare, "right"
+     * @return compare result
      */
     public VersionCompare compareVersions(String oneName, String twoName) {
 
@@ -318,32 +320,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
         Version two = this.versions.findByNameAndProject(twoName, project);
 
         if (one != null && two != null) {
-            VersionCompare compare = new VersionCompare(
+            return new VersionCompare(
                     VersionData.fromEntity(one, false),
-                    VersionData.fromEntity(two, false));
-
-            return compare;
+                    VersionData.fromEntity(two, false),
+                    this.changesGenerator.generateChanges(one, two));
         } else {
             throw new ApplicationException(VERSION_NOT_EXIST, "Selected version(s) doesn't exist (" + oneName + " - " + twoName + ")");
         }
-    }
-
-    private List<VersionCompare.DomainChanges> produceVersionChanges(Version one, Version two) {
-
-        List<FunctionalDomain> oneDomains = Stream.of(one.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-            FunctionalDomain domain = new FunctionalDomain();
-            domain.deserialize(s);
-            return domain;
-        }).collect(Collectors.toList());
-
-        List<FunctionalDomain> twoDomains = Stream.of(one.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-            FunctionalDomain domain = new FunctionalDomain();
-            domain.deserialize(s);
-            return domain;
-        }).collect(Collectors.toList());
-
-        return null;
-
     }
 
     /**

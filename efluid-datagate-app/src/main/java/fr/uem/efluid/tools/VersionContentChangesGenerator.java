@@ -1,16 +1,12 @@
 package fr.uem.efluid.tools;
 
 import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.metas.TableDescription;
-import fr.uem.efluid.services.types.DictionaryEntryEditData;
+import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.services.types.LinkUpdateFollow;
-import fr.uem.efluid.services.types.VersionCompare;
-import fr.uem.efluid.services.types.VersionCompare.ChangeType;
-import fr.uem.efluid.services.types.VersionCompare.Changes;
-import fr.uem.efluid.services.types.VersionCompare.DictionaryTableChanges;
-import fr.uem.efluid.services.types.VersionCompare.DomainChanges;
+import fr.uem.efluid.services.types.VersionCompare.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.io.Serializable;
@@ -20,6 +16,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * <p>Dictionary version change builder and provider. Read 2 versions and provides the identified changes, built in a 3 level process.</p>
+ * <p>The Mapping data are currently ignored</p>
+ *
+ * @author elecomte
+ * @version 1
+ * @since v2.0.0
+ */
+@Component
 public class VersionContentChangesGenerator {
 
     public static final String VERSION_CONTENT_ITEM_SEP = ";";
@@ -27,202 +32,299 @@ public class VersionContentChangesGenerator {
     @Autowired
     private ManagedQueriesGenerator queryGenerator;
 
-    public List<VersionCompare.DomainChanges> generateChanges(Version one, Version two) {
+    /**
+     * Process
+     *
+     * @param one dic version "left"
+     * @param two dic version "right"
+     * @return identified changes
+     */
+    public List<DomainChanges> generateChanges(Version one, Version two) {
 
-        List<FunctionalDomain> oneDomains = readDomains(one);
-        List<FunctionalDomain> twoDomains = readDomains(two);
-
-        List<DictionaryEntry> oneDicts = readDict(one);
-        List<DictionaryEntry> twoDicts = readDict(two);
-
-        List<TableLink> oneLinks = readLinks(one);
-        List<TableLink> twoLinks = readLinks(two);
-
-        List<TableMapping> oneMappings = readMappings(one);
-        List<TableMapping> twoMappings = readMappings(two);
-
-        return detectChanges(
-                oneDomains,
-                twoDomains,
-                FunctionalDomain::getUuid,
-                diffDomainChange(oneDicts, twoDicts, oneLinks, twoLinks, oneMappings, twoMappings),
-                diffDomainDelete(),
-                diffDomainAdd(twoDicts, twoLinks, twoMappings)
-        );
+        // Process with a builder because of large amount of processing properties to handle
+        return new DomainChangesBuilder(this.queryGenerator, one, two).generateChanges();
     }
 
-    private static BiFunction<FunctionalDomain, FunctionalDomain, DomainChanges> diffDomainChange(
-            List<DictionaryEntry> oneDicts,
-            List<DictionaryEntry> twoDicts,
-            List<TableLink> oneLinks,
-            List<TableLink> twoLinks,
-            List<TableMapping> oneMappings,
-            List<TableMapping> twoMappings) {
+    /**
+     * Change builder for two versions of dictionaries
+     */
+    private static class DomainChangesBuilder {
 
-        return (d1, d2) -> {
+        private final ManagedQueriesGenerator queryGenerator;
 
-            List<DictionaryEntry> d1Dicts = filterForId(d1.getUuid(), oneDicts, t -> t.getDomain().getUuid());
-            List<DictionaryEntry> d2Dicts = filterForId(d2.getUuid(), twoDicts, t -> t.getDomain().getUuid());
+        private final List<FunctionalDomain> oneDomains;
+        private final List<FunctionalDomain> twoDomains;
 
-            DomainChanges c = new DomainChanges();
-            c.setName(d1.getName());
-            c.setChangeType(ChangeType.MODIFIED);
+        private final List<DictionaryEntry> oneDicts;
+        private final List<DictionaryEntry> twoDicts;
 
-            c.setTableChanges(detectChanges(
-                    d1Dicts,
-                    d2Dicts,
-                    DictionaryEntry::getUuid,
-                    diffTableChange(oneLinks, twoLinks, oneMappings, twoMappings),
+        private final List<TableLink> oneLinks;
+        private final List<TableLink> twoLinks;
+
+        /*
+        private final List<TableMapping> oneMappings;
+        private final List<TableMapping> twoMappings;
+        */
+
+        private final Map<String, DictionaryEntry> oneAllDicts;
+        private final Map<String, DictionaryEntry> twoAllDicts;
+
+        /**
+         * Load content from version and prepare all items to process for changes, in 3 layers
+         *
+         * @param queryGenerator for column data building
+         * @param one dic version "left"
+         * @param two dic version "right"
+         */
+        DomainChangesBuilder(ManagedQueriesGenerator queryGenerator, Version one, Version two) {
+
+            this.queryGenerator = queryGenerator;
+
+            // 1st layer : the domains
+            this.oneDomains = readDomains(one);
+            this.twoDomains = readDomains(two);
+
+            // 2nd layer : the tables
+            this.oneDicts = readDict(one);
+            this.twoDicts = readDict(two);
+
+            // 3rd layer : column data (needs links and mappings)
+            this.oneLinks = readLinks(one);
+            this.twoLinks = readLinks(two);
+
+            /*
+            this.oneMappings = readMappings(one);
+            this.twoMappings = readMappings(two);
+            */
+
+            // All referenced dicts for 2 version for column link data building
+            this.oneAllDicts = this.oneDicts.stream().collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
+            this.twoAllDicts = this.twoDicts.stream().collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
+        }
+
+        /**
+         * Generation of changes from initialized layer data
+         *
+         * @return identified changes
+         */
+        List<DomainChanges> generateChanges() {
+            return detectChanges(
+                    this.oneDomains,
+                    this.twoDomains,
+                    FunctionalDomain::getUuid,
+                    diffDomainChange(),
                     diffDomainDelete(),
-                    diffDomainAdd(twoDicts, twoLinks, twoMappings)
+                    diffDomainAdd()
             );
-            return c;
-        };
-    }
+        }
 
-    private static Function<FunctionalDomain, DomainChanges> diffDomainDelete() {
+        /* ################### 1st layer processes : the domains #################### */
 
-        return (d1) -> {
+        private BiFunction<FunctionalDomain, FunctionalDomain, DomainChanges> diffDomainChange() {
 
-            DomainChanges c = new DomainChanges();
-            c.setName(d1.getName());
-            c.setChangeType(ChangeType.REMOVED);
-            return c;
-        };
-    }
+            return (d1, d2) -> {
 
-    private static Function<FunctionalDomain, DomainChanges> diffDomainAdd(
-            List<DictionaryEntry> twoDicts,
-            List<TableLink> twoLinks,
-            List<TableMapping> twoMappings) {
+                DomainChanges c = new DomainChanges();
+                c.setName(d1.getName());
 
-        return (d2) -> {
+                c.setTableChanges(detectChanges(
+                        filterForId(d1.getUuid(), this.oneDicts, t -> t.getDomain().getUuid()),
+                        filterForId(d2.getUuid(), this.twoDicts, t -> t.getDomain().getUuid()),
+                        DictionaryEntry::getUuid,
+                        diffTableChange(),
+                        diffTableDelete(),
+                        diffTableAdd()
+                ));
 
-            List<DictionaryEntry> d2Dicts = filterForId(d2.getUuid(), twoDicts, t -> t.getDomain().getUuid());
+                // Basic search for diffs (only from tables)
+                boolean unchanged = c.getTableChanges().stream().allMatch(t -> t.getChangeType() == ChangeType.UNCHANGED);
 
-            DomainChanges c = new DomainChanges();
-            c.setName(d2.getName());
-            c.setChangeType(ChangeType.ADDED);
-            return c;
-        };
-    }
+                c.setChangeType(unchanged ? ChangeType.UNCHANGED : ChangeType.MODIFIED);
 
-    private static BiFunction<DictionaryEntry, DictionaryEntry, DictionaryTableChanges> diffTableChange(
-            List<TableLink> oneLinks,
-            List<TableLink> twoLinks,
-            List<TableMapping> oneMappings,
-            List<TableMapping> twoMappings) {
+                return c;
+            };
+        }
 
-        return (t1, t2) -> {
+        private Function<FunctionalDomain, DomainChanges> diffDomainDelete() {
 
-            List<TableLink> d1Links = filterForId(t1.getUuid(), oneLinks, t -> t.getDictionaryEntry().getUuid());
-            List<TableLink> d2Links = filterForId(t2.getUuid(), twoLinks, t -> t.getDictionaryEntry().getUuid());
+            return (d1) -> {
 
-            DictionaryTableChanges c = new DictionaryTableChanges();
-            c.setName(t1.getParameterName());
-            c.setChangeType(ChangeType.MODIFIED);
-            return c;
-        };
-    }
+                DomainChanges c = new DomainChanges();
+                c.setName(d1.getName());
+                c.setChangeType(ChangeType.REMOVED);
+                return c;
+            };
+        }
 
-    private static Function<DictionaryEntry, DictionaryTableChanges> diffTableDelete() {
+        private Function<FunctionalDomain, DomainChanges> diffDomainAdd() {
 
-        return (t1) -> {
+            return (d2) -> {
 
-            DictionaryTableChanges c = new DictionaryTableChanges();
-            c.setName(t1.getParameterName());
-            c.setChangeType(ChangeType.REMOVED);
-            return c;
-        };
-    }
+                DomainChanges c = new DomainChanges();
+                c.setName(d2.getName());
+                c.setChangeType(ChangeType.ADDED);
 
-    private static Function<DictionaryEntry, DictionaryTableChanges> diffTableAdd(
+                c.setTableChanges(
+                        filterForId(d2.getUuid(), this.twoDicts, t -> t.getDomain().getUuid())
+                                .stream()
+                                .map(diffTableAdd())
+                                .collect(Collectors.toList()));
 
-            List<TableLink> twoLinks,
-            List<TableMapping> twoMappings) {
+                return c;
+            };
+        }
 
-        return (t2) -> {
+        /* ################### 2nd layer processes : the tables #################### */
 
-            List<TableLink> d2Links = filterForId(t2.getUuid(), twoLinks, t -> t.getDictionaryEntry().getUuid());
+        private BiFunction<DictionaryEntry, DictionaryEntry, DictionaryTableChanges> diffTableChange() {
 
-            DictionaryTableChanges c = new DictionaryTableChanges();
-            c.setName(t2.getParameterName());
-            c.setChangeType(ChangeType.ADDED);
-            return c;
-        };
-    }
+            return (t1, t2) -> {
 
-    private static <P, C> List<C> filterForId(P parentId, List<C> childs, Function<C, P> identityAccess) {
-        return childs.stream().filter(c -> identityAccess.apply(c).equals(parentId)).collect(Collectors.toList());
-    }
+                List<TableLink> d1Links = filterForId(t1.getUuid(), oneLinks, t -> t.getDictionaryEntry().getUuid());
+                List<TableLink> d2Links = filterForId(t2.getUuid(), twoLinks, t -> t.getDictionaryEntry().getUuid());
 
-    private static <C extends Changes, T> List<C> detectChanges(
-            List<T> ones,
-            List<T> twos,
-            Function<T, Serializable> identityAccess,
-            BiFunction<T, T, C> diffGen,
-            Function<T, C> delGen,
-            Function<T, C> createGen) {
+                DictionaryTableChanges c = new DictionaryTableChanges();
 
-        List<C> changes = new ArrayList<>();
+                c.setName(t1.getParameterName());
+                c.setFilter(t1.getWhereClause());
+                c.setTableName(t1.getTableName());
 
-        // Deleted ones
-        ones.stream().filter(o -> twos.stream().noneMatch(t -> identityAccess.apply(t).equals(identityAccess.apply(o)))).map(delGen).forEach(changes::add);
+                c.setNameChange(t2.getParameterName());
+                c.setFilterChange(t2.getWhereClause());
+                c.setTableNameChange(t2.getTableName());
 
-        // Use a pair for new or update
-        var associateds = twos.stream().map(t -> Pair.of(t, ones.stream().filter(o -> identityAccess.apply(o).equals(identityAccess.apply(t))).findFirst())).collect(Collectors.toList());
-        associateds.stream().filter(p -> !p.getSecond().isPresent()).map(p -> createGen.apply(p.getFirst())).forEach(changes::add);
-        associateds.stream().filter(p -> p.getSecond().isPresent()).map(p -> diffGen.apply(p.getFirst(), p.getSecond().get())).forEach(changes::add);
+                c.setColumnChanges(detectChanges(
+                        getTableColumns(t1, d1Links, this.oneAllDicts),
+                        getTableColumns(t2, d2Links, this.twoAllDicts),
+                        ColumnEditData::getName,
+                        diffColumnChange(),
+                        diffColumnDelete(),
+                        diffColumnAdd()
+                ));
 
-        return changes;
-    }
+                // Basic search for diffs
+                boolean unchanged = c.getName().equals(c.getNameChange())
+                        && c.getFilter().equals(c.getFilterChange())
+                        && c.getTableName().equals(c.getTableNameChange())
+                        && c.getColumnChanges().stream().allMatch(l -> l.getChangeType() == ChangeType.UNCHANGED);
 
-    private static List<FunctionalDomain> readDomains(Version version) {
-        return Stream.of(version.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-            FunctionalDomain item = new FunctionalDomain();
-            item.deserialize(s);
-            return item;
-        }).collect(Collectors.toList());
-    }
+                c.setChangeType(unchanged ? ChangeType.UNCHANGED : ChangeType.MODIFIED);
 
-    private static List<DictionaryEntry> readDict(Version version) {
-        return Stream.of(version.getDictionaryContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-            DictionaryEntry item = new DictionaryEntry();
-            item.deserialize(s);
-            return item;
-        }).collect(Collectors.toList());
-    }
+                return c;
+            };
+        }
 
-    private static List<TableLink> readLinks(Version version) {
-        return Stream.of(version.getLinksContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-            TableLink item = new TableLink();
-            item.deserialize(s);
-            return item;
-        }).collect(Collectors.toList());
-    }
+        private Function<DictionaryEntry, DictionaryTableChanges> diffTableDelete() {
 
-    private static List<TableMapping> readMappings(Version version) {
-        return Stream.of(version.getMappingsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-            TableMapping item = new TableMapping();
-            item.deserialize(s);
-            return item;
-        }).collect(Collectors.toList());
-    }
+            return (t1) -> {
 
-    private Object getTableColumns(DictionaryEntry entry, List<TableLink> dicLinks, List<DictionaryEntry> allDicts){
+                DictionaryTableChanges c = new DictionaryTableChanges();
+                c.setName(t1.getParameterName());
+                c.setChangeType(ChangeType.REMOVED);
+                return c;
+            };
+        }
 
-        // Need select clause as a list
-        Collection<String> selecteds = StringUtils.hasText(entry.getSelectClause())
-                ? this.queryGenerator.splitSelectClause(entry.getSelectClause(), dicLinks, allDicts)
-                : Collections.emptyList();
+        private Function<DictionaryEntry, DictionaryTableChanges> diffTableAdd() {
 
-        List<String> keyNames = entry.keyNames().collect(Collectors.toList());
+            return (t2) -> {
 
-        // Keep links
-        Map<String, LinkUpdateFollow> mappedLinks = dicLinks.stream().flatMap(
-                l -> LinkUpdateFollow.flatMapFromColumn(l, l.columnFroms()))
-                .collect(Collectors.toMap(LinkUpdateFollow::getColumn, v -> v));
+                List<TableLink> d2Links = filterForId(t2.getUuid(), this.twoLinks, t -> t.getDictionaryEntry().getUuid());
 
+                DictionaryTableChanges c = new DictionaryTableChanges();
+                c.setName(t2.getParameterName());
+                c.setFilter(t2.getWhereClause());
+                c.setTableName(t2.getTableName());
+
+                c.setChangeType(ChangeType.ADDED);
+
+                c.setColumnChanges(
+                        getTableColumns(t2, d2Links, this.twoAllDicts)
+                                .stream()
+                                .map(diffColumnAdd())
+                                .collect(Collectors.toList()));
+
+                return c;
+            };
+        }
+
+        /* ################### 3rd layer processes : the columns #################### */
+
+        private BiFunction<ColumnEditData, ColumnEditData, ColumnChanges> diffColumnChange() {
+
+            return (c1, c2) -> {
+
+                ColumnChanges c = new ColumnChanges();
+                c.setName(c1.getDisplayName());
+
+                c.setType(c1.getType().getDisplayName());
+                c.setKey(c1.isKey());
+                c.setLink(c1.getForeignKeyTable() + ":" + c1.getForeignKeyColumn());
+
+                c.setTypeChange(c2.getType().getDisplayName());
+                c.setKeyChange(c2.isKey());
+                c.setLinkChange(c2.getForeignKeyTable() + ":" + c2.getForeignKeyColumn());
+
+                // Basic search for diffs
+                boolean unchanged = c.getLink().equals(c.getLinkChange())
+                        && c.getType().equals(c.getTypeChange())
+                        && c.isKey() == c.isKeyChange();
+
+                c.setChangeType(unchanged ? ChangeType.UNCHANGED : ChangeType.MODIFIED);
+
+                return c;
+            };
+        }
+
+        private Function<ColumnEditData, ColumnChanges> diffColumnDelete() {
+
+            return (c1) -> {
+
+                ColumnChanges c = new ColumnChanges();
+                c.setName(c1.getDisplayName());
+                c.setType(c1.getType().getDisplayName());
+                c.setLink(c1.getForeignKeyTable() + ":" + c1.getForeignKeyColumn());
+
+                c.setChangeType(ChangeType.REMOVED);
+                return c;
+            };
+        }
+
+        private Function<ColumnEditData, ColumnChanges> diffColumnAdd() {
+
+            return (c2) -> {
+
+                ColumnChanges c = new ColumnChanges();
+                c.setName(c2.getDisplayName());
+                c.setType(c2.getType().getDisplayName());
+                c.setLink(c2.getForeignKeyTable() + ":" + c2.getForeignKeyColumn());
+
+                c.setChangeType(ChangeType.ADDED);
+                return c;
+            };
+        }
+
+        /**
+         * Generator of column data which can be processed for change search.
+         *
+         * @param entry    current table entry
+         * @param dicLinks current table links
+         * @param allDicts all tables for link reference building
+         * @return all the identified columns as change-search compliant entries
+         */
+        private List<ColumnEditData> getTableColumns(DictionaryEntry entry, List<TableLink> dicLinks, Map<String, DictionaryEntry> allDicts) {
+
+            // Need select clause as a list
+            Collection<String> selecteds = StringUtils.hasText(entry.getSelectClause())
+                    ? this.queryGenerator.splitSelectClause(entry.getSelectClause(), dicLinks, allDicts)
+                    : Collections.emptyList();
+
+            List<String> keyNames = entry.keyNames().collect(Collectors.toList());
+
+            // Keep links
+            Map<String, LinkUpdateFollow> mappedLinks = dicLinks.stream().flatMap(
+                    l -> LinkUpdateFollow.flatMapFromColumn(l, l.columnFroms()))
+                    .collect(Collectors.toMap(LinkUpdateFollow::getColumn, v -> v));
 
             // Avoid immutable lists
             Collection<String> editableSelecteds = new ArrayList<>(selecteds);
@@ -232,9 +334,73 @@ public class VersionContentChangesGenerator {
                 editableSelecteds.addAll(keyNames);
             }
 
-         return editableSelecteds.stream()
-                    .map(c -> DictionaryEntryEditData.ColumnEditData.fromSelecteds(c, keyNames, entry.keyTypes().collect(Collectors.toList()), mappedLinks.get(c)))
+            return editableSelecteds.stream()
+                    .map(c -> ColumnEditData.fromSelecteds(c, keyNames, entry.keyTypes().collect(Collectors.toList()), mappedLinks.get(c)))
                     .sorted()
                     .collect(Collectors.toList());
+        }
+
+        /* ######################## Generic filtering / diff search processes ####################### */
+
+        private static <P, C> List<C> filterForId(P parentId, List<C> childs, Function<C, P> identityAccess) {
+            return childs.stream().filter(c -> identityAccess.apply(c).equals(parentId)).collect(Collectors.toList());
+        }
+
+        private static <C extends Changes, T> List<C> detectChanges(
+                List<T> ones,
+                List<T> twos,
+                Function<T, Serializable> identityAccess,
+                BiFunction<T, T, C> diffGen,
+                Function<T, C> delGen,
+                Function<T, C> createGen) {
+
+            List<C> changes = new ArrayList<>();
+
+            // Deleted ones
+            ones.stream().filter(o -> twos.stream().noneMatch(t -> identityAccess.apply(t).equals(identityAccess.apply(o)))).map(delGen).forEach(changes::add);
+
+            // Use a pair for new or update
+            var associateds = twos.stream().map(t -> Pair.of(t, ones.stream().filter(o -> identityAccess.apply(o).equals(identityAccess.apply(t))).findFirst())).collect(Collectors.toList());
+            associateds.stream().filter(p -> !p.getSecond().isPresent()).map(p -> createGen.apply(p.getFirst())).forEach(changes::add);
+            associateds.stream().filter(p -> p.getSecond().isPresent()).map(p -> diffGen.apply(p.getFirst(), p.getSecond().get())).forEach(changes::add);
+
+            return changes;
+        }
+
+        /* ######################## Version content reading processes ####################### */
+
+        private static List<FunctionalDomain> readDomains(Version version) {
+            return Stream.of(version.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+                FunctionalDomain item = new FunctionalDomain();
+                item.deserialize(s);
+                return item;
+            }).collect(Collectors.toList());
+        }
+
+        private static List<DictionaryEntry> readDict(Version version) {
+            return Stream.of(version.getDictionaryContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+                DictionaryEntry item = new DictionaryEntry();
+                item.deserialize(s);
+                return item;
+            }).collect(Collectors.toList());
+        }
+
+        private static List<TableLink> readLinks(Version version) {
+            return Stream.of(version.getLinksContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+                TableLink item = new TableLink();
+                item.deserialize(s);
+                return item;
+            }).collect(Collectors.toList());
+        }
+
+        private static List<TableMapping> readMappings(Version version) {
+            return Stream.of(version.getMappingsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+                TableMapping item = new TableMapping();
+                item.deserialize(s);
+                return item;
+            }).collect(Collectors.toList());
+        }
     }
+
+
 }

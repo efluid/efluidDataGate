@@ -18,27 +18,24 @@ public class VersionCompare {
 
     private final VersionData two;
 
-    public List<DomainChanges> domainChanges;
+    private final List<DomainChanges> domainChanges;
 
-    public VersionCompare(VersionData one, VersionData two) {
+    public VersionCompare(VersionData one, VersionData two, List<DomainChanges> domainChanges) {
         this.one = one;
         this.two = two;
+        this.domainChanges = domainChanges;
     }
 
     public VersionData getOne() {
-        return one;
+        return this.one;
     }
 
     public VersionData getTwo() {
-        return two;
+        return this.two;
     }
 
     public List<DomainChanges> getDomainChanges() {
-        return domainChanges;
-    }
-
-    public void setDomainChanges(List<DomainChanges> domainChanges) {
-        this.domainChanges = domainChanges;
+        return this.domainChanges;
     }
 
     /**
@@ -189,12 +186,15 @@ public class VersionCompare {
         private String name;
         private String type;
         private String link;
+        private boolean key;
 
+        private String typeChange;
         private String linkChange;
+        private boolean keyChange;
 
         @Override
         public ChangeType getChangeType() {
-            return changeType;
+            return this.changeType;
         }
 
         public void setChangeType(ChangeType changeType) {
@@ -203,7 +203,7 @@ public class VersionCompare {
 
         @Override
         public String getName() {
-            return name;
+            return this.name;
         }
 
         public void setName(String name) {
@@ -211,15 +211,39 @@ public class VersionCompare {
         }
 
         public String getType() {
-            return type;
+            return this.type;
         }
 
         public void setType(String type) {
             this.type = type;
         }
 
+        public String getTypeChange() {
+            return this.typeChange;
+        }
+
+        public void setTypeChange(String typeChange) {
+            this.typeChange = typeChange;
+        }
+
+        public boolean isKey() {
+            return this.key;
+        }
+
+        public void setKey(boolean key) {
+            this.key = key;
+        }
+
+        public boolean isKeyChange() {
+            return this.keyChange;
+        }
+
+        public void setKeyChange(boolean keyChange) {
+            this.keyChange = keyChange;
+        }
+
         public String getLink() {
-            return link;
+            return this.link;
         }
 
         public void setLink(String link) {
@@ -227,7 +251,7 @@ public class VersionCompare {
         }
 
         public String getLinkChange() {
-            return linkChange;
+            return this.linkChange;
         }
 
         public void setLinkChange(String linkChange) {
