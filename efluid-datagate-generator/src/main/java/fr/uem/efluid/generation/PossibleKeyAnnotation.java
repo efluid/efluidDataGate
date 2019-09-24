@@ -27,11 +27,15 @@ class PossibleKeyAnnotation {
     private final Collection<String> forTable;
 
     PossibleKeyAnnotation(Method method) {
+        this(method, null);
+    }
+
+    PossibleKeyAnnotation(Method method, String name) {
 
         this.keyAnnot = method.getAnnotation(ParameterKey.class);
-        // If not set on ParameterValue annotation, uses method name
-        this.validName = this.keyAnnot != null && !"".equals(this.keyAnnot.value()) ? this.keyAnnot.value()
-                : method.getName().toUpperCase();
+        // If not set on ParameterValue annotation, uses specified name, and then failback on method name
+        this.validName = this.keyAnnot != null && !"".equals(this.keyAnnot.value()) ? this.keyAnnot.value().toUpperCase()
+                : (name != null ? name.toUpperCase() : method.getName().toUpperCase());
         this.validType = this.keyAnnot != null && ColumnType.UNKNOWN != this.keyAnnot.type() ? this.keyAnnot.type()
                 : ColumnType.forClass(method.getReturnType());
         this.forTable = this.keyAnnot != null && this.keyAnnot.forTable().length > 0 ? Arrays.asList(this.keyAnnot.forTable())
@@ -41,7 +45,7 @@ class PossibleKeyAnnotation {
     PossibleKeyAnnotation(Field field) {
         this.keyAnnot = field.getAnnotation(ParameterKey.class);
         // If not set on ParameterValue annotation, uses field name
-        this.validName = this.keyAnnot != null && !"".equals(this.keyAnnot.value()) ? this.keyAnnot.value()
+        this.validName = this.keyAnnot != null && !"".equals(this.keyAnnot.value()) ? this.keyAnnot.value().toUpperCase()
                 : field.getName().toUpperCase();
         // Type must be found from generic collection
         this.validType = this.keyAnnot != null && ColumnType.UNKNOWN != this.keyAnnot.type() ? this.keyAnnot.type()

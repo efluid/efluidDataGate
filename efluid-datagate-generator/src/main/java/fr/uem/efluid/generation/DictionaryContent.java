@@ -34,12 +34,21 @@ public class DictionaryContent {
             Collection<ParameterMappingDefinition> allMappings,
             Collection<ParameterVersionDefinition> allVersions) {
 
-        this.allProjects = projectDefs.values();
+        // Remove the projects not used in domains
+        this.allProjects = projectDefs.values().stream()
+                .filter(p -> allDomains.stream().anyMatch(d -> d.getProject().getUuid().equals(p.getUuid())))
+                .collect(Collectors.toList());
         this.allDomains = allDomains;
-        this.allTables = typeTables.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+        this.allTables = typeTables.values().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
         this.allLinks = allLinks;
         this.allMappings = allMappings;
-        this.allVersions = allVersions;
+
+        // Keep only versions used in filtered projects
+        this.allVersions = allVersions.stream()
+                .filter(v -> this.allProjects.stream().anyMatch(p -> p.getUuid().equals(v.getProject().getUuid())))
+                .collect(Collectors.toList());
     }
 
     public Collection<ParameterProjectDefinition> getAllProjects() {

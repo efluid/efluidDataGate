@@ -7,6 +7,7 @@ import fr.uem.efluid.ParameterValue;
 import fr.uem.efluid.model.ParameterDomainDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
 
+import java.lang.reflect.Modifier;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -52,7 +53,7 @@ class PossibleTableAnnotation {
         this.keyField = paramTable.keyField();
         this.keyType = paramTable.keyType();
         this.name = paramTable.name();
-        this.tableName = paramTable.tableName();
+        this.tableName = GenerationUtils.failback(paramTable.value(), paramTable.tableName());
         this.useAllFields = paramTable.useAllFields();
         this.values = paramTable.values();
     }
@@ -67,7 +68,7 @@ class PossibleTableAnnotation {
      */
     PossibleTableAnnotation(ParameterTable localParamTable, Class<?> source, PossibleTableAnnotation existing, boolean intermediate) {
 
-        this.intermediate = intermediate;
+        this.intermediate = intermediate || Modifier.isAbstract(source.getModifiers());
         this.sourceType = source;
 
         if (existing == null) {
@@ -77,7 +78,7 @@ class PossibleTableAnnotation {
             this.keyField = localParamTable.keyField();
             this.keyType = localParamTable.keyType();
             this.name = localParamTable.name();
-            this.tableName = localParamTable.tableName();
+            this.tableName = failback(localParamTable.value(), localParamTable.tableName());
             this.useAllFields = localParamTable.useAllFields();
             this.values = localParamTable.values();
         }
@@ -95,7 +96,7 @@ class PossibleTableAnnotation {
             this.keyField = failback(paramTable.keyField(), existing.getKeyField());
             this.keyType = paramTable.keyType() != ColumnType.UNKNOWN ? paramTable.keyType() : existing.getKeyType();
             this.name = failback(paramTable.name(), existing.getName());
-            this.tableName = failback(paramTable.tableName(), existing.getTableName());
+            this.tableName = failback(paramTable.value(), paramTable.tableName(), existing.getTableName());
             this.useAllFields = paramTable.useAllFields() || existing.useAllFields;
             this.values = paramTable.values().length > 0 ? paramTable.values() : existing.getValues();
         }

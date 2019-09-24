@@ -150,4 +150,15 @@ public @interface ParameterTableSet {
 	 * @return
 	 */
 	String domainName() default "";
+
+	/**
+	 * <p>
+	 * To force exclusion for default fields from specified inherited type.
+	 * Allows to specify a table mapping on a type will excluding any technical field from,
+	 * for example, a technical top level type (like with some Efluid ORM model types)
+	 * </p>
+	 *
+	 * @return array of types to exclude from field inclusion
+	 */
+	Class<?>[] excludeInheritedFrom() default {};
 }

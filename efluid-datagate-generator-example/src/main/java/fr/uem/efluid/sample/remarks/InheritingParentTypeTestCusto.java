@@ -4,7 +4,7 @@ import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
 import fr.uem.efluid.ParameterValue;
 
-@ParameterTable(name = "T_CHILD_TABLE_TYPE")
+@ParameterTable(tableName = "T_CHILD_TABLE_TYPE_CUSTO", useAllFields = false)
 public class InheritingParentTypeTestCusto extends ParentType {
 
     @ParameterKey

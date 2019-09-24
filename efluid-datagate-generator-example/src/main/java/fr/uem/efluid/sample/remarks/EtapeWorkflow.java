@@ -4,7 +4,7 @@ import fr.uem.efluid.ParameterTable;
 
 import java.time.LocalDateTime;
 
-@ParameterTable(name = "T_ETAPE_WFL", keyField = "key")
+@ParameterTable(tableName = "T_ETAPE_WFL", keyField = "key")
 public class EtapeWorkflow {
 
     private int key;

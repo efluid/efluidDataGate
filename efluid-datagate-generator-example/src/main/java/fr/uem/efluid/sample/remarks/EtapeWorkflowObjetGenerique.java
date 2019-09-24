@@ -5,9 +5,15 @@ import fr.uem.efluid.ParameterTableSet;
 import fr.uem.efluid.ParameterValue;
 
 @ParameterTableSet(tables = {
-        @ParameterTable(name = "T_ETAPE_WFL", keyField = "key"),
-        @ParameterTable(name = "T_ETAPE_WFL_GEN", keyField = "key",
-                values = {@ParameterValue("extended")})
+        @ParameterTable(name = "EtapeWorkflowObjetGeneriqueSubOne", tableName = "T_ETAPE_WFL_SUB", keyField = "key",
+                values = {
+                        @ParameterValue("value"),
+                        @ParameterValue("extended")
+                }),
+        @ParameterTable(name = "EtapeWorkflowObjetGeneriqueSubTwo", tableName = "T_ETAPE_WFL_GEN", keyField = "key",
+                values = {
+                        @ParameterValue("extended")
+                })
 }, useAllFields = false)
 public class EtapeWorkflowObjetGenerique extends EtapeWorkflow {
 

@@ -4,8 +4,15 @@ import fr.uem.efluid.generation.DictionaryContent;
 import fr.uem.efluid.generation.DictionaryExporter;
 import fr.uem.efluid.generation.DictionaryGenerator;
 import fr.uem.efluid.generation.DictionaryGeneratorConfig;
+import fr.uem.efluid.model.ParameterTableDefinition;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author elecomte
@@ -37,17 +44,46 @@ public class SampleGenerationTest {
 
         Assert.assertNotNull(content);
 
-        Assert.assertEquals(1, content.getAllDomains().size());
-        Assert.assertEquals(1, content.getAllProjects().size());
-        Assert.assertEquals(1, content.getAllVersions().size());
-        Assert.assertEquals(4, content.getAllTables().size());
+        Assert.assertEquals(2, content.getAllDomains().size());
+        Assert.assertEquals(9, content.getAllTables().size());
         Assert.assertEquals(0, content.getAllLinks().size());
         Assert.assertEquals(0, content.getAllMappings().size());
 
-        Assert.assertEquals("Remarques Efluid", content.getAllDomains().iterator().next().getName());
-        Assert.assertEquals("Generated Test", content.getAllProjects().iterator().next().getName());
-        Assert.assertEquals(config.getProjectVersion(), content.getAllVersions().iterator().next().getName());
+        // 2 identified domains
+        Assert.assertTrue(content.getAllDomains().stream().allMatch(
+                d -> d.getName().equals("Remarques Efluid")
+                        || d.getName().equals("Entities Efluid")
+        ));
+
+        assertTableDefValid(content.getAllTables(), "T_ETAPE_WFL", "EtapeWorkflow", "KEY", "VALUE", "TIME");
+        assertTableDefValid(content.getAllTables(), "T_ETAPE_WFL_INHER", "EtapeWorkflowIgnoreParam", "KEY", "VALUE", "TIME");
+        assertTableDefValid(content.getAllTables(), "T_ETAPE_WFL_SUB", "EtapeWorkflowObjetGeneriqueSubOne", "KEY", "EXTENDED", "VALUE");
+        assertTableDefValid(content.getAllTables(), "T_ETAPE_WFL_GEN", "EtapeWorkflowObjetGeneriqueSubTwo", "KEY", "EXTENDED");
+        assertTableDefValid(content.getAllTables(), "T_CHILD_TABLE_TYPE", "InheritingParentType", "KEYFIELD", "SOMETHING", "ENABLED", "VALUE");
+        assertTableDefValid(content.getAllTables(), "T_CHILD_TABLE_TYPE_CUSTO", "InheritingParentTypeTestCusto", "KEYFIELD", "VALUE");
+        assertTableDefValid(content.getAllTables(), "T_CHILD_TABLE_TYPE_DROP", "InheritingParentTypeTestDrop", "KEYFIELD", "VALUE", "OTHER");
+        assertTableDefValid(content.getAllTables(), "T_BASIC_ENTITY", "BasicEntity", "ID", "VALUE", "OTHER", "SOMETHING");
+        assertTableDefValid(content.getAllTables(), "T_OTHER_ENTITY", "OtherEntity", "ID", "VALUE", "OTHER");
     }
+
+    private static void assertTableDefValid(Collection<ParameterTableDefinition> tables, String tableName, String name, String key, String... selectCols) {
+
+        Optional<ParameterTableDefinition> tableOpt = tables.stream().filter(t -> t.getTableName().equals(tableName)).findFirst();
+        Assert.assertTrue(tableOpt.isPresent());
+        ParameterTableDefinition table = tableOpt.get();
+
+        Assert.assertEquals("Specified name is not valid. Expected \"" + name + "\" but get \"" + table.getParameterName() + "\" for table \"" + tableName + "\"", name, table.getParameterName());
+        Assert.assertEquals("Specified key is not valid. Expected \"" + key + "\" but get \"" + table.getKeyName() + "\" for table \"" + tableName + "\"", key, table.getKeyName());
+
+        // Cannot validate order (depends on reflexion, which may depends itself on environment)
+        // So validate on array
+        String[] splitSelect = table.getSelectClause().split(", ");
+        Assert.assertEquals("Specified select is not valid. Do not find the correct number of columns in current select \"" + table.getSelectClause()
+                + "\" for table \"" + tableName + "\"", selectCols.length, splitSelect.length);
+        List<String> cols = Stream.of(splitSelect).map(v -> v.replaceAll("cur\\.\"", "").replaceAll("\"", "")).collect(Collectors.toList());
+        Stream.of(selectCols).forEach(v -> Assert.assertTrue("Specified select is not valid. Cannot found specified col \"" + v + "\" for table \"" + tableName + "\"", cols.contains(v)));
+    }
+
 
     private static DictionaryGeneratorConfig config(final String packageName) {
 

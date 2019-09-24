@@ -98,44 +98,46 @@ public class DictionaryGenerator extends AbstractProcessor {
         Map<Class<?>, String> typeDomains = new HashMap<>();
 
         // Domains - direct search, with inherited
-        Set<Class<?>> domains = reflections.getTypesAnnotatedWith(ParameterDomain.class, true);
+        reflections.getTypesAnnotatedWith(ParameterDomain.class, true)
+                .stream()
+                .filter(this::isValidMember)
+                .forEach(typedDomain -> {
+                    ParameterDomain domain = typedDomain.getAnnotation(ParameterDomain.class);
 
-        // Domain search is the entry point of all mapped types
-        for (Class<?> typedDomain : domains) {
-            ParameterDomain domain = typedDomain.getAnnotation(ParameterDomain.class);
+                    String domainName = domain.name();
 
-            String domainName = domain.name();
+                    // Specified project - keep it in ref
+                    ParameterProject project = domain.project();
+                    projects.put(domainName, project);
 
-            // Specified project - keep it in ref
-            ParameterProject project = domain.project();
-            projects.put(domainName, project);
+                    // Search for annotated with meta
+                    if (Annotation.class.isAssignableFrom(typedDomain)) {
+                        getLog().debug("Found domain meta-annotation as " + typedDomain.getName() + " with name \"" + domainName + "\"");
+                        reflections.getTypesAnnotatedWith((Class<? extends Annotation>) typedDomain, true).stream()
+                                .filter(this::isValidMember)
+                                .peek(t -> getLog()
+                                        .debug("For type " + t.getName() + " will use specified domain by meta-annotation \"" + domainName + "\""))
+                                .forEach(t -> typeDomains.put(t, domainName));
+                    }
 
-            // Search for annotated with meta
-            if (Annotation.class.isAssignableFrom(typedDomain)) {
-                getLog().debug("Found domain meta-annotation as " + typedDomain.getName() + " with name \"" + domainName + "\"");
-                reflections.getTypesAnnotatedWith((Class<? extends Annotation>) typedDomain, true).stream()
-                        .peek(t -> getLog()
-                                .debug("For type " + t.getName() + " will use specified domain by meta-annotation \"" + domainName + "\""))
-                        .forEach(t -> typeDomains.put(t, domainName));
-            }
+                    // Directly specified (package)
+                    else {
+                        getLog().debug("Found domain directly on " + typedDomain + " with name \"" + domainName + "\"");
+                        String packageName = typedDomain.getPackage().getName();
 
-            // Directly specified (package)
-            else {
-                getLog().debug("Found domain directly on " + typedDomain + " with name \"" + domainName + "\"");
-                String packageName = typedDomain.getPackage().getName();
+                        // Get all types for package, not directly annotated
+                        Stream.concat(
+                                reflections.getTypesAnnotatedWith(ParameterTable.class, true).stream(),
+                                reflections.getTypesAnnotatedWith(ParameterTableSet.class, true).stream())
+                                .filter(this::isValidMember)
 
-                // Get all types for package, not directly annotated
-                Stream.concat(
-                        reflections.getTypesAnnotatedWith(ParameterTable.class, true).stream(),
-                        reflections.getTypesAnnotatedWith(ParameterTableSet.class, true).stream())
-
-                        .filter(c -> c.getPackage().getName().startsWith(packageName))
-                        .filter(c -> !typeDomains.containsKey(c))
-                        .peek(t -> getLog()
-                                .debug("For type " + t.getName() + " will use specified domain by package \"" + domainName + "\""))
-                        .forEach(c -> typeDomains.put(c, domainName));
-            }
-        }
+                                .filter(c -> c.getPackage().getName().startsWith(packageName))
+                                .filter(c -> !typeDomains.containsKey(c))
+                                .peek(t -> getLog()
+                                        .debug("For type " + t.getName() + " will use specified domain by package \"" + domainName + "\""))
+                                .forEach(c -> typeDomains.put(c, domainName));
+                    }
+                });
 
         return typeDomains;
     }
@@ -156,17 +158,22 @@ public class DictionaryGenerator extends AbstractProcessor {
         // Search for possible tables with meta
         reflections.getTypesAnnotatedWith(ParameterTable.class, false).stream()
                 .filter(Class::isAnnotation)
+                .filter(this::isValidMember)
                 .map(this::processParameterTableMeta)
                 .filter(Objects::nonNull)
                 .forEach(possibleTables::add);
 
         // Domains - direct search, with inherited
         reflections.getTypesAnnotatedWith(ParameterTable.class, false).stream()
+                .filter(t -> !t.isAnnotation())
+                .filter(t -> t.getAnnotation(ParameterTableSet.class) == null) // ParamTableSet "win"
+                .filter(this::isValidMember)
                 .map(t -> processParameterTableDirect(t, possibleTables))
                 .forEach(possibleTables::add);
 
         // Then completed with ParameterTableSet
         reflections.getTypesAnnotatedWith(ParameterTableSet.class, false).stream()
+                .filter(this::isValidMember)
                 .flatMap(t -> processParameterTableSet(t, possibleTables))
                 .forEach(possibleTables::add);
 
@@ -282,7 +289,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         // Domain is mandatory
         if (def.getDomain().getName() == null) {
             throw new IllegalArgumentException(
-                    "No domain found for type " + possible.getName()
+                    "No domain found for type " + possible.getSourceType()
                             + ". Need to specify the domain with meta-annotation, with package annotation or with domainName property in @ParameterTable");
         }
 
@@ -330,40 +337,12 @@ public class DictionaryGenerator extends AbstractProcessor {
 
             if (!paramTable.getKeyField().equals("")) {
 
-                PossibleKeyAnnotation foundKeySpec = null;
+                PossibleKeyAnnotation foundKeySpec;
 
                 // Not specified : search on field def
                 if (ColumnType.UNKNOWN.equals(paramTable.getKeyType())) {
-                    try {
-                        foundKeySpec = new PossibleKeyAnnotation(tableType.getField(paramTable.getKeyField()));
-                        getLog().debug("Found key type from specified field " + foundKeySpec.getValidName() + " of type "
-                                + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
-                    }
+                    foundKeySpec = searchKey(tableType, paramTable);
 
-                    // Field not found, search getter method
-                    catch (NoSuchFieldException n) {
-
-                        String getterName = "get" + paramTable.getKeyField().substring(0, 1).toUpperCase()
-                                + paramTable.getKeyField().substring(1);
-
-                        try {
-                            foundKeySpec = new PossibleKeyAnnotation(tableType.getMethod(getterName));
-                            getLog().debug("Found key type from specified method " + foundKeySpec.getValidName() + " (getter \""
-                                    + getterName
-                                    + "\") of type " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
-                        }
-
-                        // Still not found : failure
-                        catch (NoSuchMethodException e) {
-                            throw new IllegalArgumentException("Specified key in ParameterTable " + tableType + " doesn't match with the"
-                                    + " class getters. Check if the field is specified correctly or that a method exists with the name \""
-                                    + getterName + "\"", e);
-                        }
-
-                    } catch (SecurityException e) {
-                        throw new IllegalArgumentException("Specified key in ParameterTable " + tableType
-                                + " doesn't match with the class fields. Check if the field is specified correctly", e);
-                    }
                 } else {
                     foundKeySpec = new PossibleKeyAnnotation(paramTable);
                     getLog().debug("Specified keytype " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
@@ -404,6 +383,48 @@ public class DictionaryGenerator extends AbstractProcessor {
                 + ((def.getExt1KeyName() != null) ? " and " + (keyFounds - 1) + " other ext keys" : ""));
     }
 
+    private PossibleKeyAnnotation searchKey(Class<?> tableType, PossibleTableAnnotation paramTable) {
+
+        String getterName = "get" + paramTable.getKeyField().substring(0, 1).toUpperCase()
+                + paramTable.getKeyField().substring(1);
+
+        // Still not found : failure
+        if (tableType == Object.class) {
+            throw new IllegalArgumentException("Specified key in ParameterTable " + tableType + " doesn't match with the"
+                    + " class getters. Check if the field is specified correctly or that a method exists with the name \""
+                    + getterName + "\"");
+        }
+
+        PossibleKeyAnnotation foundKeySpec = null;
+
+        try {
+            foundKeySpec = new PossibleKeyAnnotation(tableType.getDeclaredField(paramTable.getKeyField()));
+            getLog().debug("Found key type from specified field " + foundKeySpec.getValidName() + " of type "
+                    + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
+        }
+
+        // Field not found, search getter method
+        catch (NoSuchFieldException n) {
+
+            try {
+                foundKeySpec = new PossibleKeyAnnotation(tableType.getMethod(getterName), paramTable.getKeyField());
+                getLog().debug("Found key type from specified method " + foundKeySpec.getValidName() + " (getter \""
+                        + getterName
+                        + "\") of type " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
+            } catch (NoSuchMethodException e) {
+
+                // Search on parent type (inherited ParameterTable)
+                searchKey(tableType.getSuperclass(), paramTable);
+            }
+
+        } catch (SecurityException e) {
+            throw new IllegalArgumentException("Specified key in ParameterTable " + tableType
+                    + " doesn't match with the class fields. Check if the field is specified correctly", e);
+        }
+
+        return foundKeySpec;
+    }
+
     /**
      * @param defs
      */
@@ -422,7 +443,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         if (duplicates.size() > 0) {
             StringBuilder details = new StringBuilder();
             details.append("Error on duplicated table names : ");
-            duplicates.forEach((key, value) -> details.append("table \"").append(key).append("\" (duplicated ").append(value).append(") "));
+            duplicates.forEach((key, value) -> details.append("table \"").append(key).append("\" (duplicated ").append(value).append(" times) "));
             details.append("Check @ParameterTable and @ParameterTableSet definition");
 
             throw new IllegalArgumentException(details.toString());
@@ -445,6 +466,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         // For link transform
         Map<String, ParameterTableDefinition> allTables = defs.values().stream()
                 .flatMap(Collection::stream)
+                .distinct()
                 .collect(Collectors.toMap(ParameterTableDefinition::getTableName, v -> v));
 
         // Domains - direct search, with inherited
@@ -499,12 +521,21 @@ public class DictionaryGenerator extends AbstractProcessor {
         Set<Method> foundMethods = searchMethods(tableType);
 
         // Mixed all values + associated links, on both field and methods
-        List<PossibleValueAnnotation> values = Stream.concat(foundFields.stream().map(f -> new PossibleValueAnnotation(f, ccl)),
-                foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))).collect(Collectors.toList());
+        List<PossibleValueAnnotation> values =
+                Stream.concat(
+                        foundFields.stream().map(f -> new PossibleValueAnnotation(f, ccl)),
+                        foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))
+                ).collect(Collectors.toList());
+
+        List<Class<?>> excludeInheriteds = new ArrayList<>();
+        searchAllCombinedExcludeInheritedFrom(tableType, excludeInheriteds);
 
         // Prepare value columns (with support for composite)
         List<String> columnNames = values.stream()
+                .filter(v -> !v.isExcluded(excludeInheriteds))
                 .flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
+                .filter(v -> !v.equalsIgnoreCase(def.getKeyName())) // Remove key if present
+                .map(String::toUpperCase)
                 .peek(v -> getLog().debug("Found selected value " + v + " for type " + tableType.getName()))
                 .collect(Collectors.toList());
 
@@ -527,13 +558,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         def.setSelectClause(selectClause);
         allLinks.addAll(links);
         allMappings.addAll(mappings);
-    }
-
-    private static Stream<PossibleValueAnnotation> streamPossibleValueInDirectTablesDef(ParameterTableSet setAnnot) {
-        return Stream.of(setAnnot.tables())
-                .filter(t -> t.values().length > 0)
-                .flatMap(t -> Stream.of(t.values())
-                        .map(v -> new PossibleValueAnnotation(v, t.tableName())));
     }
 
     /**
@@ -564,6 +588,12 @@ public class DictionaryGenerator extends AbstractProcessor {
         // Valid methods (regarding anot)
         Set<Method> foundMethods = searchMethods(tableType);
 
+        List<Class<?>> excludeInheriteds = new ArrayList<>();
+        searchAllCombinedExcludeInheritedFrom(tableType, excludeInheriteds);
+
+        // Add set also
+        excludeInheriteds.addAll(Arrays.asList(paramTableSet.excludeInheritedFrom()));
+
         for (ParameterTableDefinition def : defs) {
 
             // Mixed all values + associated links, on both field and methods
@@ -571,13 +601,15 @@ public class DictionaryGenerator extends AbstractProcessor {
                     Stream.concat(
                             foundFields.stream().map(f -> new PossibleValueAnnotation(f, ccl)),
                             foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))),
-                    streamPossibleValueInDirectTablesDef(paramTableSet))
+                    streamPossibleValueInDirectTablesDef(tableType, paramTableSet))
                     .filter(v -> v.isCompliantTable(def.getTableName())) // Only compliant
+                    .filter(v -> !v.isExcluded(excludeInheriteds))
                     .collect(Collectors.toList());
 
             // Prepare value columns (with support for composite)
             List<String> columnNames = values.stream()
                     .flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
+                    .map(String::toUpperCase)
                     .peek(v -> getLog().debug("Found selected value " + v + " for type " + tableType.getName()))
                     .collect(Collectors.toList());
 
@@ -602,6 +634,13 @@ public class DictionaryGenerator extends AbstractProcessor {
             allMappings.addAll(mappings);
         }
 
+    }
+
+    private static Stream<PossibleValueAnnotation> streamPossibleValueInDirectTablesDef(Class<?> declaringClazz, ParameterTableSet setAnnot) {
+        return Stream.of(setAnnot.tables())
+                .filter(t -> t.values().length > 0)
+                .flatMap(t -> Stream.of(t.values())
+                        .map(v -> new PossibleValueAnnotation(declaringClazz, v, failback(t.value(), t.tableName()))));
     }
 
     /**
@@ -865,7 +904,7 @@ public class DictionaryGenerator extends AbstractProcessor {
 
         getLog().debug("Init versions for each " + projects.size() + " identified projects");
 
-        // Get all domain values
+        // Get all project versions
         return projects.stream().map(p -> {
             ParameterVersionDefinition version = new ParameterVersionDefinition();
             version.setName(config().getProjectVersion());
@@ -927,9 +966,46 @@ public class DictionaryGenerator extends AbstractProcessor {
     private static PossibleTableAnnotation searchPossible(Class<?> tableType, List<PossibleTableAnnotation> possibleTables) {
 
         // Search possible from meta annotations
-        return possibleTables.stream()
+        PossibleTableAnnotation possible = possibleTables.stream()
                 .filter(t -> Stream.of(tableType.getAnnotations()).anyMatch(a -> a.getClass().equals(t.getSourceType())))
                 .findFirst()
                 .orElse(null);
+
+        // Search also on parent
+        if (possible == null && tableType != Object.class) {
+            possible = searchPossibleOnParent(tableType.getSuperclass(), possibleTables);
+        }
+
+        return possible;
+    }
+
+    private static PossibleTableAnnotation searchPossibleOnParent(Class<?> tableType, List<PossibleTableAnnotation> possibleTables) {
+
+        // Init possible on specified parent type
+        if (tableType.getAnnotation(ParameterTable.class) != null) {
+            PossibleTableAnnotation possible = new PossibleTableAnnotation(tableType.getAnnotation(ParameterTable.class), tableType, true);
+            possibleTables.add(possible);
+            return possible;
+        }
+
+        return searchPossible(tableType, possibleTables);
+    }
+
+    private static void searchAllCombinedExcludeInheritedFrom(Class<?> tableType, List<Class<?>> excludeds) {
+
+        if (tableType == Object.class) {
+            return;
+        }
+
+        // Init possible on specified parent type
+        if (tableType.getAnnotation(ParameterTable.class) != null) {
+            Class<?>[] excludedsLocally = tableType.getAnnotation(ParameterTable.class).excludeInheritedFrom();
+
+            if (excludedsLocally.length > 0) {
+                excludeds.addAll(Arrays.asList(excludedsLocally));
+            }
+        }
+
+        searchAllCombinedExcludeInheritedFrom(tableType.getSuperclass(), excludeds);
     }
 }

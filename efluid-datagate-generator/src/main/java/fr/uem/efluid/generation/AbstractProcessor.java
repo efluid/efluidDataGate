@@ -51,4 +51,8 @@ public abstract class AbstractProcessor {
                         new MethodAnnotationsScanner()));
     }
 
+    protected boolean isValidMember(Class<?> type){
+        return type.getPackageName().startsWith(config().getSourcePackage());
+    }
+
 }

@@ -49,6 +49,17 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Inherited
 public @interface ParameterTable {
 
+    String value() default "";
+
+    /**
+     * <p>
+     * Specify the technical table name for the parameter table. Please use UPPERCASE
+     * value only. If not set, will use the parameter name (as specified with
+     * {@link #name()} or from annotated type name), UPPERCASE.
+     * </p>
+     */
+    String tableName() default "";
+
     /**
      * <p>
      * Specify the business name for the parameter table (how it will be identified in
@@ -59,15 +70,6 @@ public @interface ParameterTable {
      * @return a specified business name for the parameter table in the dictionary
      */
     String name() default "";
-
-    /**
-     * <p>
-     * Specify the technical table name for the parameter table. Please use UPPERCASE
-     * value only. If not set, will use the parameter name (as specified with
-     * {@link #name()} or from annotated type name), UPPERCASE.
-     * </p>
-     */
-    String tableName() default "";
 
     /**
      * <p>

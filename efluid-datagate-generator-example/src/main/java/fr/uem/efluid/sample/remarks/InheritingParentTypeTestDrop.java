@@ -2,16 +2,16 @@ package fr.uem.efluid.sample.remarks;
 
 import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
-import fr.uem.efluid.ParameterValue;
 
-@ParameterTable(tableName = "T_CHILD_TABLE_TYPE")
-public class InheritingParentType extends ParentType {
+@ParameterTable(tableName = "T_CHILD_TABLE_TYPE_DROP", excludeInheritedFrom = ParentType.class)
+public class InheritingParentTypeTestDrop extends ParentType {
 
     @ParameterKey
     private String keyField;
 
-    @ParameterValue
     private String value;
+
+    private String other;
 
     public String getKeyField() {
         return keyField;
@@ -28,5 +28,13 @@ public class InheritingParentType extends ParentType {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public String getOther() {
+        return other;
+    }
+
+    public void setOther(String other) {
+        this.other = other;
     }
 }

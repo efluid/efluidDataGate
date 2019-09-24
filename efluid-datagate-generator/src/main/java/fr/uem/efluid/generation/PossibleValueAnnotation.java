@@ -11,6 +11,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * <p>
@@ -45,6 +46,7 @@ class PossibleValueAnnotation {
     private final ParameterMapping mappingAnnot;
     private final String[] compositeNames;
     private final Collection<String> forTable;
+    private final Class<?> sourceClazz;
 
     // Detected on method
     PossibleValueAnnotation(Method method, ClassLoader contextClassLoader) {
@@ -58,6 +60,7 @@ class PossibleValueAnnotation {
         this.validType = this.mappingAnnot != null ? getMappingType(method, contextClassLoader) : method.getReturnType();
         this.compositeNames = prepareCompositeNames(this.compositeValueAnnot);
         this.forTable = prepareValidForTable(this.valueAnnot, this.compositeValueAnnot);
+        this.sourceClazz = method.getDeclaringClass();
     }
 
     // Detected on field
@@ -73,10 +76,11 @@ class PossibleValueAnnotation {
         this.validType = this.mappingAnnot != null ? getMappingType(field, contextClassLoader) : field.getType();
         this.compositeNames = prepareCompositeNames(this.compositeValueAnnot);
         this.forTable = prepareValidForTable(this.valueAnnot, this.compositeValueAnnot);
+        this.sourceClazz = field.getDeclaringClass();
     }
 
     // Declared directly into ParameterTable annot
-    PossibleValueAnnotation(ParameterValue directValueSpec, String tableName) {
+    PossibleValueAnnotation(Class<?> declaringClazz, ParameterValue directValueSpec, String tableName) {
 
         this.valueAnnot = directValueSpec;
         this.compositeValueAnnot = null;
@@ -87,6 +91,7 @@ class PossibleValueAnnotation {
         this.validType = null;
         this.compositeNames = null;
         this.forTable = Arrays.asList(tableName);
+        this.sourceClazz = declaringClazz;
     }
 
     /**
@@ -138,6 +143,15 @@ class PossibleValueAnnotation {
      */
     boolean isCompliantTable(String name) {
         return this.forTable == null || this.forTable.contains(name);
+    }
+
+    boolean isExcluded(List<Class<?>> types) {
+
+        if (types.size() > 0) {
+            return types.stream().anyMatch(t -> t == this.sourceClazz);
+        }
+
+        return false;
     }
 
     /**
