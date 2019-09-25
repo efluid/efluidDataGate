@@ -3,6 +3,7 @@ package fr.uem.efluid.tools;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.VersionCompare.ChangeType;
+import fr.uem.efluid.services.types.VersionCompare.ColumnChanges;
 import fr.uem.efluid.services.types.VersionCompare.DictionaryTableChanges;
 import fr.uem.efluid.services.types.VersionCompare.DomainChanges;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -39,7 +40,7 @@ public class VersionContentChangesGeneratorTest {
                         + "\"dom\":\"" + domain.getUuid() + "\",\"tab\":\"T_TABLE\",\"whe\":\"1=1\","
                         + "\"cre\":\"" + FormatUtils.format(dict.getCreatedTime())
                         + "\",\"upd\":\"" + FormatUtils.format(dict.getUpdatedTime()) + "\",\"nam\":\"entry\"" +
-                        ",\"sel\":\"CUR.\\\"COLA\\\", CUR.\\\"COLB\\\"\",\"kna\":\"KEY\"}");
+                        ",\"sel\":\"cur.\\\"COLA\\\", cur.\\\"COLB\\\"\",\"kna\":\"KEY\"}");
     }
 
     @Test
@@ -83,13 +84,101 @@ public class VersionContentChangesGeneratorTest {
         assertThat(tableChange.getChangeType()).isEqualTo(ChangeType.UNCHANGED);
         assertThat(tableChange.getColumnChanges()).hasSize(3);
         assertThat(tableChange.getFilter()).isEqualTo("1=1");
-        assertThat(tableChange.getNameChange()).isNull();
+        assertThat(tableChange.getNameChange()).isEqualTo("entry");
         assertThat(tableChange.getTableName()).isEqualTo("T_TABLE");
-        assertThat(tableChange.getTableNameChange()).isNull();
+        assertThat(tableChange.getTableNameChange()).isEqualTo("T_TABLE");
 
         assertThat(tableChange.getColumnChanges()).allMatch(c -> c.getChangeType() == ChangeType.UNCHANGED);
+    }
 
+    @Test
+    public void testContentCompareColumnRemoved() {
 
+        FunctionalDomain domain = DataGenerationUtils.domain("domain", PROJ);
+        DictionaryEntry dict = DataGenerationUtils.entry("entry", domain, "cur.\"COLA\", cur.\"COLB\"", "T_TABLE", "1=1", "KEY", ColumnType.PK_ATOMIC);
+
+        Version one = version("one", domain, dict);
+
+        // Add change - remove 1 col
+        dict.setSelectClause("cur.\"COLA\"");
+
+        // Same content
+        List<DomainChanges> changes = GEN.generateChanges(one, version("two", domain, dict));
+
+        assertThat(changes).hasSize(1);
+
+        DomainChanges dch = changes.iterator().next();
+
+        assertThat(dch.getChangeType()).isEqualTo(ChangeType.MODIFIED);
+
+        assertThat(dch.getName()).isEqualTo("domain");
+        assertThat(dch.getUnmodifiedTableCount()).isEqualTo(0);
+        assertThat(dch.getTableChanges()).hasSize(1);
+
+        DictionaryTableChanges tableChange = dch.getTableChanges().get(0);
+
+        assertThat(tableChange.getName()).isEqualTo("entry");
+        assertThat(tableChange.getChangeType()).isEqualTo(ChangeType.MODIFIED);
+        assertThat(tableChange.getColumnChanges()).hasSize(3);
+        assertThat(tableChange.getFilter()).isEqualTo("1=1");
+        assertThat(tableChange.getNameChange()).isEqualTo("entry");
+        assertThat(tableChange.getTableName()).isEqualTo("T_TABLE");
+        assertThat(tableChange.getTableNameChange()).isEqualTo("T_TABLE");
+
+        ColumnChanges key = tableChange.getColumnChanges().stream().filter(c -> c.getName().equals("KEY")).findFirst().orElseThrow();
+        ColumnChanges cola = tableChange.getColumnChanges().stream().filter(c -> c.getName().equals("COLA")).findFirst().orElseThrow();
+        ColumnChanges colb = tableChange.getColumnChanges().stream().filter(c -> c.getName().equals("COLB")).findFirst().orElseThrow();
+
+        assertThat(key.getChangeType()).isEqualTo(ChangeType.UNCHANGED);
+        assertThat(cola.getChangeType()).isEqualTo(ChangeType.UNCHANGED);
+        assertThat(colb.getChangeType()).isEqualTo(ChangeType.REMOVED);
+        assertThat(colb.getName()).isEqualTo("COLB");
+    }
+
+    @Test
+    public void testContentCompareColumnAdded() {
+
+        FunctionalDomain domain = DataGenerationUtils.domain("domain", PROJ);
+        DictionaryEntry dict = DataGenerationUtils.entry("entry", domain, "cur.\"COLA\", cur.\"COLB\"", "T_TABLE", "1=1", "KEY", ColumnType.PK_ATOMIC);
+
+        Version one = version("one", domain, dict);
+
+        // Add change - remove 1 col
+        dict.setSelectClause("cur.\"COLA\", cur.\"COLB\", cur.\"COLC\"");
+
+        // Same content
+        List<DomainChanges> changes = GEN.generateChanges(one, version("two", domain, dict));
+
+        assertThat(changes).hasSize(1);
+
+        DomainChanges dch = changes.iterator().next();
+
+        assertThat(dch.getChangeType()).isEqualTo(ChangeType.MODIFIED);
+
+        assertThat(dch.getName()).isEqualTo("domain");
+        assertThat(dch.getUnmodifiedTableCount()).isEqualTo(0);
+        assertThat(dch.getTableChanges()).hasSize(1);
+
+        DictionaryTableChanges tableChange = dch.getTableChanges().get(0);
+
+        assertThat(tableChange.getName()).isEqualTo("entry");
+        assertThat(tableChange.getChangeType()).isEqualTo(ChangeType.MODIFIED);
+        assertThat(tableChange.getColumnChanges()).hasSize(4);
+        assertThat(tableChange.getFilter()).isEqualTo("1=1");
+        assertThat(tableChange.getNameChange()).isEqualTo("entry");
+        assertThat(tableChange.getTableName()).isEqualTo("T_TABLE");
+        assertThat(tableChange.getTableNameChange()).isEqualTo("T_TABLE");
+
+        ColumnChanges key = tableChange.getColumnChanges().stream().filter(c -> c.getName().equals("KEY")).findFirst().orElseThrow();
+        ColumnChanges cola = tableChange.getColumnChanges().stream().filter(c -> c.getName().equals("COLA")).findFirst().orElseThrow();
+        ColumnChanges colb = tableChange.getColumnChanges().stream().filter(c -> c.getName().equals("COLB")).findFirst().orElseThrow();
+        ColumnChanges colc = tableChange.getColumnChanges().stream().filter(c -> c.getName().equals("COLC")).findFirst().orElseThrow();
+
+        assertThat(key.getChangeType()).isEqualTo(ChangeType.UNCHANGED);
+        assertThat(cola.getChangeType()).isEqualTo(ChangeType.UNCHANGED);
+        assertThat(colb.getChangeType()).isEqualTo(ChangeType.UNCHANGED);
+        assertThat(colc.getChangeType()).isEqualTo(ChangeType.ADDED);
+        assertThat(colc.getName()).isEqualTo("COLC");
     }
 
     private static VersionContentChangesGenerator generator() {

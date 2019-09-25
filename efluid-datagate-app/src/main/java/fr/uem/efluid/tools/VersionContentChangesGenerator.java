@@ -234,9 +234,9 @@ public class VersionContentChangesGenerator {
                 ));
 
                 // Basic search for diffs
-                boolean unchanged = c.getName().equals(c.getNameChange())
-                        && c.getFilter().equals(c.getFilterChange())
-                        && c.getTableName().equals(c.getTableNameChange())
+                boolean unchanged = Objects.equals(c.getName(), c.getNameChange())
+                        && Objects.equals(c.getFilter(), c.getFilterChange())
+                        && Objects.equals(c.getTableName(), c.getTableNameChange())
                         && c.getColumnChanges().stream().allMatch(l -> l.getChangeType() == ChangeType.UNCHANGED);
 
                 c.setChangeType(unchanged ? ChangeType.UNCHANGED : ChangeType.MODIFIED);
@@ -286,19 +286,31 @@ public class VersionContentChangesGenerator {
             return (c1, c2) -> {
 
                 ColumnChanges c = new ColumnChanges();
-                c.setName(c1.getDisplayName());
+                c.setName(c1.getName());
 
-                c.setType(c1.getType().getDisplayName());
+                if (c1.getType() != null) {
+                    c.setType(c1.getType().getDisplayName());
+                }
+
                 c.setKey(c1.isKey());
-                c.setLink(c1.getForeignKeyTable() + ":" + c1.getForeignKeyColumn());
 
-                c.setTypeChange(c2.getType().getDisplayName());
+                if (c1.getForeignKeyTable() != null) {
+                    c.setLink(c1.getForeignKeyTable() + ":" + c1.getForeignKeyColumn());
+                }
+
+                if (c2.getType() != null) {
+                    c.setTypeChange(c2.getType().getDisplayName());
+                }
+
                 c.setKeyChange(c2.isKey());
-                c.setLinkChange(c2.getForeignKeyTable() + ":" + c2.getForeignKeyColumn());
+
+                if (c2.getForeignKeyTable() != null) {
+                    c.setLinkChange(c2.getForeignKeyTable() + ":" + c2.getForeignKeyColumn());
+                }
 
                 // Basic search for diffs
-                boolean unchanged = c.getLink().equals(c.getLinkChange())
-                        && c.getType().equals(c.getTypeChange())
+                boolean unchanged = Objects.equals(c.getLink(), c.getLinkChange())
+                        && Objects.equals(c.getType(), c.getTypeChange())
                         && c.isKey() == c.isKeyChange();
 
                 c.setChangeType(unchanged ? ChangeType.UNCHANGED : ChangeType.MODIFIED);
@@ -312,9 +324,15 @@ public class VersionContentChangesGenerator {
             return (c1) -> {
 
                 ColumnChanges c = new ColumnChanges();
-                c.setName(c1.getDisplayName());
-                c.setType(c1.getType().getDisplayName());
-                c.setLink(c1.getForeignKeyTable() + ":" + c1.getForeignKeyColumn());
+                c.setName(c1.getName());
+
+                if (c1.getType() != null) {
+                    c.setType(c1.getType().getDisplayName());
+                }
+
+                if (c1.getForeignKeyColumn() != null) {
+                    c.setLink(c1.getForeignKeyTable() + ":" + c1.getForeignKeyColumn());
+                }
 
                 c.setChangeType(ChangeType.REMOVED);
                 return c;
@@ -326,9 +344,15 @@ public class VersionContentChangesGenerator {
             return (c2) -> {
 
                 ColumnChanges c = new ColumnChanges();
-                c.setName(c2.getDisplayName());
-                c.setType(c2.getType().getDisplayName());
-                c.setLink(c2.getForeignKeyTable() + ":" + c2.getForeignKeyColumn());
+                c.setName(c2.getName());
+
+                if (c2.getType() != null) {
+                    c.setType(c2.getType().getDisplayName());
+                }
+
+                if (c2.getForeignKeyColumn() != null) {
+                    c.setLink(c2.getForeignKeyTable() + ":" + c2.getForeignKeyColumn());
+                }
 
                 c.setChangeType(ChangeType.ADDED);
                 return c;
@@ -387,12 +411,12 @@ public class VersionContentChangesGenerator {
 
             List<C> changes = new ArrayList<>();
 
-            // Deleted ones
-            ones.stream().filter(o -> twos.stream().noneMatch(t -> identityAccess.apply(t).equals(identityAccess.apply(o)))).map(delGen).forEach(changes::add);
+            // Added ones
+            ones.stream().filter(o -> twos.stream().noneMatch(t -> identityAccess.apply(t).equals(identityAccess.apply(o)))).map(createGen).forEach(changes::add);
 
-            // Use a pair for new or update
+            // Use a pair for removed or updated
             var associateds = twos.stream().map(t -> Pair.of(t, ones.stream().filter(o -> identityAccess.apply(o).equals(identityAccess.apply(t))).findFirst())).collect(Collectors.toList());
-            associateds.stream().filter(p -> !p.getSecond().isPresent()).map(p -> createGen.apply(p.getFirst())).forEach(changes::add);
+            associateds.stream().filter(p -> !p.getSecond().isPresent()).map(p -> delGen.apply(p.getFirst())).forEach(changes::add);
             associateds.stream().filter(p -> p.getSecond().isPresent()).map(p -> diffGen.apply(p.getFirst(), p.getSecond().get())).forEach(changes::add);
 
             return changes;
@@ -402,7 +426,7 @@ public class VersionContentChangesGenerator {
 
         private static List<FunctionalDomain> readDomains(Version version) {
 
-            if(StringUtils.isEmpty(version.getDomainsContent())){
+            if (StringUtils.isEmpty(version.getDomainsContent())) {
                 return Collections.emptyList();
             }
 
@@ -415,7 +439,7 @@ public class VersionContentChangesGenerator {
 
         private static List<DictionaryEntry> readDict(Version version) {
 
-            if(StringUtils.isEmpty(version.getDictionaryContent())){
+            if (StringUtils.isEmpty(version.getDictionaryContent())) {
                 return Collections.emptyList();
             }
 
@@ -428,7 +452,7 @@ public class VersionContentChangesGenerator {
 
         private static List<TableLink> readLinks(Version version) {
 
-            if(StringUtils.isEmpty(version.getLinksContent())){
+            if (StringUtils.isEmpty(version.getLinksContent())) {
                 return Collections.emptyList();
             }
 
@@ -441,7 +465,7 @@ public class VersionContentChangesGenerator {
 
         private static List<TableMapping> readMappings(Version version) {
 
-            if(StringUtils.isEmpty(version.getMappingsContent())){
+            if (StringUtils.isEmpty(version.getMappingsContent())) {
                 return Collections.emptyList();
             }
             return Stream.of(version.getMappingsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
