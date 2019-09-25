@@ -77,6 +77,29 @@ public class VersionContentChangesGenerator {
     }
 
     /**
+     * Revert the process from {@link #completeVersionContentForChangeGeneration} to get the content from version as entities
+     *
+     * @param version    Existing completed version
+     * @param domains    dest for extracted domains
+     * @param dictionary dest for extracted tables
+     * @param links      dest for extracted links
+     * @param mappings   dest for extracted mappins
+     */
+    public void readVersionContent(
+            Version version,
+            List<FunctionalDomain> domains,
+            List<DictionaryEntry> dictionary,
+            List<TableLink> links,
+            List<TableMapping> mappings) {
+
+
+        domains.addAll(DomainChangesBuilder.readDomains(version));
+        dictionary.addAll(DomainChangesBuilder.readDict(version));
+        links.addAll(DomainChangesBuilder.readLinks(version));
+        mappings.addAll(DomainChangesBuilder.readMappings(version));
+    }
+
+    /**
      * Change builder for two versions of dictionaries
      */
     private static class DomainChangesBuilder {
@@ -225,8 +248,8 @@ public class VersionContentChangesGenerator {
                 c.setTableNameChange(t2.getTableName());
 
                 c.setColumnChanges(detectChanges(
-                        getTableColumns(t1, d1Links, this.oneAllDicts),
                         getTableColumns(t2, d2Links, this.twoAllDicts),
+                        getTableColumns(t1, d1Links, this.oneAllDicts),
                         ColumnEditData::getName,
                         diffColumnChange(),
                         diffColumnDelete(),
@@ -411,12 +434,12 @@ public class VersionContentChangesGenerator {
 
             List<C> changes = new ArrayList<>();
 
-            // Added ones
-            ones.stream().filter(o -> twos.stream().noneMatch(t -> identityAccess.apply(t).equals(identityAccess.apply(o)))).map(createGen).forEach(changes::add);
+            // Removed ones
+            ones.stream().filter(o -> twos.stream().noneMatch(t -> identityAccess.apply(t).equals(identityAccess.apply(o)))).map(delGen).forEach(changes::add);
 
-            // Use a pair for removed or updated
+            // Use a pair for added or updated
             var associateds = twos.stream().map(t -> Pair.of(t, ones.stream().filter(o -> identityAccess.apply(o).equals(identityAccess.apply(t))).findFirst())).collect(Collectors.toList());
-            associateds.stream().filter(p -> !p.getSecond().isPresent()).map(p -> delGen.apply(p.getFirst())).forEach(changes::add);
+            associateds.stream().filter(p -> !p.getSecond().isPresent()).map(p -> createGen.apply(p.getFirst())).forEach(changes::add);
             associateds.stream().filter(p -> p.getSecond().isPresent()).map(p -> diffGen.apply(p.getFirst(), p.getSecond().get())).forEach(changes::add);
 
             return changes;
@@ -424,7 +447,7 @@ public class VersionContentChangesGenerator {
 
         /* ######################## Version content reading processes ####################### */
 
-        private static List<FunctionalDomain> readDomains(Version version) {
+        static List<FunctionalDomain> readDomains(Version version) {
 
             if (StringUtils.isEmpty(version.getDomainsContent())) {
                 return Collections.emptyList();
@@ -437,7 +460,7 @@ public class VersionContentChangesGenerator {
             }).collect(Collectors.toList());
         }
 
-        private static List<DictionaryEntry> readDict(Version version) {
+        static List<DictionaryEntry> readDict(Version version) {
 
             if (StringUtils.isEmpty(version.getDictionaryContent())) {
                 return Collections.emptyList();
@@ -450,7 +473,7 @@ public class VersionContentChangesGenerator {
             }).collect(Collectors.toList());
         }
 
-        private static List<TableLink> readLinks(Version version) {
+        static List<TableLink> readLinks(Version version) {
 
             if (StringUtils.isEmpty(version.getLinksContent())) {
                 return Collections.emptyList();
@@ -463,7 +486,7 @@ public class VersionContentChangesGenerator {
             }).collect(Collectors.toList());
         }
 
-        private static List<TableMapping> readMappings(Version version) {
+        static List<TableMapping> readMappings(Version version) {
 
             if (StringUtils.isEmpty(version.getMappingsContent())) {
                 return Collections.emptyList();

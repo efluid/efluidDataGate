@@ -1,12 +1,17 @@
 package fr.uem.efluid.system.tests.fixtures;
 
+import cucumber.api.DataTable;
 import cucumber.api.Delimiter;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.system.common.SystemTest;
+import fr.uem.efluid.tools.VersionContentChangesGenerator;
+import fr.uem.efluid.utils.DataGenerationUtils;
 import org.junit.Assert;
 import org.junit.Before;
 
@@ -15,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -112,12 +119,57 @@ public class VersionFixtures extends SystemTest {
                 modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime());
     }
 
-    @Then("^the version (.*) contains the detail of the current dictionary$")
-    public void the_version_contains_dict_content(String name) {
+    @Then("^the version (.*) contains this dictionary content :$")
+    public void the_version_contains_dict_content(String name, DataTable data) {
+
+        List<Map<String, String>> content = data.asMaps(String.class, String.class);
 
         Version version = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name);
 
         assertThat(version.getDictionaryContent()).isNotBlank();
-        assertThat(version.getDictionaryContent()).isNotBlank();
+
+        // Need gen to get extracted content
+        VersionContentChangesGenerator gen = new VersionContentChangesGenerator(
+                null // Query Gen is not used for reading
+        );
+
+        List<DictionaryEntry> contentTables = new ArrayList<>();
+
+        gen.readVersionContent(
+                version,
+                new ArrayList<>(),
+                contentTables, // Will use only tables
+                new ArrayList<>(),
+                new ArrayList<>()
+        );
+
+        List<DictionaryEntry> modelTables = content.stream().map(m ->
+                DataGenerationUtils.entry(
+                        m.get("entry name"),
+                        null,
+                        m.get("select clause"),
+                        m.get("table name"),
+                        m.get("filter clause"),
+                        m.get("key name"),
+                        ColumnType.valueOf(m.get("key type"))
+                )).collect(Collectors.toList());
+
+        assertThat(contentTables).hasSize(modelTables.size());
+
+        contentTables.forEach(t -> {
+            DictionaryEntry model = modelTables.stream()
+                    .filter(d -> d.getParameterName().equals(t.getParameterName()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new AssertionError("Cannot find model for table with name \""
+                                    + t.getParameterName() + "\""));
+
+            assertThat(t.getSelectClause()).isEqualTo(model.getSelectClause());
+            assertThat(t.getTableName()).isEqualTo(model.getTableName());
+            assertThat(t.getWhereClause()).isEqualTo(model.getWhereClause());
+            assertThat(t.getKeyName()).isEqualTo(model.getKeyName());
+            assertThat(t.getKeyType()).isEqualTo(model.getKeyType());
+
+        });
     }
 }

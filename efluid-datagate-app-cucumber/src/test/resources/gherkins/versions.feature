@@ -1,26 +1,54 @@
 Feature: A dictionary is associated to versions
-  
+
   Scenario: The list of specified versions is available to all users
     Given from the home page
     When the user access to list of versions
     Then the provided template is list of versions
-    
+
   Scenario: The existing versions are listed
     Given the existing versions v1, v2
     When the user access to list of versions
     Then the 2 existing versions are displayed
-    
+
   Scenario: A version can be added
     Given the existing versions v1, v2
     When the user add new version v3
     Then the 3 updated versions are displayed
 
   Scenario: When a version is added, the content of the dictionary is available for version compare
-    Given the existing versions v1, v2
-    And a dictionary table is added for table "TTAB_TWO"
-    When the user add new version v3
-    Then the version v3 contains the detail of the current dictionary
+    Given the existing versions v1
+    And this dictionary is added to current default domain :
+      | entry name | table name  | select clause            | filter clause | key name | key type  |
+      | My Entry   | T_TABLE_ONE | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+    When the user add new version v2
+    Then the version v2 contains this dictionary content :
+      | entry name | table name  | select clause            | filter clause | key name | key type  |
+      | My Entry   | T_TABLE_ONE | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
 
+  Scenario: Each added version manages its dictionary content for version compare
+    Given the existing versions vInit
+    And this dictionary is added to current default domain :
+      | entry name | table name  | select clause            | filter clause | key name | key type  |
+      | My Entry   | T_TABLE_ONE | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+    And the user add new version v2
+    And this dictionary is modified to current default domain :
+      | entry name | table name  | select clause            | filter clause | key name | key type  |
+      | My Entry   | T_TABLE_ONE | cur."COL_A"              | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 3 | T_TABLE_BIS | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_ATOMIC |
+    And the user add new version v3
+    Then the version v2 contains this dictionary content :
+      | entry name | table name  | select clause            | filter clause | key name | key type  |
+      | My Entry   | T_TABLE_ONE | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+    Then the version v3 contains this dictionary content :
+      | entry name | table name  | select clause            | filter clause | key name | key type  |
+      | My Entry   | T_TABLE_ONE | cur."COL_A"              | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 3 | T_TABLE_BIS | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_ATOMIC |
 
   Scenario: A version can be updated to mark last changes in dictionary
     Given the existing versions v1, v2, v3

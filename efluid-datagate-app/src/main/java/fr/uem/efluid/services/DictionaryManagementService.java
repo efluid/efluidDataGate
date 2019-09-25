@@ -1433,10 +1433,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // Apply all contents (externalized for testability)
         this.changesGenerator.completeVersionContentForChangeGeneration(
                 version,
-                this.domains.findAllById(domsUuids),
-                this.dictionary.findAllById(dictUuids),
-                this.links.findAllById(linksUuids),
-                this.mappings.findAllById(mappingsUuids)
+                domsUuids != null ? this.domains.findAllById(domsUuids) : Collections.emptyList(),
+                dictUuids != null ? this.dictionary.findAllById(dictUuids) : Collections.emptyList(),
+                linksUuids != null ? this.links.findAllById(linksUuids) : Collections.emptyList(),
+                mappingsUuids != null ? this.mappings.findAllById(mappingsUuids) : Collections.emptyList()
         );
     }
 
