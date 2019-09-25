@@ -1,6 +1,10 @@
 package fr.uem.efluid.tools;
 
 import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
+import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
+import fr.uem.efluid.model.shared.ExportAwareTableLink;
+import fr.uem.efluid.model.shared.ExportAwareTableMapping;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.services.types.LinkUpdateFollow;
 import fr.uem.efluid.services.types.VersionCompare.*;
@@ -21,16 +25,20 @@ import java.util.stream.Stream;
  * <p>The Mapping data are currently ignored</p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v2.0.0
  */
 @Component
 public class VersionContentChangesGenerator {
 
-    public static final String VERSION_CONTENT_ITEM_SEP = ";";
+    private static final String VERSION_CONTENT_ITEM_SEP = ";";
+
+    private final ManagedQueriesGenerator queryGenerator;
 
     @Autowired
-    private ManagedQueriesGenerator queryGenerator;
+    public VersionContentChangesGenerator(ManagedQueriesGenerator queryGenerator) {
+        this.queryGenerator = queryGenerator;
+    }
 
     /**
      * Process
@@ -43,6 +51,29 @@ public class VersionContentChangesGenerator {
 
         // Process with a builder because of large amount of processing properties to handle
         return new DomainChangesBuilder(this.queryGenerator, one, two).generateChanges();
+    }
+
+    /**
+     * Complete specified version with full content, compliant for further version diff processes
+     *
+     * @param version    Version to complete
+     * @param domains    all domains
+     * @param dictionary all dict entries
+     * @param links      all associated links
+     * @param mappings   all associated mappings
+     */
+    public void completeVersionContentForChangeGeneration(
+            Version version,
+            List<FunctionalDomain> domains,
+            List<DictionaryEntry> dictionary,
+            List<TableLink> links,
+            List<TableMapping> mappings) {
+
+        // Apply all contents
+        version.setDomainsContent(domains.stream().map(ExportAwareFunctionalDomain::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
+        version.setDictionaryContent(dictionary.stream().map(ExportAwareDictionaryEntry::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
+        version.setLinksContent(links.stream().map(ExportAwareTableLink::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
+        version.setMappingsContent(mappings.stream().map(ExportAwareTableMapping::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
     }
 
     /**
@@ -73,8 +104,8 @@ public class VersionContentChangesGenerator {
          * Load content from version and prepare all items to process for changes, in 3 layers
          *
          * @param queryGenerator for column data building
-         * @param one dic version "left"
-         * @param two dic version "right"
+         * @param one            dic version "left"
+         * @param two            dic version "right"
          */
         DomainChangesBuilder(ManagedQueriesGenerator queryGenerator, Version one, Version two) {
 
@@ -370,6 +401,11 @@ public class VersionContentChangesGenerator {
         /* ######################## Version content reading processes ####################### */
 
         private static List<FunctionalDomain> readDomains(Version version) {
+
+            if(StringUtils.isEmpty(version.getDomainsContent())){
+                return Collections.emptyList();
+            }
+
             return Stream.of(version.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
                 FunctionalDomain item = new FunctionalDomain();
                 item.deserialize(s);
@@ -378,6 +414,11 @@ public class VersionContentChangesGenerator {
         }
 
         private static List<DictionaryEntry> readDict(Version version) {
+
+            if(StringUtils.isEmpty(version.getDictionaryContent())){
+                return Collections.emptyList();
+            }
+
             return Stream.of(version.getDictionaryContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
                 DictionaryEntry item = new DictionaryEntry();
                 item.deserialize(s);
@@ -386,6 +427,11 @@ public class VersionContentChangesGenerator {
         }
 
         private static List<TableLink> readLinks(Version version) {
+
+            if(StringUtils.isEmpty(version.getLinksContent())){
+                return Collections.emptyList();
+            }
+
             return Stream.of(version.getLinksContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
                 TableLink item = new TableLink();
                 item.deserialize(s);
@@ -394,6 +440,10 @@ public class VersionContentChangesGenerator {
         }
 
         private static List<TableMapping> readMappings(Version version) {
+
+            if(StringUtils.isEmpty(version.getMappingsContent())){
+                return Collections.emptyList();
+            }
             return Stream.of(version.getMappingsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
                 TableMapping item = new TableMapping();
                 item.deserialize(s);

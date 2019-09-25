@@ -9,9 +9,7 @@
         	Les versions sont specifiées pour le dictionnaire courant. Les lots de modifications sont associés à une version du dictionnaire, et des
         	vérifications sont effectuées dans les imports / exports de lot pour vérifier que les versions sont à jour et en place.
         	Une version peut être mise à jour tant qu'aucun lot n'y est associé.
-        	<b><span th:if="${modelDesc != null}" th:text="|
-La version du modèle de l'application actuelle est ${modelDesc.identity}|">Model</span></b>
-			</li>
+        	<b><span th:if="${modelDesc != null}" th:text="|La version du modèle de l'application actuelle est ${modelDesc.identity}|">Model</span></b>
         </span>
         <span th:if="${versions == null || versions.isEmpty()}" class="important-remark" id="versRemark">
         	Aucune version n'a encore été définie pour le projet courant. Les echanges de lots de modifications ne sont pour l'instant pas possibles.
@@ -28,8 +26,7 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
                     <th scope="col">App. Modèle</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
-                    <th scope="col" colspan="2">Comparer</th>
-                    <th scope="col"width="10%"><a id="compareButton" class="btn btn-outline-secondary btn-sm float-right">Voir les différences</a></th>
+                    <th scope="col"width="10%">&nbsp;</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,10 +40,9 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
                      <td th:text="${version.modelId}">1.2.3</td>
                      <td th:text="${custom.format(version.createdTime)}">Lundi</td>
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
-                    <td><div th:id="|oneselecterFor${version.name}|" class="selecter unselected" title="Comparer entre cette version ...">&nbsp;</div>&nbsp;&nbsp;</td>
-                    <td><div th:id="|twoselecterFor${version.name}|" class="selecter unselected" title="... et cette version">&nbsp;</div>&nbsp;&nbsp;</td>
                      <td>
                      	<button th:if="${version.isCanUpdate()}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
+                        <a th:if="${!version.isCurrentVersion()}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm">Comparer</a>
                      </td>
 			     </tr>
 			     <tr id="versionListInjectBefore">
@@ -57,9 +53,6 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
 		</table>
     </span>
     <script layout:fragment="script">
-
-        var selectOne;
-        var selectTwo;
 
 		// Add row button
 		const addButtonAction = () => {
@@ -89,48 +82,8 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
 		    });
 		};
 
-		 // When selecting
-        const selectAction = (item) => {
-			hideDisplays();
-
-			var name = item.id.substring(14);
-            var type = item.id.substring(0,3);
-
-            console.log(type + " => " + name);
-
-            if(type === "one"){
-                if(selectOne === name){
-                    selectOne = null;
-                    item.className = "selecter unselected" ;
-                } else {
-                    selectOne = name;
-                    item.className = "selecter selected" ;
-                }
-            } else {
-                if(selectTwo === name){
-                    selectTwo = null;
-                    item.className = "selecter unselected" ;
-                } else {
-                    selectTwo = name;
-                    item.className = "selecter selected" ;
-                }
-            }
-
-            var button = $("#compareButton");
-
-            if(selectOne != null && selectTwo != null){
-                var link = "/ui/versions/compare/" + selectOne + "/" + selectTwo;
-				button.removeClass("btn-outline-secondary").addClass("btn-secondary");
-				button.prop('href',link);
-       		} else {
-                button.removeAttr('href');
-    			button.removeClass("btn-secondary").addClass("btn-outline-secondary");
-            }
-        };
-
     	// Init actions
     	$(document).ready(() => {
-			$("div.selecter").click((e) => selectAction(e.target));
 			$("#addButton").click(addButtonAction);
 			$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.id));
 		}); 

@@ -6,10 +6,6 @@ import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository.IdentifierType;
-import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
-import fr.uem.efluid.model.shared.ExportAwareFunctionalDomain;
-import fr.uem.efluid.model.shared.ExportAwareTableLink;
-import fr.uem.efluid.model.shared.ExportAwareTableMapping;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
@@ -77,13 +73,11 @@ import static fr.uem.efluid.utils.ErrorType.*;
 @Transactional
 public class DictionaryManagementService extends AbstractApplicationService {
 
-    private static final VersionData NOT_SET_VERSION = new VersionData("NOT SET", "", null, null, false);
+    private static final VersionData NOT_SET_VERSION = new VersionData("NOT SET", "", null, null, true, false);
 
     private static final String DEDUPLICATED_DOMAINS = "deduplicated-domains";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryManagementService.class);
-
-    private static final String VERSION_CONTENT_ITEM_SEP = ";";
 
     @Autowired
     private FunctionalDomainRepository domains;
@@ -127,6 +121,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
     @Autowired
     private FeatureManager features;
 
+    @Autowired
     private VersionContentChangesGenerator changesGenerator;
 
     /**
@@ -179,7 +174,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         if (last != null) {
 
             // Must have no commit for version
-            return VersionData.fromEntity(last, this.commits.countCommitsForVersion(last.getUuid()) == 0);
+            return VersionData.fromEntity(last, true, this.commits.countCommitsForVersion(last.getUuid()) == 0);
         }
 
         return NOT_SET_VERSION;
@@ -304,6 +299,23 @@ public class DictionaryManagementService extends AbstractApplicationService {
     }
 
     /**
+     * Process a full compare between a selected version and the current last version for a dictionnary update following
+     *
+     * @param toCompareName identified version to compare, "left"
+     * @return compare result
+     */
+    public VersionCompare compareVersionWithLast(String toCompareName) {
+
+        Version last = getLastUpdatedVersion();
+
+        if (last == null) {
+            throw new ApplicationException(VERSION_NOT_EXIST, "No version specified yet for application");
+        }
+
+        return compareVersions(toCompareName, last.getName());
+    }
+
+    /**
      * Process a full compare between 2 selected versions for a dictionnary update following
      *
      * @param oneName identified version to compare, "left"
@@ -321,8 +333,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         if (one != null && two != null) {
             return new VersionCompare(
-                    VersionData.fromEntity(one, false),
-                    VersionData.fromEntity(two, false),
+                    VersionData.fromEntity(one, false, false),
+                    VersionData.fromEntity(two, true, false),
                     this.changesGenerator.generateChanges(one, two));
         } else {
             throw new ApplicationException(VERSION_NOT_EXIST, "Selected version(s) doesn't exist (" + oneName + " - " + twoName + ")");
@@ -929,7 +941,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // No commits for it
         boolean isUpdatable = this.commits.countCommitsForVersion(lastProjectVersion.getUuid()) == 0;
 
-        return VersionData.fromEntity(version, isLastVersion && isUpdatable);
+        return VersionData.fromEntity(version, isLastVersion, isLastVersion && isUpdatable);
     }
 
     /**
@@ -1418,11 +1430,14 @@ public class DictionaryManagementService extends AbstractApplicationService {
         List<UUID> linksUuids = contentUuids.get(VersionRepository.MAPPED_TYPE_LINK);
         List<UUID> mappingsUuids = contentUuids.get(VersionRepository.MAPPED_TYPE_MAPPING);
 
-        // Apply all contents
-        version.setDomainsContent(this.domains.findAllById(domsUuids).stream().map(ExportAwareFunctionalDomain::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
-        version.setDictionaryContent(this.dictionary.findAllById(dictUuids).stream().map(ExportAwareDictionaryEntry::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
-        version.setLinksContent(this.links.findAllById(linksUuids).stream().map(ExportAwareTableLink::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
-        version.setMappingsContent(this.mappings.findAllById(mappingsUuids).stream().map(ExportAwareTableMapping::serialize).collect(Collectors.joining(VERSION_CONTENT_ITEM_SEP)));
+        // Apply all contents (externalized for testability)
+        this.changesGenerator.completeVersionContentForChangeGeneration(
+                version,
+                this.domains.findAllById(domsUuids),
+                this.dictionary.findAllById(dictUuids),
+                this.links.findAllById(linksUuids),
+                this.mappings.findAllById(mappingsUuids)
+        );
     }
 
     /**

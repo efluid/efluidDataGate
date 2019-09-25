@@ -4,6 +4,7 @@ import cucumber.api.Delimiter;
 import cucumber.api.java.en.Given;
 import cucumber.api.java.en.Then;
 import cucumber.api.java.en.When;
+import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.system.common.SystemTest;
 import org.junit.Assert;
@@ -14,6 +15,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author elecomte
@@ -107,5 +110,14 @@ public class VersionFixtures extends SystemTest {
 
         Assert.assertNotEquals(initUpdatedTime,
                 modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime());
+    }
+
+    @Then("^the version (.*) contains the detail of the current dictionary$")
+    public void the_version_contains_dict_content(String name) {
+
+        Version version = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name);
+
+        assertThat(version.getDictionaryContent()).isNotBlank();
+        assertThat(version.getDictionaryContent()).isNotBlank();
     }
 }

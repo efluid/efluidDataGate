@@ -96,7 +96,7 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
             + " where project_uuid = :projectUuid "
             + " and updated_time < :checkTime "
             + " union "
-            + " select '" + MAPPED_TYPE_DICT + "' as type, d.uuid as uuid as time from dictionary d "
+            + " select '" + MAPPED_TYPE_DICT + "' as type, d.uuid as uuid from dictionary d "
             + " inner join domain m on d.domain_uuid = m.uuid "
             + " where m.project_uuid = :projectUuid "
             + " and d.updated_time < :checkTime "
@@ -110,7 +110,7 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
             + " select '" + MAPPED_TYPE_MAPPING + "' as type, t.uuid as uuid from mappings t "
             + " inner join dictionary d on t.dictionary_entry_uuid = d.uuid "
             + " inner join domain m on d.domain_uuid = m.uuid "
-            + " where m.project_uuid = :projectUuid"
+            + " where m.project_uuid = :projectUuid "
             + " and t.updated_time < :checkTime ", nativeQuery = true)
     List<Object[]> _internal_findLastDictionaryUpdateForProject(@Param("projectUuid") String projectUuid, @Param("checkTime") LocalDateTime lastVersionUpdate);
 

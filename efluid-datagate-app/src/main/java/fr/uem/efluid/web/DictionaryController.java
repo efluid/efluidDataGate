@@ -328,14 +328,13 @@ public class DictionaryController extends CommonController {
 
     /**
      * @param model
-     * @param one
-     * @param two
+     * @param name
      * @return
      */
-    @GetMapping("/versions/compare/{one}/{two}")
-    public String compareVersions(Model model, @PathVariable("one") String one, @PathVariable("two") String two) {
+    @GetMapping("/versions/compare/{name}")
+    public String compareVersionWithLast(Model model, @PathVariable("name") String name) {
 
-        model.addAttribute("compare", this.dictionaryManagementService.compareVersions(one, two));
+        model.addAttribute("compare", this.dictionaryManagementService.compareVersionWithLast(name));
 
         return "pages/compare";
     }

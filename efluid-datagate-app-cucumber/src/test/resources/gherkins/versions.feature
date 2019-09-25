@@ -15,6 +15,13 @@ Feature: A dictionary is associated to versions
     When the user add new version v3
     Then the 3 updated versions are displayed
 
+  Scenario: When a version is added, the content of the dictionary is available for version compare
+    Given the existing versions v1, v2
+    And a dictionary table is added for table "TTAB_TWO"
+    When the user add new version v3
+    Then the version v3 contains the detail of the current dictionary
+
+
   Scenario: A version can be updated to mark last changes in dictionary
     Given the existing versions v1, v2, v3
     When the user update version v3

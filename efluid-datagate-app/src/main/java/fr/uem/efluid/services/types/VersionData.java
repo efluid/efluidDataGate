@@ -1,98 +1,109 @@
 package fr.uem.efluid.services.types;
 
-import java.time.LocalDateTime;
-
 import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.rest.v1.model.VersionView;
+
+import java.time.LocalDateTime;
 
 /**
  * <p>
  * DTO for version info
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.2.0
  * @version 1
+ * @since v0.2.0
  */
 public class VersionData {
 
-	private final String name;
+    private final String name;
 
-	private final String modelId;
+    private final String modelId;
 
-	private final LocalDateTime createdTime;
+    private final LocalDateTime createdTime;
 
-	private final LocalDateTime updatedTime;
+    private final LocalDateTime updatedTime;
 
-	private boolean canUpdate;
+    private final boolean currentVersion;
 
-	/**
-	 * @param name
-	 * @param createdTime
-	 * @param updatedTime
-	 */
-	public VersionData(String name, String modelId, LocalDateTime createdTime, LocalDateTime updatedTime, boolean canUpdate) {
-		super();
-		this.name = name;
-		this.modelId = modelId;
-		this.createdTime = createdTime;
-		this.updatedTime = updatedTime;
-		this.canUpdate = canUpdate;
-	}
+    private boolean canUpdate;
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return this.name;
-	}
+    /**
+     * @param name
+     * @param createdTime
+     * @param updatedTime
+     */
+    public VersionData(String name, String modelId, LocalDateTime createdTime, LocalDateTime updatedTime, boolean currentVersion, boolean canUpdate) {
+        super();
+        this.name = name;
+        this.modelId = modelId;
+        this.createdTime = createdTime;
+        this.updatedTime = updatedTime;
+        this.currentVersion = currentVersion;
+        this.canUpdate = canUpdate;
+    }
 
-	/**
-	 * @return the modelId
-	 */
-	public String getModelId() {
-		return this.modelId;
-	}
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return this.name;
+    }
 
-	/**
-	 * @return the createdTime
-	 */
-	public LocalDateTime getCreatedTime() {
-		return this.createdTime;
-	}
+    /**
+     * @return the modelId
+     */
+    public String getModelId() {
+        return this.modelId;
+    }
 
-	/**
-	 * @return the updatedTime
-	 */
-	public LocalDateTime getUpdatedTime() {
-		return this.updatedTime;
-	}
+    /**
+     * @return the createdTime
+     */
+    public LocalDateTime getCreatedTime() {
+        return this.createdTime;
+    }
 
-	/**
-	 * @return
-	 */
-	public boolean isCanUpdate() {
-		return this.canUpdate;
-	}
+    /**
+     * @return the updatedTime
+     */
+    public LocalDateTime getUpdatedTime() {
+        return this.updatedTime;
+    }
 
-	/**
-	 * @param version
-	 * @return
-	 */
-	public static VersionData fromEntity(Version version, boolean canUpdate) {
-		return new VersionData(
-				version.getName(),
-				version.getModelIdentity() != null ? version.getModelIdentity() : " n/a ",
-				version.getCreatedTime(),
-				version.getUpdatedTime(),
-				canUpdate);
-	}
+    /**
+     * @return
+     */
+    public boolean isCanUpdate() {
+        return this.canUpdate;
+    }
 
-	/**
-	 * @param data
-	 * @return
-	 */
-	public static VersionView toView(VersionData data) {
-		return data != null ? new VersionView(data.getName(), data.getModelId(), data.getUpdatedTime(), data.isCanUpdate()) : null;
-	}
+    /**
+     * @return true if it's the active version of app (for filtering in a list for example)
+     */
+    public boolean isCurrentVersion() {
+        return this.currentVersion;
+    }
+
+    /**
+     * @param version
+     * @return
+     */
+    public static VersionData fromEntity(Version version, boolean currentVersion, boolean canUpdate) {
+        return new VersionData(
+                version.getName(),
+                version.getModelIdentity() != null ? version.getModelIdentity() : " n/a ",
+                version.getCreatedTime(),
+                version.getUpdatedTime(),
+                currentVersion,
+                canUpdate);
+    }
+
+    /**
+     * @param data
+     * @return
+     */
+    public static VersionView toView(VersionData data) {
+        return data != null ? new VersionView(data.getName(), data.getModelId(), data.getUpdatedTime(), data.isCanUpdate()) : null;
+    }
 }

@@ -161,7 +161,7 @@ public class ModelDatabaseAccess {
     }
 
     public void forceUpdateVersion(Project project) {
-        Version lastVersion = this.versions.getLastVersionForProject(project);
+        Version lastVersion = findLastVersionForProject(project);
 
         Version newVersion = new Version();
         newVersion.setName(lastVersion.getName() + "_UPD");
@@ -173,5 +173,9 @@ public class ModelDatabaseAccess {
 
         this.versions.delete(lastVersion);
         this.versions.save(newVersion);
+    }
+
+    public Version findLastVersionForProject(Project proj) {
+        return this.versions.getLastVersionForProject(proj);
     }
 }
