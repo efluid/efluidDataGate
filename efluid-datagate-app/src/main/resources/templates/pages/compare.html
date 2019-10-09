@@ -10,6 +10,32 @@
                     th:text="${compare.two.name}">ID988IDIDU</span>" du dictionnaire
 			</h5>
 		</div>
+		<table class="table table-sm">
+		    <thead>
+		        <tr>
+		            <th scope="col" th:text="${compare.one.name}" width=""50%>V1</th>
+		            <th scope="col" th:text="${compare.two.name}" width=""50%>V2</th>
+		        </tr>
+		    </thead>
+		    <tbody>
+		        <tr th:each="domainChange, cstat : ${compare.domainChanges}">
+		            <td>
+						<span th:if="${domainChange.changeType.name()}!='ADDED'">
+
+							<span class="change-title" th:text="${domainChange.name}">DOMAINE</span>
+
+						</span>
+					</td>
+		            <td>
+						<span th:if="${domainChange.changeType.name()}!='REMOVED'">
+
+							<span class="change-title" th:text="${domainChange.name}">DOMAINE</span>
+
+						</span>
+					</td>
+		        </tr>
+		    </tbody>
+		</table>
 	</span>
 <script layout:fragment="script">
 
