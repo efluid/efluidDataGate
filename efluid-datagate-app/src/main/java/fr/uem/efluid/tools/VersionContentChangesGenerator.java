@@ -290,6 +290,10 @@ public class VersionContentChangesGenerator {
                 c.setFilter(t2.getWhereClause());
                 c.setTableName(t2.getTableName());
 
+                c.setNameChange(c.getName());
+                c.setFilterChange(c.getFilter());
+                c.setTableNameChange(c.getTableName());
+
                 c.setChangeType(ChangeType.ADDED);
 
                 c.setColumnChanges(
@@ -376,6 +380,9 @@ public class VersionContentChangesGenerator {
                 if (c2.getForeignKeyColumn() != null) {
                     c.setLink(c2.getForeignKeyTable() + ":" + c2.getForeignKeyColumn());
                 }
+
+                c.setTypeChange(c.getType());
+                c.setLinkChange(c.getLink());
 
                 c.setChangeType(ChangeType.ADDED);
                 return c;

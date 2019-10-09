@@ -2,6 +2,7 @@ package fr.uem.efluid.services.types;
 
 import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.rest.v1.model.VersionView;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 
@@ -28,12 +29,14 @@ public class VersionData {
 
     private boolean canUpdate;
 
+    private boolean canCompare;
+
     /**
      * @param name
      * @param createdTime
      * @param updatedTime
      */
-    public VersionData(String name, String modelId, LocalDateTime createdTime, LocalDateTime updatedTime, boolean currentVersion, boolean canUpdate) {
+    public VersionData(String name, String modelId, LocalDateTime createdTime, LocalDateTime updatedTime, boolean currentVersion, boolean canUpdate, boolean canCompare) {
         super();
         this.name = name;
         this.modelId = modelId;
@@ -41,6 +44,7 @@ public class VersionData {
         this.updatedTime = updatedTime;
         this.currentVersion = currentVersion;
         this.canUpdate = canUpdate;
+        this.canCompare = canCompare;
     }
 
     /**
@@ -85,6 +89,14 @@ public class VersionData {
         return this.currentVersion;
     }
 
+    public boolean isCanCompare() {
+        return canCompare;
+    }
+
+    public void setCanCompare(boolean canCompare) {
+        this.canCompare = canCompare;
+    }
+
     /**
      * @param version
      * @return
@@ -96,7 +108,8 @@ public class VersionData {
                 version.getCreatedTime(),
                 version.getUpdatedTime(),
                 currentVersion,
-                canUpdate);
+                canUpdate,
+                StringUtils.hasText(version.getDomainsContent()));
     }
 
     /**

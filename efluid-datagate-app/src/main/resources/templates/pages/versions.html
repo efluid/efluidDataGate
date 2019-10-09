@@ -41,8 +41,8 @@
                      <td th:text="${custom.format(version.createdTime)}">Lundi</td>
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
-                     	<button th:if="${version.isCanUpdate()}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
-                        <a th:if="${!version.isCurrentVersion()}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm">Comparer</a>
+                     	<button th:if="${version.canUpdate}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
+                        <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm">Comparer</a>
                      </td>
 			     </tr>
 			     <tr id="versionListInjectBefore">

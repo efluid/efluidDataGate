@@ -73,7 +73,7 @@ import static fr.uem.efluid.utils.ErrorType.*;
 @Transactional
 public class DictionaryManagementService extends AbstractApplicationService {
 
-    private static final VersionData NOT_SET_VERSION = new VersionData("NOT SET", "", null, null, true, false);
+    private static final VersionData NOT_SET_VERSION = new VersionData("NOT SET", "", null, null, true, false, false);
 
     private static final String DEDUPLICATED_DOMAINS = "deduplicated-domains";
 

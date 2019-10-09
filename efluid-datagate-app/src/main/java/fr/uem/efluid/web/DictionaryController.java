@@ -2,10 +2,7 @@ package fr.uem.efluid.web;
 
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.DictionaryManagementService;
-import fr.uem.efluid.services.types.DictionaryEntryEditData;
-import fr.uem.efluid.services.types.FunctionalDomainData;
-import fr.uem.efluid.services.types.TestQueryData;
-import fr.uem.efluid.services.types.VersionData;
+import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -334,7 +331,9 @@ public class DictionaryController extends CommonController {
     @GetMapping("/versions/compare/{name}")
     public String compareVersionWithLast(Model model, @PathVariable("name") String name) {
 
-        model.addAttribute("compare", this.dictionaryManagementService.compareVersionWithLast(name));
+        VersionCompare compare = this.dictionaryManagementService.compareVersionWithLast(name);
+
+        model.addAttribute("compare", compare);
 
         return "pages/compare";
     }
