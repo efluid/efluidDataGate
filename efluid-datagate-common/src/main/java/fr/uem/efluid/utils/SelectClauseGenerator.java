@@ -125,7 +125,12 @@ public class SelectClauseGenerator {
 			return DEFAULT_SELECT_CLAUSE;
 		}
 
-		// Dedicated process if has mapped links for cleaner management
+		// Empty clause
+		if(selectedColumnNames.isEmpty()){
+			return "";
+		}
+
+			// Dedicated process if has mapped links for cleaner management
 		if (hasMappedLinks(links, allEntries)) {
 
 			StringBuilder select = new StringBuilder();
