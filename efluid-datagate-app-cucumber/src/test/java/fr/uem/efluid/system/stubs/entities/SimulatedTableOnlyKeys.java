@@ -8,7 +8,7 @@ import javax.persistence.Table;
 import java.util.Objects;
 
 @Entity
-@Table(name = ManagedDatabaseAccess.TABLE_ONE)
+@Table(name = ManagedDatabaseAccess.TABLE_ONLY_KEYS)
 public class SimulatedTableOnlyKeys {
 
     @Id

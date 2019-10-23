@@ -51,5 +51,13 @@ Feature: The managed parameters are specified by table in the dictionary
     Given a prepared parameter table data with name "My Table" for managed table "TTAB_TWO"
     When the parameter table is tested by user
     Then the parameter table query result is provided with 10 detailled lines from managed table "TTAB_TWO"
-    
-    
+
+  Scenario: For a table with only keys, no content is managed without error
+    Given a prepared parameter table data with name "My key Only table" for managed table "TTAB_ONLY_KEYS" and columns selected as this :
+      | name      | selection |
+      | ONE_KEY   | key       |
+      | OTHER_KEY | key       |
+    And the parameter table for managed table "TTAB_ONE" already exists
+    When the parameter table is saved by user
+    Then the parameter table for managed table "TTAB_ONLY_KEYS" is added to the current user's project dictionary
+    And the selection clause for the parameter table for managed table "TTAB_ONLY_KEYS" is empty

@@ -101,7 +101,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @param parameterEntry
      * @return
      */
-    public String producesSelectParameterQuery(DictionaryEntry parameterEntry, List<TableLink> links,
+    public String producesSelectParameterQuery(DictionaryEntry parameterEntry, Collection<TableLink> links,
                                                Map<String, DictionaryEntry> allEntries) {
 
         // Need clean select for uses
@@ -505,7 +505,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @param allEntries
      * @return
      */
-    private String prepareJoinLinks(List<TableLink> links,
+    private String prepareJoinLinks(Collection<TableLink> links,
                                     Map<String, DictionaryEntry> allEntries, JoinType type) {
 
         AtomicInteger pos = new AtomicInteger(0);

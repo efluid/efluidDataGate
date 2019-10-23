@@ -543,6 +543,47 @@ public class DictionaryManagementService extends AbstractApplicationService {
     }
 
     /**
+     * Force generate the full query : used for editing
+     *
+     * @param editData
+     */
+    public String generateQuery(DictionaryEntryEditData editData) {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        // For link building, need other dicts
+        Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName(project);
+
+        // Will use a "temp" simulated dict entry
+        DictionaryEntry entry = new DictionaryEntry();
+
+        entry.setTableName(editData.getTable());
+
+        // Specified keys from columns
+        List<ColumnEditData> keys = editData.getColumns().stream().filter(ColumnEditData::isKey).sorted().collect(Collectors.toList());
+
+        // Other common edited properties
+        entry.setParameterName(editData.getName());
+        entry.setWhereClause(editData.getWhere());
+        entry.setUpdatedTime(LocalDateTime.now());
+
+        // Apply keys, with support for composite keys
+        applyEditedKeys(entry, keys, true);
+
+        // Simulated links
+        Collection<TableLink> links = prepareLinksFromEditData(entry, editData.getColumns()).values();
+
+        // Now update select clause using validated tableLinks
+        entry.setSelectClause(columnsAsSelectClause(editData.getColumns(),
+                links,
+                Collections.emptyList(),
+                this.dictionary.findAllMappedByTableName(project)));
+
+        return this.queryGenerator.producesSelectParameterQuery(entry, links, allDicts);
+    }
+
+    /**
      * <p>
      * Use details from a dictionary entry edit data to get corresponding result table.
      * Content is provided as a list of lines, 1st line (list of string) contains the
@@ -1288,11 +1329,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
      * @param entry
      * @param cols
      */
-    private void updateLinks(DictionaryEntry entry, List<ColumnEditData> cols) {
-
-        // For final save
-        Collection<TableLink> updatedLinks = new ArrayList<>();
-        Collection<TableLink> createdLinks = new ArrayList<>();
+    private Map<String, TableLink> prepareLinksFromEditData(DictionaryEntry entry, List<ColumnEditData> cols) {
 
         Map<String, TableLink> editedLinksByTableTo = new HashMap<>();
 
@@ -1323,6 +1360,23 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 }
             }
         }
+
+        return editedLinksByTableTo;
+    }
+
+    /**
+     * Update / Create / delete tablelink regarding specified FK in columnEditDatas
+     *
+     * @param entry
+     * @param cols
+     */
+    private void updateLinks(DictionaryEntry entry, List<ColumnEditData> cols) {
+
+        // For final save
+        Collection<TableLink> updatedLinks = new ArrayList<>();
+        Collection<TableLink> createdLinks = new ArrayList<>();
+
+        Map<String, TableLink> editedLinksByTableTo = prepareLinksFromEditData(entry, cols);
 
         // Get existing to update / remove
         Map<String, TableLink> existingLinksByTableTo = this.links.findByDictionaryEntry(entry).stream().distinct()
@@ -1493,7 +1547,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
      * @param columns
      * @return
      */
-    private String columnsAsSelectClause(List<ColumnEditData> columns, List<TableLink> tabLinks, List<TableMapping> tabMappings,
+    private String columnsAsSelectClause(List<ColumnEditData> columns, Collection<TableLink> tabLinks, Collection<TableMapping> tabMappings,
                                          Map<String, DictionaryEntry> allEntries) {
         return this.queryGenerator.mergeSelectClause(
                 columns.stream().filter(ColumnEditData::isSelected).map(ColumnEditData::getName).collect(Collectors.toList()),

@@ -206,6 +206,19 @@ public class DictionaryController extends CommonController {
     }
 
     /**
+     * REST post process from a processing table edit, to generate a query server-side
+     *
+     * @param editData
+     * @return
+     */
+    @RequestMapping(path = "/dictionary/querygen", method = POST, consumes = {"application/x-www-form-urlencoded"})
+    @ResponseBody
+    public String dictionaryGenerateQuery(DictionaryEntryEditData editData) {
+
+        return this.dictionaryManagementService.generateQuery(editData);
+    }
+
+    /**
      * @param model
      * @param editData
      * @return
