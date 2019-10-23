@@ -127,7 +127,7 @@ public class SelectClauseGenerator {
 
 		// Empty clause
 		if(selectedColumnNames.isEmpty()){
-			return "";
+			return null;
 		}
 
 			// Dedicated process if has mapped links for cleaner management

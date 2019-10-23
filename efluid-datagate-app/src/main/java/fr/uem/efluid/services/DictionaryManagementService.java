@@ -566,10 +566,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // Other common edited properties
         entry.setParameterName(editData.getName());
         entry.setWhereClause(editData.getWhere());
-        entry.setUpdatedTime(LocalDateTime.now());
 
         // Apply keys, with support for composite keys
-        applyEditedKeys(entry, keys, true);
+        applyEditedKeys(entry, keys, false);
 
         // Simulated links
         Collection<TableLink> links = prepareLinksFromEditData(entry, editData.getColumns()).values();

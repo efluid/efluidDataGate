@@ -450,19 +450,25 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     private String consolidateSelectClause(DictionaryEntry parameterEntry) {
 
         // Basic consolidate => Select all
-        if (parameterEntry.getSelectClause() == null || parameterEntry.getSelectClause().length() == 0) {
+        if (DEFAULT_SELECT_CLAUSE.equals(parameterEntry.getSelectClause())) {
             return DEFAULT_SELECT_CLAUSE;
         }
 
         // Clean search for key
-        String keyRef = createKeysRef(parameterEntry);
+        String keyRef = createKeysRef(parameterEntry).trim();
 
         // If keyname not in select clause, need to add it
-        if (!parameterEntry.getSelectClause().contains(keyRef)) {
+        if (parameterEntry.getSelectClause() == null || !parameterEntry.getSelectClause().contains(keyRef)) {
+
+            // Need to remove last comma from key select
+            if (parameterEntry.getSelectClause() == null && keyRef.endsWith(",")) {
+                return keyRef.substring(0, keyRef.length() - 1);
+            }
+
             return keyRef + parameterEntry.getSelectClause();
         }
 
-        return parameterEntry.getSelectClause();
+        return parameterEntry.getSelectClause() != null ? parameterEntry.getSelectClause() : "";
     }
 
     /**
