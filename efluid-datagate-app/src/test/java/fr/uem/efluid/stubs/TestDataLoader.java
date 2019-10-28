@@ -131,6 +131,13 @@ public class TestDataLoader {
         this.sourceChilds.flush();
     }
 
+    public Project setupProject() {
+        this.projects.deleteAll();
+        Project proj = this.projects.save(project("Default"));
+        setActiveProject(proj);
+        return proj;
+    }
+
     /**
      * @return
      */

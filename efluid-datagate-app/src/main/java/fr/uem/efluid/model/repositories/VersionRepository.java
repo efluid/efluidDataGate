@@ -52,7 +52,7 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
      */
     @Query(value = "select concat(uuid,'') from versions where created_time = "
             + " (select max(created_time) from versions where project_uuid = :projectUuid) "
-            + " and project_uuid = :projectUuid", nativeQuery = true)
+            + " and project_uuid = :projectUuid limit 1", nativeQuery = true)
     Object _internal_findLastVersionUuidForProject(@Param("projectUuid") String projectUuid);
 
     /**

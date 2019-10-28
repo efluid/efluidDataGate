@@ -208,14 +208,14 @@ public class TableFixtures extends SystemTest {
     @Then("^the selection clause for the parameter table for managed table \"(.*)\" is empty$")
     public void the_selection_clause_is_empty(String name) {
         DictionaryEntry dic = modelDatabase().findDictionaryEntryByProjectAndTableName(getCurrentUserProject(), name);
-        assertThat(dic).isNotNull();
-        assertThat(dic.getSelectClause().trim()).isEmpty();
+        assertThat(dic.getSelectClause()).isNullOrEmpty();
     }
 
     @Then("^the selection clause for the parameter table for managed table \"(.*)\" is equals to \"(.*)\"$")
     public void the_selection_clause_is_valid(String name, String clause) {
         DictionaryEntry dic = modelDatabase().findDictionaryEntryByProjectAndTableName(getCurrentUserProject(), name);
         assertThat(dic).isNotNull();
+        assertThat(dic.getSelectClause()).isNotNull();
         assertThat(dic.getSelectClause().trim()).isEqualTo(clause.trim());
     }
 
