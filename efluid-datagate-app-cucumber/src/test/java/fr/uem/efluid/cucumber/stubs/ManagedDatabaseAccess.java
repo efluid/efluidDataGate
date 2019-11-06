@@ -57,7 +57,7 @@ public class ManagedDatabaseAccess {
     public static final String EFLUIDTESTNUMBER = "EFLUIDTESTNUMBER";
 
     // Table to pair of "order" / type
-    public static final Map<String, Pair<Integer, Class<?>>> ENTITY_TYPES = new HashMap<>();
+    private static final Map<String, Pair<Integer, Class<?>>> ENTITY_TYPES = new HashMap<>();
 
     static {
         ENTITY_TYPES.put(TABLE_ONE, Pair.of(1, SimulatedTableOne.class));
@@ -92,10 +92,10 @@ public class ManagedDatabaseAccess {
 
 
     /**
-     * Init from cucumber Datatable
+     * Update from cucumber Datatable
      *
-     * @param name
-     * @param data
+     * @param name table name
+     * @param data source for data from feature code
      */
     public void updateTab(String name, DataTable data) {
 
@@ -111,10 +111,10 @@ public class ManagedDatabaseAccess {
     }
 
     /**
-     * Init from cucumber Datatable
+     * Check from cucumber Datatable that current data are equals
      *
-     * @param name
-     * @param data
+     * @param name table name
+     * @param data source for data from feature code
      */
     public void assertCurrentTabComplies(String name, DataTable data) {
 
@@ -151,8 +151,8 @@ public class ManagedDatabaseAccess {
     /**
      * Init from cucumber Datatable
      *
-     * @param name
-     * @param data
+     * @param name table name
+     * @param data source for data from feature code
      */
     public void initTab(String name, DataTable data) {
 
@@ -169,10 +169,11 @@ public class ManagedDatabaseAccess {
 
 
     /**
-     * Init from cucumber Datatable
+     * Init from cucumber Datatable with a repeated pattern
      *
-     * @param name
-     * @param data
+     * @param count repeated line count
+     * @param name  table name
+     * @param data  source for data from feature code, for one entry, repeated <tt>count</tt> times
      */
     public void initHeavyTab(int count, String name, DataTable data) {
 
@@ -261,20 +262,11 @@ public class ManagedDatabaseAccess {
         }
     }
 
-    /**
-     * @param setter
-     * @param rawVal
-     * @return
-     */
     private Object getValForSetter(Method setter, String rawVal, String name) {
         Class<?> paramType = setter.getParameterTypes()[0];
         return getMappedValue(paramType, rawVal, name);
     }
 
-    /**
-     * @param type
-     * @return
-     */
     private static Map<String, Method> loadSetters(Class<?> type) {
         return Stream.of(type.getMethods())
                 .filter(met -> met.getName().startsWith("set"))
@@ -286,11 +278,6 @@ public class ManagedDatabaseAccess {
 
     /**
      * For a value from a datatable, get the corresponding object of specified type. Can be a basic field type, or another stub type
-     *
-     * @param paramType
-     * @param v
-     * @return
-     * @throws UnsupportedOperationException
      */
     private Object getMappedValue(Class<?> paramType, String v, String name) {
 
@@ -420,10 +407,7 @@ public class ManagedDatabaseAccess {
     }
 
     /**
-     * @param nbr
-     * @param keyPattern
-     * @param valuePattern
-     * @param otherPattern
+     * Init for TABLE 2
      */
     public void initTabTwoData(int nbr, String keyPattern, String valuePattern, String otherPattern) {
 
@@ -433,10 +417,7 @@ public class ManagedDatabaseAccess {
     }
 
     /**
-     * @param nbr
-     * @param presetPattern
-     * @param somethingPattern
-     * @param valuePattern
+     * Init for TABLE 1
      */
     public void initTabOneData(int nbr, String presetPattern, String somethingPattern, String valuePattern) {
 
@@ -472,7 +453,7 @@ public class ManagedDatabaseAccess {
      * content in an assertion
      * </p>
      *
-     * @return
+     * @return names in a list
      */
     public List<String> getColumnNamesForTable(String tableName) {
 
@@ -492,7 +473,7 @@ public class ManagedDatabaseAccess {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> List<T> getAllEntitiesForTable(String tableName) {
+    private <T> List<T> getAllEntitiesForTable(String tableName) {
 
         Class<?> type = ENTITY_TYPES.get(tableName).getSecond();
 
@@ -500,7 +481,8 @@ public class ManagedDatabaseAccess {
     }
 
     /**
-     * @return
+     * @param tableName specified table to process
+     * @return entities count for specified table
      */
     public long countTable(String tableName) {
         return getAllEntitiesForTable(tableName).size();
@@ -511,7 +493,8 @@ public class ManagedDatabaseAccess {
      * Get easy to use content for Tab 1
      * </p>
      *
-     * @return
+     * @param tableName specified table to process
+     * @return content for specified table, as a list of maps (similar to <code>DataTable.toMaps()</code>)
      */
     public List<Map<String, String>> getAllContentForTable(String tableName) {
 
@@ -532,7 +515,7 @@ public class ManagedDatabaseAccess {
      * content in an assertion
      * </p>
      *
-     * @return
+     * @return matchers for TABLE_ONE
      */
     public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableOne() {
         return Arrays.asList(
@@ -548,7 +531,7 @@ public class ManagedDatabaseAccess {
      * content in an assertion
      * </p>
      *
-     * @return
+     * @return matchers for TABLE_TWO
      */
     public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableTwo() {
         return Arrays.asList(
@@ -563,7 +546,7 @@ public class ManagedDatabaseAccess {
      * ColumnEditData content in an assertion
      * </p>
      *
-     * @return
+     * @return matchers for TABLE_THREE
      */
     public List<Matcher<DictionaryEntryEditData.ColumnEditData>> getColumnMatchersForTableThree() {
         return Arrays.asList(
@@ -572,11 +555,6 @@ public class ManagedDatabaseAccess {
                 columnMatcher("OTHER", ColumnType.STRING));
     }
 
-    /**
-     * @param rawObject
-     * @param propertyAsColumnName
-     * @return
-     */
     private static String getPropertyValueByColumnName(Object rawObject, String propertyAsColumnName) {
         try {
             Method getter = rawObject.getClass().getMethod(
@@ -595,11 +573,6 @@ public class ManagedDatabaseAccess {
         }
     }
 
-    /**
-     * @param name
-     * @param type
-     * @return
-     */
     private static Matcher<DictionaryEntryEditData.ColumnEditData> columnMatcher(String name, ColumnType type) {
         return allOf(hasProperty("name", equalTo(name)), hasProperty("type", equalTo(type)));
     }

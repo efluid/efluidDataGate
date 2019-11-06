@@ -5,7 +5,7 @@ import fr.uem.efluid.utils.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -51,15 +51,17 @@ public class TweakedAsyncDriver extends FutureAsyncDriver {
     }
 
     /**
-     * @param ex
+     * Apply a forced error on active driver. All callables will fail with this error. Can be used for testing on abort / clean / rollback processes
+     *
+     * @param ex specified Exception
      */
     public void setForcedError(ApplicationException ex) {
         this.forcedError = ex;
     }
 
     /**
-     * @param source
-     * @param action
+     * @param source processor source for <tt>Callable</tt> to run
+     * @param action consumer on specified processor for actions to process
      * @see fr.uem.efluid.tools.AsyncDriver#start(AsyncSourceProcess,
      * java.util.function.Consumer)
      */
@@ -77,10 +79,10 @@ public class TweakedAsyncDriver extends FutureAsyncDriver {
     }
 
     /**
-     * @param callables
-     * @param current
-     * @return
-     * @throws InterruptedException
+     * @param callables <tt>Callable</tt> actions to process
+     * @param current   used source for actions
+     * @return initialized running processes as a List
+     * @throws InterruptedException if killed / failed
      * @see fr.uem.efluid.tools.FutureAsyncDriver#processSteps(java.util.List,
      * AsyncSourceProcess)
      */
@@ -89,16 +91,13 @@ public class TweakedAsyncDriver extends FutureAsyncDriver {
 
         // Replace steps by a fixed locked / error one
         if (this.lockedRun || this.forcedError != null) {
-            super.processSteps(Arrays.asList(tweakedCallable()), current);
+            super.processSteps(Collections.singletonList(tweakedCallable()), current);
         }
 
         // Or standard run
         return super.processSteps(callables, current);
     }
 
-    /**
-     * @return
-     */
     private <T> Callable<T> tweakedCallable() {
 
         // Locked run

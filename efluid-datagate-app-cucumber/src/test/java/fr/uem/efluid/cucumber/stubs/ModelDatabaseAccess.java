@@ -57,11 +57,13 @@ public class ModelDatabaseAccess {
     private PasswordEncoder encoder;
 
     /**
-     * @param user
-     * @param initProject
-     * @param addDomains
+     * Init all "similar to a wizard init"
+     *
+     * @param user        created user in wizard
+     * @param initProject created project in wizard
+     * @param addDomains  all created domains in wizard
      */
-    public void initWizzardData(final User user, final Project initProject, final List<FunctionalDomain> addDomains) {
+    public void initWizardData(final User user, final Project initProject, final List<FunctionalDomain> addDomains) {
 
         LOGGER.info("[MODEL-INIT] Setup wizard resulting data");
 
@@ -107,8 +109,11 @@ public class ModelDatabaseAccess {
     }
 
     /**
-     * @param tables
-     * @param version
+     * Init a complete dictionary
+     *
+     * @param tables     DictionaryEntry to init in a list
+     * @param tableLinks TableLink to init in a list
+     * @param version    Version to init
      */
     public void initDictionary(List<DictionaryEntry> tables, List<TableLink> tableLinks, Version version) {
 
@@ -130,9 +135,9 @@ public class ModelDatabaseAccess {
      * days ago, third 8 days ago
      * </p>
      *
-     * @param project
-     * @param versionNames
-     * @param startDaysBefore
+     * @param project         associated project
+     * @param versionNames    version names to init
+     * @param startDaysBefore int value of days before for version init
      */
     public void initVersions(Project project, Collection<String> versionNames, int startDaysBefore) {
 
@@ -152,28 +157,23 @@ public class ModelDatabaseAccess {
     }
 
     /**
-     * @param project
-     * @param name
-     * @return
+     * @param project Corresponding Project
+     * @param name    requested version name
+     * @return found version
      */
     public Version findVersionByProjectAndName(Project project, String name) {
         return this.versions.findByNameAndProject(name.trim(), project);
     }
 
     /**
-     * @param project
-     * @param name
-     * @return
+     * @param project Corresponding Project
+     * @param name    requested domain name
+     * @return found FunctionalDomain
      */
     public FunctionalDomain findDomainByProjectAndName(Project project, String name) {
         return this.domains.findByProjectAndName(project, name);
     }
 
-    /**
-     * @param project
-     * @param tablename
-     * @return
-     */
     public DictionaryEntry findDictionaryEntryByProjectAndTableName(Project project, String tablename) {
         return this.entries.findByDomainProject(project).stream().filter(e -> e.getTableName().equals(tablename)).findFirst()
                 .orElseThrow(() -> new AssertionError("Cannot find entry for table name " + tablename));

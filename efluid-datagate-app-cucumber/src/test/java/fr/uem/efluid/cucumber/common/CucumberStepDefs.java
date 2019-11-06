@@ -151,7 +151,7 @@ public abstract class CucumberStepDefs {
         Project newProject = initDefaultProject();
         FunctionalDomain newDomain = initDefaultDomain(newProject);
 
-        modelDatabase().initWizzardData(user, newProject, Collections.singletonList(newDomain));
+        modelDatabase().initWizardData(user, newProject, Collections.singletonList(newDomain));
 
         this.dets.completeWizard();
     }
@@ -167,7 +167,7 @@ public abstract class CucumberStepDefs {
         User user = initDefaultUser();
         Project newProject = initDefaultProject();
 
-        modelDatabase().initWizzardData(user, newProject,
+        modelDatabase().initWizardData(user, newProject,
                 domainNames.stream().map(n -> domain(n, newProject)).collect(Collectors.toList()));
 
         this.dets.completeWizard();
@@ -188,7 +188,7 @@ public abstract class CucumberStepDefs {
         // Force cache
         this.desc.getTables();
 
-        modelDatabase().initWizzardData(user, newProject, Collections.singletonList(newDomain));
+        modelDatabase().initWizardData(user, newProject, Collections.singletonList(newDomain));
 
         this.dets.completeWizard();
 
@@ -210,7 +210,7 @@ public abstract class CucumberStepDefs {
         // Force cache
         this.desc.getTables();
 
-        modelDatabase().initWizzardData(user, newProject, Collections.singletonList(newDomain));
+        modelDatabase().initWizardData(user, newProject, Collections.singletonList(newDomain));
 
         this.dets.completeWizard();
 

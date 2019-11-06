@@ -98,7 +98,7 @@ public class DictionaryGenerator {
 	}
 
 	/**
-	 * @param contextClassLoader
+	 * @param contextClassLoader ClassLoader
 	 */
 	public void generateDictionaryExport(ClassLoader contextClassLoader) throws Exception {
 
@@ -152,10 +152,6 @@ public class DictionaryGenerator {
 		}
 	}
 
-	/**
-	 * @param contextClassLoader
-	 * @return
-	 */
 	private Reflections initReflectionEntryPoint(ClassLoader contextClassLoader) {
 
 		return new Reflections(new ConfigurationBuilder()
@@ -165,10 +161,6 @@ public class DictionaryGenerator {
 						new MethodAnnotationsScanner()));
 	}
 
-	/**
-	 * @param reflections
-	 * @return
-	 */
 	@SuppressWarnings("unchecked")
 	private Map<Class<?>, String> searchDomainsByAnnotation(
 			Reflections reflections,
@@ -222,10 +214,6 @@ public class DictionaryGenerator {
 		return typeDomains;
 	}
 
-	/**
-	 * @param reflections
-	 * @return
-	 */
 	private Map<Class<?>, List<ParameterTableDefinition>> initParameterTablesWithKeys(
 			Reflections reflections,
 			Map<Class<?>, String> annotDomains) {
@@ -251,10 +239,6 @@ public class DictionaryGenerator {
 	 * <p>
 	 * For table directly annotated with <tt>ParameterTable</tt>
 	 * </p>
-	 * 
-	 * @param tableType
-	 * @param annotDomains
-	 * @param tables
 	 */
 	private void processParameterTableDirect(
 			Class<?> tableType,
@@ -312,10 +296,6 @@ public class DictionaryGenerator {
 	 * <p>
 	 * For table directly annotated with <tt>ParameterTable</tt>
 	 * </p>
-	 * 
-	 * @param tableType
-	 * @param annotDomains
-	 * @param tables
 	 */
 	private void processParameterTableSet(
 			Class<?> tableSetType,
@@ -387,11 +367,6 @@ public class DictionaryGenerator {
 		tables.put(tableSetType, defs);
 	}
 
-	/**
-	 * @param tableType
-	 * @param paramTable
-	 * @param def
-	 */
 	@SuppressWarnings("unchecked")
 	private void completeTableParameterKey(
 			Class<?> tableType,
@@ -491,9 +466,6 @@ public class DictionaryGenerator {
 				+ ((def.getExt1KeyName() != null) ? " and " + (keyFounds - 1) + " other ext keys" : ""));
 	}
 
-	/**
-	 * @param defs
-	 */
 	private static void assertTableNotDuplicated(Map<Class<?>, List<ParameterTableDefinition>> defs) {
 
 		// Get duplicated table name (and count for each)
