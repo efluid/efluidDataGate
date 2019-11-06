@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since v0.0.8
  */
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
-public class CommonFixtures extends CucumberStepDefs {
+public class CommonStepDefs extends CucumberStepDefs {
 
     public static boolean efluidCase = false;
 

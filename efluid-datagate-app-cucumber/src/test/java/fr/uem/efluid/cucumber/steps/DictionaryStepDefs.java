@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
-public class DictionaryFixture extends CucumberStepDefs {
+public class DictionaryStepDefs extends CucumberStepDefs {
 
     @Given("^a dictionary table is added for table \"(.*)\"$")
     public void given_init_dict_table(String name) {

@@ -16,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since v0.0.8
  */
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
-public class LoginFixtures extends CucumberStepDefs {
+public class LoginStepDefs extends CucumberStepDefs {
 
     private static String currentLogin;
 

@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @since v0.0.8
  */
 @Ignore // Means it will be ignored by junit start, but will be used by cucumber
-public class UserFixtures extends CucumberStepDefs {
+public class UserStepDefs extends CucumberStepDefs {
 
     @Autowired
     private UserRepository users;

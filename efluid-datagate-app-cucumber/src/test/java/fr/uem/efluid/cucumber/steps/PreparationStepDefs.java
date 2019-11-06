@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since v0.0.8
  */
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
-public class PreparationFixtures extends CucumberStepDefs {
+public class PreparationStepDefs extends CucumberStepDefs {
 
     private static UUID runningPrep;
 
@@ -56,13 +56,13 @@ public class PreparationFixtures extends CucumberStepDefs {
         select = null;
 
         // Full dic init
-        if (CommonFixtures.efluidCase) {
+        if (CommonStepDefs.efluidCase) {
             initCompleteDictionaryWithEfluidTestTables();
         } else {
             initCompleteDictionaryWith7Tables();
         }
 
-        CommonFixtures.efluidCase = false;
+        CommonStepDefs.efluidCase = false;
 
         // Authenticated
         implicitlyAuthenticatedAndOnPage("home page");
@@ -132,7 +132,7 @@ public class PreparationFixtures extends CucumberStepDefs {
         no_diff_is_running();
 
         // Start new merge from available package
-        this.prep.startMergeCommitPreparation(PushPullFixtures.currentExport.getResult());
+        this.prep.startMergeCommitPreparation(PushPullStepDefs.currentExport.getResult());
 
         // And get diff uuid for testing
         runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
@@ -260,14 +260,14 @@ public class PreparationFixtures extends CucumberStepDefs {
     public void new_init_commit_exported(String comment) throws Throwable {
         commit_has_been_added_with_comment(comment);
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushPullFixtures.currentExport = this.commitService.exportOneCommit(specifiedCommit);
+        PushPullStepDefs.currentExport = this.commitService.exportOneCommit(specifiedCommit);
     }
 
     @Given("^the commit \"(.*)\" has been saved and exported with all the new identified diff content$")
     public void new_update_commit_exported(String comment) throws Throwable {
         new_commit_was_added_with_comment(comment);
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushPullFixtures.currentExport = this.commitService.exportOneCommit(specifiedCommit);
+        PushPullStepDefs.currentExport = this.commitService.exportOneCommit(specifiedCommit);
     }
 
     @When("^the user accesses to preparation commit page$")
@@ -339,8 +339,8 @@ public class PreparationFixtures extends CucumberStepDefs {
 
     @Then("^a diff is running$")
     public void a_diff_is_running() {
-        assertThat(PushPullFixtures.currentException).isNull();
-        PushPullFixtures.currentException = null;
+        assertThat(PushPullStepDefs.currentException).isNull();
+        PushPullStepDefs.currentException = null;
         Assert.assertEquals(PilotedCommitStatus.DIFF_RUNNING, this.prep.getCurrentCommitPreparationState().getStatus());
     }
 
@@ -352,10 +352,10 @@ public class PreparationFixtures extends CucumberStepDefs {
 
     @Then("^a merge diff fail with error code (.*)$")
     public void a_merge_diff_fail_with_error(String error) {
-        assertThat(PushPullFixtures.currentException).isNotNull();
-        assertThat(PushPullFixtures.currentException).isInstanceOf(ApplicationException.class);
-        assertThat(((ApplicationException) PushPullFixtures.currentException).getError()).isEqualTo(ErrorType.valueOf(error));
-        PushPullFixtures.currentException = null;
+        assertThat(PushPullStepDefs.currentException).isNotNull();
+        assertThat(PushPullStepDefs.currentException).isInstanceOf(ApplicationException.class);
+        assertThat(((ApplicationException) PushPullStepDefs.currentException).getError()).isEqualTo(ErrorType.valueOf(error));
+        PushPullStepDefs.currentException = null;
     }
 
     @Then("^an alert says that the diff is still running$")

@@ -11,7 +11,7 @@ import org.junit.Ignore;
  * @since v0.0.8
  */
 @Ignore // Means it will be ignored by junit start, but will be used by cucumber
-public class WizzardFixtures extends CucumberStepDefs {
+public class WizzardStepDefs extends CucumberStepDefs {
 
     private static int currentStep = 0;
 

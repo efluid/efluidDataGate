@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @Ignore // Means it will be ignored by junit start, but will be used by cucumber
 @SuppressWarnings("unchecked")
-public class TableFixtures extends CucumberStepDefs {
+public class TableStepDefs extends CucumberStepDefs {
 
     private static List<String> specifiedTables;
 

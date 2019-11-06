@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since v0.0.8
  */
 @Ignore // Means it will be ignored by junit start, but will be used by cucumber
-public class PushPullFixtures extends CucumberStepDefs {
+public class PushPullStepDefs extends CucumberStepDefs {
 
     static ExportImportResult<ExportFile> currentExport;
 
