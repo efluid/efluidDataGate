@@ -10,8 +10,8 @@ EXPOSE 8080
 EXPOSE 8000
 
 ENV remoteXdebug=false
-ENV xms=2g
-ENV xmx=2g
+ENV xms=12g
+ENV xmx=12g
 
 RUN mkdir /app
 
