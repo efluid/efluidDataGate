@@ -4,11 +4,9 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.hibernate.annotations.Type;
-import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.Spliterators;
@@ -394,27 +392,18 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
         this.keyType = keyType;
     }
 
-    /**
-     * @return
-     */
     public Stream<String> keyNames() {
 
         // For composite, use advanced building from iterator
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new EntryKeyNameIterator(this), 0), false);
     }
 
-    /**
-     * @return
-     */
     public Stream<ColumnType> keyTypes() {
 
         // For composite, use advanced building from iterator
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(new EntryKeyTypeIterator(this), 0), false);
     }
 
-    /**
-     * @return
-     */
     public boolean isCompositeKey() {
         // If at least ext1 is set => composite
         return this.getExt1KeyName() != null;
@@ -464,10 +453,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 
         protected final DictionaryEntry dic;
 
-        /**
-         * @param dic
-         */
-        protected FiveEntryKeyIterator(DictionaryEntry dic) {
+        FiveEntryKeyIterator(DictionaryEntry dic) {
             super();
             this.dic = dic;
 
@@ -491,7 +477,6 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
         }
 
         /**
-         * @return
          * @see java.util.Iterator#hasNext()
          */
         @Override
@@ -502,7 +487,6 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
         protected abstract T getValue(int index);
 
         /**
-         * @return
          * @see java.util.Iterator#next()
          */
         @Override
@@ -523,10 +507,8 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
      * @since v0.0.8
      */
     private static final class EntryKeyNameIterator extends FiveEntryKeyIterator<String> {
-        /**
-         * @param dic
-         */
-        public EntryKeyNameIterator(DictionaryEntry dic) {
+
+        EntryKeyNameIterator(DictionaryEntry dic) {
             super(dic);
         }
 
@@ -560,10 +542,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
      */
     private static final class EntryKeyTypeIterator extends FiveEntryKeyIterator<ColumnType> {
 
-        /**
-         * @param dic
-         */
-        public EntryKeyTypeIterator(DictionaryEntry dic) {
+        EntryKeyTypeIterator(DictionaryEntry dic) {
             super(dic);
         }
 

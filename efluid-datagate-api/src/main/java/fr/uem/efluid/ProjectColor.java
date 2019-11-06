@@ -12,5 +12,5 @@ public enum ProjectColor {
 	GREEN,
 	YELLOW,
 	PINK,
-	VIOLET;
+	VIOLET
 }

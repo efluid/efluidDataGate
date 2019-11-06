@@ -15,21 +15,9 @@ import fr.uem.efluid.model.entities.LobProperty;
  */
 public interface LobPropertyRepository extends JpaRepository<LobProperty, Long> {
 
-	/**
-	 * @param commitUuids
-	 * @return
-	 */
 	List<LobProperty> findByCommitUuidIn(List<UUID> commitUuids);
 
-	/**
-	 * @param commit
-	 * @return
-	 */
 	List<LobProperty> findByCommit(Commit commit);
 
-	/**
-	 * @param hash
-	 * @return
-	 */
 	LobProperty findByHash(String hash);
 }

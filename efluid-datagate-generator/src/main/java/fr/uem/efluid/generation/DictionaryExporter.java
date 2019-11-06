@@ -67,8 +67,6 @@ public class DictionaryExporter extends AbstractProcessor {
     }
 
     /**
-     * @param file
-     * @param name
      * @throws IOException on file write error
      */
     private void writeExportFile(ExportFile file, String name) throws IOException {

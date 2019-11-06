@@ -20,10 +20,6 @@ import fr.uem.efluid.model.entities.Project;
  */
 public interface FunctionalDomainRepository extends JpaRepository<FunctionalDomain, UUID> {
 
-	/**
-	 * @param project
-	 * @return
-	 */
 	List<FunctionalDomain> findByProject(Project project);
 
 	@Query("SELECT DISTINCT do.uuid FROM IndexEntry ind INNER JOIN ind.dictionaryEntry.domain do GROUP BY do.uuid")
@@ -31,8 +27,6 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 
 	/**
 	 * <b><font color="red">Query for internal use only</font></b>
-	 * 
-	 * @return
 	 */
 	@Query(value = "select distinct "
 			+ "		concat(c.uuid,'') as c_uuid, "
@@ -48,8 +42,6 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 
 	/**
 	 * Provides the domain names for each existing commits
-	 * 
-	 * @return
 	 */
 	default Map<UUID, List<String>> loadAllDomainNamesByCommitUuids(Project project) {
 
@@ -57,17 +49,8 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 				.collect(Collectors.groupingBy(t -> dbRawToUuid(t[0]), Collectors.mapping(t -> String.valueOf(t[1]), Collectors.toList())));
 	}
 
-	/**
-	 * @param projectUuid
-	 * @return
-	 */
 	@Query("select count(d) from FunctionalDomain d where d.project.uuid = :projectUuid")
 	int countForProject(UUID projectUuid);
 
-	/**
-	 * @param project
-	 * @param name
-	 * @return
-	 */
 	FunctionalDomain findByProjectAndName(Project project, String name);
 }

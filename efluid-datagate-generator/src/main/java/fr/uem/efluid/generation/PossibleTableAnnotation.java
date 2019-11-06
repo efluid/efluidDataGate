@@ -38,10 +38,6 @@ class PossibleTableAnnotation {
 
     /**
      * Init from a source directly
-     *
-     * @param paramTable
-     * @param source
-     * @return
      */
     PossibleTableAnnotation(ParameterTable paramTable, Class<?> source, boolean intermediate) {
 
@@ -60,11 +56,7 @@ class PossibleTableAnnotation {
 
     /**
      * Init from a source with a specified existing model
-     *
-     * @param localParamTable
-     * @param source
-     * @param existing        can be null (will direct init)
-     * @return
+     * existing can be null (will direct init)
      */
     PossibleTableAnnotation(ParameterTable localParamTable, Class<?> source, PossibleTableAnnotation existing, boolean intermediate) {
 
@@ -104,12 +96,6 @@ class PossibleTableAnnotation {
 
     /**
      * Init on a set
-     *
-     * @param localParamTable
-     * @param paramTableSet
-     * @param source
-     * @param existing
-     * @return
      */
     PossibleTableAnnotation(ParameterTable localParamTable, ParameterTableSet paramTableSet, Class<?> source, PossibleTableAnnotation existing, boolean intermediate) {
 
@@ -174,9 +160,6 @@ class PossibleTableAnnotation {
 
     /**
      * Convert to definition
-     *
-     * @param annotDomains
-     * @return
      */
     ParameterTableDefinition toDefinition(Map<Class<?>, String> annotDomains) {
 

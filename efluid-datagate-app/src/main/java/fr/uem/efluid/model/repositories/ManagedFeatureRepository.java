@@ -14,10 +14,6 @@ import fr.uem.efluid.services.Feature;
  */
 public interface ManagedFeatureRepository extends JpaRepository<ManagedFeature, Feature> {
 
-	/**
-	 * @param feat
-	 * @return
-	 */
 	@Query("select enabled from ManagedFeature where feature = :feat")
 	boolean getManagedState(@Param("feat") Feature feat);
 }

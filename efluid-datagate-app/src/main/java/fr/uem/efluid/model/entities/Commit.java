@@ -65,7 +65,7 @@ public class Commit implements Shared {
     private transient boolean refOnly = false;
 
     /**
-     * @param uuid
+     * @param uuid forced uuid
      */
     public Commit(UUID uuid) {
         super();
@@ -235,16 +235,10 @@ public class Commit implements Shared {
         this.project = project;
     }
 
-    /**
-     * @return
-     */
     public Version getVersion() {
         return this.version;
     }
 
-    /**
-     * @param version
-     */
     public void setVersion(Version version) {
         this.version = version;
     }
@@ -264,7 +258,6 @@ public class Commit implements Shared {
     }
 
     /**
-     * @return
      * @see fr.uem.efluid.model.Shared#serialize()
      */
     @Override
@@ -296,7 +289,6 @@ public class Commit implements Shared {
     }
 
     /**
-     * @param raw
      * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
      */
     @Override
@@ -333,7 +325,6 @@ public class Commit implements Shared {
     }
 
     /**
-     * @return
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -345,8 +336,6 @@ public class Commit implements Shared {
     }
 
     /**
-     * @param obj
-     * @return
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
@@ -367,7 +356,6 @@ public class Commit implements Shared {
     }
 
     /**
-     * @return
      * @see java.lang.Object#toString()
      */
     @Override

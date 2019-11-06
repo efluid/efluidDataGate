@@ -54,8 +54,6 @@ public @interface ParameterMapping {
 	 * "my_subs" with columns "ENT_ID" and "SUB_ID" used for N-N association
 	 * </p>
 	 * </p>
-	 * 
-	 * @return
 	 */
 	Class<?> toParameter() default Void.class;
 
@@ -67,8 +65,6 @@ public @interface ParameterMapping {
 	 * or to specify them with properties {@link #mapColumnFrom()} and
 	 * {@link #mapColumnTo()}
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String mapTableName();
 
@@ -78,8 +74,6 @@ public @interface ParameterMapping {
 	 * different than the current property column name. If not set, will use
 	 * {@link #fromColumn()} content or current <tt>ParameterTable</tt> key column
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String mapColumnFrom() default "";
 
@@ -89,8 +83,6 @@ public @interface ParameterMapping {
 	 * associated with current property, if different than the one defined with
 	 * {@link #toColumn()}
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String mapColumnTo() default "";
 
@@ -100,8 +92,6 @@ public @interface ParameterMapping {
 	 * found from associated type. Corresponds to the mapped table associated with current
 	 * property by the mapping (N-N) table
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String toTableName() default "";
 
@@ -113,8 +103,6 @@ public @interface ParameterMapping {
 	 * will use the identified KEY from the mapped parameter table. Take care that the KEY
 	 * is not always the natural ID used in table mapping
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String toColumn() default "";
 
@@ -123,8 +111,6 @@ public @interface ParameterMapping {
 	 * Name of the local column used for mapping. If not specified, will use the
 	 * <tt>ParameterTable</tt> key column
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String fromColumn() default "";
 

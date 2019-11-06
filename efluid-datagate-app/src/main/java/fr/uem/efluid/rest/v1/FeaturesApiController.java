@@ -22,7 +22,6 @@ public class FeaturesApiController implements FeaturesApi {
 	private FeatureManager manager;
 
 	/**
-	 * @param feature
 	 * @see fr.uem.efluid.rest.v1.FeaturesApi#enableFeature(fr.uem.efluid.services.Feature)
 	 */
 	@Override
@@ -32,7 +31,6 @@ public class FeaturesApiController implements FeaturesApi {
 	}
 
 	/**
-	 * @param feature
 	 * @see fr.uem.efluid.rest.v1.FeaturesApi#disableFeature(fr.uem.efluid.services.Feature)
 	 */
 	@Override
@@ -42,7 +40,6 @@ public class FeaturesApiController implements FeaturesApi {
 	}
 
 	/**
-	 * @return
 	 * @see fr.uem.efluid.rest.v1.FeaturesApi#getFeatureStates()
 	 */
 	@Override

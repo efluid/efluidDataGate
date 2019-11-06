@@ -52,10 +52,6 @@ class GenerationUtils {
      * <p>
      * Select clause for fields used as value properties in a <tt>ParameterTable</tt>
      * </p>
-     *
-     * @param field
-     * @param useAll
-     * @return
      */
     static boolean isFieldValue(Field field, boolean useAll) {
 
@@ -76,9 +72,6 @@ class GenerationUtils {
      * <p>
      * Select clause for methods used as value properties in a <tt>ParameterTable</tt>
      * </p>
-     *
-     * @param method
-     * @return
      */
     static boolean isMethodValue(Method method) {
         return

@@ -45,7 +45,6 @@ public class AllAuthorizer extends ProfileAuthorizer<CommonProfile> {
 		this.users.setCurrentUser(new User() {
 
 			/**
-			 * @return
 			 * @see fr.uem.efluid.model.entities.User#getLogin()
 			 */
 			@Override
@@ -54,7 +53,6 @@ public class AllAuthorizer extends ProfileAuthorizer<CommonProfile> {
 			}
 
 			/**
-			 * @return
 			 * @see fr.uem.efluid.model.entities.User#getEmail()
 			 */
 			@Override

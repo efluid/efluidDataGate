@@ -94,16 +94,10 @@ class PossibleValueAnnotation {
         this.sourceClazz = declaringClazz;
     }
 
-    /**
-     * @return
-     */
     String getValidName() {
         return this.validName;
     }
 
-    /**
-     * @return
-     */
     Class<?> getValidType() {
         return this.validType;
     }
@@ -122,25 +116,15 @@ class PossibleValueAnnotation {
         return this.mappingAnnot;
     }
 
-    /**
-     * @return
-     */
     boolean isComposite() {
         // Rare
         return this.compositeValueAnnot != null;
     }
 
-    /**
-     * @return
-     */
     String[] getCompositeNames() {
         return this.compositeNames;
     }
 
-    /**
-     * @param name
-     * @return
-     */
     boolean isCompliantTable(String name) {
         return this.forTable == null || this.forTable.contains(name);
     }
@@ -154,12 +138,6 @@ class PossibleValueAnnotation {
         return false;
     }
 
-    /**
-     * @param method
-     * @param contextClassLoader
-     * @return
-     * @throws ClassNotFoundException
-     */
     private static Class<?> getMappingType(Method method, ClassLoader contextClassLoader) {
 
         if (method.getReturnType().equals(Void.TYPE)) {
@@ -176,12 +154,6 @@ class PossibleValueAnnotation {
         }
     }
 
-    /**
-     * @param field
-     * @param contextClassLoader
-     * @return
-     * @throws ClassNotFoundException
-     */
     private static Class<?> getMappingType(Field field, ClassLoader contextClassLoader) {
 
         try {
@@ -192,12 +164,6 @@ class PossibleValueAnnotation {
         }
     }
 
-    /**
-     * @param resultGenericType
-     * @param contextClassLoader
-     * @return
-     * @throws ClassNotFoundException
-     */
     private static Class<?> getMappingCompliantType(Type resultGenericType, Class<?> rawType, ClassLoader contextClassLoader)
             throws ClassNotFoundException {
 
@@ -228,11 +194,6 @@ class PossibleValueAnnotation {
         return holderName.toUpperCase();
     }
 
-    /**
-     * @param valueAnnot
-     * @param compAnnot
-     * @return
-     */
     private static Collection<String> prepareValidForTable(ParameterValue valueAnnot, ParameterCompositeValue compAnnot) {
 
         // Can be from a value annot
@@ -252,10 +213,6 @@ class PossibleValueAnnotation {
         return null;
     }
 
-    /**
-     * @param compositeValueAnnot
-     * @return
-     */
     private static String[] prepareCompositeNames(ParameterCompositeValue compositeValueAnnot) {
 
         if (compositeValueAnnot != null) {

@@ -15,15 +15,7 @@ import fr.uem.efluid.model.entities.Commit;
  */
 public interface AttachmentRepository extends JpaRepository<Attachment, UUID> {
 
-	/**
-	 * @param commit
-	 * @return
-	 */
 	List<Attachment> findByCommit(Commit commit);
 
-	/**
-	 * @param commit
-	 * @return
-	 */
 	List<Attachment> findByCommitIn(List<Commit> commit);
 }

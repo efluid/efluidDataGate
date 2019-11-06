@@ -42,7 +42,7 @@ public class DictionaryGenerator extends AbstractProcessor {
     }
 
     /**
-     * @param contextClassLoader
+     * @param contextClassLoader processing classloader for api search
      */
     public DictionaryContent extractDictionary(ClassLoader contextClassLoader) {
 
@@ -63,7 +63,7 @@ public class DictionaryGenerator extends AbstractProcessor {
             Map<String, ParameterProjectDefinition> projectDefs = identifyParameterProjects(projects);
 
             /* Then process table values / links / mappings using refs */
-            completeParameterValuesWithLinksAndMappings(reflections, typeTables, allLinks, allMappings, contextClassLoader);
+            completeParameterValuesWithLinksAndMappings(typeTables, allLinks, allMappings, contextClassLoader);
 
             /* Then, extract domains */
             Collection<ParameterDomainDefinition> allDomains = completeParameterDomains(typeTables, projects, projectDefs);
@@ -83,10 +83,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         }
     }
 
-    /**
-     * @param reflections
-     * @return
-     */
     @SuppressWarnings("unchecked")
     private Map<Class<?>, String> searchDomainsByAnnotation(
             Reflections reflections,
@@ -142,10 +138,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         return typeDomains;
     }
 
-    /**
-     * @param reflections
-     * @return
-     */
     private Map<Class<?>, List<ParameterTableDefinition>> initParameterTablesWithKeys(
             Reflections reflections,
             Map<Class<?>, String> annotDomains) {
@@ -193,7 +185,7 @@ public class DictionaryGenerator extends AbstractProcessor {
      * For meta annotation with <tt>ParameterTable</tt>
      * </p>
      *
-     * @param annotType
+     * @param annotType meta annotation to search
      * @return possible table specs
      */
     private PossibleTableAnnotation processParameterTableMeta(Class<?> annotType) {
@@ -215,7 +207,7 @@ public class DictionaryGenerator extends AbstractProcessor {
      * For table directly annotated with <tt>ParameterTable</tt>
      * </p>
      *
-     * @param tableType
+     * @param tableType      target table type
      * @param possibleTables from metas
      * @return found possible
      */
@@ -242,7 +234,7 @@ public class DictionaryGenerator extends AbstractProcessor {
      * For table directly annotated with <tt>ParameterTable</tt>
      * </p>
      *
-     * @param tableSetType
+     * @param tableSetType   target table type
      * @param possibleTables from metas
      * @return stream on found possibles
      */
@@ -308,11 +300,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         return def;
     }
 
-    /**
-     * @param paramTable
-     * @param def
-     */
-    @SuppressWarnings("unchecked")
     private void completeTableParameterKey(
             PossibleTableAnnotation paramTable,
             ParameterTableDefinition def) {
@@ -425,9 +412,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         return foundKeySpec;
     }
 
-    /**
-     * @param defs
-     */
     private static void assertTableNotDuplicated(Map<Class<?>, List<ParameterTableDefinition>> defs) {
 
         // Get duplicated table name (and count for each)
@@ -450,12 +434,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         }
     }
 
-    /**
-     * @param reflections
-     * @return
-     */
     private void completeParameterValuesWithLinksAndMappings(
-            Reflections reflections,
             Map<Class<?>, List<ParameterTableDefinition>> defs,
             List<ParameterLinkDefinition> allLinks,
             List<ParameterMappingDefinition> allMappings,
@@ -484,15 +463,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         }
     }
 
-    /**
-     * @param tableType
-     * @param allTables
-     * @param defs
-     * @param allLinks
-     * @param allMappings
-     * @param ccl
-     */
-    @SuppressWarnings("unchecked")
     private void processParameterValueDirect(
             Class<?> tableType,
             Map<String, ParameterTableDefinition> allTables,
@@ -560,15 +530,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         allMappings.addAll(mappings);
     }
 
-    /**
-     * @param tableType
-     * @param allTables
-     * @param allDefs
-     * @param allLinks
-     * @param allMappings
-     * @param ccl
-     */
-    @SuppressWarnings("unchecked")
     private void processParameterValueSet(
             Class<?> tableType,
             Map<String, ParameterTableDefinition> allTables,
@@ -647,14 +608,6 @@ public class DictionaryGenerator extends AbstractProcessor {
      * <p>
      * Search for the referenced table for a value used in a link
      * </p>
-     *
-     * @param defs
-     * @param allTables
-     * @param currentTableDef
-     * @param possibleValue
-     * @param annotToTableName
-     * @param annotToParameter
-     * @return
      */
     private static ParameterTableDefinition prepareReferencedTable(
             Map<Class<?>, List<ParameterTableDefinition>> defs,
@@ -694,13 +647,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         return toDef;
     }
 
-    /**
-     * @param defs
-     * @param allTables
-     * @param currentTableDef
-     * @param values
-     * @return
-     */
     private Collection<ParameterLinkDefinition> extractLinksFromValues(
             Map<Class<?>, List<ParameterTableDefinition>> defs,
             Map<String, ParameterTableDefinition> allTables,
@@ -799,13 +745,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         return linksByTablesTo.values();
     }
 
-    /**
-     * @param defs
-     * @param allTables
-     * @param currentTableDef
-     * @param values
-     * @return
-     */
     private List<ParameterMappingDefinition> extractMappingsFromValues(
             Map<Class<?>, List<ParameterTableDefinition>> defs,
             Map<String, ParameterTableDefinition> allTables,
@@ -863,10 +802,6 @@ public class DictionaryGenerator extends AbstractProcessor {
 
     }
 
-    /**
-     * @param projectsByDomains
-     * @return
-     */
     private Map<String, ParameterProjectDefinition> identifyParameterProjects(Map<String, ParameterProject> projectsByDomains) {
 
         getLog().debug("Process completion of all projects extracted from " + projectsByDomains.size() + " identified ref + 1 default");
@@ -895,10 +830,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         return projectByNames;
     }
 
-    /**
-     * @param projects
-     * @return
-     */
     private Collection<ParameterVersionDefinition> specifyVersionsByProjects(
             Collection<ParameterProjectDefinition> projects) {
 
@@ -916,12 +847,6 @@ public class DictionaryGenerator extends AbstractProcessor {
         }).collect(Collectors.toList());
     }
 
-    /**
-     * @param defs
-     * @param projectsByDomains
-     * @param projectsByName
-     * @return
-     */
     private Collection<ParameterDomainDefinition> completeParameterDomains(
             Map<Class<?>, List<ParameterTableDefinition>> defs,
             Map<String, ParameterProject> projectsByDomains,

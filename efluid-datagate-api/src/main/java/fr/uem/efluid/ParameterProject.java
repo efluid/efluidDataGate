@@ -27,8 +27,6 @@ public @interface ParameterProject {
 	 * <p>
 	 * Note than in some cases the name can be used to identify an item in application
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String name();
 

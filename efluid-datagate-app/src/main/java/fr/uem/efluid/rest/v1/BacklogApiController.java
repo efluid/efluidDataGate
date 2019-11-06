@@ -29,7 +29,6 @@ public class BacklogApiController implements BacklogApi {
     private PilotableCommitPreparationService pilotableCommitService;
 
     /**
-     * @return
      * @see fr.uem.efluid.rest.v1.BacklogApi#initPreparedCommit()
      */
     @Override
@@ -40,9 +39,7 @@ public class BacklogApiController implements BacklogApi {
     }
 
     /**
-     * @param file
-     * @return
-     * @throws ApplicationException
+     * @see fr.uem.efluid.rest.v1.BacklogApi#uploadAndInitPreparedCommit(MultipartFile) ()
      */
     @Override
     public StartedMergeView uploadAndInitPreparedCommit(@RequestParam("file") MultipartFile file) throws ApplicationException {
@@ -66,7 +63,6 @@ public class BacklogApiController implements BacklogApi {
     }
 
     /**
-     * @return
      * @see fr.uem.efluid.rest.v1.BacklogApi#cancelPreparedCommit()
      */
     @Override
@@ -87,7 +83,6 @@ public class BacklogApiController implements BacklogApi {
     }
 
     /**
-     * @return
      * @see fr.uem.efluid.rest.v1.BacklogApi#getCurrentPreparedCommitState()
      */
     @Override
@@ -96,7 +91,6 @@ public class BacklogApiController implements BacklogApi {
     }
 
     /**
-     * @return
      * @see fr.uem.efluid.rest.v1.BacklogApi#getCurrentPreparedCommitDetails()
      */
     @Override
@@ -134,8 +128,6 @@ public class BacklogApiController implements BacklogApi {
     }
 
     /**
-     * @param commitComment
-     * @return
      * @see fr.uem.efluid.rest.v1.BacklogApi#validateCurrentPreparedCommit(java.lang.String)
      */
     @Override

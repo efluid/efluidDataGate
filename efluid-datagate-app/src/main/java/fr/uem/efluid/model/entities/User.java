@@ -48,7 +48,7 @@ public class User {
 	}
 
 	/**
-	 * @param login
+	 * @param login forced login
 	 */
 	public User(String login) {
 		super();
@@ -146,7 +146,6 @@ public class User {
 	}
 
 	/**
-	 * @return
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -158,8 +157,6 @@ public class User {
 	}
 
 	/**
-	 * @param obj
-	 * @return
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override

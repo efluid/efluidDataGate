@@ -35,10 +35,7 @@ public class DictionaryApiController implements DictionaryApi {
     private DictionaryManagementService dictionaryManagementService;
 
     /**
-     *
-     * @param file
-     * @return
-     * @throws ApplicationException
+     * @see fr.uem.efluid.rest.v1.DictionaryApi#uploadDictionaryPackage(MultipartFile)
      */
     @Override
     public CreatedDictionaryView uploadDictionaryPackage(MultipartFile file) throws ApplicationException {
@@ -65,8 +62,6 @@ public class DictionaryApiController implements DictionaryApi {
     }
 
     /**
-     * @param versionName
-     * @throws ApplicationException
      * @see fr.uem.efluid.rest.v1.DictionaryApi#setVersion(java.lang.String)
      */
     @Override
@@ -75,8 +70,6 @@ public class DictionaryApiController implements DictionaryApi {
     }
 
     /**
-     * @return
-     * @throws ApplicationException
      * @see fr.uem.efluid.rest.v1.DictionaryApi#getLastVersion()
      */
     @Override
@@ -86,8 +79,6 @@ public class DictionaryApiController implements DictionaryApi {
     }
 
     /**
-     * @return
-     * @throws ApplicationException
      * @see fr.uem.efluid.rest.v1.DictionaryApi#getVersions()
      */
     @Override

@@ -78,8 +78,6 @@ public @interface ParameterTable {
      * filter
      * </p>
      * </p>
-     *
-     * @return
      */
     String filterClause() default "1=1";
 
@@ -88,8 +86,6 @@ public @interface ParameterTable {
      * Domain to associate to the parameter table. Mandatory if not specified with custom
      * annotation or at package level
      * </p>
-     *
-     * @return
      */
     String domainName() default "";
 
@@ -104,8 +100,6 @@ public @interface ParameterTable {
      * fail. Non identifiable key type must be defined with property {@link #keyType()} or
      * by definition of <tt>ParameterKey</tt>
      * </p>
-     *
-     * @return
      */
     String keyField() default "";
 
@@ -115,8 +109,6 @@ public @interface ParameterTable {
      * it directly with this parameter. Useful for "non standard" property types. If not
      * set, will define it using rules specified in {@link ColumnType#forClass(Class)}
      * </p>
-     *
-     * @return
      */
     ColumnType keyType() default ColumnType.UNKNOWN;
 
@@ -132,8 +124,6 @@ public @interface ParameterTable {
      * <tt>ParameterIgnored</tt> can also be used to ignore some specific fields from
      * automatic use as property value
      * </p>
-     *
-     * @return
      */
     boolean useAllFields() default true;
 
@@ -153,8 +143,6 @@ public @interface ParameterTable {
      * When a parameter table is identified with <tt>ParameterTableSet</tt> then the
      * values can be directly identified here
      * </p>
-     *
-     * @return
      */
     ParameterValue[] values() default {};
 }

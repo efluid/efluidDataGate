@@ -38,10 +38,6 @@ public interface DictionaryApi {
 	 * <p>
 	 * Upload a given .par file containing dictionary items, and apply it
 	 * </p>
-	 * 
-	 * @param file
-	 * @return
-	 * @throws ApplicationException
 	 */
 	@RequestMapping(value = "/upload", method = POST)
 	@ResponseBody
@@ -51,10 +47,6 @@ public interface DictionaryApi {
 	})
 	CreatedDictionaryView uploadDictionaryPackage(@RequestParam("file") MultipartFile file) throws ApplicationException;
 
-	/**
-	 * @param versionName
-	 * @throws ApplicationException
-	 */
 	@RequestMapping(value = "/version/{name}", method = PUT)
 	@ApiOperation("Set the current version of the dictionary")
 	@ApiImplicitParams({
@@ -62,10 +54,6 @@ public interface DictionaryApi {
 	})
 	void setVersion(@PathVariable("name") String versionName) throws ApplicationException;
 
-	/**
-	 * @return
-	 * @throws ApplicationException
-	 */
 	@RequestMapping(value = "/version", method = GET)
 	@ResponseBody
 	@ApiOperation("Get the current version of the dictionary")
@@ -74,10 +62,6 @@ public interface DictionaryApi {
 	})
 	VersionView getLastVersion() throws ApplicationException;
 
-	/**
-	 * @return
-	 * @throws ApplicationException
-	 */
 	@RequestMapping(value = "/versions", method = GET)
 	@ResponseBody
 	@ApiOperation("Get all the existing versions of the dictionary")

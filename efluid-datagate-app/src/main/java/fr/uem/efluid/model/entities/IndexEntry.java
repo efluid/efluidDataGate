@@ -155,7 +155,6 @@ public class IndexEntry implements DiffLine {
     }
 
     /**
-     * @return
      * @see DiffLine#getDictionaryEntryUuid()
      */
     @Override
@@ -165,8 +164,6 @@ public class IndexEntry implements DiffLine {
 
     /**
      * For commit serialize
-     *
-     * @return
      */
     String serialize() {
 
@@ -181,8 +178,6 @@ public class IndexEntry implements DiffLine {
 
     /**
      * For commit deserialize
-     *
-     * @param raw
      */
     void deserialize(String raw) {
         SharedOutputInputUtils.fromJson(raw)
@@ -209,7 +204,6 @@ public class IndexEntry implements DiffLine {
     }
 
     /**
-     * @return
      * @see java.lang.Object#toString()
      */
     @Override

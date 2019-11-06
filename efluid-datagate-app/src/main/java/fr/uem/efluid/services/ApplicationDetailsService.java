@@ -76,7 +76,7 @@ public class ApplicationDetailsService {
     private boolean wizardCompleted;
 
     /**
-     * @return
+     * @return true if must route to wizard page
      */
     public boolean isNeedWizard() {
         // Until a wizard is completed (or data is complete), it is not possible to avoid
@@ -99,7 +99,8 @@ public class ApplicationDetailsService {
     }
 
     /**
-     * @return
+     * Heavy load
+     * @return current App details with many count.
      */
     @Cacheable("details")
     public ApplicationDetails getCurrentDetails() {
@@ -162,15 +163,12 @@ public class ApplicationDetailsService {
     }
 
     /**
-     * @return
+     * @return fixed app info to display
      */
     public ApplicationInfo getInfo() {
         return this.info;
     }
 
-    /**
-     * @return
-     */
     private String getEstimatedIndexSize() {
 
         long size = this.index.count() * INDEX_ENTRY_ESTIMATED_SIZE;

@@ -19,25 +19,15 @@ public interface DatabaseDescriptionRepository {
 
     /**
      * @return completed TableDescription for the managed database.
-     * @throws ApplicationException
      */
     Collection<TableDescription> getTables() throws ApplicationException;
 
-    /**
-     * @param tableName
-     * @return
-     */
     boolean isTableExists(String tableName);
 
     /**
      * <p>
      * Check if for specified table, the given column combination has a unique value
      * </p>
-     *
-     * @param tableName
-     * @param colNames
-     * @param filterClause
-     * @return
      */
     boolean isColumnSetHasUniqueValue(String tableName, Collection<String> colNames, String filterClause);
 

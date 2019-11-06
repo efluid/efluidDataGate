@@ -11,15 +11,7 @@ import fr.uem.efluid.model.entities.User;
  */
 public interface UserRepository extends JpaRepository<User, String> {
 
-	/**
-	 * @param login
-	 * @return
-	 */
 	User findByLogin(String login);
 
-	/**
-	 * @param token
-	 * @return
-	 */
 	User findByToken(String token);
 }

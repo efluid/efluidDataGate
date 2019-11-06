@@ -1,10 +1,10 @@
 package fr.uem.efluid.model.repositories;
 
-import java.util.List;
-import java.util.Map;
-
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.Project;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -27,31 +27,30 @@ import fr.uem.efluid.model.entities.Project;
  * before (they will be rollbacked automatically if repo fail here)</li>
  * </ul>
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public interface ManagedUpdateRepository {
 
-	/**
-	 * <p>
-	 * Process a batched update, for mixed DiffLine combining multiple DictionaryEntries
-	 * </p>
-	 * <p>
-	 * Should be batched, and made with prepared statment
-	 * </p>
-	 * <p>
-	 * Due to the "double transaction" behavior of this process, it is needed by feature
-	 * to commit immediately successful changes in Managed DB. So please check that there
-	 * is no "dangerous" update on CORE db AFTER a call to this method
-	 * </p>
-	 * 
-	 * @param lines
-	 * @param lobs
-	 *            the optional lobs content to apply in diffs
-	 *
-	 * @return the processed queries
-	 */
-	String[] runAllChangesAndCommit(List<? extends DiffLine> lines, Map<String, byte[]> lobs, Project project);
+    /**
+     * <p>
+     * Process a batched update, for mixed DiffLine combining multiple DictionaryEntries
+     * </p>
+     * <p>
+     * Should be batched, and made with prepared statment
+     * </p>
+     * <p>
+     * Due to the "double transaction" behavior of this process, it is needed by feature
+     * to commit immediately successful changes in Managed DB. So please check that there
+     * is no "dangerous" update on CORE db AFTER a call to this method
+     * </p>
+     *
+     * @param lines   process lines
+     * @param lobs    the optional lobs content to apply in diffs
+     * @param project associated project
+     * @return the processed queries
+     */
+    String[] runAllChangesAndCommit(List<? extends DiffLine> lines, Map<String, byte[]> lobs, Project project);
 }

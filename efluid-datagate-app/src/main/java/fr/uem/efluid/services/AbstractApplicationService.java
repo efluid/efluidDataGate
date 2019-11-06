@@ -19,18 +19,11 @@ public abstract class AbstractApplicationService {
 	@Autowired
 	protected FeatureManager features;
 
-	/**
-	 * @return
-	 */
-	protected User getCurrentUser() {
+	User getCurrentUser() {
 		return this.holder.getCurrentUser();
 	}
 
-	/**
-	 * @param value
-	 * @return
-	 */
-	protected static boolean isNotEmpty(String value) {
+	static boolean isNotEmpty(String value) {
 		if (value == null) {
 			return false;
 		}

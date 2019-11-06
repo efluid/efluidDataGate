@@ -26,9 +26,6 @@ public class UserHolder {
 
 	private User wizardUser;
 
-	/**
-	 * @param user
-	 */
 	public void setCurrentUser(User user) {
 
 		if (user == null) {
@@ -40,16 +37,10 @@ public class UserHolder {
 		}
 	}
 
-	/**
-	 * @return
-	 */
 	public User getCurrentUser() {
 		return this.wizardUser != null ? this.wizardUser : this.currentUser.get();
 	}
 
-	/**
-	 * @param user
-	 */
 	public void setWizzardUser(User user) {
 		if (user == null) {
 			LOGGER.debug("Drop active wizard user");
