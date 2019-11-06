@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Gestion Paramètrage Efluid - Wizzard de configuration</title>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/4.0.0-2/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/css/core.css}"/>
+    <link rel="stylesheet" href="/css/core.css" media="screen"/>
+</head>
+<body>
+    <div class="container-fluid">
+    	<nav th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
+            <div class="navbar-brand" >Gestion du paramètrage Efluid - Wizzard de configuration</div>
+           	<div class="active-project" style="position:absolute; right:30px;" th:if="${project != null}">
+                  Projet actuel : <a href="./projects_prefered.html" th:href="@{/ui/projects/select}" th:text="${project.name}">RECETTE</a>
+            </div>
+		</nav>
+        <div class="row"><div class="col-1"><br/></div></div>
+        <div class="row">
+            <div class="col-1"></div>
+            <div class="col-9">
+		       <span layout:fragment="content">
+		        <div>Here page content</div>
+		      </span>
+		      <div id="successDisplay" class="alert alert-success" style="display:none">C'est un succès</div>
+		      <div id="errorDisplay" class="alert alert-danger" style="display:none">C'est un echec</div>
+		   </div>
+		</div>
+    </div>
+    <script type="text/javascript" th:src="@{/webjars/jquery/3.3.1-1/jquery.min.js/}"></script>
+    <script type="text/javascript" th:src="@{/webjars/bootstrap/4.0.0-2/js/bootstrap.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/popper.js/1.13.0/dist/umd/popper.min.js}"></script>
+    <script type="text/javascript" th:src="@{/scripts/utils.js}"></script>
+    <script layout:fragment="script">
+    	// Page script goes here
+    </script>
+</body>
+</html>

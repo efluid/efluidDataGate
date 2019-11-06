@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/wizard.html}">
+<head>
+</head>
+<body>
+	<span layout:fragment="content">
+		<span class="w-bc"><span class="active">Ajout d'utilisateur</span> > Projets > Domaines > Dictionnaire initial > Preparation de paramètre > fin</span>
+		<br/>
+		<div class="alert alert-primary" role="alert">
+			Pour utiliser l'application, vous devez d'abord vous enregistrer en tant qu'utilisateur. Vous serez alors identifié comme administrateur
+		</div>
+		<form action="/wizard/2.html" th:action="@{/wizard/1}" method="post">
+			<div class="form-group">
+				<label for="login">Login</label>
+				<input type="text" class="form-control" name="login" size="50"/>
+			</div>
+			<div class="form-group">
+				<label for="password">Mot de passe</label>
+				<input type="password" class="form-control" name="password" size="50"/>
+			</div>
+			<div class="form-group">
+				<label for="email">Adresse email</label>
+				<input type="text" class="form-control" name="email" size="50"/>
+			</div>
+			<div>
+				<span class="remark">Attention : Tous les champs sont obligatoires</span>
+				<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right" disabled="disabled">Sauvegarder et continuer</button><br/><br/>
+			</div>
+		</form>
+	</span>
+	<script layout:fragment="script">
+
+		const checkContinue = () => {
+			var allOk = true; 
+			$("input").each( (i,e) => {
+				if(e.value === ''){ 
+					allOk = false; 
+					console.info(i + "->" + e.value);
+				}
+			});
+			
+			if(allOk){
+				$("#nextButton").prop('disabled', false);
+				$("#nextButton").removeClass("btn-outline-success").addClass("btn-success");
+			} else {	
+				$("#nextButton").prop('disabled', true);
+				$("#nextButton").removeClass("btn-success").addClass("btn-outline-success");
+			}
+        };
+        
+    	// Init actions
+    	$(document).ready(() => {
+			$("input").change(checkContinue);
+			$("input").keypress(checkContinue);
+			checkContinue();
+		}); 
+    </script>
+</body>
+</html>

@@ -53,7 +53,7 @@ public class SecurityService extends AbstractApplicationService {
 		user.setToken(generateToken());
 
 		if (fromWizzard) {
-			LOGGER.info("New user {} is created in wizzard mode. Set it as current active user for holder, dropped after wizzard complete",
+			LOGGER.info("New user {} is created in wizard mode. Set it as current active user for holder, dropped after wizard complete",
 					login);
 			this.holder.setWizzardUser(user);
 		}
@@ -141,7 +141,7 @@ public class SecurityService extends AbstractApplicationService {
 
 	/**
 	 * <p>
-	 * Called when wizzard process is completed to break wizzard user mode
+	 * Called when wizard process is completed to break wizard user mode
 	 * </p>
 	 */
 	public void completeWizzardUserMode() {

@@ -34,9 +34,9 @@ public class HomeController extends CommonController {
     @RequestMapping("/")
     public String index() {
 
-        // If not configured (no data : forward to wizzard)
-        if (this.applicationDetailsService.isNeedWizzard()) {
-            return "forward:/wizzard/";
+        // If not configured (no data : forward to wizard)
+        if (this.applicationDetailsService.isNeedWizard()) {
+            return "forward:/wizard/";
         }
 
         return "redirect:/ui";
@@ -49,9 +49,9 @@ public class HomeController extends CommonController {
     @RequestMapping("/ui")
     public String index(Model model) {
 
-        // If not configured (no data : forward to wizzard)
-        if (this.applicationDetailsService.isNeedWizzard()) {
-            return "forward:/wizzard/";
+        // If not configured (no data : forward to wizard)
+        if (this.applicationDetailsService.isNeedWizard()) {
+            return "forward:/wizard/";
         }
 
         if (!controlSelectedProject(model)) {
@@ -79,9 +79,9 @@ public class HomeController extends CommonController {
                             @RequestParam(name = "username", required = false) String username,
                             @RequestParam(name = "error", required = false) String error) {
 
-        // If not configured (no data : forward to wizzard)
-        if (this.applicationDetailsService.isNeedWizzard()) {
-            return "forward:/wizzard/";
+        // If not configured (no data : forward to wizard)
+        if (this.applicationDetailsService.isNeedWizard()) {
+            return "forward:/wizard/";
         }
 
         if (username != null) {

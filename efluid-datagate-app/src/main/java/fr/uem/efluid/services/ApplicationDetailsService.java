@@ -1,13 +1,10 @@
 package fr.uem.efluid.services;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
-import javax.annotation.PostConstruct;
-
+import fr.uem.efluid.model.metas.ManagedModelDescription;
+import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.services.types.ApplicationDetails;
+import fr.uem.efluid.services.types.ApplicationInfo;
+import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.tools.AsyncDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,19 +13,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import fr.uem.efluid.model.metas.ManagedModelDescription;
-import fr.uem.efluid.model.repositories.CommitRepository;
-import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
-import fr.uem.efluid.model.repositories.IndexRepository;
-import fr.uem.efluid.model.repositories.LobPropertyRepository;
-import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository;
-import fr.uem.efluid.model.repositories.ProjectRepository;
-import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.model.repositories.VersionRepository;
-import fr.uem.efluid.services.types.ApplicationDetails;
-import fr.uem.efluid.services.types.ApplicationInfo;
-import fr.uem.efluid.services.types.ProjectData;
+import javax.annotation.PostConstruct;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @author elecomte
@@ -82,16 +72,16 @@ public class ApplicationDetailsService {
     @Value("${datagate-efluid.managed-datasource.url}")
     private String managedDbUrl;
 
-    // If wizzard started, cannot quit
-    private boolean wizzardCompleted;
+    // If wizard started, cannot quit
+    private boolean wizardCompleted;
 
     /**
      * @return
      */
-    public boolean isNeedWizzard() {
-        // Until a wizzard is completed (or data is complete), it is not possible to avoid
-        // the wizzard
-        return !this.wizzardCompleted;
+    public boolean isNeedWizard() {
+        // Until a wizard is completed (or data is complete), it is not possible to avoid
+        // the wizard
+        return !this.wizardCompleted;
     }
 
     /**
@@ -162,12 +152,12 @@ public class ApplicationDetailsService {
     }
 
     @PostConstruct
-    public void completeWizzard() {
+    public void completeWizard() {
 
-        this.wizzardCompleted = this.users.count() > 0 && this.domains.count() > 0;
+        this.wizardCompleted = this.users.count() > 0 && this.domains.count() > 0;
 
-        if (!this.wizzardCompleted) {
-            LOGGER.info("Application is started in wizzard mode : no data found localy");
+        if (!this.wizardCompleted) {
+            LOGGER.info("Application is started in wizard mode : no data found locally");
         }
     }
 
@@ -185,11 +175,11 @@ public class ApplicationDetailsService {
 
         long size = this.index.count() * INDEX_ENTRY_ESTIMATED_SIZE;
         long lobSize = this.lobs.count() * LOB_ESTIMATED_SIZE;
-        BigDecimal estim = new BigDecimal((size + lobSize) / (1024 * 1024));
-        estim.setScale(1, RoundingMode.HALF_UP);
+        BigDecimal estim = new BigDecimal((size + lobSize) / (1024 * 1024))
+                .setScale(1, RoundingMode.HALF_UP);
 
         LOGGER.debug("Checking estimated index size. Found {} items and {} lobs, for a an estimated total size of {} Mb",
-                Long.valueOf(size), Long.valueOf(lobSize), estim);
+                size, lobSize, estim);
 
         return estim.toPlainString() + " Mb";
     }
