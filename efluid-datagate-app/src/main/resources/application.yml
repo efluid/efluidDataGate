@@ -108,6 +108,9 @@ spring:
         user: ${spring.datasource.username}
         password: ${spring.datasource.password}
 
+    output:
+        ansi:
+            enabled: ALWAYS
 ## WEB SERVER CONFIG
 server:
     contextPath:

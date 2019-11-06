@@ -18,7 +18,7 @@ Par exemple pour ajouter une table de donnée `testc`, les étapes à suivre son
 
 **1/ Créer un entité JPA correspondante**
 
-L'entité est ajoutée dans le package `fr.uem.efluid.system.stubs.entities`, et nommée `EfluidTesta` (voir les autres entités en exemple)
+L'entité est ajoutée dans le package `fr.uem.efluid.cucumber.stubs.entities`, et nommée `EfluidTesta` (voir les autres entités en exemple)
 Tous les attributs doivent être précisés, avec leurs getters / setters associés.
 
 > Il est également **obligatoire** de spécifier hashcode et equals avec tous les attributs utilisés (equals sera utilisé dans les tests)
@@ -43,7 +43,7 @@ static {
 
 L'entrée dans le dictionnaire pour cette nouvelle table ne peut être deviné automatiquement. Il faut spécifier la config du dico à utiliser.
 
-Pour cela, dans la méthode `fr.uem.efluid.system.common.SystemTest.initDefaultTables` ajouter un *CASE* supplémentaire pour la nouvelle table, comme pour cet exemple : 
+Pour cela, dans la méthode `SystemTest.initDefaultTables` ajouter un *CASE* supplémentaire pour la nouvelle table, comme pour cet exemple : 
 
 ```
    // ...
