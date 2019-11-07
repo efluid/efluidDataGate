@@ -63,6 +63,7 @@ public class ApplyDiffService extends AbstractApplicationService {
      * @param diffLines lines
      * @param lobs      associated lob for content extract
      */
+    @Transactional(rollbackFor = Throwable.class)
     void applyDiff(List<? extends DiffLine> diffLines, Map<String, byte[]> lobs) {
 
         this.projectService.assertCurrentUserHasSelectedProject();
