@@ -36,7 +36,7 @@
 			    </div>
 			</div>
 			<div class="form-group">
-				<label for="currentQuery">Requête de selection obtenue&nbsp;&nbsp;&nbsp;<span class="important-remark">Les jointures sur les tables des dépendances ne sont générées qu'après enregistrement</span></label>
+				<label for="currentQuery">Requête de selection obtenue</label>
 				<span class="query-display" id="currentQuery">SELECT COLKEY, COLA, COLB, COLC FROM TPROGRAMMATION WHERE 1=1 ORDER BY COLKEY</span>
 			</div>
 			<span th:if="${entry.missingTable}">
@@ -174,22 +174,11 @@
 
 		// Dynamic query
 		const updateQuery = () => {
-		
-			// TR with col name as ids for simpler search
-			var cols = $("tbody tr").toArray().map(tr => tr.id);
-	
-			// For select, use keys + selecteds
-			var selecteds = cols.filter(col => $("#selectFor" + col).val()  === 'true');
-			
-			// Keys are identified also
-			var keys = cols.filter(col => $("#keyFor" + col).val()  === 'true');
-			
-			var key = (keys.length === 0)? cols[0] : keys.join('", cur."');
 
-			// Composed query - Order by 1st key = first in columns
-			var query = 'SELECT cur."' + key + (keys.length == cols.length-1?'':'", cur."') + (selecteds.length == cols.length?'*':selecteds.join('", cur."')) + '" FROM "' + $("#table").val() + '" cur WHERE ' +   $("#whereCriteria").val() + ' ORDER BY cur."' + keys[0] + '"';
-			
-			$("#currentQuery").text(query);
+			// Use backend generator
+			$.post("/ui/dictionary/querygen", $("#editTableForm").serialize(), (data, status) => {
+				$("#currentQuery").text(data);
+			});
 		};
 		
 		// Apply fk column options in select

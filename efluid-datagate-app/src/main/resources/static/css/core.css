@@ -449,3 +449,56 @@ select.select-column {
 	color: Gray;
     font-style: italic;
 }
+
+/* Compare screen */
+
+.domain-change {
+    font-weight:bold;
+}
+
+.added {
+    color: green;
+}
+
+.removed {
+    color: red;
+}
+
+.modified {
+    color: blue;
+}
+
+.unchanged {
+    color: #000;
+}
+
+.column-change.removed {
+    color: red;
+    text-decoration: line-through;
+}
+
+.key-change {
+    background-image: url("/key.png");
+	width: 20px;
+	height: 20px;
+	display: block;
+}
+
+.key-change-added {
+    background-image: url("/key-add.png");
+	width: 20px;
+	height: 20px;
+	display: block;
+}
+
+.key-change-removed {
+    background-image: url("/key-remove.png");
+	width: 20px;
+	height: 20px;
+	display: block;
+}
+
+.domain-compare {
+    font-weight: bold;
+    font-size: 16px;
+}

@@ -549,7 +549,7 @@ public abstract class SystemTest {
      * @param domain
      * @return
      */
-    private static void initDefaultTables(FunctionalDomain domain, List<DictionaryEntry> tables, List<TableLink> links, String... tableNames) {
+    protected static void initDefaultTables(FunctionalDomain domain, List<DictionaryEntry> tables, List<TableLink> links, String... tableNames) {
         for (String tableName : tableNames) {
             switch (tableName) {
                 case TABLE_ONE:

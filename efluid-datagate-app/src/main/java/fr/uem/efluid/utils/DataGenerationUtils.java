@@ -98,7 +98,7 @@ public class DataGenerationUtils {
         entry.setUuid(UUID.randomUUID());
         entry.setParameterName(name);
         entry.setDomain(domain);
-        entry.setSelectClause(select != null ? select.toUpperCase() : null);
+        entry.setSelectClause(select);
         entry.setTableName(table);
         entry.setWhereClause(where);
         entry.setKeyName(keyName != null ? keyName.toUpperCase() : null);
