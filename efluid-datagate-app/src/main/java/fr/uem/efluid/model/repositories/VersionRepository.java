@@ -40,8 +40,8 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 
     @Query(value = "select concat(uuid,'') from versions where created_time = "
             + " (select max(created_time) from versions where project_uuid = :projectUuid) "
-            + " and project_uuid = :projectUuid limit 1", nativeQuery = true)
-    Object _internal_findLastVersionUuidForProject(@Param("projectUuid") String projectUuid);
+            + " and project_uuid = :projectUuid order by created_time desc", nativeQuery = true)
+    List<Object[]> _internal_findLastVersionUuidForProject(@Param("projectUuid") String projectUuid);
 
     @Query(value = "select '" + MAPPED_TYPE_DOMAIN + "' as type, max(updated_time) as time from domain "
             + " where project_uuid = :projectUuid "
@@ -62,7 +62,10 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 
     default Version getLastVersionForProject(Project project) {
 
-        UUID lastVersion = RuntimeValuesUtils.dbRawToUuid(_internal_findLastVersionUuidForProject(project.getUuid().toString()));
+        // Universal "1st value"
+        List<Object[]> versions = _internal_findLastVersionUuidForProject(project.getUuid().toString());
+
+        UUID lastVersion = RuntimeValuesUtils.dbRawToUuid(versions != null && !versions.isEmpty() ? versions.get(0)[0] : null);
 
         // Last version
         return lastVersion != null ? getOne(lastVersion) : null;

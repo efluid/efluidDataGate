@@ -21,6 +21,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -110,7 +111,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
         // Get columns for all table
         Map<String, String> payloads = this.managedSource.query(query,
-                new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames ,lobs));
+                new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames, lobs));
 
         LOGGER.debug("Extracted values from managed table {} with query \"{}\". Found {} results",
                 parameterEntry.getTableName(), query, Integer.valueOf(payloads.size()));
@@ -290,7 +291,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         /**
          * @param parameterEntry
          */
-        public DisplayInternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter,boolean useLabelForColNames) {
+        public DisplayInternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter, boolean useLabelForColNames) {
             super(parameterEntry, valueConverter, useLabelForColNames);
         }
 
@@ -335,7 +336,8 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
             // Temporal as formated
             else if (type == ColumnType.TEMPORAL) {
-                value = FormatUtils.format(LocalDateTime.ofInstant(rs.getTimestamp(colPosition).toInstant(), ZoneId.systemDefault()));
+                Timestamp ts = rs.getTimestamp(colPosition);
+                value = ts != null ? FormatUtils.format(LocalDateTime.ofInstant(ts.toInstant(), ZoneId.systemDefault())) : null;
             }
 
             // Else basic string extraction

@@ -8,7 +8,7 @@ import fr.uem.efluid.ParameterTable;
  * @since v0.0.8
  * @version 1
  */
-@ParameterTable(keyField = "key")
+@ParameterTable(tableName = "MY_TYPE" , keyField = "key")
 public class MyType {
 
 	@ParameterIgnored
