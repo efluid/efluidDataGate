@@ -205,6 +205,11 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
         return this.projectVersion;
     }
 
+    @Override
+    public boolean isCheckDuplicateTables() {
+        return true;
+    }
+
     /**
      * @return
      * @see fr.uem.efluid.generation.DictionaryGeneratorConfig#getLogger()

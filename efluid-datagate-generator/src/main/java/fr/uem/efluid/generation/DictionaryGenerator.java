@@ -72,7 +72,9 @@ public class DictionaryGenerator extends AbstractProcessor {
             Collection<ParameterVersionDefinition> allVersions = specifyVersionsByProjects(projectDefs.values());
 
             /* Check everything is OK */
-            assertTableNotDuplicated(typeTables);
+            if(config().isCheckDuplicateTables()) {
+                assertTableNotDuplicated(typeTables);
+            }
 
             /* Now can export */
             return new DictionaryContent(projectDefs, allDomains, typeTables, allLinks, allMappings, allVersions);

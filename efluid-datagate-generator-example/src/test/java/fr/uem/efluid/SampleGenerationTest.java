@@ -151,6 +151,11 @@ public class SampleGenerationTest {
             public String getProjectVersion() {
                 return "1.2.3";
             }
+
+            @Override
+            public boolean isCheckDuplicateTables() {
+                return false;
+            }
         };
     }
 }
