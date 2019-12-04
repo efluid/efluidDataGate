@@ -1,6 +1,6 @@
 {
-  "wizzard/user": ["wizzard user creation"],
-  "wizzard/projects" : ["wizzard projects creation"],
+  "wizard/user": ["wizard user creation"],
+  "wizard/projects" : ["wizard projects creation"],
   "pages/users" : ["user list", "all users"],
   "pages/user_edit" : ["user edit", "edit user"],
   "pages/domains" : ["functional domain"],

@@ -58,7 +58,7 @@ public final class RestApi {
 	 * it
 	 * </p>
 	 * 
-	 * @param restTemplate
+	 * @param restTemplate template for converter apply
 	 */
 	public static void configureMessageConverters(RestTemplate restTemplate) {
 

@@ -26,16 +26,7 @@ public interface DiffLine {
 
 	long getTimestamp();
 
-	/**
-	 * 
-	 * @param dictionaryEntryUuid
-	 * @param keyValue
-	 * @param payload
-	 * @param action
-	 * @param timestamp
-	 * @return
-	 */
-	public static DiffLine combined(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action, long timestamp) {
+	static DiffLine combined(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action, long timestamp) {
 		return new CombinedDiffLine(dictionaryEntryUuid, keyValue, payload, action, timestamp);
 	}
 
@@ -43,11 +34,8 @@ public interface DiffLine {
 	 * <p>
 	 * Replay all difflines to get only one with combined results
 	 * </p>
-	 * 
-	 * @param linesOnSameTableSameKey
-	 * @return
 	 */
-	public static DiffLine combinedOnSameTableAndKey(List<? extends DiffLine> linesOnSameTableSameKey, boolean keepDeleted) {
+	static DiffLine combinedOnSameTableAndKey(List<? extends DiffLine> linesOnSameTableSameKey, boolean keepDeleted) {
 
 		if (linesOnSameTableSameKey == null || linesOnSameTableSameKey.size() == 0) {
 			return null;
@@ -105,7 +93,7 @@ public interface DiffLine {
 	 * @since v0.0.1
 	 * @version 1
 	 */
-	static class CombinedDiffLine implements DiffLine {
+	class CombinedDiffLine implements DiffLine {
 
 		private final UUID dictionaryEntryUuid;
 
@@ -117,12 +105,6 @@ public interface DiffLine {
 
 		private final long timestamp;
 
-		/**
-		 * @param dictionaryEntryUuid
-		 * @param keyValue
-		 * @param payload
-		 * @param action
-		 */
 		CombinedDiffLine(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action, long timestamp) {
 			super();
 			this.dictionaryEntryUuid = dictionaryEntryUuid;
@@ -173,7 +155,6 @@ public interface DiffLine {
 		}
 
 		/**
-		 * @return
 		 * @see java.lang.Object#toString()
 		 */
 		@Override
@@ -182,7 +163,6 @@ public interface DiffLine {
 		}
 
 		/**
-		 * @return
 		 * @see java.lang.Object#hashCode()
 		 */
 		@Override
@@ -197,8 +177,6 @@ public interface DiffLine {
 		}
 
 		/**
-		 * @param obj
-		 * @return
 		 * @see java.lang.Object#equals(java.lang.Object)
 		 */
 		@Override

@@ -92,7 +92,7 @@ public class TableMapping extends ExportAwareTableMapping<DictionaryEntry> {
 	private DictionaryEntry dictionaryEntry;
 
 	/**
-	 * @param uuid
+	 * @param uuid forced uuid
 	 */
 	public TableMapping(UUID uuid) {
 		super();
@@ -667,7 +667,6 @@ public class TableMapping extends ExportAwareTableMapping<DictionaryEntry> {
 	}
 
 	/**
-	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
 	@Override

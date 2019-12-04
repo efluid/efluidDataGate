@@ -60,9 +60,11 @@ public enum ColumnType {
     private final boolean pk;
 
     /**
-     * @param represent
+     * @param represent   model for identity as a char
+     * @param displayName column name
+     * @param pk          true if is a PK
      */
-    private ColumnType(char represent, String displayName, boolean pk) {
+    ColumnType(char represent, String displayName, boolean pk) {
         this.represent = represent;
         this.displayName = displayName;
         this.pk = pk;
@@ -94,8 +96,8 @@ public enum ColumnType {
      * Utils for getting the corresponding type on an existing object
      * </p>
      *
-     * @param obj
-     * @return
+     * @param obj type for
+     * @return ColumnType
      */
     public static ColumnType forClass(Class<?> obj) {
 
@@ -123,8 +125,8 @@ public enum ColumnType {
      * Utils for getting the corresponding type on an existing object
      * </p>
      *
-     * @param obj
-     * @return
+     * @param obj type for
+     * @return ColumnType
      */
     public static ColumnType forObject(Object obj) {
 
@@ -150,8 +152,8 @@ public enum ColumnType {
     /**
      * Shortcut to Type from its represent value
      *
-     * @param represent
-     * @return
+     * @param represent identity char
+     * @return ColumnType
      */
     public static ColumnType forRepresent(char represent) {
 
@@ -179,7 +181,7 @@ public enum ColumnType {
     }
 
     /**
-     * @param type
+     * @param type code type
      * @return the internal type associated to
      */
     public static ColumnType forJdbcType(int type) {

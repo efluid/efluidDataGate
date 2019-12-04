@@ -51,8 +51,6 @@ public @interface ParameterDomain {
 	 * <p>
 	 * Note than in some cases the name can be used to identify an item in the dictionnary
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String name();
 
@@ -60,8 +58,6 @@ public @interface ParameterDomain {
 	 * <p>
 	 * Specification of project for current domain. Project are unique by name
 	 * </p>
-	 * 
-	 * @return
 	 */
 	ParameterProject project();
 }

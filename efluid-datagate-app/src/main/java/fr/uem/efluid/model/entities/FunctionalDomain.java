@@ -40,7 +40,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
     private Project project;
 
     /**
-     * @param uuid
+     * @param uuid forced uuid
      */
     public FunctionalDomain(UUID uuid) {
         super();
@@ -145,7 +145,6 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
     }
 
     /**
-     * @param raw
      * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
      */
     @Override

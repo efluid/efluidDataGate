@@ -37,37 +37,22 @@ public class ApplicationDetailsConfig {
 		private String version;
 		private String instanceName;
 
-		/**
-		 *
-		 */
 		public DetailProperties() {
 			super();
 		}
 
-		/**
-		 * @return
-		 */
 		public String getVersion() {
 			return this.version;
 		}
 
-		/**
-		 * @param version
-		 */
 		public void setVersion(String version) {
 			this.version = version;
 		}
 
-		/**
-		 * @return
-		 */
 		public String getInstanceName() {
 			return this.instanceName;
 		}
 
-		/**
-		 * @param instanceName
-		 */
 		public void setInstanceName(String instanceName) {
 			this.instanceName = instanceName;
 		}

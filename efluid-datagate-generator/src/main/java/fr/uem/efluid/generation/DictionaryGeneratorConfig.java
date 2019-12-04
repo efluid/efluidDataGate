@@ -26,6 +26,9 @@ public interface DictionaryGeneratorConfig {
 	String getUploadSecurityToken();
 	
 	String getProjectVersion();
+
+	boolean isCheckDuplicateTables();
+
 	
 	/**
 	 * <p>

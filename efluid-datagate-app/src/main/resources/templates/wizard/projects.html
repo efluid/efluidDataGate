@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/wizard.html}">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+    	<span class="w-bc">Ajout d'utilisateur > <span class="w-active">Projets</span> > Dictionnaire initial > Preparation de paramètre > fin</span>
+		<br/>
+		<div class="alert alert-primary" role="alert">
+			Les données de paramètrage sont organisées par projet. La présence d'au moins un projet est obligatoire. 
+			Les utilisateurs doivent sélectionner un projet actif sur lequel travailler
+			Vous pourrez modifier la liste des projets, ou choisir des projets préférés plus tard.<br/><br/>
+			Un projet est identifié par un nom unique et par une couleur. La couleur est reprise dans les menus de l'application
+			et permet d'identifier plus simplement quel est le projet actif.
+			<br/><br/>Vous pouvez également depuis cet écran spécifier un fichier d'import de projets / dictionnaires. Tous les projets 
+			et leurs données seront alors importées et utilisées dans l'application. Vous pourrez ensuite choisir le projet actif lors de votre première connexion.<br/>
+        	Si vous compter recevoir des packages de paramètrages, <b>il est recommandé de créer les projets et dictionnaires en important un modèle de référence</b>.
+        </div>
+        
+        <form class="form-inline">
+			<div class="form-group mb-2">
+				<label for="projectName">Nom du projet&nbsp;&nbsp;&nbsp;&nbsp;</label>
+				<input id="projectName" type="text" class="form-control" size="30" name="domainName"/>
+			</div>
+			<div class="form-group mx-sm-3 mb-2">
+				<span class="color-picker">
+    				<label class="project-theme-txt-0"><input class="project-color" type="radio" name="color" value="0" checked="checked"><span>Gris</span></label>
+    				<label class="project-theme-txt-1"><input class="project-color" type="radio" name="color" value="1" ><span>Bleu</span></label>
+    				<label class="project-theme-txt-2"><input class="project-color" type="radio" name="color" value="2"><span>Vert</span></label>
+    				<label class="project-theme-txt-3"><input class="project-color" type="radio" name="color" value="3"><span>Jaune</span></label>
+    				<label class="project-theme-txt-4"><input class="project-color" type="radio" name="color" value="4"><span>Rose</span></label>
+    				<label class="project-theme-txt-5"><input class="project-color" type="radio" name="color" value="5"><span>Violet</span></label>
+    				&nbsp;&nbsp;&nbsp;&nbsp;
+				</span>
+  			</div>
+  			
+			<div class="form-group mx-sm-3 mb-2 float-right">
+				<button type="button" id="addButton" class="btn btn-success btn-sm float-right" disabled="disabled">Créer le projet</button>
+			</div>
+		</form>
+		
+		<div id="projectList">
+			<br/>
+        	<form action="/wizard/2.html" th:action="@{/wizard/2}" method="post">
+        		<div>
+					<h5>Liste des projets</h5>
+			        <table class="table table-sm">
+			            <thead>
+			                <tr>
+			                    <th scope="col" width="70%">Projets</th>
+			                    <th scope="col" style="text-align:center">Utiliser comme projet actif</th>
+			                </tr>
+			            </thead>
+			            <tbody>
+						     <tr id="projectListInjectBefore"><td colspan="100%">&nbsp;</td></tr>
+						</tbody>
+					</table>
+				</div>
+				<div>
+					<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right" disabled="disabled">Valider le(s) projet(s) et continuer</button>
+				</div>
+			</form>
+		</div>
+		<br/>
+		<br/>
+		<form action="#" th:action="@{/wizard/3/upload}" method="post" enctype="multipart/form-data">
+			<label for="import">Ou importer un package de projets et de dictionnaires existants</label><br/>
+			<label class="btn btn-sm btn-primary">
+				Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
+			</label>
+			<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
+			<input type="submit" class="btn btn-success-outline btn-sm float-right" id="importSubmit" disabled="disabled" value="Importer les données dans le dictionnaire"/>
+		</form>
+    </span>
+    <script layout:fragment="script">
+
+		var count = 0;
+		
+		const getPickedColor = () => {
+			return $(".project-color:checked").val();
+		};
+
+		// Check value
+    	const checkProjectAdd = () => {
+			var inputName = $("#projectName");
+			var name = inputName.val();
+			if(name == null || name === ''){
+    			$("#addButton").prop('disabled', true);
+				$("#addButton").removeClass("btn-success").addClass("btn-outline-success");
+			} else {
+    			$("#addButton").prop('disabled', false);
+				$("#addButton").removeClass("btn-outline-success").addClass("btn-success");
+			}
+		};
+			
+		// Add row button
+		const addButtonAction = () => {
+			var inputName = $("#projectName");
+			var name = inputName.val();
+			var color = getPickedColor();
+			$.post("/wizard/2/add/" + name + "/" + color, null, (data, status) => {
+		        var newProjectRow = '<tr id="' + data.uuid + '"><td class="project-theme-txt-' + data.color + '"><b>' + data.name + '</b></td><td style="text-align:center"><input type="radio" name="selected" value="' + data.uuid + '"' + (count == 0 ? '" checked="checked"' : '') + '/></td></tr>';
+				$("#projectListInjectBefore").before(newProjectRow);
+				inputName.val("");
+				$("#addButton").html("Ajouter un autre projet");
+    			$("#nextButton").prop('disabled', false);
+    			$("#projectList").fadeIn();
+				$("#nextButton").removeClass("btn-outline-success").addClass("btn-success");
+				checkProjectAdd();
+				count++;
+		    });
+		};
+		
+		// Display of file 
+		const displayFile = () => {
+			hideDisplays();
+			var file = $("#importInput").val();
+			console.log(file);
+			if(file.endsWith(".zip") || file.endsWith(".par")){
+				$("#displayFile").text(file);
+				$("#importSubmit").prop('disabled', false);
+				$("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
+			} else {
+				showError("Le fichier fourni n'est pas dans un format valide. Seules les archives PAR sont supportées."); 
+				$("#importSubmit").prop('disabled', true);
+				$("#importSubmit").removeClass("btn-success").addClass("btn-outline-success");
+			}
+		};
+        
+    	// Init actions
+    	$(document).ready(() => {
+			$("#importInput").change(displayFile);
+    		$("#projectList").hide();
+			$("#addButton").click(addButtonAction);
+			$("#projectName").on('input',checkProjectAdd);
+			checkProjectAdd();
+		}); 
+    </script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
@@ -44,9 +45,20 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  */
 @Documented
 @Retention(RUNTIME)
-@Target(TYPE)
+@Target({ANNOTATION_TYPE, TYPE})
 @Inherited
 public @interface ParameterTable {
+
+    String value() default "";
+
+    /**
+     * <p>
+     * Specify the technical table name for the parameter table. Please use UPPERCASE
+     * value only. If not set, will use the parameter name (as specified with
+     * {@link #name()} or from annotated type name), UPPERCASE.
+     * </p>
+     */
+    String tableName() default "";
 
     /**
      * <p>
@@ -61,22 +73,11 @@ public @interface ParameterTable {
 
     /**
      * <p>
-     * Specify the technical table name for the parameter table. Please use UPPERCASE
-     * value only. If not set, will use the parameter name (as specified with
-     * {@link #name()} or from annotated type name), UPPERCASE.
-     * </p>
-     */
-    String tableName() default "";
-
-    /**
-     * <p>
      * Custom filter clause to apply at SQL level for data filtering. Default is "1=1",
      * meaning "get all lines from the table". See dictionary management rules for custom
      * filter
      * </p>
      * </p>
-     *
-     * @return
      */
     String filterClause() default "1=1";
 
@@ -85,8 +86,6 @@ public @interface ParameterTable {
      * Domain to associate to the parameter table. Mandatory if not specified with custom
      * annotation or at package level
      * </p>
-     *
-     * @return
      */
     String domainName() default "";
 
@@ -101,8 +100,6 @@ public @interface ParameterTable {
      * fail. Non identifiable key type must be defined with property {@link #keyType()} or
      * by definition of <tt>ParameterKey</tt>
      * </p>
-     *
-     * @return
      */
     String keyField() default "";
 
@@ -112,8 +109,6 @@ public @interface ParameterTable {
      * it directly with this parameter. Useful for "non standard" property types. If not
      * set, will define it using rules specified in {@link ColumnType#forClass(Class)}
      * </p>
-     *
-     * @return
      */
     ColumnType keyType() default ColumnType.UNKNOWN;
 
@@ -129,18 +124,25 @@ public @interface ParameterTable {
      * <tt>ParameterIgnored</tt> can also be used to ignore some specific fields from
      * automatic use as property value
      * </p>
-     *
-     * @return
      */
     boolean useAllFields() default true;
+
+    /**
+     * <p>
+     * To force exclusion for default fields from specified inherited type.
+     * Allows to specify a table mapping on a type will excluding any technical field from,
+     * for example, a technical top level type (like with some Efluid ORM model types)
+     * </p>
+     *
+     * @return array of types to exclude from field inclusion
+     */
+    Class<?>[] excludeInheritedFrom() default {};
 
     /**
      * <p>
      * When a parameter table is identified with <tt>ParameterTableSet</tt> then the
      * values can be directly identified here
      * </p>
-     *
-     * @return
      */
     ParameterValue[] values() default {};
 }

@@ -1,13 +1,13 @@
 package fr.uem.efluid;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
+
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * <p>
@@ -23,43 +23,29 @@ import java.lang.annotation.Target;
  * field / method. Take care of the order of the column names, which must be the same as
  * referenced Link / mapping "to" columns
  * </p>
- * 
+ *
  * @author elecomte
- * @since v2.0.0
  * @version 1
+ * @since v2.0.0
  */
 @Documented
 @Retention(RUNTIME)
-@Target({ FIELD, METHOD })
+@Target({FIELD, METHOD})
 @Inherited
 public @interface ParameterCompositeValue {
 
-	/**
-	 * <p>
-	 * alias of {@link #names()}
-	 * </p>
-	 * 
-	 * @return
-	 */
-	String[] value() default {};
+    /**
+     * @return alias of {@link #names()}
+     */
+    String[] value() default {};
 
-	/**
-	 * <p>
-	 * Name of a column mapped by the current {@link ParameterValue}. If not set, will use
-	 * the field name
-	 * </p>
-	 * 
-	 * @return
-	 */
-	String[] names() default {};
+    /**
+     * @return Name of a column mapped by the current {@link ParameterValue}. If not set, will use the field name
+     */
+    String[] names() default {};
 
-	/**
-	 * <p>
-	 * When the current parameter table is specified in a <tt>ParameterTableSet</tt> use
-	 * this attribute to refer the corresponding table for current value
-	 * </p>
-	 * 
-	 * @return
-	 */
-	String[] forTable() default {};
+    /**
+     * @return When the current parameter table is specified in a <tt>ParameterTableSet</tt> use this attribute to refer the corresponding table for current value
+     */
+    String[] forTable() default {};
 }

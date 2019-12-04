@@ -62,7 +62,7 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 		try (BufferedReader in = new BufferedReader(new StringReader(FormatUtils.toString(att.getData())));
 				LineNumberReader fileReader = new LineNumberReader(in);) {
 
-			query = ScriptUtils.readScript(fileReader, COMMENT_PREFIX, SEPARATOR);
+			query = ScriptUtils.readScript(fileReader, COMMENT_PREFIX, SEPARATOR, null);
 
 			// Detect type of script -> PLSQL
 			if (query.contains(PLSQL_DETECT) || query.contains(PLSQL_DETECT.toUpperCase())) {

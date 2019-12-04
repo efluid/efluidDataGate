@@ -45,8 +45,6 @@ public @interface ParameterLink {
      * Specify the associated parameter table from a class annotated with
      * {@link ParameterTable}
      * </p>
-     *
-     * @return
      */
     Class<?> toParameter() default Void.class;
 
@@ -55,8 +53,6 @@ public @interface ParameterLink {
      * Define the associated parameter table
      * directly with the table name
      * </p>
-     *
-     * @return
      */
     String toTableName() default "";
 
@@ -71,8 +67,6 @@ public @interface ParameterLink {
      * In case of composite key with <tt>ParameterCompositeValue</tt>, the referenced
      * column names must be in the same order than the composite ref
      * </p>
-     *
-     * @return
      */
     String[] toColumn() default {};
 
@@ -80,8 +74,6 @@ public @interface ParameterLink {
      * <p>
      * Optional link name to use
      * </p>
-     *
-     * @return
      */
     String name() default "";
 

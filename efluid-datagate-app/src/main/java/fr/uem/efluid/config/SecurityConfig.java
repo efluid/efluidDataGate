@@ -32,9 +32,9 @@ public class SecurityConfig {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfig.class);
 
-	public static final String WEB_CLIENT = "web";
-	public static final String REST_CLIENT = "rest";
-	public static final String AUTHORIZER = "user";
+	private static final String WEB_CLIENT = "web";
+	private static final String REST_CLIENT = "rest";
+	private static final String AUTHORIZER = "user";
 
 	@Value("${datagate-efluid.security.salt}")
 	private String salt;
@@ -69,9 +69,6 @@ public class SecurityConfig {
 		return config;
 	}
 
-	/**
-	 * @return
-	 */
 	@Bean
 	public FilterRegistrationBean<SecurityFilter> webSecurityFilter() {
 
@@ -86,9 +83,6 @@ public class SecurityConfig {
 		return registration;
 	}
 
-	/**
-	 * @return
-	 */
 	@Bean
 	public FilterRegistrationBean<SecurityFilter> restSecurityFilter() {
 
@@ -103,9 +97,6 @@ public class SecurityConfig {
 		return registration;
 	}
 
-	/**
-	 * @return
-	 */
 	@Bean
 	public FilterRegistrationBean<CallbackFilter> callbackFilter() {
 
@@ -120,9 +111,6 @@ public class SecurityConfig {
 		return registration;
 	}
 
-	/**
-	 * @return
-	 */
 	@Bean
 	public FilterRegistrationBean<LogoutFilter> logoutFilter() {
 

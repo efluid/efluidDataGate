@@ -35,8 +35,6 @@ public interface BacklogApi {
      * <p>
      * Start a new commit index analysis, or provides the active running analysis status
      * </p>
-     *
-     * @return
      */
     @RequestMapping(value = "/diff", method = POST)
     @ResponseBody
@@ -50,8 +48,6 @@ public interface BacklogApi {
      * <p>
      * Cancel a commit preparation
      * </p>
-     *
-     * @return
      */
     @RequestMapping(value = "/cancel", method = POST)
     @ResponseBody
@@ -65,8 +61,6 @@ public interface BacklogApi {
      * <p>
      * Get the active commit index analysis status
      * </p>
-     *
-     * @return
      */
     @RequestMapping(value = "/status", method = GET)
     @ResponseBody
@@ -81,8 +75,6 @@ public interface BacklogApi {
      * Get more informations about the prepared commit, to check if their is some content
      * for example before validating it
      * </p>
-     *
-     * @return
      */
     @RequestMapping(value = "/details", method = GET)
     @ResponseBody
@@ -97,9 +89,6 @@ public interface BacklogApi {
      * Commit the prepared analysis immediately, applying all the identified Diff, on all
      * domains, and specify the commit comment.
      * </p>
-     *
-     * @param commitComment
-     * @return
      */
     @RequestMapping(value = "/commit", method = POST)
     @ResponseBody
@@ -113,10 +102,6 @@ public interface BacklogApi {
      * <p>
      * Upload a given .par file containing commit items, and start a merge commit prepare
      * </p>
-     *
-     * @param file
-     * @return
-     * @throws ApplicationException
      */
     @RequestMapping(value = "/upload", method = POST)
     @ResponseBody

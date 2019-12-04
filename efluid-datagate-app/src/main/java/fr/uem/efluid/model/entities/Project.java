@@ -36,7 +36,7 @@ public class Project extends ExportAwareProject {
 	private LocalDateTime importedTime;
 
 	/**
-	 * @param uuid
+	 * @param uuid forced uuid
 	 */
 	public Project(UUID uuid) {
 		super();
@@ -131,7 +131,6 @@ public class Project extends ExportAwareProject {
 	}
 
 	/**
-	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
 	@Override

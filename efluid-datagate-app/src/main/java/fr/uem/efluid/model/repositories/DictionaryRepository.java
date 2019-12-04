@@ -19,39 +19,17 @@ import fr.uem.efluid.model.entities.Project;
  */
 public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUID> {
 
-	/**
-	 * @return
-	 */
 	@Query("SELECT DISTINCT dic.uuid FROM IndexEntry ind INNER JOIN ind.dictionaryEntry dic GROUP BY dic.uuid")
 	List<UUID> findUsedIds();
 
-	/**
-	 * @param tableName
-	 * @return
-	 */
 	DictionaryEntry findByTableName(String tableName);
 
-	/**
-	 * @param domain
-	 * @return
-	 */
 	List<DictionaryEntry> findByDomain(FunctionalDomain domain);
 
-	/**
-	 * @param domains
-	 * @return
-	 */
 	List<DictionaryEntry> findByDomainIn(List<FunctionalDomain> domains);
 
-	/**
-	 * @param project
-	 * @return
-	 */
 	List<DictionaryEntry> findByDomainProject(Project project);
 
-	/**
-	 * @return
-	 */
 	default Map<UUID, DictionaryEntry> findAllMappedByUuid(Project project) {
 
 		return findByDomainProject(project).stream()
@@ -59,9 +37,6 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 
 	}
 
-	/**
-	 * @return
-	 */
 	default Map<String, DictionaryEntry> findAllMappedByTableName(Project project) {
 
 		return findByDomainProject(project).stream()

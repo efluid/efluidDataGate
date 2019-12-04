@@ -72,9 +72,6 @@ public class WebFeaturesConfig {
         };
     }
 
-    /**
-     * @return
-     */
     @Bean
     public Docket swaggerApi() {
 
@@ -104,9 +101,6 @@ public class WebFeaturesConfig {
 
     /**
      * H2 embedded database console for testing purpose
-     *
-     * @return
-     * @throws SQLException
      */
     @ConditionalOnClass(Server.class)
     @ConditionalOnProperty(name = "datagate-efluid.web-options.enable-custom-h2-console", havingValue = "true")

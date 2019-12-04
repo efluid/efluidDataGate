@@ -29,9 +29,6 @@ import io.swagger.annotations.ApiOperation;
 @Api("Feature management : enable / disable app features dynamically")
 public interface FeaturesApi {
 
-	/**
-	 * @param feature
-	 */
 	@RequestMapping(value = "/enable/{feature}", method = POST)
 	@ApiOperation("Enable the provided feature for the whole application")
 	@ApiImplicitParams({
@@ -39,9 +36,6 @@ public interface FeaturesApi {
 	})
 	void enableFeature(@PathVariable("feature") Feature feature);
 
-	/**
-	 * @param feature
-	 */
 	@RequestMapping(value = "/disable/{feature}", method = POST)
 	@ApiOperation("Disable the provided feature for the whole application")
 	@ApiImplicitParams({
@@ -49,9 +43,6 @@ public interface FeaturesApi {
 	})
 	void disableFeature(@PathVariable("feature") Feature feature);
 
-	/**
-	 * @return
-	 */
 	@RequestMapping(value = "/", method = GET)
 	@ResponseBody
 	@ApiOperation("Get managed features with states for application")

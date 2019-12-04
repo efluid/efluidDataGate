@@ -12,7 +12,7 @@ Pour son fonctionnement il s’appuie sur un dictionnaire où sont identifiées 
 
 **Ce dictionnaire exploite l’organisation suivante :**
 
-![model](docs/model.png?raw=true "model")
+![model](pictures/model.png?raw=true "model")
 
 La définition d’un dictionnaire valide est essentiel au bon fonctionnement de l’application. Le système de versions permet de le faire évoluer au cours du temps.
 
@@ -523,6 +523,63 @@ Ici la table est mappée car **MyOtherSubType** hérite de **MyType** qui est an
 
 Ici c'est le type lié **TabWithCompositeKey** qui utilise une clé composite (3 colonnes : "BIZ_KEY_ONE", "BIZ_KEY_TWO" et "BIZ_KEY_THREE") et donc la table de **TabWithRefOnCompositeKey** a 3 colonnes avec FK pour gérer le lien. L'ordre utilisé entre les toColumn et les composites values est obligatoirement identique.
 
+## Hierarchie et construction de modèles réutilisables
+
+Afin de pouvoir spécifier des comportements de tables générées sur des modèles de classes héritables, certaines propriétés spécifiques sont disponibles.
+
+Par principe l'API de spécification de modèle a été conçue pour être explicitement spécifiée partout où c'est nécessaire : les classes correspondant à des tables sont supposées toutes annotées "@ParameterTable", toutes les values sont annotées "@ParameterValue" etc. Mais dans la réalité il est préférable de laisser faire les règles d'héritage pour simplifier la définition du modèle.
+
+### Les comportements héritables -> ParameterTable
+
+L'annotation `ParameterTable` est héritable. Une classe fille pourra surcharger n'importe quelle propriétée, elle aura alors "le dernier mot". A noter qu'il n'est pas nécessaire d'avoir ParameterTable directement dans la classe parente pour qu'elle soit prise en compte. Elle peut être définie n'importe où dans la hierarchie.
+ 
+Ainsi, avec l'exemple suivant :
+
+![inheritance](pictures/inheritance.png?raw=true "model")
+
+Toutes les tables présentées sont traitées comme des parameterTable, sauf si elles sont abstract. Les classes filles ont toutes les propriétés définies dans TopType.
+
+Pour exclure des fields des colonnes de valeur, l'attribut `excludeInheritedFrom` peut être utiliser pour indiquer les classes dont les fields ou méthodes doivent être ignorés.
+
+Avec ces règles d'héritage et cette possible exclusion, il devient possible de préciser un type parent, par exemple pour tous les DAO Efluid, dont les champs propres seraient exclus automatiquement, avec le code suivant : 
+
+```
+/** 
+ * Les classes enfants seront traitées comme des Parameters table, avec les règles habituelles 
+ * de spécification de nom de table, d'entité ...
+ * 
+ * Le field "internal" est ignoré (car les fields de MyParentEntityType sont exclus des héritages)
+ */
+@ParameterTable(excludeInheritedFrom = MyParentEntityType.class, keyField = "id", domainName = "Entities Efluid")
+public abstract class MyParentEntityType {
+
+    private String internal;
+
+    public abstract String getId();
+
+    public String getInternal() {
+        return internal;
+    }
+
+    public void setInternal(String internal) {
+        this.internal = internal;
+    }
+}
+```
+ 
+### Les comportements héritables -> ParameterTableSet
+ 
+Une entité spécifiée comme `@ParameterTableSet` peut hériter ses comportements partagés à toutes ses spécifications de table depuis un @ParameterTable parent.
+ 
+Par contre `@ParameterTableSet` n'est pas lui même héritable.
+ 
+### Les comportements héritables -> clés et valeurs
+  
+Toutes les spécifications de clé et de valeur sont hérités, qu'ils soient indiqués par annotation directement sur les fields ou méthodes, ou via des attributs de `@ParameterTable`.
+ 
+Ils sont surchageables à tout moment via les définitions propres à une classe.
+  
+ 
 ## Utilisation du générateur
 
 L'API à base d'annotation permet de spécifier le dictionnaire, mais c'est un générateur, sous la forme d'un plugin maven, qui prend en compte concrètement ces données lors du build du projet pour générer les informations attendues.

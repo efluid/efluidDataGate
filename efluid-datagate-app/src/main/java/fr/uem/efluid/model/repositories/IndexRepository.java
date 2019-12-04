@@ -27,9 +27,6 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
      * <p>
      * Search for existing commit indexes
      * </p>
-     *
-     * @param commitUuid
-     * @return
      */
     List<IndexEntry> findByCommitUuid(UUID commitUuid);
 
@@ -37,9 +34,6 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
      * <p>
      * Search for existing commit indexes
      * </p>
-     *
-     * @param commitUuid
-     * @return
      */
     long countByCommitUuid(UUID commitUuid);
 
@@ -47,32 +41,15 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
      * <p>
      * Load full index detail for one DictionaryEntry (= on managed table)
      * </p>
-     *
-     * @param dictionaryEntry
-     * @return
      */
     List<IndexEntry> findByDictionaryEntry(DictionaryEntry dictionaryEntry);
 
-    /**
-     * @param dictionaryEntry
-     * @param timestamp
-     * @return
-     */
     List<IndexEntry> findByDictionaryEntryAndTimestampGreaterThanEqual(DictionaryEntry dictionaryEntry, long timestamp);
 
-    /**
-     * @param dictionaryEntry
-     * @param timestamp
-     * @return
-     */
     List<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqual(DictionaryEntry dictionaryEntry, long timestamp);
 
     /**
      * <b><font color="red">Query for internal use only</font></b>
-     *
-     * @param dictionaryEntryUuid
-     * @param keyValues
-     * @return
      */
     @Query(value = "select i.* "
             + "from indexes i "
@@ -86,11 +63,6 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
 
     /**
      * <b><font color="red">Query for internal use only</font></b>
-     *
-     * @param dictionaryEntryUuid
-     * @param keyValues
-     * @param excludeIds
-     * @return
      */
     @Query(value = "select i.* "
             + "from indexes i "
@@ -109,10 +81,10 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
      * DictionaryEntry as scope select.
      * </p>
      *
-     * @param dictionaryEntry
-     * @param keyValues
+     * @param dictionaryEntry dict entry
+     * @param keyValues keys
      * @param excludeIds      ids of IndexEntries to exclude. Can be null or empty
-     * @return
+     * @return entries mapped to their key
      */
     default Map<String, IndexEntry> findAllPreviousIndexEntries(
             DictionaryEntry dictionaryEntry,

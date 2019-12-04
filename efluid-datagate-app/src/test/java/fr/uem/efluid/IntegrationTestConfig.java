@@ -65,17 +65,11 @@ public class IntegrationTestConfig {
         return new JdbcTemplate(this.defaultDataSource);
     }
 
-    /**
-     * @return
-     */
     @Bean(name = DatasourceUtils.MANAGED_TRANSACTION_MANAGER)
     public PlatformTransactionManager managedTransactionManager() {
         return new DataSourceTransactionManager(this.defaultDataSource);
     }
 
-    /**
-     * @return
-     */
     @Bean(name = DatasourceUtils.DEFAULT_TRANSACTION_MANAGER)
     @Primary
     public PlatformTransactionManager defaultTransactionManager() {
@@ -95,8 +89,6 @@ public class IntegrationTestConfig {
      * <p>
      * For integration tests, use standard async model
      * </p>
-     *
-     * @return
      */
     @Bean
     public AsyncDriver futureAsyncDriver() {
