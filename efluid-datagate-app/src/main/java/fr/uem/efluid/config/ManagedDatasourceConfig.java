@@ -47,17 +47,11 @@ public class ManagedDatasourceConfig {
 		return DatasourceUtils.createJdbcTemplate(this.props);
 	}
 
-	/**
-	 * @return
-	 */
 	@Bean(name = DatasourceUtils.MANAGED_TRANSACTION_MANAGER)
 	public PlatformTransactionManager managedTransactionManager() {
 		return new DataSourceTransactionManager(managedDatabaseJdbcTemplate().getDataSource());
 	}
 
-	/**
-	 * @return
-	 */
 	@Bean(name = DatasourceUtils.DEFAULT_TRANSACTION_MANAGER)
 	@Primary
 	public PlatformTransactionManager defaultTransactionManager() {

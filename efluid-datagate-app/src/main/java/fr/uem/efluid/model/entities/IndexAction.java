@@ -7,5 +7,5 @@ package fr.uem.efluid.model.entities;
  */
 public enum IndexAction {
 
-	ADD, REMOVE, UPDATE;
+	ADD, REMOVE, UPDATE
 }

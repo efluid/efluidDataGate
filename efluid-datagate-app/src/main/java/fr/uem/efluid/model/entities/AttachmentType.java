@@ -20,15 +20,12 @@ public enum AttachmentType {
 
 	private final boolean runnable;
 
-	private AttachmentType(String ext, boolean editable, boolean runnable) {
+	AttachmentType(String ext, boolean editable, boolean runnable) {
 		this.extension = ext;
 		this.editable = editable;
 		this.runnable = runnable;
 	}
 
-	/**
-	 * @return
-	 */
 	public String getExtension() {
 		return this.extension;
 	}
@@ -47,11 +44,6 @@ public enum AttachmentType {
 		return this.runnable;
 	}
 
-	/**
-	 * @param contentType
-	 * @param fileName
-	 * @return
-	 */
 	public static AttachmentType fromContentTypeAndFileName(String contentType, String fileName) {
 
 		// TODO : use contentType for doubleCheck

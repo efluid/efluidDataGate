@@ -62,7 +62,7 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
     private DictionaryEntry dictionaryEntry;
 
     /**
-     * @param uuid
+     * @param uuid forced uuid
      */
     public TableLink(UUID uuid) {
         super();
@@ -331,10 +331,6 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
         this.dictionaryEntry = dictionaryEntry;
     }
 
-    /**
-     * @param index
-     * @param col
-     */
     public void setColumnFrom(int index, String col) {
 
         switch (index) {
@@ -357,10 +353,6 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
         }
     }
 
-    /**
-     * @param index
-     * @param col
-     */
     public void setColumnTo(int index, String col) {
 
         switch (index) {
@@ -384,7 +376,6 @@ public class TableLink extends ExportAwareTableLink<DictionaryEntry> {
     }
 
     /**
-     * @param raw
      * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
      */
     @Override

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/wizard.html}">
+<head>
+</head>
+<body>
+	<span layout:fragment="content">
+		<h3>L'application (instance <span th:text="${info.instanceName}">SOURCE</span>, version applicative v<span th:text="${info.version}">1</span>) n'a actuellement aucune configuration en place.</h3>
+		<br/>
+		<div class="alert alert-primary" role="alert">
+			Ce wizard va vous permettre de préparer les réglages nécessaires.
+			Pour toute question relative à son utilisation, merci de se reporter à la documentation officielle,
+			ou de contacter le support technique
+		</div>
+		<a href="/wizard_user.html" th:href="@{/wizard/1}" class="btn btn-dark btn-sm float-right">Démarrer la configuration</a>
+	</span>
+</body>
+</html>

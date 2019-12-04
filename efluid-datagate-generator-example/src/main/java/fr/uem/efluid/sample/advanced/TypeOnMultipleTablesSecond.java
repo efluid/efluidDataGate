@@ -26,7 +26,7 @@ import fr.uem.efluid.ParameterValue;
 				@ParameterValue("valueE"),
 				@ParameterValue("valueF")
 		})
-}, useAllFields = false)
+}, useAllFields = false, domainName = "Advanced")
 public class TypeOnMultipleTablesSecond {
 
 	private Long keyOne;

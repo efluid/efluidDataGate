@@ -22,9 +22,6 @@ public interface ManagedRegenerateRepository {
 	 * <p>
 	 * Produces the knew content for specified table, from recorded index
 	 * </p>
-	 * 
-	 * @param parameterEntry
-	 * @return
 	 */
 	Map<String, String> regenerateKnewContent(DictionaryEntry parameterEntry);
 
@@ -33,9 +30,6 @@ public interface ManagedRegenerateRepository {
 	 * Produces the knew content for specified table, from recorded index on parameter
 	 * until specified ldt, then with specified index (adapted for merge process)
 	 * </p>
-	 * 
-	 * @param specifiedIndex
-	 * @return
 	 */
 	Map<String, String> regenerateKnewContent(List<? extends DiffLine> specifiedIndex);
 

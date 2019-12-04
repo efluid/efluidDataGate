@@ -1,4 +1,4 @@
-Feature: The update on parameter tables can be followed, checked and stored as commits.
+Feature: The update on parameter tables can be followed checked and stored as commits
 
   The features are similar to the way GIT can be used to manage updates on source files, but adapted
   for database contents. The content is first identified, by looking on changes and comparing them

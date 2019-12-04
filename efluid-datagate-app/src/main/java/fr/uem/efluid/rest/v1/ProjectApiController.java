@@ -22,7 +22,6 @@ public class ProjectApiController implements ProjectApi {
     private ProjectManagementService projectService;
 
     /**
-     * @return
      * @see fr.uem.efluid.rest.v1.ProjectApi#getAvailableProjectDetails()
      */
     @Override
@@ -33,7 +32,6 @@ public class ProjectApiController implements ProjectApi {
     }
 
     /**
-     * @return
      * @see fr.uem.efluid.rest.v1.ProjectApi#getCurrentActiveProject()
      */
     @Override
@@ -42,7 +40,6 @@ public class ProjectApiController implements ProjectApi {
     }
 
     /**
-     * @param projectUuid
      * @see fr.uem.efluid.rest.v1.ProjectApi#setCurrentActiveProject(String)
      */
     @Override

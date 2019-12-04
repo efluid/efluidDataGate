@@ -116,8 +116,6 @@ public @interface ParameterTableSet {
 	 * <p>
 	 * Alias for <code>tables</code>
 	 * </p>
-	 * 
-	 * @return
 	 */
 	ParameterTable[] value() default {};
 
@@ -125,8 +123,6 @@ public @interface ParameterTableSet {
 	 * <p>
 	 * The specified tables for the current set
 	 * </p>
-	 * 
-	 * @return
 	 */
 	ParameterTable[] tables() default {};
 
@@ -135,8 +131,6 @@ public @interface ParameterTableSet {
 	 * Used instead of {@link ParameterTable#useAllFields()} for similar result on current
 	 * type
 	 * </p>
-	 * 
-	 * @return
 	 */
 	boolean useAllFields() default true;
 
@@ -146,8 +140,17 @@ public @interface ParameterTableSet {
 	 * for the table, but can still be overwritten by domain defined in
 	 * <tt>ParameterTable</tt> annotation
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String domainName() default "";
+
+	/**
+	 * <p>
+	 * To force exclusion for default fields from specified inherited type.
+	 * Allows to specify a table mapping on a type will excluding any technical field from,
+	 * for example, a technical top level type (like with some Efluid ORM model types)
+	 * </p>
+	 *
+	 * @return array of types to exclude from field inclusion
+	 */
+	Class<?>[] excludeInheritedFrom() default {};
 }

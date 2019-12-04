@@ -18,16 +18,9 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 	 * <p>
 	 * For a specified user (by login) get the currently selected project
 	 * </p>
-	 * 
-	 * @param login
-	 * @return
 	 */
 	@Query("SELECT u.selectedProject FROM User u WHERE u.login = :login")
 	Project findSelectedProjectForUserLogin(String login);
 
-	/**
-	 * @param name
-	 * @return
-	 */
 	Project findByName(String name);
 }

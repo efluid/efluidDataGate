@@ -1,9 +1,7 @@
 package fr.uem.efluid.model.entities;
 
-import java.util.UUID;
-
 import javax.persistence.*;
-import javax.validation.constraints.Size;
+import java.util.UUID;
 
 /**
  * <p>

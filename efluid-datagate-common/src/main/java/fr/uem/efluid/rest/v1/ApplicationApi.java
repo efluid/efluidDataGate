@@ -54,9 +54,6 @@ public interface ApplicationApi {
     List<AsyncProcessView> getCurrentProcesses();
 
 
-    /**
-     * @param processUUID
-     */
     @PostMapping("/processes")
     @ApiOperation("Update active project for user.")
     @ApiImplicitParams({

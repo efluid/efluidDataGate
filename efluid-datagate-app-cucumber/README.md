@@ -2,7 +2,7 @@
 
 Ce projet ne porte que des tests.
 
-Le point d'entrée est la classe `fr.uem.efluid.system.tests.AllCucumberTest` : elle peut être exécutée comme un test junit. 
+Le point d'entrée est la classe `AllCucumberTest` : elle peut être exécutée comme un test junit. 
 
 Un `mvn test` lance également tous les scénarios.
 

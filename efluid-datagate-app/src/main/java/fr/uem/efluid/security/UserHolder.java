@@ -24,11 +24,8 @@ public class UserHolder {
 
 	private ThreadLocal<User> currentUser = new ThreadLocal<>();
 
-	private User wizzardUser;
+	private User wizardUser;
 
-	/**
-	 * @param user
-	 */
 	public void setCurrentUser(User user) {
 
 		if (user == null) {
@@ -40,23 +37,17 @@ public class UserHolder {
 		}
 	}
 
-	/**
-	 * @return
-	 */
 	public User getCurrentUser() {
-		return this.wizzardUser != null ? this.wizzardUser : this.currentUser.get();
+		return this.wizardUser != null ? this.wizardUser : this.currentUser.get();
 	}
 
-	/**
-	 * @param user
-	 */
 	public void setWizzardUser(User user) {
 		if (user == null) {
-			LOGGER.debug("Drop active wizzard user");
+			LOGGER.debug("Drop active wizard user");
 		} else {
-			LOGGER.debug("Apply active wizzard user {}", user.getLogin());
+			LOGGER.debug("Apply active wizard user {}", user.getLogin());
 		}
-		this.wizzardUser = user;
+		this.wizardUser = user;
 	}
 
 	@PostConstruct

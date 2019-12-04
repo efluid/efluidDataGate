@@ -31,8 +31,6 @@ public class ShaPasswordEncoder implements PasswordEncoder {
 	private final static String PWD_DIGEST = "SHA-256";
 
 	/**
-	 * @param password
-	 * @return
 	 * @see org.pac4j.core.credentials.password.PasswordEncoder#encode(java.lang.String)
 	 */
 	@Override
@@ -51,9 +49,6 @@ public class ShaPasswordEncoder implements PasswordEncoder {
 	}
 
 	/**
-	 * @param plainPassword
-	 * @param encodedPassword
-	 * @return
 	 * @see org.pac4j.core.credentials.password.PasswordEncoder#matches(java.lang.String,
 	 *      java.lang.String)
 	 */

@@ -29,9 +29,6 @@ import io.swagger.annotations.ApiOperation;
 @Api("Project management / use : list available projects and select active project for user")
 public interface ProjectApi {
 
-	/**
-	 * @return
-	 */
 	@RequestMapping(value = "/all", method = GET)
 	@ResponseBody
 	@ApiOperation("Get all available projects for current user (= prefered projects only)")
@@ -40,9 +37,6 @@ public interface ProjectApi {
 	})
 	List<ProjectDetailView> getAvailableProjectDetails();
 
-	/**
-	 * @return
-	 */
 	@RequestMapping(value = "/active", method = GET)
 	@ResponseBody
 	@ApiOperation("Get active project for user.")
@@ -51,9 +45,6 @@ public interface ProjectApi {
 	})
 	ProjectDetailView getCurrentActiveProject();
 
-	/**
-	 * @param projectUuid
-	 */
 	@RequestMapping(value = "/active", method = POST)
 	@ApiOperation("Update active project for user.")
 	@ApiImplicitParams({

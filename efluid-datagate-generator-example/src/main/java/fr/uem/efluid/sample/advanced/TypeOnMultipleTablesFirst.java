@@ -10,11 +10,11 @@ import fr.uem.efluid.ParameterValue;
  * @since v0.0.8
  * @version 1
  */
-@ParameterTableSet({
-		@ParameterTable(tableName = "T_TABLE_MUTONE_ONE"),
-		@ParameterTable(tableName = "T_TABLE_MUTONE_TWO"),
-		@ParameterTable(tableName = "T_TABLE_MUTONE_THREE")
-})
+@ParameterTableSet(tables = {
+		@ParameterTable("T_TABLE_MUTONE_ONE"),
+		@ParameterTable("T_TABLE_MUTONE_TWO"),
+		@ParameterTable("T_TABLE_MUTONE_THREE")
+}, domainName = "Advanced")
 public class TypeOnMultipleTablesFirst {
 
 	@ParameterKey // Si pas indiqué => Commun à toutes les tables du set

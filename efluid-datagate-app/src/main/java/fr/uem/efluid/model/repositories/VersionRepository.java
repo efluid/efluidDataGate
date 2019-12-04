@@ -34,31 +34,15 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 
     String MAPPED_TYPE_MAPPING = "mapping";
 
-    /**
-     * @param project
-     * @return
-     */
     List<Version> findByProject(Project project);
 
-    /**
-     * @param name
-     * @return
-     */
     Version findByNameAndProject(String name, Project project);
 
-    /**
-     * @param projectUuid
-     * @return
-     */
     @Query(value = "select concat(uuid,'') from versions where created_time = "
             + " (select max(created_time) from versions where project_uuid = :projectUuid) "
-            + " and project_uuid = :projectUuid limit 1", nativeQuery = true)
-    Object _internal_findLastVersionUuidForProject(@Param("projectUuid") String projectUuid);
+            + " and project_uuid = :projectUuid order by created_time desc", nativeQuery = true)
+    List<Object[]> _internal_findLastVersionUuidForProject(@Param("projectUuid") String projectUuid);
 
-    /**
-     * @param projectUuid
-     * @return
-     */
     @Query(value = "select '" + MAPPED_TYPE_DOMAIN + "' as type, max(updated_time) as time from domain "
             + " where project_uuid = :projectUuid "
             + " union "
@@ -76,22 +60,17 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
             + " where m.project_uuid = :projectUuid", nativeQuery = true)
     List<Object[]> _internal_findLastDictionaryUpdateForProject(@Param("projectUuid") String projectUuid);
 
-    /**
-     * @param project
-     * @return
-     */
     default Version getLastVersionForProject(Project project) {
 
-        UUID lastVersion = RuntimeValuesUtils.dbRawToUuid(_internal_findLastVersionUuidForProject(project.getUuid().toString()));
+        // Universal "1st value"
+        List<Object[]> versions = _internal_findLastVersionUuidForProject(project.getUuid().toString());
+
+        UUID lastVersion = RuntimeValuesUtils.dbRawToUuid(versions != null && !versions.isEmpty() ? versions.get(0)[0] : null);
 
         // Last version
         return lastVersion != null ? getOne(lastVersion) : null;
     }
 
-    /**
-     * @param projectUuid
-     * @return
-     */
     @Query(value = "select '" + MAPPED_TYPE_DOMAIN + "' as type, uuid as uuid from domain "
             + " where project_uuid = :projectUuid "
             + " and updated_time < :checkTime "
@@ -116,10 +95,6 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 
     /**
      * Extract the version content : everything with an update date before specified one, for given project
-     *
-     * @param project
-     * @param lastVersionUpdate
-     * @return
      */
     default Map<String, List<UUID>> findLastVersionContents(Project project, LocalDateTime lastVersionUpdate) {
 
@@ -137,10 +112,6 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
                         ));
     }
 
-    /**
-     * @param project
-     * @return
-     */
     default boolean hasDictionaryUpdatesAfterLastVersionForProject(Project project) {
 
         // Last version
@@ -158,23 +129,13 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
                 .anyMatch(d -> d.isAfter(ver.getUpdatedTime()));
     }
 
-    /**
-     * @param projectUuid
-     * @return
-     */
     @Query("select count(v) from Version v where v.project.uuid = :projectUuid")
     int countVersionsForProject(@Param("projectUuid") UUID projectUuid);
 
-    /**
-     * @param versionUuid
-     * @return
-     */
     @Query(value = "select count(*) from commits where version_uuid = :versionUuid", nativeQuery = true)
     int countVersionUseIn(@Param("versionUuid") UUID versionUuid);
 
-
     /**
-     * @param versionUuid
      * @return true if specified version can be updated
      */
     default boolean isVersionUpdatable(UUID versionUuid) {

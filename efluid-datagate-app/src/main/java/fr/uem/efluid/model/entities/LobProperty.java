@@ -115,7 +115,6 @@ public class LobProperty implements Shared {
 	}
 
 	/**
-	 * @return
 	 * @see fr.uem.efluid.model.Shared#getUuid()
 	 */
 	@Override
@@ -125,7 +124,6 @@ public class LobProperty implements Shared {
 	}
 
 	/**
-	 * @return
 	 * @see fr.uem.efluid.model.Shared#getImportedTime()
 	 */
 	@Override
@@ -135,7 +133,6 @@ public class LobProperty implements Shared {
 	}
 
 	/**
-	 * @return
 	 * @see fr.uem.efluid.model.Shared#serialize()
 	 */
 	@Override
@@ -146,7 +143,6 @@ public class LobProperty implements Shared {
 	}
 
 	/**
-	 * @param raw
 	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
 	 */
 	@Override
@@ -165,7 +161,6 @@ public class LobProperty implements Shared {
 	}
 
 	/**
-	 * @return
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -177,8 +172,6 @@ public class LobProperty implements Shared {
 	}
 
 	/**
-	 * @param obj
-	 * @return
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override

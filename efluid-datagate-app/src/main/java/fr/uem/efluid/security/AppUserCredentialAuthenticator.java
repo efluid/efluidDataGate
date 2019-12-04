@@ -39,10 +39,6 @@ public class AppUserCredentialAuthenticator implements Authenticator<UsernamePas
 	private UserRepository users;
 
 	/**
-	 * @param credentials
-	 * @param context
-	 * @throws HttpAction
-	 * @throws CredentialsException
 	 * @see org.pac4j.core.credentials.authenticator.Authenticator#validate(org.pac4j.core.credentials.Credentials,
 	 *      org.pac4j.core.context.WebContext)
 	 */

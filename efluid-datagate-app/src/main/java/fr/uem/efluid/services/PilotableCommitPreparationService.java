@@ -93,14 +93,14 @@ public class PilotableCommitPreparationService {
 
     /**
      * <p>
-     * For wizzard, we start a global commit preparation for ALL projects
+     * For wizard, we start a global commit preparation for ALL projects
      * </p>
      *
      * @return
      */
     public WizzardCommitPreparationResult startWizzardLocalCommitPreparation() {
 
-        LOGGER.info("Request for wizzard commit preparation on all projects");
+        LOGGER.info("Request for wizard commit preparation on all projects");
 
         // Drop all (shouldn't have active preparation)
         this.currents.clear();
@@ -116,7 +116,7 @@ public class PilotableCommitPreparationService {
                     // Start preparation for project
                     PilotedCommitPreparation<LocalPreparedDiff> preparation = startLocalPreparation(p.getUuid());
 
-                    LOGGER.info("Request for a new commit preparation in wizzard context - starting preparation"
+                    LOGGER.info("Request for a new commit preparation in wizard context - starting preparation"
                             + " {} for project \"{}\"", preparation.getIdentifier(), p.getName());
 
                     return preparation;
@@ -571,6 +571,20 @@ public class PilotableCommitPreparationService {
     }
 
     /**
+     * Force abort everything in app ...
+     */
+    public void killAllCommitPreparations() {
+        this.currents.forEach((k, prep) -> {
+            LOGGER.debug("Force Kill for project {} : {} preparation", k, (prep != null) ? prep.getStatus() : "NONE");
+            if (prep != null) {
+                prep.setStatus(PilotedCommitStatus.CANCEL);
+                this.async.kill(prep.getIdentifier());
+            }
+        });
+        this.currents.clear();
+    }
+
+    /**
      * To abort preparation : drops it, then makes service ready for a new one
      */
     public void cancelCommitPreparation() {
@@ -697,7 +711,7 @@ public class PilotableCommitPreparationService {
 
     /**
      * <p>
-     * Dedicated process for the wizzard piloted "initial commit" : apply the commit
+     * Dedicated process for the wizard piloted "initial commit" : apply the commit
      * comment, and mark all diff as selected
      * </p>
      *
@@ -741,7 +755,7 @@ public class PilotableCommitPreparationService {
         WizzardCommitPreparationResult result = WizzardCommitPreparationResult.fromPreparations(this.currents.values().stream()
                 .peek(current -> {
 
-                    LOGGER.info("Starting saving for preparation in wizzard {}", current.getIdentifier());
+                    LOGGER.info("Starting saving for preparation in wizard {}", current.getIdentifier());
 
                     // Check mandatory comment (checked front side also)
                     if (current.getCommitData().getComment() == null) {

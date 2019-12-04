@@ -36,14 +36,9 @@ public interface ManagedModelDescriptionRepository {
 	 * From descriptions, if check is enabled, return the current model id. Else return
 	 * null
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String getCurrentModelIdentifier();
 
-	/**
-	 * @return
-	 */
 	IdentifierType getModelIdentifierType(String modelIdentifier);
 
 	/**
@@ -51,7 +46,7 @@ public interface ManagedModelDescriptionRepository {
 	 * @since v0.0.8
 	 * @version 1
 	 */
-	public static enum IdentifierType {
+	enum IdentifierType {
 		CURRENT,
 		OLD_ONE,
 		UNKNOWN;

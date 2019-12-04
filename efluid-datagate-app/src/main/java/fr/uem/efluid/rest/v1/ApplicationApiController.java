@@ -24,7 +24,6 @@ public class ApplicationApiController implements ApplicationApi {
     private ApplicationDetailsService applicationDetailsService;
 
     /**
-     * @return
      * @see fr.uem.efluid.rest.v1.ApplicationApi#getCurrentInfo()
      */
     @Override
@@ -36,7 +35,6 @@ public class ApplicationApiController implements ApplicationApi {
     }
 
     /**
-     * @return
      * @see fr.uem.efluid.rest.v1.ApplicationApi#getCurrentState()
      */
     @Override

@@ -173,7 +173,6 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
     }
 
     /**
-     * @return
      * @see fr.uem.efluid.model.Shared#serialize()
      */
     @Override
@@ -195,7 +194,6 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
     }
 
     /**
-     * @param mixedContent
      * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
      */
     @Override
@@ -225,7 +223,6 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
     }
 
     /**
-     * @return
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -237,8 +234,6 @@ public class Attachment implements Shared, AttachmentProcessor.Compliant {
     }
 
     /**
-     * @param obj
-     * @return
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override

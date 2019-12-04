@@ -75,7 +75,6 @@ public class ManagedFeature {
 	}
 
 	/**
-	 * @return
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -87,8 +86,6 @@ public class ManagedFeature {
 	}
 
 	/**
-	 * @param obj
-	 * @return
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -100,8 +97,6 @@ public class ManagedFeature {
 		if (getClass() != obj.getClass())
 			return false;
 		ManagedFeature other = (ManagedFeature) obj;
-		if (this.feature != other.feature)
-			return false;
-		return true;
+		return this.feature == other.feature;
 	}
 }

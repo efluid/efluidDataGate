@@ -34,8 +34,6 @@ public @interface ParameterKey {
 	 * Non default column name for the key. If not set, will use the field name as column
 	 * name
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String value() default "";
 
@@ -45,8 +43,6 @@ public @interface ParameterKey {
 	 * parameter. Useful for "non standard" property types. If not set, will define it
 	 * using rules specified in {@link ColumnType#forClass(Class)}
 	 * </p>
-	 * 
-	 * @return
 	 */
 	ColumnType type() default ColumnType.UNKNOWN;
 
@@ -56,8 +52,6 @@ public @interface ParameterKey {
 	 * multiple tables in database), then the "forTable" can refer the corresponding table
 	 * as specified in top level <tt>ParameterTableSet</tt>
 	 * </p>
-	 * 
-	 * @return
 	 */
 	String[] forTable() default {};
 }

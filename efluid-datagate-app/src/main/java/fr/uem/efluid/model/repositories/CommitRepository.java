@@ -20,16 +20,8 @@ public interface CommitRepository extends JpaRepository<Commit, UUID> {
 	@Query("select c from Commit c, Commit a where a.uuid = :uuid and c.createdTime >= a.uuid and c.project.uuid = :projectUuid")
 	List<Commit> findAllAfterSpecifiedCommitUUID(@Param("uuid") UUID uuid, UUID projectUuid);
 
-	/**
-	 * @param project
-	 * @return
-	 */
 	List<Commit> findByProject(Project project);
 
-	/**
-	 * @param versionUuid
-	 * @return
-	 */
 	@Query("select count(c) from Commit c where c.version.uuid = :versionUuid")
 	long countCommitsForVersion(@Param("versionUuid") UUID versionUuid);
 }
