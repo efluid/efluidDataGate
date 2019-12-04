@@ -49,6 +49,7 @@ public class ManagedDatabaseAccess {
     public static final String TABLE_FIVE = "TTAB_FIVE"; // Table with BLOB
     public static final String TABLE_SIX = "TTAB_SIX"; // Table with CLOB
     public static final String TABLE_SEVEN = "TTAB_SEVEN"; // Table with business join on tab THREE
+    public static final String TABLE_ONLY_KEYS = "TTAB_ONLY_KEYS"; // Table with only keys
 
     public static final String TTEST1 = "TTEST1";
     public static final String TTESTMULTIDATATYPE = "TTESTMULTIDATATYPE";
@@ -70,7 +71,7 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(EFLUIDTESTNUMBER, Pair.of(9, EfluidTestNumber.class));
         ENTITY_TYPES.put(TTESTMULTIDATATYPE, Pair.of(10, EfluidTestMultiDataType.class));
         ENTITY_TYPES.put(EFLUIDTESTPKCOMPOSITE, Pair.of(11, EfluidTestPkComposite.class));
-
+        ENTITY_TYPES.put(TABLE_ONLY_KEYS, Pair.of(12, SimulatedTableOnlyKeys.class));
     }
 
     @Autowired

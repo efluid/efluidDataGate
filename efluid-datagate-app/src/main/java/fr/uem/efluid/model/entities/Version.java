@@ -1,192 +1,232 @@
 package fr.uem.efluid.model.entities;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
 import fr.uem.efluid.model.shared.ExportAwareVersion;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.hibernate.annotations.Type;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * <p>
  * Identified versions in a project. Associated to dictionary data
  * </p>
- * 
+ * <p>
+ * Versioning is not managed as a complete entity tree timestamped model, but reserved only for
+ * detail validation and version compare.
+ * The content of an updated version is therefore specified using <code>versionContent</code> property,
+ * where an "export like" content of the dictionary model is stored
+ * </p>
+ *
  * @author elecomte
+ * @version 2
  * @since v0.2.0
- * @version 1
  */
 @Entity
 @Table(name = "versions")
 public class Version extends ExportAwareVersion<Project> {
 
-	@Id
-	@Type(type="uuid-char")
-	private UUID uuid;
+    @Id
+    @Type(type = "uuid-char")
+    private UUID uuid;
 
-	@NotNull
-	private String name;
+    @NotNull
+    private String name;
 
-	@NotNull
-	private LocalDateTime createdTime;
+    @NotNull
+    private LocalDateTime createdTime;
 
-	@NotNull
-	private LocalDateTime updatedTime;
+    @NotNull
+    private LocalDateTime updatedTime;
 
-	private LocalDateTime importedTime;
+    private LocalDateTime importedTime;
 
-	@ManyToOne(optional = false)
-	private Project project;
+    @ManyToOne(optional = false)
+    private Project project;
 
-	private String modelIdentity;
+    private String modelIdentity;
 
-	/**
-	 * @param uuid
-	 */
-	public Version(UUID uuid) {
-		super();
-		this.uuid = uuid;
-	}
 
-	/**
-	 * 
-	 */
-	public Version() {
-		super();
-	}
+    @Lob // Stored export of version content - domains, generated at init / import
+    private String domainsContent;
 
-	/**
-	 * @return the uuid
-	 */
-	@Override
-	public UUID getUuid() {
-		return this.uuid;
-	}
+    @Lob // Stored export of version content - dict, generated at init / import
+    private String dictionaryContent;
 
-	/**
-	 * @param uuid
-	 *            the uuid to set
-	 */
-	public void setUuid(UUID uuid) {
-		this.uuid = uuid;
-	}
+    @Lob // Stored export of version content - links, generated at init / import
+    private String linksContent;
 
-	/**
-	 * @return the name
-	 */
-	@Override
-	public String getName() {
-		return this.name;
-	}
+    @Lob // Stored export of version content - mappings, generated at init / import
+    private String mappingsContent;
 
-	/**
-	 * @param name
-	 *            the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+    /**
+     * @param uuid
+     */
+    public Version(UUID uuid) {
+        super();
+        this.uuid = uuid;
+    }
 
-	/**
-	 * @return the createdTime
-	 */
-	@Override
-	public LocalDateTime getCreatedTime() {
-		return this.createdTime;
-	}
+    /**
+     *
+     */
+    public Version() {
+        super();
+    }
 
-	/**
-	 * @param createdTime
-	 *            the createdTime to set
-	 */
-	public void setCreatedTime(LocalDateTime createdTime) {
-		this.createdTime = createdTime;
-	}
+    /**
+     * @return the uuid
+     */
+    @Override
+    public UUID getUuid() {
+        return this.uuid;
+    }
 
-	/**
-	 * @return the updatedTime
-	 */
-	@Override
-	public LocalDateTime getUpdatedTime() {
-		return this.updatedTime;
-	}
+    /**
+     * @param uuid the uuid to set
+     */
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
 
-	/**
-	 * @param updatedTime
-	 *            the updatedTime to set
-	 */
-	public void setUpdatedTime(LocalDateTime updatedTime) {
-		this.updatedTime = updatedTime;
-	}
+    /**
+     * @return the name
+     */
+    @Override
+    public String getName() {
+        return this.name;
+    }
 
-	/**
-	 * @return the importedTime
-	 */
-	@Override
-	public LocalDateTime getImportedTime() {
-		return this.importedTime;
-	}
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * @param importedTime
-	 *            the importedTime to set
-	 */
-	public void setImportedTime(LocalDateTime importedTime) {
-		this.importedTime = importedTime;
-	}
+    /**
+     * @return the createdTime
+     */
+    @Override
+    public LocalDateTime getCreatedTime() {
+        return this.createdTime;
+    }
 
-	/**
-	 * @return the project
-	 */
-	@Override
-	public Project getProject() {
-		return this.project;
-	}
+    /**
+     * @param createdTime the createdTime to set
+     */
+    public void setCreatedTime(LocalDateTime createdTime) {
+        this.createdTime = createdTime;
+    }
 
-	/**
-	 * @param project
-	 *            the project to set
-	 */
-	public void setProject(Project project) {
-		this.project = project;
-	}
+    /**
+     * @return the updatedTime
+     */
+    @Override
+    public LocalDateTime getUpdatedTime() {
+        return this.updatedTime;
+    }
 
-	/**
-	 * @return the modelIdentity
-	 */
-	@Override
-	public String getModelIdentity() {
-		return this.modelIdentity;
-	}
+    /**
+     * @param updatedTime the updatedTime to set
+     */
+    public void setUpdatedTime(LocalDateTime updatedTime) {
+        this.updatedTime = updatedTime;
+    }
 
-	/**
-	 * @param modelIdentity
-	 *            the modelIdentity to set
-	 */
-	public void setModelIdentity(String modelIdentity) {
-		this.modelIdentity = modelIdentity;
-	}
+    /**
+     * @return the importedTime
+     */
+    @Override
+    public LocalDateTime getImportedTime() {
+        return this.importedTime;
+    }
 
-	/**
-	 * @param raw
-	 * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
-	 */
-	@Override
-	public void deserialize(String raw) {
+    /**
+     * @param importedTime the importedTime to set
+     */
+    public void setImportedTime(LocalDateTime importedTime) {
+        this.importedTime = importedTime;
+    }
 
-		SharedOutputInputUtils.fromJson(raw)
-				.applyUUID("uid", v -> setUuid(v))
-				.applyLdt("cre", v -> setCreatedTime(v))
-				.applyLdt("upd", v -> setUpdatedTime(v))
-				.applyString("nam", v -> setName(v))
-				.applyUUID("pro", v -> setProject(new Project(v)))
-				.applyString("idn", v -> setModelIdentity(v));
-	}
+    /**
+     * @return the project
+     */
+    @Override
+    public Project getProject() {
+        return this.project;
+    }
+
+    /**
+     * @param project the project to set
+     */
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
+    /**
+     * @return the modelIdentity
+     */
+    @Override
+    public String getModelIdentity() {
+        return this.modelIdentity;
+    }
+
+    /**
+     * @param modelIdentity the modelIdentity to set
+     */
+    public void setModelIdentity(String modelIdentity) {
+        this.modelIdentity = modelIdentity;
+    }
+
+    public String getDomainsContent() {
+        return domainsContent;
+    }
+
+    public void setDomainsContent(String domainsContent) {
+        this.domainsContent = domainsContent;
+    }
+
+    public String getDictionaryContent() {
+        return dictionaryContent;
+    }
+
+    public void setDictionaryContent(String dictionaryContent) {
+        this.dictionaryContent = dictionaryContent;
+    }
+
+    public String getLinksContent() {
+        return linksContent;
+    }
+
+    public void setLinksContent(String linksContent) {
+        this.linksContent = linksContent;
+    }
+
+    public String getMappingsContent() {
+        return mappingsContent;
+    }
+
+    public void setMappingsContent(String mappingsContent) {
+        this.mappingsContent = mappingsContent;
+    }
+
+    /**
+     * @param raw
+     * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
+     */
+    @Override
+    public void deserialize(String raw) {
+
+        SharedOutputInputUtils.fromJson(raw)
+                .applyUUID("uid", v -> setUuid(v))
+                .applyLdt("cre", v -> setCreatedTime(v))
+                .applyLdt("upd", v -> setUpdatedTime(v))
+                .applyString("nam", v -> setName(v))
+                .applyUUID("pro", v -> setProject(new Project(v)))
+                .applyString("idn", v -> setModelIdentity(v));
+    }
 
 }

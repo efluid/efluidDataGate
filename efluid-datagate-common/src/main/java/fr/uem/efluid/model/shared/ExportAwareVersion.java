@@ -1,9 +1,8 @@
 package fr.uem.efluid.model.shared;
 
 import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.model.UpdateChecked;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
-
-import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -11,19 +10,15 @@ import java.time.LocalDateTime;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.2.0
  */
-public abstract class ExportAwareVersion<D extends ExportAwareProject> implements Shared {
+public abstract class ExportAwareVersion<D extends ExportAwareProject> implements Shared, UpdateChecked {
 
     /**
      * @return
      */
     public abstract String getName();
-
-    public abstract LocalDateTime getCreatedTime();
-
-    public abstract LocalDateTime getUpdatedTime();
 
     /**
      * @return associated project

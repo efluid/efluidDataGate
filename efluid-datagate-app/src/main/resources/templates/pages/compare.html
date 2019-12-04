@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<span layout:fragment="content">
+	<div>
+		<p>
+			<h5>
+				Comparaison entre les versions "<span th:text="${compare.one.name}">ID988IDIDU</span>" et "<span
+                   th:text="${compare.two.name}">ID988IDIDU</span>" du dictionnaire
+				<div class="float-right">
+					<div class="btn-group" role="group">
+						<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
+						<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
+					</div>&nbsp;
+				</div>
+			</h5>
+		</p>
+	</div>
+
+	<div th:each="domainChange, dstat : ${compare.domainChanges}" th:id="|domain_${dstat.index}|">
+		<div class="domain-summary">
+			<span class="domain-name" th:text="|Domaine : ${domainChange.name}|">Gestion du matériel</span>&nbsp;
+			<span class="domain-size" th:text="| - ${domainChange.tableChanges.size()} table(s)|"> - 15 tables</span>
+			<span class="domain-change" th:switch="${domainChange.changeType.name()}">
+				<span th:case="'UNCHANGED'" class="unchanged"> - Aucune modification</span>
+				<span th:case="'REMOVED'" class="removed"> - Supprimé</span>
+				<span th:case="'ADDED'" class="added"> - Ajouté</span>
+				<span th:case="'MODIFIED'" class="modified"> - Modifié</span>
+			</span>
+			<span class="domain-reducer reducer reducer-close float-right" th:if="${domainChange.changeType.name()=='ADDED'||domainChange.changeType.name()=='MODIFIED'}" th:id="|reducer_domain_${dstat.index}|" title="afficher / masquer le détail pour le domain">&nbsp;</span>
+		</div>
+
+		<div class="domain-content" th:if="${domainChange.changeType.name()=='ADDED'||domainChange.changeType.name()=='MODIFIED'}" th:id="|content_domain_${dstat.index}|" >
+
+			<div class="domain-buttons float-right">
+				Pour le domaine :
+				<div class="btn-group" role="group">
+					<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm all-hide-domain">Tout réduire</button>
+					<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm all-show-domain">Tout afficher</button>
+				</div>
+			</div>
+
+			<br/>
+
+			<div class="domain-diffs" th:if="${domainChange.changeType.name()=='ADDED'||domainChange.changeType.name()=='MODIFIED'}">
+
+				<div th:each="tableChange, tstat : ${domainChange.tableChanges}" th:id="|${dstat.index}_${tstat.index}|">
+					<div class="dictionary-content" >
+						<div class="dictionary-summary">
+							<span class="dictionary-name" th:text="${tableChange.name}">Type de matériel</span>
+							<span class="dictionary-details" th:switch="${tableChange.changeType.name()}">
+								<span th:case="'UNCHANGED'" class="table-change unchanged"> - Aucune modification</span>
+								<span th:case="'REMOVED'" class="table-change removed"> - Supprimé</span>
+								<span th:case="'ADDED'" class="table-change added"> - Ajouté</span>
+								<span th:case="'MODIFIED'" class="table-change modified"> - Modifié</span>
+							</span>
+							<span th:if="${tableChange.changeType.name()=='ADDED'||tableChange.changeType.name()=='MODIFIED'}"
+								  class="table-reducer reducer reducer-close float-right"
+								  title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
+
+						</div>
+						<table th:if="${tableChange.changeType.name()=='ADDED'||tableChange.changeType.name()=='MODIFIED'}" class="table table-sm">
+							<tbody>
+								<tr th:class="|param-change${tableChange.name!=tableChange.nameChange?' modified':''}|">
+									<th><b>Nom</b></th>
+									<td>
+										<span th:text="${tableChange.name}">My Param</td><span th:if="${tableChange.name != tableChange.nameChange}" th:text="| -> ${tableChange.nameChange}|">-> My ParamChg</span>
+									</td>
+								</tr>
+								<tr th:class="|param-change${tableChange.tableName!=tableChange.tableNameChange?' modified':''}|">
+									<th><b>Table</b></th>
+									<td>
+										<span th:text="${tableChange.tableName}">T_TABLE</span><span th:if="${tableChange.tableName != tableChange.tableNameChange}" th:text="| -> ${tableChange.tableNameChange}|">-> T_TABLE2</span>
+									</td>
+								</tr>
+								<tr th:class="|param-change${tableChange.filter!=tableChange.filterChange?' modified':''}|">
+									<th><b>Filter</b></th>
+									<td>
+										<span th:text="${tableChange.filter}">1=1</span><span th:if="${tableChange.filter != tableChange.filterChange}" th:text="| -> ${tableChange.filterChange}|">-> 1=2</span>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2">
+										<div><b>Colonnes :</b></div>
+										<table class="table table-sm">
+											<thead>
+												<tr>
+													<th scope="col">Clé</th>
+													<th scope="col">Nom</th>
+													<th scope="col">Type</th>
+													<th scope="col">Lien</th>
+												</tr>
+											</thead>
+											<tbody>
+												<tr th:each="columnChange, cstat : ${tableChange.columnChanges}" th:class="|column-change ${#strings.toLowerCase(columnChange.changeType.name())}|">
+													<td>
+														<span th:if="${columnChange.changeType.name() != 'ADDED' && columnChange.key && columnChange.keyChange}" class="key-change inline-block">&nbsp;</span>
+														<span th:if="${columnChange.changeType.name() != 'ADDED' && columnChange.key && !columnChange.keyChange}" class="key-change-removed inline-block">&nbsp;</span>
+														<span th:if="${columnChange.changeType.name() == 'ADDED' && columnChange.key}" class="key-change-added inline-block">&nbsp;</span>
+													</td>
+													<td>
+														<span th:text="${columnChange.name}">Col</span>
+													</td>
+													<td>
+														<span th:if="${columnChange.type!=null||columnChange.typeChange!=null}" th:text="${columnChange.type}">&nbsp;</span><span th:if="${columnChange.type}!=${columnChange.typeChange}" th:text="| -> ${columnChange.typeChange}|">-> ColB</span>
+													</td>
+													<td>
+														<span th:if="${columnChange.link!=null||columnChange.linkChange!=null}" th:text="${columnChange.link}">STR</span><span th:if="${columnChange.link}!=${columnChange.linkChange}" th:text="| -> ${columnChange.linkChange}|">-> ColB</span>
+													</td>
+												</tr>
+											</tbody>
+										</table>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+			<br/>
+	</div>
+</span>
+<script layout:fragment="script">
+
+		// For domain hidding
+		const hideAndShowDomainAction = (domainUuid) => {
+			hideDisplays();
+			var content = $("#content_" + domainUuid);
+			var button = $("#reducer_" + domainUuid);
+			if(button.attr("class").indexOf('reducer-close') !== -1){
+				content.hide();
+				button.removeClass("reducer-close").addClass("reducer-open");
+			} else {
+				content.show();
+				button.removeClass("reducer-open").addClass("reducer-close");
+			}
+		};
+
+		// For table hidding
+		const hideAndShowTableAction = (tableUuid) => {
+			hideDisplays();
+			var table = $("#" + tableUuid + " table");
+			var button = $("#" + tableUuid + " span.reducer");
+			if(button.attr("class").indexOf('reducer-close') !== -1){
+				table.hide();
+				button.removeClass("reducer-close").addClass("reducer-open");
+			} else {
+				table.show();
+				button.removeClass("reducer-open").addClass("reducer-close");
+			}
+		};
+
+		// For hidding all
+		const hideAndShowAllAction = (force) => {
+
+			// Hide /show domains
+			$("span.domain-reducer").each((index, e) => {
+				var domainUuid = e.parentElement.parentElement.id;
+				var content = $("#content_" + domainUuid);
+				var button = $("#reducer_" + domainUuid);
+				if(force === 'hide'){
+					content.hide();
+					button.removeClass("reducer-close").addClass("reducer-open");
+				} else {
+					content.show();
+					button.removeClass("reducer-open").addClass("reducer-close");
+				}
+			});
+
+			// Hide / Show tables
+			$("span.table-reducer").each((index, e) => {
+				var tableUuid = e.parentElement.parentElement.parentElement.id;
+				var table = $("#" + tableUuid + " table");
+				var button = $("#" + tableUuid + " span.reducer");
+				if(force === 'hide'){
+					table.hide();
+					button.removeClass("reducer-close").addClass("reducer-open");
+				} else {
+					table.show();
+					button.removeClass("reducer-open").addClass("reducer-close");
+				}
+			});
+		};
+
+		// For hidding all in domain
+		const hideAndShowAllDomainAction = (domainUuid, force) => {
+
+			// Hide / Show tables
+			$("#content_" + domainUuid + " span.table-reducer").each((index, e) => {
+
+				console.info("hide domain " + domainUuid + " = " + e.parentElement.parentElement.parentElement.id);
+				var tableUuid = e.parentElement.parentElement.parentElement.id;
+				var table = $("#" + tableUuid + " table");
+				var button = $("#" + tableUuid + " span.reducer");
+				if(force === 'hide'){
+					table.hide();
+					button.removeClass("reducer-close").addClass("reducer-open");
+				} else {
+					table.show();
+					button.removeClass("reducer-open").addClass("reducer-close");
+				}
+			});
+		};
+
+    	// Init actions
+    	$(document).ready(() => {
+			// Default : hide all
+			hideAndShowAllAction('hide');
+			$("span.domain-reducer").click((e) => hideAndShowDomainAction(e.target.parentElement.parentElement.id));
+			$("span.table-reducer").click((e) => hideAndShowTableAction(e.target.parentElement.parentElement.parentElement.id));
+			$("button.all-button").click((e) => processAllDiffDisplay(e.target.id));
+			$("button.all-button-domain").click((e) => processAllDomain(e.target.id));
+			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
+			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
+			$("button.all-hide-domain").click((e) => hideAndShowAllDomainAction(e.target.parentElement.parentElement.parentElement.parentElement.id, 'hide'));
+			$("button.all-show-domain").click((e) => hideAndShowAllDomainAction(e.target.parentElement.parentElement.parentElement.parentElement.id, 'show'));
+		});
+
+</script>
+</body>
+</html>

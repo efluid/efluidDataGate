@@ -42,11 +42,15 @@ public class DictionaryExportImportServiceIntegrationTest {
 	private DictionaryManagementService dictService;
 
 	@Autowired
+	private ProjectManagementService proService;
+
+	@Autowired
 	private TestDataLoader loader;
 
-	public void setupDatabase() {
+	public Project setupDatabase() {
 		Project pro = this.loader.setupDictionaryForUpdate();
 		this.loader.addDictionaryWithTrinome(D, T, pro).getUuid();
+		return pro;
 	}
 
 	@Test
@@ -60,6 +64,7 @@ public class DictionaryExportImportServiceIntegrationTest {
 	public void testImportFullDictionary() throws IOException {
 
 		// No initial DB
+		this.loader.setupProject();
 
 		ExportFile importFile = new ExportFile(new File("src/test/resources/" + VALID_FILE).toPath(), "");
 
@@ -75,12 +80,16 @@ public class DictionaryExportImportServiceIntegrationTest {
 
 	@Test
 	public void testExportImportFullDictionary() throws IOException {
-		setupDatabase();
+		
+		Project pro = setupDatabase();
+
+		this.proService.selectProject(pro.getUuid());
 
 		TestUtils.writeExportFile(this.dictService.exportAll().getResult(), "2" + VALID_FILE);
 
 		// Reset db after export, to reimport it
 		this.loader.dropAllDictionary();
+		this.loader.setupProject();
 
 		ExportFile importFile = new ExportFile(new File("src/test/resources/" + VALID_FILE).toPath(), "");
 

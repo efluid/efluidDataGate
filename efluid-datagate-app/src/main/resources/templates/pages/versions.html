@@ -9,9 +9,7 @@
         	Les versions sont specifiées pour le dictionnaire courant. Les lots de modifications sont associés à une version du dictionnaire, et des
         	vérifications sont effectuées dans les imports / exports de lot pour vérifier que les versions sont à jour et en place.
         	Une version peut être mise à jour tant qu'aucun lot n'y est associé.
-        	<b><span th:if="${modelDesc != null}" th:text="|
-La version du modèle de l'application actuelle est ${modelDesc.identity}|">Model</span></b>
-			</li>
+        	<b><span th:if="${modelDesc != null}" th:text="|La version du modèle de l'application actuelle est ${modelDesc.identity}|">Model</span></b>
         </span>
         <span th:if="${versions == null || versions.isEmpty()}" class="important-remark" id="versRemark">
         	Aucune version n'a encore été définie pour le projet courant. Les echanges de lots de modifications ne sont pour l'instant pas possibles.
@@ -28,7 +26,7 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
                     <th scope="col">App. Modèle</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
-                    <th scope="col" width="10%">&nbsp;</th>
+                    <th scope="col"width="10%">&nbsp;</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,12 +41,13 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
                      <td th:text="${custom.format(version.createdTime)}">Lundi</td>
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
-                     	<button th:if="${version.isCanUpdate()}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
+                     	<button th:if="${version.canUpdate}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
+                        <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm">Comparer</a>
                      </td>
 			     </tr>
 			     <tr id="versionListInjectBefore">
-			         <td><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
-			         <td colspan="4"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+			         <td colspan="2"><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
+			         <td colspan="5"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
 			     </tr>
 			</tbody>
 		</table>
@@ -82,7 +81,7 @@ La version du modèle de l'application actuelle est ${modelDesc.identity}|">Mode
 				window.location.replace("/ui/versions"); // Refresh page
 		    });
 		};
-		
+
     	// Init actions
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);

@@ -2,10 +2,7 @@ package fr.uem.efluid.web;
 
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.DictionaryManagementService;
-import fr.uem.efluid.services.types.DictionaryEntryEditData;
-import fr.uem.efluid.services.types.FunctionalDomainData;
-import fr.uem.efluid.services.types.TestQueryData;
-import fr.uem.efluid.services.types.VersionData;
+import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -13,10 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.validation.Valid;
@@ -212,6 +206,19 @@ public class DictionaryController extends CommonController {
     }
 
     /**
+     * REST post process from a processing table edit, to generate a query server-side
+     *
+     * @param editData
+     * @return
+     */
+    @RequestMapping(path = "/dictionary/querygen", method = POST, consumes = {"application/x-www-form-urlencoded"})
+    @ResponseBody
+    public String dictionaryGenerateQuery(DictionaryEntryEditData editData) {
+
+        return this.dictionaryManagementService.generateQuery(editData);
+    }
+
+    /**
      * @param model
      * @param editData
      * @return
@@ -327,6 +334,21 @@ public class DictionaryController extends CommonController {
 
         this.dictionaryManagementService.setCurrentVersion(name);
         return this.dictionaryManagementService.getLastVersion();
+    }
+
+    /**
+     * @param model
+     * @param name
+     * @return
+     */
+    @GetMapping("/versions/compare/{name}")
+    public String compareVersionWithLast(Model model, @PathVariable("name") String name) {
+
+        VersionCompare compare = this.dictionaryManagementService.compareVersionWithLast(name);
+
+        model.addAttribute("compare", compare);
+
+        return "pages/compare";
     }
 
     /**
