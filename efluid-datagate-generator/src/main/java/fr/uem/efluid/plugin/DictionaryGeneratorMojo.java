@@ -56,6 +56,9 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
     @Parameter(required = true, readonly = true)
     private String projectVersion;
 
+    @Parameter(defaultValue = "false", required = false, readonly = true)
+    private boolean checkDuplicateTables;
+
     /**
      * @throws MojoExecutionException
      * @throws MojoFailureException
@@ -207,7 +210,7 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
 
     @Override
     public boolean isCheckDuplicateTables() {
-        return true;
+        return checkDuplicateTables;
     }
 
     /**

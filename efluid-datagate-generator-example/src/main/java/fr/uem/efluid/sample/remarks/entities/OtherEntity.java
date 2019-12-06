@@ -2,7 +2,7 @@ package fr.uem.efluid.sample.remarks.entities;
 
 import fr.uem.efluid.ParameterTable;
 
-@ParameterTable("T_OTHER_ENTITY")
+@ParameterTable(tableName = "T_OTHER_ENTITY", keyField = "id")
 public class OtherEntity extends MyParentEntityType {
 
     private String id;

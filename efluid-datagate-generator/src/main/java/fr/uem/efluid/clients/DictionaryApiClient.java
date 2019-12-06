@@ -32,7 +32,8 @@ public class DictionaryApiClient implements DictionaryApi {
     private final RestTemplate template;
 
     /**
-     *
+     * @param uri associated entry point
+     * @param token user technical token
      */
     public DictionaryApiClient(String uri, String token) {
         this.uri = uri;

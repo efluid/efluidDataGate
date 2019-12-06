@@ -16,6 +16,8 @@
 
 		<plugins>
 
+			<!-- Disabled as intermodule plugin is not quite possible in the same project -->
+			<!--
 			<plugin>
 				<groupId>${project.groupId}</groupId>
 				<artifactId>efluid-datagate-generator</artifactId>
@@ -37,8 +39,10 @@
 					<uploadEntryPointUri>http://127.0.0.1:8080/rest/v1/dictionary</uploadEntryPointUri>
 					<uploadSecurityToken>afc9921811684c7f88062cd47ddf0ff5</uploadSecurityToken>
 					<projectVersion>${project.version}</projectVersion>
+					<checkDuplicateTables>false</checkDuplicateTables>
 				</configuration>
 			</plugin>
+			-->
 
 		</plugins>
 		<pluginManagement>
