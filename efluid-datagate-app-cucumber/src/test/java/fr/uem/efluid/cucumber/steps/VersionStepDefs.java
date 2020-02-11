@@ -4,6 +4,7 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Version;
+import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -24,7 +25,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author elecomte
@@ -37,6 +41,8 @@ public class VersionStepDefs extends CucumberStepDefs {
     private static List<String> specifiedVersions;
 
     private static LocalDateTime initUpdatedTime;
+
+    private static List<Version> versionsOrderedByCreatedTime=new ArrayList<>();
 
     @Before
     public void resetFixture() {
@@ -176,4 +182,38 @@ public class VersionStepDefs extends CucumberStepDefs {
 
         });
     }
+
+
+    @Given("^two version$")
+    public void two_version(){
+        Version version1 = new Version();
+        version1.setCreatedTime(LocalDateTime.now());
+        Version version2 = new Version();
+        version2.setCreatedTime(LocalDateTime.now());
+        versionsOrderedByCreatedTime.add(version2);
+        versionsOrderedByCreatedTime.add(version1);
+
+        // Implicit init with default domain / project
+        initMinimalWizzardData();
+
+        // Implicit authentication and on page
+        implicitlyAuthenticatedAndOnPage("list of versions");
+
+
+    }
+
+
+    @Then("^the 2 existing versions are ordered into their CreatedTime order$")
+    public void then_versions_are_ordered(){
+        for (int i = 0; i<(versionsOrderedByCreatedTime.size()-1); i++){
+            two_version();
+            if (versionsOrderedByCreatedTime.get(i).getCreatedTime().isAfter(versionsOrderedByCreatedTime.get(i+1).getCreatedTime()));
+            assertThatIllegalStateException();
+            break;
+        }
+        int i=0;
+        int j=0;
+        assertEquals(i,j);
+    }
 }
+

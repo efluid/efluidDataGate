@@ -5,11 +5,14 @@ import fr.uem.efluid.model.entities.AttachmentType;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.LobProperty;
+import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
+import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 
 import java.util.Comparator;
@@ -20,6 +23,8 @@ import java.util.stream.Collectors;
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static java.util.stream.Collectors.toMap;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.junit.Assert.*;
 
 /**
  * @author elecomte
@@ -142,4 +147,5 @@ public class CommitStepDefs extends CucumberStepDefs {
             assertThat(FormatUtils.toString(lobProperty.getData())).isEqualTo(datas.get(lobProperty.getHash()));
         });
     }
+
 }

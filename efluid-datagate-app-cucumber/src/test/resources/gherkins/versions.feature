@@ -1,5 +1,10 @@
 Feature: A dictionary is associated to versions
 
+Scenario: The existing versions are listed
+   Given two version
+   When the user access to list of versions
+   Then the 2 existing versions are ordered into their CreatedTime order
+
   Scenario: The list of specified versions is available to all users
     Given from the home page
     When the user access to list of versions

@@ -190,7 +190,24 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         return this.versions.hasDictionaryUpdatesAfterLastVersionForProject(project);
     }
+    public static void triParInsertion(List<VersionData> versions)
+    {
+        int tailleLogique=versions.size();
+        int cpt;
+        VersionData element;
 
+        for (int i = 1; i < tailleLogique ; i++)
+        {
+            element = versions.get(i);
+            cpt = i - 1;
+            while (cpt >= 0 && versions.get(cpt).getCreatedTime().isBefore(element.getCreatedTime()))
+            {
+                versions.set(cpt+1, versions.get(cpt));
+                cpt--;
+            }
+            versions.set(cpt+1 , element);
+        }
+    }
     /**
      * @return
      */
@@ -199,10 +216,12 @@ public class DictionaryManagementService extends AbstractApplicationService {
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
         Version last = this.versions.getLastVersionForProject(project);
-
-        return this.versions.findByProject(project).stream()
+        List<VersionData> liste;
+        liste = this.versions.findByProject(project).stream()
                 .map(v -> getCompletedVersion(v, last))
                 .collect(Collectors.toList());
+        triParInsertion(liste);
+        return liste;
     }
 
     /**
@@ -881,6 +900,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
             deduplicateDomains(importedDomains, deduplicatedDomainsCount);
         }
+
 
         // Finally update last version after import
         Version last = getLastUpdatedVersion();

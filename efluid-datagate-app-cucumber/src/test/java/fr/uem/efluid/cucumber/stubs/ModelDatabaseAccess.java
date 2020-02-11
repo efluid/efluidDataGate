@@ -193,7 +193,6 @@ public class ModelDatabaseAccess {
         this.versions.delete(lastVersion);
         this.versions.save(newVersion);
     }
-
     public Version findLastVersionForProject(Project proj) {
         return this.versions.getLastVersionForProject(proj);
     }
