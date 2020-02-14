@@ -111,3 +111,9 @@ Feature: The commit can be saved and are historised
       | attachment.md | MD_FILE   |
       | script.sql    | SQL_FILE  |
       | something.txt | TEXT_FILE |
+
+
+Scenario:
+Given a list of commit
+When the user access to list of commits
+Then the commits have to be ordered into their Created Time order

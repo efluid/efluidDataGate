@@ -177,6 +177,24 @@ public class CommitService extends AbstractApplicationService {
         return result;
     }
 
+    public static void triParInsertion(List<CommitEditData> versions)
+    {
+        int tailleLogique=versions.size();
+        int cpt;
+        CommitEditData element;
+
+        for (int i = 1; i < tailleLogique ; i++)
+        {
+            element = versions.get(i);
+            cpt = i - 1;
+            while (cpt >= 0 && versions.get(cpt).getCreatedTime().isAfter(element.getCreatedTime()))
+            {
+                versions.set(cpt+1, versions.get(cpt));
+                cpt--;
+            }
+            versions.set(cpt+1 , element);
+        }
+    }
     /**
      * @return
      */
@@ -188,8 +206,8 @@ public class CommitService extends AbstractApplicationService {
         LOGGER.debug("Request for list of available commits for project ");
 
         Map<UUID, List<String>> domainNames = this.domains.loadAllDomainNamesByCommitUuids(project);
-
-        return this.commits.findByProject(project).stream()
+        List<CommitEditData> liste;
+        liste=this.commits.findByProject(project).stream()
                 .map(CommitEditData::fromEntity)
                 .peek(c -> {
                     // Add domain names for each commit (if any)
@@ -200,6 +218,7 @@ public class CommitService extends AbstractApplicationService {
                 })
                 .sorted(Comparator.comparing(CommitEditData::getCreatedTime))
                 .collect(Collectors.toList());
+        return liste;
     }
 
     /**

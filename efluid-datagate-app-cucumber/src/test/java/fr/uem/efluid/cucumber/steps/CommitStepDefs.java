@@ -1,20 +1,18 @@
 package fr.uem.efluid.cucumber.steps;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
-import fr.uem.efluid.model.entities.AttachmentType;
-import fr.uem.efluid.model.entities.CommitState;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.LobProperty;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.DictionaryManagementService;
-import fr.uem.efluid.services.types.CommitDetails;
-import fr.uem.efluid.services.types.DiffDisplay;
-import fr.uem.efluid.services.types.PreparedIndexEntry;
-import fr.uem.efluid.services.types.VersionData;
+import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -147,5 +145,32 @@ public class CommitStepDefs extends CucumberStepDefs {
             assertThat(FormatUtils.toString(lobProperty.getData())).isEqualTo(datas.get(lobProperty.getHash()));
         });
     }
+    private static List<CommitEditData> commitsOrderedByCreatedTime=new ArrayList<>();
+    @Given("^a list of commit$")
+    public void a_list_of_commits(){
+        CommitEditData commit1 = new CommitEditData();
+        commit1.setCreatedTime(LocalDateTime.now());
+        CommitEditData commit2 = new CommitEditData();
+        commit2.setCreatedTime(LocalDateTime.now());
+        commitsOrderedByCreatedTime.add(commit2);
+        commitsOrderedByCreatedTime.add(commit1);
 
+    // Implicit init with default domain / project
+    initMinimalWizzardData();
+
+    // Implicit authentication and on page
+    implicitlyAuthenticatedAndOnPage("list of versions");
+}
+    @Then("^the commits have to be ordered into their Created Time order$")
+    public void the_commits_have_to_be_ordered_into_their_Created_Time_order(){
+        for (int i = 0; i<(commitsOrderedByCreatedTime.size()-1); i++){
+            a_list_of_commits();
+            if (commitsOrderedByCreatedTime.get(i).getCreatedTime().isAfter(commitsOrderedByCreatedTime.get(i+1).getCreatedTime()));
+            assertThatIllegalStateException();
+            break;
+        }
+        int i=0;
+        int j=0;
+        assertEquals(i,j);
+    }
 }
