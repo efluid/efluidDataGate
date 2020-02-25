@@ -11,6 +11,15 @@ La documentation est ici : [accueil doc](docs/README.md)
 
 ## Build
 
+### Build standard 
+
+La gestion du build est portée par maven.
+
+Pour packager l'application, lancer : 
+```
+mvn package
+```
+
 ### Version Standalone docker
 
 Une configuration complete "standalone" est intégrée. Elle intègre dans un seul container l'application (fat-jar) et une instance postgres complète pour le fonctionnement et la gestion. La configuration peut être montée depuis un volume.
@@ -20,53 +29,61 @@ Aucun autre pré-requis que la présence de docker sur le poste de build n'est n
 **Pour builder la version standalone**
 
 Pour utiliser le build sur un poste de dev windows, par exemple pour la version avec postgres embarqué : 
+```
+# être dans le dossier racine du projet
+cd efluidDataGate
 
-    ## être dans le dossier racine du projet
-    cd efluidDataGate
-    ## lancer le script de build depuis le dossier racine
-    ./efluid-datagate-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
+# lancer le script de build depuis le dossier racine
+./efluid-datagate-app/src/docker/build-desktop/standalone-with-postgres/build.ps1
+```
 
 Pour builder une version avec H2 sur un serveur efluid :
+```
+# être dans le dossier racine du projet
+cd efluidDataGate
 
-    ## être dans le dossier racine du projet
-    cd efluidDataGate
-    ## lancer le script de build depuis le dossier racine
-    ./efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
+# lancer le script de build depuis le dossier racine
+./efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2/build.sh
+```
 
 L'instance est déployée dans le répo local docker sous le nom **efluid-datagate**:*${PROJECT_VERSION}*
 
 **Pour démarrer la version standalone server avec les scripts fournis**
 
-S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de efluidDataGate, comme ``/opt/server/efluidDataGate``
+S'assurer au préalable qu'un dossier est prévu pour stocker les éléments logs et cfg de efluidDataGate, comme `/opt/server/efluidDataGate`
 
 Après build, faire : 
-    
-    cp ./efluid-datagate-app/src/docker/start-efluidDataGate.sh /opt/server/efluidDataGate/
+``` 
+cp ./efluid-datagate-app/src/docker/start-efluidDataGate.sh /opt/server/efluidDataGate/
+```
 
-Copier éventuellement la configuration désirée dans ``/opt/server/efluidDataGate/dest/cfg/application.yml`` et ``/opt/server/efluidDataGate/src/cfg/application.yml`` et lancer avec :
+Copier éventuellement la configuration désirée dans `/opt/server/efluidDataGate/dest/cfg/application.yml` et `/opt/server/efluidDataGate/src/cfg/application.yml` et lancer avec :
+```
+# Exemple de création / lancement d'une instance "src" sur le port 8080
+sudo /opt/server/efluidDataGate/start-efluidDataGate.sh src 8080
 
-    ## Exemple de création / lancement d'une instance "src" sur le port 8080
-    sudo /opt/server/efluidDataGate/start-efluidDataGate.sh src 8080
-
-    ## Exemple de création / lancement d'une instance "dest" sur le port 808&
-    sudo /opt/server/efluidDataGate/start-efluidDataGate.sh dest 8081
-
+# Exemple de création / lancement d'une instance "dest" sur le port 808&
+sudo /opt/server/efluidDataGate/start-efluidDataGate.sh dest 8081
+```
 
 **Pour démarrer la version standalone - A LA MAIN**
 
 Sous linux / windows, par exemple pour la version avec h2 : 
-
-    docker run -it --rm -p 8080:8080 efluid-datagate:latest-h2
+```
+docker run -it --rm -p 8080:8080 efluid-datagate:latest-h2
+```
 
 Pour utiliser un fichier de configuration spécifique, le monter sous *"/cfg/application.yml"*. Par exemple : 
 
 Sous linux :
-
-    docker run -it --rm -p 8080:8080 -v $pwd/efluid-datagate-app/src/main/resources/config/application.yml:/cfg/application.yml efluid-datagate:latest-h2
+```
+docker run -it --rm -p 8080:8080 -v $pwd/efluid-datagate-app/src/main/resources/config/application.yml:/cfg/application.yml efluid-datagate:latest-h2
+```
 
 Ou sous windows : 
-
-    docker run -it --rm -p 8080:8080 -v ${pwd}\efluid-datagate-app\src\main\resources\config\application.yml:/cfg/application.yml efluid-datagate:latest-h2
+```
+docker run -it --rm -p 8080:8080 -v ${pwd}\efluid-datagate-app\src\main\resources\config\application.yml:/cfg/application.yml efluid-datagate:latest-h2
+```
 
 Les BDD sont initialisées, puis l'application démarre. Elle est ensuite accessible sur [http://localhost:8080](http://localhost:8080) Elle démarre en mode Wizzard avec en BDD gérée par défault l'instance local PGSQL
 
@@ -79,42 +96,47 @@ Il existe 2 variantes à ce stade pour la version standalone :
 
 La version struff n'est pas à jour. Ne pas l'utiliser pour l'instant
 
+
 ## Utilisation en développement
 
-### Quickstart avec Maven
-Pour démarrer sans rien installer, juste à partir du projet cloné, en ayant maven sur son poste, et les bases de données nécessaires (voir plus loin), utiliser : 
+### Grandes lignes
 
-    ## Attention, des dépendances qui ne sont pas présentes dans l'Artifactory Efluid peuvent être nécessaires. 
-    ## Idéalement, exécuter la commande en désactivant l'utilisation du repository Efluid dans le fichier 
-    ## ~/.m2/settings.xml (en ajoutant un profile dédié pour cela par exemple)
-    
-    mvn spring-boot:run
+Prérequis :
+* JDK11 (openjdk)
+* Maven 3.x
+* IDE (intellij recommandé)
 
-L'application démarre après build. Le service est accessible à l'adresse [http://localhost:8080](http://localhost:8080)
+Idéalement docker desktop pour monter des BDD locales facilement
 
-### Démarrage depuis un IDE
-Pour démarrer depuis un IDE, lancer la classe exécutable __fr.uem.efluid.Application__
+### Disponibilité de bases de données de développement
 
-### Templating
-Les templates sont traités avec Thymeleaf. Ils restent des HTML valides. Ils sont éditables à chaud (tant que le cache de template est désactivé dans application.yml)
+**2 Bases de données sont nécessaires :**
+* Une BDD pour le fonctionnement de l'application: "BDD de management"
+* Une BDD cible des opérations de migrations: "BDD managée" = "BDD source"
 
-### Demo data 
-Pour tester l'application avec une instance de BDD réelle, et non pas la BDD embarquée H2, utilisation de Postgres possible. Attention, néant en terme de sécurité, à utiliser juste pour un déploiement local
+Pour permettre un démarrage et des tests adaptés pendant le développement, il est recommandé de mettre à disposition 2 bases dédiées pour chaque développeur
 
-**Attention, dans tous les cas le mode demo avec la BDD H2 embarquée ne simule pas la BDD de l'application managée (= la BDD de Efluid): elle doit être instanciée par ailleurs.**
+La BDD de référence est Oracle (postgres et H2 sont aussi supportés). 
 
-#### Instance PG 
-Démarrage avec docker
+> Nous donnons ici des procédures de mise en place de BDD locales pour Postgres, Oracle XE 12c et Oracle XE 18c
 
-    docker run --name test-postgres -e POSTGRES_PASSWORD=test -p 5432:5432 -v /opt/server/postgresql/data:/var/lib/postgresql/data -d postgres
+#### Instance Postgres
+Démarrage avec docker :
+```
+docker run --name test-postgres -e POSTGRES_PASSWORD=test -p 5432:5432 -v /opt/server/postgresql/data:/var/lib/postgresql/data -d postgres
+```
 
-Puis création de 2 databases : manager et demo. Création d'un user "user"/"user" owner de ces DB
+Puis création de 2 databases : `MANAGER` et `DEMO` + Création d'un user "user"/"user" owner de ces 2 DB
 
-#### Instance Oracle 
-Oracle XE peut être utilisé pour représenter l'application demo. 
-Démarrage avec docker
+> Tester les connexions locales avec `MANAGER` et `DEMO`
 
-    docker run --name oracle -d -p 49161:1521 sath89/oracle-12c
+#### Instance Oracle XE 12c
+Oracle XE peut être utilisé pour représenter l'application demo. Une version 12c est disponible sur docker hub.
+
+Démarrage avec docker :
+```
+docker run --name oracle -d -p 49161:1521 sath89/oracle-12c
+```
 
 Se connecter ensuite à l'instance avec SQL Developer avec les paramètres : 
 * hostname: ...suivant installation...
@@ -123,155 +145,126 @@ Se connecter ensuite à l'instance avec SQL Developer avec les paramètres :
 * username: system
 * password: oracle (par defaut)
 
-Puis créer un user "demo"/"demo" avec des droits suffisant pour créer des données
+*Enfin, créer les comptes utilisateurs suivants* :
 
-#### Instance demo
-Pour intiliser l'instance demo : Elle est utilisée pour représenter une application "managed" dont la gestion du paramètrage serait pilotée avec l'application. 
+* MANAGER (BDD de management), pwd MANAGER, Tablespace USERS, accorder tous les droits
+* DEMO (utilisé pour avoir une instance DEMO "simulée" locale), pwd DEMO, Tablespace USERS, accorder tous les droits
 
-    -- Le script d'initialisation pour postgres :
-    /src/database/model_demo_init_pgsql.sql
-    -- ou, pour oracle
-    /src/database/model_demo_init_oracle.sql
-    
-Ce sont les mêmes modèles, les mêmes données pour les 2 scripts
+> Tester les connexions locales avec `MANAGER` et `DEMO`
 
-### Genération de dictionnaire à partir de l'API
-Une API permettant de spécifier un dictionnaire complet (table, domaines et liens) est fournie dans le module **efluid-datagate-api**
+#### Instance Oracle XE 18c
 
-Voici un exemple de mise en oeuvre : 
-    
-    @GestionDuMateriel
-    @ParameterTable(name = "Categorie", tableName = "TCATEGORY")
-    public class CategorieDeMateriel {
-       
-       private Long id;
-       
-       @ParameterValue("NAME")
-       private String name;
-       
-       @ParameterKey("CODE")
-       private String code;
-       
-       // ...
-    }
+Pour démarrer une instance Docker de Oracle 18c il faut cette fois d'abord **construire** l'image docker à partir d'outils fournis par Oracle directement, en suivant **la procédure ci dessous**
 
-L'API est utilisée par un générateur dédié spécifié dans le module **efluid-datagate-generator**. Celui ci est avant tout un plugin maven, mis en oeuvre avec la configuration suivante : 
+> Cette instance XE utilisera des droits par défaut, des mots de passes simples, elle n'est pas du tout sécurisée et cette procédure ne devrait pas être appliquée sur un environnement "fonctionnel"
 
-    <plugin>
-       <groupId>${project.groupId}</groupId>
-       <artifactId>efluid-datagate-generator</artifactId>
-       <executions>
-          <execution>
-             <id>generate</id>
-             <phase>generate-sources</phase>
-             <goals>
-             	   <goal>generate</goal>
-             </goals>
-          </execution>
-       </executions>
-       <configuration>
-          <destinationFileDesignation>generated-dictionary</destinationFileDesignation>
-          <destinationFolder>${project.basedir}/target</destinationFolder>
-          <protectColumn>true</protectColumn>
-          <sourcePackage>fr.uem.efluid.sample</sourcePackage>
-          <uploadToServer>true</uploadToServer>
-          <uploadEntryPointUri>http://127.0.0.1:8080/rest/v1/dictionary</uploadEntryPointUri>
-       </configuration>
-    </plugin>
+##### 1/ Construction de l'image docker Oracle XE 18
 
-Ce générateur construit un fichier .par d'export / import de dictionnaire, immédiatement importable dans une instance de l'application. Il est également capable de l'uploader directement sur une instance active de l'application.
+Commencer par créer une XE 18 avec docker (testé sur Windows, doit fonctionner sur Windows ou linux sans changement). 
 
-Les propriétés de configuration sont : 
-* **destinationFileDesignation** : identifiant du nom de l'archive .par. Si égale à "auto", alors un uuid aléatoire est utilisé.
-* **destinationFolder** : Emplacement de sortie du fichier .par généré. Par défaut "${project.basedir}/target"
-* **protectColumn** : Indique si le format de colonne de la BDD utilisée doit être protégé (identique option équivalente de l'application)
-* **sourcePackage** : Racine du package java à parser pour la recherche du modèle du dictionnaire
-* **uploadToServer** : Si true, va uploader le .par dans une instance de l'application. Par défaut false
-* **uploadEntryPointUri** : Url du point d'entrée du service REST "dictionnaire" de l'application où le .par sera uploadé. Exemple : "http://127.0.0.1:8080/rest/v1/dictionary"
+Depuis fin 2018 des dockerfiles standards sont disponibles dans un projet Oracle Github, et proposent tout le nécessaire :
 
-Un projet exemple est fourni : **efluid-datagate-generator-example**, avec un modèle complet. Un script SQL (oracle) d'initialisation des tables correspondantes est fourni dans src/database
+* Suivre https://github.com/oracle/docker-images/blob/master/OracleDatabase/SingleInstance/README.md
+* Cloner le projet `docker-images` localement et y accéder
+* Télécharger https://www.oracle.com/technetwork/database/database-technologies/express-edition/downloads/index.html (build x64 linux)
+* Installer le rpm dans `./docker-images/OracleDatabase/SingleInstance/dockerfiles/18.4.0`
+* Lancer : `./docker-images/OracleDatabase/SingleInstance/dockerfiles/buildDockerImage.sh -v 18.4.0 -x -i`
 
-### Services REST
-Une API de services **REST** est intégrée. 
+> L'image est dispo (localement) en tant que `oracle/database:18.4.0-xe`
 
-**Elle permet** :
-* De créer / mettre à jour le dictionnaire par import de .par (utilisé pour le système de génération avec l'API java)
-* De lancer / suivre / annuler / valider un diff. Il devient donc possible de piloter la préparation de lots directement depuis une application tiers (par exemple depuis Efluid directement)
+##### 2/ Démarrage container
 
-A ce stade aucune sécurité n'est intégrée, les services REST sont accessibles à tous. Un système à base de d'API token sera mis en place.
+*Démarrer l'instance docker* :
 
-Depuis le bandeau haut de l'application, cliquer le bouton "API REST" pour accéder à une interface de navigation / test de l'API (format Swagger + swagger-ui v2).
+```
+docker run --name oracle-18 -p 49121:1521 -e ORACLE_SID=xe -e ORACLE_PWD=dba -e ORACLE_CHARACTERSET=WE8ISO8859P15 oracle/database:18.4.0-xe
+```
 
-## Conception / Principes
-CF support de présentation.
+La BDD est installée au démarrage. A priori les erreurs rencontrés n'ont pas d'importance
 
-### Stack technique
-Spring-boot avec :
-* **Spring MVC + Thymeleaf** : Contrôleurs WEB avec templates Thymeleaf + Contrôleurs Rest pour services d'intégration
-* **Spring core** : IoC, core contexte
-* **(Spring Security)** - accès sécurité très simplifié, à voir
-* **Spring data JPA** : Manipulation BDD core, avec JPA, via répository spécifiés seulement sous la forme d'interfaces java
-* **Spring JDBC avec Spring Transaction** : Pour les manipulations de la BDD managed, via JDBC directement
+> Cette instance pourra être relancée avec `docker start oracle-18`
 
-Utilise au maximum les conventions Spring-boot pour éliminer tout code technique. 
+##### 3/ Création des utilisateurs
 
-Pour la sécurité, chaque user a un "token" technique privé disponible : il suffit de le préciser dans l'url de l'appel REST.
+La création des comptes nécessite de se connecter à l'instance créée en tant que sysdba avec SQLDeveloper. 
 
-### Utilisation des bases de données
-Pour le fonctionnement, il y a 2 DB de connectées :
-* Celle propre au gestionnaire de paramètrage. Nommée **core** dans le code où elle est référencée. Utilisée avec Spring-data-jpa, avec config par défaut d'EntityManager
-* Celle de l'application gérée. Nommée **Managed** dans le code. Utilisée avec JDBCTemplate, avec un transactionManager identifié configuré spécifiquement
+*Pour cela, utiliser comme paramètres* : 
 
-### Configuration de l'application
-Fichier de configuration *src/main/resources/application.yml*
-Des options permises par Spring-boot donnent la possibilité de surcharger la conf depuis un fichier externe, ou des paramètres particuliers via arguments de ligne de commande.
+* port `49121`
+* compte `sys` / `dba`
+* Rôle `SYSDBA`
 
-Le fichier est au format YAML.
+*Puis avant de démarrer la création de compte, lancer* :
+```
+alter session set "_oracle_script"=true;
+```
 
-**Exemple de configuration standard de démonstration**
+*Enfin, créer les comptes utilisateurs suivants* :
 
-    ---
-    ## PARAMETER MANAGER CONFIG
-    datagate-efluid:
-    
-       ### BDD "MANAGED" avec JDBC
-       managed-datasource:
-           driverClassName: org.postgresql.Driver
-           url: jdbc:postgresql://localhost/demo
-           username: user
-           password: user
-           
-       details:
-           ### Sera autogen avec filtrage resource mvn
-           version: 1.1.1
-    
-    ## TECH FEATURES CUSTOM
-    spring:
-        ### 2 profils prévus : demo, prod
-        profiles:
-            active: demo
-    
-        ### En dev permet de recharger à chaud les modifs sur les TPL
-        thymeleaf:
-            cache: false
-    
-        ### BDD "CORE" avec JPA
-        datasource:
-            url: jdbc:postgresql://localhost/manager
-            username: user
-            password: user
-            driver-class-name: org.postgresql.Driver
+* MANAGER (BDD de management), pwd MANAGER, Tablespace USERS, accorder tous les droits
+* DEMO (utilisé pour avoir une instance DEMO "simulée" locale), pwd DEMO, Tablespace USERS, accorder tous les droits
 
-### Gestion de la sécurité
-Utilisation de [pac4j](http://www.pac4j.org/) "seul" (sans spring-security). La configuration technique des composants de sécurité est faite dans *fr.uem.efluid.config.SecurityConfig*
+> Tester les connexions locales avec `MANAGER` et `DEMO`
 
-Deux *clients* pac4j avec 2 chaines d'authentification / interception :
-* Les urls "/ui/*" (écrans de l'application) sont sécurisés avec une authentification "web" classique (login), avec compte en session.
-* Les urls "/rest/*" (services rest) sont sécurisés avec une récupération de token privé propre à chaque user.
 
-Attention, ce n'est pas supposé être "web-proof" (mais l'application n'est pas supposée l'être du tout : on parle là d'un outil d'administration de données directement en BDD, un peu comme l'est Oracle SQL Developer)
+### Création de la configuration spécifique du développeur
 
-Il n'y a pas de rôle géré (pour l'ajouter : créer données en BDD et les utiliser dans les checks réalisés dans fr.uem.efluid.security.AllAuthorizer). Le mot de passe est encodé en SHA-256 (hash simple, pouvant être amélioré - ajout de salt par exemple - : géré dans fr.uem.efluid.security.ShaPasswordEncoder).
+Créer un fichier application-dev.yml sur la base de cet exemple (ici pour utiliser des instances oracles locales montées sur `localhost:49121`): 
+```
+---
+datagate-efluid:
+    managed-datasource:
+        driver-class-name: oracle.jdbc.OracleDriver
+        url: jdbc:oracle:thin:@localhost:49121:xe
+        username: EFLUID
+        password: XXXXXXXX
+        meta:
+            filter-schema: EFLUID
+    display:
+        diff-page-size: 10
+    security:
+        salt: XXXXXXXXXXXXXXXX
+    details:
+        instance-name: REFERENCE-EFLUID-18.4
+    model-identifier:
+        enabled: true
+        class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
+        show-sql: true
+    web-options:
+        enable-custom-h2-console: false
+## TECH FEATURES CUSTOM
+spring:
+    profiles:
+        active: prod
+    datasource:
+        driver-class-name: oracle.jdbc.OracleDriver
+        url: jdbc:oracle:thin:@localhost:49121:xe
+        username: DATAGATE_SRC
+        password: XXXXXXX
+    jpa:
+        show-sql: true
+        hibernate:
+            ddl-auto: none
+    flyway:
+        enabled: false
+## WEB SERVER CONFIG
+server:
+    port: 8085
+```
+
+> Les fichiers `*.yml` sont gitignorés dans le dossier resources/config de l'app. Il est possible d'y gérer sa conf personnelle
+
+### Démarrage depuis un IDE
+Pour démarrer depuis un IDE, lancer la classe exécutable `fr.uem.efluid.Application`
+
+Ajouter les options de démarrage suivantes :
+```
+--spring.config.location=classpath:/application.yml,classpath:/config/application-dev.yml
+```
+
+> Il peut être nécessaire d'ajuster les options de JVM en fonction de votre environnement
+
+
 
 ## Aide au développement / maintenance
 
@@ -284,48 +277,6 @@ A noter : les tests d'intégrations utilisent une BDD embarquée H2, droppée ap
 * **username**: sa
 * **password**: *-- laisser vide --*
 
-### Organisation technique de l'application
-Organisation en couche simple. 
-
-**Utilisation des terminologies standards suivantes** :
-* xRepository => DAO. Archetype Spring
-* xService => Service business. Archetype Spring
-* xController => Contrôleur dans le cadre d'un traitement MVC (Spring-MVC est un framework de traitement par action). Archetype Spring
-* contenus du package "modele" => Modèle de données business, associé à des entités gérés (en BDD ou en mémoire)
-* contenus du package "services.types" => TO utilisés par les services business
-* contenus du package "config" => Bean de configuration spring. Remplace les anciens fichiers "bean.xml" du temps de spring < v3. Archetype Spring
-
-### Focus techniques
-
-#### Types de données gérés en interne
-La grand règle pour l'extraction des données et la préparation pour l'index est d'utiliser uniquement du string. Les données sont simplement "inlinées" sous la forme suivante : 
-
-    COLUMN_NAME=T/B64_ENCODED_VALUE,autres colonnes...
-
-Avec T le type "simplifié" parmi S/O/B. Toutes les valeurs sont inlinés en une seule chaine unique, séparées par une virgule, avec le nom de la colonne en majuscule repris pour chaque valeur. Les colonnes sont ordonnées par leur ordre naturel. Les valeurs sont systématiquement converties en BASE64. Le traitement est globalement traité par les méthodes utilitaires de **fr.uem.efluid.utils.ManagedDiffUtils**
-
-**Pourquoi ce formalisme ?** 
-En effet on peut observer que ce n'est par exemple pas le plus compact. Mais il y a des avantages : 
-* Le BASE64 implique par exemple environ +25% de taille de données. Mais tel qu'il est défini ici, il permet de simplifier l'opération de comparaison d'une valeur à l'autre, en traitant tous les changements dans la table (valeurs et définition). Le poids n'est pas critique au vu de l'usage attendu (on est sur des données qui font au grand maximum 2Gb en tout, et plutôt des 10Mb en usage courant). Hasher ces valeurs est très simple. La compression (utile pour l'export / import) est optimale). Seuls des caractères ANSI sont utilisés, on peut coder cette chaine sur des charactères de 8bit.
-* Si les noms de colonnes sont repris systématiquement et alourdissent ces données, retourner cette valeur pour obtenir un SQL d'application de mise à jour est aisé (on a immédiatement les colonnes et B64 est reversible). De plus le résultat inline reste limité aux caractères ANSI et est hautement compressable pour les exports / imports
-* La comparaison peut être faite directement par string. Au vu du volume de données attendu, la comparaison par Hash n'aurait pas d'impact positif, mais c'est à tester.
-
-**Pourquoi cette limitation à trois types S/O/B ?**
-Dans les faits, on a 2 types de transpositions à gérer pour chaque données indéxées :
-* Lors de l'extraction, on veut obtenir les données dans un format gérable dans l'index. Pour cela, TOUT EST CONVERTI EN STRING. 
-* Lors de la réapplication des données, c'est le cas d'usage lié à la génération du SQL de sorti des données qui rentre en compte. Et en SQL il y a en générale 3 possibilités : les chaines de caractères et assimilés, de même que les dates / timestamp (tant que le format est embarqué) sont données avec des caractères "d'identification de début et de fin", soit "'". Les nombres, binaires et booléen sont donnée sans ces caractères, et les CLOB et BLOB sont injectés autrement (suivant les BDD). Les types S/O/B représentent ces trois cas, et sont portés par l'enum **fr.uem.efluid.model.metas.ColumnType**
-  
-**Pour donner un exemple plus concret de données inlinées, soit une table avec comme colonnes :**
-* KEY : PK bigint
-* VALUE : Varchar(x)
-* VALUE_OTHER : Varchar(x) 
-* Something : bigint
-* when : timestamp
-
-**L'inline donne le résultat suivant :**
-
-    VALUE=S/QSFQOI42144,VALUE_OTHER=S/JR19RJ19021RK=,SOMETHING=O/14201FIOI==,WHEN=O/090FJZ0F0FI0KF
-    
 ### Requêtes utiles 
 **Consulter l'index**
 
