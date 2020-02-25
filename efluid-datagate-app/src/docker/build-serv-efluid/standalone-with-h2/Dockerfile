@@ -1,4 +1,4 @@
-FROM openjdk:10-jre
+FROM openjdk:11-jre
 
 ENV http_proxy http://usine-logicielle:ulrms@lpsrvpxy:8080
 ENV no_proxy localhost,127.0.0.1,wikefluid,eartifact,usinelogicielle,ldsanbld2
