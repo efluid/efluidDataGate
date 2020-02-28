@@ -1,12 +1,14 @@
 # EFLUID-DATAGATE 
 
-Application dédiée à l'identification, au packaging et au déploiement de paramètrage pour une instance Efluid.
+[![Build Status](https://build.elecomte.com/api/badges/datagate-update/efluidDataGate/status.svg?ref=refs/heads/develop)](https://build.elecomte.com/datagate-update/efluidDataGate)
 
-## Nouvelle documentation
+Outil dédié à l'identification, au packaging et au déploiement de modifications dans une base de données, en s'appuyant sur les principes de `git`. 
 
-**Nouveau !!!** Une documentation de référence est en cours de rédaction. Une partie de ce readme sera repris dans cette doc et d'autres éléments seront ajoutés pour couvrir tous les besoins pour Efluid.
+Projet mis en place initialement pour la gestion et l'évolution du paramètrage pour une instance de l'application [Efluid](https://www.efluid.com/)
 
-La documentation est ici : [accueil doc](docs/README.md)
+## Documentation
+
+La documentation générale est disponible ici : [accueil doc](docs/README.md) (WIP)
 
 
 ## Build
@@ -309,3 +311,7 @@ Puis il est possible de supprimer le commit et les données associées à partir
 	delete from commit_merge_sources where commit_uuid = (select uuid from commit where comment like '###%');
 	delete from lobs where commit_uuid = (select uuid from commit where comment like '###%');
 	delete from commit where uuid = (select uuid from commit where comment like '###%');
+
+## License 
+
+Apache public License 2.0
