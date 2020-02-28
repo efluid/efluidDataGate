@@ -20,6 +20,10 @@ Pour packager l'application, lancer :
 mvn package
 ```
 
+### Build auto drone
+
+Un pipeline drone est spécifié à la racine
+
 ### Version Standalone docker
 
 Une configuration complete "standalone" est intégrée. Elle intègre dans un seul container l'application (fat-jar) et une instance postgres complète pour le fonctionnement et la gestion. La configuration peut être montée depuis un volume.
