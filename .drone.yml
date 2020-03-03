@@ -24,9 +24,9 @@ steps:
     channel: datagate-build
     template: >
       {{#success build.status}}
-        Datagate build {{build.number}} succeeded.
+        Datagate build of commit {{build.ref}} on branch {{build.branch}} succeeded
       {{else}}
-        Datagate build {{build.number}} failed.
+        Datagate build of commit {{build.ref}} on branch {{build.branch}} failed
       {{/success}}
 
 volumes:
