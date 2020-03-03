@@ -27,6 +27,7 @@
 					</execution>
 				</executions>
 				<configuration>
+					<classifier>exec</classifier>
 					<mainClass>fr.uem.efluid.Application</mainClass>
 				</configuration>
 			</plugin>
