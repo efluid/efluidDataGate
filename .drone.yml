@@ -2,8 +2,34 @@ kind: pipeline
 name: default
 
 steps:
-- name: build-and-test
+- name: build-all
   image: maven:3-jdk-11
+  volumes:
+    - name: mvncache
+      path: /root/.m2
   commands:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+- name: test-all
+  image: maven:3-jdk-11
+  volumes:
+    - name: mvncache
+      path: /root/.m2
+  commands:
   - mvn test
+- name: notification
+  image: plugins/slack
+  settings:
+    webhook:
+      from_secret: slack_webhook
+    channel: datagate-build
+    template: >
+      {{#success build.status}}
+        Datagate build {{build.number}} succeeded.
+      {{else}}
+        Datagate build {{build.number}} failed.
+      {{/success}}
+
+volumes:
+  - name: mvncache
+    host:
+      path: /opt/server/build/repository
