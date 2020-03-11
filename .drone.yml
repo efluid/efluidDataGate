@@ -35,9 +35,9 @@ steps:
       channel: datagate-build
       template: >
         {{#success build.status}}
-          Datagate build of commit `${DRONE_COMMIT_MESSAGE}` on branch `${DRONE_COMMIT_BRANCH}` succeeded
+          :sunny: Datagate build of commit "${DRONE_COMMIT_MESSAGE}" on branch `${DRONE_COMMIT_BRANCH}` succeeded
         {{else}}
-          Datagate build of commit `${DRONE_COMMIT_MESSAGE}` on branch `${DRONE_COMMIT_BRANCH}` failed
+          :fire: Datagate build of commit "${DRONE_COMMIT_MESSAGE}" on branch `${DRONE_COMMIT_BRANCH}` failed
         {{/success}}
     when:
       status:
