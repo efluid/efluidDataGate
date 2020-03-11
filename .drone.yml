@@ -21,7 +21,7 @@ steps:
     image: plugins/docker
     volumes:
       - name: dckregistry
-        path: /etc/docker/certs.d/micro-server:443
+        path: /etc/docker/certs.d
     settings:
       dockerfile: efluid-datagate-app/target/Dockerfile
       repo: micro-server:443/datagate/latest
@@ -38,9 +38,9 @@ steps:
       channel: datagate-build
       template: >
         {{#success build.status}}
-          Datagate build of commit ${DRONE_COMMIT_MESSAGE} by ${DRONE_COMMIT_AUTHOR} on branch ${DRONE_COMMIT_BRANCH} succeeded
+          Datagate build of commit `${DRONE_COMMIT_MESSAGE}` on branch `${DRONE_COMMIT_BRANCH}` succeeded
         {{else}}
-          Datagate build of commit ${DRONE_COMMIT_MESSAGE} by ${DRONE_COMMIT_AUTHOR} on branch ${DRONE_COMMIT_BRANCH} failed
+          Datagate build of commit `${DRONE_COMMIT_MESSAGE}` on branch `${DRONE_COMMIT_BRANCH}` failed
         {{/success}}
     when:
       status:
@@ -53,4 +53,4 @@ volumes:
       path: /opt/server/build/repository
   - name: dckregistry
     host:
-      path: /etc/docker/certs.d/micro-server:443
+      path: /etc/docker/certs.d
