@@ -24,9 +24,13 @@ steps:
         path: /var/run/docker.sock
     settings:
       dockerfile: efluid-datagate-app/target/Dockerfile
-      repo: 172.17.0.1:5000/datagate/latest
-      registry: 172.17.0.1:5000
+      repo: micro-server:443/datagate/latest
+      registry: micro-server:443
       insecure: true
+      username:
+        from_secret: registry_username
+      password:
+        from_secret: registry_password
   - name: notification
     image: plugins/slack
     settings:
