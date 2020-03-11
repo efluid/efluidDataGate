@@ -183,7 +183,7 @@ Depuis fin 2018 des dockerfiles standards sont disponibles dans un projet Oracle
 *Démarrer l'instance docker* :
 
 ```
-docker run --name oracle-18 -p 49121:1521 -e ORACLE_SID=xe -e ORACLE_PWD=dba -e ORACLE_CHARACTERSET=WE8ISO8859P15 oracle/database:18.4.0-xe
+docker run --name oracle-18 -d -p 49121:1521 -e ORACLE_SID=xe -e ORACLE_PWD=dba -e ORACLE_CHARACTERSET=WE8ISO8859P15 oracle/database:18.4.0-xe
 ```
 
 La BDD est installée au démarrage. A priori les erreurs rencontrés n'ont pas d'importance

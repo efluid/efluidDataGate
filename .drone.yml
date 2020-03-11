@@ -17,7 +17,7 @@ steps:
   #        path: /root/.m2
   #    commands:
   #      - mvn test
-  - name: docker
+  - name: docker-build
     image: plugins/docker
     volumes:
       - name: dockersock
@@ -31,6 +31,14 @@ steps:
         from_secret: registry_username
       password:
         from_secret: registry_password
+  - name: integration-start
+    image: docker:dind
+    volumes:
+      - name: dockersock
+        path: /var/run/docker.sock
+    commands:
+      - docker rm -f datagate
+      - docker run --name datagate -p 8085:8080 -v /opt/server/datagate/cfg:/cfg -v /opt/server/datagate/tmp:/tmp -v /opt/server/datagate/logs:/logs -d datagate/latest
   - name: notification
     image: plugins/slack
     settings:
