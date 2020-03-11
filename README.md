@@ -212,47 +212,63 @@ alter session set "_oracle_script"=true;
 
 > Tester les connexions locales avec `MANAGER` et `DEMO`
 
+##### 4/ Création des données
+
+En utilisant les connexions MANAGER et DEMO configurées, installer les données de test nécessaires.
+
+* Pour DEMO, utiliser le script `examples/install_init_oracle_demo.sql` : un ensemble de données de test pour une BDD gérée est créé
+* Pour MANAGER, utiliser le script `examples/install_init_oracle_manager.sql` : Le schéma de fonctionnement de l'application est créé (pas besoin d'utiliser le DDL HBM comme cela)
 
 ### Création de la configuration spécifique du développeur
 
-Créer un fichier application-dev.yml sur la base de cet exemple (ici pour utiliser des instances oracles locales montées sur `localhost:49121`): 
+Créer un fichier application-dev.yml sur la base de cet exemple (ici pour utiliser des instances oracles locales montées sur `localhost:49121` avec les PWD par défaut): 
 ```
----
 datagate-efluid:
+
     managed-datasource:
         driver-class-name: oracle.jdbc.OracleDriver
         url: jdbc:oracle:thin:@localhost:49121:xe
-        username: EFLUID
-        password: XXXXXXXX
+        username: DEMO
+        password: DEMO
         meta:
-            filter-schema: EFLUID
+            filter-schema: DEMO
+
     display:
         diff-page-size: 10
+
     security:
-        salt: XXXXXXXXXXXXXXXX
+        salt: 12345678901234567890123456789012
+
     details:
         instance-name: REFERENCE-EFLUID-18.4
+
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
         show-sql: true
+
     web-options:
         enable-custom-h2-console: false
+
 ## TECH FEATURES CUSTOM
 spring:
     profiles:
         active: prod
+
     datasource:
         driver-class-name: oracle.jdbc.OracleDriver
         url: jdbc:oracle:thin:@localhost:49121:xe
-        username: DATAGATE_SRC
-        password: XXXXXXX
+        username: MANAGER
+        password: MANAGER
+
     jpa:
         show-sql: true
         hibernate:
             ddl-auto: none
+
     flyway:
         enabled: false
+
 ## WEB SERVER CONFIG
 server:
     port: 8085
