@@ -1,12 +1,14 @@
 # EFLUID-DATAGATE 
 
-Application dédiée à l'identification, au packaging et au déploiement de paramètrage pour une instance Efluid.
+[![Build Status](https://build.elecomte.com/api/badges/datagate-update/efluidDataGate/status.svg?ref=refs/heads/develop)](https://build.elecomte.com/datagate-update/efluidDataGate)
 
-## Nouvelle documentation
+Outil dédié à l'identification, au packaging et au déploiement de modifications dans une base de données, en s'appuyant sur les principes de `git`. 
 
-**Nouveau !!!** Une documentation de référence est en cours de rédaction. Une partie de ce readme sera repris dans cette doc et d'autres éléments seront ajoutés pour couvrir tous les besoins pour Efluid.
+Projet mis en place initialement pour la gestion et l'évolution du paramètrage pour une instance de l'application [Efluid](https://www.efluid.com/)
 
-La documentation est ici : [accueil doc](docs/README.md)
+## Documentation
+
+La documentation générale est disponible ici : [accueil doc](docs/README.md) (WIP)
 
 
 ## Build
@@ -19,6 +21,10 @@ Pour packager l'application, lancer :
 ```
 mvn package
 ```
+
+### Build auto drone
+
+Un pipeline drone est spécifié à la racine
 
 ### Version Standalone docker
 
@@ -177,7 +183,7 @@ Depuis fin 2018 des dockerfiles standards sont disponibles dans un projet Oracle
 *Démarrer l'instance docker* :
 
 ```
-docker run --name oracle-18 -p 49121:1521 -e ORACLE_SID=xe -e ORACLE_PWD=dba -e ORACLE_CHARACTERSET=WE8ISO8859P15 oracle/database:18.4.0-xe
+docker run --name oracle-18 -d -p 49121:1521 -e ORACLE_SID=xe -e ORACLE_PWD=dba -e ORACLE_CHARACTERSET=WE8ISO8859P15 oracle/database:18.4.0-xe
 ```
 
 La BDD est installée au démarrage. A priori les erreurs rencontrés n'ont pas d'importance
@@ -206,47 +212,63 @@ alter session set "_oracle_script"=true;
 
 > Tester les connexions locales avec `MANAGER` et `DEMO`
 
+##### 4/ Création des données
+
+En utilisant les connexions MANAGER et DEMO configurées, installer les données de test nécessaires.
+
+* Pour DEMO, utiliser le script `examples/install_init_oracle_demo.sql` : un ensemble de données de test pour une BDD gérée est créé
+* Pour MANAGER, utiliser le script `examples/install_init_oracle_manager.sql` : Le schéma de fonctionnement de l'application est créé (pas besoin d'utiliser le DDL HBM comme cela)
 
 ### Création de la configuration spécifique du développeur
 
-Créer un fichier application-dev.yml sur la base de cet exemple (ici pour utiliser des instances oracles locales montées sur `localhost:49121`): 
+Créer un fichier application-dev.yml sur la base de cet exemple (ici pour utiliser des instances oracles locales montées sur `localhost:49121` avec les PWD par défaut): 
 ```
----
 datagate-efluid:
+
     managed-datasource:
         driver-class-name: oracle.jdbc.OracleDriver
         url: jdbc:oracle:thin:@localhost:49121:xe
-        username: EFLUID
-        password: XXXXXXXX
+        username: DEMO
+        password: DEMO
         meta:
-            filter-schema: EFLUID
+            filter-schema: DEMO
+
     display:
         diff-page-size: 10
+
     security:
-        salt: XXXXXXXXXXXXXXXX
+        salt: 12345678901234567890123456789012
+
     details:
         instance-name: REFERENCE-EFLUID-18.4
+
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
         show-sql: true
+
     web-options:
         enable-custom-h2-console: false
+
 ## TECH FEATURES CUSTOM
 spring:
     profiles:
         active: prod
+
     datasource:
         driver-class-name: oracle.jdbc.OracleDriver
         url: jdbc:oracle:thin:@localhost:49121:xe
-        username: DATAGATE_SRC
-        password: XXXXXXX
+        username: MANAGER
+        password: MANAGER
+
     jpa:
         show-sql: true
         hibernate:
             ddl-auto: none
+
     flyway:
         enabled: false
+
 ## WEB SERVER CONFIG
 server:
     port: 8085
@@ -305,3 +327,7 @@ Puis il est possible de supprimer le commit et les données associées à partir
 	delete from commit_merge_sources where commit_uuid = (select uuid from commit where comment like '###%');
 	delete from lobs where commit_uuid = (select uuid from commit where comment like '###%');
 	delete from commit where uuid = (select uuid from commit where comment like '###%');
+
+## License 
+
+Apache public License 2.0
