@@ -80,6 +80,7 @@ public class DictionaryController extends CommonController {
         }
 
         model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
+        model.addAttribute("version", this.dictionaryManagementService.getLastVersion());
 
         return "pages/dictionary";
     }
