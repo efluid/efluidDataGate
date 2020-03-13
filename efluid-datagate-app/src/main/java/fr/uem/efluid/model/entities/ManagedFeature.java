@@ -1,102 +1,103 @@
 package fr.uem.efluid.model.entities;
 
-import java.time.LocalDateTime;
-
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
-
 import fr.uem.efluid.services.Feature;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 @Entity
 @Table(name = "features")
 public class ManagedFeature {
 
-	@Id
-	@Enumerated(EnumType.STRING)
-	private Feature feature;
+    @Id
+    @Enumerated(EnumType.STRING)
+    private Feature feature;
 
-	private boolean enabled;
+    private boolean enabled;
 
-	@NotNull
-	private LocalDateTime updatedTime;
+    @NotNull
+    private LocalDateTime updatedTime;
 
-	/**
-	 * @return the feature
-	 */
-	public Feature getFeature() {
-		return this.feature;
-	}
+    public ManagedFeature() {
+        super();
+    }
 
-	/**
-	 * @param feature
-	 *            the feature to set
-	 */
-	public void setFeature(Feature feature) {
-		this.feature = feature;
-	}
+    public ManagedFeature(Feature feature) {
+        super();
+        this.feature = feature;
+    }
 
-	/**
-	 * @return the enabled
-	 */
-	public boolean isEnabled() {
-		return this.enabled;
-	}
+    /**
+     * @return the feature
+     */
+    public Feature getFeature() {
+        return this.feature;
+    }
 
-	/**
-	 * @param enabled
-	 *            the enabled to set
-	 */
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
+    /**
+     * @param feature the feature to set
+     */
+    public void setFeature(Feature feature) {
+        this.feature = feature;
+    }
 
-	/**
-	 * @return the updatedTime
-	 */
-	public LocalDateTime getUpdatedTime() {
-		return this.updatedTime;
-	}
+    /**
+     * @return the enabled
+     */
+    public boolean isEnabled() {
+        return this.enabled;
+    }
 
-	/**
-	 * @param updatedTime
-	 *            the updatedTime to set
-	 */
-	public void setUpdatedTime(LocalDateTime updatedTime) {
-		this.updatedTime = updatedTime;
-	}
+    /**
+     * @param enabled the enabled to set
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
-	/**
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((this.feature == null) ? 0 : this.feature.hashCode());
-		return result;
-	}
+    /**
+     * @return the updatedTime
+     */
+    public LocalDateTime getUpdatedTime() {
+        return this.updatedTime;
+    }
 
-	/**
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ManagedFeature other = (ManagedFeature) obj;
-		return this.feature == other.feature;
-	}
+    /**
+     * @param updatedTime the updatedTime to set
+     */
+    public void setUpdatedTime(LocalDateTime updatedTime) {
+        this.updatedTime = updatedTime;
+    }
+
+    /**
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((this.feature == null) ? 0 : this.feature.hashCode());
+        return result;
+    }
+
+    /**
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ManagedFeature other = (ManagedFeature) obj;
+        return this.feature == other.feature;
+    }
 }
