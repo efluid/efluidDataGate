@@ -203,6 +203,47 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
+     * <p>
+     *  Function should check if a commit has <strong>VERSION_UUID = The version to delete</strong>
+     *  if it is true the user cannot delete the version otherwise he can delete it.
+     *  </p>
+     * @Author Prescise
+     * @param versionUuid
+     * @return
+     */
+    public Boolean checkVersionIdCommits(UUID versionUuid){
+
+        /* For now
+        * get id of version: ok
+        * get list of lots : ok
+        * compare version current and each lots ok
+        * front part btn + link id send to route: ok
+        * TODO: compare uuid of lots with UUID of version when iterate in front to display or not button delete
+        * TODO: refactoring code by using lambda
+        * TODO: do test for route remove and algo
+        * */
+
+        Boolean versionHasLot = false;
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        //id de la version
+        //current project
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+        //get list commit par projet
+        List<Commit> commits = this.commits.findByProject(project);
+        //System.out.println(commits);
+       // System.out.println(uuid);
+        for (Commit c : commits){
+                System.out.println(c.getVersion().getUuid()+" "+versionUuid);
+            if (c.getVersion().getUuid().equals(versionUuid)){
+                versionHasLot = true;
+            }
+        }
+
+        return versionHasLot;
+    }
+
+    /**
      * @param commitUUID
      * @return
      */
