@@ -33,7 +33,7 @@
 				<tr th:if="${versions.empty}">
 					<td colspan="100%" class="empty-list-message">Aucune version</td>
 				</tr>
-                <tr th:each="version : ${versions}" th:id="${version.name}">
+                <tr th:each="version : ${versions}" th:id="${version.uuid}">
                      <td class="version-name" th:text="${version.name}">
                      	1.2.5-SNAPSHOT
                      </td>
@@ -42,6 +42,7 @@
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
                      	<button th:if="${version.canUpdate}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
+                         <button class="deleteButton btn btn-danger btn-sm float-right"> Supprimer cette version </button>
                         <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm">Comparer</a>
                      </td>
 			     </tr>
@@ -82,10 +83,20 @@
 		    });
 		};
 
+		// Delete a  version if it has no lots
+		const deleteButtonAction = (versionId) => {
+			hideDisplays();
+			$.post("/ui/versions/remove/" + versionId, null, (data, status) => {
+			   //TODO IMPLEMENTS HERE
+			   //MAYBE ADD MODAL "ARE YOU SURE YOU WANT TO DELETE THIS VERSION ?"Q TO AVOID MISTAKES
+		    });
+		};
+
     	// Init actions
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);
 			$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.id));
+			$("button.deleteButton").click((e) => deleteButtonAction(e.target.parentElement.parentElement.id));
 		}); 
     </script>
 </body>
