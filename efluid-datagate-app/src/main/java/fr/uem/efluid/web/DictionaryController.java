@@ -1,7 +1,9 @@
 package fr.uem.efluid.web;
 
+import fr.uem.efluid.model.repositories.FeatureManager;
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.DictionaryManagementService;
+import fr.uem.efluid.services.Feature;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +45,18 @@ public class DictionaryController extends CommonController {
     @Autowired
     private ApplicationDetailsService applicationDetailsService;
 
+    @Autowired
+    private FeatureManager features;
+
+    @RequestMapping("/versions/refresh")
+    public String versionsPageRefreshModel(Model model) {
+
+
+
+        // Use versions page
+        return versionsPage(model);
+    }
+
     @RequestMapping("/versions")
     public String versionsPage(Model model) {
 
@@ -56,6 +70,10 @@ public class DictionaryController extends CommonController {
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
         model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
         model.addAttribute("checkVersion", this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion());
+        model.addAttribute("canCreateVersion", this.dictionaryManagementService.isVersionCanCreate());
+
+        // If we use the model ID as version name, the name can be ignored / hidden
+        model.addAttribute("noVersionName", this.features.isEnabled(Feature.USE_MODEL_ID_AS_VERSION_NAME));
 
         return "pages/versions";
     }

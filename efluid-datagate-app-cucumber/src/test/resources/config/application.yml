@@ -27,6 +27,9 @@ datagate-efluid:
         details-index-max: 10000
         combine-similar-diff-after: 10000000
 
+    versions:
+        use-model-id-as-version: false
+
     security:
         salt: 12345678901234567890123456789012
 

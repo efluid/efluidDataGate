@@ -4,6 +4,7 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Version;
+import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -14,6 +15,7 @@ import io.cucumber.java.en.When;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
@@ -38,13 +40,16 @@ public class VersionStepDefs extends CucumberStepDefs {
 
     private static LocalDateTime initUpdatedTime;
 
+    @Autowired
+    private DictionaryManagementService dictionaryManagementService;
+
     @Before
     public void resetFixture() {
         specifiedVersions = null;
         initUpdatedTime = null;
     }
 
-    @Given("^the existing versions (.*)$")
+    @Given("^the existing versions \"(.*)\"$")
     public void the_existing_versions(String versionsRaw) throws Throwable {
 
         List<String> versions = Stream.of(versionsRaw.split(", ")).collect(Collectors.toList());
@@ -69,7 +74,7 @@ public class VersionStepDefs extends CucumberStepDefs {
         modelDatabase().initVersions(getCurrentUserProject(), Arrays.asList(name), 50);
     }
 
-    @When("^the user add new version (.*)$")
+    @When("^the user add new version \"(.*)\"$")
     public void the_user_add_new_version(String name) throws Throwable {
 
         // Add new
@@ -93,7 +98,7 @@ public class VersionStepDefs extends CucumberStepDefs {
         modelDatabase().forceUpdateVersion(getCurrentUserProject());
     }
 
-    @When("^the user update version (.*)$")
+    @When("^the user update version \"(.*)\"$")
     public void the_user_update_version(String name) throws Throwable {
 
         // Get actual update date
@@ -107,7 +112,7 @@ public class VersionStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the (\\d+) \\w+ versions are displayed$")
-    public void the_x_versions_are_displayed(int nbr) throws Throwable {
+    public void the_x_versions_are_displayed(int nbr)   {
 
         assertModelIsSpecifiedListWithProperties(
                 "versions",
@@ -116,8 +121,31 @@ public class VersionStepDefs extends CucumberStepDefs {
                 specifiedVersions);
     }
 
-    @Then("^the update date of version (.*) is updated$")
-    public void the_update_date_of_version_is_updated(String name) throws Throwable {
+    @Then("^the current version name is \"(.*)\"$")
+    public void the_current_version_name_is(String name)  {
+
+        VersionData current = this.dictionaryManagementService.getLastVersion();
+
+        assertThat(current).isNotNull();
+        assertThat(current.getName()).isEqualTo(name);
+    }
+
+    @Then("^the user cannot add a new version$")
+    public void the_user_cannot_add_version()  {
+
+        // Use page context property
+        assertModelIsSpecifiedProperty("canCreateVersion", Boolean.class, v -> !v );
+    }
+
+    @Then("^the user can add a new version$")
+    public void the_user_can_add_version()  {
+
+        // Use page context property
+        assertModelIsSpecifiedProperty("canCreateVersion", Boolean.class, v -> v );
+    }
+
+    @Then("^the update date of version \"(.*)\" is updated$")
+    public void the_update_date_of_version_is_updated(String name)   {
 
         Assert.assertNotEquals(initUpdatedTime,
                 modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime());

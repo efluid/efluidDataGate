@@ -26,7 +26,8 @@ public class FeaturesStepDefs extends CucumberStepDefs {
 
     @Given("^the feature \"(.*)\" is (.*)$")
     public void then_feature_state(String feature, String action) throws Exception {
-        post("/rest/v1/features/" + action.substring(0, action.length() - 1) + "/" + feature);
+        String uri = "/rest/v1/features/" + action.trim().substring(0, action.trim().length() - 1) + "/" + feature;
+        post(uri);
         assertRequestWasOk();
     }
 

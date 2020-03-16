@@ -116,6 +116,11 @@ public class CommonStepDefs extends CucumberStepDefs {
         // Nothing
     }
 
+    @Given("^the current model id is \"(.*)\"$")
+    public void mock_model_id(String id) {
+        mockDatabaseIdentifierWithVersion(id,true);
+    }
+
     @Given("^the existing data in managed table \"(.*)\" in destination environment :$")
     public void existing_data_in_managed_table_in_dest(String name, DataTable data) {
         // Switched on same db

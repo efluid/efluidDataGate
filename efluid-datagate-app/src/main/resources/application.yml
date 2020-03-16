@@ -41,6 +41,9 @@ datagate-efluid:
     dictionary:
         select-pk-as-default-keys: true
 
+    versions:
+        use-model-id-as-version: true
+
     security:
         salt: 12345678901234567890123456789012
 
