@@ -183,7 +183,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
     /**
      * @return
      */
-    public void deleteVersion(UUID uuid) {
+    public void deleteVersionById(UUID uuid) {
         this.versions.deleteById(uuid);
     }
 
@@ -222,24 +222,20 @@ public class DictionaryManagementService extends AbstractApplicationService {
      * @return
      */
 
-    public Boolean checkVersionIdCommits(UUID versionId){
+    public Boolean isVersionLinkedToLot(UUID versionId){
 
-        Boolean versionIsLinkedToLot = false;
+        Boolean versionIsLinkedToLot;
 
         //get current project
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
-        //get list commits by projet
+        //get list commits by project
         List<Commit> commits = this.commits.findByProject(project);
 
-        //Iterate over commits to get version_uuid and check if version is linked
-        for (Commit c : commits){
-            if (c.getVersion().getUuid().equals(versionId)){
-                System.out.println("CANNOT DELETE VERSION");
-                versionIsLinkedToLot = true;
-            }
-        }
+        //check if commit has version_uuid equal to current version
+        versionIsLinkedToLot = commits.stream().anyMatch(c -> c.getVersion().getUuid().equals(versionId));
+
         return versionIsLinkedToLot;
     }
 
