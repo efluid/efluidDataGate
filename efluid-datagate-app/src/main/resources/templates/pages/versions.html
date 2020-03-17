@@ -91,7 +91,7 @@
 		    $("#submitDelete").on("click",() => {
 		        $.post("/ui/versions/remove/" + versionId, null, (data, status) => {
 		            $('.modal').hide();
-		                window.location.replace("/ui/versions");
+		            window.location.replace("/ui/versions");
 		        });
 		    });
 		}
