@@ -19,6 +19,7 @@
 				<tr>
 		            <th scope="col">Lots de modifications</th>
 		            <th scope="col">Domains couverts</th>
+					<th scope="col">Version</th>
 		            <th scope="col">Créé par</th>
 		            <th scope="col">Le</th>
 		            <th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/ui/push/all/{name}.par(name=${custom.exportName('commits', modelDesc.schema, 'all')})}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
@@ -32,6 +33,7 @@
 				<tr th:each="commit, cstat : ${commits}" th:id="${commit.uuid}">
 					<td th:utext="${custom.processGitmoji(commit.comment)}">Préchargement configuration</td>
 		            <td th:text="${commit.domainNames}">Fonct domains</td>
+					<td th:text="${commit.versionName}">Version</td>
 		            <td th:text="${commit.originalUserEmail}">System</td>
 		            <td th:text="${custom.format(commit.createdTime)}">01/11/2017</td>
 					<td>

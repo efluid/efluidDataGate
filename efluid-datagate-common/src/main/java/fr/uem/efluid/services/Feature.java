@@ -36,14 +36,19 @@ public enum Feature {
     /**
      * <p>If enabled, the database PK are pre-specified as dictionary entry keys</p>
      */
-    SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY("datagate-efluid.dictionary.select-pk-as-default-keys");
+    SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY("datagate-efluid.dictionary.select-pk-as-default-keys"),
+
+    /**
+     * <p>For version creates : If enabled, force use the modelIdentifier result as version name (no user select of version name)</p>
+     */
+    USE_MODEL_ID_AS_VERSION_NAME("datagate-efluid.versions.use-model-id-as-version");
 
     private final String propertyKey;
 
     /**
      * @param propertyKey
      */
-    private Feature(String propertyKey) {
+    Feature(String propertyKey) {
         this.propertyKey = propertyKey;
     }
 

@@ -16,7 +16,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
   * Projets
   * Dictionnaire des tables de paramètrage
   * Domaines fonctionnels
-  * Versions
+  * [Versions](versions.md)
   * [Sources de transformation](transformer-source.md)
   * Export / import de dictionnaire
   * Préparation de lots

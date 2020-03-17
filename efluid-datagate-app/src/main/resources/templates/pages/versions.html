@@ -11,19 +11,20 @@
         	Une version peut être mise à jour tant qu'aucun lot n'y est associé.
         	<b><span th:if="${modelDesc != null}" th:text="|La version du modèle de l'application actuelle est ${modelDesc.identity}|">Model</span></b>
         </span>
-        <span th:if="${versions == null || versions.isEmpty()}" class="important-remark" id="versRemark">
-        	Aucune version n'a encore été définie pour le projet courant. Les echanges de lots de modifications ne sont pour l'instant pas possibles.
-        	<br/><br/>
-        </span>
-        <span th:if="${versions != null && !versions.isEmpty() && checkVersion}" class="important-remark" id="versRemark">
-        	Depuis la dernière mise à jour de version des mises à jour ont eu lieu dans le dictionnaire. Créer une nouvelle version pour les intégrer.
-        	<br/><br/>
-        </span>
+        <div th:if="${versions == null || versions.isEmpty()}" class="alert alert-danger" role="alert" id="versRemark">
+            <strong>Aucune version n'a encore été définie pour le projet courant.</strong> Les echanges de lots de modifications ne sont pour l'instant pas possibles.
+        </div>
+        <div th:if="${versions != null && !versions.isEmpty() && checkVersion}" class="alert alert-danger" role="alert" id="versRemark">
+            <strong>Depuis la dernière mise à jour de version des mises à jour ont eu lieu dans le dictionnaire.</strong> Créer une nouvelle version pour les intégrer.
+        </div>
+        <div th:if="!${canCreateVersion}" class="alert alert-danger" role="alert">
+            <strong>Aucune nouvelle version ne peut être ajoutée actuellement.</strong> La version du modèle de l'application doit être auparavant mise à jour.
+        </div>
         <table class="table table-sm">
             <thead>
                 <tr>
                     <th scope="col" width="35%">Versions</th>
-                    <th scope="col">App. Modèle</th>
+                    <th th:if="!${noVersionName}">scope="col">App. Modèle</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
                     <th scope="col"width="10%">&nbsp;</th>
@@ -37,7 +38,7 @@
                      <td class="version-name" th:text="${version.name}">
                      	1.2.5-SNAPSHOT
                      </td>
-                     <td th:text="${version.modelId}">1.2.3</td>
+                     <td th:if="!${noVersionName}" th:text="${version.modelId}">1.2.3</td>
                      <td th:text="${custom.format(version.createdTime)}">Lundi</td>
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
@@ -46,34 +47,47 @@
                         <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm">Comparer</a>
                      </td>
 			     </tr>
-			     <tr id="versionListInjectBefore">
-			         <td colspan="2"><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
-			         <td colspan="5"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+			     <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
+			         <td th:if="!${noVersionName}" colspan="4"><input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/></td>
+                     <td th:if="${noVersionName}" colspan="3"><strong><span th:if="${modelDesc != null}" class="float-right" th:text="|Ajouter une nouvelle version pour le modèle de l'application actuel (${modelDesc.identity})|">Model</span></strong></td>
+			         <td><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
 			     </tr>
 			</tbody>
 		</table>
         <div th:insert="~{components/modal :: modal}"></div>
     </span>
-    <script layout:fragment="script">
+    <script layout:fragment="script" th:inline="javascript">
+
+		var noVersionName = /*[[${noVersionName}]]*/ false;
 
         $('.modal').hide();
 		// Add row button
 		const addButtonAction = () => {
 			hideDisplays();
-			var inputName = $("#versionName");
-			var name = inputName.val();
-			if(name == null || name === ''){
-				setInvalid("#versionName","Le nom de la version est obligatoire");
+			var name = 'whatever';
+			if(!noVersionName) {
+                name = $("#versionName").val();
+                if(name == null || name === ''){
+                    setInvalid("#versionName","Le nom de la version est obligatoire");
+                }
 			}
-			$.post("/ui/versions/" + inputName.val(), null, (data, status) => {
+			$.post("/ui/versions/" + name, null, (data, status) => {
 				showSuccess("Version ajoutée avec succès");
 				// Remove other update buttons
 				$("button.updateButton").remove();
-		        var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>' + data.modelId + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
-				$("#versionListInjectBefore").before(newVersionRow);
-				$(".empty-list-message").remove();
-				inputName.val("");
-				$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.parentElement.id)); // Refresh updates
+
+				if(noVersionName) {
+                    var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
+                    $("#versionListInjectBefore").before(newVersionRow);
+                    $("#versionListInjectBefore").remove(); // Cannot add more
+				} else {
+                    var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>' + data.modelId + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
+                    $("#versionListInjectBefore").before(newVersionRow);
+					inputName.val("");
+				}
+
+                $(".empty-list-message").remove();
+                $("#versRemark").remove();
 		    });
 		};
     
