@@ -3,7 +3,7 @@
 <head>
 </head>
 <body>
-    <span layout:fragment="content">
+    <span layout:fragment="content" >
 		<h5>Gestion des versions pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
         <span class="help">
         	Les versions sont specifiées pour le dictionnaire courant. Les lots de modifications sont associés à une version du dictionnaire, et des
@@ -52,9 +52,11 @@
 			     </tr>
 			</tbody>
 		</table>
+        <div th:insert="~{components/modal :: modal}"></div>
     </span>
     <script layout:fragment="script">
 
+        $('.modal').hide();
 		// Add row button
 		const addButtonAction = () => {
 			hideDisplays();
@@ -85,16 +87,24 @@
 
 		// Delete a  version if it has no lots
 		const deleteButtonAction = (versionId) => {
-			hideDisplays();
-			$.post("/ui/versions/remove/" + versionId, null, (data, status) => {
-			   //TODO IMPLEMENTS HERE
-			   //MAYBE ADD MODAL "ARE YOU SURE YOU WANT TO DELETE THIS VERSION ?"Q TO AVOID MISTAKES
+		    $('.modal').show();
+		    $("#submitDelete").on("click",() => {
+		        $.post("/ui/versions/remove/" + versionId, null, (data, status) => {
+		            $('.modal').hide();
+		                window.location.replace("/ui/versions");
+		        });
 		    });
-		};
+		}
+
+		//Hide modal
+		const cancelButton = () => {
+		    $('.modal').hide();
+		}
 
     	// Init actions
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);
+			$("#cancelDelete").click(cancelButton);
 			$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.id));
 			$("button.deleteButton").click((e) => deleteButtonAction(e.target.parentElement.parentElement.id));
 		}); 

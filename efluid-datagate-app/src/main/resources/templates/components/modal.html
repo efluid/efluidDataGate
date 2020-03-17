@@ -1,0 +1,20 @@
+<div th:fragment="modal" class="modal" tabindex="-1" role="dialog"
+     style="
+        display: flex !important;
+        justify-content: center;
+        align-items: center;">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Suppression</h5>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer cette version ?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="submitDelete" type="button" class="btn btn-danger">Supprimer</button>
+                <button id="cancelDelete" type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+            </div>
+        </div>
+    </div>
+</div>
