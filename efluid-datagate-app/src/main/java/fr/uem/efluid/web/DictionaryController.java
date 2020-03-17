@@ -39,12 +39,6 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
 public class DictionaryController extends CommonController {
 
     @Autowired
-    private CommitRepository commits;
-
-    @Autowired
-    private CommitService commitService;
-
-    @Autowired
     private DictionaryManagementService dictionaryManagementService;
 
     @Autowired
@@ -52,8 +46,6 @@ public class DictionaryController extends CommonController {
 
     @RequestMapping("/versions")
     public String versionsPage(Model model) {
-
-
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
