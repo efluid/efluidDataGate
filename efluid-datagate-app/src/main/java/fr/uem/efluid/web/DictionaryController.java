@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.validation.Valid;
-import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.web.bind.annotation.RequestMethod.*;
@@ -54,6 +53,8 @@ public class DictionaryController extends CommonController {
     @RequestMapping("/versions")
     public String versionsPage(Model model) {
 
+
+
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
         }
@@ -63,6 +64,7 @@ public class DictionaryController extends CommonController {
 
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
         model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
+        model.addAttribute("dictionaryManagementService", this.dictionaryManagementService);
         model.addAttribute("checkVersion", this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion());
 
         return "pages/versions";
@@ -71,14 +73,16 @@ public class DictionaryController extends CommonController {
     /**
      * Rest Method for AJAX push
      *
-     * @param uuid
+     * @param
      * @return
-     */
+     * */
+
     @RequestMapping(value = "/versions/remove/{uuid}", method = POST)
     @ResponseBody
-    public void  deleteVersion(@PathVariable("uuid") UUID uuid) {
-        this.commitService.checkVersionIdCommits(uuid);
+    public void  deleteVersion(Model model, @PathVariable("uuid") UUID uuid) {
+
     }
+
 
     @RequestMapping("/domains")
     public String domainsPage(Model model) {
