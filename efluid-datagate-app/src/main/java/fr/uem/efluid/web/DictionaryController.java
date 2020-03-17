@@ -79,8 +79,8 @@ public class DictionaryController extends CommonController {
 
     @RequestMapping(value = "/versions/remove/{uuid}", method = POST)
     @ResponseBody
-    public void  deleteVersion(Model model, @PathVariable("uuid") UUID uuid) {
-
+    public void  deleteVersion(@PathVariable("uuid") UUID uuid) {
+        this.dictionaryManagementService.deleteVersion(uuid);
     }
 
 
