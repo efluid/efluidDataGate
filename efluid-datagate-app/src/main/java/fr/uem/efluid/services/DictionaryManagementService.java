@@ -183,6 +183,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
     /**
      * @return
      */
+    public void deleteVersion(UUID uuid) {
+        this.versions.deleteById(uuid);
+    }
+
+    /**
+     * @return
+     */
     public boolean isDictionaryUpdatedAfterLastVersion() {
 
         this.projectService.assertCurrentUserHasSelectedProject();
