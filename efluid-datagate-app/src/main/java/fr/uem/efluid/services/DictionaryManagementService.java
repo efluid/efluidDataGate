@@ -206,6 +206,37 @@ public class DictionaryManagementService extends AbstractApplicationService {
     }
 
     /**
+     * <p>
+     *  Function should check if a commit has <strong>VERSION_UUID = The version to delete</strong>
+     *  if it is true the user cannot delete the version otherwise he can delete it.
+     *  </p>
+     * @Author Prescise
+     * @param versionId
+     * @return
+     */
+
+    public Boolean checkVersionIdCommits(UUID versionId){
+
+        Boolean versionIsLinkedToLot = false;
+
+        //get current project
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        //get list commits by projet
+        List<Commit> commits = this.commits.findByProject(project);
+
+        //Iterate over commits to get version_uuid and check if version is linked
+        for (Commit c : commits){
+            if (c.getVersion().getUuid().equals(versionId)){
+                System.out.println("CANNOT DELETE VERSION");
+                versionIsLinkedToLot = true;
+            }
+        }
+        return versionIsLinkedToLot;
+    }
+
+    /**
      * @return
      */
     public List<FunctionalDomainData> getAvailableFunctionalDomains() {
