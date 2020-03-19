@@ -60,6 +60,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     private final String joinSubQueryModel;
     private final String updateOrInsertLinkedSubQueryModel;
     private final String missingLinkClauseModel;
+    private final String nullableKeyJoinSupportModel;
     private final DateTimeFormatter dbDateFormater;
 
     /**
@@ -82,6 +83,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
         this.updateOrInsertLinkedSubQueryModel = generateUpdateOrInsertLinkedSubQueryTemplate(rules);
         this.missingLinkClauseModel = generateSelectMissingLinkWhereClausePartTemplate(rules);
         this.dbDateFormater = DateTimeFormatter.ofPattern(rules.getDatabaseDateFormat());
+        this.nullableKeyJoinSupportModel = generateNullableKeyJoinSupportTemplate(rules);
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Initialized query generator with models :");
@@ -94,6 +96,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
             LOGGER.debug(" -> joinSubQueryModel => {}", this.joinSubQueryModel);
             LOGGER.debug(" -> updateOrInsertLinkedSubQueryModel => {}", this.updateOrInsertLinkedSubQueryModel);
             LOGGER.debug(" -> missingLinkClauseModel => {}", this.missingLinkClauseModel);
+            LOGGER.debug(" -> nullableKeyJoinSupportModel => {}", this.nullableKeyJoinSupportModel);
         }
     }
 
@@ -102,13 +105,13 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @return
      */
     public String producesSelectParameterQuery(DictionaryEntry parameterEntry, Collection<TableLink> links,
-                                               Map<String, DictionaryEntry> allEntries) {
+                                               Map<String, DictionaryEntry> allEntries, boolean nullableLinkKeys) {
 
         // Need clean select for uses
         String selectClause = consolidateSelectClause(parameterEntry);
 
         // For inner linked (select contains them already)
-        String joinClauses = prepareJoinLinks(links, allEntries, JoinType.INCLUDE);
+        String joinClauses = prepareJoinLinks(links, allEntries, JoinType.INCLUDE, nullableLinkKeys);
 
         return String.format(this.selectQueryModel,
                 selectClause,
@@ -123,10 +126,10 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @return
      */
     public String producesTestJoinParameterQuery(DictionaryEntry parameterEntry, List<TableLink> links,
-                                                 Map<String, DictionaryEntry> allEntries) {
+                                                 Map<String, DictionaryEntry> allEntries, boolean nullableLinkKeys) {
 
         // For inner linked (select contains them already)
-        String joinClauses = prepareJoinLinks(links, allEntries, JoinType.MISSING);
+        String joinClauses = prepareJoinLinks(links, allEntries, JoinType.MISSING, nullableLinkKeys);
 
         return String.format(this.countQueryModel,
                 parameterEntry.getTableName(),
@@ -139,13 +142,13 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @return
      */
     public String producesSelectMissingParameterQuery(DictionaryEntry parameterEntry, List<TableLink> links,
-                                                      Map<String, DictionaryEntry> allEntries) {
+                                                      Map<String, DictionaryEntry> allEntries, boolean nullableLinkKeys) {
 
         // Need clean select for uses
         String selectClause = consolidateSelectClauseForMissingLinks(parameterEntry, links);
 
         // For inner linked (select contains them already)
-        String joinClauses = prepareJoinLinks(links, allEntries, JoinType.MISSING);
+        String joinClauses = prepareJoinLinks(links, allEntries, JoinType.MISSING, nullableLinkKeys);
 
         // Custom where clause with reversed select
         String whereClause = prepareReverseJoinLinksWhereClause(parameterEntry.getWhereClause(), links, allEntries);
@@ -512,7 +515,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @return
      */
     private String prepareJoinLinks(Collection<TableLink> links,
-                                    Map<String, DictionaryEntry> allEntries, JoinType type) {
+                                    Map<String, DictionaryEntry> allEntries, JoinType type, boolean nullableLinkKeys) {
 
         AtomicInteger pos = new AtomicInteger(0);
 
@@ -524,7 +527,14 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
                     // INNER JOIN "%s" %s on %s."%s" = cur."%s"
                     // or for test : LEFT OUTER JOIN ....
                     // or whatever join type is required
-                    return String.format(this.joinSubQueryModel, type.getValue(), dic.getTableName(), alias, linkJoinOn(alias, l));
+                    // "%s JOIN " + (rules.isTableNamesProtected() ? "\"%s\"" : "%s") + " %s ON %s";
+                    return String.format(
+                            this.joinSubQueryModel,
+                            type.getValue(),
+                            dic.getTableName(),
+                            alias,
+                            linkJoinOn(alias, l)  + (nullableLinkKeys ? nullableKeyJoinSupport(alias, l) : "")
+                    );
                 }).collect(Collectors.joining(" "));
     }
 
@@ -565,6 +575,37 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
         }
 
         return joinOn.toString();
+    }
+
+
+    private String nullableKeyJoinSupport(String alias, TableLink link) {
+
+        // Default - standard single key
+        if (!link.isCompositeKey()) {
+            return String.format(this.nullableKeyJoinSupportModel,
+                    (this.protectColumns ? alias + ".\"" + link.getColumnTo() + "\"" : alias + "." + link.getColumnTo()) + ", " +
+                            (this.protectColumns ? "cur.\"" + link.getColumnFrom() + "\"" : "cur." + link.getColumnFrom()));
+        }
+
+        // Rare - composite key link
+        int max = (int) link.columnFroms().count();
+
+        StringBuilder linkAlias = new StringBuilder();
+
+        for (int i = 0; i < max; i++) {
+            if (this.protectColumns) {
+                linkAlias.append(alias).append(".\"").append(link.getColumnTo(i)).append("\", cur.\"").append(link.getColumnFrom(i))
+                        .append("\"");
+            } else {
+                linkAlias.append(alias).append(".").append(link.getColumnTo(i)).append(", cur.").append(link.getColumnFrom(i));
+            }
+
+            if (i < max - 1) {
+                linkAlias.append(", ");
+            }
+        }
+
+        return String.format(this.nullableKeyJoinSupportModel,linkAlias.toString());
     }
 
     /**
@@ -721,6 +762,16 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      */
     private static String generateSelectMissingLinkWhereClausePartTemplate(QueryGenerationRules rules) {
         return " %s." + (rules.isTableNamesProtected() ? "\"%s\"" : "%s") + " IS NULL ";
+    }
+
+    /**
+     * Generate the template regarding the rules on protect / not protected
+     *
+     * @param rules
+     * @return
+     */
+    private static String generateNullableKeyJoinSupportTemplate(QueryGenerationRules rules) {
+        return "OR COALESCE(%s) IS NULL";
     }
 
     /**

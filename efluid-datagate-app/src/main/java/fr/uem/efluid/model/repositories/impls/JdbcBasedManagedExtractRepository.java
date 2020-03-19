@@ -79,6 +79,8 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
     @Override
     public long testCurrentContent(DictionaryEntry parameterEntry, List<List<String>> tableData, long limit) {
 
+        // J'en suis à ajouter la verif de la feature ici et à l'utiliser pour générer la requete avec COALESCE
+
         String query = this.queryGenerator.producesSelectParameterQuery(parameterEntry, Collections.emptyList(), new HashMap<>());
 
         LOGGER.debug("Test values from managed table {} with query \"{}\"", parameterEntry.getTableName(), query);
