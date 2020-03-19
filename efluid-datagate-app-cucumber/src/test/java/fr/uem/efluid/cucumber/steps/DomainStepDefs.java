@@ -86,7 +86,6 @@ public class DomainStepDefs extends CucumberStepDefs {
         this.dictionaryManagementService.importAll(new ExportFile(importFile.toPath(), ""));
     }
 
-
     @When("^the user remove functional domain (.*)$")
     public void the_user_remove_functional_domain(String name) throws Throwable {
 

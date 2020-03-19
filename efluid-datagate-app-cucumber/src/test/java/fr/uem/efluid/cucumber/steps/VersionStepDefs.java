@@ -5,6 +5,7 @@ import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.services.DictionaryManagementService;
+import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -19,10 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,7 +60,6 @@ public class VersionStepDefs extends CucumberStepDefs {
 
         // Init with specified versions
         modelDatabase().initVersions(getCurrentUserProject(), versions, 1);
-
         // Keep version for update check
         specifiedVersions = versions;
     }
@@ -90,11 +87,39 @@ public class VersionStepDefs extends CucumberStepDefs {
 
         // Update is REST only, update page
         get(getCorrespondingLinkForPageName("list of versions"));
+
+    }
+
+    @Given("^the version (.*) has no lots")
+    public void the_version_x_has_no_lots(String name) throws Throwable {
+        Boolean isLinked = false;
+        List<CommitEditData> commits = this.commitService.getAvailableCommits();
+
+        for (CommitEditData c: commits) {
+            isLinked = name.equals(c.getVersionName()) ? true : false;
+        }
+
+        assertThat(isLinked).isFalse();
+    }
+
+    @When("^the user delete version (.*)$")
+    public void the_user_delete_version(String name) throws  Throwable {
+
+        UUID versionUuid = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUuid();
+
+        post("/ui/remove/versions/" + versionUuid);
+
+        List<String> listVersions = new ArrayList<>();
+
+        listVersions.addAll(specifiedVersions);
+
+        listVersions.remove(name);
+
+        get(getCorrespondingLinkForPageName("list of versions"));
     }
 
     @Given("^the existing version in destination environment is different$")
-    public void given_modified_version() {
-        // Force modify version to make it different
+    public void given_modified_version() {// Force modify version to make it different
         modelDatabase().forceUpdateVersion(getCurrentUserProject());
     }
 
