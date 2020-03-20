@@ -3,9 +3,12 @@ package fr.uem.efluid.cucumber.steps;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.metas.ManagedModelDescription;
+import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,5 +87,21 @@ public class DictionaryStepDefs extends CucumberStepDefs {
         Version currentVersion = modelDatabase().findLastVersionForProject(project);
 
         modelDatabase().initDictionary(tables, new ArrayList<>(), currentVersion);
+    }
+
+    @Then("^the active version \"(.*)\" is displayed$")
+    public void then_active_version(String version) {
+        assertModelIsSpecifiedProperty(
+                "version",
+                VersionData.class,
+                v -> v.getName().equals(version));
+    }
+
+    @Then("^the active schema is displayed$")
+    public void then_active_schema() {
+        assertModelIsSpecifiedProperty(
+                "modelDesc",
+                ManagedModelDescription.class,
+                d -> d.getSchema().equals("TWEAKED"));
     }
 }
