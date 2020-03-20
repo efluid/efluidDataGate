@@ -93,23 +93,15 @@ public class VersionStepDefs extends CucumberStepDefs {
     @When("^the user delete version \"(.*)\"$")
     public void the_user_delete_version(String name) throws  Throwable {
 
-        System.out.println("version to delete: " + name);
-
         UUID uuidVersion = version(name, getCurrentUserProject()).getUuid();
-
-        System.out.println("uuid version to delete: " + uuidVersion);
 
         List<String> listVersions = new ArrayList<>();
 
         listVersions.addAll(specifiedVersions);
 
-        System.out.println("1: " + listVersions);
-
         post("/ui/remove/versions/" + uuidVersion);
 
         listVersions.remove(name);
-
-        System.out.println(listVersions);
 
         get(getCorrespondingLinkForPageName("list of versions"));
     }
