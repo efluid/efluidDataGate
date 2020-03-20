@@ -19,6 +19,7 @@ datagate-efluid:
             table-names-protected: true
             column-names-protected: true
             database-date-format: dd-MM-yyyy HH:mm:ss
+            join-on-nullable-keys: true
         value:
             keep-empty: false
 
@@ -43,9 +44,6 @@ datagate-efluid:
 
     versions:
         use-model-id-as-version: true
-
-    links:
-        can-use-null-as-key-value: true
 
     security:
         salt: 12345678901234567890123456789012

@@ -6,6 +6,7 @@ import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
@@ -51,6 +52,20 @@ public class PreparationStepDefs extends CucumberStepDefs {
     }
 
     /* ########################################### ALL GIVENS ################################################ */
+
+    @Given("^the database doesn't support nullable join keys$")
+    public void disable_join_key_support() {
+        DatasourceUtils.CustomQueryGenerationRules rules = initUpdatableRules();
+        rules.setJoinOnNullableKeys(false);
+        this.queryGenerator.update(rules);
+    }
+
+    @Given("^the database does support nullable join keys$")
+    public void init_join_key_support() {
+        DatasourceUtils.CustomQueryGenerationRules rules = initUpdatableRules();
+        rules.setJoinOnNullableKeys(true);
+        this.queryGenerator.update(rules);
+    }
 
     @Given("^a diff analysis can be started and completed$")
     public void a_diff_analysis_can_be_started_and_completed() {

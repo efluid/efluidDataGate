@@ -219,36 +219,7 @@ Feature: The update on parameter tables can be followed checked and stored as co
       | 3  | SEVEN_3     | THREE_B         | Machin | true    |
       | 4  | SEVEN_4     | THREE_C         | Bidule | false   |
       | 5  | SEVEN_5     | THREE_MISSING_2 | Bidule | false   |
-    And a diff analysis can be started and completed
-    And a diff has already been launched
-    And the diff is completed
-    When the user access to diff commit page
-    Then these remarks on missing linked lines are rendered :
-      | Table      | Key     | Payload                                                            |
-      | TTAB_SEVEN | SEVEN_2 | VALUE:'Bidule', ENABLED:false, OTHER_TABLE_VALUE:'THREE_MISSING_1' |
-      | TTAB_SEVEN | SEVEN_5 | VALUE:'Bidule', ENABLED:false, OTHER_TABLE_VALUE:'THREE_MISSING_2' |
-    And the commit content is rendered with these identified changes :
-      | Table      | Key     | Action | Payload                                                       |
-      | TTAB_THREE | THREE_A | ADD    | OTHER:'Other A'                                               |
-      | TTAB_THREE | THREE_B | ADD    | OTHER:'Other B'                                               |
-      | TTAB_THREE | THREE_C | ADD    | OTHER:'Other C'                                               |
-      | TTAB_SEVEN | SEVEN_1 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_A', VALUE:'Truc', ENABLED:true    |
-      | TTAB_SEVEN | SEVEN_3 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_B', VALUE:'Machin', ENABLED:true  |
-      | TTAB_SEVEN | SEVEN_4 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_C', VALUE:'Bidule', ENABLED:false |
-
-  Scenario: On Efluid tables, linked table lines can use -null- as id. No remarks should be displayed on available -null- ids
-    Given the existing data in managed table "TTAB_THREE" :
-      | key    | value   | other   |
-      | 00AA00 | THREE_A | Other A |
-      | 00BB00 | THREE_B | Other B |
-      | 00CC00 | THREE_C | Other C |
-    And the existing data in managed table "TTAB_SEVEN" :
-      | id | businessKey | otherTableValue | value  | enabled |
-      | 1  | SEVEN_1     | THREE_A         | Truc   | true    |
-      | 2  | SEVEN_2     | THREE_MISSING_1 | Bidule | false   |
-      | 3  | SEVEN_3     | THREE_B         | Machin | true    |
-      | 4  | SEVEN_4     | THREE_C         | Bidule | false   |
-      | 5  | SEVEN_5     | THREE_MISSING_2 | Bidule | false   |
+    And the database doesn't support nullable join keys
     And a diff analysis can be started and completed
     And a diff has already been launched
     And the diff is completed

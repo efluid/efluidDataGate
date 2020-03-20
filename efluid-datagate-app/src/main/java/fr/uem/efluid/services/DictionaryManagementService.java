@@ -133,7 +133,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
         // Behavior based on version feature
-        final boolean useModelId =  this.features.isEnabled(Feature.USE_MODEL_ID_AS_VERSION_NAME);
+        final boolean useModelId = this.features.isEnabled(Feature.USE_MODEL_ID_AS_VERSION_NAME);
 
         // Search ref identifier if enabled
         String modelId = this.modelDescs.getCurrentModelIdentifier();
@@ -144,7 +144,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         final String fixedName = useModelId ? modelId : name;
 
         // Search by name
-        Version version =  this.versions.findByNameAndProject(fixedName, project) ;
+        Version version = this.versions.findByNameAndProject(fixedName, project);
 
         // Create
         if (version == null) {
@@ -154,9 +154,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
             version.setName(fixedName);
             version.setCreatedTime(LocalDateTime.now());
             version.setProject(project);
-        }
-
-        else {
+        } else {
             LOGGER.info("Update version {} in current project", fixedName);
         }
 
@@ -399,7 +397,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         return this.dictionary.findByDomainProject(project).stream()
                 .map(e -> DictionaryEntrySummary.fromEntity(e,
-                        this.queryGenerator.producesSelectParameterQuery(e, this.links.findByDictionaryEntry(e), allDicts)))
+                        this.queryGenerator.producesSelectParameterQuery(
+                                e,
+                                this.links.findByDictionaryEntry(e),
+                                allDicts)))
                 .peek(d -> d.setCanDelete(!usedIds.contains(d.getUuid())))
                 .sorted()
                 .collect(Collectors.toList());
@@ -1659,8 +1660,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
     /**
      * <p>If we have to use the model ID as version name, but their is no version ID, then We cant !</p>
+     *
      * @param useModelIdAsVersionName current feature status on "use model id as version name"
-     * @param currentModelId current model id extracted from available identifier
+     * @param currentModelId          current model id extracted from available identifier
      */
     private static void assertCanCreateVersionFromModelId(boolean useModelIdAsVersionName, String currentModelId) {
 

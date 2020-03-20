@@ -29,15 +29,23 @@ import java.util.stream.Collectors;
 
 /**
  * <p>
+ * <b>Main extractor</b> : this component is the entry point for all "READ" operations from the managed table :
+ * <ul>
+ * <li>Extraction of "current" content</li>
+ * <li>Test on the existing content</li>
+ * <li>Check on missing joins for "remarks" building</li>
+ * </ul>
+ * </p>
+ * <p>
  * Access to raw data of parameters : can read from Parameter source table using JDBC call
  * </p>
  * <p>
  * Default implements using <tt>JdbcTemplate</tt> with various {@link ResultSetExtractor}
- * depending on required results. SQL query generation is done by a
- * {@link ManagedQueriesGenerator}
+ * depending on required results. SQL query generation is done by a {@link ManagedQueriesGenerator}
+ * </p>
  *
  * @author elecomte
- * @version 3
+ * @version 4
  * @since v0.0.1
  */
 @Repository
@@ -65,37 +73,51 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
     @org.springframework.beans.factory.annotation.Value("${datagate-efluid.extractor.show-sql}")
     private boolean showSql;
 
+    // TODO : use FeatureManager instead
     @org.springframework.beans.factory.annotation.Value("${datagate-efluid.extractor.use-label-for-col-name}")
     private boolean useLabelForColNames;
 
     /**
-     * @param parameterEntry
-     * @param tableData
-     * @param limit
-     * @return
+     * @param parameterEntry current parameter table to process
+     * @param tableData      test data result holder
+     * @param limit          test limit for temporary extraction
+     * @return the estimated content that will be extracted
      * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#testCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry,
      * java.util.List, long)
      */
     @Override
     public long testCurrentContent(DictionaryEntry parameterEntry, List<List<String>> tableData, long limit) {
 
-        // J'en suis à ajouter la verif de la feature ici et à l'utiliser pour générer la requete avec COALESCE
-
-        String query = this.queryGenerator.producesSelectParameterQuery(parameterEntry, Collections.emptyList(), new HashMap<>());
+        String query = this.queryGenerator.producesSelectParameterQuery(
+                parameterEntry,
+                Collections.emptyList(),
+                new HashMap<>());
 
         LOGGER.debug("Test values from managed table {} with query \"{}\"", parameterEntry.getTableName(), query);
 
         postProcessQuery(query);
 
-        // Load table content for query + Get total count
-        return this.managedSource.query(query, new TestRawExtractor(limit, tableData)).longValue();
+        // Load table content for query + Get total count (if has some)
+        Long results = this.managedSource.query(query, new TestRawExtractor(limit, tableData));
+
+        return results != null ? results : 0;
     }
 
     /**
-     * @param parameterEntry
-     * @param lobs
-     * @param project
-     * @return
+     * <p>
+     * Main extractor !!! this method prepare an extractor query for a specified parameter table,
+     * run it and convert all values into payloads for index generation => It extracts the "current" content
+     * from the managed database
+     * </p>
+     * <p>
+     * This is one of the most important process of Datagate, used for DIFF and MERGE process. This can be improved for performance and
+     * memory
+     * </p>
+     *
+     * @param parameterEntry current parameter table to process
+     * @param lobs           holder for all found lobs. Lobs are stored in the given map, associated to an hash, and the payload contains only the specified hash for each lob values
+     * @param project        current processing project
+     * @return all extracted "current" content, as a map of payload linked to there content key
      * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#extractCurrentContent(fr.uem.efluid.model.entities.DictionaryEntry,
      * java.util.Map, fr.uem.efluid.model.entities.Project)
      */
@@ -116,15 +138,15 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
                 new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames, lobs));
 
         LOGGER.debug("Extracted values from managed table {} with query \"{}\". Found {} results",
-                parameterEntry.getTableName(), query, Integer.valueOf(payloads.size()));
+                parameterEntry.getTableName(), query, payloads != null ? payloads.size() : -1);
 
         return payloads;
     }
 
     /**
-     * @param parameterEntry
-     * @param project
-     * @return
+     * @param parameterEntry table to extract
+     * @param project        current processing project
+     * @return count of unchecked joins regarding the configured rules for database joins
      * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#countCurrentContentWithUncheckedJoins(fr.uem.efluid.model.entities.DictionaryEntry,
      * fr.uem.efluid.model.entities.Project)
      */
@@ -145,13 +167,13 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         LOGGER.debug("Counted values from managed table {} on unchecked join with query \"{}\". Found {} results",
                 parameterEntry.getTableName(), query, res);
 
-        return res == null ? 0 : res.intValue();
+        return res == null ? 0 : res;
     }
 
     /**
-     * @param parameterEntry
-     * @param project
-     * @return
+     * @param parameterEntry table to extract
+     * @param project        current processing project
+     * @return details of missing join contents regarding the configured database join rules
      * @see fr.uem.efluid.model.repositories.ManagedExtractRepository#extractCurrentMissingContentWithUncheckedJoins(fr.uem.efluid.model.entities.DictionaryEntry,
      * fr.uem.efluid.model.entities.Project)
      */
@@ -172,13 +194,13 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         Map<String, String> payloads = this.managedSource.query(query, new DisplayInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames));
 
         LOGGER.debug("Extracted values from managed table {} on unchecked Join with query \"{}\". Found {} results",
-                parameterEntry.getTableName(), query, Integer.valueOf(payloads.size()));
+                parameterEntry.getTableName(), query, payloads != null ? payloads.size() : -1);
 
         return payloads;
     }
 
     /**
-     * @param query
+     * @param query current extractor query to post-process. Current simply log queries if enabled
      */
     private void postProcessQuery(String query) {
 
@@ -204,15 +226,22 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         private final Map<String, byte[]> blobs;
 
         /**
-         * @param parameterEntry
+         * @param parameterEntry      the current table spec
+         * @param valueConverter      current converter for a payload value
+         * @param useLabelForColNames if true will include the column names as payload content prefixes
+         * @param lobs                Holder for all processed lob contents
          */
-        public ValueInternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter, boolean useLabelForColNames, Map<String, byte[]> lobs) {
+        public ValueInternalExtractor(
+                DictionaryEntry parameterEntry,
+                ManagedValueConverter valueConverter,
+                boolean useLabelForColNames,
+                Map<String, byte[]> lobs) {
             super(parameterEntry, valueConverter, useLabelForColNames);
             this.blobs = lobs;
         }
 
         /**
-         * @return
+         * @return holder model for a line
          * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#initLineHolder()
          */
         @Override
@@ -221,13 +250,13 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         }
 
         /**
-         * @param currentValueConverter
-         * @param lineHolder
-         * @param type
-         * @param columnName
-         * @param colPosition
-         * @param rs
-         * @throws SQLException
+         * @param currentValueConverter applied converter for payload content extract / build
+         * @param lineHolder            content holder for the current line, as StringBuilder
+         * @param type                  current column type
+         * @param columnName            current specified column name
+         * @param colPosition           current column position
+         * @param rs                    current line content
+         * @throws SQLException on RS content error
          */
         @Override
         protected void appendProcessValue(
@@ -266,9 +295,9 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         }
 
         /**
-         * @param currentValueConverter
-         * @param lineHolder
-         * @return
+         * @param currentValueConverter converter
+         * @param lineHolder            current line content holder as a list of strings
+         * @return completed payload in a merged string
          * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#getFinalizedPayload(fr.uem.efluid.tools.ManagedValueConverter,
          * java.lang.Object)
          */
@@ -291,14 +320,19 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
     private static class DisplayInternalExtractor extends InternalExtractor<List<Value>> {
 
         /**
-         * @param parameterEntry
+         * @param parameterEntry      the current table spec
+         * @param valueConverter      current converter for a payload value
+         * @param useLabelForColNames if true will include the column names as payload content prefixes
          */
-        public DisplayInternalExtractor(DictionaryEntry parameterEntry, ManagedValueConverter valueConverter, boolean useLabelForColNames) {
+        public DisplayInternalExtractor(
+                DictionaryEntry parameterEntry,
+                ManagedValueConverter valueConverter,
+                boolean useLabelForColNames) {
             super(parameterEntry, valueConverter, useLabelForColNames);
         }
 
         /**
-         * @return
+         * @return a new holder for a complete line
          * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#initLineHolder()
          */
         @Override
@@ -307,12 +341,14 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         }
 
         /**
-         * @param currentValueConverter
-         * @param lineHolder
-         * @param type
-         * @param columnName
-         * @param colPosition
-         * @param rs
+         * Process one column in current line
+         *
+         * @param currentValueConverter current converter. Defines the type of payload we build
+         * @param lineHolder            extracted line holder, as a list of (not encoded) strings
+         * @param type                  current column type for payload prefix apply
+         * @param columnName            the specified column name, to store in payload
+         * @param colPosition           current column position
+         * @param rs                    current line content
          */
         @Override
         protected void appendProcessValue(
@@ -324,7 +360,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
                 int colPosition,
                 ResultSet rs) throws SQLException {
 
-            String value = null;
+            String value;
 
             // Call for binary only if needed
             if (type == ColumnType.BINARY || type == ColumnType.TEXT) {
@@ -353,9 +389,9 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         }
 
         /**
-         * @param currentValueConverter
-         * @param lineHolder
-         * @return
+         * @param currentValueConverter applied converter for payload generation
+         * @param lineHolder            current line list of values
+         * @return merged payload, processed through the converter
          * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#getFinalizedPayload(fr.uem.efluid.tools.ManagedValueConverter,
          * java.lang.Object)
          */
@@ -379,11 +415,6 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
             private final byte[] value;
             private final ColumnType type;
 
-            /**
-             * @param name
-             * @param value
-             * @param type
-             */
             public DisplayValue(String name, byte[] value, ColumnType type) {
                 super();
                 this.name = name;
@@ -499,7 +530,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
                 totalCount++;
             }
 
-            return Long.valueOf(totalCount);
+            return totalCount;
         }
 
         /**
@@ -507,11 +538,11 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
          * A basic flat extractor for common values
          * </p>
          *
-         * @param holder
-         * @param type
-         * @param colPosition
-         * @param rs
-         * @throws SQLException
+         * @param holder      payload content holding list
+         * @param type        current column type
+         * @param colPosition current column position
+         * @param rs          current line
+         * @throws SQLException on RS access
          */
         private static void extractValue(
                 List<String> holder,

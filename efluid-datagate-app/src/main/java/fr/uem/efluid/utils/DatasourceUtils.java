@@ -254,8 +254,10 @@ public final class DatasourceUtils {
 
 		private String databaseDateFormat;
 
+		private boolean joinOnNullableKeys;
+
 		/**
-		 * 
+		 *
 		 */
 		public CustomQueryGenerationRules() {
 			super();
@@ -307,6 +309,15 @@ public final class DatasourceUtils {
 		 */
 		public void setDatabaseDateFormat(String databaseDateFormat) {
 			this.databaseDateFormat = databaseDateFormat;
+		}
+
+		@Override
+		public boolean isJoinOnNullableKeys() {
+			return this.joinOnNullableKeys;
+		}
+
+		public void setJoinOnNullableKeys(boolean joinOnNullableKeys) {
+			this.joinOnNullableKeys = joinOnNullableKeys;
 		}
 	}
 }

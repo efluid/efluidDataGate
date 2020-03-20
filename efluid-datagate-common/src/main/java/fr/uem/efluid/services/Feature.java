@@ -41,14 +41,7 @@ public enum Feature {
     /**
      * <p>For version creates : If enabled, force use the modelIdentifier result as version name (no user select of version name)</p>
      */
-    USE_MODEL_ID_AS_VERSION_NAME("datagate-efluid.versions.use-model-id-as-version"),
-
-    /**
-     * <p>For link management : in some cases, the "null" value can be allowed as linked "id" (when link is done for example on a nullable
-     * column which is not a table key)</p>
-     */
-    CAN_USE_NULL_AS_LINKED_KEY("datagate-efluid.links.can-use-null-as-key-value");
-
+    USE_MODEL_ID_AS_VERSION_NAME("datagate-efluid.versions.use-model-id-as-version");
     private final String propertyKey;
 
     /**

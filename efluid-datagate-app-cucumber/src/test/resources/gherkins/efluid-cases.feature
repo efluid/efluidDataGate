@@ -609,7 +609,7 @@ Feature: A complete set of test case are specified for Efluid needs
     And the diff is completed
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
-      | Table              | Key       | Action | Payload                                                                                                                 |
+      | Table              | Key       | Action | Payload                                                                                                                      |
       | TTESTMULTIDATATYPE | $testj_d1 | ADD    | COL1:'testj 1', COL2:'testj varchar2', COL3:121, COL4:2012-01-15 00:00:00, COL5:2012-01-15 00:00:00, COL6:'y', COL7:'clob 1' |
       | TTESTMULTIDATATYPE | $testj_d2 | ADD    | COL1:'testj 2', COL2:'testj varchar2', COL3:122, COL4:2012-01-15 00:00:00, COL5:2012-01-15 00:00:00, COL6:'y', COL7:'clob 2' |
       | TTESTMULTIDATATYPE | $testj_d3 | ADD    | COL1:'testj 3', COL2:'testj varchar2', COL3:123, COL4:2012-01-15 00:00:00, COL5:2012-01-15 00:00:00, COL6:'y', COL7:'clob 3' |
@@ -626,3 +626,105 @@ Feature: A complete set of test case are specified for Efluid needs
     And a diff has already been launched
     And the diff is completed
     Then the commit content has 50000 entries for managed table "TTESTMULTIDATATYPE"
+
+  @TestEfluidDatabaseRules
+  Scenario: On Efluid tables, linked table lines can use a null biz link key. With a specific rule the nullable linked entries should be valid - rule disabled
+    Given the test is an Efluid standard scenario
+    And the database doesn't support nullable join keys
+    And the existing data in managed table "T_NULL_LINK_DEMO_SRC" :
+      | id   | value     | destBizKey |
+      | SRC1 | SRC_VAL_1 | DEST1_BIZ  |
+      | SRC2 | SRC_VAL_2 | DEST2_BIZ  |
+      | SRC3 | SRC_VAL_3 | DEST1_BIZ  |
+      | SRC4 | SRC_VAL_4 | -null-     |
+    And the existing data in managed table "T_NULL_LINK_DEMO_DEST" :
+      | techKey | code        | bizKey    |
+      | DEST1   | DEST_CODE_1 | DEST1_BIZ |
+      | DEST2   | DEST_CODE_2 | DEST2_BIZ |
+      | DEST3   | DEST_CODE_3 | DEST3_BIZ |
+      | DEST4   | DEST_CODE_4 | DEST4_BIZ |
+      | DEST5   | DEST_CODE_5 | -null-    |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then these remarks on missing linked lines are rendered :
+      | Table                | Key  | Payload           |
+      | T_NULL_LINK_DEMO_SRC | SRC4 | VALUE:'SRC_VAL_4' |
+    And the commit content is rendered with these identified changes :
+      | Table                 | Key   | Action | Payload                                    |
+      | T_NULL_LINK_DEMO_SRC  | SRC1  | ADD    | LN_DEST_BIZ_KEY:'DEST1', VALUE:'SRC_VAL_1' |
+      | T_NULL_LINK_DEMO_SRC  | SRC2  | ADD    | LN_DEST_BIZ_KEY:'DEST2', VALUE:'SRC_VAL_2' |
+      | T_NULL_LINK_DEMO_SRC  | SRC3  | ADD    | LN_DEST_BIZ_KEY:'DEST1', VALUE:'SRC_VAL_3' |
+      | T_NULL_LINK_DEMO_DEST | DEST1 | ADD    | BIZ_KEY:'DEST1_BIZ', CODE:'DEST_CODE_1'    |
+      | T_NULL_LINK_DEMO_DEST | DEST2 | ADD    | BIZ_KEY:'DEST2_BIZ', CODE:'DEST_CODE_2'    |
+      | T_NULL_LINK_DEMO_DEST | DEST3 | ADD    | BIZ_KEY:'DEST3_BIZ', CODE:'DEST_CODE_3'    |
+      | T_NULL_LINK_DEMO_DEST | DEST4 | ADD    | BIZ_KEY:'DEST4_BIZ', CODE:'DEST_CODE_4'    |
+      | T_NULL_LINK_DEMO_DEST | DEST5 | ADD    | BIZ_KEY:'', CODE:'DEST_CODE_5'             |
+
+  @TestEfluidDatabaseRules
+  Scenario: On Efluid tables, linked table lines can use a null biz link key. With a specific rule the nullable linked entries should be valid - rule enabled
+    Given the test is an Efluid standard scenario
+    And the database does support nullable join keys
+    And the existing data in managed table "T_NULL_LINK_DEMO_SRC" :
+      | id   | value     | destBizKey |
+      | SRC1 | SRC_VAL_1 | DEST1_BIZ  |
+      | SRC2 | SRC_VAL_2 | DEST2_BIZ  |
+      | SRC3 | SRC_VAL_3 | DEST1_BIZ  |
+      | SRC4 | SRC_VAL_4 | -null-     |
+    And the existing data in managed table "T_NULL_LINK_DEMO_DEST" :
+      | techKey | code        | bizKey    |
+      | DEST1   | DEST_CODE_1 | DEST1_BIZ |
+      | DEST2   | DEST_CODE_2 | DEST2_BIZ |
+      | DEST3   | DEST_CODE_3 | DEST3_BIZ |
+      | DEST4   | DEST_CODE_4 | DEST4_BIZ |
+      | DEST5   | DEST_CODE_5 | -null-    |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then there is no remarks on missing linked lines
+    And the commit content is rendered with these identified changes :
+      | Table                 | Key   | Action | Payload                                    |
+      | T_NULL_LINK_DEMO_SRC  | SRC1  | ADD    | LN_DEST_BIZ_KEY:'DEST1', VALUE:'SRC_VAL_1' |
+      | T_NULL_LINK_DEMO_SRC  | SRC2  | ADD    | LN_DEST_BIZ_KEY:'DEST2', VALUE:'SRC_VAL_2' |
+      | T_NULL_LINK_DEMO_SRC  | SRC3  | ADD    | LN_DEST_BIZ_KEY:'DEST1', VALUE:'SRC_VAL_3' |
+      | T_NULL_LINK_DEMO_SRC  | SRC4  | ADD    | LN_DEST_BIZ_KEY:'DEST5', VALUE:'SRC_VAL_4' |
+      | T_NULL_LINK_DEMO_DEST | DEST1 | ADD    | BIZ_KEY:'DEST1_BIZ', CODE:'DEST_CODE_1'    |
+      | T_NULL_LINK_DEMO_DEST | DEST2 | ADD    | BIZ_KEY:'DEST2_BIZ', CODE:'DEST_CODE_2'    |
+      | T_NULL_LINK_DEMO_DEST | DEST3 | ADD    | BIZ_KEY:'DEST3_BIZ', CODE:'DEST_CODE_3'    |
+      | T_NULL_LINK_DEMO_DEST | DEST4 | ADD    | BIZ_KEY:'DEST4_BIZ', CODE:'DEST_CODE_4'    |
+      | T_NULL_LINK_DEMO_DEST | DEST5 | ADD    | BIZ_KEY:'', CODE:'DEST_CODE_5'             |
+
+  @TestEfluidDatabaseRules
+  Scenario: On Efluid tables, linked table lines can use a null biz link key. Even if rule to allow it is enabled, the missing lines are seen in remarks
+    Given the test is an Efluid standard scenario
+    And the database does support nullable join keys
+    And the existing data in managed table "T_NULL_LINK_DEMO_SRC" :
+      | id   | value     | destBizKey |
+      | SRC1 | SRC_VAL_1 | DEST1_BIZ  |
+      | SRC2 | SRC_VAL_2 | DEST2_BIZ  |
+      | SRC3 | SRC_VAL_3 | DEST1_BIZ  |
+      | SRC4 | SRC_VAL_4 | DEST5_BIZ  |
+    And the existing data in managed table "T_NULL_LINK_DEMO_DEST" :
+      | techKey | code        | bizKey    |
+      | DEST1   | DEST_CODE_1 | DEST1_BIZ |
+      | DEST2   | DEST_CODE_2 | DEST2_BIZ |
+      | DEST3   | DEST_CODE_3 | DEST3_BIZ |
+      | DEST4   | DEST_CODE_4 | DEST4_BIZ |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then these remarks on missing linked lines are rendered :
+      | Table                | Key  | Payload                                     |
+      | T_NULL_LINK_DEMO_SRC | SRC4 | VALUE:'SRC_VAL_4', DEST_BIZ_KEY:'DEST5_BIZ' |
+    And the commit content is rendered with these identified changes :
+      | Table                 | Key   | Action | Payload                                    |
+      | T_NULL_LINK_DEMO_SRC  | SRC1  | ADD    | LN_DEST_BIZ_KEY:'DEST1', VALUE:'SRC_VAL_1' |
+      | T_NULL_LINK_DEMO_SRC  | SRC2  | ADD    | LN_DEST_BIZ_KEY:'DEST2', VALUE:'SRC_VAL_2' |
+      | T_NULL_LINK_DEMO_SRC  | SRC3  | ADD    | LN_DEST_BIZ_KEY:'DEST1', VALUE:'SRC_VAL_3' |
+      | T_NULL_LINK_DEMO_DEST | DEST1 | ADD    | BIZ_KEY:'DEST1_BIZ', CODE:'DEST_CODE_1'    |
+      | T_NULL_LINK_DEMO_DEST | DEST2 | ADD    | BIZ_KEY:'DEST2_BIZ', CODE:'DEST_CODE_2'    |
+      | T_NULL_LINK_DEMO_DEST | DEST3 | ADD    | BIZ_KEY:'DEST3_BIZ', CODE:'DEST_CODE_3'    |
+      | T_NULL_LINK_DEMO_DEST | DEST4 | ADD    | BIZ_KEY:'DEST4_BIZ', CODE:'DEST_CODE_4'    |
