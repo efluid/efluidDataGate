@@ -90,6 +90,30 @@ public class VersionStepDefs extends CucumberStepDefs {
 
     }
 
+    @When("^the user delete version \"(.*)\"$")
+    public void the_user_delete_version(String name) throws  Throwable {
+
+        System.out.println("version to delete: " + name);
+
+        UUID uuidVersion = version(name, getCurrentUserProject()).getUuid();
+
+        System.out.println("uuid version to delete: " + uuidVersion);
+
+        List<String> listVersions = new ArrayList<>();
+
+        listVersions.addAll(specifiedVersions);
+
+        System.out.println("1: " + listVersions);
+
+        post("/ui/remove/versions/" + uuidVersion);
+
+        listVersions.remove(name);
+
+        System.out.println(listVersions);
+
+        get(getCorrespondingLinkForPageName("list of versions"));
+    }
+
     @Given("^the version (.*) has no lots")
     public void the_version_x_has_no_lots(String name) throws Throwable {
         Boolean isLinked = false;
@@ -100,22 +124,6 @@ public class VersionStepDefs extends CucumberStepDefs {
         }
 
         assertThat(isLinked).isFalse();
-    }
-
-    @When("^the user delete version (.*)$")
-    public void the_user_delete_version(String name) throws  Throwable {
-
-        UUID versionUuid = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUuid();
-
-        post("/ui/remove/versions/" + versionUuid);
-
-        List<String> listVersions = new ArrayList<>();
-
-        listVersions.addAll(specifiedVersions);
-
-        listVersions.remove(name);
-
-        get(getCorrespondingLinkForPageName("list of versions"));
     }
 
     @Given("^the existing version in destination environment is different$")

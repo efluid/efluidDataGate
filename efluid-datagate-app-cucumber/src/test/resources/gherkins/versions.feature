@@ -15,15 +15,17 @@ Feature: A dictionary is associated to versions
     When the user add new version "v3"
     Then the 3 updated versions are displayed
 
-  Scenario: A version can be deleted if it is not used in commits
-    Given the existing versions v1
-    And the version v1 has no lots
-    When the user delete version v1
+  Scenario: A version can be deleted
+    Given the existing versions "v1"
+    When the user delete version "v1"
     Then the 0 existing versions are displayed
 
-  Scenario: A version can be deleted
-    Given the existing versions v1, v2, v3
-    When the user delete version v2
+  Scenario: A version can be deleted if it is not used in commits
+    Given the existing versions "v1"
+    And the version v1 has no lots
+    When the user delete version "v1"
+    Then the 0 existing versions are displayed
+
 
   Scenario: When a version is added, the content of the dictionary is available for version compare
     Given the existing versions "v1"
