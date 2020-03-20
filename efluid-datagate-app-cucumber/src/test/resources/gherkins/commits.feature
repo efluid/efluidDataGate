@@ -2,7 +2,23 @@ Feature: The commit can be saved and are historised
 
   After a diff, content of commit can be saved in application managed index. For each standard diff content line, user can say "keep, revert or ignore"
 
-  CommitDetails commit = getSavedCommit();
+  Background:
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | KKK | Two   | Other KKK |
+    And the existing data in managed table "TTAB_THREE" :
+      | key   | value | other   |
+      | 11111 | A     | Other A |
+      | 22222 | B     | Other B |
+      | 33333 | C     | Other C |
 
   Scenario: From the commit diff the user can access to saving page for commit completion.
     Given a diff analysis has been started and completed
