@@ -42,7 +42,6 @@ public enum Feature {
      * <p>For version creates : If enabled, force use the modelIdentifier result as version name (no user select of version name)</p>
      */
     USE_MODEL_ID_AS_VERSION_NAME("datagate-efluid.versions.use-model-id-as-version");
-
     private final String propertyKey;
 
     /**

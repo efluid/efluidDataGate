@@ -8,14 +8,15 @@ datagate-efluid:
         password:
         driver-class-name: org.h2.Driver
         meta:
-            filterSchema:
+            filter-schema:
             search-fk-type: standard
             preload: false
             fixed-cached: false
         query:
-            tableNamesProtected: true
-            columnNamesProtected: true
-            databaseDateFormat: dd-MM-yyyy HH:mm:ss
+            table-names-protected: true
+            column-names-protected: true
+            database-date-format: dd-MM-yyyy HH:mm:ss
+            join-on-nullable-keys: true
         value:
             keep-empty: true
 
@@ -37,6 +38,7 @@ datagate-efluid:
         version: SYSTEM-TEST
 
     extractor:
+        show-sql: false
         ## With H2 with need to specify label
         use-label-for-col-name: true
 

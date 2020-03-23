@@ -7,8 +7,10 @@ import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.CommitDetails;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
+import fr.uem.efluid.utils.DatasourceUtils;
 import junit.framework.AssertionFailedError;
 import org.junit.runner.RunWith;
 import org.pac4j.core.config.Config;
@@ -60,6 +62,8 @@ public abstract class CucumberStepDefs {
     private static final String DEFAULT_EFLUIDTESTNUMBER = "Table EfluidTestNumber";
     private static final String DEFAULT_TTESTMULTIDATATYPE = "Table EfluidTestMultiDataType";
     private static final String DEFAULT_EFLUIDTESTPKCOMPOSITE = "Table EfluidTestPkComposite";
+    private static final String DEFAULT_TTESTNULLLINK_SRC = "Table T_NULL_LINK_DEMO_SRC";
+    private static final String DEFAULT_TTESTNULLLINK_DEST = "Table T_NULL_LINK_DEMO_DEST";
 
     private static final String DEFAULT_WHERE = "1=1";
 
@@ -108,6 +112,12 @@ public abstract class CucumberStepDefs {
 
     @Autowired
     protected ExportImportService exportImportService;
+
+    @Autowired
+    protected ManagedQueriesGenerator queryGenerator;
+
+    @Autowired
+    private ManagedQueriesGenerator.QueryGenerationRules defaultRules;
 
 
     /**
@@ -214,10 +224,7 @@ public abstract class CucumberStepDefs {
 
         this.dets.completeWizard();
 
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1);
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, EFLUIDTESTNUMBER);
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTESTMULTIDATATYPE);
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, EFLUIDTESTPKCOMPOSITE);
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1, EFLUIDTESTNUMBER, TTESTMULTIDATATYPE, EFLUIDTESTPKCOMPOSITE, TTESTNULLLINK_SRC, TTESTNULLLINK_DEST);
     }
 
     protected void initDictionaryForDefaultVersionWithTables(FunctionalDomain domain, Project project, String... tableNames) {
@@ -300,6 +307,30 @@ public abstract class CucumberStepDefs {
 
     protected void resetDatabaseIdentifier() {
         this.databaseIdentifier.reset();
+    }
+
+    /**
+     * Restore generator with default rules (for hook use)
+     */
+    protected void resetQueryGenerator() {
+        this.queryGenerator.update(this.defaultRules);
+    }
+
+    /**
+     * Init some queryGeneration rules from the default one, as updatable rules
+     *
+     * @return instance of DatasourceUtils.CustomQueryGenerationRules initialized and updatable for queryGenerator update
+     */
+    protected DatasourceUtils.CustomQueryGenerationRules initUpdatableRules() {
+
+        DatasourceUtils.CustomQueryGenerationRules rules = new DatasourceUtils.CustomQueryGenerationRules();
+
+        rules.setColumnNamesProtected(this.defaultRules.isColumnNamesProtected());
+        rules.setDatabaseDateFormat(this.defaultRules.getDatabaseDateFormat());
+        rules.setTableNamesProtected(this.defaultRules.isTableNamesProtected());
+        rules.setJoinOnNullableKeys(this.defaultRules.isJoinOnNullableKeys());
+
+        return rules;
     }
 
     /**
@@ -568,6 +599,14 @@ public abstract class CucumberStepDefs {
                     break;
                 case EFLUIDTESTPKCOMPOSITE:
                     tables.add(table(DEFAULT_EFLUIDTESTPKCOMPOSITE, EFLUIDTESTPKCOMPOSITE, domain, "cur.\"COL1\"", DEFAULT_WHERE, "ID", STRING, "ID2", STRING));
+                    break;
+                case TTESTNULLLINK_SRC:
+                    DictionaryEntry tableNullableLinkSrc = table(DEFAULT_TTESTNULLLINK_SRC, TTESTNULLLINK_SRC, domain, "ln1.\"TECH_KEY\" as ln_DEST_BIZ_KEY , cur.\"VALUE\"", DEFAULT_WHERE, "ID", STRING);
+                    tables.add(tableNullableLinkSrc);
+                    links.add(DataGenerationUtils.link(tableNullableLinkSrc, "DEST_BIZ_KEY", "BIZ_KEY", TTESTNULLLINK_DEST));
+                    break;
+                case TTESTNULLLINK_DEST:
+                    tables.add(table(DEFAULT_TTESTNULLLINK_DEST, TTESTNULLLINK_DEST, domain, "cur.\"BIZ_KEY\", cur.\"CODE\"", DEFAULT_WHERE, "TECH_KEY", STRING));
                     break;
                 default:
                     throw new AssertionError("Unsupported table name " + tableName);

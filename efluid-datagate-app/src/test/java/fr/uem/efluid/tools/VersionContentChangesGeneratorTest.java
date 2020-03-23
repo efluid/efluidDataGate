@@ -325,6 +325,7 @@ public class VersionContentChangesGeneratorTest {
         rules.setColumnNamesProtected(true);
         rules.setDatabaseDateFormat("dd-MM-yyyy HH:mm:ss");
         rules.setTableNamesProtected(true);
+        rules.setJoinOnNullableKeys(false);
 
         return new VersionContentChangesGenerator(new ManagedQueriesGenerator(rules));
     }

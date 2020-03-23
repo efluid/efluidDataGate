@@ -15,5 +15,6 @@ public class DatabaseResetHook extends CucumberStepDefs {
         backlogDatabase().dropBacklog();
         managedDatabase().dropManaged();
         modelDatabase().dropModel();
+        resetQueryGenerator();
     }
 }

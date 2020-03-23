@@ -6,6 +6,7 @@ import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
@@ -33,7 +34,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @version 1
  * @since v0.0.8
  */
-//@Ignore // Means it will be ignored by junit start, but will be used by cucumber
+// @Ignore // Means it will be ignored by junit start, but will be used by cucumber
+@SuppressWarnings("unchecked")
 public class PreparationStepDefs extends CucumberStepDefs {
 
     private static UUID runningPrep;
@@ -47,6 +49,22 @@ public class PreparationStepDefs extends CucumberStepDefs {
         resetAsyncProcess();
         runningPrep = null;
         currentCommit = null;
+    }
+
+    /* ########################################### ALL GIVENS ################################################ */
+
+    @Given("^the database doesn't support nullable join keys$")
+    public void disable_join_key_support() {
+        DatasourceUtils.CustomQueryGenerationRules rules = initUpdatableRules();
+        rules.setJoinOnNullableKeys(false);
+        this.queryGenerator.update(rules);
+    }
+
+    @Given("^the database does support nullable join keys$")
+    public void init_join_key_support() {
+        DatasourceUtils.CustomQueryGenerationRules rules = initUpdatableRules();
+        rules.setJoinOnNullableKeys(true);
+        this.queryGenerator.update(rules);
     }
 
     @Given("^a diff analysis can be started and completed$")
@@ -270,6 +288,8 @@ public class PreparationStepDefs extends CucumberStepDefs {
         PushPullStepDefs.currentExport = this.commitService.exportOneCommit(specifiedCommit);
     }
 
+    /* ########################################### ALL WHENS ################################################ */
+
     @When("^the user accesses to preparation commit page$")
     public void user_access_preparation_saving_page() throws Throwable {
 
@@ -336,6 +356,8 @@ public class PreparationStepDefs extends CucumberStepDefs {
         // It's a normal commit
         user_save_commit();
     }
+
+    /* ########################################### ALL THENS ################################################ */
 
     @Then("^a diff is running$")
     public void a_diff_is_running() {
@@ -407,12 +429,53 @@ public class PreparationStepDefs extends CucumberStepDefs {
         });
     }
 
+    @Then("^these remarks on missing linked lines are rendered :$")
+    public void commit_remarks_ready(DataTable data) {
+
+        // Table      | Key     | Payload
+
+        // Get by tables
+        Map<String, List<Map<String, String>>> tables = data.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+        assertThat(preparation.isHasSomeDiffRemarks()).isTrue();
+
+        tables.forEach((t, v) -> {
+            DiffDisplay<?> content = preparation.getDomains().get(0).getPreparedContent().stream()
+                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
+                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding remarks for table " + t));
+
+            List<ContentLineDisplay> remarkDisplays = content.getRemarks().stream()
+                    .flatMap(c -> ((DiffRemark<List<ContentLineDisplay>>) c).getPayload().stream())
+                    .collect(Collectors.toList());
+
+            assertThat(remarkDisplays.size()).withFailMessage("Missing remarks for table %s", t).isEqualTo(v.size());
+
+            v.forEach(line -> {
+                Optional<ContentLineDisplay> remark = remarkDisplays.stream().filter(r -> r.getKey().equals(line.get("Key"))).findFirst();
+                assertThat(remark).withFailMessage("No remark found for key %s", line.get("Key")).isPresent();
+                assertThat(remark.get().getHrPayload()).isEqualTo(line.get("Payload"));
+            });
+        });
+    }
+
+    @Then("^there is no remarks on missing linked lines$")
+    public void commit_remarks_ready() {
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+        assertThat(preparation.isHasSomeDiffRemarks()).isFalse();
+    }
+
     @Then("^the commit content has (.*) entries for managed table \"(.*)\"$")
     public void commit_content_size(int size, String table) {
 
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
-        var diff = preparation.getDomains().stream().flatMap(d -> d.getPreparedContent().stream()).filter(c -> ((DiffDisplay) c).getDictionaryEntryTableName().equals(table)).findFirst();
+        var diff = preparation.getDomains().stream().flatMap(d -> d.getPreparedContent().stream()).filter(c -> c.getDictionaryEntryTableName().equals(table)).findFirst();
 
         assertThat(diff).isPresent();
         assertThat(diff.get().getDiff()).hasSize(size);

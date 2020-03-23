@@ -51,25 +51,36 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     private static final String WHERE_CLAUSE_SUB_START = " ( ";
     private static final String WHERE_CLAUSE_SUB_END = " ) ";
 
-    private final String selectQueryModel;
-    private final String countQueryModel;
-    private final String insertQueryModel;
-    private final String updateQueryModel;
-    private final String deleteQueryModel;
-    private final String unicityQueryModel;
-    private final String joinSubQueryModel;
-    private final String updateOrInsertLinkedSubQueryModel;
-    private final String missingLinkClauseModel;
-    private final DateTimeFormatter dbDateFormater;
+    private String selectQueryModel;
+    private String countQueryModel;
+    private String insertQueryModel;
+    private String updateQueryModel;
+    private String deleteQueryModel;
+    private String unicityQueryModel;
+    private String joinSubQueryModel;
+    private String updateOrInsertLinkedSubQueryModel;
+    private String missingLinkClauseModel;
+    private DateTimeFormatter dbDateFormater;
+    private boolean addNullableJoinKeyJoinClause;
 
     /**
      * Prepare generator regarding the specified rules
      *
-     * @param rules
+     * @param rules the fixed query generation rules
      */
     public ManagedQueriesGenerator(@Autowired QueryGenerationRules rules) {
+        super();
+        update(rules);
+    }
 
-        super(rules.isColumnNamesProtected());
+    /**
+     * Allows apply of new rules
+     *
+     * @param rules QueryGenerationRules to apply for generator configuration
+     */
+    public void update(QueryGenerationRules rules) {
+
+        super.update(rules.isColumnNamesProtected());
 
         // Prepare templates for query generation
         this.countQueryModel = generateCountQueryTemplate(rules);
@@ -82,6 +93,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
         this.updateOrInsertLinkedSubQueryModel = generateUpdateOrInsertLinkedSubQueryTemplate(rules);
         this.missingLinkClauseModel = generateSelectMissingLinkWhereClausePartTemplate(rules);
         this.dbDateFormater = DateTimeFormatter.ofPattern(rules.getDatabaseDateFormat());
+        this.addNullableJoinKeyJoinClause = rules.isJoinOnNullableKeys();
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Initialized query generator with models :");
@@ -98,11 +110,15 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     }
 
     /**
-     * @param parameterEntry
-     * @return
+     * Generates the query for "select the current content for a parameter table"
+     *
+     * @param parameterEntry the current parameter table spec
+     * @return query for the specified parameter table
      */
-    public String producesSelectParameterQuery(DictionaryEntry parameterEntry, Collection<TableLink> links,
-                                               Map<String, DictionaryEntry> allEntries) {
+    public String producesSelectParameterQuery(
+            DictionaryEntry parameterEntry,
+            Collection<TableLink> links,
+            Map<String, DictionaryEntry> allEntries) {
 
         // Need clean select for uses
         String selectClause = consolidateSelectClause(parameterEntry);
@@ -119,11 +135,15 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     }
 
     /**
-     * @param parameterEntry
-     * @return
+     * Generates the query for "get the linked entries for a parameter table"
+     *
+     * @param parameterEntry the current parameter table spec
+     * @return query for the specified parameter table
      */
-    public String producesTestJoinParameterQuery(DictionaryEntry parameterEntry, List<TableLink> links,
-                                                 Map<String, DictionaryEntry> allEntries) {
+    public String producesTestJoinParameterQuery(
+            DictionaryEntry parameterEntry,
+            List<TableLink> links,
+            Map<String, DictionaryEntry> allEntries) {
 
         // For inner linked (select contains them already)
         String joinClauses = prepareJoinLinks(links, allEntries, JoinType.MISSING);
@@ -135,11 +155,15 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     }
 
     /**
-     * @param parameterEntry
-     * @return
+     * Generates the query for "get the missing linked entries for a parameter table"
+     *
+     * @param parameterEntry the current parameter table spec
+     * @return query for the specified parameter table
      */
-    public String producesSelectMissingParameterQuery(DictionaryEntry parameterEntry, List<TableLink> links,
-                                                      Map<String, DictionaryEntry> allEntries) {
+    public String producesSelectMissingParameterQuery(
+            DictionaryEntry parameterEntry,
+            List<TableLink> links,
+            Map<String, DictionaryEntry> allEntries) {
 
         // Need clean select for uses
         String selectClause = consolidateSelectClauseForMissingLinks(parameterEntry, links);
@@ -159,10 +183,12 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     }
 
     /**
-     * @param parameterEntry
+     * Generates the query for "update the parameter table with a content addition"
+     *
+     * @param parameterEntry the current parameter table spec
      * @param keyValue
      * @param values
-     * @return
+     * @return query for the specified parameter table
      */
     public String producesApplyAddQuery(
             DictionaryEntry parameterEntry,
@@ -190,9 +216,11 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     }
 
     /**
-     * @param parameterEntry
+     * Generates the query for "update the parameter table with a content removal"
+     *
+     * @param parameterEntry the current parameter table spec
      * @param keyValue
-     * @return
+     * @return query for the specified parameter table
      */
     public String producesApplyRemoveQuery(DictionaryEntry parameterEntry, String keyValue) {
 
@@ -214,17 +242,20 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     }
 
     /**
-     * @param parameterEntry
+     * Generates the query for "update the parameter table with a content update"
+     *
+     * @param parameterEntry the current parameter table spec
      * @param keyValue
      * @param values
-     * @return
+     * @return query for the specified parameter table
      */
-    public String producesApplyUpdateQuery(DictionaryEntry parameterEntry,
-                                           String keyValue,
-                                           List<Value> values,
-                                           List<String> referedLobs,
-                                           List<TableLink> links,
-                                           Map<String, DictionaryEntry> allEntries) {
+    public String producesApplyUpdateQuery(
+            DictionaryEntry parameterEntry,
+            String keyValue,
+            List<Value> values,
+            List<String> referedLobs,
+            List<TableLink> links,
+            Map<String, DictionaryEntry> allEntries) {
 
         // UPDATE %s SET %s WHERE %s
 
@@ -245,9 +276,11 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     }
 
     /**
+     * Generates the query for "get one specified content from a parameter table for a given key"
+     *
      * @param parameterEntry
      * @param keyValue
-     * @return
+     * @return query for the specified parameter table
      */
     public String producesGetOneQuery(DictionaryEntry parameterEntry, String keyValue) {
 
@@ -275,7 +308,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @param tablename
      * @param columnNames
      * @param filterClause
-     * @return
+     * @return query for the specified parameter table
      */
     public String producesUnicityQuery(String tablename, Collection<String> columnNames, String filterClause) {
 
@@ -299,9 +332,10 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @param values
      * @return
      */
-    private String allNames(List<Value> values,
-                            List<TableLink> links,
-                            Map<String, DictionaryEntry> allEntries) {
+    private String allNames(
+            List<Value> values,
+            List<TableLink> links,
+            Map<String, DictionaryEntry> allEntries) {
 
         Stream<String> names;
 
@@ -524,7 +558,17 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
                     // INNER JOIN "%s" %s on %s."%s" = cur."%s"
                     // or for test : LEFT OUTER JOIN ....
                     // or whatever join type is required
-                    return String.format(this.joinSubQueryModel, type.getValue(), dic.getTableName(), alias, linkJoinOn(alias, l));
+                    // "%s JOIN " + (rules.isTableNamesProtected() ? "\"%s\"" : "%s") + " %s ON %s";
+                    return String.format(
+                            this.joinSubQueryModel,
+                            type.getValue(),
+                            dic.getTableName(),
+                            alias,
+                            linkJoinOn(alias, l) + (
+                                    this.addNullableJoinKeyJoinClause
+                                            ? String.format(" OR COALESCE(%s) IS NULL", nullableKeyJoinSupportParams(alias, l))
+                                            : "")
+                    );
                 }).collect(Collectors.joining(" "));
     }
 
@@ -567,6 +611,36 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
         return joinOn.toString();
     }
 
+
+    private String nullableKeyJoinSupportParams(String alias, TableLink link) {
+
+        // Default - standard single key
+        if (!link.isCompositeKey()) {
+            return (this.protectColumns ? alias + ".\"" + link.getColumnTo() + "\"" : alias + "." + link.getColumnTo()) + ", " +
+                    (this.protectColumns ? "cur.\"" + link.getColumnFrom() + "\"" : "cur." + link.getColumnFrom());
+        }
+
+        // Rare - composite key link
+        int max = (int) link.columnFroms().count();
+
+        StringBuilder linkAlias = new StringBuilder();
+
+        for (int i = 0; i < max; i++) {
+            if (this.protectColumns) {
+                linkAlias.append(alias).append(".\"").append(link.getColumnTo(i)).append("\", cur.\"").append(link.getColumnFrom(i))
+                        .append("\"");
+            } else {
+                linkAlias.append(alias).append(".").append(link.getColumnTo(i)).append(", cur.").append(link.getColumnFrom(i));
+            }
+
+            if (i < max - 1) {
+                linkAlias.append(", ");
+            }
+        }
+
+        return linkAlias.toString();
+    }
+
     /**
      * @param links
      * @param allEntries
@@ -581,8 +655,12 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
         return existingWhereClause + " AND (" + links.stream()
                 .filter(l -> allEntries.containsKey(l.getTableTo())).sorted(linkOrder()).map(l -> {
+                    String destKey = allEntries.get(l.getTableTo()).getKeyName();
                     String alias = LINK_TAB_ALIAS + pos.incrementAndGet();
-                    return String.format(this.missingLinkClauseModel, alias, l.getColumnTo());
+                    return String.format(this.missingLinkClauseModel, alias, destKey) +
+                            (this.addNullableJoinKeyJoinClause
+                                    ? String.format(" AND COALESCE(%s) IS NOT NULL ", nullableKeyJoinSupportParams(alias, l))
+                                    : ""); // l.getColumnTo());
                 }).collect(Collectors.joining(" OR ")) + ")";
     }
 
@@ -850,6 +928,11 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
          * @return
          */
         String getDatabaseDateFormat();
+
+        /**
+         * @return true if the database use business key with support for null values
+         */
+        boolean isJoinOnNullableKeys();
     }
 
 }

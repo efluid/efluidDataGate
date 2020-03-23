@@ -56,6 +56,9 @@ public class ManagedDatabaseAccess {
     public static final String EFLUIDTESTPKCOMPOSITE = "EFLUIDTESTPKCOMPOSITE";
     public static final String EFLUIDTESTNUMBER = "EFLUIDTESTNUMBER";
 
+    public static final String TTESTNULLLINK_SRC = "T_NULL_LINK_DEMO_SRC";
+    public static final String TTESTNULLLINK_DEST = "T_NULL_LINK_DEMO_DEST";
+
     // Table to pair of "order" / type
     private static final Map<String, Pair<Integer, Class<?>>> ENTITY_TYPES = new HashMap<>();
 
@@ -72,6 +75,8 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TTESTMULTIDATATYPE, Pair.of(10, EfluidTestMultiDataType.class));
         ENTITY_TYPES.put(EFLUIDTESTPKCOMPOSITE, Pair.of(11, EfluidTestPkComposite.class));
         ENTITY_TYPES.put(TABLE_ONLY_KEYS, Pair.of(12, SimulatedTableOnlyKeys.class));
+        ENTITY_TYPES.put(TTESTNULLLINK_SRC, Pair.of(13, EfluidTestNullableLinkSource.class));
+        ENTITY_TYPES.put(TTESTNULLLINK_DEST, Pair.of(14, EfluidTestNullableLinkDestination.class));
     }
 
     @Autowired
@@ -280,6 +285,11 @@ public class ManagedDatabaseAccess {
      * For a value from a datatable, get the corresponding object of specified type. Can be a basic field type, or another stub type
      */
     private Object getMappedValue(Class<?> paramType, String v, String name) {
+
+        // Forced null
+        if ("-null-".equals(v)){
+            return null;
+        }
 
         // Keep string
         if (paramType == String.class) {
