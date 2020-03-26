@@ -6,7 +6,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
 
 * [Principes généraux de l'application](global-tech.md)
 * Installation
-  * Paramètrage
+  * [Paramètrage](parameters.md)
   * Docker
   * Base de données
   * Autre
