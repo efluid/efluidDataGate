@@ -49,9 +49,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
 
     private String whereClause;
 
-    // If need more, check type compliance - Oracle can have 32k varchar2 but the
-    // hibernate dialect seems to check it as a varchar() with a limited size of 4k
-    @Column(length = 2048)
+    @Lob
     private String selectClause;
 
     @NotNull
