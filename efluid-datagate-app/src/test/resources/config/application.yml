@@ -55,6 +55,9 @@ spring:
         hibernate:
            ddl-auto: create
 
+    flyway:
+        enabled: false
+        
 ## WEB SERVER CONFIG
 server:
     contextPath:
