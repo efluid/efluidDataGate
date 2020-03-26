@@ -107,10 +107,12 @@ spring:
             ddl-auto: validate
 
     flyway:
-        enabled: false
+        enabled: true
         url: ${spring.datasource.url}
         user: ${spring.datasource.username}
         password: ${spring.datasource.password}
+        baseline-on-migrate: true
+        baseline-version: 3
 
     output:
         ansi:
