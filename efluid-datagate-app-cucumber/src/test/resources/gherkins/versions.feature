@@ -15,6 +15,13 @@ Feature: A dictionary is associated to versions
     When the user add new version "v3"
     Then the 3 updated versions are displayed
 
+  Scenario: A version can be removed from the list of versions if not used in commits
+    Given the existing versions "v1, v2, v3"
+    And the version v1 has no lots
+    When the user delete version "v1"
+    And the user access to list of versions
+    Then the 2 existing versions are displayed
+
   Scenario: When a version is added, the content of the dictionary is available for version compare
     Given the existing versions "v1"
     And this dictionary is added to current default domain :

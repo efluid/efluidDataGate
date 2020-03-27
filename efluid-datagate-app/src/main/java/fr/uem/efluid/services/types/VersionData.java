@@ -5,6 +5,7 @@ import fr.uem.efluid.rest.v1.model.VersionView;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * <p>
@@ -16,6 +17,8 @@ import java.time.LocalDateTime;
  * @since v0.2.0
  */
 public class VersionData {
+
+    private final UUID uuid;
 
     private final String name;
 
@@ -36,8 +39,9 @@ public class VersionData {
      * @param createdTime
      * @param updatedTime
      */
-    public VersionData(String name, String modelId, LocalDateTime createdTime, LocalDateTime updatedTime, boolean currentVersion, boolean canUpdate, boolean canCompare) {
+    public VersionData(UUID uuid, String name, String modelId, LocalDateTime createdTime, LocalDateTime updatedTime, boolean currentVersion, boolean canUpdate, boolean canCompare) {
         super();
+        this.uuid = uuid;
         this.name = name;
         this.modelId = modelId;
         this.createdTime = createdTime;
@@ -45,6 +49,13 @@ public class VersionData {
         this.currentVersion = currentVersion;
         this.canUpdate = canUpdate;
         this.canCompare = canCompare;
+    }
+
+    /**
+     * @return the id
+     */
+    public UUID getUuid() {
+        return this.uuid;
     }
 
     /**
@@ -103,6 +114,7 @@ public class VersionData {
      */
     public static VersionData fromEntity(Version version, boolean currentVersion, boolean canUpdate) {
         return new VersionData(
+                version.getUuid(),
                 version.getName(),
                 version.getModelIdentity() != null ? version.getModelIdentity() : " n/a ",
                 version.getCreatedTime(),
