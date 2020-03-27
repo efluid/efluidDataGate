@@ -1,21 +1,20 @@
 package fr.uem.efluid.cucumber.steps;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
-import fr.uem.efluid.model.entities.AttachmentType;
-import fr.uem.efluid.model.entities.CommitState;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.LobProperty;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static java.util.stream.Collectors.toMap;
@@ -31,7 +30,6 @@ public class CommitStepDefs extends CucumberStepDefs {
 
     @Then("^the commit \"(.*)\" is added to commit list for current project$")
     public void then_commit_is_added_with_comment(String comment) {
-
         CommitDetails commit = getSavedCommit();
 
         assertThat(commit).isNotNull();
@@ -40,7 +38,6 @@ public class CommitStepDefs extends CucumberStepDefs {
 
     @Then("^the merge commit \"(.*)\" is added to commit list for current project$")
     public void then_merge_commit_is_added_with_comment(String comment) {
-
         // Merge is a normal commit
         then_commit_is_added_with_comment(comment);
     }
@@ -63,6 +60,8 @@ public class CommitStepDefs extends CucumberStepDefs {
 
     @Then("^the saved commit content has these identified changes :$")
     public void commit_content_changes(DataTable data) {
+
+
 
         // Get by tables
         Map<String, List<Map<String, String>>> tables = data.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
@@ -141,5 +140,6 @@ public class CommitStepDefs extends CucumberStepDefs {
             }
             assertThat(FormatUtils.toString(lobProperty.getData())).isEqualTo(datas.get(lobProperty.getHash()));
         });
+
     }
 }
