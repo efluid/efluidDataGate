@@ -73,7 +73,6 @@ public class VersionStepDefs extends CucumberStepDefs {
 
     @When("^the user add new version \"(.*)\"$")
     public void the_user_add_new_version(String name) throws Throwable {
-
         // Add new
         post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
 
@@ -81,6 +80,7 @@ public class VersionStepDefs extends CucumberStepDefs {
         List<String> updatedVersions = new ArrayList<>();
 
         updatedVersions.addAll(specifiedVersions);
+
         updatedVersions.add(name);
 
         specifiedVersions = updatedVersions;
@@ -91,33 +91,26 @@ public class VersionStepDefs extends CucumberStepDefs {
     }
 
     @When("^the user delete version \"(.*)\"$")
-    public void the_user_delete_version(String name) throws  Throwable {
+    public void the_user_delete_version(String name) throws Throwable {
+        UUID versionUuid = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUuid();
 
-        //get version uuid
-        UUID uuidVersion = version(name, getCurrentUserProject()).getUuid();
+        post("/ui/versions/remove/" + versionUuid);
 
-        //remove a version
-        post("/ui/remove/versions/" + uuidVersion);
+        // List can be unmodifiable, reset it
+        List<String> updatedVersion = new ArrayList<>();
 
-        List<String> listVersions = new ArrayList<>();
+        updatedVersion.addAll(specifiedVersions);
+        updatedVersion.remove(name);
 
-        listVersions.addAll(specifiedVersions);
+        specifiedVersions = updatedVersion;
 
-        listVersions.remove(name);
-
+        // Update is REST only, update page
         get(getCorrespondingLinkForPageName("list of versions"));
     }
 
     @Given("^the version (.*) has no lots")
     public void the_version_x_has_no_lots(String name) throws Throwable {
-        Boolean isLinked = false;
-        List<CommitEditData> commits = this.commitService.getAvailableCommits();
-
-        for (CommitEditData c: commits) {
-            isLinked = name.equals(c.getVersionName()) ? true : false;
-        }
-
-        assertThat(isLinked).isFalse();
+        assertThat(this.commitService.getAvailableCommits()).noneMatch((c) -> { return name.equals(c.getVersionName()); } );
     }
 
     @Given("^the existing version in destination environment is different$")
@@ -139,13 +132,14 @@ public class VersionStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the (\\d+) \\w+ versions are displayed$")
-    public void the_x_versions_are_displayed(int nbr)   {
+    public void the_x_versions_are_displayed(int nbr) {
 
         assertModelIsSpecifiedListWithProperties(
                 "versions",
                 nbr,
                 VersionData::getName,
                 specifiedVersions);
+
     }
 
     @Then("^the current version name is \"(.*)\"$")
