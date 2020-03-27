@@ -54,6 +54,8 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
         return config;
     }
 
+    public abstract String getName();
+
     /**
      * Instantiate the required config type
      *

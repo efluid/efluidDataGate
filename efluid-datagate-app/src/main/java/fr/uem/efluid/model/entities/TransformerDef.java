@@ -23,12 +23,17 @@ public class TransformerDef implements Shared {
     private UUID uuid;
 
     @NotNull
+    private String name;
+
+    @NotNull
     private LocalDateTime createdTime;
 
     @NotNull
     private LocalDateTime updatedTime;
 
     private LocalDateTime importedTime;
+
+    private int priority;
 
     @NotNull
     private String type;
@@ -46,6 +51,14 @@ public class TransformerDef implements Shared {
 
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public LocalDateTime getCreatedTime() {
@@ -79,6 +92,14 @@ public class TransformerDef implements Shared {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public int getPriority() {
+        return this.priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     public Project getProject() {

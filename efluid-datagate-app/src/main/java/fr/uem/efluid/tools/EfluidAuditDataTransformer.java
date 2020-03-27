@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
  * Transformer example
  */
 @Component
-public class UpperCaseTransformer extends ColumnTransformer<UpperCaseTransformer.Config, UpperCaseTransformer.Runner> {
+public class EfluidAuditDataTransformer extends ColumnTransformer<EfluidAuditDataTransformer.Config, EfluidAuditDataTransformer.Runner> {
 
     @Override
     public String getName() {
-        return "UPPERCASE_TRANSFORMER";
+        return "EFLUID_AUDIT";
     }
 
     @Override
@@ -27,12 +27,12 @@ public class UpperCaseTransformer extends ColumnTransformer<UpperCaseTransformer
 
     public static class Config extends ColumnTransformer.Config {
 
-        public Config(){
+        public Config() {
             super();
         }
     }
 
-    public static class Runner extends ColumnTransformer.Runner<UpperCaseTransformer.Config> {
+    public static class Runner extends ColumnTransformer.Runner<EfluidAuditDataTransformer.Config> {
 
         public Runner(Config config, DictionaryEntry dict) {
             super(config, dict);
@@ -40,7 +40,7 @@ public class UpperCaseTransformer extends ColumnTransformer<UpperCaseTransformer
 
         @Override
         protected String transformValue(String value, ColumnType type) {
-            return value.toUpperCase();
+            return "****-" + value.length();
         }
     }
 }
