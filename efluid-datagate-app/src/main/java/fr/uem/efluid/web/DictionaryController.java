@@ -1,7 +1,9 @@
 package fr.uem.efluid.web;
 
+import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.FeatureManager;
 import fr.uem.efluid.services.ApplicationDetailsService;
+import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.Feature;
 import fr.uem.efluid.services.types.*;
@@ -18,8 +20,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import javax.validation.Valid;
 import java.util.UUID;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 /**
  * <p>
@@ -69,6 +70,7 @@ public class DictionaryController extends CommonController {
 
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
         model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
+        model.addAttribute("dictionaryManagementService", this.dictionaryManagementService);
         model.addAttribute("checkVersion", this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion());
         model.addAttribute("canCreateVersion", this.dictionaryManagementService.isVersionCanCreate());
 
@@ -77,6 +79,20 @@ public class DictionaryController extends CommonController {
 
         return "pages/versions";
     }
+
+    /**
+     * Rest Method for AJAX push
+     *
+     * @param
+     * @return
+     * */
+
+    @RequestMapping(value = "/versions/remove/{uuid}", method = POST)
+    @ResponseBody
+    public void  deleteVersion(@PathVariable("uuid") UUID uuid) {
+        this.dictionaryManagementService.deleteVersionById(uuid);
+    }
+
 
     @RequestMapping("/domains")
     public String domainsPage(Model model) {

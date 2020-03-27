@@ -255,5 +255,6 @@ public class ProjectManagementService extends AbstractApplicationService {
 		if (this.projects.findSelectedProjectForUserLogin(login) == null) {
 			throw new ApplicationException(PROJECT_MANDATORY, "No selected active project for current user " + login);
 		}
+
 	}
 }

@@ -34,7 +34,7 @@
 				<tr th:if="${versions.empty}">
 					<td colspan="100%" class="empty-list-message">Aucune version</td>
 				</tr>
-                <tr th:each="version : ${versions}" th:id="${version.name}">
+                <tr th:each="version : ${versions}" th:id="${version.uuid}">
                      <td class="version-name" th:text="${version.name}">
                      	1.2.5-SNAPSHOT
                      </td>
@@ -43,7 +43,8 @@
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
                      	<button th:if="${version.canUpdate}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
-                        <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm float-right">Comparer</a>
+                         <button th:if="!${ dictionaryManagementService.isVersionLinkedToLot(version.uuid) }" class="deleteButton btn btn-danger btn-sm float-right">Supprimer</button>
+                        <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm">Comparer</a>
                      </td>
 			     </tr>
 			     <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
@@ -53,11 +54,13 @@
 			     </tr>
 			</tbody>
 		</table>
+        <div th:insert="~{components/modal :: modal}"></div>
     </span>
     <script layout:fragment="script" th:inline="javascript">
 
 		var noVersionName = /*[[${noVersionName}]]*/ false;
 
+        $('.modal').hide();
 		// Add row button
 		const addButtonAction = () => {
 			hideDisplays();
@@ -96,10 +99,28 @@
 		    });
 		};
 
+		// Delete a  version if it has no lots
+		const deleteButtonAction = (versionId) => {
+		    $('.modal').show();
+		    $("#submitDelete").on("click",() => {
+		        $.post("/ui/versions/remove/" + versionId, null, (data, status) => {
+		            $('.modal').hide();
+		            window.location.replace("/ui/versions");
+		        });
+		    });
+		}
+
+		//Hide modal
+		const cancelButton = () => {
+		    $('.modal').hide();
+		}
+
     	// Init actions
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);
+			$("#cancelDelete").click(cancelButton);
 			$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.id));
+			$("button.deleteButton").click((e) => deleteButtonAction(e.target.parentElement.parentElement.id));
 		}); 
     </script>
 </body>
