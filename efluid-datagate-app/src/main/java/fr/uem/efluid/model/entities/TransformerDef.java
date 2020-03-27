@@ -10,10 +10,13 @@ import java.util.UUID;
 
 /**
  * Model of an active transformer for current project, with configuration and transformer type
+ * @author elecomte
+ * @since v1.2.0
+ * @version 1
  */
 @Entity
 @Table(name = "transformers")
-public class TransformerDesc implements Shared {
+public class TransformerDef implements Shared {
 
     @Id
     @Type(type = "uuid-char")
@@ -38,7 +41,7 @@ public class TransformerDesc implements Shared {
 
     @Override
     public UUID getUuid() {
-        return uuid;
+        return this.uuid;
     }
 
     public void setUuid(UUID uuid) {
@@ -46,7 +49,7 @@ public class TransformerDesc implements Shared {
     }
 
     public LocalDateTime getCreatedTime() {
-        return createdTime;
+        return this.createdTime;
     }
 
     public void setCreatedTime(LocalDateTime createdTime) {
@@ -54,7 +57,7 @@ public class TransformerDesc implements Shared {
     }
 
     public LocalDateTime getUpdatedTime() {
-        return updatedTime;
+        return this.updatedTime;
     }
 
     public void setUpdatedTime(LocalDateTime updatedTime) {
@@ -63,7 +66,7 @@ public class TransformerDesc implements Shared {
 
     @Override
     public LocalDateTime getImportedTime() {
-        return importedTime;
+        return this.importedTime;
     }
 
     public void setImportedTime(LocalDateTime importedTime) {
@@ -71,7 +74,7 @@ public class TransformerDesc implements Shared {
     }
 
     public String getType() {
-        return type;
+        return this.type;
     }
 
     public void setType(String type) {
@@ -79,7 +82,7 @@ public class TransformerDesc implements Shared {
     }
 
     public Project getProject() {
-        return project;
+        return this.project;
     }
 
     public void setProject(Project project) {
@@ -87,7 +90,7 @@ public class TransformerDesc implements Shared {
     }
 
     public String getConfiguration() {
-        return configuration;
+        return this.configuration;
     }
 
     public void setConfiguration(String configuration) {
@@ -96,11 +99,14 @@ public class TransformerDesc implements Shared {
 
     @Override
     public String serialize() {
+
+        // TODO : Support export with commit exports
         return null;
     }
 
     @Override
     public void deserialize(String raw) {
 
+        // TODO : Support import with commit imports
     }
 }

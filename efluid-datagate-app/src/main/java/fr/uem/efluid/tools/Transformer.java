@@ -121,6 +121,10 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
         private String tablePattern;
 
+        protected TransformerConfig(){
+            super();
+        }
+
         void populateDefault() {
             this.tablePattern = ".*";
         }
