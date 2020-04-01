@@ -74,7 +74,6 @@
 			$.post("/ui/versions/" + name, null, (data, status) => {
 				showSuccess("Version ajoutée avec succès");
 				// Remove other update buttons
-				$("button.updateButton").remove();
 
 				if(noVersionName) {
                     var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
@@ -88,6 +87,13 @@
 
                 $(".empty-list-message").remove();
                 $("#versRemark").remove();
+
+                setTimeout(() => {
+                    window.location.replace("/ui/versions");
+                    $("button.updateButton").remove();
+                    $("#successDisplay").remove();
+                }, 2000);
+
 		    });
 		};
     
