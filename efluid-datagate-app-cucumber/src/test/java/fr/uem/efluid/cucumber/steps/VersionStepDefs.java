@@ -5,6 +5,7 @@ import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.services.DictionaryManagementService;
+import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -19,10 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -62,7 +60,6 @@ public class VersionStepDefs extends CucumberStepDefs {
 
         // Init with specified versions
         modelDatabase().initVersions(getCurrentUserProject(), versions, 1);
-
         // Keep version for update check
         specifiedVersions = versions;
     }
@@ -76,7 +73,6 @@ public class VersionStepDefs extends CucumberStepDefs {
 
     @When("^the user add new version \"(.*)\"$")
     public void the_user_add_new_version(String name) throws Throwable {
-
         // Add new
         post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
 
@@ -84,17 +80,41 @@ public class VersionStepDefs extends CucumberStepDefs {
         List<String> updatedVersions = new ArrayList<>();
 
         updatedVersions.addAll(specifiedVersions);
+
         updatedVersions.add(name);
 
         specifiedVersions = updatedVersions;
 
         // Update is REST only, update page
         get(getCorrespondingLinkForPageName("list of versions"));
+
+    }
+
+    @When("^the user delete version \"(.*)\"$")
+    public void the_user_delete_version(String name) throws Throwable {
+        UUID versionUuid = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUuid();
+
+        post("/ui/versions/remove/" + versionUuid);
+
+        // List can be unmodifiable, reset it
+        List<String> updatedVersion = new ArrayList<>();
+
+        updatedVersion.addAll(specifiedVersions);
+        updatedVersion.remove(name);
+
+        specifiedVersions = updatedVersion;
+
+        // Update is REST only, update page
+        get(getCorrespondingLinkForPageName("list of versions"));
+    }
+
+    @Given("^the version (.*) has no lots")
+    public void the_version_x_has_no_lots(String name) throws Throwable {
+        assertThat(this.commitService.getAvailableCommits()).noneMatch((c) -> { return name.equals(c.getVersionName()); } );
     }
 
     @Given("^the existing version in destination environment is different$")
-    public void given_modified_version() {
-        // Force modify version to make it different
+    public void given_modified_version() {// Force modify version to make it different
         modelDatabase().forceUpdateVersion(getCurrentUserProject());
     }
 
@@ -112,13 +132,14 @@ public class VersionStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the (\\d+) \\w+ versions are displayed$")
-    public void the_x_versions_are_displayed(int nbr)   {
+    public void the_x_versions_are_displayed(int nbr) {
 
         assertModelIsSpecifiedListWithProperties(
                 "versions",
                 nbr,
                 VersionData::getName,
                 specifiedVersions);
+
     }
 
     @Then("^the current version name is \"(.*)\"$")

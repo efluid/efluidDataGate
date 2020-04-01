@@ -73,7 +73,7 @@ import static fr.uem.efluid.utils.ErrorType.*;
 @Transactional
 public class DictionaryManagementService extends AbstractApplicationService {
 
-    private static final VersionData NOT_SET_VERSION = new VersionData("NOT SET", "", null, null, true, false, false);
+    private static final VersionData NOT_SET_VERSION = new VersionData(null, "NOT SET", "", null, null, true, false, false);
 
     private static final String DEDUPLICATED_DOMAINS = "deduplicated-domains";
 
@@ -191,6 +191,13 @@ public class DictionaryManagementService extends AbstractApplicationService {
     /**
      * @return
      */
+    public void deleteVersionById(UUID uuid) {
+        this.versions.deleteById(uuid);
+    }
+
+    /**
+     * @return
+     */
     public boolean isDictionaryUpdatedAfterLastVersion() {
 
         this.projectService.assertCurrentUserHasSelectedProject();
@@ -239,6 +246,33 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 .map(v -> getCompletedVersion(v, last))
                 .sorted(Comparator.comparing(VersionData::getUpdatedTime))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * <p>
+     *  Function should check if a commit has <strong>VERSION_UUID = The version to delete</strong>
+     *  if it is true the user cannot delete the version otherwise he can delete it.
+     *  </p>
+     * @Author Prescise
+     * @param versionId
+     * @return
+     */
+
+    public Boolean isVersionLinkedToLot(UUID versionId){
+
+        Boolean versionIsLinkedToLot;
+
+        //get current project
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        //get list commits by project
+        List<Commit> commits = this.commits.findByProject(project);
+
+        //check if commit has version_uuid equal to current version
+        versionIsLinkedToLot = commits.stream().anyMatch(c -> c.getVersion().getUuid().equals(versionId));
+
+        return versionIsLinkedToLot;
     }
 
     /**
