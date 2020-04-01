@@ -1,3 +1,11 @@
+.navbar-brand {
+    height: 35px;
+	background-image: url("/logo.png");
+    padding-left: 165px!important;
+    background-repeat: no-repeat;
+    background-size: 165px 35px;
+}
+
 .container-fluid {
     padding-left: 0!important;
     padding-right: 0!important;
