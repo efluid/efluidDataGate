@@ -59,7 +59,7 @@ public class TransformerController extends CommonController {
             return REDIRECT_SELECT;
         }
 
-        model.addAttribute("transformerDef", this.transformerService.prepareNewTransformerDef(transformerType));
+        model.addAttribute("def", this.transformerService.prepareNewTransformerDef(transformerType));
 
         return "pages/transformers_edit";
     }
@@ -69,14 +69,14 @@ public class TransformerController extends CommonController {
      * @param uuid  selected transformer def id
      * @return edit template
      */
-    @RequestMapping(path = "/transformers/edit/{uuid}", method = POST)
+    @RequestMapping(path = "/transformers/edit/{uuid}")
     public String transformerEdit(Model model, @PathVariable("uuid") UUID uuid) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
         }
 
-        model.addAttribute("transformerDef", this.transformerService.editTransformerDef(uuid));
+        model.addAttribute("def", this.transformerService.editTransformerDef(uuid));
 
         return "pages/transformers_edit";
     }
@@ -86,10 +86,10 @@ public class TransformerController extends CommonController {
      * @param config configuration content to validate
      * @return validation result. If null = no error. Details on errors else
      */
-    @RequestMapping(path = "/transformers/validate", method = POST)
+    @RequestMapping(path = "/transformers/validate/{type}", method = POST)
     @ResponseBody
-    public String transformerValidateConfig(@RequestParam("type") String type, @RequestBody String config) {
-        return this.transformerService.validateConfiguration(type, config);
+    public String transformerValidateConfig(@PathVariable("type") String type, @RequestBody String config) {
+        return this.transformerService.validateConfiguration(type, decode(config));
     }
 
     /**

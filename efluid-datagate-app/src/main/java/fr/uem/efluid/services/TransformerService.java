@@ -177,7 +177,7 @@ public class TransformerService extends AbstractApplicationService {
 
     private Transformer<?, ?> loadByType(String type) {
         return this.availableTransformers.stream()
-                .filter(t -> t.getClass().getName().equals(type))
+                .filter(t -> t.getClass().getSimpleName().equals(type))
                 .findFirst()
                 .orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
     }
@@ -199,14 +199,12 @@ public class TransformerService extends AbstractApplicationService {
      * @param <C>         transformer configuration type
      * @return validated configuration
      */
+    @SuppressWarnings("unchecked")
     private <C extends Transformer.TransformerConfig> C parseConfiguration(String rawValue, Transformer<C, ?> transformer) {
 
         try {
-            C config = this.mapper.readValue(rawValue, new TypeReference<C>() {
-            });
-
+            C config = (C) this.mapper.readValue(rawValue, transformer.getDefaultConfig().getClass());
             transformer.validateConfig(config);
-
             return config;
         } catch (IOException e) {
             throw new ApplicationException(ErrorType.TRANSFORMER_CONFIG_WRONG,

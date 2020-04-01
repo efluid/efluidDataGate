@@ -152,6 +152,14 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
                 errors.add("tablePattern cannot be empty or missing. Use \"*\" as default");
             }
         }
+
+        public String getTablePattern() {
+            return this.tablePattern;
+        }
+
+        public void setTablePattern(String tablePattern) {
+            this.tablePattern = tablePattern;
+        }
     }
 
     /**

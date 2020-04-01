@@ -2,8 +2,14 @@ package fr.uem.efluid.web;
 
 import fr.uem.efluid.services.ProjectManagementService;
 import fr.uem.efluid.services.types.ProjectData;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
+import fr.uem.efluid.utils.FormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 
 /**
  * @author elecomte
@@ -33,5 +39,13 @@ public abstract class CommonController {
         }
 
         return false;
+    }
+
+    protected static String decode(String raw) {
+        try {
+            return URLDecoder.decode(raw, FormatUtils.CONTENT_ENCODING.name());
+        } catch (UnsupportedEncodingException e) {
+            throw new ApplicationException(ErrorType.OTHER, e);
+        }
     }
 }

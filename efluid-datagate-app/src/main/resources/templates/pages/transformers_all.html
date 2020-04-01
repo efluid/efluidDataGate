@@ -26,7 +26,7 @@
 		            <td th:text="${transformerDef.priority}">12</td>
 		            <td th:text="${custom.format(transformerDef.updatedTime)}">01/11/2017</td>
 		            <td>
-		            	<a href="./transformer_edit.html" th:href="@{/ui/transformers/{id}(id=${transformerDef.uuid})}" class="btn btn-sm btn-secondary float-right">Modifier</a>
+		            	<a href="./transformer_edit.html" th:href="@{/ui/transformers/edit/{id}(id=${transformerDef.uuid})}" class="btn btn-sm btn-secondary float-right">Modifier</a>
 		            </td>
 		        </tr>
 				<tr>
@@ -34,11 +34,11 @@
 					<td>
 						<div class="input-group">
 						  	<select class="custom-select" id="transformerType" name="transformerType" aria-label="Choix du transformateur à ajouter">
-								<option selected>Ajouter un nouveau transformateur...</option>
+								<option value="none" selected="selected">Ajouter un nouveau transformateur...</option>
 							  	<option th:each="transformer : ${transformerTypes}" th:value="${transformer.type}" th:text="${transformer.name}">UPPERCASE_TRANSFORMER</option>
 						  	</select>
 						  	<div class="input-group-append">
-								<input type="submit" class="btn btn-primary" value="Ajouter"/>
+								<input id="addButton" type="submit" class="btn btn-primary" value="Ajouter"/>
 						  	</div>
 						</div>
 					</td>
@@ -47,5 +47,24 @@
 		</table>
 		</form>
 	</span>
+	<script layout:fragment="script">
+
+		const checkMandatoryFields = () => {
+    		var type = $('#transformerType').val();
+    		if(type != '' && type != 'none'){
+    			$('#addButton').prop('disabled', false);
+				$('#addButton').removeClass('btn-outline-success').addClass('btn-success');
+    		} else {
+    			$('#addButton').prop('disabled', true);
+				$('#addButton').removeClass('btn-success').addClass('btn-outline-success');
+    		}
+		};
+
+    	// Init actions
+    	$(document).ready(() => {
+			$("#transformerType").on('change',checkMandatoryFields);
+			checkMandatoryFields();
+		});
+    </script>
 </body>
 </html>

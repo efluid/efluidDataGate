@@ -15,7 +15,7 @@ public class TransformerType {
     private final String name;
 
     public TransformerType(Transformer<?, ?> transformer) {
-        this.type = transformer.getClass().getTypeName();
+        this.type = transformer.getClass().getSimpleName();
         this.name = transformer.getName();
     }
 
