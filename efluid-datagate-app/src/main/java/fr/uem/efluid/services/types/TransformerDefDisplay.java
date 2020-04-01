@@ -3,6 +3,7 @@ package fr.uem.efluid.services.types;
 import fr.uem.efluid.model.entities.TransformerDef;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -51,5 +52,20 @@ public class TransformerDefDisplay {
 
     public LocalDateTime getUpdatedTime() {
         return this.updatedTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TransformerDefDisplay that = (TransformerDefDisplay) o;
+        return priority == that.priority &&
+                uuid.equals(that.uuid) &&
+                name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(uuid, name, priority);
     }
 }

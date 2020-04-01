@@ -3,6 +3,9 @@ package fr.uem.efluid.cucumber.stubs;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.security.UserHolder;
+import fr.uem.efluid.services.types.TransformerDefDisplay;
+import fr.uem.efluid.tools.Transformer;
+import io.cucumber.datatable.DataTable;
 import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +58,9 @@ public class ModelDatabaseAccess {
 
     @Autowired
     private PasswordEncoder encoder;
+
+    @Autowired
+    private TransformerDefRepository transformerDefs;
 
     /**
      * Init all "similar to a wizard init"
@@ -154,6 +160,35 @@ public class ModelDatabaseAccess {
             return ver;
         }).collect(Collectors.toList()));
         this.versions.flush();
+    }
+
+    /**
+     * Create a valid transformer. Config is NOT validated
+     * @param project associated project
+     * @param name transformer def name
+     * @param transformer identified transformer to describe
+     * @param config config to store
+     * @param priority int priority
+     * @return saved transformer
+     */
+    public TransformerDefDisplay initTransformer(Project project, String name, Transformer<?,?> transformer, String config, int priority) {
+        TransformerDef def = new TransformerDef();
+        def.setProject(project);
+        def.setUuid(UUID.randomUUID());
+        def.setType(transformer.getClass().getSimpleName());
+        def.setName(name);
+        def.setConfiguration(config);
+        def.setCreatedTime(LocalDateTime.now().minusDays(1));
+        def.setUpdatedTime(def.getCreatedTime());
+        def.setPriority(priority);
+
+        def = this.transformerDefs.save(def);
+        this.transformerDefs.flush();
+        return new TransformerDefDisplay(def, transformer.getName());
+    }
+
+    public Project findProjectByName(String name) {
+        return this.projects.findByName(name);
     }
 
     /**

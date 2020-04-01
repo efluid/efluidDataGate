@@ -1,7 +1,6 @@
 package fr.uem.efluid.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.model.entities.TransformerDef;
 import fr.uem.efluid.model.repositories.TransformerDefRepository;
@@ -86,7 +85,7 @@ public class TransformerService extends AbstractApplicationService {
      */
     public TransformerDefEditData prepareNewTransformerDef(String type) {
 
-        Transformer<?, ?> transformer = loadByType(type);
+        Transformer<?, ?> transformer = loadTransformerByType(type);
 
         TransformerDefEditData editData = new TransformerDefEditData();
 
@@ -110,7 +109,7 @@ public class TransformerService extends AbstractApplicationService {
     public String validateConfiguration(String type, String rawConfiguration) {
 
         try {
-            Transformer<?, ?> transformer = loadByType(type);
+            Transformer<?, ?> transformer = loadTransformerByType(type);
             parseConfiguration(rawConfiguration, transformer);
         } catch (ApplicationException e) {
             return e.getPayload();
@@ -129,7 +128,7 @@ public class TransformerService extends AbstractApplicationService {
     public TransformerDefEditData editTransformerDef(UUID uuid) {
 
         TransformerDef def = this.transformerDefs.findById(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
-        Transformer<?, ?> transformer = loadByType(def.getType());
+        Transformer<?, ?> transformer = loadTransformerByType(def.getType());
         String prettyCfg = prettyConfig(parseConfiguration(def.getConfiguration(), transformer));
 
         return TransformerDefEditData.fromEntity(def, transformer, prettyCfg);
@@ -144,7 +143,7 @@ public class TransformerService extends AbstractApplicationService {
 
         this.projectService.assertCurrentUserHasSelectedProject();
 
-        Transformer<?, ?> transformer = loadByType(editData.getType());
+        Transformer<?, ?> transformer = loadTransformerByType(editData.getType());
         Transformer.TransformerConfig config = parseConfiguration(editData.getConfiguration(), transformer);
 
         TransformerDef def;
@@ -175,7 +174,13 @@ public class TransformerService extends AbstractApplicationService {
         this.transformerDefs.save(def);
     }
 
-    private Transformer<?, ?> loadByType(String type) {
+    /**
+     * Get an available transformer for a specified type
+     *
+     * @param type inner type
+     * @return available transformer
+     */
+    public Transformer<?, ?> loadTransformerByType(String type) {
         return this.availableTransformers.stream()
                 .filter(t -> t.getClass().getSimpleName().equals(type))
                 .findFirst()
