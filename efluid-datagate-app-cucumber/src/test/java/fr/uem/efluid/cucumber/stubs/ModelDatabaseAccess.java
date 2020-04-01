@@ -99,6 +99,7 @@ public class ModelDatabaseAccess {
      * For data cleanup without transaction management
      */
     public void dropModel() {
+        this.transformerDefs.deleteAll();
         this.versions.deleteAll();
         this.links.deleteAll();
         this.entries.deleteAll();
@@ -106,6 +107,7 @@ public class ModelDatabaseAccess {
         this.users.deleteAll();
         this.projects.deleteAll();
 
+        this.transformerDefs.flush();
         this.versions.flush();
         this.links.flush();
         this.entries.flush();

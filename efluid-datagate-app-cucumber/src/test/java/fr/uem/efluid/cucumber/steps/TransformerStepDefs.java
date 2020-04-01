@@ -38,8 +38,6 @@ public class TransformerStepDefs extends CucumberStepDefs {
     @Given("^the configured transformers for project \"(.*)\" :$")
     public void the_existing_versions(String projectName, DataTable table) {
 
-        Project project = modelDatabase().findProjectByName(projectName);
-
         specifiedTransformers = new HashMap<>();
 
         // Implicit init with default domain / project
@@ -47,6 +45,8 @@ public class TransformerStepDefs extends CucumberStepDefs {
 
         // Implicit authentication and on page
         implicitlyAuthenticatedAndOnPage("the home page");
+
+        Project project = modelDatabase().findProjectByName(projectName);
 
         table.asMaps()
                 .forEach(s -> {
