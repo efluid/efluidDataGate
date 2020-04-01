@@ -89,12 +89,34 @@ public class TransformerService extends AbstractApplicationService {
         Transformer<?, ?> transformer = loadByType(type);
 
         TransformerDefEditData editData = new TransformerDefEditData();
-        editData.setType(type);
+
         editData.setName(transformer.getName());
         editData.setConfiguration(prettyConfig(transformer.getDefaultConfig()));
         editData.setPriority(1);
 
+        editData.setTransformer(transformer);
+
         return editData;
+    }
+
+    /**
+     * Validate the provided configuration : do not throw, but return back validation details in a string.
+     * If null result, the configuration is OK for specified transformer
+     *
+     * @param type             specified transformer for which the configuration can be processed
+     * @param rawConfiguration the content to validate for the configuration
+     * @return null if no error, or complete details on errors
+     */
+    public String validateConfiguration(String type, String rawConfiguration) {
+
+        try {
+            Transformer<?, ?> transformer = loadByType(type);
+            parseConfiguration(rawConfiguration, transformer);
+        } catch (ApplicationException e) {
+            return e.getPayload();
+        }
+
+        return null;
     }
 
     /**
@@ -110,7 +132,7 @@ public class TransformerService extends AbstractApplicationService {
         Transformer<?, ?> transformer = loadByType(def.getType());
         String prettyCfg = prettyConfig(parseConfiguration(def.getConfiguration(), transformer));
 
-        return TransformerDefEditData.fromEntity(def, prettyCfg);
+        return TransformerDefEditData.fromEntity(def, transformer, prettyCfg);
     }
 
     /**
@@ -174,8 +196,8 @@ public class TransformerService extends AbstractApplicationService {
      *
      * @param rawValue    string configuration to convert
      * @param transformer corresponding transformer, for config type access and
-     * @param <C>
-     * @return
+     * @param <C>         transformer configuration type
+     * @return validated configuration
      */
     private <C extends Transformer.TransformerConfig> C parseConfiguration(String rawValue, Transformer<C, ?> transformer) {
 
@@ -188,7 +210,7 @@ public class TransformerService extends AbstractApplicationService {
             return config;
         } catch (IOException e) {
             throw new ApplicationException(ErrorType.TRANSFORMER_CONFIG_WRONG,
-                    "Cannot process json content", e, "Parsing error : " + e.getMessage());
+                    "Cannot process json content", e, "JSON Parsing error : " + e.getMessage());
         }
     }
 }

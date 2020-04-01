@@ -4,7 +4,7 @@
 </head>
 <body>
     <span layout:fragment="content">
-		<form action="#" th:action="@{/ui/transformers/add}" method="post">
+		<form action="#" th:action="@{/ui/transformers/new}" method="post">
 		<h5>Transformateurs du projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
 		<table class="table table-sm">
 		    <thead>
@@ -33,7 +33,7 @@
 					<td colspan="4">&nbsp;</td>
 					<td>
 						<div class="input-group">
-						  	<select class="custom-select" id="inputGroupSelect04" aria-label="Choix du transformateur à ajouter">
+						  	<select class="custom-select" id="transformerType" name="transformerType" aria-label="Choix du transformateur à ajouter">
 								<option selected>Ajouter un nouveau transformateur...</option>
 							  	<option th:each="transformer : ${transformerTypes}" th:value="${transformer.type}" th:text="${transformer.name}">UPPERCASE_TRANSFORMER</option>
 						  	</select>

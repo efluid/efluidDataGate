@@ -82,7 +82,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      * @param config
      * @return
      */
-    protected abstract R runner( C config, DictionaryEntry dict);
+    protected abstract R runner(C config, DictionaryEntry dict);
 
     /**
      * Entry point for global transform process. Process each value independently
@@ -123,7 +123,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
         private String tablePattern;
 
-        protected TransformerConfig(){
+        protected TransformerConfig() {
             super();
         }
 
