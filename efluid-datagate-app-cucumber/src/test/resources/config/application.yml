@@ -65,6 +65,9 @@ spring:
         driver-class-name: org.h2.Driver
         max-pool-size: 100
 
+    flyway:
+        enabled: false
+
     jpa:
         show-sql: false
         hibernate:

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>
+    <span layout:fragment="content">
+		<form action="#" th:action="@{/ui/transformers/new}" method="post">
+		<h5>Transformateurs du projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
+		<table class="table table-sm">
+		    <thead>
+		        <tr>
+		            <th scope="col">Nom</th>
+		            <th scope="col">Type</th>
+		            <th scope="col">Priorité</th>
+		            <th scope="col">Dernière modification</th>
+		            <th scope="col"></th>
+		        </tr>
+		    </thead>
+		    <tbody>
+				<tr th:if="${transformerDefs.empty}">
+					<td colspan="100%" class="empty-list-message">Aucun transformateur configuré pour le projet</td>
+				</tr>
+		        <tr th:each="transformerDef, cstat : ${transformerDefs}">
+		            <td th:text="${transformerDef.name}">Pre chargement des trucs</td>
+		            <td th:text="${transformerDef.typeName}">UPPERCARSE_TRANSFORMER</td>
+		            <td th:text="${transformerDef.priority}">12</td>
+		            <td th:text="${custom.format(transformerDef.updatedTime)}">01/11/2017</td>
+		            <td>
+		            	<a href="./transformer_edit.html" th:href="@{/ui/transformers/edit/{id}(id=${transformerDef.uuid})}" class="btn btn-sm btn-secondary float-right">Modifier</a>
+		            </td>
+		        </tr>
+				<tr>
+					<td colspan="4">&nbsp;</td>
+					<td>
+						<div class="input-group">
+						  	<select class="custom-select" id="transformerType" name="transformerType" aria-label="Choix du transformateur à ajouter">
+								<option value="none" selected="selected">Ajouter un nouveau transformateur...</option>
+							  	<option th:each="transformer : ${transformerTypes}" th:value="${transformer.type}" th:text="${transformer.name}">UPPERCASE_TRANSFORMER</option>
+						  	</select>
+						  	<div class="input-group-append">
+								<input id="addButton" type="submit" class="btn btn-primary" value="Ajouter"/>
+						  	</div>
+						</div>
+					</td>
+			     </tr>
+		    </tbody>
+		</table>
+		</form>
+	</span>
+	<script layout:fragment="script">
+
+		const checkMandatoryFields = () => {
+    		var type = $('#transformerType').val();
+    		if(type != '' && type != 'none'){
+    			$('#addButton').prop('disabled', false);
+				$('#addButton').removeClass('btn-outline-success').addClass('btn-success');
+    		} else {
+    			$('#addButton').prop('disabled', true);
+				$('#addButton').removeClass('btn-success').addClass('btn-outline-success');
+    		}
+		};
+
+    	// Init actions
+    	$(document).ready(() => {
+			$("#transformerType").on('change',checkMandatoryFields);
+			checkMandatoryFields();
+		});
+    </script>
+</body>
+</html>

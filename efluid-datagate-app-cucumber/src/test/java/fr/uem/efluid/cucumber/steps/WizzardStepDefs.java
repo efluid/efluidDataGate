@@ -30,7 +30,7 @@ public class WizzardStepDefs extends CucumberStepDefs {
         currentStep = 1;
     }
 
-    @When("the login \"(.*)\", the email \"(.*)\" and the password \"(.*)\" are specified")
+    @When("^the login \"(.*)\", the email \"(.*)\" and the password \"(.*)\" are specified$")
     public void the_login_the_email_and_the_password_are_specified(
             String login,
             String email,

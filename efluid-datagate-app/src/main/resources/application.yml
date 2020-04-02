@@ -80,6 +80,10 @@ spring:
     profiles:
         active: prod
 
+    mvc:
+        favicon:
+            enabled: false
+
     thymeleaf:
         cache: false
         check-template: true

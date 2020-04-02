@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>
+<span layout:fragment="content">
+    	<form id="editForm" action="#" th:action="@{/ui/transformers/save}" method="post">
+        	<p>
+	        	<h5>Edition d'un transformateur - Type <span th:text="${def.typeName}">type</span></h5>
+
+				<div class="form-group">
+					<label for="name">Nom de la transformation</label>
+					<input type="text" id="name" class="form-control" th:field="${def.name}" size="50"/>
+					<small class="form-text text-muted">Champ obligatoire</small>
+					<input type="hidden" th:field="${def.uuid}" />
+					<input type="hidden" id="type" th:field="${def.type}" />
+				</div>
+
+				<div class="form-group">
+					<label for="name">Priorité</label>
+					<input id="priority" type="text" class="form-control" th:field="${def.priority}" size="5"/>
+					<small class="form-text text-muted">Champ obligatoire. Les priorités les plus élevées sont traitées en 1er.</small>
+				</div>
+
+				<div class="form-group">
+					<label for="name">Configuration</label>
+					<textarea id="configuration" class="form-control" th:field="${def.configuration}" rows="15"></textarea>
+					<small class="form-text text-muted">Champ obligatoire. Le format est propre au type <span th:text="${def.typeName}">type</span></small>
+				</div>
+            </p>
+
+			<p>
+				<div class="float-right">
+					<a class="btn btn-secondary btn-sm" th:href="@{/ui/transformers}" href="prepare.html">Revenir en arrière</a>
+					<input type="button" id="saveButton" class="btn btn-success btn-sm" title="Le commentaire est obligatoire" value="Sauvegarder"/><br/><br/>
+				</div>
+            </p>
+
+		</form>
+
+	</span>
+	<script layout:fragment="script">
+
+		const checkMandatoryFields = () => {
+			hideDisplays();
+    		var config = $('#configuration').val();
+    		var name = $('#name').val();
+    		var priority = $('#priority').val();
+    		if(config != '' && name != '' && priority != ''){
+    			$('#saveButton').prop('disabled', false);
+				$('#saveButton').removeClass('btn-outline-success').addClass('btn-success');
+    		} else {
+    			$('#saveButton').prop('disabled', true);
+				$('#saveButton').removeClass('btn-success').addClass('btn-outline-success');
+    		}
+		};
+
+    	const checkConfigurationContentAndSave = () => {
+    		var config = $('#configuration').val();
+    		if(config != ''){
+    			var type = $('#type').val();
+    			$.post('/ui/transformers/validate/' + encodeURIComponent(type), config, (data, status) => {
+    				if(data && data != ''){
+    					showError('Erreur dans la configuration :' + data);
+    				} else {
+    					$('#editForm').submit();
+    				}
+    			});
+    		} else {
+    			showError('La configuration est obligatoire');
+	    		$('#saveButton').prop('disabled', true);
+				$('#saveButton').removeClass('btn-success').addClass('btn-outline-success');
+	    	}
+    	};
+
+    	// Init actions
+    	$(document).ready(() => {
+			$("#configuration").on('input',checkMandatoryFields);
+			$("#name").on('input',checkMandatoryFields);
+			$("#priority").on('input',checkMandatoryFields);
+			checkMandatoryFields();
+			$("#saveButton").click(checkConfigurationContentAndSave);
+		});
+    </script>
+</body>
+</html>

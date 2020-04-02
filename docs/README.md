@@ -17,7 +17,6 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
   * Dictionnaire des tables de paramètrage
   * Domaines fonctionnels
   * [Versions](versions.md)
-  * [Sources de transformation](transformer-source.md)
   * Export / import de dictionnaire
   * Préparation de lots
   * Validation de lots
@@ -25,7 +24,8 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
   * Export de lots
   * Historique
   * Import de lots
-  * [Transformation de données](transformer-apply.md)
+  * [Transformation de données](transformer.md)
+  * [Les transformers disponibles et leur configuration](transformer-config.md)
   * Mise à jour de lots à l'import
   * [Gestion de merge](case-based-merge.md)
   * [API Rest](rest-api.md)
