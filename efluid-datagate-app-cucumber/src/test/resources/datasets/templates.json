@@ -9,5 +9,7 @@
   "pages/table_edit" : ["parameter table edit","parameter table create"],
   "pages/versions" : ["list of versions"],
   "pages/diff" : ["diff running"],
-  "pages/commit" : ["commit saving"]
+  "pages/commit" : ["commit saving"],
+  "pages/transformers_all" : ["list of transformers"],
+  "pages/transformers_edit" : ["transformer definition edit","transformer definition create"]
 }

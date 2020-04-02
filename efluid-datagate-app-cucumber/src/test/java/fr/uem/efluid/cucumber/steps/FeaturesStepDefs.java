@@ -1,12 +1,10 @@
 package fr.uem.efluid.cucumber.steps;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Map;
@@ -20,9 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
 public class FeaturesStepDefs extends CucumberStepDefs {
-
-    @Autowired
-    private ObjectMapper mapper;
 
     @Given("^the feature \"(.*)\" is (.*)$")
     public void then_feature_state(String feature, String action) throws Exception {

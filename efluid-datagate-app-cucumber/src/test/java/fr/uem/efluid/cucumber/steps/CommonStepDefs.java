@@ -2,6 +2,7 @@ package fr.uem.efluid.cucumber.steps;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -118,7 +119,7 @@ public class CommonStepDefs extends CucumberStepDefs {
 
     @Given("^the current model id is \"(.*)\"$")
     public void mock_model_id(String id) {
-        mockDatabaseIdentifierWithVersion(id,true);
+        mockDatabaseIdentifierWithVersion(id, true);
     }
 
     @Given("^the existing data in managed table \"(.*)\" in destination environment :$")
@@ -176,4 +177,18 @@ public class CommonStepDefs extends CucumberStepDefs {
         implicitlyAuthenticatedAndOnPage(page);
     }
 
+    @SuppressWarnings("ThrowableNotThrown")
+    @Then("^an error is provided with this message :$")
+    public void error_message(DocString message) {
+        assertErrorMessageContent(message.getContent().trim());
+    }
+
+    @Then("^the result \"(.*)\" is provided$")
+    public void result_check(String result) {
+        if ("SUCCESS".equals(result)) {
+            assertThat(currentAction.andReturn().getResolvedException()).describedAs("A success is expected from the application").isNull();
+        } else {
+            assertErrorMessageContent(result);
+        }
+    }
 }

@@ -1,5 +1,7 @@
 package fr.uem.efluid.cucumber.common;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.stubs.*;
 import fr.uem.efluid.model.entities.*;
@@ -8,10 +10,12 @@ import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
 import junit.framework.AssertionFailedError;
+import org.assertj.core.api.ObjectAssert;
 import org.junit.runner.RunWith;
 import org.pac4j.core.config.Config;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,9 +26,11 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -70,6 +76,9 @@ public abstract class CucumberStepDefs {
     protected static ResultActions currentAction;
 
     protected static String currentStartPage;
+
+    @Autowired
+    protected ObjectMapper mapper;
 
     @Autowired
     protected MockMvc mockMvc;
@@ -282,6 +291,27 @@ public abstract class CucumberStepDefs {
      */
     protected FunctionalDomain getDefaultDomainFromCurrentProject() {
         return modelDatabase().findDomainByProjectAndName(getCurrentUserProject(), DEFAULT_DOMAIN);
+    }
+
+    /**
+     * Check for a specified error (from exception message / payload)
+     *
+     * @param expected
+     */
+    protected static void assertErrorMessageContent(String expected) {
+        Exception ex = currentAction.andReturn().getResolvedException();
+        assertThat(ex).describedAs("An error message was not returned by the application").isNotNull();
+        if (ex instanceof ApplicationException) {
+            ApplicationException apx = (ApplicationException) ex;
+
+            if (!(apx.getPayload() != null && apx.getPayload().contains(expected) || apx.getMessage().contains(expected))) {
+                throw new AssertionError("Expected message not found in Datagate Application Exception." +
+                        " Expected \"" + expected + "\" found " +
+                        "message=\"" + apx.getMessage() + "\" / payload=\"" + (apx.getPayload() != null ? apx.getPayload() : "N/A") + "\"");
+            }
+        } else {
+            assertThat(ex.getMessage()).contains(expected);
+        }
     }
 
     /**
@@ -762,6 +792,18 @@ public abstract class CucumberStepDefs {
         assertThat(datas).allMatch(i -> properties.contains(propertyAccess.apply(i)));
     }
 
+    @SuppressWarnings("unchecked")
+    protected static <K> K getCurrentSpecifiedProperty(String propertyName, Class<K> type) {
+        @SuppressWarnings("unchecked")
+        Object data = Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName);
+
+        assertThat(data).isNotNull();
+        assertThat(data).isInstanceOf(type);
+
+
+        return (K) data;
+    }
+
     /**
      * @param propertyName
      * @param propertyMatch
@@ -772,6 +814,56 @@ public abstract class CucumberStepDefs {
             String propertyName,
             Class<K> type,
             Predicate<K> propertyMatch) {
+        assertThat(getCurrentSpecifiedProperty(propertyName, type)).matches(propertyMatch);
+    }
+
+    /**
+     * Control json ignoring formating
+     *
+     * @param rawOne a json value
+     * @param rawTwo another json value
+     * @return true if equals
+     */
+    protected boolean jsonEquals(String rawOne, String rawTwo) {
+
+        if (rawOne == null && rawTwo == null) {
+            return true;
+        }
+
+        if (rawOne == null) {
+            return false;
+        }
+
+        if (rawTwo == null) {
+            return false;
+        }
+
+        try {
+            // Drop formatting
+            Map<?, ?> one = this.mapper.readValue(rawOne, new TypeReference<Map<Object, Object>>() {
+            });
+            Map<?, ?> two = this.mapper.readValue(rawTwo, new TypeReference<Map<Object, Object>>() {
+            });
+
+            assertThat(this.mapper.writeValueAsString(one)).isEqualTo(this.mapper.writeValueAsString(two));
+        } catch (IOException i) {
+            throw new AssertionError("Invalid json content", i);
+        }
+
+        return true;
+
+    }
+
+    /**
+     * @param propertyName
+     * @param matchers     for chained checks with assertj error support
+     * @param <K>
+     */
+    @SuppressWarnings("unchecked")
+    protected static <K> void assertModelIsSpecifiedProperty(
+            String propertyName,
+            Class<K> type,
+            Consumer<ObjectAssert<K>>... matchers) {
 
         @SuppressWarnings("unchecked")
         Object data = Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName);
@@ -779,12 +871,12 @@ public abstract class CucumberStepDefs {
         assertThat(data).isNotNull();
         assertThat(data).isInstanceOf(type);
 
-
         K matched = (K) data;
 
-        assertThat(matched).matches(propertyMatch);
+        for (Consumer<ObjectAssert<K>> matcher : matchers) {
+            matcher.accept(assertThat(matched));
+        }
     }
-
 
     protected static final class PostParamSet {
 

@@ -16,12 +16,12 @@ public class UpperCaseTransformer extends ColumnTransformer<UpperCaseTransformer
     }
 
     @Override
-    protected Config newConfig() {
-        return new Config();
+    protected UpperCaseTransformer.Config newConfig() {
+        return new UpperCaseTransformer.Config();
     }
 
     @Override
-    protected Runner runner(Config config, DictionaryEntry dict) {
+    protected Runner runner(UpperCaseTransformer.Config config, DictionaryEntry dict) {
         return new Runner(config, dict);
     }
 
@@ -34,7 +34,7 @@ public class UpperCaseTransformer extends ColumnTransformer<UpperCaseTransformer
 
     public static class Runner extends ColumnTransformer.Runner<UpperCaseTransformer.Config> {
 
-        public Runner(Config config, DictionaryEntry dict) {
+        public Runner(UpperCaseTransformer.Config config, DictionaryEntry dict) {
             super(config, dict);
         }
 

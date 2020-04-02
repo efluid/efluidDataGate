@@ -25,5 +25,6 @@
   "/ui/prepare/save" : ["commit save"],
   "/ui/merge" : ["merge commit page"],
   "/rest/v1/features/" : ["feature listing rest service"],
-  "/ui/transformers" : ["list of transformers"]
+  "/ui/transformers" : ["list of transformers"],
+  "/ui/transformers/new" : ["new transformer page"]
 }
