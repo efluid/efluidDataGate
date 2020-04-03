@@ -100,6 +100,11 @@
         <!-- Fixed plugins -->
         <plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
 
+        <!-- Sonar config with jacoco aggregated report -->
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        <sonar.jacoco.reportPath>${project.basedir}/../efluid-datagate-common/target/jacoco.exec</sonar.jacoco.reportPath>
+
     </properties>
 
 
@@ -149,6 +154,52 @@
         </pluginManagement>
 
         <plugins>
+
+            <!-- Jacoco tooling for test coverage analysis with sonar -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.5</version>
+                <executions>
+                    <execution>
+                        <id>pre-unit-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <propertyName>argLine</propertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-unit-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>pre-integration-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                        <configuration>
+                            <propertyName>argLine</propertyName>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>post-integration-test</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- Merge support -->
+                    <destFile>${sonar.jacoco.reportPath}</destFile>
+                    <append>true</append>
+                </configuration>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

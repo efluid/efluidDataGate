@@ -16,7 +16,14 @@ steps:
       - name: mvncache
         path: /root/.m2
     commands:
-      - mvn test
+      - mvn test jacoco:report
+  - name: test-coverage
+    image: lizheming/drone-coveralls
+    settings:
+      token:
+        from_secret: coveralls_token
+      files:
+        - ./efluid-datagate-common/target/jacoco.exec
   - name: docker-build
     image: plugins/docker
     volumes:
