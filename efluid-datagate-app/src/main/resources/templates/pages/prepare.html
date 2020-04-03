@@ -121,8 +121,8 @@
 			     								</tr>
 												<tr th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBar|">
 													<td colspan="100%">
-														<span th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBarContent|">
-														</span>
+														<div th:id="|${diffDisplay.domainUuid}_${diffDisplay.dictionaryEntryUuid}_navBarContent|">
+														</div>
 													</td>
 			     								</tr>
 											</tbody>
@@ -184,20 +184,70 @@
 		};
 		
 		const createNavBarItem = (elemId, active, num) => {
-			return '<li class="page-item' + (active ? ' active' : '') + '"><a class="page-link" onclick="getPageContent(\'' + elemId + '\',' + num + ')">' + (num + 1) + '</a></li>';
+			return '<li class="page-item' + (active ? ' active' : '') + '"><a class="page-link" style='+ (active ? 'color:#ffffff' : 'color:#007bff') + ' onclick="getPageContent(\'' + elemId + '\',' + num + ')">' + (num + 1) + '</a></li>';
+		};
+
+		const createNavBarPrevious = (elemId, num) => {
+			return '<li class="page-item"><a class="page-link" style=color:#007bff onclick="getPageContent(\'' + elemId + '\',' + num + ')">Précédent</a></li>';
+		};
+
+		const createNavBarNext = (elemId, num) => {
+			return '<li class="page-item"><a class="page-link" style=color:#007bff onclick="getPageContent(\'' + elemId + '\',' + num + ')">Suivant</a></li>';
 		};
 		
 		const displayNavBar = (elemId, pageIndex, pageCount) => {
 			
-			var navBar = '<nav><ul class="pagination">';
-			var navStart = pageIndex <= 2 ? 0 : pageIndex - 2;
-			var navEnd = pageCount >= 2 ? pageCount : (pageIndex < pageCount - 1 ? pageIndex + 1 : pageCount);  
-			
-			// console.info("For elem " + elemId + " get pageIndex=" + pageIndex + " pageCount=" + pageCount + " navStart=" + navStart + " navEnd=" + navEnd);
-			
-			for(i = navStart; i < navEnd; i++) {
-				navBar += createNavBarItem(elemId, i == pageIndex, i);
+			var navBar = '<nav aria-label="navbar"><ul class="pagination">';
+
+			var splitOneStart = -1;
+			var splitOneEnd = -1;
+			var splitTwoStart = -1 ;
+			var splitTwoEnd = -1 ;
+
+			// Intermediate "split" in navBar depending on current pos and size
+			if (pageCount >= 8) {
+
+				// Current at the beginning : 1 spacer
+				if (pageIndex < 4) {
+					splitOneStart = 4;
+					splitOneEnd = pageCount - 3;
+				}
+
+				// Current at the end : 1 spacer
+				else if (pageIndex > pageCount - 5) {
+					splitOneStart = 2;
+					splitOneEnd = pageCount - 5;
+				}
+
+				// Current elsewhere : 2 spacers around
+				else {
+					splitOneStart = 2;
+					splitOneEnd = pageIndex - 2;
+					splitTwoStart = pageIndex + 2;
+					splitTwoEnd = pageCount - 3;
+				}
+			}
+
+			if(pageIndex > 0){
+				navBar += createNavBarPrevious(elemId, pageIndex-1);
+			}
+
+			for(i = 0; i < pageCount; i++) {
+				// First optional split
+				if(i >= splitOneStart && i < splitOneEnd){
+					i = splitOneEnd;
+					navBar += '<li class="page-item disabled"><a class="page-link" href=""><span>...</span></a></li>';
+				} else if(i >= splitTwoStart && i < splitTwoEnd){
+					i = splitTwoEnd;
+					navBar += '<li class="page-item disabled"><a class="page-link" href=""><span>...</span></a></li>';
+				} else {
+					navBar += createNavBarItem(elemId, i == pageIndex, i);
+				}
 			}	
+
+			if(pageIndex < pageCount){
+				navBar += createNavBarNext(elemId, pageIndex+1);
+			}
 
 			return navBar + '</ul></nav>';
 		};

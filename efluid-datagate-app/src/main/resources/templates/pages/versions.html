@@ -27,7 +27,7 @@
                     <th th:if="!${noVersionName}">scope="col">App. Modèle</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
-                    <th scope="col"width="10%">&nbsp;</th>
+                    <th scope="col" width="25%">&nbsp;</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,9 +42,11 @@
                      <td th:text="${custom.format(version.createdTime)}">Lundi</td>
                      <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
-                     	<button th:if="${version.canUpdate}" class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button>
-                         <button th:if="!${ dictionaryManagementService.isVersionLinkedToLot(version.uuid) }" class="deleteButton btn btn-danger btn-sm float-right">Supprimer</button>
-                        <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm">Comparer</a>
+                         <span class="float-right">
+                            <button th:if="${version.canUpdate}" class="updateButton btn btn-success btn-sm">Mettre à jour</button>
+                            <button th:if="!${ dictionaryManagementService.isVersionLinkedToLot(version.uuid) }" class="deleteButton btn btn-danger btn-sm" style="margin-left:10px;">Supprimer</button>
+                            <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm" style="margin-left:10px;">Comparer</a>
+                         </span>
                      </td>
 			     </tr>
 			     <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
