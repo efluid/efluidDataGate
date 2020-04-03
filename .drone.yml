@@ -18,10 +18,10 @@ steps:
     commands:
       - mvn test jacoco:report
   - name: test-coverage
-    image: lizheming/drone-coveralls
+    image: plugins/codecov
     settings:
       token:
-        from_secret: coveralls_token
+        from_secret: codecov_token
       files:
         - ./efluid-datagate-common/target/jacoco.exec
   - name: docker-build
