@@ -1,4 +1,4 @@
-# EFLUID-DATAGATE 
+![logo](efluid-datagate-app/src/main/resources/static/logo.png?raw=true "model") 
 
 [![Build Status](https://build.elecomte.com/api/badges/datagate-update/efluidDataGate/status.svg?ref=refs/heads/develop)](https://build.elecomte.com/datagate-update/efluidDataGate)
 
