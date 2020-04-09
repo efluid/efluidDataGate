@@ -1,4 +1,7 @@
-# EFLUID-DATAGATE 
+<img src="efluid-datagate-app/src/main/resources/static/logo.png?raw=true" width="300"/>
+
+Efluid Datagate - Advanced database value management
+=====================
 
 [![Build Status](https://build.elecomte.com/api/badges/datagate-update/efluidDataGate/status.svg?ref=refs/heads/develop)](https://build.elecomte.com/datagate-update/efluidDataGate)
 
