@@ -16,17 +16,15 @@ steps:
       - name: mvncache
         path: /root/.m2
     commands:
-      - mvn test
+      - mvn verify
   - name: publish-coverage
     image: plugins/codecov
     settings:
       token:
         from_secret: codecov_token
       files:
-        - ./efluid-datagate-common/target/site/jacoco/jacoco.xml
-        - ./efluid-datagate-app/target/site/jacoco/jacoco.xml
-        - ./efluid-datagate-app-cucumber/target/site/jacoco/jacoco.xml
-        - ./efluid-datagate-generator-example/target/site/jacoco/jacoco.xml
+        - ./efluid-datagate-app/target/site/jacoco-aggregate/jacoco.xml
+        - ./efluid-datagate-app-cucumber/target/site/jacoco-aggregate/jacoco.xml
     when:
       branch:
         - develop
