@@ -16,14 +16,18 @@ steps:
       - name: mvncache
         path: /root/.m2
     commands:
-      - mvn test jacoco:report
-  - name: test-coverage
+      - mvn verify
+  - name: publish-coverage
     image: plugins/codecov
     settings:
       token:
         from_secret: codecov_token
       files:
-        - ./efluid-datagate-common/target/jacoco.exec
+        - ./efluid-datagate-app/target/site/jacoco-aggregate/jacoco.xml
+        - ./efluid-datagate-app-cucumber/target/site/jacoco-aggregate/jacoco.xml
+    when:
+      branch:
+        - develop
   - name: docker-build
     image: plugins/docker
     volumes:
@@ -47,9 +51,8 @@ steps:
       - docker rm -f datagate
       - docker run --name datagate -p 8085:8080 -v /opt/server/datagate/cfg:/cfg -v /opt/server/datagate/tmp:/tmp -v /opt/server/datagate/logs:/logs -e TZ=Europe/Paris -d micro-server:443/datagate/latest
     when:
-      event:
-        exclude:
-          - pull_request
+      branch:
+        - develop
   - name: notification
     image: plugins/slack
     settings:
