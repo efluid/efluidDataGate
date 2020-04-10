@@ -279,7 +279,7 @@ public class CommitService extends AbstractApplicationService {
 
         LOGGER.debug("Request for binary content with hash {}", decHash);
 
-        LobProperty lob = this.lobs.findByHash(decHash);
+        LobProperty lob = this.lobs.findFirstByHash(decHash);
 
         return lob.getData();
     }
