@@ -11,5 +11,7 @@
   "pages/diff" : ["diff running"],
   "pages/commit" : ["commit saving"],
   "pages/transformers_all" : ["list of transformers"],
-  "pages/transformers_edit" : ["transformer definition edit","transformer definition create"]
+  "pages/transformers_edit" : ["transformer definition edit","transformer definition create"],
+  "pages/commits" : ["list of commits"],
+  "pages/details" : ["detail of an existing commit"]
 }

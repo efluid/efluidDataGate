@@ -788,20 +788,28 @@ public abstract class CucumberStepDefs {
         Collection<T> datas = (Collection<T>) Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(property);
 
         assertThat(datas).isNotNull();
-        assertThat(datas).hasSize(datas.size());
+        assertThat(datas).hasSize(properties.size());
         assertThat(datas).allMatch(i -> properties.contains(propertyAccess.apply(i)));
     }
 
     @SuppressWarnings("unchecked")
     protected static <K> K getCurrentSpecifiedProperty(String propertyName, Class<K> type) {
-        @SuppressWarnings("unchecked")
-        Object data = Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName);
 
+        Object data = Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName);
         assertThat(data).isNotNull();
         assertThat(data).isInstanceOf(type);
 
-
         return (K) data;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static <K> List<K> getCurrentSpecifiedPropertyList(String propertyName, Class<K> type) {
+
+        Object data = Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName);
+        assertThat(data).isNotNull();
+        assertThat(data).isInstanceOf(List.class);
+
+        return (List<K>) data;
     }
 
     /**
@@ -877,6 +885,7 @@ public abstract class CucumberStepDefs {
             matcher.accept(assertThat(matched));
         }
     }
+
 
     protected static final class PostParamSet {
 
