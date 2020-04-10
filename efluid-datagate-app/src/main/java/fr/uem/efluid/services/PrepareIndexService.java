@@ -354,9 +354,7 @@ public class PrepareIndexService {
     List<PreparedIndexEntry> prepareDiffForRendering(DictionaryEntry dic, List<PreparedIndexEntry> index) {
 
         // Get all previouses for HR payload init
-        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dic,
-                index.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()),
-                index.stream().map(PreparedIndexEntry::getId).collect(Collectors.toList()));
+        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntriesExcludingExisting(dic, index);
 
         // Complete HR payloads
         index.forEach(e -> {
@@ -578,7 +576,7 @@ public class PrepareIndexService {
         else {
 
             // Except if new is also empty will content is knew : it's a managed empty line
-            if(!(wasKnew && StringUtils.isEmpty(actualOne.getValue()))) {
+            if (!(wasKnew && StringUtils.isEmpty(actualOne.getValue()))) {
                 LOGGER.debug("New endex entry for {} : ADD with \"{}\"", actualOne.getKey(), actualOne.getValue());
                 diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKey(), actualOne.getValue(), null, dic));
             }
@@ -622,7 +620,6 @@ public class PrepareIndexService {
 
 
     /**
-     *
      * @param dict
      * @param actualContent
      * @param mines
@@ -698,7 +695,7 @@ public class PrepareIndexService {
 
         // Prepare "previous" if any for HR Payload
         Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dict,
-                preparingMergeIndexToComplete.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()), null);
+                preparingMergeIndexToComplete.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
 
         if (MERGE_LOGGER.isDebugEnabled()) {
             MERGE_LOGGER.debug(

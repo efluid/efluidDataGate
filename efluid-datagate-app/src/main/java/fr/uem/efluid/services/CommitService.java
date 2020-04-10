@@ -229,8 +229,9 @@ public class CommitService extends AbstractApplicationService {
         // Too much data, get only dictionary item listings
         else {
             details.setTooMuchData(true);
-            details.setSize(size);
         }
+
+        details.setSize(size);
 
         List<Attachment> commitAtt = this.attachments.findByCommit(new Commit(commitUUID));
 
@@ -600,7 +601,7 @@ public class CommitService extends AbstractApplicationService {
 
         // All "previous" for current diff
         Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(entry,
-                diffContent.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()), null);
+                diffContent.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
 
         // Completed rollback
         return diffContent.stream()
