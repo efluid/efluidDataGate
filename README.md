@@ -1,6 +1,9 @@
-# EFLUID-DATAGATE 
+<img src="efluid-datagate-app/src/main/resources/static/logo.png?raw=true" width="300"/>
 
-[![Build Status](https://build.elecomte.com/api/badges/datagate-update/efluidDataGate/status.svg?ref=refs/heads/develop)](https://build.elecomte.com/datagate-update/efluidDataGate)
+Efluid Datagate - Advanced database value management
+=====================
+
+[![Build Status](https://build.elecomte.com/api/badges/datagate-update/efluidDataGate/status.svg?ref=refs/heads/develop)](https://build.elecomte.com/datagate-update/efluidDataGate) [![codecov](https://codecov.io/gh/datagate-update/efluidDataGate/branch/develop/graph/badge.svg)](https://codecov.io/gh/datagate-update/efluidDataGate)
 
 Outil dédié à l'identification, au packaging et au déploiement de modifications dans une base de données, en s'appuyant sur les principes de `git`. 
 

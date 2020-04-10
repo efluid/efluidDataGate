@@ -99,6 +99,7 @@
 
         <!-- Fixed plugins -->
         <plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
+        <plugin.jacoco.version>0.8.5</plugin.jacoco.version>
 
     </properties>
 
@@ -144,11 +145,31 @@
                     <version>${project.version}</version>
                 </plugin>
 
+                <!-- Jacoco support -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${plugin.jacoco.version}</version>
+                </plugin>
 
             </plugins>
         </pluginManagement>
 
         <plugins>
+
+            <!-- Jacoco tooling for test coverage analysis -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>pre-test</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
