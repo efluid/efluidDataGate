@@ -72,9 +72,9 @@ Feature: The update on parameter tables can be followed checked and stored as co
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
       | Table    | Key | Action | Payload                                                                                                                         |
-      | TTAB_SIX | 7   | ADD    | TEXT:<a href="/lob/AyoJCmZNQXwkzt2ZcHgG8cpvUucsbGnanTuQu%2BpaGOs%3D" download="download">TEXT</a>, DATE:2012-01-15 00:00:00     |
-      | TTAB_SIX | 8   | ADD    | TEXT:<a href="/lob/KOpk7DP9iLnAls5%2FRoF1%2BKRDxWMDaA%2BeSk2bUGo8g3g%3D" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
-      | TTAB_SIX | 9   | ADD    | TEXT:<a href="/lob/%2BfuDApVm2qHu8BaSOOkKAtICrThc5VM9ESzFM%2FC%2FVGI%3D" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
+      | TTAB_SIX | 7   | ADD    | TEXT:<a href="/ui/lob/QXlvSkNtWk5RWHdrenQyWmNIZ0c4Y3B2VXVjc2JHbmFuVHVRdStwYUdPcz0=" download="download">TEXT</a>, DATE:2012-01-15 00:00:00     |
+      | TTAB_SIX | 8   | ADD    | TEXT:<a href="/ui/lob/S09wazdEUDlpTG5BbHM1L1JvRjErS1JEeFdNRGFBK2VTazJiVUdvOGczZz0=" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
+      | TTAB_SIX | 9   | ADD    | TEXT:<a href="/ui/lob/K2Z1REFwVm0ycUh1OEJhU09Pa0tBdElDclRoYzVWTTlFU3pGTS9DL1ZHST0=" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
     And the commit content has these associated lob data :
       | data                                     | hash                                         |
       | Ceci est un text enregistré dans un CLOB | AyoJCmZNQXwkzt2ZcHgG8cpvUucsbGnanTuQu+paGOs= |
