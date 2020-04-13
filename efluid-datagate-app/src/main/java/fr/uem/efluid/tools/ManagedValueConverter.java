@@ -353,28 +353,8 @@ public class ManagedValueConverter {
         if (StringUtils.isEmpty(existingPayload)) {
             return displayInternalValue(expandInternalValue(activePayload));
         }
-        System.out.println("les 2 sont pleins " + existingPayload + "..." + activePayload);
-        System.out.println(displayModificationRendering(expandInternalValue(activePayload), expandInternalValue(existingPayload)));
+
         return displayModificationRendering(expandInternalValue(activePayload), expandInternalValue(existingPayload));
-    }
-
-    /**
-     * <p>
-     * Before converting payload we need to check if it contains illegal characters,
-     * if it contains illegal characters the result could be like this
-     * "Un mod�q�q�q�q�qest - 3'=>'Un modèle de test - 3"
-     * </p>
-     * @author prescillia seck
-     * @param payload
-     * @return
-     */
-
-    public Boolean checkPayloadBeforeConverting(String payload) {
-        String regex = "^[a-zA-Z0-9/+=]+$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher m = pattern.matcher(payload);
-
-        return m.find();
     }
 
     /**
