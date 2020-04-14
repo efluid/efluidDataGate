@@ -32,7 +32,7 @@
 								 pour la <span th:text="${remark.location}">table TABLE</span>.<br/><u>Entrées manquantes identifiées</u> :
 								 <ul>
 								 	<li th:each="missing, mstat : ${remark.payload}" th:id="${mstat.index}">
-								 		<span class="table-key">ID</span> : <span th:text="${missing.key}" class="table-key">KEY</span>
+								 		<span class="table-key" th:text="'Colonne ' + ${missing.columnName}"></span> : <span th:text="${missing.key}" class="table-key">KEY</span>
 									</li>
 								 </ul>
 							</li>
