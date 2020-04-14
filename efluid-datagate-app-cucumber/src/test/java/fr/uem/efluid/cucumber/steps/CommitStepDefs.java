@@ -1,20 +1,24 @@
 package fr.uem.efluid.cucumber.steps;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
-import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.entities.AttachmentType;
+import fr.uem.efluid.model.entities.CommitState;
+import fr.uem.efluid.model.entities.IndexAction;
+import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.services.types.CommitDetails;
+import fr.uem.efluid.services.types.CommitEditData;
 import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static java.util.stream.Collectors.toMap;
@@ -27,6 +31,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
 public class CommitStepDefs extends CucumberStepDefs {
+
+    @When("^the user select the details of commit \"(.*)\"$")
+    public void select_commit_details(String comment) throws Exception {
+        List<CommitEditData> commits = getCurrentSpecifiedPropertyList("commits", CommitEditData.class);
+        Optional<CommitEditData> commit = commits.stream().filter(c -> c.getComment().equals(comment)).findFirst();
+        assertThat(commit).isPresent();
+
+        // Navigate
+        get("/ui/details/" + commit.get().getUuid());
+    }
 
     @Then("^the commit \"(.*)\" is added to commit list for current project$")
     public void then_commit_is_added_with_comment(String comment) {
@@ -93,6 +107,9 @@ public class CommitStepDefs extends CucumberStepDefs {
             }
 
         });
+      
+        // Process assert on last saved commit in DB
+        checkCommitDetails(getSavedCommit(), data);
     }
 
     @Then("^the saved merge commit content has these identified changes :$")
@@ -140,6 +157,74 @@ public class CommitStepDefs extends CucumberStepDefs {
             }
             assertThat(FormatUtils.toString(lobProperty.getData())).isEqualTo(datas.get(lobProperty.getHash()));
         });
+
+    }
+
+    @Then("^the list of commits is :$")
+    public void commit_list(DataTable table) {
+        List<Map<String, String>> datas = table.asMaps();
+        List<CommitEditData> commits = getCurrentSpecifiedPropertyList("commits", CommitEditData.class);
+        assertThat(commits).hasSize(datas.size());
+        int idx = 0;
+        for (CommitEditData commit : commits) {
+            assertThat(commit).isNotNull();
+            assertThat(commit.getUuid()).isNotNull();
+            assertThat(commit.getComment()).isEqualTo(datas.get(idx).get("comment"));
+            assertThat(commit.getOriginalUserEmail()).isEqualTo(datas.get(idx).get("author"));
+            idx++;
+        }
+    }
+
+    @Then("^the commit details are displayed with this content :$")
+    public void commit_detail_content(DataTable table) {
+
+        // Get by tables
+        checkCommitDetails(getCurrentSpecifiedProperty("details", CommitDetails.class), table);
+    }
+
+    @Then("^the commit details are too large to be displayed$")
+    public void commit_detail_large() {
+        CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
+        assertThat(details.isTooMuchData()).isTrue();
+    }
+
+    @Then("^the commit details are displayed with (\\d*) payloads$")
+    public void commit_detail_size(int size) {
+        CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
+        assertThat(details.getSize()).isEqualTo(size);
+    }
+
+    private void checkCommitDetails(CommitDetails commit, DataTable table) {
+
+        // Get by tables
+        Map<String, List<Map<String, String>>> tables = table.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
+
+        tables.forEach((t, v) -> {
+            DiffDisplay<?> content = commit.getContent().stream()
+                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
+                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
+
+            assertThat(content.getDiff().size()).isEqualTo(v.size());
+
+            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
+            v.sort(Comparator.comparing(m -> m.get("Key")));
+
+            // Keep order
+            for (int i = 0; i < content.getDiff().size(); i++) {
+                PreparedIndexEntry diffLine = content.getDiff().get(i);
+                Map<String, String> dataLine = v.get(i);
+
+                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
+                assertThat(diffLine.getAction()).isEqualTo(action);
+                assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
+
+                // No need to check payload in delete
+                if (action != REMOVE) {
+                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
+                }
+            }
+        });
+
 
     }
 }
