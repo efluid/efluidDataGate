@@ -38,11 +38,4 @@ public class ContentLineDisplay {
 		return this.hrPayload;
 	}
 
-	/**
-	 * @return the column
-	 */
-	public String getColumnName() {
-		return this.columnName;
-	}
-
 }
