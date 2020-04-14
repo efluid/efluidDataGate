@@ -71,7 +71,7 @@ public class CommitStepDefs extends CucumberStepDefs {
                     .filter(p -> p.getDictionaryEntryTableName().equals(t))
                     .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
 
-            //assertThat(content.getDiff().size()).isEqualTo(v.size());
+            assertThat(content.getDiff().size()).isEqualTo(v.size());
 
             content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
             v.sort(Comparator.comparing(m -> m.get("Key")));
@@ -89,8 +89,6 @@ public class CommitStepDefs extends CucumberStepDefs {
                 if (action != REMOVE) {
                     assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
                 }
-
-                System.out.println("/////////////////////////////// " + diffLine.getHrPayload());
 
             }
 
