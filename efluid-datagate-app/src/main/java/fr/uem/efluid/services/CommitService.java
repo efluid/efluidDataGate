@@ -85,6 +85,50 @@ public class CommitService extends AbstractApplicationService {
     @Autowired
     private AttachmentProcessor.Provider attachProcs;
 
+    @Autowired
+    private TransformerService transformerService;
+
+    public CommitExportEditData initCommitExport(CommitExportEditData.CommitSelectType type, UUID commitUUID) {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        LOGGER.debug("Asking for a commit export init for project {}, with type {} from commit \"{}\"",
+                project.getName(), type, commitUUID != null ? "UUID " + commitUUID : "ALL");
+
+        CommitExportEditData preparation = new CommitExportEditData();
+
+        preparation.setCommitSelectType(type);
+
+        // Get comment on specified commit if any
+        if (commitUUID != null) {
+
+            Commit commit = this.commits.findById(commitUUID)
+                    .orElseThrow(() -> new ApplicationException(COMMIT_EXISTS, "Specified commit " + commitUUID + " doesn't exist"));
+
+            preparation.setSelectedCommitUuid(commitUUID);
+            preparation.setSelectedCommitComment(commit.getComment());
+            preparation.setSelectedCommitVersion(commit.getVersion().getName());
+        }
+
+        // Else it's an "export all" situation
+        else {
+            preparation.setSelectedCommitComment("ALL");
+            Version version = this.versions.getLastVersionForProject(project);
+            if (version != null) {
+                preparation.setSelectedCommitVersion(version.getName());
+            } else {
+                preparation.setSelectedCommitVersion(NOT_SET_VERSION_NAME);
+            }
+        }
+
+        // Init transformer config map
+        preparation.setSpecificTransformerConfigurations(this.transformerService.getAllTransformerDefConfigs());
+
+        return preparation;
+    }
+
 
     /**
      * <p>
@@ -250,6 +294,7 @@ public class CommitService extends AbstractApplicationService {
 
     /**
      * Complete commit details for rendering regarding the specified project dictionary, and the given index content
+     *
      * @param project
      * @param details
      * @param index
@@ -639,7 +684,7 @@ public class CommitService extends AbstractApplicationService {
      * @param commitUUID
      */
     private void assertCommitExists(UUID commitUUID) {
-        if (!this.commits.existsById(commitUUID)) {
+        if (commitUUID == null || !this.commits.existsById(commitUUID)) {
             throw new ApplicationException(COMMIT_EXISTS, "Specified commit " + commitUUID + " doesn't exist");
         }
     }

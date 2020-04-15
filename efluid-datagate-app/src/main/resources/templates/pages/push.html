@@ -22,7 +22,7 @@
 					<th scope="col">Version</th>
 		            <th scope="col">Créé par</th>
 		            <th scope="col">Le</th>
-		            <th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/ui/push/all/{name}.par(name=${custom.exportName('commits', modelDesc.schema, 'all')})}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
+		            <th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/ui/push/prepare/ALL/RANGE_FROM}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
 				</tr>
 			</thead>
 
@@ -39,8 +39,8 @@
 					<td>
 						<div class="float-right">
 							<div th:id="|selecterFor${commit.uuid}|" class="selecter selected" title="Activer l'export complet à partir de ce lot">&nbsp;</div>&nbsp;&nbsp;
-							<a href="#" th:href="@{/ui/push/{id}/{name}.par(id=${commit.uuid}, name=${custom.exportName('commits', modelDesc.schema, 'single', commit.uuid)})}" class="btn btn-primary btn-sm">Exporter seul</a>
-							<a hidden="true" th:id="|exportUntilSrcLink${commit.uuid}|" th:href="@{/ui/push/until-{id}/{name}.par(id=${commit.uuid},name=${custom.exportName('commits', modelDesc.schema, 'until', commit.uuid)})}">&nbsp;</a>
+							<a href="#" th:href="@{/ui/push/prepare/{id}/SINGLE_ONE(id=${commit.uuid})}" class="btn btn-primary btn-sm">Exporter seul</a>
+							<a hidden="true" th:id="|exportUntilSrcLink${commit.uuid}|" th:href="@{/ui/push/prepare/{id}/RANGE_FROM(id=${commit.uuid})}">&nbsp;</a>
 						</div>
 					</td>
 				</tr>

@@ -23,8 +23,8 @@
 				</div>
 
 				<div class="form-group">
-					<label for="name">Configuration</label>
-					<textarea id="configuration" class="form-control" th:field="${def.configuration}" rows="15"></textarea>
+					<label for="name">Configuration (json)</label>
+					<textarea id="configuration" class="form-control configuration" th:field="${def.configuration}" rows="15"></textarea>
 					<small class="form-text text-muted">Champ obligatoire. Le format est propre au type <span th:text="${def.typeName}">type</span></small>
 				</div>
             </p>

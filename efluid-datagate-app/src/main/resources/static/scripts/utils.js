@@ -68,3 +68,16 @@ const supportGitmojis = () => {
         $(".gitmoji").each((index, e) => updateGitmoji(e, json.gitmojis));
     });
 }
+
+// Common accessor on element id containing an UUID for reference
+const getReferencedUuidInId = (e) => {
+
+    var itemId = e.target.id;
+    console.info("processing " + itemId);
+
+	var idParts = itemId.split("_");
+	if(idParts.length == 1){
+	    return itemId;
+	}
+	return idParts[idParts.length-1];
+}

@@ -77,6 +77,19 @@ public class TransformerService extends AbstractApplicationService {
     }
 
     /**
+     * For large scale config edition, provides all configuration mapped to their transformer def UUID
+     *
+     * @return config for transformer defs uuid, on current project
+     */
+    public Map<UUID, String> getAllTransformerDefConfigs() {
+        return this.transformerDefs.findByProject(this.projectService.getCurrentSelectedProjectEntity()).stream()
+                .collect(Collectors.toMap(TransformerDef::getUuid, def -> {
+                    Transformer<?, ?> transformer = loadTransformerByType(def.getType());
+                    return prettyConfig(parseConfiguration(def.getConfiguration(), transformer));
+                }));
+    }
+
+    /**
      * Init a def ready to be completed for specified type
      *
      * @param type selected type for new def

@@ -48,6 +48,9 @@ public class BacklogController extends CommonController {
     private ApplicationDetailsService applicationDetailsService;
 
     @Autowired
+    private TransformerService transformerService;
+
+    @Autowired
     private ApplyDiffService diffService;
 
     /**
@@ -235,7 +238,7 @@ public class BacklogController extends CommonController {
      * @return
      */
     @RequestMapping(path = {"/prepare/commit", "/merge/commit"}, method = POST)
-    public String preparationCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation,  @RequestAttribute(required =  false) PilotedCommitPreparation<LocalPreparedDiff> preparationPush) {
+    public String preparationCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation, @RequestAttribute(required = false) PilotedCommitPreparation<LocalPreparedDiff> preparationPush) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
@@ -259,7 +262,7 @@ public class BacklogController extends CommonController {
      * @return
      */
     @RequestMapping(path = {"/prepare/save", "/merge/save"}, method = POST)
-    public String preparationSave(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation,  @RequestAttribute(required =  false) PilotedCommitPreparation<LocalPreparedDiff> preparationPush) {
+    public String preparationSave(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation, @RequestAttribute(required = false) PilotedCommitPreparation<LocalPreparedDiff> preparationPush) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
@@ -311,10 +314,6 @@ public class BacklogController extends CommonController {
             return REDIRECT_SELECT;
         }
 
-        if (!controlSelectedProject(model)) {
-            return REDIRECT_SELECT;
-        }
-
         // For formatting
         WebUtils.addTools(model);
 
@@ -325,6 +324,38 @@ public class BacklogController extends CommonController {
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
 
         return "pages/push";
+    }
+
+    /**
+     * Prepare a new export of commit
+     *
+     * @param model s-mvc context
+     * @param uuid  support ALL or a clean UUID
+     * @param type  specified export type
+     * @return tpl for edit of an export
+     */
+    @RequestMapping(path = "/push/prepare/{uuid}/{type}", method = GET)
+    public String commitExportEditPage(Model model, @PathVariable("uuid") String uuid, @PathVariable("type") CommitExportEditData.CommitSelectType type) {
+
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
+        // For formatting
+        WebUtils.addTools(model);
+
+        // Editing commit - support for "ALL" as commit UUID
+        model.addAttribute("exportEdit", this.commitService.initCommitExport(type,
+                uuid != null && !uuid.equals("ALL") ? UUID.fromString(uuid) : null));
+
+        // Transformers from project
+        model.addAttribute("transformerDefs", this.transformerService.getAllTransformerDefs());
+
+        // Other info to display
+        model.addAttribute("version", this.dictService.getLastVersion());
+        model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
+
+        return "pages/push_prepare";
     }
 
     /**
@@ -343,7 +374,7 @@ public class BacklogController extends CommonController {
      */
     @RequestMapping(value = "/push/all/{name}.par", method = GET)
     @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportAllCommits( @PathVariable("name") String name) {
+    public ResponseEntity<InputStreamResource> downloadExportAllCommits(@PathVariable("name") String name) {
 
         return WebUtils.outputExportImportFile(name, this.commitService.exportCommits(null).getResult());
     }
