@@ -42,7 +42,7 @@
  -->
 
 	<logger name="org.flywaydb" additivity="false">
-		<level value="DEBUG" />
+		<level value="INFO" />
 		<appender-ref ref="STDOUT" />
 	</logger>
 
