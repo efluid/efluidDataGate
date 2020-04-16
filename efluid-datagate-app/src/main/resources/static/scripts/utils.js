@@ -62,11 +62,10 @@ const autoDownloadWithProgress = (uid, name, contentId) => {
     $("#downloadingMessage").show();
     $("#" + contentId).hide();
 
+    // Start a download progress : check if export is generated
     checkDownloadProgress(uid, contentId);
 
-    // Hidden download link
-    //$('#downloadingLink')[0].click();
-
+    // To avoid focus change on current, we have no other choice than downloading in JS blob ...
     $.ajax({
         url: uri,
         method: 'GET',
@@ -74,6 +73,7 @@ const autoDownloadWithProgress = (uid, name, contentId) => {
             responseType: 'blob'
         },
         success: function (data) {
+            // WARN : this will get the export content into JS blob ...
             var a = document.createElement('a');
             var url = window.URL.createObjectURL(data);
             a.href = url;

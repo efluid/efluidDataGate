@@ -42,6 +42,7 @@ public class CommitService extends AbstractApplicationService {
 
     public static final String PCKG_LOBS = "lobs";
     public static final String PCKG_ATTACHS = "attachs";
+    public static final String PCKG_TRANSFORMERS = "transformers";
 
     private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
@@ -257,6 +258,8 @@ public class CommitService extends AbstractApplicationService {
 
         // Then export :
         ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
+                new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
+                        .initWithContent(this.transformerService.getCustomizedTransformerDef(project, preparedExport.getTransformers())),
                 new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
                 new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport),
                 new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now())
@@ -373,6 +376,7 @@ public class CommitService extends AbstractApplicationService {
             d.setDiff(this.diffs.prepareDiffForRendering(dict, d.getDiff()));
         });
     }
+
 
     /**
      * @param encodedLobHash
@@ -549,6 +553,10 @@ public class CommitService extends AbstractApplicationService {
                 .findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
                         "Import of commits doens't contains the expected package types"));
 
+        // Get package files - transformers (optional for compatibility with legacy exports) - apply only if present
+        commitPackages.stream().filter(p -> p.getClass() == TransformerDefPackage.class)
+                .map(p -> (TransformerDefPackage) p).findFirst().ifPresent(p -> currentPreparation.setTransformerProcessor(this.transformerService.importTransformerDefsAndPrepareProcessor(p)));
+
         LOGGER.debug("Import of commits from package {} initiated", commitPckg);
 
         // #3 Extract local data to merge with
@@ -599,6 +607,7 @@ public class CommitService extends AbstractApplicationService {
                 // This one is not yet imported or merged : keep it for processing
                 else {
                     LOGGER.debug("Imported commit {} is not yet managed in local db. Will process it", imported.getUuid());
+
                     toProcess.add(imported);
 
                     // Start time for local diff search
