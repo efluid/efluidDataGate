@@ -2,6 +2,7 @@ package fr.uem.efluid.services;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AttachmentProcessor;
@@ -29,7 +30,7 @@ import static fr.uem.efluid.utils.ErrorType.*;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
 @Transactional
@@ -57,6 +58,9 @@ public class CommitService extends AbstractApplicationService {
 
     @Autowired
     private IndexRepository indexes;
+
+    @Autowired
+    private ExportRepository exports;
 
     @Autowired
     private FunctionalDomainRepository domains;
@@ -87,6 +91,9 @@ public class CommitService extends AbstractApplicationService {
 
     @Autowired
     private TransformerService transformerService;
+
+    @Autowired
+    private ApplicationDetailsService appDetailsService;
 
     public CommitExportEditData initCommitExport(CommitExportEditData.CommitSelectType type, UUID commitUUID) {
 
@@ -129,17 +136,84 @@ public class CommitService extends AbstractApplicationService {
         return preparation;
     }
 
+    /**
+     * Save prepared export and provides UUID. Real export process will be started from specified uuid
+     *
+     * @param editData prepared export details
+     * @return saved export display details if no error in process.
+     */
+    public CommitExportDisplay saveCommitExport(CommitExportEditData editData) {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        // Prepare export content
+        Export export = new Export(UUID.randomUUID());
+
+        // Cherry-pick - range with same commit
+        if (editData.getCommitSelectType() == CommitExportEditData.CommitSelectType.SINGLE_ONE) {
+            export.setStartCommit(new Commit(editData.getSelectedCommitUuid()));
+            export.setEndCommit(new Commit(editData.getSelectedCommitUuid()));
+            export.setFilename(commitExportName("single", editData.getSelectedCommitUuid()));
+        }
+
+        // Range : get a start and an end commit
+        else {
+            List<Commit> allCommits = sortedCommits(project);
+
+            // All range exports until last ...
+            export.setEndCommit(allCommits.get(allCommits.size() - 1));
+
+            if (editData.getSelectedCommitUuid() == null) {
+                // ... From first
+                export.setStartCommit(allCommits.get(0));
+                export.setFilename(commitExportName("all", null));
+            } else {
+                // ... From selected
+                export.setStartCommit(new Commit(editData.getSelectedCommitUuid()));
+                export.setFilename(commitExportName("until", editData.getSelectedCommitUuid()));
+            }
+        }
+
+        // Transformer customization (store ALL)
+        editData.getSpecificTransformerConfigurations().forEach((k, v) -> {
+            ExportTransformer et = new ExportTransformer();
+            et.setConfiguration(v);
+            et.setTransformerDef(new TransformerDef(k));
+            et.setExport(export);
+            export.getTransformers().add(et);
+        });
+
+        export.setCreatedTime(LocalDateTime.now());
+        export.setProject(project);
+
+        return new CommitExportDisplay(this.exports.save(export));
+    }
+
+    /**
+     * Check if the specified commit export has been downloaded : download is processed only when the file is completed, so if not
+     * downloaded = the file is generated, if downloaded = a download time has been added to export entity = the file has
+     * been fully generated = the export has been downloaded.
+     * <p>
+     * Used for loading screen on export download
+     *
+     * @param commitExportUuid prepared commit export ready to be downloaded / downloaded
+     * @return true if already downloaded
+     */
+    public boolean isCommitExportDownloaded(UUID commitExportUuid) {
+        return this.exports.getOne(commitExportUuid).getDownloadedTime() != null;
+    }
 
     /**
      * <p>
      * Export complete commit list, with option to include only one fraction of the index
-     * content
+     * content. Support ALL, UNTIL and CHERRY PICK export
      * </p>
+     * <p>Update the export to mark it as downloaded</p>
      *
-     * @param startingWithCommit optional uuid of a commit which will be the 1st fully exported, will
-     *                           previous ones will be exported as ref-only
+     * @param commitExportUuid Id of prepared commit <tt>Export</tt>
      */
-    public ExportImportResult<ExportFile> exportCommits(UUID startingWithCommit) {
+    public ExportImportResult<ExportFile> processCommitExport(UUID commitExportUuid) {
 
         /*
          * Export contains all commits. But it is possible to load commit "ref" only for
@@ -150,21 +224,33 @@ public class CommitService extends AbstractApplicationService {
 
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
-        LOGGER.debug("Asking for a commit export for project {}", project.getName());
+        LOGGER.debug("Asking to process the prepared commit export {} for project {}",
+                commitExportUuid, project.getName());
 
-        String pckgName = startingWithCommit != null ? PCKG_ALL : PCKG_AFTER;
-        List<Commit> commitsToExport = this.commits.findByProject(project);
+        Export preparedExport = this.exports.getOne(commitExportUuid);
 
-        // If starting uuid is specified, mark all "previous" as not exported as ref only
-        if (startingWithCommit != null) {
-            LOGGER.info("Partial commit export asked. Will use ref only for all commits BEFORE {} into project {}", startingWithCommit,
-                    project.getName());
+        List<Commit> commitsToExport = sortedCommits(project);
 
-            Commit startCommit = this.commits.getOne(startingWithCommit);
+        // If start from first, it's an "ALL"
+        String pckgName = PCKG_ALL;
 
-            // Mark previous ones as "ref only"
-            commitsToExport.stream().filter(c -> c.getCreatedTime().isBefore(startCommit.getCreatedTime())).forEach(Commit::setAsRefOnly);
+        // Do not start with the first = it's a partial export
+        if (!preparedExport.getStartCommit().equals(commitsToExport.get(0))) {
+
+            // Single selection while it's not the last one, mark it as a partial
+            if (preparedExport.getStartCommit().equals(preparedExport.getEndCommit())) {
+                pckgName = PCKG_CHERRY_PICK;
+            } else {
+                pckgName = PCKG_AFTER;
+            }
         }
+
+        LOGGER.info("Prepare partial commit export. Will use ref only for all commits BEFORE {} into project {}",
+                preparedExport.getStartCommit(), project.getName());
+
+        // Mark previous ones as "ref only"
+        commitsToExport.stream().filter(c -> c.getCreatedTime().isBefore(preparedExport.getStartCommit().getCreatedTime())).forEach(Commit::setAsRefOnly);
+        commitsToExport.stream().filter(c -> c.getCreatedTime().isBefore(preparedExport.getStartCommit().getCreatedTime())).forEach(Commit::setAsRefOnly);
 
         // Get associated lobs
         List<LobProperty> lobsToExport = loadLobsForCommits(commitsToExport);
@@ -186,43 +272,16 @@ public class CommitService extends AbstractApplicationService {
                         + "uncluding {} exported as ref only. File size is {}b",
                 commitsToExport.size(), project.getName(), refOnly, file.getSize());
 
-        // Result is for display / File load
-        return result;
-    }
-
-    /**
-     * @param commitUuid
-     */
-    public ExportImportResult<ExportFile> exportOneCommit(UUID commitUuid) {
-
-        /*
-         * Export contains all commits. But it is possible to load commit "ref" only for
-         * old commits, and to do a chery pick, with one selected commit
-         */
-
-        LOGGER.debug("Asking for a chery-pick commit export on commit {}", commitUuid);
-
-        Commit exported = this.commits.getOne(commitUuid);
-
-        // Then export :
-        ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
-                new CommitPackage(PCKG_CHERRY_PICK, LocalDateTime.now()).initWithContent(Collections.singletonList(exported)),
-                new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(this.lobs.findByCommit(exported)),
-                new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now()).initWithContent(this.attachments.findByCommit(exported))));
-
-        LOGGER.info("Export package for commit {} is ready. Size is {}b", commitUuid, file.getSize());
-
-        ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
-
-        // Single item
-        result.addCount(PCKG_CHERRY_PICK, 1, 0, 0);
+        // Mark as completed
+        preparedExport.setDownloadedTime(LocalDateTime.now());
+        this.exports.save(preparedExport);
 
         // Result is for display / File load
         return result;
     }
 
     /**
-     * @return
+     * @return existing commits
      */
     public List<CommitEditData> getAvailableCommits() {
 
@@ -702,6 +761,10 @@ public class CommitService extends AbstractApplicationService {
         }
     }
 
+    private List<Commit> sortedCommits(Project project) {
+        return this.commits.findByProject(project).stream().sorted(Comparator.comparing(Commit::getCreatedTime)).collect(Collectors.toList());
+    }
+
     /**
      * @param importedSources
      * @return
@@ -784,5 +847,17 @@ public class CommitService extends AbstractApplicationService {
                 || p instanceof AttachmentPackage)) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types");
         }
+    }
+
+    private String commitExportName(String type, UUID id) {
+
+        ManagedModelDescription modelDesc = this.appDetailsService.getCurrentModelId();
+
+        return String.format("commits-%s-%s%s-%s.par",
+                modelDesc != null ? modelDesc.getSchema() : "DB",
+                type,
+                id != null ? "-" + id.toString() : "",
+                FormatUtils.formatForUri(LocalDateTime.now())
+        ).replaceAll(" ", "-");
     }
 }

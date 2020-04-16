@@ -6,51 +6,68 @@
     <span layout:fragment="content">
 		<h5>Export de lots de modifications pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span>,
 			pour la version <span class="version-name" th:text="${version.name}"></span></h5>
-		<span class="help">L'export complet se fait à partir du 1er lot selectionné. Les exports de lots ne comportent que les données du projet courant.</span>
-        <div th:if="${checkVersion}" class="alert alert-danger">
-        	Attention, l'export va être associé à la dernière version identifiée <span th:text="${version.name}">1.2.4</span>, or des mises à jour ont été apportées
-        	au dictionnaire après la création de cette version. 
-	        L'import pourra être en erreur si la version du dictionnaire cible n'intègre pas ces changements.
-	        Merci de vérifier qu'un import / export de dictionnaire n'est pas nécessaire en même temps.
-	    </div>
-		<a hidden="true" id="exportAllSrcLink" th:href="@{/ui/push/all/{name}.par(name=${custom.exportName('commits', modelDesc.schema, 'all')})}">&nbsp;</a>
-		<table class="table table-sm">
-			<thead>
-				<tr>
-		            <th scope="col">Lots de modifications</th>
-		            <th scope="col">Domains couverts</th>
-					<th scope="col">Version</th>
-		            <th scope="col">Créé par</th>
-		            <th scope="col">Le</th>
-		            <th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/ui/push/prepare/ALL/RANGE_FROM}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
-				</tr>
-			</thead>
+		<span id="allContent">
+			<span class="help">L'export complet se fait à partir du 1er lot selectionné. Les exports de lots ne comportent que les données du projet courant.</span>
+			<div th:if="${checkVersion}" class="alert alert-danger">
+				Attention, l'export va être associé à la dernière version identifiée <span th:text="${version.name}">1.2.4</span>, or des mises à jour ont été apportées
+				au dictionnaire après la création de cette version.
+				L'import pourra être en erreur si la version du dictionnaire cible n'intègre pas ces changements.
+				Merci de vérifier qu'un import / export de dictionnaire n'est pas nécessaire en même temps.
+			</div>
+			<a hidden="true" id="exportAllSrcLink" th:href="@{/ui/push/prepare/ALL/RANGE_FROM}">&nbsp;</a>
 
-			<tbody>
-				<tr th:if="${commits.empty}">
-					<td colspan="100%" class="empty-list-message">Aucun lot existant</td>
-				</tr>
-				<tr th:each="commit, cstat : ${commits}" th:id="${commit.uuid}">
-					<td th:utext="${custom.processGitmoji(commit.comment)}">Préchargement configuration</td>
-		            <td th:text="${commit.domainNames}">Fonct domains</td>
-					<td th:text="${commit.versionName}">Version</td>
-		            <td th:text="${commit.originalUserEmail}">System</td>
-		            <td th:text="${custom.format(commit.createdTime)}">01/11/2017</td>
-					<td>
-						<div class="float-right">
-							<div th:id="|selecterFor${commit.uuid}|" class="selecter selected" title="Activer l'export complet à partir de ce lot">&nbsp;</div>&nbsp;&nbsp;
-							<a href="#" th:href="@{/ui/push/prepare/{id}/SINGLE_ONE(id=${commit.uuid})}" class="btn btn-primary btn-sm">Exporter seul</a>
-							<a hidden="true" th:id="|exportUntilSrcLink${commit.uuid}|" th:href="@{/ui/push/prepare/{id}/RANGE_FROM(id=${commit.uuid})}">&nbsp;</a>
-						</div>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th scope="col">Lots de modifications</th>
+						<th scope="col">Domains couverts</th>
+						<th scope="col">Version</th>
+						<th scope="col">Créé par</th>
+						<th scope="col">Le</th>
+						<th scope="col" width="15%"><a href="#" id="exportAll" th:href="@{/ui/push/prepare/ALL/RANGE_FROM}" class="btn btn-success btn-sm float-right">Exporter tous les lots</a></th>
+					</tr>
+				</thead>
+
+				<tbody>
+					<tr th:if="${commits.empty}">
+						<td colspan="100%" class="empty-list-message">Aucun lot existant</td>
+					</tr>
+					<tr th:each="commit, cstat : ${commits}" th:id="${commit.uuid}">
+						<td th:utext="${custom.processGitmoji(commit.comment)}">Préchargement configuration</td>
+						<td th:text="${commit.domainNames}">Fonct domains</td>
+						<td th:text="${commit.versionName}">Version</td>
+						<td th:text="${commit.originalUserEmail}">System</td>
+						<td th:text="${custom.format(commit.createdTime)}">01/11/2017</td>
+						<td>
+							<div class="float-right">
+								<div th:id="|selecterFor${commit.uuid}|" class="selecter selected" title="Activer l'export complet à partir de ce lot">&nbsp;</div>&nbsp;&nbsp;
+								<a href="#" th:href="@{/ui/push/prepare/{id}/SINGLE_ONE(id=${commit.uuid})}" class="btn btn-primary btn-sm">Exporter seul</a>
+								<a hidden="true" th:id="|exportUntilSrcLink${commit.uuid}|" th:href="@{/ui/push/prepare/{id}/RANGE_FROM(id=${commit.uuid})}">&nbsp;</a>
+							</div>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</span>
+		<span th:if="${ready!=null}" id="downloadingMessage">
+			<br/>
+			<div class="alert alert-secondary" role="alert">
+				<strong>Export en court de préparation, merci de patienter</strong>.
+				Le téléchargement se déclenchera immédiatement une fois le fichier prêt<br/><br/>
+				<div class="d-flex justify-content-center">
+				  <div class="spinner-border" role="status">
+					<span class="sr-only">Loading...</span>
+				  </div>
+				</div>
+			</div>
+		</span>
 		<input type="hidden" id="endSelect" value=""/>
 	</span>
-	<script layout:fragment="script">
+	<script layout:fragment="script" th:inline="javascript">
 		 /*<![CDATA[*/
-		
+
+		var downloadReady = /*[[${ready!=null}]]*/ false;
+
         // When selecting
         const selectAction = (item) => {
 			hideDisplays();
@@ -95,6 +112,16 @@
 
 			// This page support gitmojis
 			supportGitmojis();
+
+			// Auto download if required
+			if(downloadReady){
+				var downloadReadyUuid = /*[[${ready != null ? ready.uuid : 'none' }]]*/ 'hide';
+				var downloadReadyName = /*[[${ready != null ? ready.filename : 'none' }]]*/ 'hide';
+				autoDownloadWithProgress(downloadReadyUuid, downloadReadyName, 'allContent');
+			} else {
+				$("#downloadingMessage").hide();
+				$("#allContent").show();
+			}
 		}); 
         
         /*]]>*/

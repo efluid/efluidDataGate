@@ -10,9 +10,10 @@ import java.util.UUID;
 
 /**
  * Model of an active transformer for current project, with configuration and transformer type
+ *
  * @author elecomte
- * @since v1.2.0
  * @version 1
+ * @since v1.2.0
  */
 @Entity
 @Table(name = "transformers")
@@ -43,6 +44,14 @@ public class TransformerDef implements Shared {
 
     @Lob
     private String configuration;
+
+    public TransformerDef() {
+        super();
+    }
+
+    public TransformerDef(UUID uuid) {
+        this.uuid = uuid;
+    }
 
     @Override
     public UUID getUuid() {

@@ -3,12 +3,13 @@ package fr.uem.efluid.cucumber.common;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.cucumber.steps.PushPullStepDefs;
 import fr.uem.efluid.cucumber.stubs.*;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.*;
-import fr.uem.efluid.services.types.CommitDetails;
+import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
@@ -326,6 +327,24 @@ public abstract class CucumberStepDefs {
         this.userHolder.setWizzardUser(null);
 
         this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, null));
+    }
+
+    /**
+     * Helper for direct export call regarding selection rules
+     * @param type export range type
+     * @param specifiedCommitUuid selected commit (can be null for "ALL")
+     * @return export result
+     */
+    protected ExportImportResult<ExportFile> processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType type, UUID specifiedCommitUuid){
+
+        // We edit the export
+        CommitExportEditData exportEdit = this.commitService.initCommitExport(type, specifiedCommitUuid);
+
+        // From the edited data, create an export without transformer customization ...
+        CommitExportDisplay exportDisplay = this.commitService.saveCommitExport(exportEdit);
+
+        // ... And start it to get its content
+        return this.commitService.processCommitExport(exportDisplay.getUuid());
     }
 
     /**

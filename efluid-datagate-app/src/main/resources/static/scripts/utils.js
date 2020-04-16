@@ -53,6 +53,56 @@ const checkProgress = (service, redirectPath) => {
 	});
 };
 
+// Auto download with auto hide of downloading message
+const autoDownloadWithProgress = (uid, name, contentId) => {
+
+    var uri = '/ui/push/' + uid + '/' + name;
+    console.info("Auto download " + uri);
+
+    $("#downloadingMessage").show();
+    $("#" + contentId).hide();
+
+    checkDownloadProgress(uid, contentId);
+
+    // Hidden download link
+    //$('#downloadingLink')[0].click();
+
+    $.ajax({
+        url: uri,
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = name;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        }
+    });
+};
+
+// Repeated check on download state
+const checkDownloadProgress = (uid, contentId) => {
+	var checkUri = '/ui/push/state/' + uid;
+    $.get(checkUri, (data, status) => {
+        console.info("Check download with data " + data);
+        console.info(data);
+        // Requires on progress bar in current dom
+        if(data){
+            // Completed
+            $("#downloadingMessage").hide();
+            $("#" + contentId).show();
+0		} else {
+			setTimeout(checkDownloadProgress, 1000, uid, contentId);
+		}
+	});
+}
+
 // Update one gitmoji
 const updateGitmoji = (e, gitmojis) => {
 	var code = $(e).attr("code");

@@ -92,8 +92,8 @@
         <dependency.jsr305.version>3.0.2</dependency.jsr305.version>
 
         <!-- dependencies - webjars -->
-        <dependency.bootstrap.version>4.0.0-2</dependency.bootstrap.version>
-        <dependency.jquery.version>3.3.1-1</dependency.jquery.version>
+        <dependency.bootstrap.version>4.4.1-1</dependency.bootstrap.version>
+        <dependency.jquery.version>3.5.0</dependency.jquery.version>
         <dependency.popper.version>1.13.0</dependency.popper.version>
         <dependency.swagger-ui.version>2.2.10</dependency.swagger-ui.version>
 

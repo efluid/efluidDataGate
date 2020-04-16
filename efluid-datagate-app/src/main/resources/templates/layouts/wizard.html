@@ -5,7 +5,7 @@
     <title>DataGate</title>
     <meta charset="utf-8"/>
     <link rel="icon" type="image/png" th:href="@{/favicon.png}"/>
-    <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/4.0.0-2/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/4.4.1-1/css/bootstrap.min.css}"/>
     <link rel="stylesheet" type="text/css" th:href="@{/css/core.css}"/>
     <link rel="stylesheet" href="/css/core.css" media="screen"/>
 </head>
@@ -20,8 +20,8 @@
                   Projet actuel : <a href="./projects_prefered.html" th:href="@{/ui/projects/select}" th:text="${project.name}">RECETTE</a>
             </div>
 		</nav>
-        <div class="row"><div class="col-1"><br/></div></div>
-        <div class="row">
+        <div class="row app-row"><div class="col-1"><br/></div></div>
+        <div class="row app-row">
             <div class="col-1"></div>
             <div class="col-9">
 		       <span layout:fragment="content">
@@ -32,8 +32,8 @@
 		   </div>
 		</div>
     </div>
-    <script type="text/javascript" th:src="@{/webjars/jquery/3.3.1-1/jquery.min.js/}"></script>
-    <script type="text/javascript" th:src="@{/webjars/bootstrap/4.0.0-2/js/bootstrap.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/jquery/3.5.0/jquery.min.js/}"></script>
+    <script type="text/javascript" th:src="@{/webjars/bootstrap/4.4.1-1/js/bootstrap.min.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/popper.js/1.13.0/dist/umd/popper.min.js}"></script>
     <script type="text/javascript" th:src="@{/scripts/utils.js}"></script>
     <script layout:fragment="script">

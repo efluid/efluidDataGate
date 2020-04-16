@@ -32,25 +32,25 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
     @When("^the user request an export of all the commits$")
     public void when_export_all_commits() {
-        currentExport = this.commitService.exportCommits(null);
+        currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.RANGE_FROM, null);
     }
 
     @When("^the user request an export of the commit with name \"(.*)\"$")
     public void when_export_one_commit(String name) {
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
-        currentExport = this.commitService.exportOneCommit(specifiedCommit);
+        currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
     }
 
     @Given("^the user has requested an export of the commit with name \"(.*)\"$")
     public void given_export_one_commit(String name) {
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
-        currentExport = this.commitService.exportOneCommit(specifiedCommit);
+        currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
     }
 
     @Given("^the user has requested an export starting by the commit with name \"(.*)\"$")
     public void given_export_start_by_commit(String name) {
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
-        currentExport = this.commitService.exportCommits(specifiedCommit);
+        currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.RANGE_FROM, specifiedCommit);
     }
 
     @When("^the user import the available source package$")

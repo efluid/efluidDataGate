@@ -12,6 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import javax.validation.Valid;
 import java.util.UUID;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -28,7 +29,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
  * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 @Controller
@@ -359,35 +360,45 @@ public class BacklogController extends CommonController {
     }
 
     /**
-     * @param uuid
-     * @return
+     * Save a prepared export of commits with customization, ready to be downloaded from push page
+     *
+     * @param model          s-mvc context
+     * @param exportEditData prepared export content with customization
+     * @return tpl of push entry point
+     */
+    @RequestMapping(path = "/push/save", method = POST)
+    public String commitExportSave(Model model, @ModelAttribute @Valid CommitExportEditData exportEditData) {
+
+        // Add saved export details as "ready to process"
+        model.addAttribute("ready", this.commitService.saveCommitExport(exportEditData));
+
+        // And continue to export listing page where export download will be processed
+        return commitExportPage(model);
+    }
+
+    /**
+     * Check if download completed
+     *
+     * @param uuid of prepared commit export (Export entity)
+     * @return true if content downloaded
+     */
+    @RequestMapping(value = "/push/state/{uuid}", method = GET)
+    @ResponseBody
+    public boolean isCommitExportDownloaded(@PathVariable("uuid") UUID uuid) {
+        return this.commitService.isCommitExportDownloaded(uuid);
+    }
+
+    /**
+     * Download one export from uuid of prepared export, using the specified name as file destination download name. Single download endpoint
+     *
+     * @param uuid of prepared commit export (Export entity)
+     * @param name for downloaded file, used to force set the destination file on browser
+     * @return download content
      */
     @RequestMapping(value = "/push/{uuid}/{name}.par", method = GET)
     @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportOneCommit(@PathVariable("uuid") UUID uuid, @PathVariable("name") String name) {
-
-        return WebUtils.outputExportImportFile(name, this.commitService.exportOneCommit(uuid).getResult());
-    }
-
-    /**
-     * @return
-     */
-    @RequestMapping(value = "/push/all/{name}.par", method = GET)
-    @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportAllCommits(@PathVariable("name") String name) {
-
-        return WebUtils.outputExportImportFile(name, this.commitService.exportCommits(null).getResult());
-    }
-
-    /**
-     * @param uuid
-     * @return
-     */
-    @RequestMapping(value = "/push/until-{uuid}/{name}.par", method = GET)
-    @ResponseBody
-    public ResponseEntity<InputStreamResource> downloadExportUntil(@PathVariable("uuid") UUID uuid, @PathVariable("name") String name) {
-
-        return WebUtils.outputExportImportFile(name, this.commitService.exportCommits(uuid).getResult());
+    public ResponseEntity<InputStreamResource> downloadCommitExport(@PathVariable("uuid") UUID uuid, @PathVariable("name") String name) {
+        return WebUtils.outputExportImportFile(name, this.commitService.processCommitExport(uuid).getResult());
     }
 
     /**

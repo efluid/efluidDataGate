@@ -6,6 +6,17 @@
     background-size: 165px 35px;
 }
 
+/* Fixed on new bootstrap */
+.btn {
+    white-space: nowrap;
+}
+
+/* Fixed on new bootstrap */
+.app-row {
+    margin-left: 0!important;
+    margin-right: 0!important;
+}
+
 .container-fluid {
     padding-left: 0!important;
     padding-right: 0!important;

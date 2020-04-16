@@ -4,7 +4,7 @@
 </head>
 <body>
 	<span layout:fragment="content">
-		<form id="editForm" action="#" th:action="@{/ui/push/complete}" method="post">
+		<form id="editForm" action="#" th:action="@{/ui/push/save}" method="post">
 			<h5>Préparation d'un export de lots de modifications pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
 
 			<!-- export summary -->
@@ -17,6 +17,10 @@
 
 				<input type="hidden" th:field="${exportEdit.commitSelectType}"/>
 				<input type="hidden" th:field="${exportEdit.selectedCommitUuid}"/>
+
+				<span th:if="${transformerDefs.empty}">
+					<div class="empty-list-message">Aucun transformateur configuré pour le projet</div>
+				</span>
 
 				<h5>Transformateurs actifs</h5>
 				<table class="table table-sm">

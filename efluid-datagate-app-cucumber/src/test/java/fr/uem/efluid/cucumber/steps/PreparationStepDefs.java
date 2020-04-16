@@ -278,14 +278,14 @@ public class PreparationStepDefs extends CucumberStepDefs {
     public void new_init_commit_exported(String comment) throws Throwable {
         commit_has_been_added_with_comment(comment);
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushPullStepDefs.currentExport = this.commitService.exportOneCommit(specifiedCommit);
+        PushPullStepDefs.currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
     }
 
     @Given("^the commit \"(.*)\" has been saved and exported with all the new identified diff content$")
     public void new_update_commit_exported(String comment) throws Throwable {
         new_commit_was_added_with_comment(comment);
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushPullStepDefs.currentExport = this.commitService.exportOneCommit(specifiedCommit);
+        PushPullStepDefs.currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
     }
 
     /* ########################################### ALL WHENS ################################################ */
