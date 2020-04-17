@@ -6,12 +6,12 @@ import fr.uem.efluid.utils.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -46,10 +46,10 @@ public class ManagedValueConverter {
 
     private final static String LOB_DIGEST = "SHA-256";
 
-    private final static String LOB_URL_TEMPLATE = "<a href=\"/lob/%s\" download=\"download\">" + ColumnType.BINARY.getDisplayName()
+    private final static String LOB_URL_TEMPLATE = "<a href=\"/ui/lob/%s\" download=\"download\">" + ColumnType.BINARY.getDisplayName()
             + "</a>";
 
-    private final static String TXT_URL_TEMPLATE = "<a href=\"/lob/%s\" download=\"download\">" + ColumnType.TEXT.getDisplayName()
+    private final static String TXT_URL_TEMPLATE = "<a href=\"/ui/lob/%s\" download=\"download\">" + ColumnType.TEXT.getDisplayName()
             + "</a>";
 
     private final static String BLOB_HASH_SEARCH = AFFECT + String.valueOf(ColumnType.BINARY.getRepresent()) + TYPE_IDENT;
@@ -416,12 +416,7 @@ public class ManagedValueConverter {
     private static String renderValue(Value value) {
 
         if (value.getType() == ColumnType.BINARY || value.getType() == ColumnType.TEXT) {
-            try {
-                return String.format(value.getType() == ColumnType.BINARY ? LOB_URL_TEMPLATE : TXT_URL_TEMPLATE,
-                        URLEncoder.encode(new String(value.getValue(), FormatUtils.CONTENT_ENCODING), FormatUtils.CONTENT_ENCODING.name()));
-            } catch (UnsupportedEncodingException e) {
-                throw new ApplicationException(ErrorType.VALUE_SHA_UNSUP, "unsupported u encoding type " + LOB_DIGEST, e);
-            }
+            return String.format(value.getType() == ColumnType.BINARY ? LOB_URL_TEMPLATE : TXT_URL_TEMPLATE, FormatUtils.encode(value.getValue()));
         }
 
         return value.getTypedForDisplay();

@@ -75,6 +75,39 @@ public class CommitStepDefs extends CucumberStepDefs {
     @Then("^the saved commit content has these identified changes :$")
     public void commit_content_changes(DataTable data) {
 
+        // Get by tables
+        Map<String, List<Map<String, String>>> tables = data.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
+
+        CommitDetails commit = getSavedCommit();
+
+        tables.forEach((t, v) -> {
+            DiffDisplay<?> content = commit.getContent().stream()
+                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
+                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
+
+            assertThat(content.getDiff().size()).isEqualTo(v.size());
+
+            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
+            v.sort(Comparator.comparing(m -> m.get("Key")));
+
+            // Keep order
+            for (int i = 0; i < content.getDiff().size(); i++) {
+                PreparedIndexEntry diffLine = content.getDiff().get(i);
+                Map<String, String> dataLine = v.get(i);
+
+                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
+                assertThat(diffLine.getAction()).isEqualTo(action);
+                assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
+
+                // No need to check payload in delete
+                if (action != REMOVE) {
+                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
+                }
+
+            }
+
+        });
+      
         // Process assert on last saved commit in DB
         checkCommitDetails(getSavedCommit(), data);
     }

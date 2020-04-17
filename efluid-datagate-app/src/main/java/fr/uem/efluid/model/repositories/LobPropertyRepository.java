@@ -19,5 +19,5 @@ public interface LobPropertyRepository extends JpaRepository<LobProperty, Long> 
 
 	List<LobProperty> findByCommit(Commit commit);
 
-	LobProperty findByHash(String hash);
+	LobProperty findFirstByHash(String hash);
 }

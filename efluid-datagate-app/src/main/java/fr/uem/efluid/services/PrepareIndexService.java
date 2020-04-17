@@ -506,7 +506,7 @@ public class PrepareIndexService {
                 // Get the missign payloads as display list
                 List<ContentLineDisplay> missingContent = this.rawParameters.extractCurrentMissingContentWithUncheckedJoins(entry, project)
                         .entrySet().stream()
-                        .map(e -> new ContentLineDisplay(e.getKey(), e.getValue()))
+                        .map(e -> new ContentLineDisplay(e.getKey(), e.getValue(), entry.getKeyName()))
                         .collect(Collectors.toList());
 
                 if (missingContent.size() > 0) {
