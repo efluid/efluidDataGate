@@ -53,6 +53,56 @@ const checkProgress = (service, redirectPath) => {
 	});
 };
 
+// Auto download with auto hide of downloading message
+const autoDownloadWithProgress = (uid, name, contentId) => {
+
+    var uri = '/ui/push/' + uid + '/' + name;
+    console.info("Auto download " + uri);
+
+    $("#downloadingMessage").show();
+    $("#" + contentId).hide();
+
+    // Start a download progress : check if export is generated
+    checkDownloadProgress(uid, contentId);
+
+    // To avoid focus change on current, we have no other choice than downloading in JS blob ...
+    $.ajax({
+        url: uri,
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob'
+        },
+        success: function (data) {
+            // WARN : this will get the export content into JS blob ...
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = name;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        }
+    });
+};
+
+// Repeated check on download state
+const checkDownloadProgress = (uid, contentId) => {
+	var checkUri = '/ui/push/state/' + uid;
+    $.get(checkUri, (data, status) => {
+        console.info("Check download with data " + data);
+        console.info(data);
+        // Requires on progress bar in current dom
+        if(data){
+            // Completed
+            $("#downloadingMessage").hide();
+            $("#" + contentId).show();
+0		} else {
+			setTimeout(checkDownloadProgress, 1000, uid, contentId);
+		}
+	});
+}
+
 // Update one gitmoji
 const updateGitmoji = (e, gitmojis) => {
 	var code = $(e).attr("code");
@@ -67,4 +117,17 @@ const supportGitmojis = () => {
     $.getJSON("/gitmoji/gitmojis.json", function(json) {
         $(".gitmoji").each((index, e) => updateGitmoji(e, json.gitmojis));
     });
+}
+
+// Common accessor on element id containing an UUID for reference
+const getReferencedUuidInId = (e) => {
+
+    var itemId = e.target.id;
+    console.info("processing " + itemId);
+
+	var idParts = itemId.split("_");
+	if(idParts.length == 1){
+	    return itemId;
+	}
+	return idParts[idParts.length-1];
 }

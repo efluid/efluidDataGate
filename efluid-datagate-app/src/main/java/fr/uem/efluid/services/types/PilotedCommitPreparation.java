@@ -2,6 +2,7 @@ package fr.uem.efluid.services.types;
 
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.tools.AsyncDriver;
+import fr.uem.efluid.tools.TransformerProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 
 import java.time.LocalDateTime;
@@ -77,6 +78,7 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     // For simplification of rendering
     private boolean displayAll = true;
 
+    private TransformerProcessor transformerProcessor;
 
     /**
      *
@@ -449,6 +451,14 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
                 .map(DomainDiffDisplay::getPreparedContent)
                 .filter(Objects::nonNull)
                 .flatMap(Collection::stream);
+    }
+
+    public TransformerProcessor getTransformerProcessor() {
+        return transformerProcessor;
+    }
+
+    public void setTransformerProcessor(TransformerProcessor transformerProcessor) {
+        this.transformerProcessor = transformerProcessor;
     }
 
     /**

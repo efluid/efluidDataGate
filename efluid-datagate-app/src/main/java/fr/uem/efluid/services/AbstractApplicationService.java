@@ -13,6 +13,8 @@ import fr.uem.efluid.security.UserHolder;
  */
 public abstract class AbstractApplicationService {
 
+	protected static final String NOT_SET_VERSION_NAME = "NOT SET";
+
 	@Autowired
 	protected UserHolder holder;
 

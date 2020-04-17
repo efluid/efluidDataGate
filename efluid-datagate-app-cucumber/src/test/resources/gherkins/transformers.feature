@@ -75,3 +75,61 @@ Feature: Some transformers can be set for a project to adapt commits at import r
       | test5_efluid    | EFLUID_AUDIT          | {"tablePattern":".*"}                                        | At least one column name must be specified. |
       | test6_efluid    | EFLUID_AUDIT          | {"columnNames":[".*"]}                                       | tablePattern cannot be empty or missing.    |
       | test7_efluid    | EFLUID_AUDIT          | {"tablePattern":".*","columnNames":[".*","COL_.*","COL_C"],} | JSON Parsing error                          |
+
+  Scenario: The transformer configuration for a project is exported with commits
+    Given the configured transformers for project "Default" :
+      | name                  | type                  | priority | configuration                                                   |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}         |
+    And the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 1   | AAA   | Preset 1 | AAA       |
+      | 2   | BBB   | Preset 2 | BBB       |
+      | 3   | CCC   | Preset 3 | CCC       |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key | value | other     |
+      | add    | AAA | One   | Other JJJ |
+      | add    | BBB | Two   | Other KKK |
+    And a new commit ":construction: Update 2" has been saved with all the new identified diff content
+    When the user request an export of all the commits
+    Then the export package contains 2 commit contents
+    And the export package content has these transformer definitions :
+      | name                  | type                  | priority | configuration                                                   |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}         |
+
+  Scenario: The transformer configuration for a project can be customized at export
+    Given the configured transformers for project "Default" :
+      | name                  | type                  | priority | configuration                                                   |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}         |
+    And the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 1   | AAA   | Preset 1 | AAA       |
+      | 2   | BBB   | Preset 2 | BBB       |
+      | 3   | CCC   | Preset 3 | CCC       |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key | value | other     |
+      | add    | AAA | One   | Other JJJ |
+      | add    | BBB | Two   | Other KKK |
+    And a new commit ":construction: Update 2" has been saved with all the new identified diff content
+    When the user request to prepare an export of the commit with name ":construction: Update 1"
+    And the user customize the transformer "My Test Transformer 2" with this configuration :
+      """json
+      {
+        "tablePattern" : "T_ONE",
+        "columnNames" : [ "COL_D","COL_C" ]
+      }
+      """
+    And the user validate the prepared export
+    Then the export download start automatically
+    And the export package content has these transformer definitions :
+      | name                  | type                  | priority | configuration                                                  |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}           |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_D","COL_C" ]} |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}        |

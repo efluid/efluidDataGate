@@ -36,6 +36,9 @@ public class BacklogDatabaseAccess {
     private LobPropertyRepository lobs;
 
     @Autowired
+    private ExportRepository exports;
+
+    @Autowired
     private ApplyHistoryEntryRepository history;
 
     @Autowired
@@ -72,6 +75,7 @@ public class BacklogDatabaseAccess {
                 this.index.save(i);
             });
         }
+        this.exports.deleteAll();
         this.lobs.deleteAll();
         this.attachs.deleteAll();
         this.index.deleteAll();

@@ -2,23 +2,27 @@ package fr.uem.efluid.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.uem.efluid.model.entities.ExportTransformer;
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TransformerDef;
 import fr.uem.efluid.model.repositories.TransformerDefRepository;
 import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
+import fr.uem.efluid.services.types.TransformerDefPackage;
 import fr.uem.efluid.services.types.TransformerType;
 import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.tools.TransformerProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -37,6 +41,8 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class TransformerService extends AbstractApplicationService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TransformerService.class);
 
     @Autowired
     private TransformerDefRepository transformerDefs;
@@ -74,6 +80,19 @@ public class TransformerService extends AbstractApplicationService {
         return this.transformerDefs.findByProject(this.projectService.getCurrentSelectedProjectEntity()).stream()
                 .map(d -> new TransformerDefDisplay(d, transformerNameByType.get(d.getType())))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * For large scale config edition, provides all configuration mapped to their transformer def UUID
+     *
+     * @return config for transformer defs uuid, on current project
+     */
+    public Map<UUID, String> getAllTransformerDefConfigs() {
+        return this.transformerDefs.findByProject(this.projectService.getCurrentSelectedProjectEntity()).stream()
+                .collect(Collectors.toMap(TransformerDef::getUuid, def -> {
+                    Transformer<?, ?> transformer = loadTransformerByType(def.getType());
+                    return prettyConfig(parseConfiguration(def.getConfiguration(), transformer));
+                }));
     }
 
     /**
@@ -185,6 +204,79 @@ public class TransformerService extends AbstractApplicationService {
                 .filter(t -> t.getClass().getSimpleName().equals(type))
                 .findFirst()
                 .orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
+    }
+
+    /**
+     * <p>From an import package of TransformerDefs, init locally and prepare a processor for merge transformation</p>
+     * <p>Return Null if no content identified, as the processor is optionally present</p>
+     *
+     * @param pckg processing import package
+     * @return processor ready to apply transformers onto commit diffs in merge process.
+     */
+    TransformerProcessor importTransformerDefsAndPrepareProcessor(TransformerDefPackage pckg) {
+
+        if (pckg.getContentSize() == 0) {
+            return null;
+        }
+
+        // Prepare processor from defs ...
+        return new TransformerProcessor(
+                // On imported defs ...
+                pckg.getContent().stream()
+                        // ... Store them locally ...
+                        .map(this::importTransformerDef)
+                        // ... And init them as "transformer Apply" used in TranformerProcessor
+                        .map(d -> {
+                            Transformer<?, ?> transformer = loadTransformerByType(d.getType());
+                            Transformer.TransformerConfig config = parseConfiguration(d.getConfiguration(), transformer);
+                            return new TransformerProcessor.TransformerApply(transformer, config, d.getPriority());
+                        }).collect(Collectors.toList())
+        );
+    }
+
+    /**
+     * Prepare TransformerDefs for export with applied customization (if any). Keep only customization which are different than existing content
+     *
+     * @param project        associated project
+     * @param customizations specified customizations for export
+     * @return transformer def ready to be exported, with applied customizations
+     */
+    List<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
+
+        Map<UUID, String> confs = customizations.stream().collect(Collectors.toMap(c -> c.getTransformerDef().getUuid(), ExportTransformer::getConfiguration));
+
+        return this.transformerDefs.findByProject(project).stream().peek(t -> {
+            String customization = confs.get(t.getUuid());
+            if (!customization.equals(t.getConfiguration())) {
+                t.setCustomizedConfiguration(customization);
+            }
+        }).collect(Collectors.toList());
+    }
+
+    private TransformerDef importTransformerDef(TransformerDef imported) {
+
+        Optional<TransformerDef> localOpt = this.transformerDefs.findById(imported.getUuid());
+
+        // Exists already
+        localOpt.ifPresent(d -> LOGGER.debug("Import existing TransformerDef {} : will update currently owned", imported.getUuid()));
+
+        // Or is a new one
+        TransformerDef local = localOpt.orElseGet(() -> {
+            LOGGER.debug("Import new TransformerDef {} : will create currently owned", imported.getUuid());
+            TransformerDef loc = new TransformerDef(imported.getUuid());
+            loc.setCreatedTime(imported.getCreatedTime());
+            return loc;
+        });
+
+        // Common attrs
+        local.setUpdatedTime(imported.getUpdatedTime());
+        local.setType(imported.getType());
+        local.setPriority(imported.getPriority());
+        local.setName(imported.getName());
+        local.setProject(imported.getProject());
+        local.setImportedTime(LocalDateTime.now());
+
+        return local;
     }
 
     private String prettyConfig(Transformer.TransformerConfig config) {

@@ -13,5 +13,7 @@
   "pages/transformers_all" : ["list of transformers"],
   "pages/transformers_edit" : ["transformer definition edit","transformer definition create"],
   "pages/commits" : ["list of commits"],
-  "pages/details" : ["detail of an existing commit"]
+  "pages/details" : ["detail of an existing commit"],
+  "pages/push" : ["selection of commits to export"],
+  "pages/push_prepare" : ["preparation of an export"]
 }

@@ -6,6 +6,17 @@
     background-size: 165px 35px;
 }
 
+/* Fixed on new bootstrap */
+.btn {
+    white-space: nowrap;
+}
+
+/* Fixed on new bootstrap */
+.app-row {
+    margin-left: 0!important;
+    margin-right: 0!important;
+}
+
 .container-fluid {
     padding-left: 0!important;
     padding-right: 0!important;
@@ -509,4 +520,19 @@ select.select-column {
 .domain-compare {
     font-weight: bold;
     font-size: 16px;
+}
+
+/* Configuration fields */
+textarea.configuration {
+    background: url("/configuration-bg.png");
+    background-attachment: local;
+    background-repeat: no-repeat;
+    padding-left: 35px;
+    padding-top: 12px;
+    border-color:#ccc;
+    font-family: monospace;
+    color: #456;
+    font-size: 11px;
+    font-weight: bold;
+    background-size: 27px;
 }

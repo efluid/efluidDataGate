@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>
+	<span layout:fragment="content">
+		<form id="editForm" action="#" th:action="@{/ui/push/save}" method="post">
+			<h5>Préparation d'un export de lots de modifications pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
+
+			<!-- export summary -->
+			<p>
+				<ul>
+					<li><b>Version du dictionnaire</b> : <span class="version-name" th:text="${exportEdit.selectedCommitVersion}">0.1.2</span></li>
+					<li><b>Type d'export</b> : <span th:text="${exportEdit.commitSelectType.name()}=='RANGE_FROM'?'Série de lot':'Lot seul'">Unitaire</span></li>
+					<li><b>Lot sélectionné</b> : <span th:utext="${exportEdit.selectedCommitComment=='ALL' ? 'Totalité des lots' : custom.processGitmoji(exportEdit.selectedCommitComment)}">Commit machin</span></li>
+				</ul>
+
+				<input type="hidden" th:field="${exportEdit.commitSelectType}"/>
+				<input type="hidden" th:field="${exportEdit.selectedCommitUuid}"/>
+
+				<span th:if="${transformerDefs.empty}">
+					<div class="empty-list-message">Aucun transformateur configuré pour le projet</div>
+				</span>
+
+				<h5>Transformateurs actifs</h5>
+				<table class="table table-sm">
+					<thead>
+						<tr>
+							<th scope="col">Nom</th>
+							<th scope="col">Type</th>
+							<th scope="col">Priorité</th>
+							<th scope="col">Dernière modification</th>
+							<th scope="col"></th>
+						</tr>
+					</thead>
+					<tbody th:each="transformerDef, cstat : ${transformerDefs}" >
+						<tr>
+							<td th:text="${transformerDef.name}">Pre chargement des trucs</td>
+							<td th:text="${transformerDef.typeName}">UPPERCARSE_TRANSFORMER</td>
+							<td th:text="${transformerDef.priority}">12</td>
+							<td th:text="${custom.format(transformerDef.updatedTime)}">01/11/2017</td>
+							<td>
+								<button type="button" th:id=" 'openConfiguration_' + ${transformerDef.uuid}" class="open-button btn btn-sm btn-primary float-right">Adapter la configuration</button>
+							</td>
+						</tr>
+						<tr class="editable-transformer" th:id=" 'configurationRow_' + ${transformerDef.uuid}">
+							<td colspan="100%">
+								<div class="form-group">
+									<span>
+										<label><strong>Configuration</strong></label>
+										<div class="btn-group float-right" role="group">
+											<button type="button" class="check-button btn btn-outline-primary btn-sm" th:id=" 'checkConfiguration_' + ${transformerDef.uuid}" >Vérifier</button>
+											<button type="button" class="hide-button btn btn-outline-secondary btn-sm" th:id=" 'closeConfiguration_' + ${transformerDef.uuid}">Réduire</button>
+										</div>&nbsp;
+									</span>
+									<textarea style="margin-top:5px" th:id=" 'configuration_' + ${transformerDef.uuid}" th:field="${exportEdit.specificTransformerConfigurations[__${transformerDef.uuid}__]}" class="form-control configuration" rows="7"></textarea>
+									<input type="hidden" th:id=" 'configurationType_' + ${transformerDef.uuid}" th:value="${transformerDef.type}"/>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+
+			</p>
+
+			<p>
+				<div class="float-right">
+					<a class="btn btn-secondary btn-sm" th:href="@{/ui/push}" href="push.html">Annuler</a>
+					<input type="submit" id="saveButton" class="btn btn-success btn-sm" value="Exporter"/><br/><br/>
+				</div>
+			</p>
+
+		</form>
+
+	</span>
+	<script layout:fragment="script">
+		/*<![CDATA[*/
+
+    	const checkConfigurationContent = (e) => {
+			hideDisplays();
+    		var uuid = getReferencedUuidInId(e);
+    		var config = $('#configuration_' + uuid).val();
+
+    		if(config != ''){
+    			var type = $('#configurationType_' + uuid).val();
+    			$.post('/ui/transformers/validate/' + encodeURIComponent(type), config, (data, status) => {
+    				if(data && data != ''){
+    					showError('Erreur dans la configuration :' + data);
+    				} else {
+    					showSuccess('Aucune erreur identifiée pour cette configuration');
+    				}
+    			});
+    		} else {
+    			showError('La configuration est obligatoire');
+	    	}
+    	};
+
+		const showConfiguration = (e) => {
+			hideDisplays();
+    		var uuid = getReferencedUuidInId(e);
+    		$('#configurationRow_' + uuid).show();
+			var shoBut = $('#openConfiguration_' + uuid);
+    		shoBut.prop('disabled', true);
+			shoBut.removeClass('btn-primary').addClass('btn-outline-primary');
+		}
+
+		const hideConfiguration = (e) => {
+			hideDisplays();
+    		var uuid = getReferencedUuidInId(e);
+    		$('#configurationRow_' + uuid).hide();
+			var shoBut = $('#openConfiguration_' + uuid);
+    		shoBut.prop('disabled', false);
+			shoBut.removeClass('btn-outline-primary').addClass('btn-primary');
+		}
+
+        // Init actions
+    	$(document).ready(() => {
+			// This page support gitmojis
+			supportGitmojis();
+
+			$("tr.editable-transformer").hide();
+
+			$("button.check-button").click((e) => checkConfigurationContent(e));
+			$("button.open-button").click((e) => showConfiguration(e));
+			$("button.hide-button").click((e) => hideConfiguration(e));
+		});
+
+        /*]]>*/
+	</script>
+</body>
+</html>

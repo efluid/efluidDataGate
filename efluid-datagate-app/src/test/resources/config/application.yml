@@ -5,20 +5,20 @@ datagate-efluid:
    managed-datasource:
        url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
        username: sa
-       password: 
+       password:
        driver-class-name: org.h2.Driver
        meta:
-           filterSchema: 
+           filterSchema:
            search-fk-type: standard
            preload: false
            fixed-cached: false
-       query: 
+       query:
            tableNamesProtected: true
            columnNamesProtected: true
            databaseDateFormat: dd-MM-yyyy HH:mm:ss
        value:
            keep-empty: true
-              
+
    managed-updates:
        check-update-missing-ids: true
        check-delete-missing-ids: true
@@ -26,18 +26,21 @@ datagate-efluid:
    display:
        details-index-max: 10000
        combine-similar-diff-after: 10000000
-       
+
    security:
        salt: 12345678901234567890123456789012
-       
+
    details:
        version: TEST
+
+   model-identifier:
+       enabled: false
 
 ## TECH FEATURES CUSTOM
 spring:
 
     main.allow-bean-definition-overriding: true
-    
+
     profiles:
         active: test
 
@@ -47,7 +50,7 @@ spring:
     datasource:
        url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
        username: sa
-       password: 
+       password:
        driver-class-name: org.h2.Driver
 
     jpa:
@@ -57,7 +60,7 @@ spring:
 
     flyway:
         enabled: false
-        
+
 ## WEB SERVER CONFIG
 server:
     contextPath:

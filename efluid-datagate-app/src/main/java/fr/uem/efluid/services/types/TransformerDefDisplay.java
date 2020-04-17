@@ -19,6 +19,8 @@ public class TransformerDefDisplay {
 
     private final String name;
 
+    private final String type;
+
     private final String typeName;
 
     private final int priority;
@@ -29,9 +31,14 @@ public class TransformerDefDisplay {
         super();
         this.uuid = transformerDef.getUuid();
         this.name = transformerDef.getName();
+        this.type = transformerDef.getType();
         this.typeName = transformerName;
         this.priority = transformerDef.getPriority();
         this.updatedTime = transformerDef.getUpdatedTime();
+    }
+
+    public String getType() {
+        return type;
     }
 
     public UUID getUuid() {

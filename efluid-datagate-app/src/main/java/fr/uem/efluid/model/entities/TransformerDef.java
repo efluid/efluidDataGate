@@ -1,6 +1,7 @@
 package fr.uem.efluid.model.entities;
 
 import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -10,9 +11,10 @@ import java.util.UUID;
 
 /**
  * Model of an active transformer for current project, with configuration and transformer type
+ *
  * @author elecomte
- * @since v1.2.0
  * @version 1
+ * @since v1.2.0
  */
 @Entity
 @Table(name = "transformers")
@@ -43,6 +45,17 @@ public class TransformerDef implements Shared {
 
     @Lob
     private String configuration;
+
+    @Transient
+    private transient String customizedConfiguration;
+
+    public TransformerDef() {
+        super();
+    }
+
+    public TransformerDef(UUID uuid) {
+        this.uuid = uuid;
+    }
 
     @Override
     public UUID getUuid() {
@@ -118,16 +131,41 @@ public class TransformerDef implements Shared {
         this.configuration = configuration;
     }
 
+    public String getCustomizedConfiguration() {
+        return customizedConfiguration;
+    }
+
+    public void setCustomizedConfiguration(String customizedConfiguration) {
+        this.customizedConfiguration = customizedConfiguration;
+    }
+
     @Override
     public String serialize() {
-
-        // TODO : Support export with commit exports
-        return null;
+        return SharedOutputInputUtils.newJson()
+                .with("uid", getUuid())
+                .with("nam", getName())
+                .with("cre", getCreatedTime())
+                .with("upd", getUpdatedTime())
+                .with("pri", getPriority())
+                .with("typ", getType())
+                .with("pro", getProject().getUuid())
+                // Customized has priority but we keep state "customized"
+                .with("isc", getCustomizedConfiguration() != null)
+                .with("con", getCustomizedConfiguration() != null ? getCustomizedConfiguration() : getConfiguration())
+                .toString();
     }
 
     @Override
     public void deserialize(String raw) {
 
-        // TODO : Support import with commit imports
+        SharedOutputInputUtils.fromJson(raw)
+                .applyUUID("uid", this::setUuid)
+                .applyString("nam", this::setName)
+                .applyLdt("cre", this::setCreatedTime)
+                .applyLdt("upd", this::setUpdatedTime)
+                .applyInt("pri", this::setPriority)
+                .applyString("typ", this::setType)
+                .applyUUID("pro", v -> setProject(new Project(v)))
+                .applyString("con", this::setConfiguration);
     }
 }
