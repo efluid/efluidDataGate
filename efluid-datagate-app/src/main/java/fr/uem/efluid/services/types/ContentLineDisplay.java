@@ -9,15 +9,19 @@ public class ContentLineDisplay {
 
 	private final String key;
 	private final String hrPayload;
+	private final String columnName;
 
 	/**
 	 * @param key
 	 * @param hrPayload
 	 */
-	public ContentLineDisplay(String key, String hrPayload) {
+	public ContentLineDisplay(String key, String hrPayload, String columnName) {
 		super();
 		this.key = key;
 		this.hrPayload = hrPayload;
+		this.columnName = columnName;
+
+
 	}
 
 	/**
@@ -32,6 +36,13 @@ public class ContentLineDisplay {
 	 */
 	public String getHrPayload() {
 		return this.hrPayload;
+	}
+
+	/**
+	 * @return the column
+	 */
+	public String getColumnName() {
+		return this.columnName;
 	}
 
 }
