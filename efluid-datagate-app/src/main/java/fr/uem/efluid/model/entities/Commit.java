@@ -361,7 +361,8 @@ public class Commit implements Shared {
     @Override
     public String toString() {
         return "Commit [<" + this.uuid + ">\"" + this.comment + "\", by:" + this.originalUserEmail + ", create:" + this.createdTime
-                + ", imported:" + this.importedTime + ", " + "version:"+this.version.getUuid()+ "]";
+                + ", imported:" + this.importedTime + ", " + "version:" + (this.version != null && this.version.getUuid() != null ? this.version.getUuid() : "?")
+                + (this.refOnly ? "refOnly:true" : "") + "]";
     }
 
 }

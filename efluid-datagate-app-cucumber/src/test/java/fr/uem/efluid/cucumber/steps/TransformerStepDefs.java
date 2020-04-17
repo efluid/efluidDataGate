@@ -3,7 +3,7 @@ package fr.uem.efluid.cucumber.steps;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TransformerDef;
-import fr.uem.efluid.services.TransformerService;
+import fr.uem.efluid.services.types.CommitExportEditData;
 import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
 import fr.uem.efluid.services.types.TransformerType;
@@ -15,7 +15,6 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Before;
 import org.junit.Ignore;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,16 +26,12 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @version 1
  * @since v1.2.0
  */
-@SuppressWarnings("unchecked")
 @Ignore // Means it will be ignored by junit start, but will be used by cucumber
 public class TransformerStepDefs extends CucumberStepDefs {
 
     private static Map<String, List<TransformerDefDisplay>> specifiedTransformers;
 
     private static TransformerDefEditData currentEdit;
-
-    @Autowired
-    private TransformerService transformerService;
 
     @Before
     public void resetFixture() {
@@ -49,8 +44,17 @@ public class TransformerStepDefs extends CucumberStepDefs {
 
         specifiedTransformers = new HashMap<>();
 
-        // Implicit init with default domain / project
-        initMinimalWizzardData();
+        // Full dic init
+        if (CommonStepDefs.efluidCase) {
+            initCompleteDictionaryWithEfluidTestTables();
+        } else {
+            initCompleteDictionaryWith7Tables();
+        }
+
+        CommonStepDefs.efluidCase = false;
+
+        // Valid version ready
+        modelDatabase().initVersions(getCurrentUserProject(), Collections.singletonList("vCurrent"), 0);
 
         // Implicit authentication and on page
         implicitlyAuthenticatedAndOnPage("the home page");
@@ -109,6 +113,23 @@ public class TransformerStepDefs extends CucumberStepDefs {
         // Drop current (for other saves)
         currentEdit = null;
     }
+    @When("^the user customize the transformer \"(.*)\" with this configuration :$")
+    public void customize_export_transformer(String name, DocString config) throws Exception {
+        CommitExportEditData exportEditData = getCurrentSpecifiedProperty("exportEdit", CommitExportEditData.class);
+        List<TransformerDefDisplay> transformers = getCurrentSpecifiedPropertyList("transformerDefs", TransformerDefDisplay.class);
+
+        Optional<TransformerDefDisplay> transformerDefDisplay = transformers.stream().filter(t -> t.getName().equals(name)).findFirst();
+
+        assertThat(transformerDefDisplay).isPresent();
+
+        UUID truid = transformerDefDisplay.get().getUuid();
+
+        if(exportEditData.getSpecificTransformerConfigurations() ==null){
+            exportEditData.setSpecificTransformerConfigurations(new HashMap<>());
+        }
+
+        exportEditData.getSpecificTransformerConfigurations().put(truid, config.getContent());
+    }
 
     @Then("^the (.*) configured transformers from project \"(.*)\" are displayed$")
     public void the_x_transformers_are_displayed(String nbr, String projectName) {
@@ -152,14 +173,5 @@ public class TransformerStepDefs extends CucumberStepDefs {
 
         assertThat(def).isPresent();
         assertThat(def.get().getUuid()).isNotNull();
-    }
-
-    private Transformer<?, ?> getTransformerByName(String name) {
-        String type = this.transformerService.getAllTransformerTypes().stream()
-                .filter(t -> t.getName().equals(name)).findFirst()
-                .orElseThrow(() -> new AssertionError("Invalid transformer name " + name))
-                .getType();
-
-        return this.transformerService.loadTransformerByType(type);
     }
 }

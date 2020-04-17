@@ -177,13 +177,15 @@ public class CommitService extends AbstractApplicationService {
         }
 
         // Transformer customization (store ALL)
-        editData.getSpecificTransformerConfigurations().forEach((k, v) -> {
-            ExportTransformer et = new ExportTransformer();
-            et.setConfiguration(v);
-            et.setTransformerDef(new TransformerDef(k));
-            et.setExport(export);
-            export.getTransformers().add(et);
-        });
+        if (editData.getSpecificTransformerConfigurations() != null) {
+            editData.getSpecificTransformerConfigurations().forEach((k, v) -> {
+                ExportTransformer et = new ExportTransformer();
+                et.setConfiguration(v);
+                et.setTransformerDef(new TransformerDef(k));
+                et.setExport(export);
+                export.getTransformers().add(et);
+            });
+        }
 
         export.setCreatedTime(LocalDateTime.now());
         export.setProject(project);
@@ -249,9 +251,18 @@ public class CommitService extends AbstractApplicationService {
         LOGGER.info("Prepare partial commit export. Will use ref only for all commits BEFORE {} into project {}",
                 preparedExport.getStartCommit(), project.getName());
 
-        // Mark previous ones as "ref only"
-        commitsToExport.stream().filter(c -> c.getCreatedTime().isBefore(preparedExport.getStartCommit().getCreatedTime())).forEach(Commit::setAsRefOnly);
-        commitsToExport.stream().filter(c -> c.getCreatedTime().isBefore(preparedExport.getStartCommit().getCreatedTime())).forEach(Commit::setAsRefOnly);
+        LocalDateTime rangeEnd = preparedExport.getEndCommit().getCreatedTime();
+        LocalDateTime rangeBegin = preparedExport.getStartCommit().getCreatedTime();
+
+        // Remove the ones after selected
+        commitsToExport = commitsToExport.stream()
+                .filter(c -> !c.getCreatedTime().isAfter(rangeEnd))
+                .collect(Collectors.toList());
+
+        // And mark previous ones as "ref only"
+        commitsToExport.stream()
+                .filter(c -> c.getCreatedTime().isBefore(rangeBegin))
+                .forEach(Commit::setAsRefOnly);
 
         // Get associated lobs
         List<LobProperty> lobsToExport = loadLobsForCommits(commitsToExport);
@@ -846,14 +857,15 @@ public class CommitService extends AbstractApplicationService {
      * @param commitPackages
      */
     private static void assertImportPackageIsValid(List<SharedPackage<?>> commitPackages) {
-        if (commitPackages.size() != 3) {
+        if (commitPackages.size() != 4) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID,
-                    "Import of commits can contain only commit package file + lobs package + attachment package file");
+                    "Import of commits can contain only commit package file + lobs package + attachment package file + a transformer package");
         }
 
         if (commitPackages.stream().noneMatch(p -> p instanceof CommitPackage
                 || p instanceof LobPropertyPackage
-                || p instanceof AttachmentPackage)) {
+                || p instanceof AttachmentPackage
+                || p instanceof TransformerDefPackage)) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types");
         }
     }

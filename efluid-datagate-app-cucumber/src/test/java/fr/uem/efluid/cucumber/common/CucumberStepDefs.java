@@ -3,7 +3,6 @@ package fr.uem.efluid.cucumber.common;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.cucumber.steps.PushPullStepDefs;
 import fr.uem.efluid.cucumber.stubs.*;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
@@ -11,6 +10,7 @@ import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.tools.Transformer;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -125,6 +125,9 @@ public abstract class CucumberStepDefs {
 
     @Autowired
     protected ManagedQueriesGenerator queryGenerator;
+
+    @Autowired
+    private TransformerService transformerService;
 
     @Autowired
     private ManagedQueriesGenerator.QueryGenerationRules defaultRules;
@@ -331,11 +334,12 @@ public abstract class CucumberStepDefs {
 
     /**
      * Helper for direct export call regarding selection rules
-     * @param type export range type
+     *
+     * @param type                export range type
      * @param specifiedCommitUuid selected commit (can be null for "ALL")
      * @return export result
      */
-    protected ExportImportResult<ExportFile> processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType type, UUID specifiedCommitUuid){
+    protected ExportImportResult<ExportFile> processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType type, UUID specifiedCommitUuid) {
 
         // We edit the export
         CommitExportEditData exportEdit = this.commitService.initCommitExport(type, specifiedCommitUuid);
@@ -404,6 +408,15 @@ public abstract class CucumberStepDefs {
     protected void mockDatabaseIdentifierWithVersion(String version, boolean hasHistory) {
         this.databaseIdentifier.setFixedVersion(version);
         this.databaseIdentifier.setHasHistory(hasHistory);
+    }
+
+    protected Transformer<?, ?> getTransformerByName(String name) {
+        String type = this.transformerService.getAllTransformerTypes().stream()
+                .filter(t -> t.getName().equals(name)).findFirst()
+                .orElseThrow(() -> new AssertionError("Invalid transformer name " + name))
+                .getType();
+
+        return this.transformerService.loadTransformerByType(type);
     }
 
     /**
