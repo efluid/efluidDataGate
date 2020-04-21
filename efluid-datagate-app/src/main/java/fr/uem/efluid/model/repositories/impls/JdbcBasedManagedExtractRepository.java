@@ -135,7 +135,10 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
 
         // Get columns for all table
         Map<String, String> payloads = this.managedSource.query(query,
-                new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames, lobs));
+                new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames, lobs))
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         LOGGER.debug("Extracted values from managed table {} with query \"{}\". Found {} results",
                 parameterEntry.getTableName(), query, payloads != null ? payloads.size() : -1);
