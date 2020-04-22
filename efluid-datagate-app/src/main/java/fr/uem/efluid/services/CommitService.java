@@ -306,7 +306,9 @@ public class CommitService extends AbstractApplicationService {
 
         Map<UUID, List<String>> domainNames = this.domains.loadAllDomainNamesByCommitUuids(project);
 
-        return this.commits.findByProject(project).stream()
+        List availableCommits;
+
+        availableCommits = this.commits.findByProject(project).stream()
                 .map(CommitEditData::fromEntity)
                 .peek(c -> {
                     // Add domain names for each commit (if any)
@@ -317,6 +319,11 @@ public class CommitService extends AbstractApplicationService {
                 })
                 .sorted(Comparator.comparing(CommitEditData::getCreatedTime))
                 .collect(Collectors.toList());
+
+        Collections.reverse(availableCommits);
+
+        return availableCommits;
+
     }
 
     /**

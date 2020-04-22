@@ -238,14 +238,20 @@ public class DictionaryManagementService extends AbstractApplicationService {
      */
     public List<VersionData> getAvailableVersions() {
 
+        List versions;
+
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
         Version last = this.versions.getLastVersionForProject(project);
 
-        return this.versions.findByProject(project).stream()
+        versions =  this.versions.findByProject(project).stream()
                 .map(v -> getCompletedVersion(v, last))
                 .sorted(Comparator.comparing(VersionData::getUpdatedTime))
                 .collect(Collectors.toList());
+
+        Collections.reverse(versions);
+
+        return versions;
     }
 
     /**
