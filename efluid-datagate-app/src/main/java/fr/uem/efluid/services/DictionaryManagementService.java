@@ -136,7 +136,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         final boolean useModelId = this.features.isEnabled(Feature.USE_MODEL_ID_AS_VERSION_NAME);
 
         // Search ref identifier if enabled
-        String modelId = this.modelDescs.getCurrentModelIdentifier();
+        String modelId = this.modelDescs.getCurrentModelIdentifier() != null ? this.modelDescs.getCurrentModelIdentifier() : UUID.randomUUID().toString();
 
         // Must check if model id is compliant
         assertCanCreateVersionFromModelId(useModelId, modelId);
