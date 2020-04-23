@@ -84,17 +84,16 @@
 				} else {
                     var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>' + data.modelId + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
                     $("#versionListInjectBefore").before(newVersionRow);
-					inputName.val("");
 				}
 
                 $(".empty-list-message").remove();
                 $("#versRemark").remove();
 
                 setTimeout(() => {
-                    window.location.replace("/ui/versions");
                     $("button.updateButton").remove();
                     $("#successDisplay").remove();
-                }, 2000);
+                    window.location.replace("/ui/versions");
+                }, 1000);
 
 		    });
 		};
