@@ -103,7 +103,7 @@
 		const updateButtonAction = (versionName) => {
 			hideDisplays();
 			$.post("/ui/versions/" + versionName, null, (data, status) => {
-				window.location.replace("/ui/versions"); // Refresh page
+				window.location.replace("/ui/versions/refresh"); // Refresh page
 		    });
 		};
 
