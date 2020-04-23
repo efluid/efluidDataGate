@@ -315,8 +315,9 @@ public class CommitService extends AbstractApplicationService {
                         c.setDomainNames(String.join(", ", dns));
                     }
                 })
-                .sorted(Comparator.comparing(CommitEditData::getCreatedTime))
+                .sorted(Comparator.comparing(CommitEditData::getCreatedTime).reversed())
                 .collect(Collectors.toList());
+
     }
 
     /**

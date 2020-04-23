@@ -244,7 +244,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         return this.versions.findByProject(project).stream()
                 .map(v -> getCompletedVersion(v, last))
-                .sorted(Comparator.comparing(VersionData::getUpdatedTime))
+                .sorted(Comparator.comparing(VersionData::getUpdatedTime).reversed())
                 .collect(Collectors.toList());
     }
 
