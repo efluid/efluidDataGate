@@ -112,6 +112,9 @@
 					<p th:case="'ATTACHMENT_EXEC_ERROR'">
 						L'exécution d'un script importé a échoué. Le détail de l'erreur rencontrée : <span th:text="${payload}">1.2.3</span>.
 					</p>
+					<p th:case="'LDAP_ERROR'">
+						Une erreur de configuration ou de fonctionnement LDAP a été rencontrée. Vérifier le paramètrage ou contacter l'administrateur LDAP.
+					</p>
 					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
 				</span>
 			</span>

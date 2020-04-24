@@ -9,6 +9,10 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * @author elecomte
  * @version 1
@@ -41,8 +45,8 @@ public class UserStepDefs extends CucumberStepDefs {
     public void the_user_is_stored(String user) throws Throwable {
         String login = cleanUserParameter(user);
         User def = user(login);
-        User real = this.users.findByLogin(login);
-        Assert.assertTrue(real != null);
-        Assert.assertEquals(def.getEmail(), real.getEmail());
+        Optional<User> real = this.users.findByLogin(login);
+        assertThat(real).isPresent();
+        Assert.assertEquals(def.getEmail(), real.get().getEmail());
     }
 }

@@ -2,6 +2,7 @@ package fr.uem.efluid.services;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.security.providers.AccountProvider;
 import fr.uem.efluid.services.types.ApplicationDetails;
 import fr.uem.efluid.services.types.ApplicationInfo;
 import fr.uem.efluid.services.types.ProjectData;
@@ -49,7 +50,7 @@ public class ApplicationDetailsService {
     private LobPropertyRepository lobs;
 
     @Autowired
-    private UserRepository users;
+    private AccountProvider accounts;
 
     @Autowired
     private ProjectRepository projects;
@@ -100,6 +101,7 @@ public class ApplicationDetailsService {
 
     /**
      * Heavy load
+     *
      * @return current App details with many count.
      */
     @Cacheable("details")
@@ -155,7 +157,7 @@ public class ApplicationDetailsService {
     @PostConstruct
     public void completeWizard() {
 
-        this.wizardCompleted = this.users.count() > 0 && this.domains.count() > 0;
+        this.wizardCompleted = this.accounts.findAllExistingUsers().size() > 0 && this.domains.count() > 0;
 
         if (!this.wizardCompleted) {
             LOGGER.info("Application is started in wizard mode : no data found locally");

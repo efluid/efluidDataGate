@@ -2,6 +2,7 @@ package fr.uem.efluid.security;
 
 import javax.annotation.PostConstruct;
 
+import fr.uem.efluid.security.providers.AccountProvider;
 import org.pac4j.core.context.WebContext;
 import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
@@ -19,45 +20,42 @@ import fr.uem.efluid.utils.WebUtils;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 @Component
 public class RestTokenAuthenticator implements Authenticator<TokenCredentials> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(RestTokenAuthenticator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestTokenAuthenticator.class);
 
-	@Autowired
-	private UserRepository users;
+    @Autowired
+    private AccountProvider accountProvider;
 
-	@Override
-	public void validate(final TokenCredentials credentials, final WebContext context) throws HttpAction, CredentialsException {
+    @Override
+    public void validate(final TokenCredentials credentials, final WebContext context) throws HttpAction, CredentialsException {
 
-		LOGGER.debug("Begin rest (token) authentication");
+        LOGGER.debug("Begin rest (token) authentication");
 
-		if (credentials == null) {
-			throw new CredentialsException("credentials must not be null");
-		}
+        if (credentials == null) {
+            throw new CredentialsException("credentials must not be null");
+        }
 
-		if (CommonHelper.isBlank(credentials.getToken())) {
-			throw new CredentialsException("token must not be blank");
-		}
+        if (CommonHelper.isBlank(credentials.getToken())) {
+            throw new CredentialsException("token must not be blank");
+        }
 
-		final String token = credentials.getToken();
+        final String token = credentials.getToken();
 
-		User user = this.users.findByToken(token);
+        User user = this.accountProvider.findExistingUserByToken(token)
+                .orElseThrow(() -> new CredentialsException("Username doesn't exist"));
 
-		if (user == null) {
-			throw new CredentialsException("Username doesn't exist");
-		}
+        LOGGER.debug("Authentication successfull for user {}", user.getLogin());
 
-		LOGGER.debug("Authentication successfull for user {}", user.getLogin());
+        credentials.setUserProfile(WebUtils.webSecurityProfileFromUser(user));
+    }
 
-		credentials.setUserProfile(WebUtils.webSecurityProfileFromUser(user));
-	}
-
-	@PostConstruct
-	public void signalLoading() {
-		LOGGER.debug("[SECURITY] Load rest authenticator {}", this.getClass().getName());
-	}
+    @PostConstruct
+    public void signalLoading() {
+        LOGGER.debug("[SECURITY] Load rest authenticator {}", this.getClass().getName());
+    }
 }

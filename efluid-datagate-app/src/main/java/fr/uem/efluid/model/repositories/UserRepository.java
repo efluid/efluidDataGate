@@ -4,6 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import fr.uem.efluid.model.entities.User;
 
+import java.util.Optional;
+
 /**
  * @author elecomte
  * @since v0.0.1
@@ -11,7 +13,7 @@ import fr.uem.efluid.model.entities.User;
  */
 public interface UserRepository extends JpaRepository<User, String> {
 
-	User findByLogin(String login);
+	Optional<User> findByLogin(String login);
 
-	User findByToken(String token);
+	Optional<User>  findByToken(String token);
 }

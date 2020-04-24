@@ -1,5 +1,6 @@
 package fr.uem.efluid.model.entities;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,6 +11,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 /**
  * <p>
@@ -30,7 +32,6 @@ public class User {
 	@NotBlank
 	private String email;
 
-	@NotBlank
 	private String password;
 
 	private String token;
@@ -40,6 +41,12 @@ public class User {
 
 	@ManyToOne(fetch = FetchType.EAGER)
 	private Project selectedProject;
+
+	private String externalRef;
+
+	@NotNull
+	private LocalDateTime createdTime;
+
 
 	/**
 	 */
@@ -143,6 +150,22 @@ public class User {
 	 */
 	public void setSelectedProject(Project selectedProject) {
 		this.selectedProject = selectedProject;
+	}
+
+	public String getExternalRef() {
+		return externalRef;
+	}
+
+	public void setExternalRef(String externalRef) {
+		this.externalRef = externalRef;
+	}
+
+	public LocalDateTime getCreatedTime() {
+		return createdTime;
+	}
+
+	public void setCreatedTime(LocalDateTime createdTime) {
+		this.createdTime = createdTime;
 	}
 
 	/**

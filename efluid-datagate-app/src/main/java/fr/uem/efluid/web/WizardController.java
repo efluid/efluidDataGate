@@ -65,7 +65,9 @@ public class WizardController {
      * @return
      */
     @RequestMapping(path = "/1", method = GET)
-    public String userPage() {
+    public String userPage(Model model) {
+
+        model.addAttribute("externalAuth", this.security.canPreloadUserOnly());
 
         return "wizard/user";
     }
@@ -78,11 +80,18 @@ public class WizardController {
      */
     @RequestMapping(path = "/1", method = POST)
     public String userSave(
+            Model model,
             @RequestParam("login") String login,
             @RequestParam("password") String password,
-            @RequestParam("email") String email) {
+            @RequestParam(name = "email", required = false) String email) {
 
-        this.security.addSimpleUser(login, email, password, true);
+        // Cannot create - auth error
+        if (this.security.addSimpleUser(login, email, password, true) == null) {
+
+            model.addAttribute("authError", new Object());
+
+            return userPage(model);
+        }
 
         return "wizard/projects";
     }

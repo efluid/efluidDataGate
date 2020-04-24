@@ -1,0 +1,82 @@
+version: 1
+
+dn: dc=company,dc=com
+objectClass: domain
+objectClass: top
+dc: company
+
+dn: o=entity,dc=company,dc=com
+objectClass: organization
+objectClass: top
+o: entity
+
+dn: ou=Personne,o=entity,dc=company,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Personne
+
+dn: ou=Profil,o=entity,dc=company,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: Profil
+
+dn: cn=DatagateUsers,ou=Profil,o=entity,dc=company,dc=com
+objectClass: groupOfNames
+objectClass: top
+cn: DatagateUsers
+member: cn=DEMO\2C Gerard,ou=Personne,o=entity,dc=company,dc=com
+member: cn=RECETTE\2C Frederic,ou=Personne,o=entity,dc=company,dc=com
+
+dn: cn=DEMO\2C Gerard,ou=Personne,o=entity,dc=company,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: DEMO, Gerard
+sn: DEMO
+displayName: DEMO, Gerard
+employeeNumber: 0111AA
+employeeType: statutaire
+givenName: Gerard
+initials: GDE
+mail: g-demo@company.com
+o: COMPANY
+title: M
+uid: demo
+userPassword:: e1NIQX1pZVNWNTVRYytlUU9hWURSU2hhL0Fqek5USkU9
+
+dn: cn=RECETTE\2C Frederic,ou=Personne,o=entity,dc=company,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: RECETTE, Frederic
+sn: RECETTE
+displayName: RECETTE, Frederic
+employeeNumber: 0111BB
+employeeType: statutaire
+givenName: Frederic
+initials: FRE
+mail: f-recette@company.com
+o: COMPANY
+title: M
+uid: recette
+userPassword:: e1NIQX0ySEV6Q1psbG5LMkNLcGtybkVKOGUyYXlyVG89
+
+dn: cn=SUPER_ADMIN\2C User,ou=Personne,o=entity,dc=company,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: SUPER_ADMIN, User
+sn: SUPER_ADMIN
+displayName: SUPER_ADMIN, User
+employeeNumber: 0111CC
+employeeType: statutaire
+givenName: User
+initials: USA
+mail: sa@company.com
+o: COMPANY
+title: Ms
+uid: sa
+userPassword:: e1NIQX1OZ2ltMGFCYXVpUHFPUTVmTzBnZ1BidHlRZmM9

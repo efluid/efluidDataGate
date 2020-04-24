@@ -1,10 +1,10 @@
 package fr.uem.efluid.services;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import org.pac4j.core.credentials.password.PasswordEncoder;
+import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.security.providers.AccountProvider;
+import fr.uem.efluid.services.types.UserDetails;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,148 +12,161 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.services.types.UserDetails;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 2
+ * @since v0.0.1
  */
 @Service
 @Transactional
 public class SecurityService extends AbstractApplicationService {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(SecurityService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityService.class);
 
-	@Autowired
-	private UserRepository users;
+    @Autowired
+    private AccountProvider accounts;
 
-	@Autowired
-	private PasswordEncoder encoder;
+    @Autowired
+    private ProjectManagementService projectService;
 
-	@Autowired
-	private ProjectManagementService projectService;
+    /**
+     * @param login
+     * @param email
+     * @param password
+     */
+    @CacheEvict(cacheNames = "users", allEntries = true)
+    public User addSimpleUser(String login, String email, String password, boolean fromWizzard) {
 
-	/**
-	 * @param login
-	 * @param email
-	 * @param password
-	 */
-	@CacheEvict(cacheNames = "users", allEntries = true)
-	public User addSimpleUser(String login, String email, String password, boolean fromWizzard) {
+        if (this.accounts.getSupport() == AccountProvider.Support.FULL) {
 
-		LOGGER.info("Creation new user : {}", login);
+            LOGGER.info("Creation new user : {}", login);
 
-		User user = new User();
-		user.setLogin(login);
-		user.setPassword(this.encoder.encode(password));
-		user.setEmail(email);
-		user.setToken(generateToken());
+            User user = this.accounts.createUser(login, email, password);
 
-		if (fromWizzard) {
-			LOGGER.info("New user {} is created in wizard mode. Set it as current active user for holder, dropped after wizard complete",
-					login);
-			this.holder.setWizzardUser(user);
-		}
+            if (fromWizzard) {
+                LOGGER.info("New user {} is created in wizard mode. Set it as current active user for holder, dropped after wizard complete",
+                        login);
+                this.holder.setWizzardUser(user);
+            }
 
-		return this.users.save(user);
-	}
+            return user;
+        }
 
-	/**
-	 * <p>
-	 * Create a complete user for user management features. Apply the selected prefered
-	 * project in the same time
-	 * </p>
-	 * 
-	 * @param login
-	 * @param email
-	 * @param password
-	 * @param preferedProjects
-	 *            Selected prefered projects for the new user
-	 */
-	public void createUser(String login, String email, String password, List<UUID> preferedProjects) {
+        // For wizzard init, must support init on an authentication processed
+        else {
 
-		User user = addSimpleUser(login, email, password, false);
+            LOGGER.info("Creation new user from an authentication process: {}", login);
 
-		this.projectService.setPreferedProjectsForUser(user, preferedProjects);
-	}
+            Optional<User> user = this.accounts.authenticate(login, password);
 
-	/**
-	 * <p>
-	 * Create a complete user for user management features. Apply the selected prefered
-	 * project in the same time
-	 * </p>
-	 * 
-	 * @param login
-	 * @param email
-	 * @param preferedProjects
-	 *            Selected prefered projects for the new user
-	 */
-	public void editUser(String login, String email, List<UUID> preferedProjects) {
+            if (user.isPresent()) {
+                if (fromWizzard) {
+                    LOGGER.info("New user {} is created in wizard mode from external auth account. Set it as current active user for holder, dropped after wizard complete",
+                            login);
+                    this.holder.setWizzardUser(user.get());
+                }
+                return user.get();
+            }
 
-		User user = this.users.getOne(login);
+            return null;
+        }
+    }
 
-		// Apply new values
-		user.setEmail(email);
+    /**
+     * <p>
+     * Create a complete user for user management features. Apply the selected prefered
+     * project in the same time
+     * </p>
+     *
+     * @param login
+     * @param email
+     * @param password
+     * @param preferedProjects Selected prefered projects for the new user
+     */
+    public void createUser(String login, String email, String password, List<UUID> preferedProjects) {
 
-		// Edit and save
-		this.projectService.setPreferedProjectsForUser(user, preferedProjects);
-	}
+        User user = addSimpleUser(login, email, password, false);
 
-	/**
-	 * <p>
-	 * For rendering of user info
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public UserDetails getCurrentUserDetails() {
+        this.projectService.setPreferedProjectsForUser(user, preferedProjects);
+    }
 
-		return getUserDetails(getCurrentUser().getLogin());
-	}
+    /**
+     * <p>
+     * Create a complete user for user management features. Apply the selected prefered
+     * project in the same time
+     * </p>
+     *
+     * @param login
+     * @param email
+     * @param preferedProjects Selected prefered projects for the new user
+     */
+    public void editUser(String login, String email, List<UUID> preferedProjects) {
 
-	/**
-	 * <p>
-	 * For rendering of user to edit
-	 * </p>
-	 * 
-	 * @param login
-	 *            identifier for user to get
-	 * @return
-	 */
-	public UserDetails getUserDetails(String login) {
+        User user = this.accounts.findExistingUserByLogin(login)
+                .map(u -> {
+                    // Apply new values
+                    u.setEmail(email);
+                    this.accounts.updateUser(u);
+                    return u;
+                })
+                .orElseThrow(() -> new ApplicationException(ErrorType.OTHER, "User not found"));
 
-		User freshUser = this.users.getOne(login);
+        // Edit and save
+        this.projectService.setPreferedProjectsForUser(user, preferedProjects);
+    }
 
-		return UserDetails.fromEntity(freshUser);
-	}
+    /**
+     * <p>
+     * For rendering of user info
+     * </p>
+     *
+     * @return
+     */
+    public UserDetails getCurrentUserDetails() {
 
-	/**
-	 * @return
-	 */
-	public List<UserDetails> getAllUserDetails() {
-		return this.users.findAll().stream()
-				.map(UserDetails::fromEntity)
-				.collect(Collectors.toList());
-	}
+        return getUserDetails(getCurrentUser().getLogin());
+    }
 
-	/**
-	 * <p>
-	 * Called when wizard process is completed to break wizard user mode
-	 * </p>
-	 */
-	public void completeWizzardUserMode() {
-		LOGGER.info("Wizzard completed. Drop user from holder");
-		this.holder.setWizzardUser(null);
-	}
+    /**
+     * <p>
+     * For rendering of user to edit
+     * </p>
+     *
+     * @param login identifier for user to get
+     * @return
+     */
+    public UserDetails getUserDetails(String login) {
 
-	/**
-	 * @return
-	 */
-	private static final String generateToken() {
+        return this.accounts.findExistingUserByLogin(login)
+                .map(UserDetails::fromEntity)
+                .orElseThrow(() -> new ApplicationException(ErrorType.OTHER, "User not found"));
+    }
 
-		return UUID.randomUUID().toString().replaceAll("-", "");
-	}
+    /**
+     * @return
+     */
+    public List<UserDetails> getAllUserDetails() {
+        return this.accounts.findAllExistingUsers().stream()
+                .map(UserDetails::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public boolean canPreloadUserOnly() {
+        return this.accounts.getSupport() != AccountProvider.Support.FULL;
+    }
+
+    /**
+     * <p>
+     * Called when wizard process is completed to break wizard user mode
+     * </p>
+     */
+    public void completeWizzardUserMode() {
+        LOGGER.info("Wizzard completed. Drop user from holder");
+        this.holder.setWizzardUser(null);
+    }
 }
