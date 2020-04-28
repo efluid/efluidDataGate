@@ -64,9 +64,10 @@ class GenerationUtils {
                 || (field.isAnnotationPresent(ParameterValue.class) || field.isAnnotationPresent(ParameterCompositeValue.class)
                 || field.isAnnotationPresent(ParameterLink.class) || field.isAnnotationPresent(ParameterMapping.class)))
 
+                // Exclude constant
+                && !Modifier.isFinal(field.getModifiers())
                 // Exclude ignored with @ParameterIgnored or specified as key with
                 // @ParameterKey
-                && !Modifier.isFinal(field.getModifiers())
                 && !(field.isAnnotationPresent(ParameterIgnored.class) || field.isAnnotationPresent(ParameterKey.class));
 
     }
