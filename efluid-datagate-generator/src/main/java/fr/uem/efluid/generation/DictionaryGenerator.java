@@ -33,6 +33,12 @@ public class DictionaryGenerator extends AbstractProcessor {
 
     private final SelectClauseGenerator selectClauseGen;
 
+    final String DEBUG_BG_RED    = "\u001B[41m";
+
+    final String DEBUG_RESET_COLOUR  = "\u001B[0m";
+
+    final String DEBUG_TEXT_BLACK  = "\u001B[30m";
+
     /**
      *
      */
@@ -525,7 +531,8 @@ public class DictionaryGenerator extends AbstractProcessor {
                 mappings,
                 allTables);
 
-        getLog().debug("Generated select clause for type " + tableType.getName() + " is " + selectClause);
+        getLog().debug( DEBUG_BG_RED + DEBUG_TEXT_BLACK  + "Generated select clause for type " + tableType.getName() + " is" + selectClause + DEBUG_RESET_COLOUR);
+
 
         def.setSelectClause(selectClause);
         allLinks.addAll(links);
