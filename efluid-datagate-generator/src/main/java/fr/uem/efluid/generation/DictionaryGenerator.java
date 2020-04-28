@@ -531,7 +531,7 @@ public class DictionaryGenerator extends AbstractProcessor {
                 mappings,
                 allTables);
 
-        getLog().debug( DEBUG_BG_RED + DEBUG_TEXT_BLACK  + "Generated select clause for type " + tableType.getName() + " is" + selectClause + DEBUG_RESET_COLOUR);
+        getLog().debug( "Generated select clause for type " + tableType.getName() + " is " + selectClause);
 
 
         def.setSelectClause(selectClause);
@@ -597,7 +597,7 @@ public class DictionaryGenerator extends AbstractProcessor {
                     mappings,
                     allTables);
 
-            getLog().debug("Generated select clause for type " + tableType.getName() + " is " + selectClause);
+            getLog().debug(DEBUG_BG_RED + DEBUG_TEXT_BLACK  + "Generated select clause for type " + tableType.getName() + " is " + selectClause + DEBUG_RESET_COLOUR);
 
             def.setSelectClause(selectClause);
             allLinks.addAll(links);
