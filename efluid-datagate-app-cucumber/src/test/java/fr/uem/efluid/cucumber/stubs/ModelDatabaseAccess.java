@@ -80,6 +80,7 @@ public class ModelDatabaseAccess {
         // Like wizard, preset default project
         user.setPreferedProjects(prefered);
         user.setSelectedProject(project);
+        user.setCreatedTime(LocalDateTime.now());
 
         // User pwd is encoded
         user.setPassword(this.encoder.encode(user.getPassword()));

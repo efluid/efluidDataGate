@@ -13,7 +13,7 @@
 			L'authentification est configurée pour être réalisée à partir d'un service externe (LDAP par exemple). Pour utiliser l'application, vous devez d'abord vous authentifier.
 			Vous serez alors identifié comme administrateur
 		</div>
-		<div th:if="${authError != null}" class="alert alert-danger" role="alert" id="authRemark">
+		<div th:if="${error != null}" class="alert alert-danger" role="alert" id="authRemark">
             <strong>Erreur d'authentification</strong> Vérifiez les informations de connexion saisies.
         </div>
 		<form action="/wizard/2.html" th:action="@{/wizard/1}" method="post">

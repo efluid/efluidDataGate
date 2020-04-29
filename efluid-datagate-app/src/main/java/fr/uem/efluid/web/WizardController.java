@@ -88,7 +88,7 @@ public class WizardController {
         // Cannot create - auth error
         if (this.security.addSimpleUser(login, email, password, true) == null) {
 
-            model.addAttribute("authError", new Object());
+            model.addAttribute("error", new Object());
 
             return userPage(model);
         }

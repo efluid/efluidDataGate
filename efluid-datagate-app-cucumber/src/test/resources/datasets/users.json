@@ -18,5 +18,9 @@
     "login" : "other",
     "email" : "other@test.fr",
     "password" : "pwotherd"
+  },
+  "ldap" : {
+    "login" : "ldap-user",
+    "password" : "ldap-user"
   }
 }

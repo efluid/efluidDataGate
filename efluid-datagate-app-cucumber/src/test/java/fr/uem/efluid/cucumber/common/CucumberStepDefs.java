@@ -296,6 +296,17 @@ public abstract class CucumberStepDefs {
     /**
      * @return
      */
+    protected String getCurrentUserEmail() {
+
+        User user = this.userHolder.getCurrentUser();
+
+        return user != null ? user.getEmail() : null;
+    }
+
+
+    /**
+     * @return
+     */
     protected Project getCurrentUserProject() {
         return new Project(this.projectMgmt.getCurrentSelectedProject().getUuid());
     }
@@ -890,10 +901,22 @@ public abstract class CucumberStepDefs {
      * @param propertyName
      */
     protected static void assertModelHasNoSpecifiedProperty(String propertyName) {
-        assertThat(Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName))
-                .isNull();
+        if (currentAction.andReturn().getModelAndView() != null) {
+            assertThat(currentAction.andReturn().getModelAndView().getModel().get(propertyName))
+                    .isNull();
+        }
     }
 
+
+    /**
+     * Must be missing
+     *
+     * @param propertyName
+     */
+    protected static void assertModelHasSpecifiedProperty(String propertyName) {
+        assertThat(Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName))
+                .isNotNull();
+    }
 
     /**
      * Control json ignoring formating

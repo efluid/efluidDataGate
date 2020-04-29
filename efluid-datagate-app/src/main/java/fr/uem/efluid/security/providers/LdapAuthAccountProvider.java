@@ -12,6 +12,7 @@ import org.springframework.ldap.core.AttributesMapper;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.query.LdapQuery;
 
+import javax.naming.directory.Attribute;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.HashSet;
@@ -107,7 +108,8 @@ public class LdapAuthAccountProvider implements AccountProvider {
                 (AttributesMapper<User>) attrs -> {
                     User u = new User();
                     u.setExternalRef(attrs.get("cn").get().toString());
-                    u.setEmail(attrs.get(this.mailAttribute).get().toString());
+                    Attribute email = attrs.get(this.mailAttribute);
+                    u.setEmail(email != null ? email.get().toString(): username + "@unknown");
                     return u;
                 });
 

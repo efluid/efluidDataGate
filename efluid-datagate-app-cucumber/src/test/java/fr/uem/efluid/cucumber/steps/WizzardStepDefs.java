@@ -34,7 +34,7 @@ public class WizzardStepDefs extends CucumberStepDefs {
         currentStep = 1;
     }
 
-    @When("^the login \"(.*)\", the email \"(.*)\" and the password \"(.*)\" are specified$")
+    @When("^the login \"(\\w*)\", the email \"(.*)\" and the password \"(\\w*)\" are specified$")
     public void the_login_the_email_and_the_password_are_specified(
             String login,
             String email,
@@ -44,6 +44,17 @@ public class WizzardStepDefs extends CucumberStepDefs {
         post("/wizard/" + currentStep,
                 p("login", login),
                 p("email", email),
+                p("password", password));
+    }
+
+    @When("^the login \"(\\w*)\" and the password \"(\\w*)\" are specified$")
+    public void the_login_and_the_password_are_specified(
+            String login,
+            String password)
+            throws Throwable {
+
+        post("/wizard/" + currentStep,
+                p("login", login),
                 p("password", password));
     }
 
