@@ -73,7 +73,10 @@ spring:
         hibernate:
             ddl-auto: create
 
-## WEB SERVER CONFIG
+    ldap:
+        embedded:
+            base-dn: dc=company,dc=com
+
 server:
     contextPath:
     port: 8099

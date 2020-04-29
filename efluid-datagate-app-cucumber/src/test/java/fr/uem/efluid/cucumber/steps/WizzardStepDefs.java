@@ -2,8 +2,12 @@ package fr.uem.efluid.cucumber.steps;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Ignore;
+import org.springframework.util.StringUtils;
+
+import java.util.Objects;
 
 /**
  * @author elecomte
@@ -41,6 +45,11 @@ public class WizzardStepDefs extends CucumberStepDefs {
                 p("login", login),
                 p("email", email),
                 p("password", password));
+    }
+
+    @Then("^the user creation page is (.*)an ldap authentication request$")
+    public void user_create_is_login(String mode) {
+        assertModelIsSpecifiedProperty("externalAuth", Boolean.class, v -> v == StringUtils.isEmpty(mode));
     }
 
 }

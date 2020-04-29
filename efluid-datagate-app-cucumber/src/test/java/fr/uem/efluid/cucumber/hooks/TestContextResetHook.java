@@ -19,5 +19,6 @@ public class TestContextResetHook extends CucumberStepDefs {
         resetAuthentication();
         resetAsyncProcess();
         resetDatabaseIdentifier();
+        disableLdap();
     }
 }

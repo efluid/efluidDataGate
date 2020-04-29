@@ -2,6 +2,9 @@ package fr.uem.efluid.cucumber.common;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unboundid.ldap.listener.InMemoryDirectoryServer;
+import com.unboundid.ldap.sdk.LDAPException;
+import com.unboundid.ldif.LDIFReader;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.stubs.*;
 import fr.uem.efluid.model.entities.*;
@@ -27,9 +30,11 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -132,6 +137,11 @@ public abstract class CucumberStepDefs {
     @Autowired
     private ManagedQueriesGenerator.QueryGenerationRules defaultRules;
 
+    @Autowired
+    private SwitchableLdapAccountProvider accountProvider;
+
+    @Autowired
+    private InMemoryDirectoryServer ldapServer;
 
     /**
      * <p>
@@ -295,6 +305,23 @@ public abstract class CucumberStepDefs {
      */
     protected FunctionalDomain getDefaultDomainFromCurrentProject() {
         return modelDatabase().findDomainByProjectAndName(getCurrentUserProject(), DEFAULT_DOMAIN);
+    }
+
+    protected void disableLdap() {
+        this.accountProvider.useDatabase();
+    }
+
+    protected void enableLdap(String ldifContent, String searchBase, String loginAttribute, String mailAttribute) {
+
+        // Init embedded ldap with ldif content
+        try {
+            this.ldapServer.importFromLDIF(true, new LDIFReader(new ByteArrayInputStream(ldifContent.getBytes(StandardCharsets.UTF_8))));
+        } catch (LDAPException e) {
+            throw new AssertionError("Cannot import specified ldif content", e);
+        }
+
+        // And define accountProvider with specified properties
+        this.accountProvider.useLdap(searchBase, loginAttribute, mailAttribute);
     }
 
     /**
@@ -856,6 +883,17 @@ public abstract class CucumberStepDefs {
             Predicate<K> propertyMatch) {
         assertThat(getCurrentSpecifiedProperty(propertyName, type)).matches(propertyMatch);
     }
+
+    /**
+     * Must be missing
+     *
+     * @param propertyName
+     */
+    protected static void assertModelHasNoSpecifiedProperty(String propertyName) {
+        assertThat(Objects.requireNonNull(currentAction.andReturn().getModelAndView()).getModel().get(propertyName))
+                .isNull();
+    }
+
 
     /**
      * Control json ignoring formating

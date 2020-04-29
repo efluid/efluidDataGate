@@ -1,6 +1,7 @@
 package fr.uem.efluid.cucumber.common;
 
 import fr.uem.efluid.cucumber.stubs.TweakedAsyncDriver;
+import fr.uem.efluid.security.providers.DatabaseOnlyAccountProvider;
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.utils.DatasourceUtils;
@@ -67,7 +68,6 @@ public class SystemTestConfig {
     }
 
     /**
-     *
      * @return Active H2 server instance
      * @throws SQLException for server init error
      */
@@ -129,5 +129,26 @@ public class SystemTestConfig {
     @Bean
     public AsyncDriver futureAsyncDriver() {
         return new TweakedAsyncDriver();
+    }
+
+    /**
+     * Non primary AccountProvider for database access use
+     *
+     * @return fixed DB account provider (default provider)
+     */
+    @Bean
+    public DatabaseOnlyAccountProvider databaseOnlyAccountProvider() {
+        return new DatabaseOnlyAccountProvider();
+    }
+
+    /**
+     * Live switchable provider, used as primary for testing
+     *
+     * @return account provider which can be updated live on testing
+     */
+    @Bean
+    @Primary
+    public SwitchableLdapAccountProvider switchableAccountProvider() {
+        return new SwitchableLdapAccountProvider(databaseOnlyAccountProvider());
     }
 }

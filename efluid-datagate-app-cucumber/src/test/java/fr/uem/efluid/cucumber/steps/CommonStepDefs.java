@@ -51,6 +51,11 @@ public class CommonStepDefs extends CucumberStepDefs {
         managedDatabase().dropManaged();
     }
 
+    @Given("^ldap auth is specified on search at \"(.*)\", with login attr \"(.*)\" and email attr \"(.*)\" and this content :$")
+    public void ldap_is_specified(String searchBase, String loginAttribute, String mailAttribute, DocString config) {
+        enableLdap(config.getContent(), searchBase, loginAttribute, mailAttribute);
+    }
+
     @When("^(.+) access to (.+)$")
     public void user_access_to_page(String user, String page) throws Throwable {
 

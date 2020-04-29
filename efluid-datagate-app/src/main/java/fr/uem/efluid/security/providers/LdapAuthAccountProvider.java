@@ -1,6 +1,5 @@
 package fr.uem.efluid.security.providers;
 
-import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
@@ -18,7 +17,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
@@ -43,21 +41,15 @@ public class LdapAuthAccountProvider implements AccountProvider {
     @Autowired
     private ProjectRepository projects;
 
-    private final String searchBase;
-    private final String loginAttribute;
-    private final String mailAttribute;
+    private String searchBase;
+    private String loginAttribute;
+    private String mailAttribute;
 
     public LdapAuthAccountProvider(
             String searchBase,
             String loginAttribute,
             String mailAttribute) {
-
-        this.searchBase = searchBase;
-        this.loginAttribute = loginAttribute;
-        this.mailAttribute = mailAttribute;
-
-        LOGGER.info("[SECURITY] Using LDAP authentication with database preload target. LDAP User " +
-                "search base is {}, for ({} = ?}", this.searchBase, this.loginAttribute);
+        updateAuthAccountProvider(searchBase, loginAttribute, mailAttribute);
     }
 
     @Override
@@ -65,7 +57,7 @@ public class LdapAuthAccountProvider implements AccountProvider {
 
         try {
             this.ldapTemplate.authenticate(userQuery(username), password);
-        }catch (Exception e){
+        } catch (Exception e) {
             LOGGER.warn("Authentication error : cannot process LDAP bind auth for user " + username, e);
             return Optional.empty();
         }
@@ -132,4 +124,25 @@ public class LdapAuthAccountProvider implements AccountProvider {
 
         return Optional.of(this.users.save(user));
     }
+
+    /**
+     * Configuration entry point for testing
+     *
+     * @param searchBase
+     * @param loginAttribute
+     * @param mailAttribute
+     */
+    protected void updateAuthAccountProvider(
+            String searchBase,
+            String loginAttribute,
+            String mailAttribute) {
+
+        this.searchBase = searchBase;
+        this.loginAttribute = loginAttribute;
+        this.mailAttribute = mailAttribute;
+
+        LOGGER.info("[SECURITY] Using LDAP authentication with database preload target. LDAP User " +
+                "search base is {}, for ({} = ?}", this.searchBase, this.loginAttribute);
+    }
+
 }
