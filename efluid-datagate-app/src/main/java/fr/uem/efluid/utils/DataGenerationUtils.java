@@ -58,6 +58,7 @@ public class DataGenerationUtils {
         user.setEmail(login + "@efluid.fr");
         user.setPassword("FPQSFIKQPSFIQSF[ENCRYPTED]");
         user.setToken(login);
+        user.setCreatedTime(LocalDateTime.now());
 
         return user;
     }

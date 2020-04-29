@@ -44,7 +44,6 @@ public class User {
 
 	private String externalRef;
 
-	@NotNull
 	private LocalDateTime createdTime;
 
 
