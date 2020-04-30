@@ -1,16 +1,20 @@
 package fr.uem.efluid.tools;
 
+import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
+import fr.uem.efluid.utils.FormatUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -21,8 +25,15 @@ import java.util.stream.Collectors;
  */
 public abstract class Transformer<C extends Transformer.TransformerConfig, R extends Transformer.TransformerRunner<C>> {
 
-    @Autowired
-    private ManagedValueConverter converter;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Transformer.class);
+
+    private static final Logger LOGGER_TRANSFORMATIONS = LoggerFactory.getLogger("transformer.results");
+
+    private final ManagedValueConverter converter;
+
+    protected Transformer(ManagedValueConverter converter){
+        this.converter = converter;
+    }
 
     /**
      * Process a configured spec for
@@ -101,19 +112,48 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
         C config = (C) rawConfig;
 
         if (isApplyOnDictionaryEntry(dict, config)) {
+
+            LOGGER_TRANSFORMATIONS.info("Transformation is possible for transformer {} on DictionaryEntry table \"{}\"", this.getName(), dict.getTableName());
+
             R runner = runner(config, dict);
-            mergeDiff.forEach(l -> l.setPayload(
-                    // Rebuild payload ...
-                    this.converter.convertToExtractedValue(
-                            // From expanded payload ...
-                            this.converter.expandInternalValue(l.getPayload()).stream()
-                                    .collect(Collectors.toMap(Value::getName,
-                                            runner, // Transforming each values ...
-                                            (a, b) -> a,
-                                            LinkedHashMap::new)))));
+            mergeDiff.stream()
+                    // Process only when runner can apply
+                    .filter(runner)
+                    .forEach(l -> {
+
+                        // Expand payload (modifiable list)
+                        List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
+
+                        // Apply transform
+                        runner.accept(extracted);
+
+                        if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
+                            LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on DictionaryEntry table \"{}\" :\n{}",
+                                    this.getName(), dict.getTableName(), buildTransformationResultForDebug(extracted));
+                        }
+
+                        // Rebuild payload
+                        l.setPayload(this.converter.convertToExtractedValue(extracted));
+                    });
+        } else if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
+            LOGGER_TRANSFORMATIONS.info("No transformation process for transformer {} on DictionaryEntry table \"{}\"", this.getName(), dict.getTableName());
         }
 
         return mergeDiff;
+    }
+
+    private static String buildTransformationResultForDebug(List<Value> content) {
+
+        List<String> results = content.stream()
+                .filter(v -> v instanceof TransformerRunner.TransformedValue)
+                .map(v -> ((TransformerRunner.TransformedValue) v).getTransformation())
+                .collect(Collectors.toList());
+
+        if (results.size() == 0) {
+            return "no changes";
+        }
+
+        return results.stream().collect(Collectors.joining("\n", " + ", ""));
     }
 
     /**
@@ -163,10 +203,14 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
     }
 
     /**
+     * <p>
      * Model of runner for transformation. A new runner is instantiated for each DictionaryEntry.
      * Not threadsafe : can keep status on processed values, and keep current dict entry to process.
+     * </p>
+     * <p>Runner filter "lines" to process and apply to values</p>
      */
-    public static abstract class TransformerRunner<C extends Transformer.TransformerConfig> implements Function<Value, String> {
+    public static abstract class TransformerRunner<C extends Transformer.TransformerConfig>
+            implements Predicate<PreparedIndexEntry>, Consumer<List<Value>> {
 
         protected final C config;
 
@@ -175,6 +219,45 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
         public TransformerRunner(C config, DictionaryEntry dict) {
             this.config = config;
             this.dict = dict;
+        }
+
+        protected Value transformedValue(Value existing, String newValue) {
+            return new TransformedValue(existing, FormatUtils.toBytes(newValue));
+        }
+
+        public static final class TransformedValue implements Value {
+
+            private static final String TRANSFORMATION_DISPLAY = " -> ";
+
+            private Value target;
+
+            private final byte[] modifiedContent;
+
+            private TransformedValue(Value target, byte[] modifiedContent) {
+                this.target = target;
+                this.modifiedContent = modifiedContent;
+
+                LOGGER.debug("Processed transformation on value from {} to {}", target.getValue(), modifiedContent);
+            }
+
+            @Override
+            public String getName() {
+                return this.target.getName();
+            }
+
+            @Override
+            public byte[] getValue() {
+                return this.modifiedContent;
+            }
+
+            @Override
+            public ColumnType getType() {
+                return this.target.getType();
+            }
+
+            public String getTransformation() {
+                return getName() + " : " + this.target.getValueAsString() + TRANSFORMATION_DISPLAY + getValueAsString();
+            }
         }
     }
 }

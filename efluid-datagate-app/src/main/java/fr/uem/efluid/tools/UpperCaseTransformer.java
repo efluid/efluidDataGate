@@ -2,6 +2,7 @@ package fr.uem.efluid.tools;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -9,6 +10,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class UpperCaseTransformer extends ColumnTransformer<UpperCaseTransformer.Config, UpperCaseTransformer.Runner> {
+
+    @Autowired
+    public UpperCaseTransformer(ManagedValueConverter converter) {
+        super(converter);
+    }
 
     @Override
     public String getName() {

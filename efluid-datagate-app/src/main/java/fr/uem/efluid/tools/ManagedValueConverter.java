@@ -10,8 +10,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -195,6 +193,31 @@ public class ManagedValueConverter {
 
             builder.append(SEPARATOR);
         }
+    }
+
+    /**
+     * <p>
+     * To produce the exact same extracted value format than with "normal RS-based
+     * operation", but from a raw map of values (useful for testing). Provides directly
+     * the string result.
+     * </p>
+     *
+     * @param lineContent content in a List of Value
+     * @return
+     */
+    public String convertToExtractedValue(final List<Value> lineContent) {
+
+        StringBuilder oneLine = new StringBuilder();
+
+        for (Value value : lineContent) {
+            appendExtractedValue(
+                    oneLine,
+                    value.getName(),
+                    value.getValueAsString(),
+                    value.getType());
+        }
+
+        return finalizePayload(oneLine.toString());
     }
 
     /**
