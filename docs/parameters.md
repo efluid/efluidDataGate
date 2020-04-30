@@ -118,6 +118,11 @@ Les paramètres gérés sont :
 * `datagate-efluid.dictionary.select-pk-as-default-keys`: true si les PK des tables peuvent être pré-selectionnées comme clés dans l'édition d'une table de paramètrage
 * `datagate-efluid.versions.use-model-id-as-version`: true si le model identifié de la BDD gérée est utilisé comme nom de version
 * `datagate-efluid.security.salt`: hash salt pour la génération des tokens d'appel API
+* `datagate-efluid.security.accounting`: Mode de gestion des comptes utilisateurs. Peut être `DATABASE`, `LDAP_AUTH` ou `LDAP_FULL` (seuls `DATABASE`, `LDAP_AUTH` sont supportés à ce stade)
+* `datagate-efluid.security.ldap.user-search-base`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) DN (sans intégrer le base dn spécifié sur spring) ou rechercher des comptes utilisateurs. Exemple : `ou=Personne,o=entity`
+* `datagate-efluid.security.ldap.username-attribute`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) Attribut ldap à utiliser comme login. Exemple : `uid`
+* `datagate-efluid.security.ldap.mail-attribute`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) Attribut ldap à utiliser comme email utilisateur. Exemple : `mail`
+* `datagate-efluid.security.ldap.use-auth-binding`: (uniquement pour l'accounting `LDAP_FULL`) non utilisé à ce stade
 * `datagate-efluid.details.version`: Version de datagate
 * `datagate-efluid.extractor.show-sql`: true si les requêtes d'extraction depuis la BDD gérée doivent être loggées. A ne pas confondre avec l'output des requêtes JPA (l'extraction n'utilise pas JPA)
 * `datagate-efluid.extractor.use-label-for-col-name`: true si le label des colonnes est utilisé pour aliaser les valeurs dans les requêtes d'extraction
@@ -136,6 +141,10 @@ Les paramètres gérés sont :
 * `spring.datasource.username`: Login de la BDD de fonctionnement de l'application
 * `spring.datasource.password`: MDP de la BDD de fonctionnement de l'application
 * `spring.jpa.show-sql`: true pour logguer les requêtes de fonctionnement de l'application
+* `spring.ldap.base`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) DN de base du référentiel LDAP. Par exemple `dc=company,dc=com`
+* `spring.ldap.password`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) Mot de passe pour la connexion au référentiel LDAP (nécessaire pour valider les DN des utilisateurs pendant l'authentification)
+* `spring.ldap.username`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) DN du compte à utiliser pour la connexion au référentiel LDAP. Par exemple `cn=admin,dc=company,dc=com`
+* `spring.ldap.urls`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) URL du référentiel LDAP. Support ldap et ldaps. Par exemple `ldap://my-server:389`
 * `server.contextPath`: context web de l'application
 * `server.port`: Port TCP de l'application
 
