@@ -6,9 +6,16 @@
 	<span layout:fragment="content">
 		<span class="w-bc"><span class="active">Ajout d'utilisateur</span> > Projets > Domaines > Dictionnaire initial > Preparation de paramètre > fin</span>
 		<br/>
-		<div class="alert alert-primary" role="alert">
+		<div th:if="${!externalAuth}" class="alert alert-primary" role="alert">
 			Pour utiliser l'application, vous devez d'abord vous enregistrer en tant qu'utilisateur. Vous serez alors identifié comme administrateur
 		</div>
+		<div th:if="${externalAuth}" class="alert alert-primary" role="alert">
+			L'authentification est configurée pour être réalisée à partir d'un service externe (LDAP par exemple). Pour utiliser l'application, vous devez d'abord vous authentifier.
+			Vous serez alors identifié comme administrateur
+		</div>
+		<div th:if="${error != null}" class="alert alert-danger" role="alert" id="authRemark">
+            <strong>Erreur d'authentification</strong> Vérifiez les informations de connexion saisies.
+        </div>
 		<form action="/wizard/2.html" th:action="@{/wizard/1}" method="post">
 			<div class="form-group">
 				<label for="login">Login</label>
@@ -18,13 +25,16 @@
 				<label for="password">Mot de passe</label>
 				<input type="password" class="form-control" name="password" size="50"/>
 			</div>
-			<div class="form-group">
+			<div th:if="${!externalAuth}" class="form-group">
 				<label for="email">Adresse email</label>
 				<input type="text" class="form-control" name="email" size="50"/>
 			</div>
-			<div>
+			<div th:if="${!externalAuth}" >
 				<span class="remark">Attention : Tous les champs sont obligatoires</span>
 				<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right" disabled="disabled">Sauvegarder et continuer</button><br/><br/>
+			</div>
+			<div th:if="${externalAuth}" >
+				<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right" disabled="disabled">S'authentifier</button><br/><br/>
 			</div>
 		</form>
 	</span>

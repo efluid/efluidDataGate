@@ -1,7 +1,6 @@
 package fr.uem.efluid.sample.updates;
 
-import fr.uem.efluid.ParameterIgnored;
-import fr.uem.efluid.ParameterTable;
+import fr.uem.efluid.*;
 
 /**
  * @author elecomte

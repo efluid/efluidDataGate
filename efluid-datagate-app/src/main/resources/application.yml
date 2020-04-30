@@ -47,6 +47,12 @@ datagate-efluid:
 
     security:
         salt: 12345678901234567890123456789012
+        accounting: DATABASE
+        ldap:
+            user-search-base: /
+            username-attribute: uid
+            mail-attribute: mail
+            use-auth-binding: true
 
     details:
         version: @project.version@
@@ -88,7 +94,7 @@ spring:
         cache: false
         check-template: true
         check-template-location: true
-        content-type: text/html
+        servlet.content-type: text/html
         encoding: UTF-8
         mode: HTML
         enabled: true
@@ -110,6 +116,12 @@ spring:
         hibernate:
             ddl-auto: validate
 
+    ldap:
+        base:
+        password:
+        username:
+        urls:
+
     flyway:
         enabled: true
         url: ${spring.datasource.url}
@@ -123,5 +135,5 @@ spring:
             enabled: ALWAYS
 ## WEB SERVER CONFIG
 server:
-    contextPath:
+    servlet.context-path:
     port: 8081

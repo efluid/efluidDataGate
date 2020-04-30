@@ -1,0 +1,3 @@
+-- Add user ref for external user provider
+ALTER TABLE "USERS" ADD "EXTERNAL_REF" VARCHAR2(256);
+ALTER TABLE "USERS" ADD "CREATED_TIME" TIMESTAMP (6);

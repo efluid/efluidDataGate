@@ -1,17 +1,12 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.PROJECT_MANDATORY;
-import static fr.uem.efluid.utils.ErrorType.PROJECT_NAME_EXIST;
-
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
+import fr.uem.efluid.model.entities.Project;
+import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.repositories.ProjectRepository;
+import fr.uem.efluid.security.providers.AccountProvider;
+import fr.uem.efluid.services.types.ProjectData;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +14,13 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.repositories.ProjectRepository;
-import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.services.types.ProjectData;
-import fr.uem.efluid.utils.ApplicationException;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static fr.uem.efluid.utils.ErrorType.PROJECT_MANDATORY;
+import static fr.uem.efluid.utils.ErrorType.PROJECT_NAME_EXIST;
 
 /**
  * <p>
@@ -33,228 +29,234 @@ import fr.uem.efluid.utils.ApplicationException;
  * project : on same repository instance we can have many repositories, and all the
  * information is independent on each project
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.2.0
  * @version 2
+ * @since v0.2.0
  */
 @Service
 @Transactional
 public class ProjectManagementService extends AbstractApplicationService {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ProjectManagementService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProjectManagementService.class);
 
-	@Autowired
-	private ProjectRepository projects;
+    @Autowired
+    private ProjectRepository projects;
 
-	@Autowired
-	private UserRepository users;
+    @Autowired
+    private AccountProvider accountProvider;
 
-	/**
-	 * 
-	 */
-	public ProjectManagementService() {
-		super();
-	}
+    /**
+     *
+     */
+    public ProjectManagementService() {
+        super();
+    }
 
-	/**
-	 * @return
-	 */
-	public ProjectData getCurrentSelectedProject() {
+    /**
+     * @return display compliant details on active project
+     */
+    public ProjectData getCurrentSelectedProject() {
 
-		// For now we are using project data stored in database directly, even if asked at
-		// every request, for basic stateless model. Could be improved as the stateless
-		// model is not mandatory here regarding the needs
+        // For now we are using project data stored in database directly, even if asked at
+        // every request, for basic stateless model. Could be improved as the stateless
+        // model is not mandatory here regarding the needs
 
-		return ProjectData.fromEntity(getCurrentSelectedProjectEntity());
-	}
+        return ProjectData.fromEntity(getCurrentSelectedProjectEntity());
+    }
 
-	/**
-	 * <p>
-	 * Apply selected project to current user
-	 * </p>
-	 * 
-	 * @param projectId
-	 */
-	@CacheEvict(cacheNames = "details", allEntries = true)
-	public void selectProject(UUID projectId) {
+    /**
+     * <p>
+     * Apply selected project to current user
+     * </p>
+     *
+     * @param projectId selected project
+     * @return true if it's a forced preselect of project (when user had not yet selected any active project)
+     */
+    @CacheEvict(cacheNames = "details", allEntries = true)
+    public boolean selectProject(UUID projectId) {
 
-		User user = this.users.getOne(getCurrentUser().getLogin());
+        User user = reloadCurrentUser();
 
-		LOGGER.debug("Select project {} for current user {}", projectId, user.getLogin());
+        LOGGER.debug("Select project {} for current user {}", projectId, user.getLogin());
 
-		Project project = this.projects.getOne(projectId);
-		user.setSelectedProject(project);
-		this.users.save(user);
+        Project project = this.projects.getOne(projectId);
+        boolean hadSelectedProject = user.getSelectedProject() != null;
+        user.setSelectedProject(project);
+        this.accountProvider.updateUser(user);
 
-		LOGGER.info("User {} is now working with project {}", user.getLogin(), project.getName());
-	}
+        LOGGER.info("User {} is now working with project {}", user.getLogin(), project.getName());
+        return !hadSelectedProject;
+    }
 
-	/**
-	 * @return
-	 */
-	public List<ProjectData> getPreferedProjectsForCurrentUser() {
-		User user = this.users.getOne(getCurrentUser().getLogin());
-		return user.getPreferedProjects().stream().map(ProjectData::fromEntity).collect(Collectors.toList());
-	}
+    /**
+     * @return display compliant project details
+     */
+    public List<ProjectData> getPreferedProjectsForCurrentUser() {
+        return reloadCurrentUser().getPreferedProjects().stream().map(ProjectData::fromEntity).collect(Collectors.toList());
+    }
 
-	/**
-	 * <p>
-	 * Update on current connected user
-	 * </p>
-	 * 
-	 * @param projectIds
-	 */
-	public void setPreferedProjectsForCurrentUser(List<UUID> projectIds) {
+    /**
+     * <p>
+     * Update on current connected user
+     * </p>
+     *
+     * @param projectIds selected project uuids
+     */
+    public void setPreferedProjectsForCurrentUser(List<UUID> projectIds) {
 
-		User user = this.users.getOne(getCurrentUser().getLogin());
+        this.accountProvider.findExistingUserByLogin(getCurrentUser().getLogin())
+                .ifPresent(u -> setPreferedProjectsForUser(u, projectIds));
+    }
 
-		setPreferedProjectsForUser(user, projectIds);
-	}
+    /**
+     * <p>
+     * Set the prefered users from given uuids
+     * </p>
+     *
+     * @param user       specified user
+     * @param projectIds selected project uuids
+     */
+    public void setPreferedProjectsForUser(User user, List<UUID> projectIds) {
 
-	/**
-	 * <p>
-	 * Set the prefered users from given uuids
-	 * </p>
-	 * 
-	 * @param user
-	 * @param projectIds
-	 */
-	public void setPreferedProjectsForUser(User user, List<UUID> projectIds) {
+        LOGGER.debug("Update selected projects for user {}. Set {} projects", user.getLogin(), projectIds.size());
 
-		LOGGER.debug("Update selected projects for user {}. Set {} projects", user.getLogin(), Integer.valueOf(projectIds.size()));
+        // New list
+        user.setPreferedProjects(new HashSet<>(this.projects.findAllById(projectIds)));
 
-		// New list
-		user.setPreferedProjects(new HashSet<>(this.projects.findAllById(projectIds)));
+        this.accountProvider.updateUser(user);
+    }
 
-		this.users.save(user);
-	}
+    /**
+     * <p>
+     * For edit
+     * </p>
+     *
+     * @param name new project name
+     * @return add entity as data
+     */
+    public ProjectData createNewProject(String name, int color) {
 
-	/**
-	 * <p>
-	 * For edit
-	 * </p>
-	 * 
-	 * @param name
-	 * @return add entity as data
-	 */
-	public ProjectData createNewProject(String name, int color) {
+        LOGGER.debug("Create new project {}", name);
 
-		LOGGER.debug("Create new project {}", name);
+        assertProjectNameIsAvailable(name);
 
-		assertProjectNameIsAvailable(name);
+        Project project = new Project();
 
-		Project project = new Project();
+        project.setUuid(UUID.randomUUID());
+        project.setName(name);
+        project.setCreatedTime(LocalDateTime.now());
+        project.setColor(color);
 
-		project.setUuid(UUID.randomUUID());
-		project.setName(name);
-		project.setCreatedTime(LocalDateTime.now());
-		project.setColor(color);
+        project = this.projects.save(project);
 
-		project = this.projects.save(project);
+        // Also add it as prefered to current user
+        User user = reloadCurrentUser();
+        user.getPreferedProjects().add(project);
+        this.accountProvider.updateUser(user);
 
-		// Also add it as prefered to current user
-		User user = this.users.getOne(getCurrentUser().getLogin());
-		user.getPreferedProjects().add(project);
-		this.users.save(user);
+        return ProjectData.fromEntity(project);
+    }
 
-		return ProjectData.fromEntity(project);
-	}
+    /**
+     * <p>
+     * For edit
+     * </p>
+     *
+     * @return display compliant project details
+     */
+    public List<ProjectData> getAllProjects() {
+        return this.projects.findAll().stream().map(ProjectData::fromEntity).collect(Collectors.toList());
+    }
 
-	/**
-	 * <p>
-	 * For edit
-	 * </p>
-	 * 
-	 * @return
-	 */
-	public List<ProjectData> getAllProjects() {
-		return this.projects.findAll().stream().map(ProjectData::fromEntity).collect(Collectors.toList());
-	}
+    /**
+     * <p>
+     * Process one Project
+     * </p>
+     * <p>
+     * Project can be identified by uuid or by name during import
+     * <p>
+     *
+     * @param imported           project data from imported package
+     * @param newCounts          atomic for import count stats
+     * @param substituteProjects substitutes on project name rules
+     * @return created / updated project
+     */
+    Project importProject(Project imported, AtomicInteger newCounts, Map<UUID, Project> substituteProjects) {
 
-	/**
-	 * <p>
-	 * Process one Project
-	 * </p>
-	 * <p>
-	 * Project can be identified by uuid or by name during import
-	 * <p>
-	 * 
-	 * @param imported
-	 * @param newCounts
-	 * @param substituteProjects
-	 * @return
-	 */
-	Project importProject(Project imported, AtomicInteger newCounts, Map<UUID, Project> substituteProjects) {
+        Optional<Project> localOpt = this.projects.findById(imported.getUuid());
 
-		Optional<Project> localOpt = this.projects.findById(imported.getUuid());
+        // Exists already
+        localOpt.ifPresent(d -> LOGGER.debug("Import existing project by uuid {} : will update currently owned", imported.getUuid()));
 
-		// Exists already
-		localOpt.ifPresent(d -> LOGGER.debug("Import existing project by uuid {} : will update currently owned", imported.getUuid()));
+        // Will try also by name
+        Project byName = this.projects.findByName(imported.getName());
 
-		// Will try also by name
-		Project byName = this.projects.findByName(imported.getName());
+        // Search on existing Or is a new one
+        Project local = localOpt.orElseGet(() -> {
+            Project loc;
+            if (byName == null) {
+                LOGGER.debug("Import new project {} : will create currently owned", imported.getUuid());
+                loc = new Project(imported.getUuid());
+                newCounts.incrementAndGet();
+            } else {
+                LOGGER.debug("Import exsting project by name \"{}\" : will reuse existing project with uuid {} and substitute "
+                        + "for other data associated to project uuid {}", imported.getName(), byName.getUuid(), imported.getUuid());
+                loc = byName;
 
-		// Search on existing Or is a new one
-		Project local = localOpt.orElseGet(() -> {
-			Project loc;
-			if (byName == null) {
-				LOGGER.debug("Import new project {} : will create currently owned", imported.getUuid());
-				loc = new Project(imported.getUuid());
-				newCounts.incrementAndGet();
-			} else {
-				LOGGER.debug("Import exsting project by name \"{}\" : will reuse existing project with uuid {} and substitute "
-						+ "for other data associated to project uuid {}", imported.getName(), byName.getUuid(), imported.getUuid());
-				loc = byName;
+                // Keep substitute for domain import
+                substituteProjects.put(imported.getUuid(), byName);
+            }
+            return loc;
+        });
 
-				// Keep substitute for domain import
-				substituteProjects.put(imported.getUuid(), byName);
-			}
-			return loc;
-		});
+        // Common attrs
+        local.setCreatedTime(imported.getCreatedTime());
+        local.setName(imported.getName());
+        local.setColor(imported.getColor());
 
-		// Common attrs
-		local.setCreatedTime(imported.getCreatedTime());
-		local.setName(imported.getName());
-		local.setColor(imported.getColor());
+        local.setImportedTime(LocalDateTime.now());
 
-		local.setImportedTime(LocalDateTime.now());
+        return local;
+    }
 
-		return local;
-	}
+    /**
+     * @return entity for project for current user
+     */
+    Project getCurrentSelectedProjectEntity() {
+        return this.projects.findSelectedProjectForUserLogin(getCurrentUser().getLogin());
+    }
 
-	/**
-	 * @return
-	 */
-	Project getCurrentSelectedProjectEntity() {
-		return this.projects.findSelectedProjectForUserLogin(getCurrentUser().getLogin());
-	}
+    private User reloadCurrentUser() {
+        return this.accountProvider.findExistingUserByLogin(getCurrentUser().getLogin())
+                .orElseThrow(() -> new ApplicationException(ErrorType.OTHER, "User not found"));
+    }
 
-	/**
-	 * <p>
-	 * Internal validation of availability of a selected project with clean failure
-	 * checking
-	 * </p>
-	 */
-	private void assertProjectNameIsAvailable(String name) {
+    /**
+     * <p>
+     * Internal validation of availability of a selected project with clean failure
+     * checking
+     * </p>
+     */
+    private void assertProjectNameIsAvailable(String name) {
 
-		if (this.projects.findByName(name) != null) {
-			throw new ApplicationException(PROJECT_NAME_EXIST, "A project with name " + name + " already exist", name);
-		}
-	}
+        if (this.projects.findByName(name) != null) {
+            throw new ApplicationException(PROJECT_NAME_EXIST, "A project with name " + name + " already exist", name);
+        }
+    }
 
-	/**
-	 * <p>
-	 * Internal validation of availability of a selected project with clean failure
-	 * checking
-	 * </p>
-	 */
-	void assertCurrentUserHasSelectedProject() {
+    /**
+     * <p>
+     * Internal validation of availability of a selected project with clean failure
+     * checking
+     * </p>
+     */
+    void assertCurrentUserHasSelectedProject() {
 
-		String login = getCurrentUser().getLogin();
-		if (this.projects.findSelectedProjectForUserLogin(login) == null) {
-			throw new ApplicationException(PROJECT_MANDATORY, "No selected active project for current user " + login);
-		}
+        String login = getCurrentUser().getLogin();
+        if (this.projects.findSelectedProjectForUserLogin(login) == null) {
+            throw new ApplicationException(PROJECT_MANDATORY, "No selected active project for current user " + login);
+        }
 
-	}
+    }
 }

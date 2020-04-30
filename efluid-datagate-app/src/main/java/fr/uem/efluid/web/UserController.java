@@ -138,6 +138,8 @@ public class UserController extends CommonController {
 		// Current user details
 		model.addAttribute("users", this.secu.getAllUserDetails());
 
+		model.addAttribute("canCreate", !this.secu.canPreloadUserOnly());
+
 		return "pages/users";
 	}
 }

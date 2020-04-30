@@ -63,7 +63,8 @@ spring:
         username: sa
         password:
         driver-class-name: org.h2.Driver
-        max-pool-size: 100
+        hikari:
+            maximum-pool-size: 5
 
     flyway:
         enabled: false
@@ -73,7 +74,12 @@ spring:
         hibernate:
             ddl-auto: create
 
-## WEB SERVER CONFIG
+    ldap:
+        base: ${spring.ldap.embedded.base-dn}
+        embedded:
+            base-dn: dc=company,dc=com
+
 server:
-    contextPath:
     port: 8099
+    servlet:
+        context-path:

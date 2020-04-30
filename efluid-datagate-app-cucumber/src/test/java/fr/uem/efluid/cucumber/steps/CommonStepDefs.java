@@ -7,6 +7,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -49,6 +50,11 @@ public class CommonStepDefs extends CucumberStepDefs {
         // For this, we simply keep current dict, and drop all indexes + Test tables datas
         backlogDatabase().dropBacklog();
         managedDatabase().dropManaged();
+    }
+
+    @Given("^ldap auth is enabled with search at \"(.*)\", with login attr \"(.*)\" and email attr \"(.*)\" and this content :$")
+    public void ldap_is_specified(String searchBase, String loginAttribute, String mailAttribute, DocString config) {
+        enableLdap(config.getContent(), searchBase, loginAttribute, mailAttribute);
     }
 
     @When("^(.+) access to (.+)$")
@@ -191,4 +197,10 @@ public class CommonStepDefs extends CucumberStepDefs {
             assertErrorMessageContent(result);
         }
     }
+
+    @Then("^an auth error is displayed$")
+    public void login_auth_error() {
+        assertModelHasSpecifiedProperty("error");
+    }
+
 }

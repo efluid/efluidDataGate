@@ -2,8 +2,12 @@ package fr.uem.efluid.cucumber.steps;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Ignore;
+import org.springframework.util.StringUtils;
+
+import java.util.Objects;
 
 /**
  * @author elecomte
@@ -30,7 +34,7 @@ public class WizzardStepDefs extends CucumberStepDefs {
         currentStep = 1;
     }
 
-    @When("^the login \"(.*)\", the email \"(.*)\" and the password \"(.*)\" are specified$")
+    @When("^the login \"(\\w*)\", the email \"(.*)\" and the password \"(\\w*)\" are specified$")
     public void the_login_the_email_and_the_password_are_specified(
             String login,
             String email,
@@ -41,6 +45,22 @@ public class WizzardStepDefs extends CucumberStepDefs {
                 p("login", login),
                 p("email", email),
                 p("password", password));
+    }
+
+    @When("^the login \"(\\w*)\" and the password \"(\\w*)\" are specified$")
+    public void the_login_and_the_password_are_specified(
+            String login,
+            String password)
+            throws Throwable {
+
+        post("/wizard/" + currentStep,
+                p("login", login),
+                p("password", password));
+    }
+
+    @Then("^the user creation page is (.*)an ldap authentication request$")
+    public void user_create_is_login(String mode) {
+        assertModelIsSpecifiedProperty("externalAuth", Boolean.class, v -> v == StringUtils.isEmpty(mode));
     }
 
 }
