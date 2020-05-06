@@ -22,7 +22,7 @@ public enum CommitState {
      * in "mergeSource". The source is not saved locally, but seen as "applied" during a
      * merge
      */
-    MERGED(7),
+    MERGED(8),
 
     /**
      * Commit was fully created locally

@@ -77,9 +77,7 @@ datagate-efluid:
         class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
         show-sql: true
 
-    merge:
-        use-new-process: true
-        rule-file: classpath:merge-resolution-rules.json
+    merge.rule-file: classpath:merge-resolution-rules.json
 
 ## TECH FEATURES CUSTOM
 spring:

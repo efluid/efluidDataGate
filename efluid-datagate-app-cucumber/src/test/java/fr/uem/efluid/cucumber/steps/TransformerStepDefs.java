@@ -113,6 +113,7 @@ public class TransformerStepDefs extends CucumberStepDefs {
         // Drop current (for other saves)
         currentEdit = null;
     }
+
     @When("^the user customize the transformer \"(.*)\" with this configuration :$")
     public void customize_export_transformer(String name, DocString config) throws Exception {
         CommitExportEditData exportEditData = getCurrentSpecifiedProperty("exportEdit", CommitExportEditData.class);
@@ -129,6 +130,11 @@ public class TransformerStepDefs extends CucumberStepDefs {
         }
 
         exportEditData.getSpecificTransformerConfigurations().put(truid, config.getContent());
+    }
+
+    @When("^the user keep the default transformer configuration$")
+    public void default_export_transformer()  {
+        // Nothing ...
     }
 
     @Then("^the (.*) configured transformers from project \"(.*)\" are displayed$")

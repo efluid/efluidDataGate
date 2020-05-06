@@ -1,12 +1,12 @@
 // Utils
 
-String.prototype.endsWith = function(suffix) {
+String.prototype.endsWith = function (suffix) {
     return this.indexOf(suffix, this.length - suffix.length) !== -1;
 };
 
 const hideDisplays = () => {
-	$("#successDisplay").hide();
-	$("#errorDisplay").hide();
+    $("#successDisplay").hide();
+    $("#errorDisplay").hide();
 };
 
 const showSuccessHtml = (html) => {
@@ -14,7 +14,12 @@ const showSuccessHtml = (html) => {
 };
 
 const showSuccess = (message) => {
-    $("#successDisplay").text(message).fadeIn();
+    $("#successDisplay").text(message);
+    $("#successDisplay").append('<button id="closesuccessDisplay" type="button" class="close">\n' +
+        '    <span aria-hidden="true">&times;</span>\n' +
+        '  </button>')
+    $("#successDisplay").fadeIn()
+    $("#closesuccessDisplay").click(hideDisplays);
 };
 
 const showError = (message) => {
@@ -27,7 +32,7 @@ const replaceLoc = (location) => {
 
 const setInvalid = (inputSelector, message) => {
     showError(message);
-    $(inputSelector).addClass("is-invalid").focusin(function(){
+    $(inputSelector).addClass("is-invalid").focusin(function () {
         $("#errorDisplay").hide();
         $(this).removeClass("is-invalid");
     });
@@ -40,17 +45,18 @@ const checkProgress = (service, redirectPath) => {
         console.info("Check with data " + data);
         // Requires on progress bar in current dom
         var progressBar = $("#progressBar");
-        if(data.status === 'DIFF_RUNNING' || data.status === 'NOT_LAUNCHED'){
-			progressBar.css('width', data.percentDone + '%');
-			progressBar.text(data.percentDone + '%');
-			setTimeout(checkProgress, 300, service, redirectPath);
-0		} else {
-		    // Completed : display completion state
-			progressBar.css('width', '100%');
-			progressBar.text('100% !!!');
-			setTimeout(replaceLoc, 500, redirectPath);
-		}
-	});
+        if (data.status === 'DIFF_RUNNING' || data.status === 'NOT_LAUNCHED') {
+            progressBar.css('width', data.percentDone + '%');
+            progressBar.text(data.percentDone + '%');
+            setTimeout(checkProgress, 300, service, redirectPath);
+            0
+        } else {
+            // Completed : display completion state
+            progressBar.css('width', '100%');
+            progressBar.text('100% !!!');
+            setTimeout(replaceLoc, 500, redirectPath);
+        }
+    });
 };
 
 // Auto download with auto hide of downloading message
@@ -88,33 +94,34 @@ const autoDownloadWithProgress = (uid, name, contentId) => {
 
 // Repeated check on download state
 const checkDownloadProgress = (uid, contentId) => {
-	var checkUri = '/ui/push/state/' + uid;
+    var checkUri = '/ui/push/state/' + uid;
     $.get(checkUri, (data, status) => {
         console.info("Check download with data " + data);
         console.info(data);
         // Requires on progress bar in current dom
-        if(data){
+        if (data) {
             // Completed
             $("#downloadingMessage").hide();
             $("#" + contentId).show();
-0		} else {
-			setTimeout(checkDownloadProgress, 1000, uid, contentId);
-		}
-	});
+            0
+        } else {
+            setTimeout(checkDownloadProgress, 1000, uid, contentId);
+        }
+    });
 }
 
 // Update one gitmoji
 const updateGitmoji = (e, gitmojis) => {
-	var code = $(e).attr("code");
-	var gitmoji = gitmojis.find(g => g.code === code);
-	if(gitmoji){
-		$(e).html(gitmoji.emoji);
-	}
+    var code = $(e).attr("code");
+    var gitmoji = gitmojis.find(g => g.code === code);
+    if (gitmoji) {
+        $(e).html(gitmoji.emoji);
+    }
 };
 
 // Common support for gitmojis in a page
 const supportGitmojis = () => {
-    $.getJSON("/gitmoji/gitmojis.json", function(json) {
+    $.getJSON("/gitmoji/gitmojis.json", function (json) {
         $(".gitmoji").each((index, e) => updateGitmoji(e, json.gitmojis));
     });
 }
@@ -125,9 +132,9 @@ const getReferencedUuidInId = (e) => {
     var itemId = e.target.id;
     console.info("processing " + itemId);
 
-	var idParts = itemId.split("_");
-	if(idParts.length == 1){
-	    return itemId;
-	}
-	return idParts[idParts.length-1];
+    var idParts = itemId.split("_");
+    if (idParts.length == 1) {
+        return itemId;
+    }
+    return idParts[idParts.length - 1];
 }

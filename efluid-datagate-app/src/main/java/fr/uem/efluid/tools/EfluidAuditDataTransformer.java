@@ -7,6 +7,7 @@ import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.utils.FormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.*;
@@ -137,6 +139,32 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
             if (this.appliedKeyPatterns == null || this.appliedKeyPatterns.size() == 0) {
                 errors.add("At least one key value pattern must be specified. Use \".*\" as default to match all");
             }
+            if ((this.dateUpdates == null || this.dateUpdates.size() == 0) && (this.actorUpdates == null || this.actorUpdates.size() == 0)) {
+                errors.add("At least one update on date or actor must be specified.");
+            }
+            if (this.dateUpdates != null) {
+                if (this.dateUpdates.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                    errors.add("A date update column name cannot be empty. Use \".*\" as default to match all");
+                }
+                if (this.dateUpdates.values().stream().anyMatch(StringUtils::isEmpty)) {
+                    errors.add("A date update value cannot be empty. Use \"" + CURRENT_DATE_EXPR + "\" for current date or a fixed date using format \"" + FormatUtils.DATE_FORMAT + "\"");
+                } else if (this.dateUpdates.values().stream().anyMatch(v -> !CURRENT_DATE_EXPR.equals(v) && !FormatUtils.canParseLd(v))) {
+                    errors.add("A date update value must be \"current_date\" or a fixed date value using format \"" + FormatUtils.DATE_FORMAT + "\"");
+                }
+            }
+            if (this.appliedValueFilterPatterns != null) {
+                if (this.appliedValueFilterPatterns.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                    errors.add("Value filter column name cannot be empty. Use \".*\" as default to match all, or remove all filter patterns");
+                }
+            }
+            if (this.actorUpdates != null) {
+                if (this.actorUpdates.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                    errors.add("An actor update column name cannot be empty. Use \".*\" as default to match all");
+                }
+                if (this.actorUpdates.values().stream().anyMatch(StringUtils::isEmpty)) {
+                    errors.add("An actor update value cannot be empty. Specify a valid actor name value");
+                }
+            }
         }
 
         boolean isEntryMatches(PreparedIndexEntry entry) {
@@ -155,10 +183,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
 
             // Preload patterns for filter values (get columns and compile)
             if (this.appliedValueColumnMatchers == null) {
-                this.appliedValueColumnMatchers = this.appliedValueFilterPatterns.keySet().stream()
-                        .map(v -> "^.*" + v + ".*$")
-                        .map(Pattern::compile)
-                        .collect(toList());
+                this.appliedValueColumnMatchers = generatePayloadMatchersFromColumnPatterns(this.appliedValueFilterPatterns.keySet().stream());
             }
 
             // Continue only if value pattern may match (check that column at least exists)
@@ -169,15 +194,13 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
 
             // Preload patterns for date and actor updates (get columns and compile)
             if (this.appliedUpdateColumnMatchers == null) {
-                this.appliedUpdateColumnMatchers = Stream.concat(
-                        this.dateUpdates.keySet().stream(),
-                        this.actorUpdates.keySet().stream())
-                        .map(v -> "^.*" + v + ".*$")
-                        .map(Pattern::compile)
-                        .collect(toList());
+                this.appliedUpdateColumnMatchers = generatePayloadMatchersFromColumnPatterns(
+                        Stream.concat(this.dateUpdates.keySet().stream(), this.actorUpdates.keySet().stream()));
             }
 
-            return this.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
+            boolean result = this.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
+
+            return result;
         }
 
         boolean isValueFilterMatches(List<Value> values) {
@@ -207,7 +230,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
      */
     public static class Runner extends Transformer.TransformerRunner<EfluidAuditDataTransformer.Config> {
 
-        private final Map<String, String> mappedReplacedValues;
+        private final Map<Pattern, String> mappedReplacedValues;
 
         private Runner(Config config, DictionaryEntry dict) {
             super(config, dict);
@@ -225,9 +248,12 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 // Process on indexed list for replacement support
                 for (int i = 0; i < values.size(); i++) {
                     Value val = values.get(i);
-                    if (this.mappedReplacedValues.containsKey(val.getName())) {
-                        values.set(i, transformedValue(val, this.mappedReplacedValues.get(val.getName())));
-                    }
+                    // Apply only 1 matching rule
+                    final int finalI = i;
+                    this.mappedReplacedValues.entrySet().stream()
+                            .filter(e -> e.getKey().matcher(val.getName()).matches())
+                            .findFirst()
+                            .ifPresent(e -> values.set(finalI, transformedValue(val, e.getValue())));
                 }
             }
         }
@@ -238,17 +264,18 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
          * @param config
          * @return
          */
-        private Map<String, String> prepareMappedReplacedValues(Config config) {
+        private Map<Pattern, String> prepareMappedReplacedValues(Config config) {
 
             String currentTime = FormatUtils.format(LocalDateTime.now());
 
-            Map<String, String> replacements = new HashMap<>(config.getActorUpdates());
+            Map<Pattern, String> replacements = new HashMap<>(config.getActorUpdates().entrySet().stream().collect(
+                    Collectors.toMap(e -> Pattern.compile(e.getKey()), Map.Entry::getValue)));
 
             config.getDateUpdates().forEach((k, v) -> {
                 if (CURRENT_DATE_EXPR.equals(v)) {
-                    replacements.put(k, currentTime);
+                    replacements.put(Pattern.compile(k), currentTime);
                 } else {
-                    replacements.put(k, FormatUtils.format(FormatUtils.parseLd(v).atStartOfDay()));
+                    replacements.put(Pattern.compile(k), FormatUtils.format(FormatUtils.parseLd(v).atStartOfDay()));
                 }
             });
 

@@ -27,7 +27,6 @@ public class MergeResolutionConfig {
     private MergeProperties properties;
 
     @Bean
-    @ConditionalOnProperty(value = "datagate-efluid.merge.use-new-process", havingValue = "true")
     public MergeResolutionProcessor mergeResolutionProcessor() throws IOException {
 
         URL json = ResourceUtils.getURL(this.properties.getRuleFile());

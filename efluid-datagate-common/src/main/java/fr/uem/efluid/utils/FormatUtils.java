@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -169,6 +170,26 @@ public final class FormatUtils {
         return LocalDate.parse(date, LD_FORMATTER);
     }
 
+    /**
+     * Check if given string can be parsed as a LocalDate
+     *
+     * @param date string value
+     * @return true if it's a valid LocalDate regarding Datagate format
+     */
+    public static boolean canParseLd(String date) {
+
+        if (date == null) {
+            return false;
+        }
+
+        try {
+            LocalDate.parse(date, LD_FORMATTER);
+        } catch (DateTimeParseException e) {
+            return false;
+        }
+
+        return true;
+    }
 
     /**
      * <p>

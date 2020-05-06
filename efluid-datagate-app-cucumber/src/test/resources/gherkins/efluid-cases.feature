@@ -26,7 +26,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u  | testa update 1 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content has these resolution details for table "TTEST1" on key "$testa_i2" :
       | Type       | Action | Payload               |
       | their      | ADD    | COL1:'testa insert 2' |
@@ -68,7 +68,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u  | testa update 1 | 123456789 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table            | Key       | Action | Payload                                                              |
       | EFLUIDTESTNUMBER | $testa_d  | REMOVE |                                                                      |
@@ -100,7 +100,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testj_u  | testj update 1 | testj varchar2 | 123456789 | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob update |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table              | Key       | Action | Payload                                                               |
       | TTESTMULTIDATATYPE | $testj_d  | REMOVE |                                                                       |
@@ -145,7 +145,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u3 | testa update 3 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload                                               |
       | TTEST1 | $testa_i4 | ADD    | COL1:'testk : insert lot 2 + insert lot 3 ---> lot 2' |
@@ -189,7 +189,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u3 | testa update 3 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload                                               |
       | TTEST1 | $testa_i4 | ADD    | COL1:'testk : insert lot 2 + insert lot 3 ---> lot 3' |
@@ -233,7 +233,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u3 | testa update 3 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table | Key | Action | Payload |
 
@@ -276,7 +276,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u3 | testa update 3 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload                                                                 |
       | TTEST1 | $testa_u3 | UPDATE | COL1:'testa update 3'=>'testn : update lot 2 + update lot 3 ---> lot 3' |
@@ -319,7 +319,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u3 | testa update 3 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload |
       | TTEST1 | $testa_u3 | REMOVE |         |
@@ -362,7 +362,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u3 | testa update 3 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload                                                                 |
       | TTEST1 | $testa_d3 | UPDATE | COL1:'testa delete 3'=>'testp : delete lot 2 + insert lot 3 ---> lot 3' |
@@ -517,7 +517,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testa_u3 | testa update 3 |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload                                               |
       | TTEST1 | $testa_i4 | ADD    | COL1:'testp : delete lot 2 + insert lot 3 ---> lot 3' |
@@ -728,3 +728,92 @@ Feature: A complete set of test case are specified for Efluid needs
       | T_NULL_LINK_DEMO_DEST | DEST2 | ADD    | BIZ_KEY:'DEST2_BIZ', CODE:'DEST_CODE_2'    |
       | T_NULL_LINK_DEMO_DEST | DEST3 | ADD    | BIZ_KEY:'DEST3_BIZ', CODE:'DEST_CODE_3'    |
       | T_NULL_LINK_DEMO_DEST | DEST4 | ADD    | BIZ_KEY:'DEST4_BIZ', CODE:'DEST_CODE_4'    |
+
+  @TestEfluidAuditTransformerRules
+  Scenario: The audit transformer apply generated audit data on specified values - simple
+    Given the test is an Efluid standard scenario
+    And the configured transformers for project "Default" :
+      | name  | type         | priority | configuration                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":"bob"}} |
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
+      | id | value  | etatObjet    | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | 1  | INIT_1 | TODO_DELETED | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src     | admin_src          | admin_src      |
+      | 2  | INIT_2 | TODO_UPDATE  | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 1" and this customization for transformer "Audit" :
+      """json
+      {
+          "tablePattern":"T_EFLUID_TEST_AUDIT",
+          "appliedKeyPatterns":[".*"],
+          "appliedValueFilterPatterns":{"ETAT_OBJET":".*"},
+          "dateUpdates":{"DATE_.*":"2020-05-11"},
+          "actorUpdates":{
+            "ACTEUR_.*":"evt 154654"
+           }
+      }
+      """
+    And the user accesses to the destination environment with the same dictionary
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment :
+      | id | value  | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | 2  | INIT_2 | OK        | 2020-05-11      | 2020-05-11       | 2020-05-11   | evt 154654        | evt 154654         | evt 154654     |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table               | Key | Action | Need Resolve | Payload                                                                                                                                                                                                                                                    |
+      | T_EFLUID_TEST_AUDIT | 1   | ADD    | true         | VALUE:'INIT_1', ETAT_OBJET:'TODO_DELETED', DATE_SUPPRESSION:2020-05-11 00:00:00, DATE_MODIFICATION:2020-05-11 00:00:00, DATE_CREATION:2020-05-11 00:00:00, ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654' |
+      | T_EFLUID_TEST_AUDIT | 2   | UPDATE | true         | ETAT_OBJET:'OK'=>'TODO_UPDATE'                                                                                                                                                                                                                             |
+
+  @TestEfluidAuditTransformerRules
+  Scenario: The audit transformer apply generated audit data on specified values - complexe
+    Given the test is an Efluid standard scenario
+    And the configured transformers for project "Default" :
+      | name  | type         | priority | configuration                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":"bob"}} |
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
+      | id       | value | etatObjet       | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | CHG_1    | 11    | TODO_DELETED    | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src     | admin_src          | admin_src      |
+      | CHG_2    | 22    | NOT_TODO_UPDATE | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+      | CHG_3    | 33    | NOT_TODO_UPDATE | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+      | CHG_4    | 44    | TODO_UPDATE     | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+      | NO_CHG_1 | 55    | TODO_UPDATE     | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+      | NO_CHG_2 | 66    | TODO_UPDATE     | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+      | CHG_5    | 77    | TODO_ADD        | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+      | NO_CHG_3 | 88    | TODO_ADD        | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 1" and this customization for transformer "Audit" :
+      """json
+      {
+          "tablePattern":"T_EFLUID_TEST_AUDIT",
+          "appliedKeyPatterns":["CHG.*"],
+          "appliedValueFilterPatterns":{"ETAT_OBJET":"TODO_.*"},
+          "dateUpdates":{"DATE_.*TION":"2020-05-11"},
+          "actorUpdates":{
+            "ACTEUR_SUPPRESSION":"evt SUPPR",
+            "ACTEUR_MODIFICATION":"evt MOD",
+            "ACTEUR_CREATION":"evt CRE"
+           }
+      }
+      """
+    And the user accesses to the destination environment with the same dictionary
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment :
+      | id       | value | etatObjet       | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | CHG_1    | 11    | TODO_DELETED    | 2018-02-17      | 2020-05-11       | 2020-05-11   | evt SUPPR         | evt MOD            | evt CRE        |
+      | CHG_2    | 22    | NOT_TODO_UPDATE | 2020-05-11      | 2020-05-11       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+      | CHG_3    | 33    | NOT_TODO_UPDATE | 2020-05-11      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+      | CHG_4    | 44    | TODO_UPDATE     | 2020-05-11      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | evt CRE        |
+      | NO_CHG_1 | 55    | TODO_UPDATE     | 2020-05-11      | 2018-02-16       | 2018-02-15   | admin_del_src1    | admin_src1         | admin_src1     |
+      | NO_CHG_2 | 66    | TODO_UPDATE     | 2020-05-11      | 2018-02-16       | 2018-02-15   | admin_del_src2    | admin_src2         | admin_src2     |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table               | Key      | Action | Need Resolve | Payload                                                                                                                                                                                                                                                                      |
+      | T_EFLUID_TEST_AUDIT | CHG_1    | ADD    | false        | VALUE:'11', ETAT_OBJET:'TODO_DELETED', DATE_SUPPRESSION:2018-02-17 00:00:00, DATE_MODIFICATION:2020-05-11 00:00:00, DATE_CREATION:2020-05-11 00:00:00, ACTEUR_SUPPRESSION:'evt SUPPR', ACTEUR_MODIFICATION:'evt MOD', ACTEUR_CREATION:'evt CRE'                              |
+      | T_EFLUID_TEST_AUDIT | CHG_2    | UPDATE | true         | DATE_SUPPRESSION:2020-05-11 00:00:00=>2018-02-17 00:00:00, DATE_MODIFICATION:2020-05-11 00:00:00=>2018-02-16 00:00:00                                                                                                                                                        |
+      | T_EFLUID_TEST_AUDIT | CHG_3    | UPDATE | true         | DATE_SUPPRESSION:2020-05-11 00:00:00=>2018-02-17 00:00:00                                                                                                                                                                                                                    |
+      | T_EFLUID_TEST_AUDIT | CHG_4    | UPDATE | true         | DATE_SUPPRESSION:2020-05-11 00:00:00=>2018-02-17 00:00:00, DATE_MODIFICATION:2018-02-16 00:00:00=>2020-05-11 00:00:00, DATE_CREATION:2018-02-15 00:00:00=>2020-05-11 00:00:00, ACTEUR_SUPPRESSION:'admin_del_src2'=>'evt SUPPR', ACTEUR_MODIFICATION:'admin_src2'=>'evt MOD' |
+      | T_EFLUID_TEST_AUDIT | NO_CHG_1 | UPDATE | true         | DATE_SUPPRESSION:2020-05-11 00:00:00=>2018-02-17 00:00:00, ACTEUR_SUPPRESSION:'admin_del_src1'=>'admin_del_src2', ACTEUR_MODIFICATION:'admin_src1'=>'admin_src2', ACTEUR_CREATION:'admin_src1'=>'admin_src2'                                                                 |
+      | T_EFLUID_TEST_AUDIT | NO_CHG_2 | UPDATE | true         | DATE_SUPPRESSION:2020-05-11 00:00:00=>2018-02-17 00:00:00                                                                                                                                                                                                                    |
+      | T_EFLUID_TEST_AUDIT | CHG_5    | ADD    | true         | VALUE:'77', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:2018-02-17 00:00:00, DATE_MODIFICATION:2020-05-11 00:00:00, DATE_CREATION:2020-05-11 00:00:00, ACTEUR_SUPPRESSION:'evt SUPPR', ACTEUR_MODIFICATION:'evt MOD', ACTEUR_CREATION:'evt CRE'                                  |
+      | T_EFLUID_TEST_AUDIT | NO_CHG_3 | ADD    | true         | VALUE:'88', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:2018-02-17 00:00:00, DATE_MODIFICATION:2018-02-16 00:00:00, DATE_CREATION:2018-02-15 00:00:00, ACTEUR_SUPPRESSION:'admin_del_src2', ACTEUR_MODIFICATION:'admin_src2', ACTEUR_CREATION:'admin_src2'                       |

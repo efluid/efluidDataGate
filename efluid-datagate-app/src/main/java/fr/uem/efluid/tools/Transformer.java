@@ -9,7 +9,6 @@ import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +16,9 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author elecomte
@@ -27,11 +29,11 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Transformer.class);
 
-    private static final Logger LOGGER_TRANSFORMATIONS = LoggerFactory.getLogger("transformer.results");
+    static final Logger LOGGER_TRANSFORMATIONS = LoggerFactory.getLogger("transformer.results");
 
     private final ManagedValueConverter converter;
 
-    protected Transformer(ManagedValueConverter converter){
+    protected Transformer(ManagedValueConverter converter) {
         this.converter = converter;
     }
 
@@ -82,7 +84,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      * @param config
      * @return
      */
-    public boolean isApplyOnDictionaryEntry(DictionaryEntry dict, C config) {
+    public boolean isApplyOnDictionaryEntry(DictionaryEntry dict, Transformer.TransformerConfig config) {
         return config.isTableNameMatches(dict);
     }
 
@@ -104,42 +106,31 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      * @return
      */
     @SuppressWarnings("unchecked")
-    public List<? extends PreparedIndexEntry> transform(
+    public void transform(
             DictionaryEntry dict,
             TransformerConfig rawConfig,
             List<? extends PreparedIndexEntry> mergeDiff) {
 
-        C config = (C) rawConfig;
+        R runner = runner((C) rawConfig, dict);
+        mergeDiff.stream()
+                // Process only when runner can apply
+                .filter(runner)
+                .forEach(l -> {
 
-        if (isApplyOnDictionaryEntry(dict, config)) {
+                    // Expand payload (modifiable list)
+                    List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
 
-            LOGGER_TRANSFORMATIONS.info("Transformation is possible for transformer {} on DictionaryEntry table \"{}\"", this.getName(), dict.getTableName());
+                    // Apply transform
+                    runner.accept(extracted);
 
-            R runner = runner(config, dict);
-            mergeDiff.stream()
-                    // Process only when runner can apply
-                    .filter(runner)
-                    .forEach(l -> {
+                    if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
+                        LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on DictionaryEntry table \"{}\" :\n{}",
+                                this.getName(), dict.getTableName(), buildTransformationResultForDebug(extracted));
+                    }
 
-                        // Expand payload (modifiable list)
-                        List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
-
-                        // Apply transform
-                        runner.accept(extracted);
-
-                        if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
-                            LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on DictionaryEntry table \"{}\" :\n{}",
-                                    this.getName(), dict.getTableName(), buildTransformationResultForDebug(extracted));
-                        }
-
-                        // Rebuild payload
-                        l.setPayload(this.converter.convertToExtractedValue(extracted));
-                    });
-        } else if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
-            LOGGER_TRANSFORMATIONS.info("No transformation process for transformer {} on DictionaryEntry table \"{}\"", this.getName(), dict.getTableName());
-        }
-
-        return mergeDiff;
+                    // Rebuild payload
+                    l.setPayload(this.converter.convertToExtractedValue(extracted));
+                });
     }
 
     private static String buildTransformationResultForDebug(List<Value> content) {
@@ -153,7 +144,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
             return "no changes";
         }
 
-        return results.stream().collect(Collectors.joining("\n", " + ", ""));
+        return results.stream().collect(Collectors.joining("\n + ", " + ", ""));
     }
 
     /**
@@ -199,6 +190,21 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
         public void setTablePattern(String tablePattern) {
             this.tablePattern = tablePattern;
+        }
+
+        /**
+         * Helper to prepare pattern matchers for searching columns into a payload
+         *
+         * @param columnPatterns
+         * @return
+         */
+        protected List<Pattern> generatePayloadMatchersFromColumnPatterns(Stream<String> columnPatterns) {
+            return columnPatterns.map(v -> {
+                if (v.equals(".*")) {
+                    return v;
+                }
+                return "^.*" + v + ".*$";
+            }).map(Pattern::compile).collect(toList());
         }
     }
 

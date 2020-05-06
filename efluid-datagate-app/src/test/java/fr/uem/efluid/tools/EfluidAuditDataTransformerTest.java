@@ -76,7 +76,14 @@ public class EfluidAuditDataTransformerTest {
     @Test
     public void testApplyOnLinesByIndex() {
 
-        List<? extends PreparedIndexEntry> res = this.transformer.transform(
+        List<? extends PreparedIndexEntry> diff = diff(
+                l("ID0", p("COL1", "test1"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID1", p("COL1", "test2"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID2", p("COL1", "test3"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID3", p("COL1", "test4"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test"))
+        );
+
+        this.transformer.transform(
                 table("TOTHER"),
                 config(
                         "    {"
@@ -86,25 +93,27 @@ public class EfluidAuditDataTransformerTest {
                                 + "  \"dateUpdates\":{\"DATE1\":\"2022-12-25\", \"DATE2\":\"2025-12-25\"},"
                                 + "  \"actorUpdates\":{\"ACT1\":\"bob\", \"ACT2\":\"toto\"}"
                                 + "}"
-                ), diff(
-                        l("ID0", p("COL1", "test1"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID1", p("COL1", "test2"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID2", p("COL1", "test3"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID3", p("COL1", "test4"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test"))
-                )
+                ), diff
         );
 
         // Only ID1 is changed
-        check(res, 0).isEqualTo("COL1:'test1', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
-        check(res, 1).isEqualTo("COL1:'test2', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(res, 2).isEqualTo("COL1:'test3', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
-        check(res, 3).isEqualTo("COL1:'test4', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
+        check(diff, 0).isEqualTo("COL1:'test1', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
+        check(diff, 1).isEqualTo("COL1:'test2', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
+        check(diff, 2).isEqualTo("COL1:'test3', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
+        check(diff, 3).isEqualTo("COL1:'test4', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
     }
 
     @Test
     public void testApplyOnLinesByIndexAndFilter() {
 
-        List<? extends PreparedIndexEntry> res = this.transformer.transform(
+        List<? extends PreparedIndexEntry> diff = diff(
+                l("ID0", p("COL1", "test1"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID1", p("COL1", "test2"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID2", p("COL1", "test3"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID3", p("COL1", "test4"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test"))
+        );
+
+        this.transformer.transform(
                 table("TOTHER"),
                 config(
                         "    {"
@@ -114,25 +123,27 @@ public class EfluidAuditDataTransformerTest {
                                 + "  \"dateUpdates\":{\"DATE1\":\"2022-12-25\", \"DATE2\":\"2025-12-25\"},"
                                 + "  \"actorUpdates\":{\"ACT1\":\"bob\", \"ACT2\":\"toto\"}"
                                 + "}"
-                ), diff(
-                        l("ID0", p("COL1", "test1"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID1", p("COL1", "test2"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID2", p("COL1", "test3"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID3", p("COL1", "test4"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test"))
-                )
+                ), diff
         );
 
         // Only ID2 is changed
-        check(res, 0).isEqualTo("COL1:'test1', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
-        check(res, 1).isEqualTo("COL1:'test2', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
-        check(res, 2).isEqualTo("COL1:'test3', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(res, 3).isEqualTo("COL1:'test4', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
+        check(diff, 0).isEqualTo("COL1:'test1', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
+        check(diff, 1).isEqualTo("COL1:'test2', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
+        check(diff, 2).isEqualTo("COL1:'test3', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
+        check(diff, 3).isEqualTo("COL1:'test4', DATE1:'2015-12-25 15:25:46', DATE2:'2015-12-25 15:25:46', ACT1:'test', ACT2:'test', ACT3:'test'");
     }
 
     @Test
     public void testApplyOnLinesByIndexNoFilter() {
 
-        List<? extends PreparedIndexEntry> res = this.transformer.transform(
+        List<? extends PreparedIndexEntry> diff = diff(
+                l("ID0", p("COL1", "test1"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID1", p("COL1", "test2"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID2", p("COL1", "test3"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
+                l("ID3", p("COL1", "test4"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test"))
+        );
+
+        this.transformer.transform(
                 table("TOTHER"),
                 config(
                         "    {"
@@ -142,19 +153,40 @@ public class EfluidAuditDataTransformerTest {
                                 + "  \"dateUpdates\":{\"DATE1\":\"2022-12-25\", \"DATE2\":\"2025-12-25\"},"
                                 + "  \"actorUpdates\":{\"ACT1\":\"bob\", \"ACT2\":\"toto\"}"
                                 + "}"
-                ), diff(
-                        l("ID0", p("COL1", "test1"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID1", p("COL1", "test2"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID2", p("COL1", "test3"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test")),
-                        l("ID3", p("COL1", "test4"), p("DATE1", OLD), p("DATE2", OLD), p("ACT1", "test"), p("ACT2", "test"), p("ACT3", "test"))
-                )
+                ), diff
         );
 
         // All are changed
-        check(res, 0).isEqualTo("COL1:'test1', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(res, 1).isEqualTo("COL1:'test2', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(res, 2).isEqualTo("COL1:'test3', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(res, 3).isEqualTo("COL1:'test4', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
+        check(diff, 0).isEqualTo("COL1:'test1', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
+        check(diff, 1).isEqualTo("COL1:'test2', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
+        check(diff, 2).isEqualTo("COL1:'test3', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
+        check(diff, 3).isEqualTo("COL1:'test4', DATE1:'2022-12-25 00:00:00', DATE2:'2025-12-25 00:00:00', ACT1:'bob', ACT2:'toto', ACT3:'test'");
+    }
+
+    @Test
+    public void testApplyCombined() {
+
+        List<? extends PreparedIndexEntry> diff = diff(
+                l("1", p("VALUE", "INIT_1"), p("ETAT_OBJET", "TODO_DELETED"), p("DATE_SUPPRESSION", OLD), p("DATE_MODIFICATION", OLD), p("DATE_CREATION", OLD), p("ACTEUR_SUPPRESSION", "admin_del_src"), p("ACTEUR_MODIFICATION", "admin_src"), p("ACTEUR_CREATION", "admin_src")),
+                l("2", p("VALUE", "INIT_2"), p("ETAT_OBJET", "TODO_UPDATE"), p("DATE_SUPPRESSION", OLD), p("DATE_MODIFICATION", OLD), p("DATE_CREATION", OLD), p("ACTEUR_SUPPRESSION", "admin_del_src2"), p("ACTEUR_MODIFICATION", "admin_src2"), p("ACTEUR_CREATION", "admin_src2"))
+        );
+
+        this.transformer.transform(
+                table("TOTHER"),
+                config(
+                        "  {" +
+                                "  \"tablePattern\":\"T_EFLUID_TEST_AUDIT\"," +
+                                "  \"appliedKeyPatterns\":[\".*\"]," +
+                                "  \"appliedValueFilterPatterns\":{\"ETAT_OBJET\":\"TODO.*\"}," +
+                                "  \"dateUpdates\":{\"DATE_.*\":\"2020-05-11\"}," +
+                                "  \"actorUpdates\":{\"ACTEUR_.*\":\"evt 154654\"}" +
+                                "}"
+                ), diff
+        );
+
+        // All are changed
+        check(diff, 0).isEqualTo("VALUE:'INIT_1', ETAT_OBJET:'TODO_DELETED', DATE_SUPPRESSION:'2020-05-11 00:00:00', DATE_MODIFICATION:'2020-05-11 00:00:00', DATE_CREATION:'2020-05-11 00:00:00', ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
+        check(diff, 1).isEqualTo("VALUE:'INIT_2', ETAT_OBJET:'TODO_UPDATE', DATE_SUPPRESSION:'2020-05-11 00:00:00', DATE_MODIFICATION:'2020-05-11 00:00:00', DATE_CREATION:'2020-05-11 00:00:00', ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
     }
 
     private AbstractStringAssert<?> check(List<? extends PreparedIndexEntry> transformed, int index) {

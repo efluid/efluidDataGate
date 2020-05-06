@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.util.UUID;
 
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 /**
@@ -82,6 +83,20 @@ public class TransformerController extends CommonController {
     }
 
     /**
+     * @param model spring mvc ctx
+     * @param uuid  selected transformer def id
+     * @return edit template
+     */
+    @RequestMapping(path = "/transformers/delete/{uuid}")
+    public String transformerDelete(Model model, @PathVariable("uuid") UUID uuid) {
+
+        this.transformerService.deleteTransformerDef(uuid);
+
+        return allTransformersPage(model);
+    }
+
+
+    /**
      * @param type   the transformer type for specified config
      * @param config configuration content to validate
      * @return validation result. If null = no error. Details on errors else
@@ -90,6 +105,16 @@ public class TransformerController extends CommonController {
     @ResponseBody
     public String transformerValidateConfig(@PathVariable("type") String type, @RequestBody String config) {
         return this.transformerService.validateConfiguration(type, decode(config));
+    }
+
+    /**
+     * @param type the transformer type for specified config
+     * @return default config as a formated raw json
+     */
+    @RequestMapping(path = "/transformers/reset/{type}", method = GET)
+    @ResponseBody
+    public String transformerResetConfig(@PathVariable("type") String type) {
+        return this.transformerService.getDefaultConfigRawJson(type);
     }
 
     /**

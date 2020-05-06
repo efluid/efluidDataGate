@@ -59,7 +59,7 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
 
             // Preload pattern
             if (this.columnMatchers == null) {
-                this.columnMatchers = this.columnNames.stream().map(Pattern::compile).collect(Collectors.toList());
+                this.columnMatchers = generatePayloadMatchersFromColumnPatterns(this.columnNames.stream());
             }
 
             return this.columnMatchers.stream().anyMatch(c -> c.matcher(preparedIndexEntry.getPayload()).matches());
