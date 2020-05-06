@@ -1,5 +1,6 @@
 package fr.uem.efluid.tools;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -150,6 +152,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
     /**
      * Configuration spec. Specified as json
      */
+    @JsonInclude(NON_NULL)
     public static abstract class TransformerConfig {
 
         private String tablePattern;

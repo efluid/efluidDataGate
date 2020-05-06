@@ -19,6 +19,7 @@ Feature: Some transformers can be set for a project to adapt commits at import r
     When the user access to list of transformers
     Then the available transformer types are :
       | name                  | type                       |
+      | LOWERCASE_TRANSFORMER | LowerCaseTransformer       |
       | UPPERCASE_TRANSFORMER | UpperCaseTransformer       |
       | EFLUID_AUDIT          | EfluidAuditDataTransformer |
 
@@ -100,7 +101,7 @@ Feature: Some transformers can be set for a project to adapt commits at import r
       | name                  | type                  | priority | configuration                                                   |
       | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
       | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}         |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}         |
     And the existing data in managed table "TTAB_ONE" :
       | key | value | preset   | something |
       | 1   | AAA   | Preset 1 | AAA       |
@@ -118,14 +119,14 @@ Feature: Some transformers can be set for a project to adapt commits at import r
       | name                  | type                  | priority | configuration                                                   |
       | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
       | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}         |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}         |
 
   Scenario: The transformer configuration for a project can be customized at export
     Given the configured transformers for project "Default" :
       | name                  | type                  | priority | configuration                                                   |
       | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
       | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}         |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}         |
     And the existing data in managed table "TTAB_ONE" :
       | key | value | preset   | something |
       | 1   | AAA   | Preset 1 | AAA       |
@@ -151,7 +152,7 @@ Feature: Some transformers can be set for a project to adapt commits at import r
       | name                  | type                  | priority | configuration                                                  |
       | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}           |
       | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_D","COL_C" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}        |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}        |
 
   Scenario: The data processed on merge in destination environment is transformed regarding the transformer configuration
     Given the configured transformers for project "Default" :
