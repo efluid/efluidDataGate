@@ -7,6 +7,7 @@ import org.reflections.ReflectionUtils;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.UUID;
@@ -63,9 +64,12 @@ class GenerationUtils {
                 || (field.isAnnotationPresent(ParameterValue.class) || field.isAnnotationPresent(ParameterCompositeValue.class)
                 || field.isAnnotationPresent(ParameterLink.class) || field.isAnnotationPresent(ParameterMapping.class)))
 
+                // Exclude constant
+                && !Modifier.isFinal(field.getModifiers())
                 // Exclude ignored with @ParameterIgnored or specified as key with
                 // @ParameterKey
                 && !(field.isAnnotationPresent(ParameterIgnored.class) || field.isAnnotationPresent(ParameterKey.class));
+
     }
 
     /**
