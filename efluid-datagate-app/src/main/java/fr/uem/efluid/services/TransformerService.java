@@ -268,13 +268,18 @@ public class TransformerService extends AbstractApplicationService {
     List<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
 
         Map<UUID, String> confs = customizations.stream().collect(Collectors.toMap(c -> c.getTransformerDef().getUuid(), ExportTransformer::getConfiguration));
+        Set<UUID> disabled = customizations.stream().filter(ExportTransformer::isDisabled).map(t -> t.getTransformerDef().getUuid()).collect(Collectors.toSet());
 
-        return this.transformerDefs.findByProject(project).stream().peek(t -> {
-            String customization = confs.get(t.getUuid());
-            if (!customization.equals(t.getConfiguration())) {
-                t.setCustomizedConfiguration(customization);
-            }
-        }).collect(Collectors.toList());
+        return this.transformerDefs.findByProject(project).stream()
+                // Remove disabled transformers ...
+                .filter(t -> !disabled.contains(t.getUuid()))
+                // ... And apply updated configs
+                .peek(t -> {
+                    String customization = confs.get(t.getUuid());
+                    if (customization != null && !customization.equals(t.getConfiguration())) {
+                        t.setCustomizedConfiguration(customization);
+                    }
+                }).collect(Collectors.toList());
     }
 
     private TransformerDef importTransformerDef(TransformerDef imported) {

@@ -5,6 +5,7 @@ import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.model.entities.TransformerDef;
+import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.Transformer;
 import fr.uem.efluid.utils.FormatUtils;
@@ -72,11 +73,11 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
         UUID truid = transformerDefDisplay.get().getUuid();
 
-        if (exportEditData.getSpecificTransformerConfigurations() == null) {
-            exportEditData.setSpecificTransformerConfigurations(new HashMap<>());
+        if (exportEditData.getSpecificTransformers() == null) {
+            exportEditData.setSpecificTransformers(new HashMap<>());
         }
 
-        exportEditData.getSpecificTransformerConfigurations().put(truid, config.getContent());
+        exportEditData.getSpecificTransformers().put(truid, new CustomTransformerConfiguration(config.getContent()));
 
         // Export
         when_post_prepared_export();
@@ -127,8 +128,11 @@ public class PushPullStepDefs extends CucumberStepDefs {
                 .with("selectedCommitUuid", data.getSelectedCommitUuid());
 
         // Add customization using a spring-mvc bean "map model"
-        data.getSpecificTransformerConfigurations()
-                .forEach((k, v) -> params.with("specificTransformerConfigurations[" + k + "]", v));
+        data.getSpecificTransformers()
+                .forEach((k, v) -> {
+                    params.with("specificTransformers[" + k + "].configuration", v.getConfiguration());
+                    params.with("specificTransformers[" + k + "].disabled", String.valueOf(v.isDisabled()));
+                });
 
         post("/ui/push/save", params);
     }
@@ -286,7 +290,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
     @Then("^no transformers are listed for customization$")
     public void then_export_no_transformers() {
-        assertThat(getCurrentSpecifiedProperty("exportEdit", CommitExportEditData.class).getSpecificTransformerConfigurations()).hasSize(0);
+        assertThat(getCurrentSpecifiedProperty("exportEdit", CommitExportEditData.class).getSpecificTransformers()).hasSize(0);
     }
 
     @Given("^the export package content has these transformer definitions :$")

@@ -24,6 +24,8 @@ public class ExportTransformer {
     @Lob
     private String configuration;
 
+    private boolean disabled;
+
     @ManyToOne
     private Export export;
 
@@ -64,6 +66,14 @@ public class ExportTransformer {
 
     public void setExport(Export export) {
         this.export = export;
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 
     @Override

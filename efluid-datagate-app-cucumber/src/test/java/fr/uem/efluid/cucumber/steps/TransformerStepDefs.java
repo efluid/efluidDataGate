@@ -4,6 +4,7 @@ import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.TransformerDef;
 import fr.uem.efluid.services.types.CommitExportEditData;
+import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
 import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
 import fr.uem.efluid.services.types.TransformerType;
@@ -125,11 +126,34 @@ public class TransformerStepDefs extends CucumberStepDefs {
 
         UUID truid = transformerDefDisplay.get().getUuid();
 
-        if(exportEditData.getSpecificTransformerConfigurations() ==null){
-            exportEditData.setSpecificTransformerConfigurations(new HashMap<>());
+        if(exportEditData.getSpecificTransformers() ==null){
+            exportEditData.setSpecificTransformers(new HashMap<>());
         }
 
-        exportEditData.getSpecificTransformerConfigurations().put(truid, config.getContent());
+        CustomTransformerConfiguration cfg = new CustomTransformerConfiguration(config.getContent());
+
+        exportEditData.getSpecificTransformers().put(truid, cfg);
+    }
+
+    @When("^the user disable the transformer \"(.*)\"$")
+    public void disable_export_transformer(String name) throws Exception {
+        CommitExportEditData exportEditData = getCurrentSpecifiedProperty("exportEdit", CommitExportEditData.class);
+        List<TransformerDefDisplay> transformers = getCurrentSpecifiedPropertyList("transformerDefs", TransformerDefDisplay.class);
+
+        Optional<TransformerDefDisplay> transformerDefDisplay = transformers.stream().filter(t -> t.getName().equals(name)).findFirst();
+
+        assertThat(transformerDefDisplay).isPresent();
+
+        UUID truid = transformerDefDisplay.get().getUuid();
+
+        if(exportEditData.getSpecificTransformers() ==null){
+            exportEditData.setSpecificTransformers(new HashMap<>());
+        }
+
+        CustomTransformerConfiguration cfg = new CustomTransformerConfiguration("");
+        cfg.setDisabled(true);
+
+        exportEditData.getSpecificTransformers().put(truid, cfg);
     }
 
     @When("^the user keep the default transformer configuration$")
