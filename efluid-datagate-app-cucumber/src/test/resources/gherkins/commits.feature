@@ -131,9 +131,9 @@ Feature: The commit can be saved and are historised
     Then the provided template is list of commits
     And the list of commits is :
       | comment                 | author      |
-      | :construction: Update 2 | any@test.fr |
-      | :construction: Update 1 | any@test.fr |
       | :tada: Test commit init | any@test.fr |
+      | :construction: Update 1 | any@test.fr |
+      | :construction: Update 2 | any@test.fr |
 
   Scenario: The details for an existing commit can be displayed
     Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
