@@ -50,6 +50,7 @@ public class CommonStepDefs extends CucumberStepDefs {
         // For this, we simply keep current dict, and drop all indexes + Test tables datas
         backlogDatabase().dropBacklog();
         managedDatabase().dropManaged();
+        this.prep.cancelCommitPreparation();
     }
 
     @Given("^ldap auth is enabled with search at \"(.*)\", with login attr \"(.*)\" and email attr \"(.*)\" and this content :$")

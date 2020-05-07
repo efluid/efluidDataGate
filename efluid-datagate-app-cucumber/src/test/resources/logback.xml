@@ -10,20 +10,32 @@
 	<!-- Log onto console only, with default format -->
 	<appender name="STDOUT_QUERY" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-			<pattern>%msg%n</pattern>
+			<pattern>[QUERY] %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="STDOUT_TRANSFORMERS" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>[TRANSFORMER][%thread] %msg%n</pattern>
 		</encoder>
 	</appender>
 
 	<!-- Explicit logger for Extractor queries. Log it here into current console on custom format -->
 	<logger name="extractor.queries" additivity="false">
-		<level value="INFO" />
+		<level value="WARN" />
 		<appender-ref ref="STDOUT_QUERY" />
 	</logger>
 
 	<!-- Explicit logger for Identifier queries. Log it here into current console on custom format -->
 	<logger name="identifier.queries" additivity="false">
-		<level value="INFO" />
+		<level value="WARN" />
 		<appender-ref ref="STDOUT_QUERY" />
+	</logger>
+
+	<!-- Explicit logger for Transformer processes. Log it here into current console on custom format -->
+	<logger name="transformer.results" additivity="false">
+		<level value="INFO" />
+		<appender-ref ref="STDOUT_TRANSFORMERS" />
 	</logger>
 
 	<root level="WARN">

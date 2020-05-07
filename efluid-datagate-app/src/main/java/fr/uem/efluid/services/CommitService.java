@@ -132,7 +132,11 @@ public class CommitService extends AbstractApplicationService {
         }
 
         // Init transformer config map
-        preparation.setSpecificTransformerConfigurations(this.transformerService.getAllTransformerDefConfigs());
+        preparation.setSpecificTransformers(
+                this.transformerService.getAllTransformerDefConfigs().entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey,
+                                e -> new CommitExportEditData.CustomTransformerConfiguration(e.getValue())))
+        );
 
         return preparation;
     }
@@ -177,10 +181,11 @@ public class CommitService extends AbstractApplicationService {
         }
 
         // Transformer customization (store ALL)
-        if (editData.getSpecificTransformerConfigurations() != null) {
-            editData.getSpecificTransformerConfigurations().forEach((k, v) -> {
+        if (editData.getSpecificTransformers() != null) {
+            editData.getSpecificTransformers().forEach((k, v) -> {
                 ExportTransformer et = new ExportTransformer();
-                et.setConfiguration(v);
+                et.setConfiguration(v.getConfiguration());
+                et.setDisabled(v.isDisabled());
                 et.setTransformerDef(new TransformerDef(k));
                 et.setExport(export);
                 export.getTransformers().add(et);

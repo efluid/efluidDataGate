@@ -40,7 +40,10 @@
 							<td th:text="${transformerDef.priority}">12</td>
 							<td th:text="${custom.format(transformerDef.updatedTime)}">01/11/2017</td>
 							<td>
-								<button type="button" th:id=" 'openConfiguration_' + ${transformerDef.uuid}" class="open-button btn btn-sm btn-primary float-right">Adapter la configuration</button>
+								<span class="float-right">
+									<button type="button" th:id="'disable_' + ${transformerDef.uuid}" class="disable-button btn btn-sm btn-dark">Désactiver</button>&nbsp;&nbsp&nbsp;&nbsp;
+									<button type="button" th:id="'openConfiguration_' + ${transformerDef.uuid}" class="open-button btn btn-sm btn-primary">Adapter la configuration</button>
+								</span>
 							</td>
 						</tr>
 						<tr class="editable-transformer" th:id=" 'configurationRow_' + ${transformerDef.uuid}">
@@ -53,8 +56,9 @@
 											<button type="button" class="hide-button btn btn-outline-secondary btn-sm" th:id=" 'closeConfiguration_' + ${transformerDef.uuid}">Réduire</button>
 										</div>&nbsp;
 									</span>
-									<textarea style="margin-top:5px" th:id=" 'configuration_' + ${transformerDef.uuid}" th:field="${exportEdit.specificTransformerConfigurations[__${transformerDef.uuid}__]}" class="form-control configuration" rows="7"></textarea>
-									<input type="hidden" th:id=" 'configurationType_' + ${transformerDef.uuid}" th:value="${transformerDef.type}"/>
+									<textarea style="margin-top:5px" th:id="'configuration_' + ${transformerDef.uuid}" th:field="${exportEdit.specificTransformers[__${transformerDef.uuid}__].configuration}" class="form-control configuration" rows="7"></textarea>
+									<input type="hidden" th:id="'configurationType_' + ${transformerDef.uuid}" th:value="${transformerDef.type}"/>
+									<input type="hidden" th:id="'disabled_' + ${transformerDef.uuid}" th:field="${exportEdit.specificTransformers[__${transformerDef.uuid}__].disabled}"/>
 								</div>
 							</td>
 						</tr>
@@ -113,6 +117,39 @@
 			shoBut.removeClass('btn-outline-primary').addClass('btn-primary');
 		}
 
+		const enableConfiguration = (e) => {
+			hideDisplays();
+			var uuid = getReferencedUuidInId(e);
+
+			$('#disabled_' + uuid).val("false");
+
+			var shoBut = $('#openConfiguration_' + uuid);
+			shoBut.prop('disabled', false);
+			shoBut.removeClass('btn-outline-primary').addClass('btn-primary');
+
+			var disableBut = $('#disable_' + uuid);
+			disableBut.removeClass('btn-outline-dark').addClass('btn-dark');
+			disableBut.text('Désactiver')
+			disableBut.click((e) => disableConfiguration(e));
+		}
+
+		const disableConfiguration = (e) => {
+			hideDisplays();
+			hideConfiguration(e);
+			var uuid = getReferencedUuidInId(e);
+
+			$('#disabled_' + uuid).val("true");
+
+			var shoBut = $('#openConfiguration_' + uuid);
+			shoBut.prop('disabled', true);
+			shoBut.removeClass('btn-primary').addClass('btn-outline-primary');
+
+			var disableBut = $('#disable_' + uuid);
+			disableBut.removeClass('btn-dark').addClass('btn-outline-dark');
+			disableBut.text('Activer')
+			disableBut.click((e) => enableConfiguration(e));
+		}
+
         // Init actions
     	$(document).ready(() => {
 			// This page support gitmojis
@@ -123,6 +160,7 @@
 			$("button.check-button").click((e) => checkConfigurationContent(e));
 			$("button.open-button").click((e) => showConfiguration(e));
 			$("button.hide-button").click((e) => hideConfiguration(e));
+			$("button.disable-button").click((e) => disableConfiguration(e));
 		});
 
         /*]]>*/

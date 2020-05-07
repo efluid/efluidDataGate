@@ -54,7 +54,7 @@ Feature: The backlog can be imported and merged with local changes
     And a commit ":construction: Destination commit 1" has been saved with all the new identified diff content in destination environment
     And a merge diff has already been launched with the available source package
     And the merge diff is completed
-    When the user access to diff commit page
+    When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table     | Key | Action | Need Resolve | Payload                                                                                                                         |
       | TTAB_TWO  | VVV | ADD    | false        | VALUE:'333', OTHER:'Other VVV'                                                                                                  |

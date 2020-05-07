@@ -20,7 +20,9 @@ public class TransformerProcessor {
     private final List<TransformerApply> sortedTransformers;
 
     public TransformerProcessor(Collection<TransformerApply> transformerApplys) {
-        this.sortedTransformers = transformerApplys.stream().sorted(Comparator.comparing(TransformerApply::getPriority)).collect(Collectors.toList());
+        this.sortedTransformers = transformerApplys.stream()
+                .sorted(Comparator.comparing(TransformerApply::getPriority).reversed())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -41,13 +43,18 @@ public class TransformerProcessor {
         return transformed;
     }
 
+    /**
+     * Note : uses the Transformer dedicated log
+     */
     public static class TransformerApply {
 
+        private final String name;
         private final Transformer<?, ?> transformer;
         private final Transformer.TransformerConfig config;
         private final int priority;
 
-        public TransformerApply(Transformer<?, ?> transformer, Transformer.TransformerConfig config, int priority) {
+        public TransformerApply(String name, Transformer<?, ?> transformer, Transformer.TransformerConfig config, int priority) {
+            this.name = name;
             this.transformer = transformer;
             this.config = config;
             this.priority = priority;
@@ -56,7 +63,21 @@ public class TransformerProcessor {
         List<? extends PreparedIndexEntry> transform(
                 DictionaryEntry dict,
                 List<? extends PreparedIndexEntry> mergeDiff) {
-            return this.transformer.transform(dict, this.config, mergeDiff);
+
+            // Do transform
+            if (this.transformer.isApplyOnDictionaryEntry(dict, config)) {
+                Transformer.LOGGER_TRANSFORMATIONS.info("Transformation is possible for transformer \"{}\" (type {}) on DictionaryEntry table \"{}\"",
+                        this.name, this.transformer.getName(), dict.getTableName());
+                this.transformer.transform(dict, this.config, mergeDiff);
+            }
+
+            // Do NOT transform (log if enabled)
+            else if (Transformer.LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
+                Transformer.LOGGER_TRANSFORMATIONS.info("No transformation process for transformer \"{}\" (type {}) on DictionaryEntry table \"{}\"",
+                        this.name, this.transformer.getName(), dict.getTableName());
+            }
+
+            return mergeDiff;
         }
 
         public int getPriority() {

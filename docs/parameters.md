@@ -134,7 +134,6 @@ Les paramètres gérés sont :
 * `datagate-efluid.model-identifier.enabled`: true si la gestion d'un model id (identifiant de BDD gérée extrait à partir d'une table de la BDD) est activée
 * `datagate-efluid.model-identifier.class-name`: Classe spécifique de recherche d'un model id 
 * `datagate-efluid.model-identifier.show-sql`: true si les requêtes de recherche de model id sont loggées
-* `datagate-efluid.merge.use-new-process`: true si le nouveau modèle de traitement de merge doit être activé (ce paramètre va disparaitre car le nouveau modèle sera le seul maintenu)
 * `datagate-efluid.merge.rule-file`: emplacement du fichier de définition des règles de merge pour le nouveau modèle de merge
 * `spring.datasource.url`: URL de la BDD de fonctionnement de l'application
 * `spring.datasource.driver-class-name`: Driver JDBC de la BDD de fonctionnement de l'application

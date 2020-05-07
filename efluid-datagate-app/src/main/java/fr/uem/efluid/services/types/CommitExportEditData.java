@@ -7,6 +7,7 @@ import java.util.UUID;
  * Content of an export preparation of commits : selected export content, details on applied transformers, other details ...
  *
  * @author elecomte
+ * @version 2
  * @since v1.2.0
  */
 public class CommitExportEditData {
@@ -19,7 +20,7 @@ public class CommitExportEditData {
 
     private String selectedCommitVersion;
 
-    private Map<UUID, String> specificTransformerConfigurations;
+    private Map<UUID, CustomTransformerConfiguration> specificTransformers;
 
     public CommitExportEditData() {
         super();
@@ -49,10 +50,6 @@ public class CommitExportEditData {
         this.selectedCommitComment = selectedCommitComment;
     }
 
-    public Map<UUID, String> getSpecificTransformerConfigurations() {
-        return specificTransformerConfigurations;
-    }
-
     public String getSelectedCommitVersion() {
         return selectedCommitVersion;
     }
@@ -61,13 +58,47 @@ public class CommitExportEditData {
         this.selectedCommitVersion = selectedCommitVersion;
     }
 
-    public void setSpecificTransformerConfigurations(Map<UUID, String> specificTransformerConfigurations) {
-        this.specificTransformerConfigurations = specificTransformerConfigurations;
+    public Map<UUID, CustomTransformerConfiguration> getSpecificTransformers() {
+        return specificTransformers;
+    }
+
+    public void setSpecificTransformers(Map<UUID, CustomTransformerConfiguration> specificTransformers) {
+        this.specificTransformers = specificTransformers;
     }
 
     public enum CommitSelectType {
 
         RANGE_FROM, SINGLE_ONE;
+    }
+
+    public static class CustomTransformerConfiguration {
+        private String configuration;
+        private boolean disabled;
+
+        public CustomTransformerConfiguration() {
+            super();
+        }
+
+        public CustomTransformerConfiguration(String configuration) {
+            this.configuration = configuration;
+            this.disabled = false;
+        }
+
+        public String getConfiguration() {
+            return configuration;
+        }
+
+        public void setConfiguration(String configuration) {
+            this.configuration = configuration;
+        }
+
+        public boolean isDisabled() {
+            return disabled;
+        }
+
+        public void setDisabled(boolean disabled) {
+            this.disabled = disabled;
+        }
     }
 
 }

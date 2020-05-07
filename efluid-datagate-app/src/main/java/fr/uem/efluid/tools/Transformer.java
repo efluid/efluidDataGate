@@ -1,18 +1,26 @@
 package fr.uem.efluid.tools;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
-import org.springframework.beans.factory.annotation.Autowired;
+import fr.uem.efluid.utils.FormatUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static java.util.stream.Collectors.toList;
 
 /**
  * @author elecomte
@@ -21,8 +29,15 @@ import java.util.stream.Collectors;
  */
 public abstract class Transformer<C extends Transformer.TransformerConfig, R extends Transformer.TransformerRunner<C>> {
 
-    @Autowired
-    private ManagedValueConverter converter;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Transformer.class);
+
+    static final Logger LOGGER_TRANSFORMATIONS = LoggerFactory.getLogger("transformer.results");
+
+    private final ManagedValueConverter converter;
+
+    protected Transformer(ManagedValueConverter converter) {
+        this.converter = converter;
+    }
 
     /**
      * Process a configured spec for
@@ -71,7 +86,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      * @param config
      * @return
      */
-    public boolean isApplyOnDictionaryEntry(DictionaryEntry dict, C config) {
+    public boolean isApplyOnDictionaryEntry(DictionaryEntry dict, Transformer.TransformerConfig config) {
         return config.isTableNameMatches(dict);
     }
 
@@ -93,32 +108,51 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      * @return
      */
     @SuppressWarnings("unchecked")
-    public List<? extends PreparedIndexEntry> transform(
+    public void transform(
             DictionaryEntry dict,
             TransformerConfig rawConfig,
             List<? extends PreparedIndexEntry> mergeDiff) {
 
-        C config = (C) rawConfig;
+        R runner = runner((C) rawConfig, dict);
+        mergeDiff.stream()
+                // Process only when runner can apply
+                .filter(runner)
+                .forEach(l -> {
 
-        if (isApplyOnDictionaryEntry(dict, config)) {
-            R runner = runner(config, dict);
-            mergeDiff.forEach(l -> l.setPayload(
-                    // Rebuild payload ...
-                    this.converter.convertToExtractedValue(
-                            // From expanded payload ...
-                            this.converter.expandInternalValue(l.getPayload()).stream()
-                                    .collect(Collectors.toMap(Value::getName,
-                                            runner, // Transforming each values ...
-                                            (a, b) -> a,
-                                            LinkedHashMap::new)))));
+                    // Expand payload (modifiable list)
+                    List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
+
+                    // Apply transform
+                    runner.accept(extracted);
+
+                    if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
+                        LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on DictionaryEntry table \"{}\" :\n{}",
+                                this.getName(), dict.getTableName(), buildTransformationResultForDebug(extracted));
+                    }
+
+                    // Rebuild payload
+                    l.setPayload(this.converter.convertToExtractedValue(extracted));
+                });
+    }
+
+    private static String buildTransformationResultForDebug(List<Value> content) {
+
+        List<String> results = content.stream()
+                .filter(v -> v instanceof TransformerRunner.TransformedValue)
+                .map(v -> ((TransformerRunner.TransformedValue) v).getTransformation())
+                .collect(Collectors.toList());
+
+        if (results.size() == 0) {
+            return "no changes";
         }
 
-        return mergeDiff;
+        return results.stream().collect(Collectors.joining("\n + ", " + ", ""));
     }
 
     /**
      * Configuration spec. Specified as json
      */
+    @JsonInclude(NON_NULL)
     public static abstract class TransformerConfig {
 
         private String tablePattern;
@@ -160,13 +194,32 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
         public void setTablePattern(String tablePattern) {
             this.tablePattern = tablePattern;
         }
+
+        /**
+         * Helper to prepare pattern matchers for searching columns into a payload
+         *
+         * @param columnPatterns
+         * @return
+         */
+        protected List<Pattern> generatePayloadMatchersFromColumnPatterns(Stream<String> columnPatterns) {
+            return columnPatterns.map(v -> {
+                if (v.equals(".*")) {
+                    return v;
+                }
+                return "^.*" + v + ".*$";
+            }).map(Pattern::compile).collect(toList());
+        }
     }
 
     /**
+     * <p>
      * Model of runner for transformation. A new runner is instantiated for each DictionaryEntry.
      * Not threadsafe : can keep status on processed values, and keep current dict entry to process.
+     * </p>
+     * <p>Runner filter "lines" to process and apply to values</p>
      */
-    public static abstract class TransformerRunner<C extends Transformer.TransformerConfig> implements Function<Value, String> {
+    public static abstract class TransformerRunner<C extends Transformer.TransformerConfig>
+            implements Predicate<PreparedIndexEntry>, Consumer<List<Value>> {
 
         protected final C config;
 
@@ -175,6 +228,45 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
         public TransformerRunner(C config, DictionaryEntry dict) {
             this.config = config;
             this.dict = dict;
+        }
+
+        protected Value transformedValue(Value existing, String newValue) {
+            return new TransformedValue(existing, FormatUtils.toBytes(newValue));
+        }
+
+        public static final class TransformedValue implements Value {
+
+            private static final String TRANSFORMATION_DISPLAY = " -> ";
+
+            private Value target;
+
+            private final byte[] modifiedContent;
+
+            private TransformedValue(Value target, byte[] modifiedContent) {
+                this.target = target;
+                this.modifiedContent = modifiedContent;
+
+                LOGGER.debug("Processed transformation on value from {} to {}", target.getValue(), modifiedContent);
+            }
+
+            @Override
+            public String getName() {
+                return this.target.getName();
+            }
+
+            @Override
+            public byte[] getValue() {
+                return this.modifiedContent;
+            }
+
+            @Override
+            public ColumnType getType() {
+                return this.target.getType();
+            }
+
+            public String getTransformation() {
+                return getName() + " : " + this.target.getValueAsString() + TRANSFORMATION_DISPLAY + getValueAsString();
+            }
         }
     }
 }

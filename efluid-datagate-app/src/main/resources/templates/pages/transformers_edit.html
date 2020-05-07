@@ -23,16 +23,22 @@
 				</div>
 
 				<div class="form-group">
-					<label for="name">Configuration (json)</label>
-					<textarea id="configuration" class="form-control configuration" th:field="${def.configuration}" rows="15"></textarea>
+					<span>
+						<label><strong>Configuration (json)</strong></label>
+						<div class="btn-group float-right" style="margin-bottom: 8px" role="group">
+							<button type="button" class="check-button btn btn-outline-primary btn-sm" id="checkButton" >Vérifier</button>
+							<button type="button" class="hide-button btn btn-outline-secondary btn-sm" id="resetButton" title="Revenir à la configuration par défaut du transformateur">Restaurer</button>
+						</div>&nbsp;
+					</span>
+					<textarea id="configuration" class="form-control configuration" th:field="${def.configuration}" rows="25"></textarea>
 					<small class="form-text text-muted">Champ obligatoire. Le format est propre au type <span th:text="${def.typeName}">type</span></small>
 				</div>
-            </p>
 
-			<p>
-				<div class="float-right">
-					<a class="btn btn-secondary btn-sm" th:href="@{/ui/transformers}" href="prepare.html">Revenir en arrière</a>
-					<input type="button" id="saveButton" class="btn btn-success btn-sm" title="Le commentaire est obligatoire" value="Sauvegarder"/><br/><br/>
+				<div class="form-group">
+					<span class="float-right">
+						<a class="btn btn-secondary btn-sm" th:href="@{/ui/transformers}" href="prepare.html">Revenir en arrière</a>
+						<input type="button" id="saveButton" class="btn btn-success btn-sm" title="Le commentaire est obligatoire" value="Sauvegarder"/><br/><br/>
+					</span>
 				</div>
             </p>
 
@@ -40,6 +46,38 @@
 
 	</span>
 	<script layout:fragment="script">
+		/*<![CDATA[*/
+
+		const checkConfigurationContent = () => {
+			hideDisplays();
+			var config = $('#configuration').val();
+			if(config != ''){
+				var type = $('#type').val();
+				$.post('/ui/transformers/validate/' + encodeURIComponent(type), config, (data, status) => {
+					if(data && data != ''){
+						showError('Erreur dans la configuration :' + data);
+					} else {
+						showSuccess('Aucune erreur identifiée pour cette configuration');
+					}
+				});
+			} else {
+				showError('La configuration est obligatoire');
+				$('#saveButton').prop('disabled', true);
+				$('#saveButton').removeClass('btn-success').addClass('btn-outline-success');
+			}
+		};
+
+		const resetConfigurationContent = () => {
+			hideDisplays();
+			var type = $('#type').val();
+			$.get('/ui/transformers/reset/' + encodeURIComponent(type), (data, status) => {
+				if(data && data != ''){
+					$('#configuration').val(data);
+				} else {
+					showSuccess('Aucune erreur identifiée pour cette configuration');
+				}
+			});
+		};
 
 		const checkMandatoryFields = () => {
 			hideDisplays();
@@ -80,6 +118,8 @@
 			$("#priority").on('input',checkMandatoryFields);
 			checkMandatoryFields();
 			$("#saveButton").click(checkConfigurationContentAndSave);
+			$("#checkButton").click(checkConfigurationContent);
+			$("#resetButton").click(resetConfigurationContent);
 		});
     </script>
 </body>

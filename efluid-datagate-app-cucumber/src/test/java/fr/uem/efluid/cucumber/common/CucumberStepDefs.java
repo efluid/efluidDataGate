@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -74,6 +75,7 @@ public abstract class CucumberStepDefs {
     private static final String DEFAULT_EFLUIDTESTNUMBER = "Table EfluidTestNumber";
     private static final String DEFAULT_TTESTMULTIDATATYPE = "Table EfluidTestMultiDataType";
     private static final String DEFAULT_EFLUIDTESTPKCOMPOSITE = "Table EfluidTestPkComposite";
+    private static final String DEFAULT_EFLUIDTESTAUDIT = "Table EfluidTestAudit";
     private static final String DEFAULT_TTESTNULLLINK_SRC = "Table T_NULL_LINK_DEMO_SRC";
     private static final String DEFAULT_TTESTNULLLINK_DEST = "Table T_NULL_LINK_DEMO_DEST";
 
@@ -247,7 +249,7 @@ public abstract class CucumberStepDefs {
 
         this.dets.completeWizard();
 
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1, EFLUIDTESTNUMBER, TTESTMULTIDATATYPE, EFLUIDTESTPKCOMPOSITE, TTESTNULLLINK_SRC, TTESTNULLLINK_DEST);
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1, EFLUIDTESTNUMBER, TTESTMULTIDATATYPE, EFLUIDTESTPKCOMPOSITE, TTESTNULLLINK_SRC, TTESTNULLLINK_DEST, EFLUIDTESTAUDIT);
     }
 
     protected void initDictionaryForDefaultVersionWithTables(FunctionalDomain domain, Project project, String... tableNames) {
@@ -693,6 +695,9 @@ public abstract class CucumberStepDefs {
                     break;
                 case EFLUIDTESTNUMBER:
                     tables.add(table(DEFAULT_EFLUIDTESTNUMBER, EFLUIDTESTNUMBER, domain, "cur.\"COL1\", cur.\"COL2\"", DEFAULT_WHERE, "ID", STRING));
+                    break;
+                case EFLUIDTESTAUDIT:
+                    tables.add(table(DEFAULT_EFLUIDTESTAUDIT, EFLUIDTESTAUDIT, domain, "cur.\"VALUE\", cur.\"ETAT_OBJET\", cur.\"DATE_SUPPRESSION\", cur.\"DATE_MODIFICATION\", cur.\"DATE_CREATION\", cur.\"ACTEUR_SUPPRESSION\", cur.\"ACTEUR_MODIFICATION\", cur.\"ACTEUR_CREATION\"", DEFAULT_WHERE, "ID", STRING));
                     break;
                 case TTESTMULTIDATATYPE:
                     tables.add(table(DEFAULT_TTESTMULTIDATATYPE, TTESTMULTIDATATYPE, domain, "cur.\"COL1\", cur.\"COL2\", cur.\"COL3\", cur.\"COL4\", cur.\"COL5\", cur.\"COL6\", cur.\"COL7\"", DEFAULT_WHERE, "ID", STRING));

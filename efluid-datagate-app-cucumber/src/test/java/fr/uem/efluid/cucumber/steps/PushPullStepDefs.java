@@ -5,10 +5,12 @@ import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.model.entities.TransformerDef;
+import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.Transformer;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -47,6 +49,41 @@ public class PushPullStepDefs extends CucumberStepDefs {
     public void given_export_one_commit(String name) {
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), name);
         currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
+    }
+
+    @Given("^the user has requested an export of the commit with name \"(.*)\" and no customization on transformers$")
+    public void given_export_one_commit_no_transformer_customization(String name) {
+        // Use default
+        given_export_one_commit(name);
+    }
+
+    @Given("^the user has requested an export of the commit with name \"(.*)\" and this customization for transformer \"(.*)\" :$")
+    public void given_export_one_commit_with_transformer_customization(String name, String transformer, DocString config) throws Exception {
+
+        // Access customization
+        when_prepare_export_single(name);
+
+        // Customize
+        CommitExportEditData exportEditData = getCurrentSpecifiedProperty("exportEdit", CommitExportEditData.class);
+        List<TransformerDefDisplay> transformers = getCurrentSpecifiedPropertyList("transformerDefs", TransformerDefDisplay.class);
+
+        Optional<TransformerDefDisplay> transformerDefDisplay = transformers.stream().filter(t -> t.getName().equals(transformer)).findFirst();
+
+        assertThat(transformerDefDisplay).isPresent();
+
+        UUID truid = transformerDefDisplay.get().getUuid();
+
+        if (exportEditData.getSpecificTransformers() == null) {
+            exportEditData.setSpecificTransformers(new HashMap<>());
+        }
+
+        exportEditData.getSpecificTransformers().put(truid, new CustomTransformerConfiguration(config.getContent()));
+
+        // Export
+        when_post_prepared_export();
+
+        // Download
+        then_export_download();
     }
 
     @Given("^the user has requested an export starting by the commit with name \"(.*)\"$")
@@ -91,8 +128,11 @@ public class PushPullStepDefs extends CucumberStepDefs {
                 .with("selectedCommitUuid", data.getSelectedCommitUuid());
 
         // Add customization using a spring-mvc bean "map model"
-        data.getSpecificTransformerConfigurations()
-                .forEach((k, v) -> params.with("specificTransformerConfigurations[" + k + "]", v));
+        data.getSpecificTransformers()
+                .forEach((k, v) -> {
+                    params.with("specificTransformers[" + k + "].configuration", v.getConfiguration());
+                    params.with("specificTransformers[" + k + "].disabled", String.valueOf(v.isDisabled()));
+                });
 
         post("/ui/push/save", params);
     }
@@ -250,7 +290,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
     @Then("^no transformers are listed for customization$")
     public void then_export_no_transformers() {
-        assertThat(getCurrentSpecifiedProperty("exportEdit", CommitExportEditData.class).getSpecificTransformerConfigurations()).hasSize(0);
+        assertThat(getCurrentSpecifiedProperty("exportEdit", CommitExportEditData.class).getSpecificTransformers()).hasSize(0);
     }
 
     @Given("^the export package content has these transformer definitions :$")

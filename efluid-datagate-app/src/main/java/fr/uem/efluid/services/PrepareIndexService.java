@@ -59,6 +59,8 @@ public class PrepareIndexService {
 
     private static final Logger MERGE_LOGGER = LoggerFactory.getLogger("merge.analysis");
 
+    private static final boolean USE_PARALLEL_DIFF = false;
+
     @Autowired
     private ManagedExtractRepository rawParameters;
 
@@ -68,7 +70,7 @@ public class PrepareIndexService {
     @Autowired
     private ManagedValueConverter valueConverter;
 
-    @Autowired(required = false)
+    @Autowired
     private MergeResolutionProcessor mergeResolutionProcessor;
 
     @Value("${datagate-efluid.display.combine-similar-diff-after}")
@@ -83,7 +85,6 @@ public class PrepareIndexService {
     @Autowired
     private TableLinkRepository links;
 
-    private boolean useParallelDiff = false;
 
     /**
      * <p>
@@ -160,117 +161,22 @@ public class PrepareIndexService {
      * should have if the imported diff was present". This way we produce the exact result
      * of the merge for an import.
      * </p>
+     * <p>Merge diff is processed by transformer (with TransformerProcessor available in current preparation)</p>
      * <p>
      * Apply also some "remarks" to diff if required
      * </p>
-     * <p>7 steps</p>
+     * <p>8 steps</p>
      *
      * @param diffToComplete     the specified <tt>MergePreparedDiff</tt> to complete with content and
      *                           remarks
      * @param entry              dictionaryEntry
      * @param lobs               for any extracted lobs
-     * @param timeStampForSearch
-     * @param mergeContent
+     * @param timeStampForSearch start point for merge process
+     * @param mergeDiff          imported merge diff
      * @param project
+     * @param preparation        current preparation
      */
     public void completeMergeIndexDiff(
-            MergePreparedDiff diffToComplete,
-            DictionaryEntry entry,
-            Map<String, byte[]> lobs,
-            long timeStampForSearch,
-            List<PreparedMergeIndexEntry> mergeContent,
-            Project project,
-            PilotedCommitPreparation<?> preparation) {
-
-        // Temporary switchable process
-        if (this.mergeResolutionProcessor != null) {
-            newCompleteMergeIndexDiff(diffToComplete, entry, lobs, timeStampForSearch, mergeContent, project, preparation);
-            return;
-        }
-
-        LOGGER.debug("Regenerating values from combined local + specified index for managed table \"{}\", using"
-                + " timestamp for local index search {}", entry.getTableName(), timeStampForSearch);
-
-        // Here one other complexity in the app : diff between 2 different indexes, which
-        // can be related themselves to a content diff previously generated. Used for
-        // merging process
-
-        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampGreaterThanEqual(entry,
-                timeStampForSearch);
-
-        preparation.incrementProcessStep();
-
-        // Prepare simulated "knew index"
-        List<DiffLine> toProcess = new ArrayList<>();
-        toProcess.addAll(localIndexToTimeStamp);
-        toProcess.addAll(mergeContent);
-
-        LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
-        Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(toProcess);
-
-        preparation.incrementProcessStep();
-
-        LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
-        Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
-
-        preparation.incrementProcessStep();
-
-        // Some diffs may add remarks on local contents
-        LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
-        processOptionalCurrentContendDiffRemarks(diffToComplete, entry, project, actualContent);
-
-        preparation.incrementProcessStep();
-
-        Collection<PreparedMergeIndexEntry> diff = generateDiffIndexFromContent(PreparedMergeIndexEntry::new, knewContent, actualContent,
-                entry);
-
-        preparation.incrementProcessStep();
-
-        LOGGER.info("Diff prepared. Complete merge data for table \"{}\"", entry.getTableName());
-
-        // Then apply from local and from import to identify diff changes
-        completeMergeIndexes(entry, localIndexToTimeStamp, mergeContent, diff);
-
-        preparation.incrementProcessStep();
-
-        diff.forEach(line -> {
-            line.setSelected(true);
-        });
-
-        diffToComplete.setDiff(
-                combineSimilarDiffEntries(diff, SimilarPreparedMergeIndexEntry::fromSimilar).stream()
-                        .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
-
-        preparation.incrementProcessStep();
-    }
-
-
-    /**
-     * <p>
-     * Prepare the diff content, by extracting current content and building value to value
-     * diff regarding the actual index content
-     * </p>
-     * <p>
-     * For merge diff, we run basically the standard process, but building the "knew
-     * content" as a combination of local knew content "until last imported commit" and
-     * the imported diff. =&gt; Produces the diff between current real content and "what we
-     * should have if the imported diff was present". This way we produce the exact result
-     * of the merge for an import.
-     * </p>
-     * <p>
-     * Apply also some "remarks" to diff if required
-     * </p>
-     * <p>7 steps</p>
-     *
-     * @param diffToComplete     the specified <tt>MergePreparedDiff</tt> to complete with content and
-     *                           remarks
-     * @param entry              dictionaryEntry
-     * @param lobs               for any extracted lobs
-     * @param timeStampForSearch
-     * @param mergeDiff
-     * @param project
-     */
-    public void newCompleteMergeIndexDiff(
             MergePreparedDiff diffToComplete,
             DictionaryEntry entry,
             Map<String, byte[]> lobs,
@@ -300,8 +206,15 @@ public class PrepareIndexService {
 
         preparation.incrementProcessStep();
 
+        // Apply transformer on merge content
+        List<? extends PreparedIndexEntry> transformedMergeDiff = preparation.getTransformerProcessor() != null
+                ? preparation.getTransformerProcessor().transform(entry, mergeDiff) : mergeDiff;
+
+        preparation.incrementProcessStep();
+
         // Build merge diff entries from 2 source of Diff + previous content
-        Collection<PreparedMergeIndexEntry> completedMergeDiff = newCompleteMergeIndexes(entry, actualContent, mineDiff, mergeDiff, previousContent, preparation);
+        Collection<PreparedMergeIndexEntry> completedMergeDiff =
+                completeMergeIndexes(entry, actualContent, mineDiff, transformedMergeDiff, previousContent, preparation);
 
         preparation.incrementProcessStep();
 
@@ -312,7 +225,6 @@ public class PrepareIndexService {
 
         preparation.incrementProcessStep();
     }
-
 
     /**
      *
@@ -466,13 +378,6 @@ public class PrepareIndexService {
     }
 
     /**
-     * @param parallel
-     */
-    protected void applyParallelMode(boolean parallel) {
-        this.useParallelDiff = parallel;
-    }
-
-    /**
      * <p>
      * Process detection and completion of some business rules on diff process. Will
      * create remarks if required.
@@ -529,7 +434,7 @@ public class PrepareIndexService {
      */
     private Stream<Map.Entry<String, String>> switchedStream(Map<String, String> source) {
 
-        if (this.useParallelDiff) {
+        if (this.USE_PARALLEL_DIFF) {
             return source.entrySet().parallelStream();
         }
 
@@ -628,7 +533,7 @@ public class PrepareIndexService {
      * @param preparation
      * @return
      */
-    private Collection<PreparedMergeIndexEntry> newCompleteMergeIndexes(
+    private Collection<PreparedMergeIndexEntry> completeMergeIndexes(
             DictionaryEntry dict,
             Map<String, String> actualContent,
             Collection<? extends DiffLine> mines,
@@ -671,189 +576,18 @@ public class PrepareIndexService {
                 preparation.incrementProcessStep();
             }
 
-            return this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actualContent.get(key));
+            String actual = actualContent.get(key);
+
+            PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actual);
+
+            // Dedicated logger output for resolutions
+            if (MERGE_LOGGER.isDebugEnabled()) {
+                MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", actual = \"{}\" -> Get \"{}\" with rule \"{}\"",
+                        dict.getTableName(), key, mineEntry, theirEntry, actual, resolved, resolved.getResolutionRule());
+            }
+
+            return resolved;
         }).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-
-    /**
-     * @param dict
-     * @param local
-     * @param mergeSource
-     * @param preparingMergeIndexToComplete
-     */
-    private void completeMergeIndexes(
-            DictionaryEntry dict,
-            List<? extends DiffLine> local,
-            List<? extends DiffLine> mergeSource,
-            Collection<PreparedMergeIndexEntry> preparingMergeIndexToComplete) {
-
-        LOGGER.debug("Completing merge data from index for parameter table {}", dict.getTableName());
-
-        Map<String, List<DiffLine>> minesByKey = local.stream().collect(Collectors.groupingBy(DiffLine::getKeyValue));
-        Map<String, List<DiffLine>> theirsByKey = mergeSource.stream().collect(Collectors.groupingBy(DiffLine::getKeyValue));
-
-        // Prepare "previous" if any for HR Payload
-        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(dict,
-                preparingMergeIndexToComplete.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
-
-        if (MERGE_LOGGER.isDebugEnabled()) {
-            MERGE_LOGGER.debug(
-                    "Beggin Merge resolution search for dict {} (table {}). Will process on {} previous, with {} \"mines\" and {} \"theirs\"",
-                    dict.getUuid(), dict.getTableName(), previouses.size(), minesByKey.size(), theirsByKey.size());
-        }
-
-        // For each merge result (Only one possible for each keyValue)
-        preparingMergeIndexToComplete.forEach(mergeEntry -> {
-
-            // Expose properties for debug
-            String key = mergeEntry.getKeyValue();
-            List<? extends DiffLine> mineDiff = minesByKey.get(key);
-            List<? extends DiffLine> theirDiff = theirsByKey.remove(key);
-            IndexEntry previous = previouses.get(key);
-            DiffLine mineCombined = DiffLine.combinedOnSameTableAndKey(mineDiff, false);
-            DiffLine theirCombined = DiffLine.combinedOnSameTableAndKey(theirDiff, true);
-
-            // Adapt auto-resolution of entry
-            mergeResolution(mergeEntry, previous, mineCombined, theirCombined);
-
-            // Mark as a diff which need action
-            mergeEntry.setNeedAction(true);
-
-            LOGGER.debug("Completion on merge data for table {}, key \"{}\", \"HrPayload\"=\"{}\", \"mine\"={}, \"their\"={}",
-                    dict.getTableName(), mergeEntry.getKeyValue(), mergeEntry.getHrPayload(), mergeEntry.getMine(), mergeEntry.getTheir());
-        });
-
-        // Add references to remaining "theirs"
-        theirsByKey.forEach((key, value) -> {
-
-            IndexEntry localPrevious = previouses.get(key);
-            DiffLine foundTheir = DiffLine.combinedOnSameTableAndKey(value, true);
-
-            // Ignore when no "mine" and "auto-erased" import
-            if (localPrevious != null && foundTheir != null) {
-
-                // Create "nothing to do" MergeEntry
-                PreparedMergeIndexEntry merge = mergeAutoApplyTheir(localPrevious, foundTheir);
-
-                // If not found in the diff : was already imported
-                merge.setNeedAction(false);
-
-                preparingMergeIndexToComplete.add(merge);
-            }
-        });
-    }
-
-    /**
-     * Apply "their" immediately
-     *
-     * @param localPrevious
-     * @param foundTheir
-     * @return
-     */
-    private PreparedMergeIndexEntry mergeAutoApplyTheir(
-            IndexEntry localPrevious,
-            DiffLine foundTheir) {
-
-        // Prepare payload for "their" regarding local previous (if any)
-        String theirHrPayload = foundTheir != null ? getConverter().convertToHrPayload(foundTheir.getPayload(),
-                localPrevious != null ? localPrevious.getPayload() : null) : null;
-
-        // Corresponding details for the "their"
-        PreparedIndexEntry theirEntry = PreparedIndexEntry.fromCombined(foundTheir, theirHrPayload);
-
-        // Create "nothing to do" MergeEntry
-        PreparedMergeIndexEntry their = PreparedMergeIndexEntry.fromExistingTheir(theirEntry);
-
-        if (MERGE_LOGGER.isDebugEnabled()) {
-
-            if (foundTheir == null) {
-                MERGE_LOGGER.debug("Auto applied \"their\" on one Entry, but without specified foundTheir");
-            } else {
-                MERGE_LOGGER.debug(
-                        "Auto applied \"their\" on Entry {}, entry key {} (no resolution needed): localPrevious={}/{}, foundTheir={}/{}, preparedTheir={}/{}/{}",
-                        foundTheir.getDictionaryEntryUuid(), foundTheir.getKeyValue(),
-                        localPrevious != null ? localPrevious.getAction() : "?",
-                        localPrevious != null ? localPrevious.getPayload() : " - N/A - ",
-                        foundTheir.getAction(), foundTheir.getPayload(),
-                        their.getAction(), their.getPayload(), their.getHrPayload());
-            }
-        }
-
-        return their;
-    }
-
-    /**
-     * Process resolution of merge
-     *
-     * @param mergeEntry
-     * @param localPrevious
-     * @param foundMine
-     * @param foundTheir
-     */
-    private void mergeResolution(
-            PreparedMergeIndexEntry mergeEntry,
-            IndexEntry localPrevious,
-            DiffLine foundMine,
-            DiffLine foundTheir) {
-
-        String previousPayload = localPrevious != null && !localPrevious.equals(foundMine) ? localPrevious.getPayload() : null;
-
-        // For clean HR, need to mark it precisely on addition
-        boolean localInitOnly = foundMine != null && foundMine.getAction() == IndexAction.ADD && foundMine.getPayload() != null
-                && foundMine.getPayload().equals(previousPayload);
-
-        // Complete current entry HR payload for rendering
-        String currentHrPayload = getConverter().convertToHrPayload(mergeEntry.getPayload(), localInitOnly ? null : previousPayload);
-        mergeEntry.setHrPayload(currentHrPayload);
-
-        // If mine is there, complete payload and add combined
-        if (foundMine != null) {
-            String mineHrPayload = getConverter().convertToHrPayload(foundMine.getPayload(), localInitOnly ? null : previousPayload);
-            mergeEntry.setMine(PreparedIndexEntry.fromCombined(foundMine, mineHrPayload));
-
-            // Special case : Added on mine, nothing on their => Propose deletion of mine
-            if (foundTheir == null) {
-                mergeEntry.setAction(IndexAction.REMOVE);
-            }
-        }
-
-        // Else copy proposition (case if current diff entry not yet commited)
-        else {
-            mergeEntry.setMine(PreparedIndexEntry.fromCombined(mergeEntry, currentHrPayload));
-        }
-
-        // If their is there, complete payload and add combined
-        if (foundTheir != null) {
-            String theirHrPayload = getConverter().convertToHrPayload(foundTheir.getPayload(), previousPayload);
-            mergeEntry.setTheir(PreparedIndexEntry.fromCombined(foundTheir, theirHrPayload));
-
-            // Case : their was modified after mine => Default resolution became "their"
-            if (foundMine == null || foundMine.getTimestamp() < foundTheir.getTimestamp()) {
-                String combinedHrPayload = localPrevious != null
-                        ? getConverter().convertToHrPayload(foundTheir.getPayload(), localPrevious.getPayload())
-                        : theirHrPayload;
-                mergeEntry.applyResolution(foundTheir, combinedHrPayload);
-            }
-
-            // Default resolution is always their : can select individually
-            else {
-                mergeEntry.setHrPayload(getConverter().convertToHrPayload(foundTheir.getPayload(), foundMine.getPayload()));
-                mergeEntry.setPayload(foundTheir.getPayload());
-            }
-        }
-
-        if (MERGE_LOGGER.isDebugEnabled()) {
-            MERGE_LOGGER.debug(
-                    "Merge Resolution on Entry {}, entry key {} (resolution needed) : previous={}/{}/{}, mine={}/{}/{}, their={}/{}/{}, mergedResolution={}/{}/{}",
-                    mergeEntry.getDictionaryEntryUuid(), mergeEntry.getKeyValue(),
-                    localPrevious != null ? localPrevious.getAction() : "?",
-                    localPrevious != null ? localPrevious.getPayload() : " - N/A - ", currentHrPayload,
-                    mergeEntry.getMine().getAction(), mergeEntry.getMine().getPayload(), mergeEntry.getMine().getHrPayload(),
-                    mergeEntry.getTheir().getAction(), mergeEntry.getTheir().getPayload(), mergeEntry.getTheir().getHrPayload(),
-                    mergeEntry.getAction(), mergeEntry.getPayload(), mergeEntry.getHrPayload());
-        }
-
     }
 
     /**

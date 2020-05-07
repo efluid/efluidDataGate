@@ -3,6 +3,7 @@ package fr.uem.efluid.tools;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
 import org.springframework.util.StringUtils;
 
@@ -15,6 +16,10 @@ import java.util.stream.Collectors;
  * Transformer model for process at column level
  */
 public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTransformer.Config, R extends ColumnTransformer.Runner<C>> extends Transformer<C, R> {
+
+    protected ColumnTransformer(ManagedValueConverter converter) {
+        super(converter);
+    }
 
     public abstract static class Config extends TransformerConfig {
 
@@ -50,17 +55,21 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
             }
         }
 
-        boolean isColumnNameMatches(Value value) {
-
-            // TODO : find better solution for performances ...
+        boolean isColumnNameMatches(PreparedIndexEntry preparedIndexEntry) {
 
             // Preload pattern
             if (this.columnMatchers == null) {
-                this.columnMatchers = this.columnNames.stream().map(Pattern::compile).collect(Collectors.toList());
+                this.columnMatchers = generatePayloadMatchersFromColumnPatterns(this.columnNames.stream());
             }
+
+            return this.columnMatchers.stream().anyMatch(c -> c.matcher(preparedIndexEntry.getPayload()).matches());
+        }
+
+        boolean isColumnNameMatches(Value value) {
 
             return this.columnMatchers.stream().anyMatch(c -> c.matcher(value.getName()).matches());
         }
+
     }
 
     public abstract static class Runner<C extends ColumnTransformer.Config> extends TransformerRunner<C> {
@@ -70,13 +79,19 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
         }
 
         @Override
-        public String apply(Value value) {
-
-            if (this.config.isColumnNameMatches(value)) {
-                return transformValue(value.getValueAsString(), value.getType());
+        public void accept(List<Value> values) {
+            // Process on indexed list for replacement support
+            for (int i = 0; i < values.size(); i++) {
+                Value val = values.get(i);
+                if (this.config.isColumnNameMatches(val)) {
+                    values.set(i, transformedValue(val, transformValue(val.getValueAsString(), val.getType())));
+                }
             }
+        }
 
-            return value.getValueAsString();
+        @Override
+        public boolean test(PreparedIndexEntry preparedIndexEntry) {
+            return this.config.isColumnNameMatches(preparedIndexEntry);
         }
 
         protected abstract String transformValue(String value, ColumnType type);

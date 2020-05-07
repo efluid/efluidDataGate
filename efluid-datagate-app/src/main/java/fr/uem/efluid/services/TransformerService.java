@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v1.2.0
  */
 @Service
@@ -118,6 +118,19 @@ public class TransformerService extends AbstractApplicationService {
     }
 
     /**
+     * Provides a default transformer config as a formated raw json string
+     *
+     * @param type specified transformer type identifier
+     * @return config content
+     */
+    public String getDefaultConfigRawJson(String type) {
+
+        Transformer<?, ?> transformer = loadTransformerByType(type);
+
+        return prettyConfig(transformer.getDefaultConfig());
+    }
+
+    /**
      * Validate the provided configuration : do not throw, but return back validation details in a string.
      * If null result, the configuration is OK for specified transformer
      *
@@ -152,6 +165,17 @@ public class TransformerService extends AbstractApplicationService {
 
         return TransformerDefEditData.fromEntity(def, transformer, prettyCfg);
     }
+
+    /**
+     * Drop a specified transformer def
+     *
+     * @param uuid of def to delete
+     */
+    public void deleteTransformerDef(UUID uuid) {
+        TransformerDef def = this.transformerDefs.findById(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
+        this.transformerDefs.delete(def);
+    }
+
 
     /**
      * Save edited def
@@ -229,7 +253,7 @@ public class TransformerService extends AbstractApplicationService {
                         .map(d -> {
                             Transformer<?, ?> transformer = loadTransformerByType(d.getType());
                             Transformer.TransformerConfig config = parseConfiguration(d.getConfiguration(), transformer);
-                            return new TransformerProcessor.TransformerApply(transformer, config, d.getPriority());
+                            return new TransformerProcessor.TransformerApply(d.getName(), transformer, config, d.getPriority());
                         }).collect(Collectors.toList())
         );
     }
@@ -244,13 +268,18 @@ public class TransformerService extends AbstractApplicationService {
     List<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
 
         Map<UUID, String> confs = customizations.stream().collect(Collectors.toMap(c -> c.getTransformerDef().getUuid(), ExportTransformer::getConfiguration));
+        Set<UUID> disabled = customizations.stream().filter(ExportTransformer::isDisabled).map(t -> t.getTransformerDef().getUuid()).collect(Collectors.toSet());
 
-        return this.transformerDefs.findByProject(project).stream().peek(t -> {
-            String customization = confs.get(t.getUuid());
-            if (!customization.equals(t.getConfiguration())) {
-                t.setCustomizedConfiguration(customization);
-            }
-        }).collect(Collectors.toList());
+        return this.transformerDefs.findByProject(project).stream()
+                // Remove disabled transformers ...
+                .filter(t -> !disabled.contains(t.getUuid()))
+                // ... And apply updated configs
+                .peek(t -> {
+                    String customization = confs.get(t.getUuid());
+                    if (customization != null && !customization.equals(t.getConfiguration())) {
+                        t.setCustomizedConfiguration(customization);
+                    }
+                }).collect(Collectors.toList());
     }
 
     private TransformerDef importTransformerDef(TransformerDef imported) {
@@ -274,6 +303,7 @@ public class TransformerService extends AbstractApplicationService {
         local.setPriority(imported.getPriority());
         local.setName(imported.getName());
         local.setProject(imported.getProject());
+        local.setConfiguration(imported.getConfiguration());
         local.setImportedTime(LocalDateTime.now());
 
         return local;

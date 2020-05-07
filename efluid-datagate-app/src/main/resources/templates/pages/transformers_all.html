@@ -26,7 +26,10 @@
 		            <td th:text="${transformerDef.priority}">12</td>
 		            <td th:text="${custom.format(transformerDef.updatedTime)}">01/11/2017</td>
 		            <td>
-		            	<a href="./transformer_edit.html" th:href="@{/ui/transformers/edit/{id}(id=${transformerDef.uuid})}" class="btn btn-sm btn-secondary float-right">Modifier</a>
+						<span class="float-right">
+							<a href="./transformer_all.html" th:href="@{/ui/transformers/delete/{id}(id=${transformerDef.uuid})}" class="btn btn-sm btn-danger">Supprimer</a>&nbsp;&nbsp;
+		            		<a href="./transformer_edit.html" th:href="@{/ui/transformers/edit/{id}(id=${transformerDef.uuid})}" class="btn btn-sm btn-secondary">Modifier</a>
+						</span>
 		            </td>
 		        </tr>
 				<tr>
