@@ -107,7 +107,7 @@ public class CommitStepDefs extends CucumberStepDefs {
             }
 
         });
-      
+
         // Process assert on last saved commit in DB
         checkCommitDetails(getSavedCommit(), data);
     }
@@ -162,8 +162,14 @@ public class CommitStepDefs extends CucumberStepDefs {
 
     @Then("^the list of commits is :$")
     public void commit_list(DataTable table) {
+
         List<Map<String, String>> datas = table.asMaps();
-        List<CommitEditData> commits = getCurrentSpecifiedPropertyList("commits", CommitEditData.class);
+
+        // Use fixed sorts to avoid ramdom failure
+        List<CommitEditData> commits = getCurrentSpecifiedPropertyList("commits", CommitEditData.class).stream()
+                .sorted(Comparator.comparing(CommitEditData::getCreatedTime))
+                .collect(Collectors.toList());
+
         assertThat(commits).hasSize(datas.size());
         int idx = 0;
         for (CommitEditData commit : commits) {

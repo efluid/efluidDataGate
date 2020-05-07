@@ -24,7 +24,7 @@
             <thead>
                 <tr>
                     <th scope="col" width="35%">Versions</th>
-                    <th th:if="!${noVersionName}">scope="col">App. Modèle</th>
+                    <th scope="col" th:if="!${noVersionName}">App. Modèle</th>
                     <th scope="col">Création</th>
                     <th scope="col">Dernière maj</th>
                     <th scope="col" width="25%">&nbsp;</th>
@@ -84,17 +84,16 @@
 				} else {
                     var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>' + data.modelId + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
                     $("#versionListInjectBefore").before(newVersionRow);
-					inputName.val("");
 				}
 
                 $(".empty-list-message").remove();
                 $("#versRemark").remove();
 
                 setTimeout(() => {
-                    window.location.replace("/ui/versions");
                     $("button.updateButton").remove();
                     $("#successDisplay").remove();
-                }, 2000);
+                    window.location.replace("/ui/versions");
+                }, 1000);
 
 		    });
 		};
@@ -103,7 +102,7 @@
 		const updateButtonAction = (versionName) => {
 			hideDisplays();
 			$.post("/ui/versions/" + versionName, null, (data, status) => {
-				window.location.replace("/ui/versions"); // Refresh page
+				window.location.replace("/ui/versions/refresh"); // Refresh page
 		    });
 		};
 
@@ -127,7 +126,7 @@
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);
 			$("#cancelDelete").click(cancelButton);
-			$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.id));
+			$("button.updateButton").click((e) => updateButtonAction(e.target.parentElement.parentElement.parentElement.id));
 			$("button.deleteButton").click((e) => deleteButtonAction(e.target.parentElement.parentElement.parentElement.id));
 		}); 
     </script>
