@@ -1,13 +1,13 @@
 package fr.uem.efluid.cucumber.steps;
 
+import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
-import fr.uem.efluid.model.entities.Commit;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.LobProperty;
-import fr.uem.efluid.model.entities.TransformerDef;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.tools.VersionContentChangesGenerator;
+import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
@@ -315,6 +315,62 @@ public class PushPullStepDefs extends CucumberStepDefs {
         });
     }
 
+    @Given("^the export package content has this dictionary definition extract :$")
+    public void export_contains_version(DataTable data) {
+
+        List<Map<String, String>> content = data.asMaps(String.class, String.class);
+
+        List<Version> vers = readPackageVersions();
+        assertThat(vers).hasSize(1);
+        Version version = vers.get(0);
+
+        assertThat(version.getDictionaryContent()).isNotBlank();
+
+        // Need gen to get extracted content
+        VersionContentChangesGenerator gen = new VersionContentChangesGenerator(
+                null // Query Gen is not used for reading
+        );
+
+        List<DictionaryEntry> contentTables = new ArrayList<>();
+
+        gen.readVersionContent(
+                version,
+                new ArrayList<>(),
+                contentTables, // Will use only tables
+                new ArrayList<>(),
+                new ArrayList<>()
+        );
+
+        List<DictionaryEntry> modelTables = content.stream().map(m ->
+                DataGenerationUtils.entry(
+                        m.get("entry name"),
+                        null,
+                        m.get("select clause"),
+                        m.get("table name"),
+                        m.get("filter clause"),
+                        m.get("key name"),
+                        ColumnType.valueOf(m.get("key type"))
+                )).collect(Collectors.toList());
+
+        assertThat(contentTables).hasSize(modelTables.size());
+
+        contentTables.forEach(t -> {
+            DictionaryEntry model = modelTables.stream()
+                    .filter(d -> d.getParameterName().equals(t.getParameterName()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new AssertionError("Cannot find model for table with name \""
+                                    + t.getParameterName() + "\""));
+
+            assertThat(t.getSelectClause()).isEqualTo(model.getSelectClause());
+            assertThat(t.getTableName()).isEqualTo(model.getTableName());
+            assertThat(t.getWhereClause()).isEqualTo(model.getWhereClause());
+            assertThat(t.getKeyName()).isEqualTo(model.getKeyName());
+            assertThat(t.getKeyType()).isEqualTo(model.getKeyType());
+
+        });
+    }
+
     /**
      * Easy access to exported content (reuse internal export, so will not test export process itself)
      *
@@ -346,6 +402,15 @@ public class PushPullStepDefs extends CucumberStepDefs {
         return readPackages().stream()
                 .filter(s -> s.getClass() == TransformerDefPackage.class)
                 .map(p -> (TransformerDefPackage) p)
+                .map(SharedPackage::getContent)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+    }
+
+    private List<Version> readPackageVersions() {
+        return readPackages().stream()
+                .filter(s -> s.getClass() == VersionPackage.class)
+                .map(p -> (VersionPackage) p)
                 .map(SharedPackage::getContent)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());

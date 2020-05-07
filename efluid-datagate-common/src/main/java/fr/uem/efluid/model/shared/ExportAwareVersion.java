@@ -35,7 +35,7 @@ public abstract class ExportAwareVersion<D extends ExportAwareProject> implement
      * @see fr.uem.efluid.model.Shared#serialize()
      */
     @Override
-    public final String serialize() {
+    public String serialize() {
 
         return SharedOutputInputUtils.newJson()
                 .with("uid", getUuid())

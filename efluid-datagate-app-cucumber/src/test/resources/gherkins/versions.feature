@@ -128,3 +128,38 @@ Feature: A dictionary is associated to versions
     And a commit ":construction: Destination commit 1" has been saved with all the new identified diff content in destination environment
     When the user import the available source package
     Then a merge diff is running
+
+  Scenario: The dictionary content from last version is included with commit export package
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing versions "vInit"
+    And this dictionary is added to current default domain :
+      | entry name | table name | select clause | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE"   | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v2"
+    And this dictionary is modified to current default domain :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v3"
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user request an export of the commit with name ":construction: Update 1"
+    Then the export package contains 1 commit contents
+    And the export package content has these identified changes for commit with name ":construction: Update 1" :
+      | Table    | Key | Action | Payload                        |
+      | TTAB_ONE | 14  | ADD    | VALUE:'AAA', PRESET:'Preset 1' |
+      | TTAB_ONE | 25  | ADD    | VALUE:'BBB', PRESET:'Preset 2' |
+      | TTAB_ONE | 37  | ADD    | VALUE:'CCC', PRESET:'Preset 3' |
+      | TTAB_ONE | 38  | ADD    | VALUE:'DDD', PRESET:'Preset 4' |
+      | TTAB_ONE | 39  | ADD    | VALUE:'EEE', PRESET:'Preset 5' |
+    And the export package content has this dictionary definition extract :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+

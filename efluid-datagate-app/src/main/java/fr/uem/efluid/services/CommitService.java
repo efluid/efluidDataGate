@@ -30,7 +30,7 @@ import static fr.uem.efluid.utils.ErrorType.*;
  * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 @Transactional
@@ -43,6 +43,7 @@ public class CommitService extends AbstractApplicationService {
     public static final String PCKG_LOBS = "lobs";
     public static final String PCKG_ATTACHS = "attachs";
     public static final String PCKG_TRANSFORMERS = "transformers";
+    public static final String PCKG_VERSIONS = "versions";
 
     private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
@@ -272,12 +273,22 @@ public class CommitService extends AbstractApplicationService {
         // Get associated lobs
         List<LobProperty> lobsToExport = loadLobsForCommits(commitsToExport);
 
+        // Get reference version (for dict content diff at import)
+        Version lastVersion = this.versions.getLastVersionForProject(project);
+        lastVersion.setSerializeDictionaryContents(true);
+
         // Then export :
         ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
+                // Add customized transformers
                 new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
                         .initWithContent(this.transformerService.getCustomizedTransformerDef(project, preparedExport.getTransformers())),
+                // Add last version (for dict content diff)
+                new VersionPackage(PCKG_VERSIONS, LocalDateTime.now()).initWithContent(List.of(lastVersion)),
+                // Add selected commit(s)
                 new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
+                // Add lobs associated to commits
                 new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport),
+                // Add all commit attachments
                 new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now())
                         .initWithContent(this.attachments.findByCommitIn(commitsToExport))));
 
@@ -863,15 +874,17 @@ public class CommitService extends AbstractApplicationService {
      * @param commitPackages
      */
     private static void assertImportPackageIsValid(List<SharedPackage<?>> commitPackages) {
-        if (commitPackages.size() != 4) {
+        if (commitPackages.size() != 5) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID,
-                    "Import of commits can contain only commit package file + lobs package + attachment package file + a transformer package");
+                    "Import of commits can contain only commit package file + lobs package " +
+                            "+ attachment package file + a transformer package + last version");
         }
 
         if (commitPackages.stream().noneMatch(p -> p instanceof CommitPackage
                 || p instanceof LobPropertyPackage
                 || p instanceof AttachmentPackage
-                || p instanceof TransformerDefPackage)) {
+                || p instanceof TransformerDefPackage
+                || p instanceof VersionPackage)) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types");
         }
     }
