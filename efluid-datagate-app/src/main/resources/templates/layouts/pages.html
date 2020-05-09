@@ -23,63 +23,64 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent" style="display: flex; justify-content: column;">
                     <ul class="navbar-nav mr-auto" style="width: 100%;">
                         <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                        <span style="display: flex; width: 100%; justify-content: space-around;">
+                        <div style="margin-bottom: 10px;">
+                            <span style="display: flex; width: 100%; justify-content: space-around;">
                                 <a>Dictionnaire</a>
-                                <i class="fas fa-sort-down"></i>
-                        </span>
+                                <i class="fas fa-sort-down" th:onclick="showMenu('menu-1')"></i>
+                            </span>
+                            <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
+                            <ul class="menu" id="menu-1">
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./versions.html" th:href="@{/ui/versions}">Définition des versions</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./dictionary.html" th:href="@{/ui/dictionary}">Modification du dictionnaire</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./domains.html" th:href="@{/ui/domains}">Configuration des domaines fonctionnels</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./share.html" th:href="@{/ui/share}">Export/Import des dictionnaires</a></li>
+                            </ul>
+                        </div>
                         <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                        <span style="display: flex;justify-content: space-around;">
+                        <div>
+                            <span style="display: flex;justify-content: space-around;">
                                 <a>Lot de modification</a>
-                                <i class="fas fa-sort-down"></i>
-                        </span>
+                                <i class="fas fa-sort-down" th:onclick="showMenu('menu-2')"></i>
+                            </span>
+                            <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
+                            <ul class="menu" id="menu-2">
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./history.html" th:href="@{/ui/history}">Historique des requêtes de MAJ</a></li>
+                            </ul>
+                        </div>
                         <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                        <span style="display: flex;justify-content: space-around;">
+                        <div>
+                            <span style="display: flex;justify-content: space-around;">
                                 <a>Projets</a>
-                                <i class="fas fa-sort-down"></i>
-                        </span>
+                                <i class="fas fa-sort-down" th:onclick="showMenu('menu-3')"></i>
+                            </span>
+                            <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
+                            <ul class="menu" id="menu-3">
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet actuel</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir mes projets préférés</a></li>
+                            </ul>
+                        </div>
                         <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                        <span style="display: flex;justify-content: space-around;">
+                        <div>
+                            <span style="display: flex;justify-content: space-around;">
                                 <a>Utilisateurs</a>
-                                <i class="fas fa-sort-down"></i>
-                        </span>
-                        <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                        <!-- <li class="nav-item dropdown">
-                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                 Lot de modification
-                             </a>
-                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                 <a class="dropdown-item" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a>
-                                 <div class="dropdown-divider"></div>
-                                 <a class="dropdown-item" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a>
-                                 <a class="dropdown-item" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a>
-                                 <a class="dropdown-item" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a>
-                                 <a class="dropdown-item" href="./history.html" th:href="@{/ui/history}">Historique des requêtes de MAJ</a>
-                             </div>
-                         </li>
-                         <li class="nav-item dropdown">
-                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                 Projets
-                             </a>
-                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                 <a class="dropdown-item" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet actuel</a>
-                                 <a class="dropdown-item" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a>
-                                 <a class="dropdown-item" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir mes projets préférés</a>
-                             </div>
-                         </li>
-                         <li class="nav-item dropdown">
-                             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                 Utilisateurs
-                             </a>
-                             <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                 <a class="dropdown-item" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a>
-                                 <a class="dropdown-item" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a>
-                             </div>
-                         </li>-->
+                                <i class="fas fa-sort-down" id="show" th:onclick="showMenu('menu-4')"></i>
+                            </span>
+                            <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
+                            <ul class="menu" id="menu-4">
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem;" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a></li>
+                            </ul>
+                        </div>
                     </ul>
                 </div>
             </div>
-            <div class="col-10" style="padding:0;">
-                <nav style="display: flex; justify-content: flex-end; height: 80px;" th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
+            <div class="col-10" style="padding:20px;">
+                <nav style="display: flex; justify-content: flex-end; height: 80px; margin-bottom: 20px;" th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
                     <div class="divider-horizontal"></div>
                         <form class="form-inline">
                 	<span class="active-project" th:if="${project != null}">
@@ -106,7 +107,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script layout:fragment="script">
-    	// Page script goes here
+                let show = false;
+                $(".menu").hide();
+
+    	    	const showMenu = (getMenuClass) => {
+    	    	    if (show) {
+    	    	        $(`#${getMenuClass}`).hide();
+    	    	        show = false
+    	    	    } else {
+    	    	        $(`#${getMenuClass}`).show();
+    	    	        show = true
+    	    	    }
+    	    	}
+
+    	    	$(document).ready(() => {
+                });
     </script>
 </body>
 </html>
