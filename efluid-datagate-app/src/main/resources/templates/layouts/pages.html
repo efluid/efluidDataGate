@@ -23,64 +23,57 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent" style="display: flex; justify-content: column;">
                     <ul class="navbar-nav mr-auto" style="width: 100%;">
                         <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                        <div style="margin-bottom: 10px;">
-                            <span style="display: flex; width: 100%; justify-content: space-around;">
+                        <div>
+                            <span style="display: flex; width: 100%; justify-content: space-around; margin-bottom: 20px;">
                                 <a>Dictionnaire</a>
                                 <i class="fas fa-sort-down" th:onclick="showMenu('menu-1')"></i>
                             </span>
-                            <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                            <ul class="menu" id="menu-1">
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./versions.html" th:href="@{/ui/versions}">Définition des versions</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./dictionary.html" th:href="@{/ui/dictionary}">Modification du dictionnaire</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./domains.html" th:href="@{/ui/domains}">Configuration des domaines fonctionnels</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./share.html" th:href="@{/ui/share}">Export/Import des dictionnaires</a></li>
+                            <ul class="menu" id="menu-1" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./versions.html" th:href="@{/ui/versions}">Définition des versions</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./dictionary.html" th:href="@{/ui/dictionary}">Modification du dictionnaire</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./domains.html" th:href="@{/ui/domains}">Configuration des domaines fonctionnels</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./share.html" th:href="@{/ui/share}">Export/Import des dictionnaires</a></li>
                             </ul>
                         </div>
-                        <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
                         <div>
-                            <span style="display: flex;justify-content: space-around;">
-                                <a>Lot de modification</a>
+                            <span style="display: flex; width: 100%; justify-content: space-around; margin-top: 20px; margin-bottom: 20px;">
+                                <a>Lots de modifications</a>
                                 <i class="fas fa-sort-down" th:onclick="showMenu('menu-2')"></i>
                             </span>
-                            <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                            <ul class="menu" id="menu-2">
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./history.html" th:href="@{/ui/history}">Historique des requêtes de MAJ</a></li>
+                            <ul class="menu" id="menu-2" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./history.html" th:href="@{/ui/history}">Historique des requêtes de MAJ</a></li>
                             </ul>
                         </div>
-                        <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
                         <div>
-                            <span style="display: flex;justify-content: space-around;">
+                            <span style="display: flex; width: 100%; justify-content: space-around; margin-top: 20px; margin-bottom: 20px;">
                                 <a>Projets</a>
                                 <i class="fas fa-sort-down" th:onclick="showMenu('menu-3')"></i>
                             </span>
-                            <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                            <ul class="menu" id="menu-3">
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet actuel</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir mes projets préférés</a></li>
+                            <ul class="menu" id="menu-3" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet actuel</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir mes projets préférés</a></li>
                             </ul>
                         </div>
-                        <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
                         <div>
-                            <span style="display: flex;justify-content: space-around;">
+                            <span style="display: flex; width: 100%; justify-content: space-around; margin-top: 20px; margin-bottom: 20px;">
                                 <a>Utilisateurs</a>
-                                <i class="fas fa-sort-down" id="show" th:onclick="showMenu('menu-4')"></i>
+                                <i class="fas fa-sort-down" th:onclick="showMenu('menu-4')"></i>
                             </span>
-                            <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                            <ul class="menu" id="menu-4">
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem;" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a></li>
+                            <ul class="menu" id="menu-4" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a></li>
+                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a></li>
                             </ul>
                         </div>
                     </ul>
                 </div>
             </div>
-            <div class="col-10" style="padding:20px;">
-                <nav style="display: flex; justify-content: flex-end; height: 80px; margin-bottom: 20px;" th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
+            <div class="col-10" style="padding: 0;">
+                <nav style="display: flex; justify-content: flex-end; height: 80px; background-color: #336DA4!important;" th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
                     <div class="divider-horizontal"></div>
                         <form class="form-inline">
                 	<span class="active-project" th:if="${project != null}">
