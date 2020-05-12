@@ -26,31 +26,6 @@
 		</div>
 		<div style="width: 40%; height: 30vh;background-color: #FFFFFF; box-shadow: 1px 1px 12px #555; "></div>
 	</div>
-	<!--<span layout:fragment="content">
-		<h3>Instance <span th:text="${details.info.instanceName}">SOURCE</span>, version applicative v<span th:text="${details.info.version}">1</span></h3>
-		<hr/>
-		<h5>Détails techniques</h5>
-		<ul>
-			<li>Base de données source : <span th:text="${details.dbUrl}">ORACLE_DB_SERVER_123</span></li>
-			<li th:if="${details.modelDesc != null}">Schema source : <span th:text="${details.modelDesc.schema}">EFLUID</span></li>
-			<li th:if="${details.modelDesc != null}">Modèle de données identifié : 
-				<span th:text="${details.modelDesc.identity}">v1.2.2, schéma ABCDEF</span>
-				<span th:if="${details.modelDesc.details != null}" th:text="| - ${details.modelDesc.details}|"> - détails</span>
-				<span th:if="${details.modelDesc.updatedTime != null}" th:text="| (dernière mise à jour : ${custom.format(details.modelDesc.updatedTime)})|">(dernier maj : 01/02/2018)</span>
-			</li>
-			<li>Lots de paramètrage gérés : <span th:text="${details.commitsCount}">12</span></li>
-			<li>Nombre de projets gérés : <span th:text="${details.projectsCount}">4</span></li>
-			<li>Nombre de versions gérées (total) : <span th:text="${details.versionsCount}">4</span></li>
-			<li>Nombre de lobs gérés (total) : <span th:text="${details.lobsCount}">100</span></li>
-			<li>Nombre de domaines fonctionnels (total) : <span th:text="${details.domainsCount}">15</span></li>
-			<li th:if="${project != null}">Nombre de domaines fonctionnels (projet "<span th:text="${project.name}">Mon Projet</span>") : <span th:text="${details.domainsCountForProject}">15</span></li>
-			<li th:if="${project != null}">Nombre de versions gérées (projet "<span th:text="${project.name}">Mon Projet</span>") : <span th:text="${details.versionsCountForProject}">15</span></li>
-			<li>Nombre de tables de paramètrage spécifiées dans le dictionnaire (total) : <span th:text="${details.dictionaryCount}">100</span></li>
-			<li>Nombre de lignes dans l'index (total) : <span th:text="${details.indexCount}">124000</span></li>
-			<li>Taille estimée de l'index complet (total) : <span th:text="${details.indexSize}">146 Mb</span></li>
-			<li>Dernier import : Lot ABCDEF le 12/01/2018</li>
-		</ul>
-	</span>-->
 	<script layout:fragment="script">
 		$(document).ready(() => {
     		supportGitmojis();

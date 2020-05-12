@@ -25,7 +25,7 @@
                         <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
                         <div class="pos-f-t">
                             <span class="navbar" style="display: flex; width: 100%; margin-bottom: 20px; padding-left: 0!important;">
-                                <a class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent">Dictionnaire</a>
+                                <a style="padding-left: 20px; font-size: 1rem;" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent">Dictionnaire</a>
                             </span>
                             <ul id="navbarToggleExternalContent" class="menuLanding collapse" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
                                 <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./versions.html" th:href="@{/ui/versions}">Définition des versions</a></li>
@@ -36,7 +36,7 @@
                         </div>
                         <div class="pos-f-t">
                             <span style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px;">
-                                <a class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent2">Lots de modifications</a>
+                                <a style="padding-left: 20px; font-size: 1rem;" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent2">Lots de modifications</a>
                             </span>
                             <ul id="navbarToggleExternalContent2" class="menuLanding collapse" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
                                 <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a></li>
@@ -48,7 +48,7 @@
                         </div>
                         <div class="pos-f-t">
                             <span style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px;">
-                                <a class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent3">Projets</a>
+                                <a style="padding-left: 20px; font-size: 1rem;" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent3">Projets</a>
                             </span>
                             <ul id="navbarToggleExternalContent3" class="menuLanding collapse" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
                                 <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet actuel</a></li>
@@ -58,7 +58,7 @@
                         </div>
                         <div class="pos-f-t">
                             <span style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px;">
-                                <a class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent4">Utilisateurs</a>
+                                <a style="padding-left: 20px; font-size: 1rem;" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent4">Utilisateurs</a>
                             </span>
                             <ul id="navbarToggleExternalContent4" class="menuLanding collapse" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
                                 <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a></li>
@@ -67,14 +67,14 @@
                         </div>
                     </ul>
                 </div>
+                <span th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light" style="padding: 20px;">
+                    Projet actuel : <a href="./projects_prefered.html" th:href="@{/ui/projects/select}" th:text="${project.name}">RECETTE</a>
+                </span>
             </div>
             <div class="col-10" style="padding: 0;">
                 <nav style="display: flex; justify-content: flex-end; height: 50px; background-color: #336DA4!important;" th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
                     <div class="divider-horizontal"></div>
                         <form class="form-inline">
-                	<span class="active-project" th:if="${project != null}">
-                        Projet actuel : <a href="./projects_prefered.html" th:href="@{/ui/projects/select}" th:text="${project.name}">RECETTE</a>
-                    </span>
                             <a href="./swagger.html" th:href="@{/swagger}" target="_blank" style="color: white;" type="button">API REST</a>
                             &nbsp;&nbsp;
                             <a href="./index.html" th:href="@{/logout?url=/ui}" style="color: white;" type="button">Déconnexion</a>
