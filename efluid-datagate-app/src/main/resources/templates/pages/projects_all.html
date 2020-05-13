@@ -34,8 +34,13 @@
 			     </tr>
 			</tbody>
 		</table>
+		<div id="projectAlreadyExists" class="alert alert-danger" role="alert">
+		  Ce nom de projet est déjà utilisé.
+		</div>
     </span>
     <script layout:fragment="script">
+
+    	$("#projectAlreadyExists").hide();
 
 		const getPickedColor = () => {
 			return $(".project-color:checked").val();
@@ -55,7 +60,13 @@
 				var newProjectRow = '<tr id="' + data.uuid + '" class="project-theme-bg-' + data.color + '"><td colspan="2">' + data.name + '</td><td>&nbsp;</td></tr>';
 				$("#projectListInjectBefore").before(newProjectRow);
 				inputName.val("");
-		    });
+				$("#projectAlreadyExists").hide();
+
+		    })
+		    .fail(function() {
+		    	console.log("error");
+				$("#projectAlreadyExists").show();
+			});
 		};
     
     	// Init actions
