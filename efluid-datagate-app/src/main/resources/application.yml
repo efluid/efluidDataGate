@@ -67,6 +67,7 @@ datagate-efluid:
 
     imports:
         check-model-version: true
+        check-dictionary-compatibility: false
 
     async-preparation:
         thread-pool-size: 8

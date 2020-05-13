@@ -53,7 +53,7 @@ public class DictionaryStepDefs extends CucumberStepDefs {
         modelDatabase().initDictionary(tables, new ArrayList<>(), currentVersion);
     }
 
-    @Given("^this dictionary is modified to current default domain :$")
+    @Given("^this dictionary .*is modified to current default domain :$")
     public void given_modified_dict(DataTable dataTable) {
         List<Map<String, String>> content = dataTable.asMaps(String.class, String.class);
         Project project = getCurrentUserProject();

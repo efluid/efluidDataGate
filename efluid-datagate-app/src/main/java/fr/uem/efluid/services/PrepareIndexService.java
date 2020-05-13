@@ -345,6 +345,18 @@ public class PrepareIndexService {
     }
 
     /**
+     * Process the given index entries to get ALL used column names in payloads. Can be slow for large index as it will expand the payload string contents
+     *
+     * @param entries index
+     * @return name of columns referenced in payload
+     */
+    Set<String> extractIndexEntryValueNames(Collection<IndexEntry> entries) {
+        return entries.stream().map(IndexEntry::getPayload)
+                .flatMap(p -> this.valueConverter.expandInternalValueNames(p))
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * @param diffWithSimilars
      * @return
      */

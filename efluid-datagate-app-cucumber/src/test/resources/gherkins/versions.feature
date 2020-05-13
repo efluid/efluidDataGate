@@ -57,6 +57,40 @@ Feature: A dictionary is associated to versions
       | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
       | My Entry 3 | T_TABLE_BIS | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_ATOMIC |
 
+  Scenario: A version can be compared to another one and all the identified differences are displayed
+    Given the existing versions "vInit"
+    And this dictionary is added to current default domain :
+      | entry name | table name  | select clause            | filter clause | key name | key type  |
+      | My Entry   | T_TABLE_ONE | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+      | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1           | COL_KEY  | PK_STRING |
+    And the user add new version "v2"
+    And this dictionary is modified to current default domain :
+      | entry name | table name  | select clause            | filter clause           | key name | key type  |
+      | My Entry   | T_TABLE_ONE | cur."COL_A"              | cur."COL_B" is not null | COL_KEY  | PK_STRING |
+      | My Entry 2 | T_TABLE_TWO | cur."COL_A", cur."COL_B" | 1=1                     | COL_KEY  | PK_STRING |
+      | My Entry 3 | T_TABLE_BIS | cur."COL_A", cur."COL_B" | 1=1                     | COL_KEY  | PK_ATOMIC |
+    And the user add new version "v3"
+    When the user request to compare the version "v2" with last version
+    Then these domain changes are identified for the dictionary content :
+      | domain      | change   | unmodified table count |
+      | Test domain | MODIFIED | 1                      |
+    And these table changes are identified for the dictionary content :
+      | domain      | table       | change    | table change               | name change              | filter change                  | column change count |
+      | Test domain | T_TABLE_BIS | ADDED     | T_TABLE_BIS -> T_TABLE_BIS | My Entry 3 -> My Entry 3 | 1=1 -> 1=1                     | 3                   |
+      | Test domain | T_TABLE_ONE | MODIFIED  | T_TABLE_ONE -> T_TABLE_ONE | My Entry -> My Entry     | 1=1 -> cur."COL_B" is not null | 1                   |
+      | Test domain | T_TABLE_TWO | UNCHANGED | T_TABLE_TWO -> T_TABLE_TWO | My Entry 2 -> My Entry 2 | 1=1 -> 1=1                     | 0                   |
+    And these column changes are identified for the dictionary content :
+      | domain      | table       | column  | change    | link change  | key change     |
+      | Test domain | T_TABLE_ONE | COL_KEY | UNCHANGED | null -> null | true -> true   |
+      | Test domain | T_TABLE_ONE | COL_B   | REMOVED   | null -> null | false -> false |
+      | Test domain | T_TABLE_ONE | COL_A   | UNCHANGED | null -> null | false -> false |
+      | Test domain | T_TABLE_TWO | COL_KEY | UNCHANGED | null -> null | true -> true   |
+      | Test domain | T_TABLE_TWO | COL_B   | UNCHANGED | null -> null | false -> false |
+      | Test domain | T_TABLE_TWO | COL_A   | UNCHANGED | null -> null | false -> false |
+      | Test domain | T_TABLE_BIS | COL_KEY | ADDED     | null -> null | true -> true   |
+      | Test domain | T_TABLE_BIS | COL_B   | ADDED     | null -> null | false -> false |
+      | Test domain | T_TABLE_BIS | COL_A   | ADDED     | null -> null | false -> false |
+
   Scenario: A version can be updated to mark last changes in dictionary
     Given the existing versions "v1, v2, v3"
     When the user update version "v3"
@@ -129,7 +163,7 @@ Feature: A dictionary is associated to versions
     When the user import the available source package
     Then a merge diff is running
 
-  Scenario: The dictionary content from last version is included with commit export package
+  Scenario: The dictionary content from referenced version is included with commit export package
     Given the existing data in managed table "TTAB_ONE" :
       | key | value | preset   | something |
       | 14  | AAA   | Preset 1 | AAA       |
@@ -137,20 +171,18 @@ Feature: A dictionary is associated to versions
       | 37  | CCC   | Preset 3 | CCC       |
       | 38  | DDD   | Preset 4 | DDD       |
       | 39  | EEE   | Preset 5 | EEE       |
-    And the existing versions "vInit"
     And this dictionary is added to current default domain :
       | entry name | table name | select clause | filter clause | key name | key type  |
       | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
-      | Table Two  | TTAB_TWO   | cur."VALUE"   | 1=1           | KEY      | PK_STRING |
-    And the user add new version "v2"
+    And the user add new version "v1"
     And this dictionary is modified to current default domain :
       | entry name | table name | select clause             | filter clause | key name | key type  |
       | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
-      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
-    And the user add new version "v3"
-    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user add new version "v2"
+    And a new commit ":construction: Commit on version v2 source" has been saved with all the new identified diff content
     When the user request an export of the commit with name ":construction: Update 1"
     Then the export package contains 1 commit contents
+    And the export package contains 1 version contents
     And the export package content has these identified changes for commit with name ":construction: Update 1" :
       | Table    | Key | Action | Payload                        |
       | TTAB_ONE | 14  | ADD    | VALUE:'AAA', PRESET:'Preset 1' |
@@ -158,7 +190,7 @@ Feature: A dictionary is associated to versions
       | TTAB_ONE | 37  | ADD    | VALUE:'CCC', PRESET:'Preset 3' |
       | TTAB_ONE | 38  | ADD    | VALUE:'DDD', PRESET:'Preset 4' |
       | TTAB_ONE | 39  | ADD    | VALUE:'EEE', PRESET:'Preset 5' |
-    And the export package content has this dictionary definition extract :
+    And the export package content has this dictionary definition extract for commit ":construction: Update 1" :
       | entry name | table name | select clause             | filter clause | key name | key type  |
       | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
       | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |

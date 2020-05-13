@@ -3,8 +3,8 @@ package fr.uem.efluid.cucumber.steps;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
 import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
 import fr.uem.efluid.tools.Transformer;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -31,8 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PushPullStepDefs extends CucumberStepDefs {
 
     static ExportImportResult<ExportFile> currentExport;
-
-    static Exception currentException;
 
     @When("^the user request an export of all the commits$")
     public void when_export_all_commits() {
@@ -169,6 +167,15 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
         // Test only commit with index content (not reference commits)
         assertThat(commits.stream().filter(c -> c.getIndex() != null && c.getIndex().size() > 0)).hasSize(size);
+    }
+
+    @Then("^the export package contains (.*) version contents$")
+    public void then_export_content_version_size(int size) {
+        assertThat(currentExport).isNotNull();
+        List<Version> versions = readPackageVersions();
+
+        // Check complete versions
+        assertThat(versions).hasSize(size);
     }
 
     @Then("^the exported commit \"(.*)\" is not present in the destination environment$")
@@ -315,16 +322,20 @@ public class PushPullStepDefs extends CucumberStepDefs {
         });
     }
 
-    @Given("^the export package content has this dictionary definition extract :$")
-    public void export_contains_version(DataTable data) {
+    @Given("^the export package content has this dictionary definition extract for commit \"(.*)\" :$")
+    public void export_contains_version(DataTable data, String commitComment) {
 
         List<Map<String, String>> content = data.asMaps(String.class, String.class);
 
-        List<Version> vers = readPackageVersions();
-        assertThat(vers).hasSize(1);
-        Version version = vers.get(0);
+        List<Version> versions = readPackageVersions();
+        Optional<Commit> commit = readPackageCommits().stream().filter(c -> c.getComment().equals(commitComment)).findFirst();
 
-        assertThat(version.getDictionaryContent()).isNotBlank();
+        assertThat(commit).isPresent();
+
+        Optional<Version> version = versions.stream().filter(v -> v.getUuid().equals(commit.get().getVersion().getUuid())).findFirst();
+
+        assertThat(version).isPresent();
+        assertThat(version.get().getDictionaryContent()).isNotBlank();
 
         // Need gen to get extracted content
         VersionContentChangesGenerator gen = new VersionContentChangesGenerator(
@@ -334,7 +345,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         List<DictionaryEntry> contentTables = new ArrayList<>();
 
         gen.readVersionContent(
-                version,
+                version.get(),
                 new ArrayList<>(),
                 contentTables, // Will use only tables
                 new ArrayList<>(),

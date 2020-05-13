@@ -137,3 +137,94 @@ Feature: The backlog can be imported and merged with local changes
       | 7          | Ceci est un text enregistré dans un CLOB | 2012-01-15 |
       | 8          | Un autre text CLOB                       | 2005-07-08 |
       | 9          | Encore un autre                          | 2021-12-25 |
+
+  Scenario: When a merge is started, a compatibility check on the dictionary can be processed - fail on different versions
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing versions "v1"
+    And this dictionary is added to current default domain :
+      | entry name | table name | select clause | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE"   | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v2"
+    And this dictionary is modified to current default domain :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v3"
+    And a new commit ":construction: Commit on v3" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit on v3"
+    And the user accesses to the destination environment with only the versions until "v2"
+    And the feature "VALIDATE_VERSION_FOR_IMPORT" is enabled
+    When the user import the available source package
+    Then an error of type MERGE_DICT_NOT_COMPATIBLE is provided with this payload :
+      """txt
+      Referenced version "v3" is not managed locally for commit ":construction: Commit on v3"
+      """
+
+  Scenario: When a merge is started, a compatibility check on the dictionary can be processed - fail on incompatible tables
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing versions "v1"
+    And this dictionary is added to current default domain :
+      | entry name | table name | select clause | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE"   | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v2"
+    And this dictionary is modified to current default domain :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v3"
+    And a new commit ":construction: Commit on v3" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit on v3"
+    And the user accesses to the destination environment with only the versions until "v2"
+    And the feature "CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT" is enabled
+    When the user import the available source package
+    Then an error of type MERGE_DICT_NOT_COMPATIBLE is provided with this payload :
+      """txt
+      Table "TTAB_ONE" : column "PRESET" used for commit ":construction: Commit on v3" has been modified,
+      Table "TTAB_TWO" : column "OTHER" used for commit ":construction: Commit on v3" has been modified
+      """
+
+  Scenario: When a merge is started, a compatibility check on the dictionary can be processed - success on compatible tables even with different versions
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing versions "v1"
+    And this dictionary is added to current default domain :
+      | entry name | table name | select clause | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE"   | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v2"
+    And this dictionary is modified to current default domain :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v3"
+    And a new commit ":construction: Commit on v3" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit on v3"
+    And the user accesses to the destination environment with only the versions until "v2"
+    And this dictionary on destination environment is modified to current default domain :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v3 dest" on destination environment
+    And the feature "CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT" is enabled
+    When the user import the available source package
+    Then no error is provided
+    And a merge diff is running

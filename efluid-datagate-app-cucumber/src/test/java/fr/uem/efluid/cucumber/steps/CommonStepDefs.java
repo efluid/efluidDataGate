@@ -7,7 +7,6 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import org.springframework.util.StringUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -51,6 +50,18 @@ public class CommonStepDefs extends CucumberStepDefs {
         backlogDatabase().dropBacklog();
         managedDatabase().dropManaged();
         this.prep.cancelCommitPreparation();
+    }
+
+    @Given("^the user accesses to the destination environment with only the versions until \"(.*)\"$")
+    public void user_witch_environment_partial_dic(String version) {
+
+        // Drop all indexes + Test tables datas
+        backlogDatabase().dropBacklog();
+        managedDatabase().dropManaged();
+        this.prep.cancelCommitPreparation();
+
+        // But reset versions after a specified one
+        modelDatabase().dropVersionsAfter(getCurrentUserProject(), version);
     }
 
     @Given("^ldap auth is enabled with search at \"(.*)\", with login attr \"(.*)\" and email attr \"(.*)\" and this content :$")
@@ -188,6 +199,29 @@ public class CommonStepDefs extends CucumberStepDefs {
     @Then("^an error is provided with this message :$")
     public void error_message(DocString message) {
         assertErrorMessageContent(message.getContent().trim());
+    }
+
+    @SuppressWarnings("ThrowableNotThrown")
+    @Then("^an error of type (.*) is provided with this message :$")
+    public void error_message(String type, DocString message) {
+        assertErrorMessageType(type);
+        error_message(message);
+    }
+
+    @SuppressWarnings("ThrowableNotThrown")
+    @Then("^an error of type (.*) is provided with this payload :$")
+    public void error_payload(String type, DocString payload) {
+        assertErrorMessageType(type);
+        assertErrorMessagePayload(payload.getContent().trim());
+    }
+
+    @Then("^no error is provided$")
+    public void no_error() {
+        assertThat(currentException).isNull();
+
+        if (currentAction != null) {
+            assertThat(currentAction.andReturn().getResolvedException()).isNull();
+        }
     }
 
     @Then("^the result \"(.*)\" is provided$")

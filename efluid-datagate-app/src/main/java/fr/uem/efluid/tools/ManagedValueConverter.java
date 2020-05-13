@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
 @Component
@@ -312,6 +313,22 @@ public class ManagedValueConverter {
         }
 
         return Collections.emptyList();
+    }
+
+    /**
+     * Process only value names, without processing value content, for faster analysis
+     *
+     * @param internalExtracted a payload from an index entry or a diff preparation
+     * @return all column names referenced in index entry payload, as a stream for inlined processing
+     */
+    public Stream<String> expandInternalValueNames(String internalExtracted) {
+
+        if (internalExtracted != null && !"".equals(internalExtracted)) {
+            return StringSplitter.split(internalExtracted, SEPARATOR).stream()
+                    .map(v -> v.substring(0, v.indexOf(AFFECT)).intern());
+        }
+
+        return Stream.empty();
     }
 
     /**
