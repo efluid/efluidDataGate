@@ -14,6 +14,7 @@ public class TestContextResetHook extends CucumberStepDefs {
     public void resetContext() {
 
         currentAction = null;
+        currentException = null;
         currentStartPage = null;
 
         resetAuthentication();

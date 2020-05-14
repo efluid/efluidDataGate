@@ -25,7 +25,7 @@ import java.util.stream.Stream;
  * <p>The Mapping data are currently ignored</p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v2.0.0
  */
 @Component
@@ -93,10 +93,10 @@ public class VersionContentChangesGenerator {
             List<TableMapping> mappings) {
 
 
-        domains.addAll(DomainChangesBuilder.readDomains(version));
-        dictionary.addAll(DomainChangesBuilder.readDict(version));
-        links.addAll(DomainChangesBuilder.readLinks(version));
-        mappings.addAll(DomainChangesBuilder.readMappings(version));
+        domains.addAll(readDomains(version));
+        dictionary.addAll(readDict(version));
+        links.addAll(readLinks(version));
+        mappings.addAll(readMappings(version));
     }
 
     /**
@@ -381,8 +381,11 @@ public class VersionContentChangesGenerator {
                     c.setLink(c2.getForeignKeyTable() + ":" + c2.getForeignKeyColumn());
                 }
 
+                c.setKey(c2.isKey());
+
                 c.setTypeChange(c.getType());
                 c.setLinkChange(c.getLink());
+                c.setKeyChange(c.isKey());
 
                 c.setChangeType(ChangeType.ADDED);
                 return c;
@@ -446,65 +449,65 @@ public class VersionContentChangesGenerator {
 
             // Use a pair for added or updated
             var associateds = twos.stream().map(t -> Pair.of(t, ones.stream().filter(o -> identityAccess.apply(o).equals(identityAccess.apply(t))).findFirst())).collect(Collectors.toList());
-            associateds.stream().filter(p -> !p.getSecond().isPresent()).map(p -> createGen.apply(p.getFirst())).forEach(changes::add);
+            associateds.stream().filter(p -> p.getSecond().isEmpty()).map(p -> createGen.apply(p.getFirst())).forEach(changes::add);
             associateds.stream().filter(p -> p.getSecond().isPresent()).map(p -> diffGen.apply(p.getFirst(), p.getSecond().get())).forEach(changes::add);
 
             return changes;
         }
-
-        /* ######################## Version content reading processes ####################### */
-
-        static List<FunctionalDomain> readDomains(Version version) {
-
-            if (StringUtils.isEmpty(version.getDomainsContent())) {
-                return Collections.emptyList();
-            }
-
-            return Stream.of(version.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-                FunctionalDomain item = new FunctionalDomain();
-                item.deserialize(s);
-                return item;
-            }).collect(Collectors.toList());
-        }
-
-        static List<DictionaryEntry> readDict(Version version) {
-
-            if (StringUtils.isEmpty(version.getDictionaryContent())) {
-                return Collections.emptyList();
-            }
-
-            return Stream.of(version.getDictionaryContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-                DictionaryEntry item = new DictionaryEntry();
-                item.deserialize(s);
-                return item;
-            }).collect(Collectors.toList());
-        }
-
-        static List<TableLink> readLinks(Version version) {
-
-            if (StringUtils.isEmpty(version.getLinksContent())) {
-                return Collections.emptyList();
-            }
-
-            return Stream.of(version.getLinksContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-                TableLink item = new TableLink();
-                item.deserialize(s);
-                return item;
-            }).collect(Collectors.toList());
-        }
-
-        static List<TableMapping> readMappings(Version version) {
-
-            if (StringUtils.isEmpty(version.getMappingsContent())) {
-                return Collections.emptyList();
-            }
-            return Stream.of(version.getMappingsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
-                TableMapping item = new TableMapping();
-                item.deserialize(s);
-                return item;
-            }).collect(Collectors.toList());
-        }
     }
 
+
+    /* ######################## Version content reading processes ####################### */
+
+    public static List<FunctionalDomain> readDomains(Version version) {
+
+        if (StringUtils.isEmpty(version.getDomainsContent())) {
+            return Collections.emptyList();
+        }
+
+        return Stream.of(version.getDomainsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+            FunctionalDomain item = new FunctionalDomain();
+            item.deserialize(s);
+            return item;
+        }).collect(Collectors.toList());
+    }
+
+    public static List<DictionaryEntry> readDict(Version version) {
+
+        if (StringUtils.isEmpty(version.getDictionaryContent())) {
+            return Collections.emptyList();
+        }
+
+        return Stream.of(version.getDictionaryContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+            DictionaryEntry item = new DictionaryEntry();
+            item.deserialize(s);
+            return item;
+        }).collect(Collectors.toList());
+    }
+
+    public static List<TableLink> readLinks(Version version) {
+
+        if (StringUtils.isEmpty(version.getLinksContent())) {
+            return Collections.emptyList();
+        }
+
+        return Stream.of(version.getLinksContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+            TableLink item = new TableLink();
+            item.deserialize(s);
+            return item;
+        }).collect(Collectors.toList());
+    }
+
+    public static List<TableMapping> readMappings(Version version) {
+
+        if (StringUtils.isEmpty(version.getMappingsContent())) {
+            return Collections.emptyList();
+        }
+        return Stream.of(version.getMappingsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {
+            TableMapping item = new TableMapping();
+            item.deserialize(s);
+            return item;
+        }).collect(Collectors.toList());
+    }
 
 }

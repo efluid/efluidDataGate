@@ -49,17 +49,20 @@ public class Version extends ExportAwareVersion<Project> {
     private String modelIdentity;
 
 
-    @Lob // Stored export of version content - domains, generated at init / import
+    @Lob // Stored export of version content - domains, regenerated at init / import except for commit exports
     private String domainsContent;
 
-    @Lob // Stored export of version content - dict, generated at init / import
+    @Lob // Stored export of version content - dict, regenerated at init / import except for commit exports
     private String dictionaryContent;
 
-    @Lob // Stored export of version content - links, generated at init / import
+    @Lob // Stored export of version content - links, regenerated at init / import except for commit exports
     private String linksContent;
 
-    @Lob // Stored export of version content - mappings, generated at init / import
+    @Lob // Stored export of version content - mappings, regenerated at init / import except for commit exports
     private String mappingsContent;
+
+    @Transient
+    private transient boolean serializeDictionaryContents;
 
     /**
      * @param uuid forced uuid
@@ -213,6 +216,14 @@ public class Version extends ExportAwareVersion<Project> {
         this.mappingsContent = mappingsContent;
     }
 
+    public void setSerializeDictionaryContents(boolean serializeDictionaryContents) {
+        this.serializeDictionaryContents = serializeDictionaryContents;
+    }
+
+    public boolean isSerializeDictionaryContents() {
+        return serializeDictionaryContents;
+    }
+
     /**
      * @see fr.uem.efluid.model.Shared#deserialize(java.lang.String)
      */
@@ -225,7 +236,38 @@ public class Version extends ExportAwareVersion<Project> {
                 .applyLdt("upd", this::setUpdatedTime)
                 .applyString("nam", this::setName)
                 .applyUUID("pro", v -> setProject(new Project(v)))
-                .applyString("idn", this::setModelIdentity);
+                .applyString("idn", this::setModelIdentity)
+                .applyString("ddo", this::setDomainsContent)
+                .applyString("ddi", this::setDictionaryContent)
+                .applyString("dli", this::setLinksContent)
+                .applyString("dma", this::setMappingsContent);
     }
 
+    /**
+     * @return
+     * @see fr.uem.efluid.model.Shared#serialize()
+     */
+    @Override
+    public String serialize() {
+
+        // Variation of export for commit export, with dict content
+        if (this.serializeDictionaryContents) {
+
+            return SharedOutputInputUtils.newJson()
+                    .with("uid", getUuid())
+                    .with("cre", getCreatedTime())
+                    .with("upd", getUpdatedTime())
+                    .with("nam", getName())
+                    .with("pro", getProject().getUuid())
+                    .with("idn", getModelIdentity())
+                    .with("ddo", getDomainsContent())
+                    .with("ddi", getDictionaryContent())
+                    .with("dli", getLinksContent())
+                    .with("dma", getMappingsContent())
+                    .toString();
+        }
+
+        // No content => Default
+        return super.serialize();
+    }
 }

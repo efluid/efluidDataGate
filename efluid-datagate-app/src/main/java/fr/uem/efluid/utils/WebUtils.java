@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  * For REST / WEB needs
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
 public class WebUtils {
@@ -317,6 +317,7 @@ public class WebUtils {
 
         /**
          * For file exports : .par filename build
+         *
          * @param parts
          * @return
          */
@@ -336,6 +337,18 @@ public class WebUtils {
 
         public boolean containsProjectData(ProjectData data, List<ProjectData> mayContain) {
             return mayContain.stream().map(ProjectData::getUuid).anyMatch(p -> data.getUuid().equals(p));
+        }
+
+        /**
+         * For error display when a payload is a multi line string : can transform it using a template-specified
+         * format
+         *
+         * @param payload    single value to split by lines
+         * @param lineFormat formater for each line
+         * @return transforemer value. Should be rendered with th:utext thymeleaf instruction
+         */
+        public String formatMultilinePayload(String payload, String lineFormat) {
+            return Stream.of(payload.split("\n")).map(v -> String.format(lineFormat, v)).collect(Collectors.joining());
         }
     }
 

@@ -1,13 +1,13 @@
 package fr.uem.efluid.cucumber.steps;
 
+import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
-import fr.uem.efluid.model.entities.Commit;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.LobProperty;
-import fr.uem.efluid.model.entities.TransformerDef;
-import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
 import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.tools.VersionContentChangesGenerator;
+import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
@@ -31,8 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PushPullStepDefs extends CucumberStepDefs {
 
     static ExportImportResult<ExportFile> currentExport;
-
-    static Exception currentException;
 
     @When("^the user request an export of all the commits$")
     public void when_export_all_commits() {
@@ -169,6 +167,15 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
         // Test only commit with index content (not reference commits)
         assertThat(commits.stream().filter(c -> c.getIndex() != null && c.getIndex().size() > 0)).hasSize(size);
+    }
+
+    @Then("^the export package contains (.*) version contents$")
+    public void then_export_content_version_size(int size) {
+        assertThat(currentExport).isNotNull();
+        List<Version> versions = readPackageVersions();
+
+        // Check complete versions
+        assertThat(versions).hasSize(size);
     }
 
     @Then("^the exported commit \"(.*)\" is not present in the destination environment$")
@@ -315,6 +322,66 @@ public class PushPullStepDefs extends CucumberStepDefs {
         });
     }
 
+    @Given("^the export package content has this dictionary definition extract for commit \"(.*)\" :$")
+    public void export_contains_version( String commitComment, DataTable data) {
+
+        List<Map<String, String>> content = data.asMaps(String.class, String.class);
+
+        List<Version> versions = readPackageVersions();
+        Optional<Commit> commit = readPackageCommits().stream().filter(c -> c.getComment().equals(commitComment)).findFirst();
+
+        assertThat(commit).isPresent();
+
+        Optional<Version> version = versions.stream().filter(v -> v.getUuid().equals(commit.get().getVersion().getUuid())).findFirst();
+
+        assertThat(version).isPresent();
+        assertThat(version.get().getDictionaryContent()).isNotBlank();
+
+        // Need gen to get extracted content
+        VersionContentChangesGenerator gen = new VersionContentChangesGenerator(
+                null // Query Gen is not used for reading
+        );
+
+        List<DictionaryEntry> contentTables = new ArrayList<>();
+
+        gen.readVersionContent(
+                version.get(),
+                new ArrayList<>(),
+                contentTables, // Will use only tables
+                new ArrayList<>(),
+                new ArrayList<>()
+        );
+
+        List<DictionaryEntry> modelTables = content.stream().map(m ->
+                DataGenerationUtils.entry(
+                        m.get("entry name"),
+                        null,
+                        m.get("select clause"),
+                        m.get("table name"),
+                        m.get("filter clause"),
+                        m.get("key name"),
+                        ColumnType.valueOf(m.get("key type"))
+                )).collect(Collectors.toList());
+
+        assertThat(contentTables).hasSize(modelTables.size());
+
+        contentTables.forEach(t -> {
+            DictionaryEntry model = modelTables.stream()
+                    .filter(d -> d.getParameterName().equals(t.getParameterName()))
+                    .findFirst()
+                    .orElseThrow(() ->
+                            new AssertionError("Cannot find model for table with name \""
+                                    + t.getParameterName() + "\""));
+
+            assertThat(t.getSelectClause()).isEqualTo(model.getSelectClause());
+            assertThat(t.getTableName()).isEqualTo(model.getTableName());
+            assertThat(t.getWhereClause()).isEqualTo(model.getWhereClause());
+            assertThat(t.getKeyName()).isEqualTo(model.getKeyName());
+            assertThat(t.getKeyType()).isEqualTo(model.getKeyType());
+
+        });
+    }
+
     /**
      * Easy access to exported content (reuse internal export, so will not test export process itself)
      *
@@ -346,6 +413,15 @@ public class PushPullStepDefs extends CucumberStepDefs {
         return readPackages().stream()
                 .filter(s -> s.getClass() == TransformerDefPackage.class)
                 .map(p -> (TransformerDefPackage) p)
+                .map(SharedPackage::getContent)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+    }
+
+    private List<Version> readPackageVersions() {
+        return readPackages().stream()
+                .filter(s -> s.getClass() == VersionPackage.class)
+                .map(p -> (VersionPackage) p)
                 .map(SharedPackage::getContent)
                 .flatMap(List::stream)
                 .collect(Collectors.toList());

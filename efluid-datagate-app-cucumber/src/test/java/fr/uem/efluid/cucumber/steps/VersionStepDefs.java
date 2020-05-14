@@ -5,7 +5,7 @@ import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.services.DictionaryManagementService;
-import fr.uem.efluid.services.types.CommitEditData;
+import fr.uem.efluid.services.types.VersionCompare;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -71,7 +71,7 @@ public class VersionStepDefs extends CucumberStepDefs {
         modelDatabase().initVersions(getCurrentUserProject(), Arrays.asList(name), 50);
     }
 
-    @When("^the user add new version \"(.*)\"$")
+    @When("^the user add new version \"(.*)\".*$")
     public void the_user_add_new_version(String name) throws Throwable {
         // Add new
         post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
@@ -88,6 +88,11 @@ public class VersionStepDefs extends CucumberStepDefs {
         // Update is REST only, update page
         get(getCorrespondingLinkForPageName("list of versions"));
 
+    }
+
+    @When("^the user request to compare the version \"(.*)\" with last version$")
+    public void the_user_compare_versions(String version) throws Exception {
+        get("/ui/versions/compare/" + version);
     }
 
     @When("^the user delete version \"(.*)\"$")
@@ -110,7 +115,9 @@ public class VersionStepDefs extends CucumberStepDefs {
 
     @Given("^the version (.*) has no lots")
     public void the_version_x_has_no_lots(String name) throws Throwable {
-        assertThat(this.commitService.getAvailableCommits()).noneMatch((c) -> { return name.equals(c.getVersionName()); } );
+        assertThat(this.commitService.getAvailableCommits()).noneMatch((c) -> {
+            return name.equals(c.getVersionName());
+        });
     }
 
     @Given("^the existing version in destination environment is different$")
@@ -143,7 +150,7 @@ public class VersionStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the current version name is \"(.*)\"$")
-    public void the_current_version_name_is(String name)  {
+    public void the_current_version_name_is(String name) {
 
         VersionData current = this.dictionaryManagementService.getLastVersion();
 
@@ -152,21 +159,21 @@ public class VersionStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the user cannot add a new version$")
-    public void the_user_cannot_add_version()  {
+    public void the_user_cannot_add_version() {
 
         // Use page context property
-        assertModelIsSpecifiedProperty("canCreateVersion", Boolean.class, v -> !v );
+        assertModelIsSpecifiedProperty("canCreateVersion", Boolean.class, v -> !v);
     }
 
     @Then("^the user can add a new version$")
-    public void the_user_can_add_version()  {
+    public void the_user_can_add_version() {
 
         // Use page context property
-        assertModelIsSpecifiedProperty("canCreateVersion", Boolean.class, v -> v );
+        assertModelIsSpecifiedProperty("canCreateVersion", Boolean.class, v -> v);
     }
 
     @Then("^the update date of version \"(.*)\" is updated$")
-    public void the_update_date_of_version_is_updated(String name)   {
+    public void the_update_date_of_version_is_updated(String name) {
 
         Assert.assertNotEquals(initUpdatedTime,
                 modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime());
@@ -223,6 +230,73 @@ public class VersionStepDefs extends CucumberStepDefs {
             assertThat(t.getKeyName()).isEqualTo(model.getKeyName());
             assertThat(t.getKeyType()).isEqualTo(model.getKeyType());
 
+        });
+    }
+
+    @Then("^these domain changes are identified for the dictionary content :$")
+    public void dict_change_domains(DataTable data) {
+
+        List<Map<String, String>> content = data.asMaps(String.class, String.class);
+
+        VersionCompare compare = getCurrentSpecifiedProperty("compare", VersionCompare.class);
+
+        assertThat(compare.getDomainChanges()).hasSize(content.size());
+
+        Map<String, VersionCompare.DomainChanges> domainChanges = compare.getDomainChanges().stream().collect(Collectors.toMap(VersionCompare.DomainChanges::getName, d -> d));
+
+        content.forEach(c -> {
+            VersionCompare.DomainChanges domainChange = domainChanges.get(c.get("domain"));
+            assertThat(domainChange).as("domain %s", c.get("domain")).isNotNull();
+            assertThat(domainChange.getChangeType().name()).as("type of change for domain %s", c.get("domain")).isEqualTo(c.get("change"));
+            assertThat(domainChange.getUnmodifiedTableCount()).as("unmodified table count for domain %s", c.get("domain")).isEqualTo(Long.valueOf(c.get("unmodified table count")));
+        });
+    }
+
+    @Then("^these table changes are identified for the dictionary content :$")
+    public void dict_change_tables(DataTable data) {
+
+        List<Map<String, String>> content = data.asMaps(String.class, String.class);
+
+        VersionCompare compare = getCurrentSpecifiedProperty("compare", VersionCompare.class);
+
+        Map<String, VersionCompare.DomainChanges> domainChanges = compare.getDomainChanges().stream().collect(Collectors.toMap(VersionCompare.DomainChanges::getName, d -> d));
+
+        content.forEach(c -> {
+            VersionCompare.DomainChanges domainChange = domainChanges.get(c.get("domain"));
+            assertThat(domainChange).as("domain %s", c.get("domain")).isNotNull();
+            assertThat(domainChange.getTableChanges().size()).as("table count for domaine %s", c.get("domain")).isEqualTo(content.stream().filter(d -> d.get("domain").equals(c.get("domain"))).count());
+            Optional<VersionCompare.DictionaryTableChanges> tableChange = domainChange.getTableChanges().stream().filter(t -> t.getTableName().equals(c.get("table"))).findFirst();
+            assertThat(tableChange).as("table %s", c.get("table")).isPresent();
+            assertThat(tableChange.get().getChangeType().name()).as("type of change for table %s", c.get("table")).isEqualTo(c.get("change"));
+            assertThat(tableChange.get().getTableNameChange() + " -> " + tableChange.get().getTableName()).as("table change for table %s", c.get("table")).isEqualTo(c.get("table change"));
+            assertThat(tableChange.get().getNameChange() + " -> " + tableChange.get().getName()).as("name change for table %s", c.get("table")).isEqualTo(c.get("name change"));
+            assertThat(tableChange.get().getFilterChange() + " -> " + tableChange.get().getFilter()).as("filter change for table %s", c.get("table")).isEqualTo(c.get("filter change"));
+
+            assertThat(tableChange.get().getColumnChanges().stream().filter(h -> h.getChangeType() != VersionCompare.ChangeType.UNCHANGED).count())
+                    .isEqualTo(Long.valueOf(c.get("column change count")));
+        });
+    }
+
+    @Then("^these column changes are identified for the dictionary content :$")
+    public void dict_change_columns(DataTable data) {
+
+        List<Map<String, String>> content = data.asMaps(String.class, String.class);
+
+        VersionCompare compare = getCurrentSpecifiedProperty("compare", VersionCompare.class);
+
+        Map<String, VersionCompare.DomainChanges> domainChanges = compare.getDomainChanges().stream().collect(Collectors.toMap(VersionCompare.DomainChanges::getName, d -> d));
+
+        content.forEach(c -> {
+            VersionCompare.DomainChanges domainChange = domainChanges.get(c.get("domain"));
+            assertThat(domainChange).as("domain %s", c.get("domain")).isNotNull();
+            Optional<VersionCompare.DictionaryTableChanges> tableChange = domainChange.getTableChanges().stream().filter(t -> t.getTableName().equals(c.get("table"))).findFirst();
+            assertThat(tableChange).as("table %s", c.get("table")).isPresent();
+            assertThat(tableChange.get().getColumnChanges().size()).as("number of columns for table %s", c.get("table")).isEqualTo(content.stream().filter(d -> d.get("column").equals(c.get("column"))).count());
+            Optional<VersionCompare.ColumnChanges> columnChanges = tableChange.get().getColumnChanges().stream().filter(n -> n.getName().equals(c.get("column"))).findFirst();
+            assertThat(columnChanges).as("columns for table %s", c.get("table")).isPresent();
+            assertThat(columnChanges.get().getChangeType().name()).as("type of change for column %s.%s", c.get("table"), c.get("column")).isEqualTo(c.get("change"));
+            assertThat(columnChanges.get().getLinkChange() + " -> " + columnChanges.get().getLinkChange()).as("link change for column %s.%s", c.get("table"), c.get("column")).isEqualTo(c.get("link change"));
+            assertThat(columnChanges.get().isKeyChange() + " -> " + columnChanges.get().isKey()).as("key change for column %s.%s", c.get("table"), c.get("column")).isEqualTo(c.get("key change"));
         });
     }
 }

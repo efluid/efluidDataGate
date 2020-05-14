@@ -86,6 +86,16 @@ public class PreSpecifiedFeatureManager implements FeatureManager {
     }
 
     /**
+     * Mostly for testing purpose : can reset all features from existing environment (config)
+     */
+    @CacheEvict(cacheNames = "features", allEntries = true)
+    public void resetFromEnvironment(){
+        for (Feature feat : Feature.values()) {
+            setFeatureState(feat, this.env.getProperty(feat.getPropertyKey(), Boolean.class, Boolean.FALSE));
+        }
+    }
+
+    /**
      * @return
      * @see fr.uem.efluid.model.repositories.FeatureManager#getAllFeatureStates()
      */

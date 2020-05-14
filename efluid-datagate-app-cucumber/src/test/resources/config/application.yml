@@ -42,6 +42,10 @@ datagate-efluid:
         ## With H2 with need to specify label
         use-label-for-col-name: true
 
+    imports:
+        check-model-version: true
+        check-dictionary-compatibility: false
+
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.cucumber.stubs.TweakedDatabaseIdentifier
@@ -64,7 +68,7 @@ spring:
         password:
         driver-class-name: org.h2.Driver
         hikari:
-            maximum-pool-size: 5
+            maximum-pool-size: 10
 
     flyway:
         enabled: false

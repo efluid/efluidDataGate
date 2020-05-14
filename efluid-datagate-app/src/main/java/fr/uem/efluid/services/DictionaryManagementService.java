@@ -250,15 +250,16 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
     /**
      * <p>
-     *  Function should check if a commit has <strong>VERSION_UUID = The version to delete</strong>
-     *  if it is true the user cannot delete the version otherwise he can delete it.
-     *  </p>
-     * @Author Prescise
+     * Function should check if a commit has <strong>VERSION_UUID = The version to delete</strong>
+     * if it is true the user cannot delete the version otherwise he can delete it.
+     * </p>
+     *
      * @param versionId
      * @return
+     * @Author Prescise
      */
 
-    public Boolean isVersionLinkedToLot(UUID versionId){
+    public Boolean isVersionLinkedToLot(UUID versionId) {
 
         Boolean versionIsLinkedToLot;
 
@@ -956,10 +957,17 @@ public class DictionaryManagementService extends AbstractApplicationService {
         }
 
         // Finally update last version after import
-        Version last = getLastUpdatedVersion();
-        if (last != null) {
-            completeVersionContents(last);
-            this.versions.save(last); // Refresh
+        try {
+            Version last = getLastUpdatedVersion();
+            if (last != null) {
+                completeVersionContents(last);
+                this.versions.save(last); // Refresh
+            }
+        } 
+        
+        // Ignore failure on missing project / version (can occurs with wizzard)
+        catch (ApplicationException e) {
+            LOGGER.warn("Cannot process version update on import - ignore \"{}\"", e.getMessage());
         }
 
         // Details on imported counts (add vs updated items)

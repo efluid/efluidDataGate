@@ -34,6 +34,14 @@ public enum Feature {
     VALIDATE_VERSION_FOR_IMPORT("datagate-efluid.imports.check-model-version"),
 
     /**
+     * <p>
+     * Check the dictionary content compatibility (by using a real dictionary diff for tables concerned by the index content) during import of a commit,
+     * to validate if the import can be processed even if the versions are not compatible
+     * </p>
+     */
+    CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT("datagate-efluid.imports.check-dictionary-compatibility"),
+
+    /**
      * <p>If enabled, the database PK are pre-specified as dictionary entry keys</p>
      */
     SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY("datagate-efluid.dictionary.select-pk-as-default-keys"),

@@ -165,6 +165,35 @@ public class ModelDatabaseAccess {
     }
 
     /**
+     * <p>
+     * Reset some versions for dictionary init in "destination" environment
+     * </p>
+     *
+     * @param project     associated project
+     * @param versionName last version to keep from source environment
+     */
+    public void dropVersionsAfter(Project project, String versionName) {
+
+        AtomicInteger idx = new AtomicInteger(0);
+
+        List<Version> existingVersions = this.versions.findByProject(project);
+
+        boolean noMoreToKeep = false;
+
+        for (Version version : existingVersions) {
+
+            // Drop everything before specified version
+            if (noMoreToKeep) {
+                this.versions.delete(version);
+            } else if (version.getName().equals(versionName)) {
+                noMoreToKeep = true;
+            }
+        }
+
+        this.versions.flush();
+    }
+
+    /**
      * Create a valid transformer. Config is NOT validated
      *
      * @param project     associated project

@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -82,6 +81,8 @@ public abstract class CucumberStepDefs {
     private static final String DEFAULT_WHERE = "1=1";
 
     protected static ResultActions currentAction;
+
+    protected static Exception currentException;
 
     protected static String currentStartPage;
 
@@ -338,12 +339,44 @@ public abstract class CucumberStepDefs {
     }
 
     /**
+     * Check for a specified error type (for managed exceptions only)
+     *
+     * @param expected ErrorType to check
+     */
+    protected static void assertErrorMessageType(String expected) {
+
+        Exception ex = currentException != null ? currentException : currentAction.andReturn().getResolvedException();
+        assertThat(ex).describedAs("An error message was not returned by the application").isNotNull();
+        assertThat(ex).isInstanceOf(ApplicationException.class);
+
+        ApplicationException apx = (ApplicationException) ex;
+
+        assertThat(apx.getError().name()).isEqualTo(expected);
+    }
+
+    /**
+     * Check for a specified error payload (for managed exceptions only)
+     *
+     * @param expected payload to search
+     */
+    protected static void assertErrorMessagePayload(String expected) {
+
+        Exception ex = currentException != null ? currentException : currentAction.andReturn().getResolvedException();
+        assertThat(ex).describedAs("An error message was not returned by the application").isNotNull();
+        assertThat(ex).isInstanceOf(ApplicationException.class);
+
+        ApplicationException apx = (ApplicationException) ex;
+
+        assertThat(apx.getPayload()).contains(expected);
+    }
+
+    /**
      * Check for a specified error (from exception message / payload)
      *
-     * @param expected
+     * @param expected content to search for
      */
     protected static void assertErrorMessageContent(String expected) {
-        Exception ex = currentAction.andReturn().getResolvedException();
+        Exception ex = currentException != null ? currentException : currentAction.andReturn().getResolvedException();
         assertThat(ex).describedAs("An error message was not returned by the application").isNotNull();
         if (ex instanceof ApplicationException) {
             ApplicationException apx = (ApplicationException) ex;

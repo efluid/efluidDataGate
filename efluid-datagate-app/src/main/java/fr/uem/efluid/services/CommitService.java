@@ -6,6 +6,7 @@ import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.FormatUtils;
@@ -30,7 +31,7 @@ import static fr.uem.efluid.utils.ErrorType.*;
  * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 4
  * @since v0.0.1
  */
 @Transactional
@@ -43,6 +44,7 @@ public class CommitService extends AbstractApplicationService {
     public static final String PCKG_LOBS = "lobs";
     public static final String PCKG_ATTACHS = "attachs";
     public static final String PCKG_TRANSFORMERS = "transformers";
+    public static final String PCKG_VERSIONS = "versions";
 
     private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
@@ -95,6 +97,9 @@ public class CommitService extends AbstractApplicationService {
 
     @Autowired
     private ApplicationDetailsService appDetailsService;
+
+    @Autowired
+    private VersionContentChangesGenerator changesGenerator;
 
     public CommitExportEditData initCommitExport(CommitExportEditData.CommitSelectType type, UUID commitUUID) {
 
@@ -272,12 +277,21 @@ public class CommitService extends AbstractApplicationService {
         // Get associated lobs
         List<LobProperty> lobsToExport = loadLobsForCommits(commitsToExport);
 
+        // Get associated versions
+        List<Version> versionsToExport = loadVersionsForCommits(commitsToExport);
+
         // Then export :
         ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
+                // Add customized transformers
                 new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
                         .initWithContent(this.transformerService.getCustomizedTransformerDef(project, preparedExport.getTransformers())),
+                // Add referenced versions (for dict content compatibility check at import)
+                new VersionPackage(PCKG_VERSIONS, LocalDateTime.now()).initWithContent(versionsToExport),
+                // Add selected commit(s)
                 new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
+                // Add lobs associated to commits
                 new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport),
+                // Add all commit attachments
                 new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now())
                         .initWithContent(this.attachments.findByCommitIn(commitsToExport))));
 
@@ -549,6 +563,9 @@ public class CommitService extends AbstractApplicationService {
 
         LOGGER.debug("Asking for an import of commit in piloted preparation context {}", currentPreparation.getIdentifier());
 
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+        Version currentLastVersion = this.versions.getLastVersionForProject(project);
+
         // #1 Load import
         List<SharedPackage<?>> commitPackages = this.exportImportService.importPackages(importFile);
 
@@ -558,17 +575,22 @@ public class CommitService extends AbstractApplicationService {
         // Get package files - commits
         CommitPackage commitPckg = (CommitPackage) commitPackages.stream().filter(p -> p.getClass() == CommitPackage.class).findFirst()
                 .orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
-                        "Import of commits doens't contains the expected package types"));
+                        "Import of commits doens't contains the expected package types - can't found commits"));
 
         // Get package files - lobs
         LobPropertyPackage lobsPckg = (LobPropertyPackage) commitPackages.stream().filter(p -> p.getClass() == LobPropertyPackage.class)
                 .findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
-                        "Import of commits doens't contains the expected package types"));
+                        "Import of commits doens't contains the expected package types - can't found lobs package"));
 
         // Get package files - attachments
         AttachmentPackage attachsPckg = (AttachmentPackage) commitPackages.stream().filter(p -> p.getClass() == AttachmentPackage.class)
                 .findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
-                        "Import of commits doens't contains the expected package types"));
+                        "Import of commits doens't contains the expected package types - can't found attachment package"));
+
+        // Get package files - versions (used ones)
+        VersionPackage versionPckg = (VersionPackage) commitPackages.stream().filter(p -> p.getClass() == VersionPackage.class)
+                .findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
+                        "Import of commits doens't contains the expected package types - can't found version package"));
 
         // Get package files - transformers (optional for compatibility with legacy exports) - apply only if present
         commitPackages.stream().filter(p -> p.getClass() == TransformerDefPackage.class)
@@ -589,52 +611,80 @@ public class CommitService extends AbstractApplicationService {
         // Need to be sorted by create time
         commitPckg.getContent().sort(Comparator.comparing(Commit::getCreatedTime));
 
+        // Prepare referenced version related to commits
+        Map<UUID, Version> referencedVersions = versionPckg.getContent().stream().distinct().collect(Collectors.toMap(Version::getUuid, v -> v));
+
         // Version checking is a dynamic feature
         boolean checkVersion = this.features.isEnabled(Feature.VALIDATE_VERSION_FOR_IMPORT);
+
+        // Dictionary compatibility control
+        boolean checkDictionaryCompatibility = this.features.isEnabled(Feature.CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT);
+
+        // Prepare a listing of errors (will abort full process if any error exists)
+        List<String> errorMessages = new ArrayList<>();
 
         // #4 Process commits, one by one
         for (Commit imported : commitPckg.getContent()) {
 
-            // Referenced version must exist locally if feature enable
+            Version referencedVersion = referencedVersions.get(imported.getVersion().getUuid());
+
+            // Referenced version must exist locally if feature is enabled
             if (checkVersion) {
-                assertImportedCommitHasExpectedVersion(imported);
+                checkImportedCommitHasExpectedVersion(imported, referencedVersion, errorMessages);
             }
 
-            // Check if already stored localy (in "local" or "merged")
-            boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());
+            // For compatibility we need to process the referenced version which has the full content included
+            if (checkDictionaryCompatibility) {
+                checkImportedCommitCompatibilityWithLocalDictionary(imported, referencedVersion, currentLastVersion, errorMessages);
+            }
 
-            // It's a ref : we MUST have it locally (imported as this or merged)
-            if (imported.isRefOnly()) {
+            // Ignore anyway if there is an identified error as we will abort import
+            if (errorMessages.isEmpty()) {
 
-                // Impossible situation
-                if (!hasItLocaly) {
-                    throw new ApplicationException(COMMIT_IMPORT_INVALID,
-                            "Imported package is not compliant : the requested ref commit " + imported.getUuid()
-                                    + " is not imported yet nore merged in local commit base.");
-                }
+                // Check if already stored localy (in "local" or "merged")
+                boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());
 
-                LOGGER.debug("Imported ref commit {} is already managed in local db. As a valid reference, ignore it", imported.getUuid());
+                // It's a ref : we MUST have it locally (imported as this or merged)
+                if (imported.isRefOnly()) {
 
-            } else {
+                    // Impossible situation
+                    if (!hasItLocaly) {
+                        throw new ApplicationException(COMMIT_IMPORT_INVALID,
+                                "Imported package is not compliant : the requested ref commit " + imported.getUuid()
+                                        + " is not imported yet nore merged in local commit base.");
+                    }
 
-                if (hasItLocaly) {
-                    LOGGER.debug("Imported commit {} is already managed in local db. Ignore it", imported.getUuid());
-                }
+                    LOGGER.debug("Imported ref commit {} is already managed in local db. As a valid reference, ignore it", imported.getUuid());
 
-                // This one is not yet imported or merged : keep it for processing
-                else {
-                    LOGGER.debug("Imported commit {} is not yet managed in local db. Will process it", imported.getUuid());
+                } else {
 
-                    toProcess.add(imported);
+                    if (hasItLocaly) {
+                        LOGGER.debug("Imported commit {} is already managed in local db. Ignore it", imported.getUuid());
+                    }
 
-                    // Start time for local diff search
-                    if (timeProcessStart == null) {
-                        timeProcessStart = imported.getCreatedTime();
-                        LOGGER.debug("As the imported commit {} is the first missing one, will use it's time {} to identify"
-                                + " local diff to run", imported.getUuid(), timeProcessStart);
+                    // This one is not yet imported or merged : keep it for processing
+                    else {
+                        LOGGER.debug("Imported commit {} is not yet managed in local db. Will process it", imported.getUuid());
+
+                        toProcess.add(imported);
+
+                        // Start time for local diff search
+                        if (timeProcessStart == null) {
+                            timeProcessStart = imported.getCreatedTime();
+                            LOGGER.debug("As the imported commit {} is the first missing one, will use it's time {} to identify"
+                                    + " local diff to run", imported.getUuid(), timeProcessStart);
+                        }
                     }
                 }
             }
+        }
+
+        // #5 Abort if any check error exist
+        if (errorMessages.size() > 0) {
+            throw new ApplicationException(
+                    MERGE_DICT_NOT_COMPATIBLE,
+                    "Import cannot be processed as some compatibility issues have been identified",
+                    String.join(",\n", errorMessages));
         }
 
         // #5 Get all lobs
@@ -749,6 +799,17 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
+     * @param commitsToExport
+     * @return
+     */
+    private List<Version> loadVersionsForCommits(List<Commit> commitsToExport) {
+        return commitsToExport.stream()
+                .filter(c -> !c.isRefOnly()).map(Commit::getVersion)
+                .peek(v -> v.setSerializeDictionaryContents(true))
+                .collect(Collectors.toList());
+    }
+
+    /**
      * <p>
      * Get rollback specified in one DiffDisplay
      * </p>
@@ -777,13 +838,99 @@ public class CommitService extends AbstractApplicationService {
     /**
      * @param refCommit
      */
-    private void assertImportedCommitHasExpectedVersion(Commit refCommit) {
+    private void checkImportedCommitHasExpectedVersion(Commit refCommit, Version referencedVersion, List<String> errorMessages) {
 
-        Optional<Version> vers = this.versions.findById(refCommit.getVersion().getUuid());
+        Optional<Version> vers = this.versions.findById(referencedVersion.getUuid());
 
-        if (!vers.isPresent()) {
-            throw new ApplicationException(VERSION_NOT_IMPORTED,
-                    "Referenced version " + refCommit.getVersion().getUuid() + " is not managed locally");
+        if (vers.isEmpty()) {
+            errorMessages.add("Referenced version \"" + referencedVersion.getName() + "\" is not managed locally" +
+                    " for commit \"" + refCommit.getComment() + "\" (" + refCommit.getUuid() + ")");
+        }
+    }
+
+    /**
+     * @param refCommit
+     */
+    private void checkImportedCommitCompatibilityWithLocalDictionary(Commit refCommit, Version importedVersion, Version localLastVersion, List<String> errorMessages) {
+
+        // 1 : extract identified tables from imported version dict content
+        Map<UUID, DictionaryEntry> importedTables = VersionContentChangesGenerator.readDict(importedVersion).stream()
+                .collect(Collectors.toMap(DictionaryEntry::getUuid, t -> t));
+
+        // 2 : extract concerned tables and indexes from commit - will process by table (map to table directly)
+        Map<DictionaryEntry, List<IndexEntry>> indexByTables = refCommit.getIndex().stream()
+                .collect(Collectors.groupingBy(IndexEntry::getDictionaryEntryUuid)).entrySet().stream()
+                .collect(Collectors.toMap(e -> importedTables.get(e.getKey()), Map.Entry::getValue));
+
+        // 3 : run a full change generation using dict content in dictionary - will process only concerned items
+        Map<String, VersionCompare.DictionaryTableChanges> allTableChanges = this.changesGenerator.generateChanges(localLastVersion, importedVersion).stream()
+                .flatMap(d -> d.getTableChanges().stream())
+                .collect(Collectors.toMap(VersionCompare.DictionaryTableChanges::getTableName, c -> c));
+
+        // 4 : Check compatibility by table - check referenced entry, keys and columns (consistent order)
+        indexByTables.entrySet().stream()
+                .sorted(Comparator.comparing(e -> e.getKey().getTableName()))
+                .forEach((e) -> checkCommitIndexDictionaryEntryCompatibility(
+                        e.getValue(),
+                        e.getKey(),
+                        refCommit,
+                        allTableChanges,
+                        errorMessages
+                ));
+    }
+
+    /**
+     * Internal check for dictionary compatibility for one set of index from a commit, for a specified dictionary entry,
+     *
+     * @param index                   current index section (for one DictionaryEntry)
+     * @param importedDictionaryEntry current imported DictionaryEntry
+     * @param refCommit               associated commit
+     * @param allTableChanges         all identified changes between commit tables and local tables
+     * @param errorMessages           message holder to complete
+     */
+    private void checkCommitIndexDictionaryEntryCompatibility(
+            List<IndexEntry> index,
+            DictionaryEntry importedDictionaryEntry,
+            Commit refCommit,
+            Map<String, VersionCompare.DictionaryTableChanges> allTableChanges,
+            List<String> errorMessages) {
+
+        Optional<DictionaryEntry> localDictionaryEntry = this.dictionary.findById(importedDictionaryEntry.getUuid());
+
+        // DictionaryEntry is not present at all -> Cannot check changes, and cannot import commit
+        if (localDictionaryEntry.isEmpty()) {
+            LOGGER.error("Incompatibility for import of commit {} \"{}\" : referenced dict entry {} for table \"{}\" doesn't exist locally",
+                    refCommit.getUuid(), refCommit.getComment(), importedDictionaryEntry.getUuid(), importedDictionaryEntry.getTableName());
+            errorMessages.add("Referenced dictionary table \"" + importedDictionaryEntry.getTableName() + "\" is not managed locally");
+        }
+
+        // DictionaryEntry is present : continue to check table / key / column changes
+        else {
+            String tablename = importedDictionaryEntry.getTableName();
+            VersionCompare.DictionaryTableChanges tableChanges = allTableChanges.get(tablename);
+
+            // Check columns adn keys only if the table is identified as changed (= not UNCHANGED here)
+            if (tableChanges.getChangeType() != VersionCompare.ChangeType.UNCHANGED) {
+
+                // Detect all column used in index and check that they are unchanged. If an used column is changed, we cannot import commit
+                this.diffs.extractIndexEntryValueNames(index).stream().sorted().forEach(colName -> {
+                    Optional<VersionCompare.ColumnChanges> columnChanges = tableChanges.getColumnChanges().stream().filter(c -> c.getName().equals(colName)).findFirst();
+                    if (columnChanges.isEmpty() || columnChanges.get().getChangeType() != VersionCompare.ChangeType.UNCHANGED) {
+                        LOGGER.error("Incompatibility for import of commit {} \"{}\" : column \"{}\" for table \"{}\" is different, cannot process data",
+                                refCommit.getUuid(), refCommit.getComment(), colName, tablename);
+                        errorMessages.add("Table \"" + tablename + "\" : column \"" + colName + "\" used for commit \""
+                                + refCommit.getComment() + "\" has been modified");
+                    }
+                });
+
+                // If key has changed, we cannot import commit
+                if (tableChanges.getColumnChanges().stream().filter(c -> c.isKey() || c.isKeyChange()).anyMatch(c -> c.getChangeType() != VersionCompare.ChangeType.UNCHANGED)) {
+                    LOGGER.error("Incompatibility for import of commit {} \"{}\" : key definition for table \"{}\" is different, cannot process data",
+                            refCommit.getUuid(), refCommit.getComment(), tablename);
+                    errorMessages.add("Table \"" + tablename + "\" : key definition used for commit \""
+                            + refCommit.getComment() + "\" has been modified");
+                }
+            }
         }
     }
 
@@ -863,15 +1010,17 @@ public class CommitService extends AbstractApplicationService {
      * @param commitPackages
      */
     private static void assertImportPackageIsValid(List<SharedPackage<?>> commitPackages) {
-        if (commitPackages.size() != 4) {
+        if (commitPackages.size() != 5) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID,
-                    "Import of commits can contain only commit package file + lobs package + attachment package file + a transformer package");
+                    "Import of commits can contain only commit package file + lobs package " +
+                            "+ attachment package file + a transformer package + last version");
         }
 
         if (commitPackages.stream().noneMatch(p -> p instanceof CommitPackage
                 || p instanceof LobPropertyPackage
                 || p instanceof AttachmentPackage
-                || p instanceof TransformerDefPackage)) {
+                || p instanceof TransformerDefPackage
+                || p instanceof VersionPackage)) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types");
         }
     }
