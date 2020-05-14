@@ -91,6 +91,55 @@ Feature: A dictionary is associated to versions
       | Test domain | T_TABLE_BIS | COL_B   | ADDED     | null -> null | false -> false |
       | Test domain | T_TABLE_BIS | COL_A   | ADDED     | null -> null | false -> false |
 
+  Scenario: The version of a dictionary can change and the commits apply update on dictionary as content changes
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | KKK | Two   | Other KKK |
+    And the existing versions "v0"
+    And this dictionary is added to current default domain :
+      | entry name | table name | select clause | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
+    And the user add new version "v1"
+    And a new commit ":construction: Commit on version v1 source" has been saved with all the new identified diff content
+    And this dictionary is modified to current default domain :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v2"
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key | value | other     |
+      | add    | LLL | Three | Other LLL |
+      | add    | MMM | Four  | Other MMM |
+    And a new commit ":construction: Commit on version v2 source" has been saved with all the new identified diff content
+    When the user request an export of all the commits
+    Then the export package contains 2 commit contents
+    And the export package content has these identified changes for commit with name ":construction: Commit on version v1 source" :
+      | Table    | Key | Action | Payload     |
+      | TTAB_ONE | 14  | ADD    | VALUE:'AAA' |
+      | TTAB_ONE | 25  | ADD    | VALUE:'BBB' |
+      | TTAB_ONE | 37  | ADD    | VALUE:'CCC' |
+      | TTAB_ONE | 38  | ADD    | VALUE:'DDD' |
+      | TTAB_ONE | 39  | ADD    | VALUE:'EEE' |
+    And the export package content has these identified changes for commit with name ":construction: Commit on version v2 source" :
+      | Table    | Key | Action | Payload                          |
+      | TTAB_ONE | 14  | UPDATE | VALUE:'AAA', PRESET:'Preset 1'   |
+      | TTAB_ONE | 25  | UPDATE | VALUE:'BBB', PRESET:'Preset 2'   |
+      | TTAB_ONE | 37  | UPDATE | VALUE:'CCC', PRESET:'Preset 3'   |
+      | TTAB_ONE | 38  | UPDATE | VALUE:'DDD', PRESET:'Preset 4'   |
+      | TTAB_ONE | 39  | UPDATE | VALUE:'EEE', PRESET:'Preset 5'   |
+      | TTAB_TWO | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'   |
+      | TTAB_TWO | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'   |
+      | TTAB_TWO | LLL | ADD    | VALUE:'Three', OTHER:'Other LLL' |
+      | TTAB_TWO | MMM | ADD    | VALUE:'Four', OTHER:'Other MMM'  |
+
   Scenario: A version can be updated to mark last changes in dictionary
     Given the existing versions "v1, v2, v3"
     When the user update version "v3"
@@ -142,7 +191,7 @@ Feature: A dictionary is associated to versions
       | III | 444   | Other III |
     And a commit ":construction: Destination commit 1" has been saved with all the new identified diff content in destination environment
     When the user import the available source package
-    Then a merge diff fail with error code VERSION_NOT_IMPORTED
+    Then a merge diff fail with error code MERGE_DICT_NOT_COMPATIBLE
 
   Scenario: The source dictionary version may be missing in destination environment when processing a merge if validation feature is disabled
     Given the existing data in managed table "TTAB_TWO" :
@@ -171,6 +220,7 @@ Feature: A dictionary is associated to versions
       | 37  | CCC   | Preset 3 | CCC       |
       | 38  | DDD   | Preset 4 | DDD       |
       | 39  | EEE   | Preset 5 | EEE       |
+    And the existing versions "v0"
     And this dictionary is added to current default domain :
       | entry name | table name | select clause | filter clause | key name | key type  |
       | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
@@ -178,20 +228,61 @@ Feature: A dictionary is associated to versions
     And this dictionary is modified to current default domain :
       | entry name | table name | select clause             | filter clause | key name | key type  |
       | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
     And the user add new version "v2"
     And a new commit ":construction: Commit on version v2 source" has been saved with all the new identified diff content
-    When the user request an export of the commit with name ":construction: Update 1"
+    When the user request an export of the commit with name ":construction: Commit on version v2 source"
     Then the export package contains 1 commit contents
     And the export package contains 1 version contents
-    And the export package content has these identified changes for commit with name ":construction: Update 1" :
+    And the export package content has these identified changes for commit with name ":construction: Commit on version v2 source" :
       | Table    | Key | Action | Payload                        |
       | TTAB_ONE | 14  | ADD    | VALUE:'AAA', PRESET:'Preset 1' |
       | TTAB_ONE | 25  | ADD    | VALUE:'BBB', PRESET:'Preset 2' |
       | TTAB_ONE | 37  | ADD    | VALUE:'CCC', PRESET:'Preset 3' |
       | TTAB_ONE | 38  | ADD    | VALUE:'DDD', PRESET:'Preset 4' |
       | TTAB_ONE | 39  | ADD    | VALUE:'EEE', PRESET:'Preset 5' |
-    And the export package content has this dictionary definition extract for commit ":construction: Update 1" :
+    And the export package content has this dictionary definition extract for commit ":construction: Commit on version v2 source" :
       | entry name | table name | select clause             | filter clause | key name | key type  |
       | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
       | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+
+  Scenario: The dictionary contents from all referenced versions are included with multi-commits export package
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | KKK | Two   | Other KKK |
+    And the existing versions "v0"
+    And this dictionary is added to current default domain :
+      | entry name | table name | select clause | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
+    And the user add new version "v1"
+    And a new commit ":construction: Commit on version v1 source" has been saved with all the new identified diff content
+    And this dictionary is modified to current default domain :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+    And the user add new version "v2"
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key | value | other     |
+      | add    | LLL | Three | Other LLL |
+      | add    | MMM | Four  | Other MMM |
+    And a new commit ":construction: Commit on version v2 source" has been saved with all the new identified diff content
+    When the user request an export of all the commits
+    Then the export package contains 2 commit contents
+    And the export package contains 2 version contents
+    And the export package content has this dictionary definition extract for commit ":construction: Commit on version v1 source" :
+      | entry name | table name | select clause | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE"   | 1=1           | KEY      | PK_ATOMIC |
+    And the export package content has this dictionary definition extract for commit ":construction: Commit on version v2 source" :
+      | entry name | table name | select clause             | filter clause | key name | key type  |
+      | Table One  | TTAB_ONE   | cur."VALUE", cur."PRESET" | 1=1           | KEY      | PK_ATOMIC |
+      | Table Two  | TTAB_TWO   | cur."VALUE", cur."OTHER"  | 1=1           | KEY      | PK_STRING |
+
 

@@ -323,7 +323,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
     }
 
     @Given("^the export package content has this dictionary definition extract for commit \"(.*)\" :$")
-    public void export_contains_version(DataTable data, String commitComment) {
+    public void export_contains_version( String commitComment, DataTable data) {
 
         List<Map<String, String>> content = data.asMaps(String.class, String.class);
 

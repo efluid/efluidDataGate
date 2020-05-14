@@ -612,7 +612,7 @@ public class CommitService extends AbstractApplicationService {
         commitPckg.getContent().sort(Comparator.comparing(Commit::getCreatedTime));
 
         // Prepare referenced version related to commits
-        Map<UUID, Version> referencedVersions = versionPckg.getContent().stream().collect(Collectors.toMap(Version::getUuid, v -> v));
+        Map<UUID, Version> referencedVersions = versionPckg.getContent().stream().distinct().collect(Collectors.toMap(Version::getUuid, v -> v));
 
         // Version checking is a dynamic feature
         boolean checkVersion = this.features.isEnabled(Feature.VALIDATE_VERSION_FOR_IMPORT);
@@ -853,58 +853,85 @@ public class CommitService extends AbstractApplicationService {
      */
     private void checkImportedCommitCompatibilityWithLocalDictionary(Commit refCommit, Version importedVersion, Version localLastVersion, List<String> errorMessages) {
 
-        // 1 : extract concerned tables and indexes from commit - will process by table
-        Map<UUID, List<IndexEntry>> indexByTables = refCommit.getIndex().stream().collect(Collectors.groupingBy(IndexEntry::getDictionaryEntryUuid));
+        // 1 : extract identified tables from imported version dict content
+        Map<UUID, DictionaryEntry> importedTables = VersionContentChangesGenerator.readDict(importedVersion).stream()
+                .collect(Collectors.toMap(DictionaryEntry::getUuid, t -> t));
 
-        // 2 : run a full change generation using dict content in dictionary - will process only concerned items
+        // 2 : extract concerned tables and indexes from commit - will process by table (map to table directly)
+        Map<DictionaryEntry, List<IndexEntry>> indexByTables = refCommit.getIndex().stream()
+                .collect(Collectors.groupingBy(IndexEntry::getDictionaryEntryUuid)).entrySet().stream()
+                .collect(Collectors.toMap(e -> importedTables.get(e.getKey()), Map.Entry::getValue));
+
+        // 3 : run a full change generation using dict content in dictionary - will process only concerned items
         Map<String, VersionCompare.DictionaryTableChanges> allTableChanges = this.changesGenerator.generateChanges(localLastVersion, importedVersion).stream()
-                .flatMap(d -> d.getTableChanges().stream()).collect(Collectors.toMap(VersionCompare.DictionaryTableChanges::getTableName, c -> c));
+                .flatMap(d -> d.getTableChanges().stream())
+                .collect(Collectors.toMap(VersionCompare.DictionaryTableChanges::getTableName, c -> c));
 
-        // 3 : extract identified tables from imported version dict content
-        Map<UUID, DictionaryEntry> importedTables = VersionContentChangesGenerator.readDict(importedVersion).stream().collect(Collectors.toMap(DictionaryEntry::getUuid, t -> t));
+        // 4 : Check compatibility by table - check referenced entry, keys and columns (consistent order)
+        indexByTables.entrySet().stream()
+                .sorted(Comparator.comparing(e -> e.getKey().getTableName()))
+                .forEach((e) -> checkCommitIndexDictionaryEntryCompatibility(
+                        e.getValue(),
+                        e.getKey(),
+                        refCommit,
+                        allTableChanges,
+                        errorMessages
+                ));
+    }
 
-        // 4 : Check compatibility by table - check referenced entry, keys and columns
-        indexByTables.forEach((tableUuid, index) -> {
+    /**
+     * Internal check for dictionary compatibility for one set of index from a commit, for a specified dictionary entry,
+     *
+     * @param index                   current index section (for one DictionaryEntry)
+     * @param importedDictionaryEntry current imported DictionaryEntry
+     * @param refCommit               associated commit
+     * @param allTableChanges         all identified changes between commit tables and local tables
+     * @param errorMessages           message holder to complete
+     */
+    private void checkCommitIndexDictionaryEntryCompatibility(
+            List<IndexEntry> index,
+            DictionaryEntry importedDictionaryEntry,
+            Commit refCommit,
+            Map<String, VersionCompare.DictionaryTableChanges> allTableChanges,
+            List<String> errorMessages) {
 
-            Optional<DictionaryEntry> localDictionaryEntry = this.dictionary.findById(tableUuid);
-            DictionaryEntry importedDictionaryEntry = importedTables.get(tableUuid);
+        Optional<DictionaryEntry> localDictionaryEntry = this.dictionary.findById(importedDictionaryEntry.getUuid());
 
-            // DictionaryEntry is not present at all -> Cannot check changes, and cannot import commit
-            if (localDictionaryEntry.isEmpty()) {
-                LOGGER.error("Incompatibility for import of commit {} \"{}\" : referenced dict entry {} for table \"{}\" doesn't exist locally",
-                        refCommit.getUuid(), refCommit.getComment(), tableUuid, importedDictionaryEntry.getTableName());
-                errorMessages.add("Referenced dictionary table \"" + importedDictionaryEntry.getTableName() + "\" is not managed locally");
-            }
+        // DictionaryEntry is not present at all -> Cannot check changes, and cannot import commit
+        if (localDictionaryEntry.isEmpty()) {
+            LOGGER.error("Incompatibility for import of commit {} \"{}\" : referenced dict entry {} for table \"{}\" doesn't exist locally",
+                    refCommit.getUuid(), refCommit.getComment(), importedDictionaryEntry.getUuid(), importedDictionaryEntry.getTableName());
+            errorMessages.add("Referenced dictionary table \"" + importedDictionaryEntry.getTableName() + "\" is not managed locally");
+        }
 
-            // DictionaryEntry is present : continue to check table / key / column changes
-            else {
-                String tablename = importedDictionaryEntry.getTableName();
-                VersionCompare.DictionaryTableChanges tableChanges = allTableChanges.get(tablename);
+        // DictionaryEntry is present : continue to check table / key / column changes
+        else {
+            String tablename = importedDictionaryEntry.getTableName();
+            VersionCompare.DictionaryTableChanges tableChanges = allTableChanges.get(tablename);
 
-                // Check columns adn keys only if the table is identified as changed (= not UNCHANGED here)
-                if (tableChanges.getChangeType() != VersionCompare.ChangeType.UNCHANGED) {
+            // Check columns adn keys only if the table is identified as changed (= not UNCHANGED here)
+            if (tableChanges.getChangeType() != VersionCompare.ChangeType.UNCHANGED) {
 
-                    // Detect all column used in index and check that they are unchanged. If an used column is changed, we cannot import commit
-                    this.diffs.extractIndexEntryValueNames(index).forEach(colName -> {
-                        Optional<VersionCompare.ColumnChanges> columnChanges = tableChanges.getColumnChanges().stream().filter(c -> c.getName().equals(colName)).findFirst();
-                        if (columnChanges.isEmpty() || columnChanges.get().getChangeType() != VersionCompare.ChangeType.UNCHANGED) {
-                            LOGGER.error("Incompatibility for import of commit {} \"{}\" : column \"{}\" for table \"{}\" is different, cannot process data",
-                                    refCommit.getUuid(), refCommit.getComment(), colName, tablename);
-                            errorMessages.add("Table \"" + tablename + "\" : column \"" + colName + "\" used for commit \""
-                                    + refCommit.getComment() + "\" has been modified");
-                        }
-                    });
-
-                    // If key has changed, we cannot import commit
-                    if (tableChanges.getColumnChanges().stream().filter(c -> c.isKey() || c.isKeyChange()).anyMatch(c -> c.getChangeType() != VersionCompare.ChangeType.UNCHANGED)) {
-                        LOGGER.error("Incompatibility for import of commit {} \"{}\" : key definition for table \"{}\" is different, cannot process data",
-                                refCommit.getUuid(), refCommit.getComment(), tablename);
-                        errorMessages.add("Table \"" + tablename + "\" : key definition used for commit \""
+                // Detect all column used in index and check that they are unchanged. If an used column is changed, we cannot import commit
+                this.diffs.extractIndexEntryValueNames(index).stream().sorted().forEach(colName -> {
+                    Optional<VersionCompare.ColumnChanges> columnChanges = tableChanges.getColumnChanges().stream().filter(c -> c.getName().equals(colName)).findFirst();
+                    if (columnChanges.isEmpty() || columnChanges.get().getChangeType() != VersionCompare.ChangeType.UNCHANGED) {
+                        LOGGER.error("Incompatibility for import of commit {} \"{}\" : column \"{}\" for table \"{}\" is different, cannot process data",
+                                refCommit.getUuid(), refCommit.getComment(), colName, tablename);
+                        errorMessages.add("Table \"" + tablename + "\" : column \"" + colName + "\" used for commit \""
                                 + refCommit.getComment() + "\" has been modified");
                     }
+                });
+
+                // If key has changed, we cannot import commit
+                if (tableChanges.getColumnChanges().stream().filter(c -> c.isKey() || c.isKeyChange()).anyMatch(c -> c.getChangeType() != VersionCompare.ChangeType.UNCHANGED)) {
+                    LOGGER.error("Incompatibility for import of commit {} \"{}\" : key definition for table \"{}\" is different, cannot process data",
+                            refCommit.getUuid(), refCommit.getComment(), tablename);
+                    errorMessages.add("Table \"" + tablename + "\" : key definition used for commit \""
+                            + refCommit.getComment() + "\" has been modified");
                 }
             }
-        });
+        }
     }
 
     private List<Commit> sortedCommits(Project project) {

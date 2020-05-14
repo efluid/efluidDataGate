@@ -43,7 +43,7 @@ datagate-efluid:
         use-label-for-col-name: true
 
     imports:
-        check-model-version: false
+        check-model-version: true
         check-dictionary-compatibility: false
 
     model-identifier:
@@ -68,7 +68,7 @@ spring:
         password:
         driver-class-name: org.h2.Driver
         hikari:
-            maximum-pool-size: 5
+            maximum-pool-size: 10
 
     flyway:
         enabled: false
