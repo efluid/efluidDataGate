@@ -56,13 +56,12 @@
 			     </tr>
 			</tbody>
 		</table>
-        <div th:insert="~{components/modal :: modal}"></div>
+        <div id="modal" style="display: none" th:insert="~{components/modal :: modal}"></div>
     </span>
     <script layout:fragment="script" th:inline="javascript">
 
 		var noVersionName = /*[[${noVersionName}]]*/ false;
 
-        $('.modal').hide();
 		// Add row button
 		const addButtonAction = () => {
 			hideDisplays();
@@ -108,10 +107,10 @@
 
 		// Delete a  version if it has no lots
 		const deleteButtonAction = (versionId) => {
-		    $('.modal').show();
+		    $('#modal').css("display","block");
 		    $("#submitDelete").on("click",() => {
 		        $.post("/ui/versions/remove/" + versionId, null, (data, status) => {
-		            $('.modal').hide();
+		            $('#modal').css("display","none");
 		            window.location.replace("/ui/versions");
 		        });
 		    });
@@ -119,7 +118,7 @@
 
 		//Hide modal
 		const cancelButton = () => {
-		    $('.modal').hide();
+		    $('#modal').css("display","none");
 		}
 
     	// Init actions
