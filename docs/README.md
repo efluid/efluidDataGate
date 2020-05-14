@@ -23,7 +23,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
   * [Pièces jointes](attachments.md)
   * Export de lots
   * Historique
-  * Import de lots
+  * [Import de lots](commit-pull.md)
   * [Transformation de données](transformer.md)
   * [Les transformers disponibles et leur configuration](transformer-config.md)
   * Mise à jour de lots à l'import
