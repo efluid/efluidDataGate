@@ -47,7 +47,8 @@
 					<p th:case="'MERGE_RESOLUTION_UNKNOWN'">Le cas de resolution de merge donné n'est pas supporté</p>
 					<p th:case="'MERGE_DICT_NOT_COMPATIBLE'">
 						Le dictionnaire utilisée pour le lot importé n'est pas compatible avec le dictionnaire actuel.
-						Les problèmes de compatibilités suivants ont été trouvés : <span th:text="${payload}"></span>
+						<br/><br/><strong>Les problèmes de compatibilités suivants ont été trouvés :</strong>
+						<ul th:utext="${custom.formatMultilinePayload(payload,'<li>%s</li>')}"></ul>
 					</p>
 					<p th:case="'UPLOAD_WRG_DATA'">Le format des données importées n'est pas supporté par l'application</p>
 					<p th:case="'TMP_ERROR'">Le système ne permet pas la préparation du fichier temporaire</p>

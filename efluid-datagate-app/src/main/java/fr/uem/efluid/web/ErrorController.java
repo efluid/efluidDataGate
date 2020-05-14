@@ -2,6 +2,7 @@ package fr.uem.efluid.web;
 
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
+import fr.uem.efluid.utils.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,9 @@ public class ErrorController {
             model.addAttribute("code", ext.getError());
             model.addAttribute("payload", ext.getPayload());
             model.addAttribute("timestamp", ext.getTimestamp());
+
+            WebUtils.addTools(model);
+
         } else {
             model.addAttribute("code", ErrorType.OTHER);
             model.addAttribute("payload", null);
@@ -51,5 +55,4 @@ public class ErrorController {
 
         return "error";
     }
-
 }
