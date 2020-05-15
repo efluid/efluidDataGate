@@ -1,51 +1,58 @@
 package fr.uem.efluid.generation;
 
+import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.Set;
+
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public interface DictionaryGeneratorConfig {
 
-	String AUTO_GEN_DEST_FILE_DESG = "auto";
-	
-	String getSourcePackage();
+    String AUTO_GEN_DEST_FILE_DESG = "auto";
 
-	String getDestinationFolder();
+    String getSourcePackage();
 
-	boolean isProtectColumn();
+    @Nullable
+    Set<Class<?>> getSourceClasses();
 
-	LogFacade getLogger();
-	
-	String getDestinationFileDesignation();
+    String getDestinationFolder();
 
-	boolean isUploadToServer();
-	
-	String getUploadEntryPointUri();
-	
-	String getUploadSecurityToken();
-	
-	String getProjectVersion();
+    boolean isProtectColumn();
 
-	boolean isCheckDuplicateTables();
+    LogFacade getLogger();
 
-	
-	/**
-	 * <p>
-	 * For shared logging using source logger. As in maven plugin process we have to use a
-	 * dedicated logger, this facade allows to log transparently during generation process
-	 * </p>
-	 * 
-	 * @author elecomte
-	 * @since v2.1.0
-	 * @version 1
-	 */
-	interface LogFacade {
+    String getDestinationFileDesignation();
 
-		void debug(CharSequence var1);
+    boolean isUploadToServer();
 
-		void info(CharSequence var1);
+    String getUploadEntryPointUri();
 
-		void error(CharSequence var1, Throwable var2);
-	}
+    String getUploadSecurityToken();
+
+    String getProjectVersion();
+
+    boolean isCheckDuplicateTables();
+
+
+    /**
+     * <p>
+     * For shared logging using source logger. As in maven plugin process we have to use a
+     * dedicated logger, this facade allows to log transparently during generation process
+     * </p>
+     *
+     * @author elecomte
+     * @version 1
+     * @since v2.1.0
+     */
+    interface LogFacade {
+
+        void debug(CharSequence var1);
+
+        void info(CharSequence var1);
+
+        void error(CharSequence var1, Throwable var2);
+    }
 }
