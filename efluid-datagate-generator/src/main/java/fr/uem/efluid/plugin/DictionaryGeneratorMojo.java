@@ -16,6 +16,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -150,6 +151,12 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
     @Override
     public String getSourcePackage() {
         return this.sourcePackage;
+    }
+
+    @Override
+    public Set<Class<?>> getSourceClasses() {
+        // Not supported - null is ok
+        return null;
     }
 
     /**

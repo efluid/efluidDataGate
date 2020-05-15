@@ -10,10 +10,10 @@ import fr.uem.efluid.model.ParameterProjectDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
 import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import javax.annotation.Nullable;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,9 +35,18 @@ public class GeneratorTester {
     private final List<CharSequence> errors = new ArrayList<>();
     private final List<Throwable> errorsExcs = new ArrayList<>();
 
-    private GeneratorTester(String pack) {
 
-        DictionaryGeneratorConfig config = config(pack);
+    private Map<Class<?>, List<FoundTable>> foundTables = new HashMap<>();
+    private Map<Class<?>, List<FoundKey>> foundKeys = new HashMap<>();
+    private Map<Class<?>, List<String>> foundValues = new HashMap<>();
+
+    private Pattern keySearch = Pattern.compile("^Found key (.*) of type (.*) for type (.*)$");
+    private Pattern tableSearch = Pattern.compile("^Found new mapped parameter .* in type (.*) with table (.*) and generated UUID (.*)$");
+    private Pattern valueSearch = Pattern.compile("^Found selected value (.*) for type (.*)$");
+
+    private GeneratorTester(String pack, Class<?>... searchTypes) {
+
+        DictionaryGeneratorConfig config = config(pack, Stream.of(searchTypes).collect(Collectors.toSet()));
         DictionaryGenerator generator = new DictionaryGenerator(config);
         DictionaryExporter exporter = new DictionaryExporter(config);
 
@@ -65,9 +74,16 @@ public class GeneratorTester {
         return new GeneratorTester(pack);
     }
 
-    public GeneratorTester assertThatIdentifiedTablesAre(String... tableNames) {
-        return this;
+    /**
+     * More convenient accessor for readability to avoid managing string package name. Process only given classes
+     *
+     * @param classes any type to process. Only these classes will be used for generator
+     * @return parsed tester
+     */
+    public static GeneratorTester onClasses(Class<?>... classes) {
+        return new GeneratorTester(null, classes);
     }
+
 
     public GeneratorTester assertThatContentWereIdentified() {
         Assert.assertNotNull(this.content);
@@ -84,8 +100,11 @@ public class GeneratorTester {
         return this;
     }
 
-    public GeneratorTester assertFoundTableCountIs(int count) {
-        Assert.assertEquals(count, this.content.getAllTables().size());
+    public GeneratorTester assertFoundTablesAre(String... names) {
+        Assert.assertEquals(names.length, this.content.getAllTables().size());
+        Set<String> foundNames = this.content.getAllTables().stream().map(ParameterTableDefinition::getTableName).collect(Collectors.toSet());
+
+        Assert.assertTrue(Stream.of(names).allMatch(foundNames::contains));
         return this;
     }
 
@@ -94,12 +113,10 @@ public class GeneratorTester {
         return this;
     }
 
-
     public GeneratorTester assertFoundMappingCountIs(int count) {
         Assert.assertEquals(count, this.content.getAllMappings().size());
         return this;
     }
-
 
     public GeneratedTableAssert assertThatTable(String table) {
         return new GeneratedTableAssert(
@@ -123,6 +140,17 @@ public class GeneratorTester {
 
         public GeneratedTableAssert exist() {
             Assert.assertTrue("Table " + tableName + " must exist but doesn't", tableOpt.isPresent());
+            return this;
+        }
+
+        public GeneratedTableAssert wasFoundOn(Class<?> type) {
+
+            GeneratorTester.this.foundTables.get(type).stream()
+                    .filter(t -> t.getName().equals(this.tableName))
+                    .findFirst().orElseThrow(
+                    () -> new AssertionError("Table \"" + this.tableName + "\" was not found onto type " + type.getName())
+            );
+
             return this;
         }
 
@@ -186,7 +214,7 @@ public class GeneratorTester {
             return this;
         }
 
-        public GeneratorTester and(){
+        public GeneratorTester and() {
             return GeneratorTester.this;
         }
 
@@ -218,7 +246,45 @@ public class GeneratorTester {
         }
     }
 
-    private DictionaryGeneratorConfig config(final String packageName) {
+    private static class FoundKey {
+        private final String name;
+        private final ColumnType type;
+
+        private FoundKey(String name, ColumnType type) {
+            this.name = name;
+            this.type = type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public ColumnType getType() {
+            return type;
+        }
+    }
+
+    private static class FoundTable {
+        private final String name;
+        private final UUID uuid;
+
+        private FoundTable(String name, UUID uuid) {
+            this.name = name;
+            this.uuid = uuid;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public UUID getUuid() {
+            return uuid;
+        }
+    }
+
+    // [DEBUG] Found new mapped parameter from set in type fr.uem.efluid.sample.advanced.TypeOnMultipleTablesSecond with table T_TABLE_MUTSECOND_THREE and generated UUID 6b2e9eb3-0000-0000-0000-0000fe2b3363
+
+    private DictionaryGeneratorConfig config(final String packageName, final Set<Class<?>> classes) {
 
         return new DictionaryGeneratorConfig() {
 
@@ -227,12 +293,48 @@ public class GeneratorTester {
                 return packageName;
             }
 
+            @Nullable
+            @Override
+            public Set<Class<?>> getSourceClasses() {
+                return classes;
+            }
+
             @Override
             public LogFacade getLogger() {
                 return new LogFacade() {
 
                     @Override
                     public void debug(CharSequence var1) {
+
+                        try {
+                            Matcher mk = keySearch.matcher(var1);
+
+                            if (mk.matches()) {
+                                FoundKey key = new FoundKey(mk.group(1), ColumnType.valueOf(mk.group(2)));
+                                Class<?> type = Class.forName(mk.group(3));
+                                GeneratorTester.this.foundKeys.computeIfAbsent(type, k -> new ArrayList<>()).add(key);
+                            } else {
+                                Matcher mt = tableSearch.matcher(var1);
+
+                                if (mt.matches()) {
+                                    FoundTable table = new FoundTable(mt.group(2), UUID.fromString(mt.group(3)));
+                                    Class<?> type = Class.forName(mt.group(1));
+                                    GeneratorTester.this.foundTables.computeIfAbsent(type, k -> new ArrayList<>()).add(table);
+                                } else {
+                                    Matcher mv = valueSearch.matcher(var1);
+
+                                    if (mv.matches()) {
+                                        String value = mv.group(1);
+                                        Class<?> type = Class.forName(mv.group(2));
+                                        GeneratorTester.this.foundValues.computeIfAbsent(type, k -> new ArrayList<>()).add(value);
+                                    }
+                                }
+                            }
+
+                        } catch (Exception e) {
+                            System.out.println("[TESTER ERROR] Cannot process debug expression \"" + var1 + "\". Got \"" + e.getMessage() + "\":");
+                            e.printStackTrace();
+                        }
 
                         GeneratorTester.this.debugs.add(var1);
                         System.out.println("[DEBUG] " + var1);

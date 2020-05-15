@@ -25,7 +25,17 @@ public class SampleGenerationTest {
 
         tester.assertThatContentWereIdentified();
         tester.assertFoundDomainsAre("Remarques Efluid", "Entities Efluid");
-        tester.assertFoundTableCountIs(9);
+        tester.assertFoundTablesAre(
+                "T_ETAPE_WFL",
+                "T_ETAPE_WFL_INHER",
+                "T_ETAPE_WFL_SUB",
+                "T_ETAPE_WFL_GEN",
+                "T_CHILD_TABLE_TYPE",
+                "T_CHILD_TABLE_TYPE_CUSTO",
+                "T_CHILD_TABLE_TYPE_DROP",
+                "T_BASIC_ENTITY",
+                "T_OTHER_ENTITY"
+        );
         tester.assertFoundLinkCountIs(0);
         tester.assertFoundMappingCountIs(0);
 
