@@ -1,4 +1,4 @@
-package fr.uem.efluid.tests.ignoreconstants;
+package fr.uem.efluid.tests.ignoreConstants;
 
 import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;

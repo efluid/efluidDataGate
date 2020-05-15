@@ -15,13 +15,13 @@ public class SampleGenerationTest {
     @Test
     public void testCallGenerationOnAll() {
 
-        onPackage("fr.uem.efluid").assertThatContentWereIdentified();
+        onPackage("fr.uem.efluid").generate().assertThatContentWereIdentified();
     }
 
     @Test
     public void testCallGenerationOnRemarks() {
 
-        GeneratorTester tester = onPackage("fr.uem.efluid.sample.remarks");
+        GeneratorTester tester = onPackage("fr.uem.efluid.sample.remarks").generate();
 
         tester.assertThatContentWereIdentified();
         tester.assertFoundDomainsAre("Remarques Efluid", "Entities Efluid");

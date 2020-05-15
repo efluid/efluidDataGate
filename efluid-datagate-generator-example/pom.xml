@@ -36,7 +36,7 @@
 					<protectColumn>true</protectColumn>
 					<sourcePackage>fr.uem.efluid.sample</sourcePackage>
 					<uploadToServer>false</uploadToServer>
-					<uploadEntryPointUri>http://127.0.0.1:8080/rest/v1/dictionary</uploadEntryPointUri>
+					<uploadEntryPointUri>http://127.0.0.1:8080/rest/v1</uploadEntryPointUri>
 					<uploadSecurityToken>afc9921811684c7f88062cd47ddf0ff5</uploadSecurityToken>
 					<projectVersion>${project.version}</projectVersion>
 					<checkDuplicateTables>false</checkDuplicateTables>
@@ -106,6 +106,20 @@
 		<dependency>
 			<groupId>${project.groupId}</groupId>
 			<artifactId>efluid-datagate-generator</artifactId>
+			<version>${project.version}</version>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Spring boot support -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>efluid-datagate-app</artifactId>
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>

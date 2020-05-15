@@ -15,11 +15,11 @@ public class ParameterValueTest {
     public void testConstantsAreIgnored() {
 
         var tester = onClasses(
-                fr.uem.efluid.tests.ignoreconstants.RootType.class
-        );
+                fr.uem.efluid.tests.ignoreConstants.RootType.class
+        ).generate();
 
         tester.assertThatTable("T_ROOT")
-                .wasFoundOn(fr.uem.efluid.tests.ignoreconstants.RootType.class)
+                .wasFoundOn(fr.uem.efluid.tests.ignoreConstants.RootType.class)
                 .hasKey("KEY", ColumnType.STRING)
                 .hasColumns("VALUE", "OTHER")
                 .doesntHaveColumns("CONSTANT_PROPERTY");
@@ -29,12 +29,12 @@ public class ParameterValueTest {
     public void testInheritedConstantsAreIgnored() {
 
         var tester = onClasses(
-                fr.uem.efluid.tests.ignoreconstants.RootType.class,
-                fr.uem.efluid.tests.ignoreconstants.InheritedType.class
-        );
+                fr.uem.efluid.tests.ignoreConstants.RootType.class,
+                fr.uem.efluid.tests.ignoreConstants.InheritedType.class
+        ).generate();
 
         tester.assertThatTable("T_INHERITED")
-                .wasFoundOn(fr.uem.efluid.tests.ignoreconstants.InheritedType.class)
+                .wasFoundOn(fr.uem.efluid.tests.ignoreConstants.InheritedType.class)
                 .hasKey("KEY", ColumnType.STRING)
                 .hasColumns("VALUE", "OTHER", "PROPERTY")
                 .doesntHaveColumns("CONSTANT_PROPERTY", "OTHER_CONSTANT");
