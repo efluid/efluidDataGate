@@ -366,7 +366,6 @@ public class DictionaryController extends CommonController {
     @RequestMapping(value = "/versions/{name}", method = POST)
     @ResponseBody
     public VersionData setVersion(@PathVariable("name") String name) {
-
         this.dictionaryManagementService.setCurrentVersion(name);
         return this.dictionaryManagementService.getLastVersion();
     }
