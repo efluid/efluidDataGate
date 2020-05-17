@@ -1,9 +1,9 @@
 .navbar-brand {
-    height: 35px;
+    height: 80px;
 	background-image: url("/logo.png");
     padding-left: 165px!important;
     background-repeat: no-repeat;
-    background-size: 165px 35px;
+    background-size: 80px 80px;
 }
 
 /* Fixed on new bootstrap */
