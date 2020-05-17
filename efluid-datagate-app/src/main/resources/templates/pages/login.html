@@ -6,42 +6,42 @@
 	<link rel="icon" type="image/png" th:href="@{/favicon.png}"/>
 	<link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/4.4.1-1/css/bootstrap.min.css}"/>
 	<link rel="stylesheet" type="text/css" th:href="@{/css/core.css}"/>
-	<link rel="stylesheet" href="/css/core.css" media="screen"/>
+	<link rel="stylesheet" href="/css/loginPage.css" media="screen"/>
 </head>
 <body>
     <div class="container-fluid" id="app-container">
-    	<nav class="navbar navbar-expand-lg navbar-light bg-light" style="height:56px;">
-            <span class="navbar-brand" ></span>
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<span class="nav-link">Authentification</span>
-			</div>
-		</nav>
         <div class="row app-row"><div class="col-1"><br/></div></div>
-        <div class="row app-row">
-            <div class="col-3"></div>
-            <div class="col-6">
-		    	<span>
-					<div th:if="${error != null}" class="alert alert-danger" role="alert" id="authRemark">
+        <div class="row app-row" id="row-app-login">
+			<div class="col-9" id="container-login">
+			<div class="col-6" id="container-form-login">
+				<div id="container-logo">
+					<div id="logo-login"></div>
+				</div>
+				<h1 style="text-align: center;
+					font-size: 1.25rem;">Authentification</h1>
+		    	<span id="form-login">
+					<div style="font-size: 0.8rem;" th:if="${error != null}" class="alert alert-danger" role="alert" id="authRemark">
 						<strong>Erreur d'authentification</strong> Vérifiez les informations de connexion saisies.
 					</div>
-					<form action="index.html" th:action="@{/callback?client_name=web}" method="post">
-						<div class="form-group">
+					<form action="index.html" th:action="@{/callback?client_name=web}" id="form-item" method="post">
+						<div class="form-group" style="width: 70%;">
 							<label for="username">Login</label>
 							<input type="text" class="form-control" id="username" name="username" size="50"/>
 						</div>
-						<div class="form-group">
+						<div class="form-group" style="width: 70%;">
 							<label for="password">Mot de passe</label>
 							<input type="password" class="form-control" id="password" name="password" size="50"/>
 						</div>
-						<div>
-							<span class="remark">Instance <span th:text="${info.instanceName}">SOURCE</span> - v<span th:text="${info.version}">1</span></span>
-							<button id="nextButton" type="submit" class="btn btn-outline-success btn-sm float-right">Se connecter</button><br/><br/>
+						<div style="display: flex; flex-direction: column;">
+							<button id="nextButton" type="submit" style="width: 120px; align-self: flex-end;" class="btn btn-primary">Se connecter</button><br/><br/>
+							<span class="remark" style="justify-self: flex-start;">Instance <span th:text="${info.instanceName}">SOURCE</span> - v<span th:text="${info.version}">1</span></span>
 						</div>
 					</form>
 			      </span>
 		      <div id="successDisplay" class="alert alert-success" style="display:none">C'est un succès</div>
 		      <div id="errorDisplay" class="alert alert-danger" style="display:none">C'est un echec</div>
 		   </div>
+			</div>
 		</div>
     </div>
 	<script type="text/javascript" th:src="@{/webjars/jquery/3.5.0/jquery.min.js/}"></script>
