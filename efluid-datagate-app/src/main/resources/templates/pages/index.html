@@ -14,16 +14,23 @@
 			<p style="font-size: 4rem;" th:text="${project.name}"></p>
 		</div>
 		<div style="width: 80%; height: 30vh; padding: 10px;background-color: #FFFFFF;box-shadow: 1px 1px 12px #555;overflow: scroll !important; ">
-			<span style=" width: 40%;">
-				<p>Derniers lots de modifications</p>
-				<p>Le</p>
-			</span>
-			<hr>
-			<div style="display: flex; flex-direction: row; justify-content: space-around;" th:each="commit, cstat : ${commits}">
-				<p th:text="${commit.versionName} ? ${commit.versionName} : ${commit.versionModelId}"></p>
-				<p th:text="${custom.format(commit.createdTime)}"></p>
-				<p th:utext="${custom.processGitmoji(commit.comment)}"></p>
-			</div>
+			<table class="table table-sm">
+				<thead>
+				<tr>
+					<th scope="col">Derniers lots de modifications</th>
+					<th scope="col">Le</th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:if="${commits.empty}">
+					<td colspan="100%" class="empty-list-message">Aucun lot existant</td>
+				</tr>
+				<tr th:each="commit, cstat : ${commits}">
+					<td th:utext="${custom.processGitmoji(commit.comment)}">Préchargement configuration</td>
+					<td th:text="${custom.format(commit.createdTime)}">01/11/2017</td>
+				</tr>
+				</tbody>
+			</table>
 		</div>
 	</div>
 	<script layout:fragment="script">
