@@ -9,13 +9,16 @@ import java.time.LocalDateTime;
  */
 public class VersionView {
 
-    private final String name;
+    private String name;
 
-    private final String modelId;
+    private String modelId;
 
-    private final LocalDateTime updatedTime;
+    private LocalDateTime updatedTime;
 
-    private final boolean canUpdate;
+    private boolean canUpdate;
+
+    public VersionView() {
+    }
 
     /**
      * @param name
@@ -28,6 +31,22 @@ public class VersionView {
         this.name = name;
         this.modelId = modelId;
         this.updatedTime = updatedTime;
+        this.canUpdate = canUpdate;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setModelId(String modelId) {
+        this.modelId = modelId;
+    }
+
+    public void setUpdatedTime(LocalDateTime updatedTime) {
+        this.updatedTime = updatedTime;
+    }
+
+    public void setCanUpdate(boolean canUpdate) {
         this.canUpdate = canUpdate;
     }
 

@@ -196,7 +196,8 @@ public class DictionaryGeneratorMojo extends AbstractMojo implements DictionaryG
      */
     @Override
     public String getUploadEntryPointUri() {
-        return this.uploadEntryPointUri;
+        // Support all model where entry point was at /dictionary
+        return this.uploadEntryPointUri.replaceAll("/dictionary", "");
     }
 
     /**

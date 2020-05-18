@@ -1,7 +1,9 @@
 package fr.uem.efluid.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.Application;
 import fr.uem.efluid.rest.RestApi;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.h2.server.web.WebServer;
 import org.h2.tools.Server;
 import org.slf4j.Logger;
@@ -49,6 +51,11 @@ public class WebFeaturesConfig {
     @InitBinder
     public void initBinder(WebDataBinder binder) {
         binder.setAutoGrowCollectionLimit(500000);
+    }
+
+    @Bean
+    ObjectMapper defaultMapper(){
+        return SharedOutputInputUtils.preparedObjectMapper();
     }
 
     @Bean
