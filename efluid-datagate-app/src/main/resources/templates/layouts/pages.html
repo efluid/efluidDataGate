@@ -7,79 +7,15 @@
     <link rel="icon" type="image/png" th:href="@{/favicon.png}"/>
     <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/4.4.1-1/css/bootstrap.min.css}"/>
     <link rel="stylesheet" type="text/css" th:href="@{/css/core.css}"/>
-    <link rel="stylesheet" href="/css/core.css" media="screen"/>
+    <link rel="stylesheet" href="/css/Navbar.css" media="screen"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" />
 </head>
 <body>
     <div class="container-fluid" id="app-container">
         <div class="row app-row">
-            <div class="col-2" style="border: 1px solid #d8e2dc; padding: 0; min-height: 100vh;">
-                <a class="navbar-brand" href="./index.html" th:href="@{/ui/}">&nbsp;</a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                </button>
-
-                <div class="divider-horizontal"></div>
-
-                <div class="collapse navbar-collapse" id="navbarSupportedContent" style="display: flex; justify-content: column;">
-                    <ul class="navbar-nav mr-auto" style="width: 100%;">
-                        <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-                        <div class="pos-f-t">
-                            <span class="navbar" style="display: flex; width: 100%; margin-bottom: 20px; padding-left: 0!important;">
-                                <a style="padding-left: 20px; font-size: 1rem;" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent">Dictionnaire</a>
-                            </span>
-                            <ul id="navbarToggleExternalContent" class="menuLanding collapse" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./versions.html" th:href="@{/ui/versions}">Définition des versions</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./dictionary.html" th:href="@{/ui/dictionary}">Modification du dictionnaire</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./domains.html" th:href="@{/ui/domains}">Configuration des domaines fonctionnels</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./share.html" th:href="@{/ui/share}">Export/Import des dictionnaires</a></li>
-                            </ul>
-                        </div>
-                        <div class="pos-f-t">
-                            <span style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px;">
-                                <a style="padding-left: 20px; font-size: 1rem;" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent2">Lots de modifications</a>
-                            </span>
-                            <ul id="navbarToggleExternalContent2" class="menuLanding collapse" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./history.html" th:href="@{/ui/history}">Historique des requêtes de MAJ</a></li>
-                            </ul>
-                        </div>
-                        <div class="pos-f-t">
-                            <span style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px;">
-                                <a style="padding-left: 20px; font-size: 1rem;" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent3">Projets</a>
-                            </span>
-                            <ul id="navbarToggleExternalContent3" class="menuLanding collapse" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet actuel</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir mes projets préférés</a></li>
-                            </ul>
-                        </div>
-                        <div class="pos-f-t">
-                            <span style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px;">
-                                <a style="padding-left: 20px; font-size: 1rem;" class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggleExternalContent4">Utilisateurs</a>
-                            </span>
-                            <ul id="navbarToggleExternalContent4" class="menuLanding collapse" style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: 170px; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a></li>
-                                <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a></li>
-                            </ul>
-                        </div>
-                    </ul>
-                </div>
-                <span th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light" style="padding: 20px;">
-                    Project actuel :  <a href="./projects_prefered.html" th:href="@{/ui/projects/select}" th:text="${project.name}">RECETTE</a>
-                </span>
-            </div>
+            <div class="col-2" id="colonne-navbar" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
             <div class="col-10" style="padding: 0;">
-                <nav style="display: flex; justify-content: flex-end; height: 50px; background-color: #336DA4!important;" th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
-                    <div class="divider-horizontal"></div>
-                        <form class="form-inline">
-                            <a href="./swagger.html" th:href="@{/swagger}" target="_blank" style="color: white;" type="button">API REST</a>
-                            &nbsp;&nbsp;
-                            <a href="./index.html" th:href="@{/logout?url=/ui}" style="color: white;" type="button">Déconnexion</a>
-                        </form>
-                </nav>
+                <div th:insert="~{layouts/navbar-right :: navbar-right}"></div>
                 <span layout:fragment="content">
 		        <div>Here page content</div>
 		      </span>
@@ -100,6 +36,7 @@
                 $(".menuLanding").hide();
 
     	    	const showMenu = (getMenuClass) => {
+    	    	    console.log('toto');
     	    	    if (show) {
     	    	        $(`#${getMenuClass}`).hide();
     	    	        show = false
