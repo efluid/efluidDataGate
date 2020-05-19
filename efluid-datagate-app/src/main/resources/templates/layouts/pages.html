@@ -13,8 +13,8 @@
 <body>
     <div class="container-fluid" id="app-container" style="height: 80vh;">
         <div class="row app-row">
-            <div class="col-2" style="height: 100vh;" id="colonne-navbar" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
-            <div class="col-10" style="padding: 0!important; overflow: scroll;">
+            <div style="width: 15%; height: 100vh;" id="colonne-navbar" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
+            <div style="width: 85%; padding: 0!important;">
                 <div th:insert="~{layouts/navbar-right :: navbar-right}"></div>
                 <span layout:fragment="content">
 		        <div>Here page content</div>
