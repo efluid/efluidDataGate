@@ -7,77 +7,16 @@
     <link rel="icon" type="image/png" th:href="@{/favicon.png}"/>
     <link rel="stylesheet" type="text/css" th:href="@{/webjars/bootstrap/4.4.1-1/css/bootstrap.min.css}"/>
     <link rel="stylesheet" type="text/css" th:href="@{/css/core.css}"/>
-    <link rel="stylesheet" href="/css/core.css" media="screen"/>
+    <link rel="stylesheet" href="/css/Navbar.css" media="screen"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" />
 </head>
 <body>
     <div class="container-fluid" id="app-container">
-    	<nav th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
-            <a class="navbar-brand" href="./index.html" th:href="@{/ui/}">&nbsp;</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="divider-horizontal"></div>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav mr-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Dictionnaire
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./versions.html" th:href="@{/ui/versions}">Définition des versions</a>
-                            <a class="dropdown-item" href="./dictionary.html" th:href="@{/ui/dictionary}">Modification du dictionnaire</a>
-                            <a class="dropdown-item" href="./domains.html" th:href="@{/ui/domains}">Configuration des domaines fonctionnels</a>
-                            <a class="dropdown-item" href="./share.html" th:href="@{/ui/share}">Export / Import de dictionnaire</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Lot de modification
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a>
-                            <a class="dropdown-item" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a>
-                            <a class="dropdown-item" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a>
-                            <a class="dropdown-item" href="./history.html" th:href="@{/ui/history}">Historique des requêtes de MAJ</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink3" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Projets
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet actuel</a>
-                            <a class="dropdown-item" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a>
-                            <a class="dropdown-item" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir mes projets préférés</a>
-                        </div>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink4" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            Utilisateurs
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a>
-                            <a class="dropdown-item" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a>
-                        </div>
-                    </li>
-                </ul>
-                <form class="form-inline">
-                	<span class="active-project" th:if="${project != null}">
-                        Projet actuel : <a href="./projects_prefered.html" th:href="@{/ui/projects/select}" th:text="${project.name}">RECETTE</a>
-                    </span>
-                    <a href="./swagger.html" th:href="@{/swagger}" target="_blank" class="btn btn-sm btn-primary" type="button">API REST</a>
-                    &nbsp;&nbsp;
-                     <a href="./index.html" th:href="@{/logout?url=/ui}" class="btn btn-sm btn-outline-secondary" type="button">Déconnexion</a>
-                </form>
-            </div>
-        </nav>
-        <div class="row app-row"><div class="col-1">&nbsp;</div></div>
         <div class="row app-row">
-            <div class="col-1"></div>
-            <div class="col-9">
-		       <span layout:fragment="content">
+            <div class="col-2" style="height: 100vh;" id="colonne-navbar" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
+            <div class="col-10">
+                <div th:insert="~{layouts/navbar-right :: navbar-right}"></div>
+                <span layout:fragment="content" style="padding: 20px;">
 		        <div>Here page content</div>
 		      </span>
 		      <div id="successDisplay" class="alert alert-success alert-dismissible" style="display:none">C'est un succès</div>
@@ -89,8 +28,26 @@
     <script type="text/javascript" th:src="@{/webjars/bootstrap/4.4.1-1/js/bootstrap.min.js}"></script>
     <script type="text/javascript" th:src="@{/webjars/popper.js/1.13.0/dist/umd/popper.min.js}"></script>
     <script type="text/javascript" th:src="@{/scripts/utils.js}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     <script layout:fragment="script">
-    	// Page script goes here
+                let show = false;
+                $(".menuLanding").hide();
+
+    	    	const showMenu = (getMenuClass) => {
+    	    	    console.log('toto');
+    	    	    if (show) {
+    	    	        $(`#${getMenuClass}`).hide();
+    	    	        show = false
+    	    	    } else {
+    	    	        $(`#${getMenuClass}`).show();
+    	    	        show = true
+    	    	    }
+    	    	}
+
+    	    	$(document).ready(() => {
+                });
     </script>
 </body>
 </html>
