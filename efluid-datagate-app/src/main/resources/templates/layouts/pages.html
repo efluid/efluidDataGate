@@ -14,9 +14,9 @@
     <div class="container-fluid" id="app-container">
         <div class="row app-row">
             <div class="col-2" style="height: 100vh;" id="colonne-navbar" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
-            <div class="col-10">
+            <div class="col-10" style="padding: 0!important;">
                 <div th:insert="~{layouts/navbar-right :: navbar-right}"></div>
-                <span layout:fragment="content" style="padding: 20px;">
+                <span layout:fragment="content">
 		        <div>Here page content</div>
 		      </span>
 		      <div id="successDisplay" class="alert alert-success alert-dismissible" style="display:none">C'est un succès</div>
