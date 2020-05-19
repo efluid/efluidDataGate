@@ -1,4 +1,4 @@
-<div th:fragment="navbar-left">
+<div th:fragment="navbar-left" style="overflow: scroll;">
     <a class="navbar-brand" href="./index.html" th:href="@{/ui/}">&nbsp;</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     </button>
@@ -8,62 +8,59 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent" style="display: flex; justify-content: column;">
         <ul class="navbar-nav mr-auto" style="width: 100%;">
             <hr style="border-top: 1px solid #d8e2dc; width: 100%;"/>
-            <span class="navbar" style="display: flex; width: 100%; margin-bottom: 20px; padding-left: 0!important;">
-                <a data-toggle="collapse" href="#collapseExample1" aria-expanded="false" aria-controls="collapseExample1" style="padding-left: 20px; font-size: 1rem; color: grey;">
+            <span class="navbar" style="display: flex; width: 100%; margin-top: 10px; margin-bottom: 20px; padding-left: 0!important;">
+                <a data-toggle="collapse" href="#collapseExample1" aria-expanded="false" aria-controls="collapseExample1" style="padding-left: 20px; font-size: 1.1rem; color: grey;">
                     Dictionnaire
                 </a>
             </span>
             <div class="collapse" id="collapseExample1">
                 <div style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: auto; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./versions.html" th:href="@{/ui/versions}">Définition des versions</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./dictionary.html" th:href="@{/ui/dictionary}">Modification du dictionnaire</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./domains.html" th:href="@{/ui/domains}">Configuration des domaines fonctionnels</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./share.html" th:href="@{/ui/share}">Export/Import des dictionnaires</a></li>
+                    <li><a class="lead-nav" href="./versions.html" th:href="@{/ui/versions}">Gestion des versions</a></li>
+                    <li><a class="lead-nav" href="./dictionary.html" th:href="@{/ui/dictionary}">Modifier le dictionnaire</a></li>
+                    <li><a class="lead-nav" href="./domains.html" th:href="@{/ui/domains}">Domaines fonctionnels</a></li>
+                    <li><a class="lead-nav" href="./share.html" th:href="@{/ui/share}">Exporter/Importer</a></li>
                 </div>
             </div>
 
-            <span class="navbar" style="display: flex; width: 100%; margin-bottom: 20px; padding-left: 0!important;">
-                <a data-toggle="collapse" href="#collapseExample2" aria-expanded="false" aria-controls="collapseExample2" style="padding-left: 20px; font-size: 1rem; color: grey;">
+            <span class="navbar" style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px; padding-left: 0!important;">
+                <a data-toggle="collapse" href="#collapseExample2" aria-expanded="false" aria-controls="collapseExample2" style="padding-left: 20px; font-size: 1.1rem; color: grey;">
                     Lot de modifications
                 </a>
             </span>
             <div class="collapse" id="collapseExample2">
                 <div style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: auto; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./history.html" th:href="@{/ui/history}">Historique des requêtes de MAJ</a></li>
+                    <li><a class="lead-nav" href="./commits.html" th:href="@{/ui/commits}">Liste des lots présents</a></li>
+                    <li><a class="lead-nav" href="./prepare.html" th:href="@{/ui/prepare}">Préparer un lot</a></li>
+                    <li><a class="lead-nav" href="./pull.html" th:href="@{/ui/pull}">Importer un lot</a></li>
+                    <li><a class="lead-nav" href="./push.html" th:href="@{/ui/push}">Exporter un lot</a></li>
+                    <li><a class="lead-nav" href="./history.html" th:href="@{/ui/history}">Historique des MAJ</a></li>
                 </div>
             </div>
 
-            <span class="navbar" style="display: flex; width: 100%; margin-bottom: 20px; padding-left: 0!important;">
-                <a data-toggle="collapse" href="#collapseExample3" aria-expanded="false" aria-controls="collapseExample3" style="padding-left: 20px; font-size: 1rem; color: grey;">
+            <span class="navbar" style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px; padding-left: 0!important;">
+                <a data-toggle="collapse" href="#collapseExample3" aria-expanded="false" aria-controls="collapseExample3" style="padding-left: 20px; font-size: 1.1rem; color: grey;">
                     Projets
                 </a>
             </span>
             <div class="collapse" id="collapseExample3">
                 <div style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: auto; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet actuel</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Choisir mes projets préférés</a></li>
+                    <li><a class="lead-nav" href="./transformers_all.html" th:href="@{/ui/transformers}">Transformateurs du projet</a></li>
+                    <li><a class="lead-nav" href="./projects_all.html" th:href="@{/ui/projects}">Gestion des projets</a></li>
+                    <li><a class="lead-nav" href="./projects_prefered.html" th:href="@{/ui/projects/prefered}">Projets préférés</a></li>
                 </div>
             </div>
 
-            <span class="navbar" style="display: flex; width: 100%; margin-bottom: 20px; padding-left: 0!important;">
-                <a data-toggle="collapse" href="#collapseExample4" aria-expanded="false" aria-controls="collapseExample4" style="padding-left: 20px; font-size: 1rem; color: grey;">
+            <span class="navbar" style="display: flex; width: 100%; margin-top: 20px; margin-bottom: 20px; padding-left: 0!important;">
+                <a data-toggle="collapse" href="#collapseExample4" aria-expanded="false" aria-controls="collapseExample4" style="padding-left: 20px; font-size: 1.1rem; color: grey;">
                     Utilisateurs
                 </a>
             </span>
             <div class="collapse" id="collapseExample4">
                 <div style="list-style-type:none; background-color: #F3F8FD; width: 100%; padding: 20px; height: auto; border-top: 1px solid #d8e2dc; border-bottom: 1px solid #d8e2dc;">
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a></li>
-                    <li><a class="lead" style="font-size: 0.8rem; color: grey;" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a></li>
+                    <li><a class="lead-nav" href="./user.html" th:href="@{/ui/user}">Voir mon profil</a></li>
+                    <li><a class="lead-nav" href="./users.html" th:href="@{/ui/users}">Editer les utilisateurs</a></li>
                 </div>
             </div>
         </ul>
     </div>
-    <span th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light" style="padding: 20px;">
-                    Project actuel :  <a href="./projects_prefered.html" th:href="@{/ui/projects/select}" th:text="${project.name}" style="margin-left: 10px">RECETTE</a>
-                </span>
 </div>

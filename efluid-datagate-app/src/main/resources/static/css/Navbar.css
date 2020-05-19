@@ -17,3 +17,8 @@
     border: 1px solid #d8e2dc;
     padding: 0;
 }
+
+.lead-nav {
+    font-size: 0.9rem;
+    color: grey!important;
+}
