@@ -1,5 +1,6 @@
 package fr.uem.efluid.web;
 
+import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.WebUtils;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * @since v0.0.1
  */
 @ControllerAdvice(basePackageClasses = CommonController.class)
-public class ErrorController {
+public class ErrorController extends CommonController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ErrorController.class);
 
@@ -35,6 +36,11 @@ public class ErrorController {
         LOGGER.error("Unprocessed exception found", e);
 
         model.addAttribute("error", e);
+
+        // Includes project (required, even if none specified)
+        if(!controlSelectedProject(model)){
+            model.addAttribute(PROJECT_ATTR, new ProjectData());
+        }
 
         // Code : for message display (can use payload)
         if (e instanceof ApplicationException) {

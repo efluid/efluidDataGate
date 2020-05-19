@@ -378,6 +378,10 @@ public class DictionaryController extends CommonController {
     @GetMapping("/versions/compare/{name}")
     public String compareVersionWithLast(Model model, @PathVariable("name") String name) {
 
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
         VersionCompare compare = this.dictionaryManagementService.compareVersionWithLast(name);
 
         model.addAttribute("compare", compare);
