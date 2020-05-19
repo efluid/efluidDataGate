@@ -26,7 +26,8 @@ import java.util.stream.Stream;
  */
 public class GeneratorTester {
 
-    private final DictionaryContent content;
+    private final DictionaryGeneratorConfig config;
+    private DictionaryContent content;
     private Exception generationException;
     private Exception exportException;
 
@@ -35,6 +36,10 @@ public class GeneratorTester {
     private final List<CharSequence> errors = new ArrayList<>();
     private final List<Throwable> errorsExcs = new ArrayList<>();
 
+    private boolean uploadToServer = false;
+    private String uploadEntryPointUri = "http://127.0.0.1:8080/rest/v1";
+    private String uploadSecurityToken = "afc9921811684c7f88062cd47ddf0ff5";
+    private String projectVersion = "1.2.3";
 
     private Map<Class<?>, List<FoundTable>> foundTables = new HashMap<>();
     private Map<Class<?>, List<FoundKey>> foundKeys = new HashMap<>();
@@ -45,11 +50,16 @@ public class GeneratorTester {
     private Pattern valueSearch = Pattern.compile("^Found selected value (.*) for type (.*)$");
 
     private GeneratorTester(String pack, Class<?>... searchTypes) {
+        this.config = config(pack, Stream.of(searchTypes).collect(Collectors.toSet()));
+    }
 
-        DictionaryGeneratorConfig config = config(pack, Stream.of(searchTypes).collect(Collectors.toSet()));
-        DictionaryGenerator generator = new DictionaryGenerator(config);
-        DictionaryExporter exporter = new DictionaryExporter(config);
+    public GeneratorTester withSpecifiedVersion(String version){
+        this.projectVersion = version;
+        return this;
+    }
 
+    public GeneratorTester generate(){
+        DictionaryGenerator generator = new DictionaryGenerator(this.config);
         DictionaryContent ct;
 
         try {
@@ -61,13 +71,22 @@ public class GeneratorTester {
 
         this.content = ct;
 
-        if (this.content != null) {
-            try {
-                exporter.export(this.content);
-            } catch (Exception e) {
-                this.exportException = e;
-            }
-        }
+        export();
+
+        return this;
+    }
+
+
+
+    public void exportWithUpload(int port, String token) {
+        this.uploadToServer = true;
+        this.uploadEntryPointUri = "http://127.0.0.1:" + port + "/rest/v1";
+        this.uploadSecurityToken = token;
+        export();
+    }
+
+    public UUID getDefaultProjectUuid() {
+        return this.content.getAllProjects().iterator().next().getUuid();
     }
 
     public static GeneratorTester onPackage(String pack) {
@@ -124,6 +143,50 @@ public class GeneratorTester {
                 this.content.getAllTables().stream().filter(t -> t.getTableName().equals(table)).findFirst());
     }
 
+    public GeneratorTester assertNoErrorWasMet() {
+        assertNoGenerationErrorWasMet();
+        assertNoExportErrorWasMet();
+        return this;
+    }
+
+    public GeneratorTester assertNoGenerationErrorWasMet() {
+        if (this.generationException != null) {
+            throw new AssertionError("Generation exceptions was met", generationException);
+        }
+        return this;
+    }
+
+    public GeneratorTester assertNoExportErrorWasMet() {
+        if (this.exportException != null) {
+            throw new AssertionError("Export exceptions was met", exportException);
+        }
+        return this;
+    }
+
+    public UUID getUuidForTable(String table) {
+        return this.content.getAllTables().stream()
+                .filter(t -> t.getTableName().equals(table)).findFirst()
+                .orElseThrow(() -> new AssertionError("Table \"" + table + "\" was not identified, cannot get uuid")).getUuid();
+    }
+
+    public UUID getUuidForDomain(String domain) {
+        return this.content.getAllDomains().stream()
+                .filter(t -> t.getName().equals(domain)).findFirst()
+                .orElseThrow(() -> new AssertionError("Domain \"" + domain + "\" was not identified, cannot get uuid")).getUuid();
+    }
+
+    public void export() {
+        DictionaryExporter exporter = new DictionaryExporter(this.config);
+
+        if (this.content != null) {
+            try {
+                exporter.export(this.content);
+            } catch (Exception e) {
+                this.exportException = e;
+            }
+        }
+    }
+
     @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "OptionalGetWithoutIsPresent"})
     public class GeneratedTableAssert {
         private final String tableName;
@@ -138,7 +201,7 @@ public class GeneratorTester {
             Assert.assertTrue("Table " + tableName + " shouldn't exist but does", tableOpt.isEmpty());
         }
 
-        public GeneratedTableAssert exist() {
+        public GeneratedTableAssert exists() {
             Assert.assertTrue("Table " + tableName + " must exist but doesn't", tableOpt.isPresent());
             return this;
         }
@@ -373,22 +436,22 @@ public class GeneratorTester {
 
             @Override
             public boolean isUploadToServer() {
-                return false;
+                return GeneratorTester.this.uploadToServer;
             }
 
             @Override
             public String getUploadEntryPointUri() {
-                return "http://127.0.0.1:8080/rest/v1/dictionary";
+                return GeneratorTester.this.uploadEntryPointUri;
             }
 
             @Override
             public String getUploadSecurityToken() {
-                return "afc9921811684c7f88062cd47ddf0ff5";
+                return GeneratorTester.this.uploadSecurityToken;
             }
 
             @Override
             public String getProjectVersion() {
-                return "1.2.3";
+                return GeneratorTester.this.projectVersion;
             }
 
             @Override

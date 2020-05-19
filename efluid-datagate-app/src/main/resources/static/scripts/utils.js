@@ -121,6 +121,7 @@ const updateGitmoji = (e, gitmojis) => {
 
 // Common support for gitmojis in a page
 const supportGitmojis = () => {
+    console.log('.////////////////')
     $.getJSON("/gitmoji/gitmojis.json", function (json) {
         $(".gitmoji").each((index, e) => updateGitmoji(e, json.gitmojis));
     });

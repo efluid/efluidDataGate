@@ -27,14 +27,19 @@ datagate-efluid:
        details-index-max: 10000
        combine-similar-diff-after: 10000000
 
+   versions:
+       use-model-id-as-version: false
+
    security:
        salt: 12345678901234567890123456789012
+       accounting: DATABASE
 
    details:
        version: TEST
 
    model-identifier:
-       enabled: false
+       enabled: true
+       class-name: fr.uem.efluid.FixedModelIdentifier
 
 ## TECH FEATURES CUSTOM
 spring:
@@ -63,6 +68,6 @@ spring:
 
 ## WEB SERVER CONFIG
 server:
-    port: 8080
+    port: 80808099
     servlet:
         context-path:

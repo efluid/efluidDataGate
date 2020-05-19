@@ -1,121 +1,128 @@
 package fr.uem.efluid.services.types;
 
-import java.util.UUID;
-
 import fr.uem.efluid.model.entities.DictionaryEntry;
+
+import java.util.UUID;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public final class DictionaryEntrySummary implements Comparable<DictionaryEntrySummary> {
 
-	private final UUID uuid;
+    private final UUID uuid;
 
-	private final UUID domainUuid;
+    private final UUID domainUuid;
 
-	private final String domainName;
+    private final String domainName;
 
-	private final String name;
+    private final String name;
 
-	private final String query;
+    private final String query;
 
-	private boolean canDelete;
+    private final String tableName;
 
-	/**
-	 * @param uuid
-	 * @param domainUuid
-	 * @param domainName
-	 * @param name
-	 * @param query
-	 */
-	public DictionaryEntrySummary(UUID uuid, UUID domainUuid, String domainName, String name, String query) {
-		super();
-		this.uuid = uuid;
-		this.domainUuid = domainUuid;
-		this.domainName = domainName;
-		this.name = name;
-		this.query = query;
-	}
+    private boolean canDelete;
 
-	/**
-	 * @return the uuid
-	 */
-	public UUID getUuid() {
-		return this.uuid;
-	}
+    /**
+     * @param uuid
+     * @param domainUuid
+     * @param domainName
+     * @param name
+     * @param query
+     */
+    public DictionaryEntrySummary(UUID uuid, UUID domainUuid, String domainName, String name, String tableName, String query) {
+        super();
+        this.uuid = uuid;
+        this.domainUuid = domainUuid;
+        this.domainName = domainName;
+        this.name = name;
+        this.tableName = tableName;
+        this.query = query;
+    }
 
-	/**
-	 * @return the domainUuid
-	 */
-	public UUID getDomainUuid() {
-		return this.domainUuid;
-	}
+    /**
+     * @return the uuid
+     */
+    public UUID getUuid() {
+        return this.uuid;
+    }
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return this.name;
-	}
+    /**
+     * @return the domainUuid
+     */
+    public UUID getDomainUuid() {
+        return this.domainUuid;
+    }
 
-	/**
-	 * @return the query
-	 */
-	public String getQuery() {
-		return this.query;
-	}
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return this.name;
+    }
 
-	/**
-	 * @return the domainName
-	 */
-	public String getDomainName() {
-		return this.domainName;
-	}
+    /**
+     * @return the query
+     */
+    public String getQuery() {
+        return this.query;
+    }
 
-	/**
-	 * @return the canDelete
-	 */
-	public boolean isCanDelete() {
-		return this.canDelete;
-	}
+    /**
+     * @return the domainName
+     */
+    public String getDomainName() {
+        return this.domainName;
+    }
 
-	/**
-	 * @param canDelete
-	 *            the canDelete to set
-	 */
-	public void setCanDelete(boolean canDelete) {
-		this.canDelete = canDelete;
-	}
+    public String getTableName() {
+        return tableName;
+    }
 
-	/**
-	 * @param o
-	 * @return
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
-	@Override
-	public int compareTo(DictionaryEntrySummary o) {
+    /**
+     * @return the canDelete
+     */
+    public boolean isCanDelete() {
+        return this.canDelete;
+    }
 
-		int dom = this.getDomainName().compareTo(o.getDomainName());
+    /**
+     * @param canDelete the canDelete to set
+     */
+    public void setCanDelete(boolean canDelete) {
+        this.canDelete = canDelete;
+    }
 
-		if (dom != 0) {
-			return dom;
-		}
+    /**
+     * @param o
+     * @return
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(DictionaryEntrySummary o) {
 
-		return this.getName().compareTo(o.getName());
-	}
+        int dom = this.getDomainName().compareTo(o.getDomainName());
 
-	/**
-	 * @param entity
-	 * @return
-	 */
-	public static DictionaryEntrySummary fromEntity(DictionaryEntry entity, String selectQuery) {
-		return new DictionaryEntrySummary(
-				entity.getUuid(),
-				entity.getDomain().getUuid(),
-				entity.getDomain().getName(),
-				entity.getParameterName(),
-				selectQuery);
-	}
+        if (dom != 0) {
+            return dom;
+        }
+
+        return this.getName().compareTo(o.getName());
+    }
+
+    /**
+     * @param entity
+     * @return
+     */
+    public static DictionaryEntrySummary fromEntity(DictionaryEntry entity, String selectQuery) {
+        return new DictionaryEntrySummary(
+                entity.getUuid(),
+                entity.getDomain().getUuid(),
+                entity.getDomain().getName(),
+                entity.getParameterName(),
+                entity.getTableName(),
+                selectQuery);
+    }
 }

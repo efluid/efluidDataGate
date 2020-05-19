@@ -1,9 +1,11 @@
 package fr.uem.efluid.generation;
 
 import fr.uem.efluid.clients.DictionaryApiClient;
+import fr.uem.efluid.clients.ProjectApiClient;
 import fr.uem.efluid.model.*;
 import fr.uem.efluid.rest.v1.DictionaryApi;
 import fr.uem.efluid.rest.v1.model.CreatedDictionaryView;
+import fr.uem.efluid.rest.v1.model.VersionView;
 import fr.uem.efluid.services.ExportService;
 import fr.uem.efluid.services.types.ExportFile;
 
@@ -13,6 +15,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * <p>Specific process for Dictionary export. Extracted from generator code</p>
@@ -63,6 +70,7 @@ public class DictionaryExporter extends AbstractProcessor {
         // Upload to remote server if asked for
         if (config().isUploadToServer()) {
             uploadExportFile(file);
+            updateProjectVersions(content.getAllProjects(),content.getAllVersions());
         }
     }
 
@@ -99,7 +107,44 @@ public class DictionaryExporter extends AbstractProcessor {
 
         CreatedDictionaryView view = client.uploadDictionaryPackage(file.toMultipartFile());
 
-        getLog().info("Generated dictionary uploaded to " + config().getUploadEntryPointUri() + ". Get result : " + view);
+        VersionView versionView = client.getLastVersion();
+        client.setVersion(versionView.getName());
+
+        getLog().info("Generated dictionary uploaded to " + config().getUploadEntryPointUri() + " and version \""
+                + versionView.getName() + "\" updated. Get result : " + view);
+    }
+
+    /**
+     * @param projects found projects
+     * @param versions all versions, processed by projects
+     * @throws fr.uem.efluid.utils.ApplicationException on call error
+     */
+    private void updateProjectVersions(Collection<ParameterProjectDefinition> projects, Collection<ParameterVersionDefinition> versions) {
+
+        getLog().debug("Will update all pushed versions for " + config().getUploadEntryPointUri());
+
+        Map<String, List<ParameterVersionDefinition>> versionByProjects = versions.stream().collect(Collectors.groupingBy(
+                v -> projects.stream().filter(p -> p.getUuid().equals(v.getProject().getUuid())).findFirst().orElseThrow(
+                        () -> new IllegalArgumentException("Can't found associated project " + v.getProject().getUuid())).getName()
+                )
+        );
+
+        DictionaryApi dictionaryApiClient = new DictionaryApiClient(config().getUploadEntryPointUri(), config().getUploadSecurityToken());
+        ProjectApiClient projectApiClient = new ProjectApiClient(config().getUploadEntryPointUri(), config().getUploadSecurityToken());
+
+        AtomicInteger updated = new AtomicInteger(0);
+
+        projectApiClient.getAvailableProjectDetails().stream().filter(p -> versionByProjects.containsKey(p.getName())).forEach(p -> {
+            projectApiClient.setCurrentActiveProject(p.getUuid().toString());
+
+            versionByProjects.get(p.getName()).forEach(v -> {
+                dictionaryApiClient.setVersion(v.getName());
+                updated.incrementAndGet();
+            });
+        });
+
+        getLog().info("Generated dictionary versions updated to " + config().getUploadEntryPointUri() + ". "
+                + updated.get() + " versions were updated.");
     }
 
 }

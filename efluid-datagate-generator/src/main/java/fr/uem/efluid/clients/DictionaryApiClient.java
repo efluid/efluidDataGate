@@ -25,21 +25,14 @@ import java.util.List;
  * @version 2
  * @since v0.0.1
  */
-public class DictionaryApiClient implements DictionaryApi {
-
-    private final String uri;
-    private final String token;
-    private final RestTemplate template;
+public class DictionaryApiClient extends AbstractApiClient implements DictionaryApi {
 
     /**
-     * @param uri associated entry point
+     * @param uri   associated entry point
      * @param token user technical token
      */
     public DictionaryApiClient(String uri, String token) {
-        this.uri = uri;
-        this.token = token;
-        this.template = new RestTemplate();
-        RestApi.configureMessageConverters(this.template);
+        super(uri, token);
     }
 
     /**
@@ -49,23 +42,7 @@ public class DictionaryApiClient implements DictionaryApi {
      */
     @Override
     public CreatedDictionaryView uploadDictionaryPackage(MultipartFile file) throws ApplicationException {
-
-        try {
-            MultiValueMap<String, Object> data = new LinkedMultiValueMap<>();
-            ByteArrayResource resource = new ByteArrayResource(file.getBytes()) {
-                @Override
-                public String getFilename() {
-                    return file.getName();
-                }
-            };
-            data.add("file", resource);
-
-            HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(data, RestApi.FIXED_UPLOAD_HEADERS);
-            return this.template.postForObject(this.uri + "/upload?token=" + this.token, request, CreatedDictionaryView.class);
-
-        } catch (Exception e) {
-            throw new ApplicationException(ErrorType.WRONG_CLIENT_CALL, "Cannot process call to /updoad", e);
-        }
+       return postFile( "/dictionary/upload" , file, CreatedDictionaryView.class);
     }
 
     /**
@@ -74,14 +51,7 @@ public class DictionaryApiClient implements DictionaryApi {
      */
     @Override
     public void setVersion(String versionName) throws ApplicationException {
-        try {
-            this.template.postForEntity(
-                    this.uri + "/version/" + versionName + "?token=" + this.token,
-                    new HttpEntity<>(null),
-                    String.class);
-        } catch (Exception e) {
-            throw new ApplicationException(ErrorType.WRONG_CLIENT_CALL, "Cannot process call to POST /version", e);
-        }
+        put("/dictionary/version/" + versionName);
     }
 
     /**
@@ -90,13 +60,7 @@ public class DictionaryApiClient implements DictionaryApi {
      */
     @Override
     public VersionView getLastVersion() throws ApplicationException {
-        try {
-            return this.template.getForEntity(
-                    new URI(this.uri + "/version/?token=" + this.token),
-                    VersionView.class).getBody();
-        } catch (Exception e) {
-            throw new ApplicationException(ErrorType.WRONG_CLIENT_CALL, "Cannot process call to GET /version", e);
-        }
+        return get("/dictionary/version/", VersionView.class);
     }
 
     /**
