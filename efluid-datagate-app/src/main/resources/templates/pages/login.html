@@ -13,7 +13,7 @@
         <div class="row app-row"><div class="col-1"><br/></div></div>
         <div class="row app-row" id="row-app-login">
 			<div class="col-11" id="container-login">
-			<div class="col-6" id="container-form-login">
+			<div class="col-5" id="container-form-login">
 				<div id="container-logo">
 					<div id="logo-login"></div>
 				</div>
@@ -34,12 +34,14 @@
 						</div>
 						<div style="display: flex; flex-direction: column;">
 							<button id="nextButton" type="submit" style="width: 120px; align-self: flex-end;" class="btn btn-primary">Se connecter</button><br/><br/>
-							<span class="remark" style="justify-self: flex-start;">Instance <span th:text="${info.instanceName}">SOURCE</span> - v<span th:text="${info.version}">1</span></span>
 						</div>
 					</form>
 			      </span>
-		      <div id="successDisplay" class="alert alert-success" style="display:none">C'est un succès</div>
-		      <div id="errorDisplay" class="alert alert-danger" style="display:none">C'est un echec</div>
+				<div id="successDisplay" class="alert alert-success" style="display:none">C'est un succès</div>
+		      	<div id="errorDisplay" class="alert alert-danger" style="display:none">C'est un echec</div>
+				<footer id="footer-login"d>
+					<span class="remark" style="justify-self: flex-start;">Instance <span th:text="${info.instanceName}">SOURCE</span> - v<span th:text="${info.version}">1</span></span>
+				</footer>
 		   </div>
 			</div>
 		</div>
