@@ -1,3 +1,8 @@
+.datagate-content{
+    display: block;
+    padding: 30px;
+}
+
 /* Fixed on new bootstrap */
 .btn {
     white-space: nowrap;
