@@ -1,7 +1,7 @@
 #logo-login {
     background-image: url("/logo.png");
     background-repeat: no-repeat;
-    background-size: 100px 130px!important;
+    background-size: 90px 130px!important;
     width: 90px;
     height: 150px;
 }
@@ -54,4 +54,10 @@
     background-color: #EDEDED;
     height: 100vh;
     overflow: hidden;
+}
+
+#footer-login {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
 }
