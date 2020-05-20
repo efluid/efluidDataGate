@@ -11,40 +11,29 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" />
 </head>
 <body>
-    <div class="container-fluid" id="app-container" style="height: 80vh;">
-        <div class="row app-row">
-            <div style="width: 15%; height: 100vh;" id="colonne-navbar" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
-            <div style="width: 85%; padding: 0!important;">
-                <div th:insert="~{layouts/navbar-right :: navbar-right}"></div>
-                <span layout:fragment="content">
+<div class="container-fluid" id="app-container" style="height: 80vh;">
+    <div class="row app-row">
+        <div style="width: 15%; height: 100vh;" id="colonne-navbar" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
+        <div style="width: 85%;">
+            <div th:insert="~{layouts/navbar-right :: navbar-right}"></div>
+            <span layout:fragment="content" style="padding: 20px;">
 		        <div>Here page content</div>
 		      </span>
-		      <div id="successDisplay" class="alert alert-success alert-dismissible" style="display:none">C'est un succès</div>
-		      <div id="errorDisplay" class="alert alert-danger alert-dismissible" style="display:none">C'est un echec</div>
-		   </div>
-		</div>
+            <div id="successDisplay" class="alert alert-success alert-dismissible" style="display:none">C'est un succès</div>
+            <div id="errorDisplay" class="alert alert-danger alert-dismissible" style="display:none">C'est un echec</div>
+        </div>
     </div>
-    <script type="text/javascript" th:src="@{/webjars/jquery/3.5.0/jquery.min.js/}"></script>
-    <script type="text/javascript" th:src="@{/webjars/bootstrap/4.4.1-1/js/bootstrap.min.js}"></script>
-    <script type="text/javascript" th:src="@{/webjars/popper.js/1.13.0/dist/umd/popper.min.js}"></script>
-    <script type="text/javascript" th:src="@{/scripts/utils.js}"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script layout:fragment="script">
+</div>
+<script type="text/javascript" th:src="@{/webjars/jquery/3.5.0/jquery.min.js/}"></script>
+<script type="text/javascript" th:src="@{/webjars/bootstrap/4.4.1-1/js/bootstrap.min.js}"></script>
+<script type="text/javascript" th:src="@{/webjars/popper.js/1.13.0/dist/umd/popper.min.js}"></script>
+<script type="text/javascript" th:src="@{/scripts/utils.js}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script layout:fragment="script">
                 let show = false;
                 $(".menuLanding").hide();
-
-    	    	const showMenu = (getMenuClass) => {
-    	    	    console.log('toto');
-    	    	    if (show) {
-    	    	        $(`#${getMenuClass}`).hide();
-    	    	        show = false
-    	    	    } else {
-    	    	        $(`#${getMenuClass}`).show();
-    	    	        show = true
-    	    	    }
-    	    	}
 
     	    	$(document).ready(() => {
                 });

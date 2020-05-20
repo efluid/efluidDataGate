@@ -10,8 +10,10 @@
 			<p th:if="${project != null}">Domaines fonctionnels : <span th:text="${details.domainsCountForProject}">15</span></p>
 			<p>Tables administrées : <span th:text="${details.dictionaryCount}">100</span></p>
 		</div>
-		<div style="display: flex; justify-content: center; align-items: center; width: 40%; height: 30vh;background-color: #FFFFFF;box-shadow: 1px 1px 12px #555; ">
+		<div style="display: flex; justify-content: center; align-items: center; flex-direction: column; width: 40%; height: 30vh;background-color: #FFFFFF;box-shadow: 1px 1px 12px #555; ">
+			<p style="font-size: 1rem;" th:text="'Mon projet'"></p>
 			<p style="font-size: 4rem;" th:text="${project.name}"></p>
+			<a href="./projects_prefered.html" th:href="@{/ui/projects/select}" class="btn btn-primary" type="button" th:text="'Changer de projet'" style="margin-left: 10px;"></a>
 		</div>
 		<div style="width: 80%; height: 30vh; padding: 10px;background-color: #FFFFFF;box-shadow: 1px 1px 12px #555;overflow: scroll !important; ">
 			<table class="table table-sm">
