@@ -11,3 +11,4 @@ Feature: Some features can be managed on application for dynamic updates of beha
       | SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY       | enabled  |
       | USE_MODEL_ID_AS_VERSION_NAME              | disabled |
       | CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT | disabled |
+      | VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT   | disabled |

@@ -287,3 +287,58 @@ Feature: The backlog can be imported and merged with local changes
       Table "TTAB_TWO" : column "VALUE" used for commit ":construction: Commit on version v2 source" has been modified,
       Referenced version "v3" is not managed locally for commit ":construction: Commit on version v3 source"
       """
+
+  Scenario: An option check if referenced commits are not present in destination environment - enabled fail on missing ref
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | KKK | Two   | Other KKK |
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key | value | other     |
+      | add    | LLL | Three | Other LLL |
+      | add    | MMM | Four  | Other MMM |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 1"
+    And the user accesses to the destination environment with the same dictionary
+    And the feature "VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT" is enabled
+    When the user import the available source package
+    Then an error is provided with this message :
+      """txt
+      Imported package is not compliant : the requested ref commit
+      """
+    And no diff is running
+
+  Scenario: An option check if referenced commits are not present in destination environment - disabled allows missing ref
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | KKK | Two   | Other KKK |
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key | value | other     |
+      | add    | LLL | Three | Other LLL |
+      | add    | MMM | Four  | Other MMM |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 1"
+    And the user accesses to the destination environment with the same dictionary
+    And the feature "VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT" is disabled
+    When the user import the available source package
+    Then no error is provided
+    And a merge diff is running
+
+

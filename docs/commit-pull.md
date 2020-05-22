@@ -17,6 +17,7 @@
 1. Lecture du fichier `.par` : extraction des données
 2. Validation du contenu du `.par` et chargement en mémoire de son contenu
 3. Récupération des commits déjà présents sur l'instance courante
+  * Optionnellement (paramètre `datagate-efluid.imports.check-missing-ref-commits`), si un lot référencé par le ou les lots importés (cas de l'export partiel ou du cherry pick) ne sont pas présents locallement, le traitement peut échouer
 4. Traitement uniquement sur les commits non encore importés, 1 par 1 :
   * Processus de vérification du dictionnaire référencé par les commits : 
      * Vérification (optionnelle, activée avec `datagate-efluid.imports.check-model-version`) que toutes les versions de dictionnaire référencées par les commits sont présentes dans la destination à l'identique

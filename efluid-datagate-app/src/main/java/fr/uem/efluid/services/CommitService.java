@@ -620,6 +620,9 @@ public class CommitService extends AbstractApplicationService {
         // Dictionary compatibility control
         boolean checkDictionaryCompatibility = this.features.isEnabled(Feature.CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT);
 
+        // Control on referenced commits - allowing to import on missing ref commits
+        boolean validateMissingRefCommits = this.features.isEnabled(Feature.VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT);
+
         // Prepare a listing of errors (will abort full process if any error exists)
         List<String> errorMessages = new ArrayList<>();
 
@@ -633,7 +636,7 @@ public class CommitService extends AbstractApplicationService {
             if (imported.isRefOnly()) {
 
                 // Impossible situation
-                if (!hasItLocaly) {
+                if (!hasItLocaly && validateMissingRefCommits) {
                     throw new ApplicationException(COMMIT_IMPORT_MISS_REF,
                             "Imported package is not compliant : the requested ref commit " + imported.getUuid()
                                     + " is not imported yet nore merged in local commit base.", imported.getUuid().toString());

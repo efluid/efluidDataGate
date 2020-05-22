@@ -42,6 +42,14 @@ public enum Feature {
     CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT("datagate-efluid.imports.check-dictionary-compatibility"),
 
     /**
+     * <p>
+     * Check if a ref commit (a not exported "ref only" commit for partial export) is present in local instance. If this parameter is `true` then
+     * the merge import will fail as some required commits are not imported
+     * </p>
+     */
+    VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT("datagate-efluid.imports.check-missing-ref-commits"),
+
+    /**
      * <p>If enabled, the database PK are pre-specified as dictionary entry keys</p>
      */
     SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY("datagate-efluid.dictionary.select-pk-as-default-keys"),
