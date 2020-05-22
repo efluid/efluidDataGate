@@ -198,9 +198,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                         Stream.concat(this.dateUpdates.keySet().stream(), this.actorUpdates.keySet().stream()));
             }
 
-            boolean result = this.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
-
-            return result;
+            return this.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
         }
 
         boolean isValueFilterMatches(List<Value> values) {

@@ -348,7 +348,7 @@ public class WebUtils {
          * @return transforemer value. Should be rendered with th:utext thymeleaf instruction
          */
         public String formatMultilinePayload(String payload, String lineFormat) {
-            return Stream.of(payload.split("\n")).map(v -> String.format(lineFormat, v)).collect(Collectors.joining());
+            return payload != null ? Stream.of(payload.split("\n")).map(v -> String.format(lineFormat, v)).collect(Collectors.joining()) : "";
         }
     }
 
