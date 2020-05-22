@@ -415,24 +415,24 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
     public void deserialize(String raw) {
 
         SharedOutputInputUtils.fromJson(raw)
-                .applyUUID("uid", v -> setUuid(v))
-                .applyLdt("cre", v -> setCreatedTime(v))
-                .applyLdt("upd", v -> setUpdatedTime(v))
+                .applyUUID("uid", this::setUuid)
+                .applyLdt("cre", this::setCreatedTime)
+                .applyLdt("upd", this::setUpdatedTime)
                 .applyUUID("dom", v -> setDomain(new FunctionalDomain(v)))
-                .applyString("kna", v -> setKeyName(v))
+                .applyString("kna", this::setKeyName)
                 .applyString("kty", v -> setKeyType(ColumnType.valueOf(v)))
-                .applyString("k1n", v -> setExt1KeyName(v))
+                .applyString("k1n", this::setExt1KeyName)
                 .applyString("k1t", v -> setExt1KeyType(ColumnType.valueOf(v)))
-                .applyString("k2n", v -> setExt2KeyName(v))
+                .applyString("k2n", this::setExt2KeyName)
                 .applyString("k2t", v -> setExt2KeyType(ColumnType.valueOf(v)))
-                .applyString("k3n", v -> setExt3KeyName(v))
+                .applyString("k3n", this::setExt3KeyName)
                 .applyString("k3t", v -> setExt3KeyType(ColumnType.valueOf(v)))
-                .applyString("k4n", v -> setExt4KeyName(v))
+                .applyString("k4n", this::setExt4KeyName)
                 .applyString("k4t", v -> setExt4KeyType(ColumnType.valueOf(v)))
-                .applyString("nam", v -> setParameterName(v))
-                .applyString("sel", v -> setSelectClause(v))
-                .applyString("tab", v -> setTableName(v))
-                .applyString("whe", v -> setWhereClause(v));
+                .applyString("nam", this::setParameterName)
+                .applyString("sel", this::setSelectClause)
+                .applyString("tab", this::setTableName)
+                .applyString("whe", this::setWhereClause);
     }
 
     /**

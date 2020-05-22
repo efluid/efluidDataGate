@@ -1,5 +1,5 @@
 ---
-## PARAMETER MANAGER CONFIG
+### This config is the expected default one for the application ###
 datagate-efluid:
 
     managed-datasource:
@@ -45,6 +45,7 @@ datagate-efluid:
     imports:
         check-model-version: true
         check-dictionary-compatibility: false
+        check-missing-ref-commits: false
 
     model-identifier:
         enabled: true

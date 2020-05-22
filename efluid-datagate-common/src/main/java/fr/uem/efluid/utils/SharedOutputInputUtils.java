@@ -415,6 +415,20 @@ public class SharedOutputInputUtils {
         }
 
         /**
+         * Like <code>applyString</code> but always process even null values
+         *
+         * @param name  property name
+         * @param apply value process
+         * @return reader chain
+         */
+        public OutputJsonPropertiesReader applyNullableString(String name, Consumer<String> apply) {
+
+            apply.accept(getPropertyString(name));
+
+            return this;
+        }
+
+        /**
          * @param name
          * @param apply
          * @return

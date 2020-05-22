@@ -620,50 +620,55 @@ public class CommitService extends AbstractApplicationService {
         // Dictionary compatibility control
         boolean checkDictionaryCompatibility = this.features.isEnabled(Feature.CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT);
 
+        // Control on referenced commits - allowing to import on missing ref commits
+        boolean validateMissingRefCommits = this.features.isEnabled(Feature.VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT);
+
         // Prepare a listing of errors (will abort full process if any error exists)
         List<String> errorMessages = new ArrayList<>();
 
         // #4 Process commits, one by one
         for (Commit imported : commitPckg.getContent()) {
 
-            Version referencedVersion = referencedVersions.get(imported.getVersion().getUuid());
+            // Check if already stored localy (in "local" or "merged")
+            boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());
 
-            // Referenced version must exist locally if feature is enabled
-            if (checkVersion) {
-                checkImportedCommitHasExpectedVersion(imported, referencedVersion, errorMessages);
-            }
+            // It's a ref : we MUST have it locally (imported as this or merged)
+            if (imported.isRefOnly()) {
 
-            // For compatibility we need to process the referenced version which has the full content included
-            if (checkDictionaryCompatibility) {
-                checkImportedCommitCompatibilityWithLocalDictionary(imported, referencedVersion, currentLastVersion, errorMessages);
-            }
+                // Impossible situation
+                if (!hasItLocaly && validateMissingRefCommits) {
+                    throw new ApplicationException(COMMIT_IMPORT_MISS_REF,
+                            "Imported package is not compliant : the requested ref commit " + imported.getUuid()
+                                    + " is not imported yet nore merged in local commit base.", imported.getUuid().toString());
+                }
 
-            // Ignore anyway if there is an identified error as we will abort import
-            if (errorMessages.isEmpty()) {
+                LOGGER.debug("Imported ref commit {} is already managed in local db. As a valid reference, ignore it", imported.getUuid());
 
-                // Check if already stored localy (in "local" or "merged")
-                boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());
+            } else {
 
-                // It's a ref : we MUST have it locally (imported as this or merged)
-                if (imported.isRefOnly()) {
+                if (hasItLocaly) {
+                    LOGGER.debug("Imported commit {} is already managed in local db. Ignore it", imported.getUuid());
+                }
 
-                    // Impossible situation
-                    if (!hasItLocaly) {
-                        throw new ApplicationException(COMMIT_IMPORT_INVALID,
-                                "Imported package is not compliant : the requested ref commit " + imported.getUuid()
-                                        + " is not imported yet nore merged in local commit base.");
+                // This one is not yet imported or merged : keep it for processing
+                else {
+
+                    // For real import, can check version
+                    Version referencedVersion = referencedVersions.get(imported.getVersion().getUuid());
+
+                    // Referenced version must exist locally if feature is enabled
+                    if (checkVersion) {
+                        checkImportedCommitHasExpectedVersion(imported, referencedVersion, errorMessages);
                     }
 
-                    LOGGER.debug("Imported ref commit {} is already managed in local db. As a valid reference, ignore it", imported.getUuid());
-
-                } else {
-
-                    if (hasItLocaly) {
-                        LOGGER.debug("Imported commit {} is already managed in local db. Ignore it", imported.getUuid());
+                    // For compatibility we need to process the referenced version which has the full content included
+                    if (checkDictionaryCompatibility) {
+                        checkImportedCommitCompatibilityWithLocalDictionary(imported, referencedVersion, currentLastVersion, errorMessages);
                     }
 
-                    // This one is not yet imported or merged : keep it for processing
-                    else {
+                    // Ignore anyway if there is an identified error as we will abort import
+                    if (errorMessages.isEmpty()) {
+
                         LOGGER.debug("Imported commit {} is not yet managed in local db. Will process it", imported.getUuid());
 
                         toProcess.add(imported);

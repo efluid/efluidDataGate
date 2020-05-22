@@ -10,10 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -171,9 +168,9 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
 
             // Preload patterns for keys (as this)
             if (this.appliedKeyMatchers == null) {
-                this.appliedKeyMatchers = this.appliedKeyPatterns.stream()
-                        .map(Pattern::compile)
-                        .collect(toList());
+                this.appliedKeyMatchers = this.appliedKeyPatterns != null
+                        ? this.appliedKeyPatterns.stream().map(Pattern::compile).collect(toList())
+                        : Collections.emptyList();
             }
 
             // Continue only if key at least match
@@ -183,7 +180,9 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
 
             // Preload patterns for filter values (get columns and compile)
             if (this.appliedValueColumnMatchers == null) {
-                this.appliedValueColumnMatchers = generatePayloadMatchersFromColumnPatterns(this.appliedValueFilterPatterns.keySet().stream());
+                this.appliedValueColumnMatchers = this.appliedValueFilterPatterns != null
+                        ? generatePayloadMatchersFromColumnPatterns(this.appliedValueFilterPatterns.keySet().stream())
+                        : Collections.emptyList();
             }
 
             // Continue only if value pattern may match (check that column at least exists)
@@ -195,20 +194,24 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
             // Preload patterns for date and actor updates (get columns and compile)
             if (this.appliedUpdateColumnMatchers == null) {
                 this.appliedUpdateColumnMatchers = generatePayloadMatchersFromColumnPatterns(
-                        Stream.concat(this.dateUpdates.keySet().stream(), this.actorUpdates.keySet().stream()));
+                        Stream.concat(
+                                this.dateUpdates != null ? this.dateUpdates.keySet().stream() : Stream.empty(),
+                                this.actorUpdates != null ? this.actorUpdates.keySet().stream() : Stream.empty()
+                        ));
             }
 
-            boolean result = this.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
-
-            return result;
+            return this.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
         }
 
         boolean isValueFilterMatches(List<Value> values) {
             if (this.appliedValueFilterMatchers == null) {
-                this.appliedValueFilterMatchers = this.appliedValueFilterPatterns.entrySet().stream()
-                        .collect(groupingBy(
-                                Map.Entry::getKey,
-                                mapping(e -> Pattern.compile(e.getValue()), toList())));
+                this.appliedValueFilterMatchers =
+                        this.appliedValueFilterPatterns != null
+                                ? this.appliedValueFilterPatterns.entrySet().stream()
+                                .collect(groupingBy(
+                                        Map.Entry::getKey,
+                                        mapping(e -> Pattern.compile(e.getValue()), toList())))
+                                : new HashMap<>();
             }
 
             // Match all if no filter
@@ -268,16 +271,20 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
 
             String currentTime = FormatUtils.format(LocalDateTime.now());
 
-            Map<Pattern, String> replacements = new HashMap<>(config.getActorUpdates().entrySet().stream().collect(
-                    Collectors.toMap(e -> Pattern.compile(e.getKey()), Map.Entry::getValue)));
+            Map<Pattern, String> replacements = config.getActorUpdates() != null
+                    ? new HashMap<>(config.getActorUpdates().entrySet().stream().collect(
+                    Collectors.toMap(e -> Pattern.compile(e.getKey()), Map.Entry::getValue)))
+                    : new HashMap<>();
 
-            config.getDateUpdates().forEach((k, v) -> {
-                if (CURRENT_DATE_EXPR.equals(v)) {
-                    replacements.put(Pattern.compile(k), currentTime);
-                } else {
-                    replacements.put(Pattern.compile(k), FormatUtils.format(FormatUtils.parseLd(v).atStartOfDay()));
-                }
-            });
+            if (config.getDateUpdates() != null) {
+                config.getDateUpdates().forEach((k, v) -> {
+                    if (CURRENT_DATE_EXPR.equals(v)) {
+                        replacements.put(Pattern.compile(k), currentTime);
+                    } else {
+                        replacements.put(Pattern.compile(k), FormatUtils.format(FormatUtils.parseLd(v).atStartOfDay()));
+                    }
+                });
+            }
 
             return replacements;
         }
