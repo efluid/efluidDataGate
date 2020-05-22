@@ -311,6 +311,8 @@ public class WebUtils {
      */
     public static class Formatter {
 
+        private static final String MULTI_PAYLOAD_FORMAT = "<li>%s</li>";
+
         public String format(LocalDateTime date) {
             return FormatUtils.format(date);
         }
@@ -340,15 +342,13 @@ public class WebUtils {
         }
 
         /**
-         * For error display when a payload is a multi line string : can transform it using a template-specified
-         * format
+         * For error display when a payload is a multi line string : can transform it to list of values
          *
          * @param payload    single value to split by lines
-         * @param lineFormat formater for each line
          * @return transforemer value. Should be rendered with th:utext thymeleaf instruction
          */
-        public String formatMultilinePayload(String payload, String lineFormat) {
-            return payload != null ? Stream.of(payload.split("\n")).map(v -> String.format(lineFormat, v)).collect(Collectors.joining()) : "";
+        public String formatMultilinePayload(String payload) {
+            return payload != null ? Stream.of(payload.split("\n")).map(v -> String.format(MULTI_PAYLOAD_FORMAT, v)).collect(Collectors.joining()) : "";
         }
     }
 

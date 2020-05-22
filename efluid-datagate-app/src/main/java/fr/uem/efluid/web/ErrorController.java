@@ -42,14 +42,14 @@ public class ErrorController extends CommonController {
             model.addAttribute(PROJECT_ATTR, new ProjectData());
         }
 
+        WebUtils.addTools(model);
+
         // Code : for message display (can use payload)
         if (e instanceof ApplicationException) {
             ApplicationException ext = (ApplicationException) e;
             model.addAttribute("code", ext.getError());
             model.addAttribute("payload", ext.getPayload());
             model.addAttribute("timestamp", ext.getTimestamp());
-
-            WebUtils.addTools(model);
 
         } else {
             model.addAttribute("code", ErrorType.OTHER);

@@ -10,6 +10,7 @@
 					<p th:case="'PREPARATION_CANNOT_START'">Impossible de démarrer un diff quand un traitement est déjà en cours</p>
 					<p th:case="'UNSUPPORTED_UUID'">L'identifiant uuid indiqué n'est pas valide</p>
 					<p th:case="'COMMIT_IMPORT_INVALID'">Le fichier d'import de lot de modification n'est pas valide ou référence des données inconnues</p>
+					<p th:case="'COMMIT_IMPORT_MISS_REF'">Le fichier d'import référence au moins un lot de modification référencé non encore importé localement (lot manquant identifié : id <span th:text="${payload}">123</span>)</p>
 					<p th:case="'COMMIT_EXISTS'">Le lot de préparation indiqué n'existe pas</p>
 					<p th:case="'COMMIT_MISS_COMMENT'">Le commentaire est obligatoire lors de l'enregistrement d'un lot</p>
 					<p th:case="'METADATA_WRONG_SCHEMA'">
@@ -48,7 +49,7 @@
 					<p th:case="'MERGE_DICT_NOT_COMPATIBLE'">
 						Le dictionnaire utilisée pour le lot importé n'est pas compatible avec le dictionnaire actuel.
 						<br/><br/><strong>Les problèmes de compatibilités suivants ont été trouvés :</strong>
-						<ul th:utext="${custom.formatMultilinePayload(payload,'<li>%s</li>')}"></ul>
+						<ul th:if="${payload != null}" th:utext="${custom.formatMultilinePayload(payload)}"></ul>
 					</p>
 					<p th:case="'UPLOAD_WRG_DATA'">Le format des données importées n'est pas supporté par l'application</p>
 					<p th:case="'TMP_ERROR'">Le système ne permet pas la préparation du fichier temporaire</p>
