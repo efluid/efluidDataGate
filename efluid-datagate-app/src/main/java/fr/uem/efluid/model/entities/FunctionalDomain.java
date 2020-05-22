@@ -151,10 +151,10 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
     public void deserialize(String raw) {
 
         SharedOutputInputUtils.fromJson(raw)
-                .applyUUID("uid", v -> setUuid(v))
-                .applyLdt("cre", v -> setCreatedTime(v))
-                .applyLdt("upd", v -> setUpdatedTime(v))
-                .applyString("nam", v -> setName(v))
+                .applyUUID("uid", this::setUuid)
+                .applyLdt("cre", this::setCreatedTime)
+                .applyLdt("upd", this::setUpdatedTime)
+                .applyString("nam", this::setName)
                 .applyUUID("pro", v -> setProject(new Project(v)));
     }
 

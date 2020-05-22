@@ -151,6 +151,8 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
     /**
      * Configuration spec. Specified as json
+     *
+     * <b>When defining a new TransformerConfig type you must take care that Collection / array properties can be null after deserialization on destination environment</b>
      */
     @JsonInclude(NON_NULL)
     public static abstract class TransformerConfig {

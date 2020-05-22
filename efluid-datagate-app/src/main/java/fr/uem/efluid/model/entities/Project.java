@@ -137,10 +137,10 @@ public class Project extends ExportAwareProject {
 	public void deserialize(String raw) {
 
 		SharedOutputInputUtils.fromJson(raw)
-				.applyUUID("uid", v -> setUuid(v))
-				.applyLdt("cre", v -> setCreatedTime(v))
-				.applyString("nam", v -> setName(v))
-				.applyInt("col", v -> setColor(v));
+				.applyUUID("uid", this::setUuid)
+				.applyLdt("cre", this::setCreatedTime)
+				.applyString("nam", this::setName)
+				.applyInt("col", this::setColor);
 	}
 
 }
