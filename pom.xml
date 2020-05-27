@@ -49,7 +49,6 @@
     </scm>
 
     <modules>
-        <module>scripts/installeur</module>
         <module>efluid-datagate-common</module>
         <module>efluid-datagate-api</module>
         <module>efluid-datagate-app</module>
