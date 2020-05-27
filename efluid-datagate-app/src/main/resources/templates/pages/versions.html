@@ -34,13 +34,13 @@
 				<tr th:if="${versions.empty}">
 					<td colspan="100%" class="empty-list-message">Aucune version</td>
 				</tr>
-                <tr th:each="version : ${versions}" th:id="${version.uuid}">
-                     <td class="version-name" th:text="${version.name}">
+                <tr th:each="version : ${versions}" th:id="${version.name}">
+                     <td class="version-name" th:text="${version.name}" name="${version.name}">
                      	1.2.5-SNAPSHOT
                      </td>
                      <td th:if="!${noVersionName}" th:text="${version.modelId}">1.2.3</td>
                      <td th:text="${custom.format(version.createdTime)}">Lundi</td>
-                     <td class="updateTime" th:text="${custom.format(version.updatedTime)}">Mardi</td>
+                     <td id="updatedTime" th:class="${version.name}" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
                          <span class="float-right">
                             <button th:if="${version.canUpdate}" th:id="${version.name}" class="updateButton btn btn-success btn-sm">Mettre à jour</button>
@@ -56,13 +56,12 @@
 			     </tr>
 			</tbody>
 		</table>
-        <div th:insert="~{components/modal :: modal}"></div>
+        <div id="modal" style="display: none"  th:insert="~{components/modal :: modal}"></div>
     </span>
     <script layout:fragment="script" th:inline="javascript">
 
 		var noVersionName = /*[[${noVersionName}]]*/ false;
 
-        $('.modal').hide();
 		// Add row button
 		const addButtonAction = () => {
 			hideDisplays();
@@ -100,18 +99,17 @@
     
 		// Update row button
 		const updateButtonAction = (versionName) => {
-			hideDisplays();
 			$.post("/ui/versions/" + versionName, null, (data, status) => {
-				window.location.replace("/ui/versions/refresh"); // Refresh page
+				$('td#updatedTime.' + versionName).load(location.href + " #updatedTime." + versionName);
 		    });
 		};
 
 		// Delete a  version if it has no lots
 		const deleteButtonAction = (versionId) => {
-		    $('.modal').show();
+		    $('#modal').css("display","block");
 		    $("#submitDelete").on("click",() => {
 		        $.post("/ui/versions/remove/" + versionId, null, (data, status) => {
-		            $('.modal').hide();
+		            $('#modal').css("display","none");
 		            window.location.replace("/ui/versions");
 		        });
 		    });
@@ -119,7 +117,7 @@
 
 		//Hide modal
 		const cancelButton = () => {
-		    $('.modal').hide();
+		   $('#modal').css("display","none");
 		}
 
     	// Init actions
