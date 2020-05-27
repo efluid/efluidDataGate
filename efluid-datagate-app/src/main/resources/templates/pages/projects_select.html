@@ -18,7 +18,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr th:each="prefered, stat : ${prefereds}" th:id="${prefered.uuid}" th:class="|project-theme-bg-${prefered.color}|">
+				<tr th:each="prefered, stat : ${prefereds}" th:id="${prefered.uuid}" th:class="|project-theme-${prefered.color}|">
 					<td th:if="${project != null}" th:style="${prefered.uuid.equals(project.uuid)}?'font-weight:bold'" th:text="${prefered.name}">Autre</td>
 					<td th:if="${project == null}" th:text="${prefered.name}">Autre</td>
 	                <td><a href="projects_select.html" th:href="@{|/ui/projects/select/${prefered.uuid}|}" class="float-right btn btn-secondary btn-sm">Choisir</a></td>

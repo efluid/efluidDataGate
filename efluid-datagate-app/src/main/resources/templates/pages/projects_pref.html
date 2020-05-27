@@ -14,7 +14,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					<tr th:each="project, stat : ${projects}" th:id="${project.uuid}" th:class="|project-theme-bg-${project.color}|">
+					<tr th:each="project, stat : ${projects}" th:id="${project.uuid}" th:class="|project-theme-${project.color}|">
 						<td th:text="${project.name}">Autre</td>
 						<td><span class="float-right"><input type="checkbox" name="prefered" th:value="${project.uuid}" th:checked="${prefereds.contains(project)}"/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
 					</tr>

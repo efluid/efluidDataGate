@@ -1,10 +1,43 @@
+.navbar-brand-holder {
+    width: 120px;
+    margin-bottom: -20px !important;
+}
+
 .navbar-brand {
     height: 130px;
-	background-image: url("/logo.png");
-    padding-left: 200px!important;
+    background-image: url("/logo.png");
+    width: 120px;
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
+}
+
+.navbar.top-item {
+    display: flex;
+    width: 100%;
+    margin: 10px 0px;
+    padding-left: 0 !important;
+}
+
+.navbar.top-item a {
+    padding-left: 20px;
+    font-size: 16px;
+    color: grey;
+}
+
+.collapse.navbar-collapse {
+    display: flex;
+    justify-content: column;
+}
+
+.collapse .sub-items {
+    list-style-type: none;
+    background-color: #F3F8FD;
+    width: 100%;
+    padding: 20px;
+    height: auto;
+    border-top: 1px solid #d8e2dc;
+    border-bottom: 1px solid #d8e2dc;
 }
 
 #app-container {
@@ -14,11 +47,24 @@
 }
 
 #colonne-navbar {
-    border: 1px solid #d8e2dc;
     padding: 0;
 }
 
 .lead-nav {
-    font-size: 0.9rem;
-    color: grey!important;
+    font-size: 14px;
+    color: grey !important;
+}
+
+.navbar-project {
+    display: block;
+    width: 100%;
+    border-top: 1px solid #d8e2dc;
+    border-bottom: 1px solid #d8e2dc;
+    line-height: 20px;
+    height: 40px;
+    margin-top: 10px;
+    /*margin-left: -2px;*/
+    padding: 8px 0 12px 0;
+    text-align: center;
+    font-weight: bold;
 }

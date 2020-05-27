@@ -1,3 +1,58 @@
+.datagate-content {
+    display: block;
+    padding: 30px;
+}
+
+.datagate-home {
+    background-color: #F3F8FD;
+    /*display: flex;
+    flex-wrap: wrap;*/
+    width: 100%;
+    height: 100%;
+    /*justify-content: space-evenly;*/
+    align-items: center;
+}
+
+.datagate-home .left-bloc {
+    display: flex;
+    flex-direction: column;
+    float: left;
+    justify-content: center;
+    align-items: center;
+    width: 35%;
+    margin: 5% 0 5% 10%;
+    height: 30vh;
+    background-color: #FFFFFF;
+    box-shadow: 1px 1px 12px #555;
+}
+
+.datagate-home .right-bloc {
+    display: flex;
+    flex-direction: column;
+    float: right;
+    justify-content: center;
+    align-items: center;
+    width: 35%;
+    margin: 5% 10% 5% 0;
+    height: 30vh;
+    background-color: #FFFFFF;
+    box-shadow: 1px 1px 12px #555;
+}
+
+.datagate-home .bottom-bloc {
+    width: 80%;
+    height: 30vh;
+    padding: 20px;
+    margin: 10% 10% 0 10%;
+    background-color: #FFFFFF;
+    box-shadow: 1px 1px 12px #555;
+    overflow: scroll !important;
+}
+
+#column-main {
+    border-left: 1px solid #d8e2dc;
+}
+
 /* Fixed on new bootstrap */
 .btn {
     white-space: nowrap;
@@ -5,27 +60,27 @@
 
 /* Fixed on new bootstrap */
 .app-row {
-    margin-left: 0!important;
-    margin-right: 0!important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
 }
 
 .container-fluid {
-    padding-left: 0!important;
-    padding-right: 0!important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
 }
 
 .add {
-    color:green;
+    color: green;
     font-weight: bold;
 }
 
 .remove {
-    color:red;
+    color: red;
     font-weight: bold;
 }
 
 .update {
-    color:blue;
+    color: blue;
     font-weight: bold;
 }
 
@@ -40,7 +95,7 @@
     border: 1px #EEE solid;
     font-weight: bold;
     font-size: 16px;
-    color:brown;
+    color: brown;
 }
 
 .query-display {
@@ -60,28 +115,28 @@
 .table-used {
     font-size: 13px;
     background-color: #FAFAFA;
-	line-height: 30px;
+    line-height: 30px;
 }
 
 .table-name {
-	font-weight: bold;
-	line-height: 30px;
+    font-weight: bold;
+    line-height: 30px;
 }
 
 .table-used .table-name {
     font-size: 16px;
-	font-weight: bold;
-	color:brown;
+    font-weight: bold;
+    color: brown;
 }
 
 select.select-table {
-	width: 350px;
-	display: inline;
+    width: 350px;
+    display: inline;
 }
 
 select.select-column {
-	width: 250px;
-	display: inline;
+    width: 250px;
+    display: inline;
 }
 
 .active-project {
@@ -96,7 +151,7 @@ select.select-column {
 }
 
 .help {
-	display: block;
+    display: block;
     font-size: 14px;
     padding: 5px 1px 15px 1px;
 }
@@ -127,25 +182,25 @@ select.select-column {
 }
 
 .domain-area {
-	padding-bottom: 20px;
+    padding-bottom: 20px;
 }
 
 .domain-summary {
-	background-color: #747474;
-	padding: 7px;
-	font-weight: bold;
-	margin-bottom: 0px !important;
-	color: #FFF;
+    background-color: #747474;
+    padding: 7px;
+    font-weight: bold;
+    margin-bottom: 0px !important;
+    color: #FFF;
 }
 
 .domain-content {
-	border: 1px solid #CCC;
-	padding: 0 10px 10px 10px;
+    border: 1px solid #CCC;
+    padding: 0 10px 10px 10px;
 }
 
 .domain-buttons {
-	font-weight: bold;
-	padding-top: 6px;
+    font-weight: bold;
+    padding-top: 6px;
 }
 
 .dictionary-summary .reducer, .domain-summary .reducer, .diff-remarks .reducer {
@@ -157,7 +212,7 @@ select.select-column {
 }
 
 .reducer-open {
-	background-image: url("/plus.png");
+    background-image: url("/plus.png");
 }
 
 .reducer-close {
@@ -165,51 +220,51 @@ select.select-column {
 }
 
 .history-state {
-	width: 25px;
-	vertical-align: middle !important;
+    width: 25px;
+    vertical-align: middle !important;
 }
 
 .history-update {
-	background-image: url("/update.png");
-	width: 24px;
-	height: 18px;
-	display: block;
+    background-image: url("/update.png");
+    width: 24px;
+    height: 18px;
+    display: block;
 }
 
 .history-rollback {
     background-image: url("/rollback.png");
-	width: 24px;
-	height: 18px;
-	display: block;
+    width: 24px;
+    height: 18px;
+    display: block;
 }
 
 .history-attachment {
     background-image: url("/attachment.png");
-	width: 24px;
-	height: 18px;
-	display: block;
+    width: 24px;
+    height: 18px;
+    display: block;
 }
 
 .inline-block {
-	display: inline-block!important;
+    display: inline-block !important;
 }
 
 .dictionary-summary .dictionary-name {
-	font-size: 17px;
-	color: #777;
-	font-weight: bold;
+    font-size: 17px;
+    color: #777;
+    font-weight: bold;
 }
 
 .dictionary-summary .dictionary-details {
-	font-size: 14px;
-	color: #777;
-	font-weight: bold;
+    font-size: 14px;
+    color: #777;
+    font-weight: bold;
 }
 
 .dictionary-diff-size {
-	font-size: 14px;
-	color: brown;
-	font-weight: bold;
+    font-size: 14px;
+    color: brown;
+    font-weight: bold;
 }
 
 .parameter-name {
@@ -217,7 +272,7 @@ select.select-column {
 }
 
 .version-name {
-	color: Maroon;
+    color: Maroon;
     font-weight: bold;
 }
 
@@ -231,8 +286,8 @@ select.select-column {
 }
 
 .action-line .similar-display {
-	color: rgba(128, 78, 136, 1);
-	font-weight: bold;
+    color: rgba(128, 78, 136, 1);
+    font-weight: bold;
 }
 
 .action-line .change-display {
@@ -252,36 +307,36 @@ select.select-column {
 }
 
 .change-title {
-	font-size: 13px;
-	font-weight: bold;
+    font-size: 13px;
+    font-weight: bold;
 }
 
 .action-line.add .action-display {
-    color:green;
+    color: green;
 }
 
 .action-line.update .action-display {
-    color:orange;
+    color: orange;
 }
 
 .action-line.remove .action-display {
-    color:red;
+    color: red;
 }
 
 .action-line.add .change-display {
-	background-color: rgb(243, 250, 243);
+    background-color: rgb(243, 250, 243);
 }
 
 .action-line.update .change-display {
-	background-color: rgb(236, 229, 204);
+    background-color: rgb(236, 229, 204);
 }
 
 .action-line.remove .change-display {
-	background-color: rgb(255, 220, 220);
+    background-color: rgb(255, 220, 220);
 }
 
 .file-display {
-	padding-left: 10px;
+    padding-left: 10px;
     font-size: 14px;
 }
 
@@ -290,21 +345,21 @@ select.select-column {
 }
 
 .wizard-warning {
-	width:100%;
-	background-color:#EEE;
-	font-size:16px;
-	font-weight:bold;
+    width: 100%;
+    background-color: #EEE;
+    font-size: 16px;
+    font-weight: bold;
 }
 
 .w-bc {
-	display:block;
-	font-size: 19px;
-	color:#AAA;
+    display: block;
+    font-size: 19px;
+    color: #AAA;
 }
 
 .w-bc .active {
-	font-weight: bold;
-	color:#000;
+    font-weight: bold;
+    color: #000;
 }
 
 .selecter {
@@ -313,12 +368,12 @@ select.select-column {
     margin-bottom: 0px;
     width: 20px;
     height: 20px;
-    line-height:15px;
+    line-height: 15px;
     cursor: pointer;
 }
 
 .selecter.selected {
-	background-image: url("/selected.png");
+    background-image: url("/selected.png");
 }
 
 .selecter.unselected {
@@ -328,8 +383,8 @@ select.select-column {
 .btn-group .btn-head {
     margin-top: 7px;
     margin-bottom: 0px;
-	font-size: 15px;
-    line-height:15px;
+    font-size: 15px;
+    line-height: 15px;
 }
 
 .reducer.reducer-sm {
@@ -338,18 +393,18 @@ select.select-column {
     height: 14px;
     cursor: pointer;
     margin: 8px;
-	background-size: 14px 14px;
+    background-size: 14px 14px;
 }
 
 .change-details {
-	display: none;
+    display: none;
 }
 
 
 /* COLOR PICKER - CUSTOM */
 
 .color-picker {
-	float: right;
+    float: right;
 }
 
 .color-picker label {
@@ -366,59 +421,90 @@ select.select-column {
 
 /* THEMING - TEXT - BG SUPPORT */
 
+
 /* Grey (default) */
+.project-theme-0 {
+    background-color: #555555 !important;
+    color: white;
+}
+
 .project-theme-txt-0 {
-    color:Grey !important;
+    color: #555555 !important;
 }
 
 .project-theme-bg-0 {
-	/* Color copied from default bootstrap bg */
-    background-color:#f8f9fa !important;
+    /* Color copied from default bootstrap bg */
+    background-color: #f8f9fa !important;
 }
 
 /* Blue */
+.project-theme-1 {
+    background-color: darkblue !important;
+    color: white;
+}
+
 .project-theme-txt-1 {
-    color:Blue !important;
+    color: darkblue !important;
 }
 
 .project-theme-bg-1 {
-    background-color:SkyBlue !important;
+    background-color: SkyBlue !important;
 }
 
 /* Green */
+.project-theme-2 {
+    background-color: darkgreen !important;
+    color: white;
+}
+
 .project-theme-txt-2 {
-    color:Green !important;
+    color: darkgreen !important;
 }
 
 .project-theme-bg-2 {
-    background-color:#A8FBA8 !important;
+    background-color: #A8FBA8 !important;
 }
 
 /* Yellow */
+.project-theme-3 {
+    background-color: darkgoldenrod !important;
+    color: white;
+}
+
 .project-theme-txt-3 {
-    color:Gold !important;
+    color: darkgoldenrod !important;
 }
 
 .project-theme-bg-3 {
-    background-color:LemonChiffon !important;
+    background-color: LemonChiffon !important;
 }
 
 /* Pink */
+.project-theme-4 {
+    background-color: darkorchid !important;
+    color: white;
+}
+
 .project-theme-txt-4 {
-    color:HotPink !important;
+    color: darkorchid !important;
 }
 
 .project-theme-bg-4 {
-    background-color:MistyRose !important;
+    background-color: MistyRose !important;
 }
 
 /* Purple */
+.project-theme-5 {
+    background-color: indigo !important;
+    color: white;
+}
+
 .project-theme-txt-5 {
-    color:Purple !important;
+    color: indigo !important;
 }
 
 .project-theme-bg-5 {
-    background-color:Lavender !important;
+    background-color: Lavender !important;
 }
 
 .query-error {
@@ -442,29 +528,29 @@ select.select-column {
     color: Purple;
 }
 
-.file-ico {    
-	margin-top: 5px;
-	display: block;
+.file-ico {
+    margin-top: 5px;
+    display: block;
     width: 18px;
     height: 24px;
     cursor: pointer;
 }
 
 .sql-comment {
-	color: DarkGreen;
+    color: DarkGreen;
     font-style: italic;
 }
 
 .empty-list-message {
     text-align: center;
-	color: Gray;
+    color: Gray;
     font-style: italic;
 }
 
 /* Compare screen */
 
 .domain-change {
-    font-weight:bold;
+    font-weight: bold;
 }
 
 .added {
@@ -490,23 +576,23 @@ select.select-column {
 
 .key-change {
     background-image: url("/key.png");
-	width: 20px;
-	height: 20px;
-	display: block;
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 
 .key-change-added {
     background-image: url("/key-add.png");
-	width: 20px;
-	height: 20px;
-	display: block;
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 
 .key-change-removed {
     background-image: url("/key-remove.png");
-	width: 20px;
-	height: 20px;
-	display: block;
+    width: 20px;
+    height: 20px;
+    display: block;
 }
 
 .domain-compare {
@@ -521,7 +607,7 @@ textarea.configuration {
     background-repeat: no-repeat;
     padding-left: 35px;
     padding-top: 12px;
-    border-color:#ccc;
+    border-color: #ccc;
     font-family: monospace;
     color: #456;
     font-size: 11px;

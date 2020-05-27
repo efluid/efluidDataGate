@@ -300,7 +300,7 @@ public class Commit implements Shared {
                 .applyLdt("cre", this::setCreatedTime)
                 .applyString("has", this::setHash)
                 .applyString("ema", this::setOriginalUserEmail)
-                .applyString("idx", i -> {
+                .applyNullableString("idx", i -> {
                     // No idx item at all => Ref
                     if (i == null) {
                         setAsRefOnly();

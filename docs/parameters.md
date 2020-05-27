@@ -130,6 +130,7 @@ Les paramètres gérés sont :
 * `datagate-efluid.attachments.enable-display`: true si la consultation des fichiers spécifiés en PJ de lot est activé
 * `datagate-efluid.imports.check-model-version`: true si l'import d'un lot est conditionné sur la version attachée (vérifie uniquement que la version est présente)
 * `datagate-efluid.imports.check-dictionary-compatibility`: true si l'import d'un lot est conditionné par la présence d'un dictionnaire compatible (vérifie en profondeur le contenu du lot et le paramètrage du dictionnaire en place pour valider que les données sont compatibles)
+* `datagate-efluid.imports.check-missing-ref-commits`: true si l'import de lot doit remonter une erreur si un lot "référencé" (lot non exporté précédent le ou les lots exportés, en cas d'export partiel ou de type "cherry-pick") n'a pas déjà été importé localement. False par défaut (pour permettre le vrai cherry-pick)
 * `datagate-efluid.async-preparation.thread-pool-size`: taille du thread pool pour l'exécution de la préparation de lots
 * `datagate-efluid.async-preparation.timeout-seconds`: Timeout pour un lancement de prépraration de lots avant son interuption automatique
 * `datagate-efluid.model-identifier.enabled`: true si la gestion d'un model id (identifiant de BDD gérée extrait à partir d'une table de la BDD) est activée
