@@ -23,5 +23,9 @@
 			<button id="nextButton" type="submit" class="btn btn-success btn-sm float-right">Sauvegarder</button><br/><br/>
 		</form>
 	</span>
+	<script layout:fragment="script" th:inline="javascript">
+		$('#currentLocation').text("Projets préférés");
+		$('#color-nav-3').css("font-weight", "bold");
+	</script>
 </body>
 </html>

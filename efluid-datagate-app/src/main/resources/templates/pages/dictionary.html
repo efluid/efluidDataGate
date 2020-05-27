@@ -38,6 +38,9 @@
 	</span>
 	<script layout:fragment="script" th:inline="javascript">
 
+	 	$('#currentLocation').text("Modifier le dictionnaire");
+	 	$('#color-nav-1').css("font-weight", "bold");
+
 		// Delete buttons
 		const deleteButtonAction = (e) => {
 			hideDisplays();

@@ -1,4 +1,5 @@
-<nav th:fragment="navbar-right" style="display: flex; justify-content: flex-end; height: 50px; background-color: #336DA4!important;" th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
+<nav th:fragment="navbar-right" style="display: flex; justify-content: space-between; height: 60px; background-color: #336DA4!important;" th:class="|navbar navbar-expand-lg navbar-light project-theme-bg-${project != null ? project.color : 0}|" class="navbar navbar-expand-lg navbar-light">
+    <p id="currentLocation"></p>
     <div class="divider-horizontal"></div>
     <form class="form-inline">
         <a href="./swagger.html" th:href="@{/swagger}" target="_blank" style="color: white;" type="button">API REST</a>
