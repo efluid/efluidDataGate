@@ -8,7 +8,7 @@
 
     <groupId>com.efluid.oss</groupId>
     <artifactId>efluid-datagate-parent</artifactId>
-    <version>1.1.0-SNAPSHOT</version>
+    <version>1.0.0-beta-24-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -49,7 +49,6 @@
     </scm>
 
     <modules>
-        <module>scripts/installeur</module>
         <module>efluid-datagate-common</module>
         <module>efluid-datagate-api</module>
         <module>efluid-datagate-app</module>
@@ -100,7 +99,8 @@
         <!-- Fixed plugins -->
         <plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
         <plugin.jacoco.version>0.8.5</plugin.jacoco.version>
-
+	
+        <skipNexusStagingDeploy>false</skipNexusStagingDeploy>
     </properties>
 
 
@@ -198,6 +198,7 @@
                     <serverId>ossrh</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    <skipNexusStagingDeployMojo>${skipNexusStagingDeploy}</skipNexusStagingDeployMojo>
                 </configuration>
             </plugin>
             <plugin>

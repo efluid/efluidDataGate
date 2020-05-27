@@ -16,11 +16,8 @@ node('socle-jenkins-maven-docker-14-4G') {
       env.HTTPS_PROXY="http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
     }
     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.gpgMavenCentralPassphrase, passwordVariable: 'gpgPassword', usernameVariable: 'gpgUsername']]) {
-      sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion}"
+      sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion} -DaltReleaseDeploymentRepository=releases::releases::${urlArtifactoryRelease}"
     }
-	
-	sh "mvn deploy:deploy-file -B -DgroupId=com.efluid.oss -DartifactId=efluid-datagate-scriptInstalleur -DrepositoryId=releases -Dversion=${releaseVersion} -Dfile=scripts/installeur/target/efluid-datagate-scriptInstalleur-${releaseVersion}.zip -Dpackaging=zip -Durl=${urlArtifactoryRelease}"
-    
     withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
       sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/efluidDataGate.git')
     }
