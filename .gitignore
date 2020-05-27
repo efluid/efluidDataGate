@@ -18,6 +18,8 @@ buildNumber.properties
 .sonar/
 .scannerwork/
 
+efluid-datagate-app/*.log
+
 ## App resources
 **/src/main/resources/config/application*.yml
 **/update-errors.out

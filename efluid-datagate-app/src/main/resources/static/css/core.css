@@ -614,3 +614,9 @@ textarea.configuration {
     font-weight: bold;
     background-size: 27px;
 }
+
+#updatedTime:first-child{
+    border: 0px;
+    padding: 0px;
+    margin:0px;
+}
