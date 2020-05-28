@@ -142,7 +142,7 @@ public class UserController extends CommonController {
 
 		model.addAttribute("canCreate", !this.secu.canPreloadUserOnly());
 		model.addAttribute("currentLocationTitle", "Éditer les utilisateurs");
-
+		model.addAttribute("isNavBold", true);
 
 		return "pages/users";
 	}
