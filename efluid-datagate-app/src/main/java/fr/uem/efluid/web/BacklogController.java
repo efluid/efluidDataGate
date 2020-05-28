@@ -64,7 +64,7 @@ public class BacklogController extends CommonController {
      */
     @RequestMapping("/history")
     public String historyPage(Model model) {
-
+        model.addAttribute("currentLocationTitle", "Historique des mises à jour");
         return historySearchPageNav(model, 0, null);
     }
 
@@ -131,7 +131,8 @@ public class BacklogController extends CommonController {
      */
     @RequestMapping("/prepare")
     public String preparationPage(Model model) {
-        return startPreparationAndRouteRegardingStatus(model, false);
+            model.addAttribute("currentLocationTitle", "Préparer un lot");
+            return startPreparationAndRouteRegardingStatus(model, false);
     }
 
     /**
@@ -320,6 +321,7 @@ public class BacklogController extends CommonController {
 
         // Get updated commits
         model.addAttribute("commits", this.commitService.getAvailableCommits());
+        model.addAttribute("currentLocationTitle", "Exporter un lot");
         model.addAttribute("checkVersion", this.dictService.isDictionaryUpdatedAfterLastVersion());
         model.addAttribute("version", this.dictService.getLastVersion());
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
@@ -429,6 +431,8 @@ public class BacklogController extends CommonController {
                 && this.pilotableCommitService.getCurrentCommitPreparation().getPreparingState() != CommitState.LOCAL) {
             return processImport(model);
         }
+
+        model.addAttribute("currentLocationTitle", "Importer un lot");
 
         return "pages/pull";
     }
@@ -573,6 +577,8 @@ public class BacklogController extends CommonController {
 
         // Get updated preparation
         model.addAttribute("commits", this.commitService.getAvailableCommits());
+        model.addAttribute("currentLocationTitle", "Liste des lots");
+
 
         return "pages/commits";
     }

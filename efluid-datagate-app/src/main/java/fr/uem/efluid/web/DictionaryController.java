@@ -68,6 +68,7 @@ public class DictionaryController extends CommonController {
         // For formatting
         WebUtils.addTools(model);
 
+        model.addAttribute("currentLocationTitle", "Gestion des versions");
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
         model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
         model.addAttribute("dictionaryManagementService", this.dictionaryManagementService);
@@ -131,6 +132,7 @@ public class DictionaryController extends CommonController {
         }
 
         model.addAttribute("tables", this.dictionaryManagementService.getSelectableTables());
+        model.addAttribute("currentLocationTitle", "Modifier le dictionnaire");
 
         return "pages/table_init";
     }
@@ -305,6 +307,8 @@ public class DictionaryController extends CommonController {
         model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
         model.addAttribute("version", this.dictionaryManagementService.getLastVersion());
+        model.addAttribute("currentLocationTitle", "Exporter/Importer un dictionnaire");
+
 
         return "pages/share";
     }
@@ -397,7 +401,8 @@ public class DictionaryController extends CommonController {
      */
     @RequestMapping(value = "/domains/add/{name}", method = POST)
     @ResponseBody
-    public FunctionalDomainData addFunctionalDomainData(@PathVariable("name") String name) {
+    public FunctionalDomainData addFunctionalDomainData(@PathVariable("name") String name, Model model) {
+        model.addAttribute("currentLocationTitle", "Domaines fonctionnels");
         return this.dictionaryManagementService.createNewFunctionalDomain(name);
     }
 

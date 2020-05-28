@@ -41,7 +41,8 @@
 			</div>
 		</form>
 	</span>
-	<script layout:fragment="script">
+	<script layout:fragment="script" th:inline="javascript">
+		$('#color-nav-4').css("font-weight", "bold");
 
 		const checkContinue = () => {
 			var allOk = true; 

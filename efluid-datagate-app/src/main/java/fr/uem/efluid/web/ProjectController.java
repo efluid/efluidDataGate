@@ -38,6 +38,7 @@ public class ProjectController extends CommonController {
         }
 
         model.addAttribute("projects", this.projectManagementService.getAllProjects());
+        model.addAttribute("currentLocationTitle", "Gestion des projets");
 
         return "pages/projects_all";
     }
@@ -69,6 +70,8 @@ public class ProjectController extends CommonController {
         WebUtils.addTools(model);
         model.addAttribute("prefereds", this.projectManagementService.getPreferedProjectsForCurrentUser());
         model.addAttribute("projects", this.projectManagementService.getAllProjects());
+        model.addAttribute("currentLocationTitle", "Mes projets préférés");
+
 
         return "pages/projects_pref";
     }
