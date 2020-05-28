@@ -59,6 +59,8 @@ public class HomeController extends CommonController {
     @RequestMapping("/ui")
     public String index(Model model) {
 
+        int getLengthProject = this.projectManagementService.getCurrentSelectedProject().getName().length();
+
         // If not configured (no data : forward to wizard)
         if (this.applicationDetailsService.isNeedWizard()) {
             return "forward:/wizard/";
@@ -66,6 +68,12 @@ public class HomeController extends CommonController {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
+        }
+
+        if (getLengthProject > 10) {
+            model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProject().getName().substring(0,10) + "...");
+        } else {
+            model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProject().getName());
         }
 
         WebUtils.addTools(model);
