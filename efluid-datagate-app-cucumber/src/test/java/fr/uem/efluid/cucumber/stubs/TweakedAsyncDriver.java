@@ -87,15 +87,16 @@ public class TweakedAsyncDriver extends FutureAsyncDriver {
      * AsyncSourceProcess)
      */
     @Override
-    public <T> List<T> processSteps(List<Callable<T>> callables, AsyncSourceProcess current) throws InterruptedException {
+    public void processSteps(List<Callable<?>> callables, final AsyncSourceProcess current)
+            throws InterruptedException {
 
         // Replace steps by a fixed locked / error one
         if (this.lockedRun || this.forcedError != null) {
             super.processSteps(Collections.singletonList(tweakedCallable()), current);
+        } else {
+            // Or standard run
+            super.processSteps(callables, current);
         }
-
-        // Or standard run
-        return super.processSteps(callables, current);
     }
 
     private <T> Callable<T> tweakedCallable() {

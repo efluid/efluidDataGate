@@ -3,6 +3,7 @@ package fr.uem.efluid.model.repositories;
 import java.util.List;
 import java.util.UUID;
 
+import fr.uem.efluid.model.entities.DictionaryEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

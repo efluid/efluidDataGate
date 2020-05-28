@@ -44,7 +44,7 @@ public class BacklogApiController implements BacklogApi {
     @Override
     public StartedMergeView uploadAndInitPreparedCommit(@RequestParam("file") MultipartFile file) throws ApplicationException {
 
-        ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> result =
+        ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> result =
                 this.pilotableCommitService.startMergeCommitPreparation(WebUtils.inputExportImportFile(file));
 
         ExportImportResult.ItemCount packgs = result.getCounts().get(CommitService.PCKG_ALL);
@@ -69,7 +69,7 @@ public class BacklogApiController implements BacklogApi {
     public PreparationState cancelPreparedCommit() {
 
         int currentPercent = 0;
-        PilotedCommitPreparation<?> prep =  this.pilotableCommitService.getCurrentCommitPreparation();
+        PilotedCommitPreparation<?> prep = this.pilotableCommitService.getCurrentCommitPreparation();
 
         // Update current preparation as canceled
         if (prep != null) {
@@ -79,7 +79,7 @@ public class BacklogApiController implements BacklogApi {
             this.pilotableCommitService.cancelCommitPreparation();
         }
 
-        return new PreparationState(PilotedCommitStatus.CANCEL, currentPercent) ;
+        return new PreparationState(PilotedCommitStatus.CANCEL, currentPercent);
     }
 
     /**
@@ -104,21 +104,21 @@ public class BacklogApiController implements BacklogApi {
 
         CommitPrepareDetailsView result = new CommitPrepareDetailsView();
 
+
         // Details on content by table
-        if (preparation.getDomains() != null) {
+        if (!preparation.getDiffContent().isEmpty()) {
             result.setDetails(
-                    preparation.getDomains().stream()
-                            .filter(d -> d.getPreparedContent() != null)
-                            .flatMap(d -> d.getPreparedContent().stream()
-                                    .map(c -> {
-                                        CommitPrepareTableView table = new CommitPrepareTableView();
-                                        table.setDomain(d.getDomainName());
-                                        table.setTable(c.getDictionaryEntryTableName());
-                                        table.setIndexRowCount(c.getDiff().size());
-                                        table.setParameter(c.getDictionaryEntryName());
-                                        return table;
-                                    }))
-                            .collect(Collectors.toList()));
+                    preparation.streamDiffContentMappedToDictionaryEntryUuid().map(e -> {
+                        CommitPrepareTableView table = new CommitPrepareTableView();
+                        DictionaryEntrySummary referencedDicEntry = preparation.getReferencedTables().get(e.getKey());
+                        if (referencedDicEntry != null) {
+                            table.setDomain(referencedDicEntry.getDomainName());
+                            table.setTable(referencedDicEntry.getTableName());
+                            table.setParameter(referencedDicEntry.getName());
+                        }
+                        table.setIndexRowCount(e.getValue().size());
+                        return table;
+                    }).collect(Collectors.toList()));
         }
 
         // Total count for quick checking
@@ -144,7 +144,7 @@ public class BacklogApiController implements BacklogApi {
 
         // Complete and gather result data
         CommitCreatedResultView result = new CommitCreatedResultView();
-        result.setCommitDomainNames(preparation.getSelectedFunctionalDomainNames());
+        result.setCommitDomainNames(preparation.getReferencedDomainNames());
         result.setIndexRowCount(preparation.getTotalCount());
         result.setCommitUuid(this.pilotableCommitService.saveCommitPreparation());
 

@@ -4,6 +4,7 @@ package fr.uem.efluid.services.types;
  * <p>
  * Specify that the item is processed in rendering (in screens or rest services, for
  * manual operation)
+ * </p>
  * 
  * @author elecomte
  * @since v0.0.1

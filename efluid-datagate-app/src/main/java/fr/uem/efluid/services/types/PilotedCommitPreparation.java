@@ -6,41 +6,43 @@ import fr.uem.efluid.tools.TransformerProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
  * A <tt>PilotedCommitPreparation</tt> is a major load event associated to a preparation
  * of index or index related data. Their is only ONE preparation of any kind which is
- * available in the application, due to memory use and data extraction heavy load. But
+ * available for an active instance, due to memory use and data extraction heavy load. But
  * this preparation can be of various type.
  * </p>
  * <p>
  * Common rules for a preparation :
  * <ul>
  * <li>Used to prepare a commit of a fixed {@link CommitState}</li>
- * <li>Identified by uuid, but not exported. (currently not realy used)</li>
- * <li>Identified with start and end time of preparation</li>
- * <li>Associated to an evolving status : defines how far we are in the preparation. Can
+ * <li>Identified by uuid, but not exported.</li>
+ *  * <li>Associated to an evolving status : defines how far we are in the preparation. Can
  * evolve to include a full "% remaining" process</li>
  * <li>Holds a content, the "result" of the preparation. Supposed to be related to
  * <tt>DiffLine</tt> (but type is free in this vearsion)</li>
  * <li>Associated to a commit definition which will embbed the result of the preparation
  * once completed and validated.</li>
+ * <li>Associated to referenced tables</li>
+ * <li>Can include some remarks on incorrect values identified during diff build</li>
  * </ul>
  * </p>
+ * <p>All diff related contents are thread safe (and are updated in asynchronous diff processes)</p>
+ * <p>No content are sorted or filtered. Everything is stored in memory. The display of filtered / sorted values is processed in higher level rendering</p>
  *
  * @param <T>
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
-public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements AsyncDriver.AsyncSourceProcess {
+public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extends DiffContentHolder<T> implements AsyncDriver.AsyncSourceProcess {
 
     private final UUID identifier;
 
@@ -48,11 +50,7 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
 
     private final CommitState preparingState;
 
-    private LocalDateTime end;
-
     private PilotedCommitStatus status;
-
-    private String errorKey;
 
     private ApplicationException errorDuringPreparation;
 
@@ -63,15 +61,15 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     private int processStarted;
 
     // For percentDone step counts
-    private AtomicInteger totalStepCount = new AtomicInteger(0);
-
-    private Map<String, byte[]> diffLobs;
+    private final AtomicInteger totalStepCount = new AtomicInteger(0);
 
     private UUID projectUuid;
 
-    private List<DomainDiffDisplay<T>> domains;
+    /* Asynchronously completed content of preparation : diff, associated lobs / remarks, and details on referenced tables */
+    private final Map<String, byte[]> diffLobs = new ConcurrentHashMap<>();
+    private final Collection<DiffRemark<?>> diffRemarks = ConcurrentHashMap.newKeySet();
 
-    // For attachments
+    /* For attachments */
     private boolean attachmentDisplaySupport;
     private boolean attachmentExecuteSupport;
 
@@ -84,6 +82,10 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
      *
      */
     public PilotedCommitPreparation(CommitState preparingState) {
+
+        // Holder with asynchronous completion of content
+        super(ConcurrentHashMap.newKeySet(), new ConcurrentHashMap<>());
+
         this.identifier = UUID.randomUUID();
         this.status = PilotedCommitStatus.DIFF_RUNNING;
         this.start = LocalDateTime.now();
@@ -231,27 +233,6 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     }
 
     /**
-     * @return the end
-     */
-    public LocalDateTime getEnd() {
-        return this.end;
-    }
-
-    /**
-     * @return the errorKey
-     */
-    public String getErrorKey() {
-        return this.errorKey;
-    }
-
-    /**
-     * @param errorKey the errorKey to set
-     */
-    public void setErrorKey(String errorKey) {
-        this.errorKey = errorKey;
-    }
-
-    /**
      * @return the commitData
      */
     public CommitEditData getCommitData() {
@@ -266,127 +247,18 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     }
 
     /**
-     * @param end the end to set
-     */
-    public void setEnd(LocalDateTime end) {
-        this.end = end;
-    }
-
-    /**
      * @return the preparingState
      */
     public CommitState getPreparingState() {
         return this.preparingState;
     }
 
-    /**
-     * @return the domains
-     */
-    public List<DomainDiffDisplay<T>> getDomains() {
-        return this.domains;
-    }
-
-    /**
-     *
-     */
-    public void resetDiffDisplayContent() {
-        this.domains.forEach(d -> d.setPreparedContent(null));
-    }
-
-    /**
-     * <p>
-     * Applies the diff to corresponding domain display, and provides the top level domain
-     * DiffDisplay with a diff
-     * </p>
-     * <p>
-     * Affect also an index for each diff line for the whole preparation (for quick access
-     * / reference)
-     * </p>
-     *
-     * @param fullDiff
-     */
-    public void applyDiffDisplayContent(Collection<T> fullDiff) {
-
-        Map<UUID, DomainDiffDisplay<T>> domainsByUuid = this.domains.stream()
-                .collect(Collectors.toMap(DomainDiffDisplay::getDomainUuid, d -> d));
-
-        AtomicLong indexInPreparation = new AtomicLong(0);
-
-        fullDiff.forEach(d -> {
-            DomainDiffDisplay<T> domain = domainsByUuid.get(d.getDomainUuid());
-
-            // Init domain diff content holder
-            if (domain.getPreparedContent() == null) {
-                domain.setPreparedContent(new ArrayList<>());
-            }
-
-            domain.getPreparedContent().add(d);
-
-            // Apply index for the item
-            d.getDiff().forEach(l -> l.setIndexForDiff(indexInPreparation.getAndIncrement()));
-        });
-    }
-
-    /**
-     * @param domains the domains to set
-     */
-    public void setDomains(List<DomainDiffDisplay<T>> domains) {
-        this.domains = domains;
-    }
-
-    /**
-     * Quick access to covered Functional domains in preparation (used for commit detail
-     * page)
-     *
-     * @return
-     */
-    public Collection<String> getSelectedFunctionalDomainNames() {
-        return this.domains != null && this.domains.size() > 0
-                ? this.domains.stream()
-                .filter(DomainDiffDisplay::isHasSelectedItems)
-                .map(DomainDiffDisplay::getDomainName)
-                .collect(Collectors.toSet())
-                : Collections.emptyList();
-    }
-
-    /**
-     * @return
-     */
-    public long getTotalCount() {
-        return this.domains != null && this.domains.size() > 0
-                ? this.domains.stream().mapToLong(DomainDiffDisplay::getTotalCount).sum()
-                : 0;
-    }
-
-    /**
-     * @return
-     */
-    public int getTotalTableCount() {
-        return this.domains != null && this.domains.size() > 0
-                ? this.domains.stream().filter(d -> d.getPreparedContent() != null)
-                .mapToInt(d -> d.getPreparedContent().size()).sum()
-                : 0;
-    }
-
-    /**
-     * @return
-     */
-    public int getTotalDomainCount() {
-        return this.domains != null ? this.domains.size() : 0;
-    }
 
     /**
      * @return the diffLobs
      */
     public Map<String, byte[]> getDiffLobs() {
         return this.diffLobs;
-    }
-
-    /**
-     * @param diffLobs the diffLobs to set
-     */
-    public void setDiffLobs(Map<String, byte[]> diffLobs) {
-        this.diffLobs = diffLobs;
     }
 
     /**
@@ -404,54 +276,12 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     }
 
     /**
-     * <p>
-     * For easy control on diff content regarding domain + DiffDisplay tree content
-     * </p>
-     *
-     * @param pred
-     * @return
-     */
-    public boolean isAnyDiffValidate(Predicate<T> pred) {
-        return (this.domains != null && this.domains.size() > 0)
-                && this.domains.stream()
-                .filter(d -> d.getPreparedContent() != null && d.getPreparedContent().size() > 0)
-                .map(DomainDiffDisplay::getPreparedContent)
-                .flatMap(Collection::stream)
-                .anyMatch(pred);
-    }
-
-    /**
      * @return
      */
     public boolean isHasSomeDiffRemarks() {
-        return isAnyDiffValidate(DiffDisplay::isHasRemarks);
+        return this.diffRemarks.size() > 0;
     }
 
-    /**
-     * @return
-     */
-    public boolean isEmptyDiff() {
-        return !isAnyDiffValidate(DiffDisplay::isHasContent);
-    }
-
-    /**
-     * @return
-     */
-    public boolean isHasDiffDisplay() {
-        return (this.domains != null && this.domains.size() > 0)
-                && this.domains.stream().filter(d -> d.getPreparedContent() != null)
-                .anyMatch(d -> d.getPreparedContent().size() > 0);
-    }
-
-    /**
-     * @return
-     */
-    public Stream<T> streamDiffDisplay() {
-        return this.domains.stream()
-                .map(DomainDiffDisplay::getPreparedContent)
-                .filter(Objects::nonNull)
-                .flatMap(Collection::stream);
-    }
 
     public TransformerProcessor getTransformerProcessor() {
         return transformerProcessor;
@@ -462,16 +292,14 @@ public final class PilotedCommitPreparation<T extends DiffDisplay<?>> implements
     }
 
     /**
-     * @return
+     * Entry point to diff remarks holder. Referenced collection is thread safe and can be updated / accessed without locking
+     *
+     * @return holder accessor
      */
-    public List<DiffRemark<?>> getAllDiffRemarks() {
-        return this.domains != null && this.domains.size() > 0
-                ? this.domains.stream()
-                .map(DomainDiffDisplay::getAllDiffRemarks)
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList())
-                : Collections.emptyList();
+    public Collection<DiffRemark<?>> getDiffRemarks() {
+        return this.diffRemarks;
     }
+
 
     public boolean isDisplayAll() {
         return this.displayAll;

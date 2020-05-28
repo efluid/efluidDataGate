@@ -790,6 +790,18 @@ public abstract class CucumberStepDefs {
         return this.commitService.getExistingCommitDetails(savedCommitUUID);
     }
 
+    protected List<PreparedIndexEntry> getSavedCommitIndex() {
+
+        assertRequestWasOk();
+
+        UUID savedCommitUUID = (UUID) Objects.requireNonNull(currentAction.andReturn()
+                .getModelAndView()).getModel().get("createdUUID");
+
+        assertThat(savedCommitUUID).isNotNull();
+
+        return this.commitService.loadCommitIndex(getCurrentUserProject(), savedCommitUUID);
+    }
+
     /**
      * @param name
      * @param tableName

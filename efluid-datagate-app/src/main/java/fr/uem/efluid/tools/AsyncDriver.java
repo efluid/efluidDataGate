@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  * </p>
  * <p>
  * Mostly a basic facade to async features used in multi-step processes, for easy update
- * in some contexts (testing ...) or for heavy configuration changes
+ * in some contexts (testing ...) or for heavy configuration changes. Do not care of the result of the processed Callable
  * </p>
  * <p>
  * Provides a survey feature : can check active processes and kill
@@ -62,8 +62,7 @@ public interface AsyncDriver {
 
     /**
      * <p>
-     * Run all steps (as <tt>Callable</tt>) for completing a <tt>AsyncSourceProcess</tt> and
-     * provides results
+     * Run all steps (as <tt>Callable</tt>) for completing a <tt>AsyncSourceProcess</tt>. Do not get / extract callable results ...
      * </p>
      * <p>
      * Process steps concurrently using driver config
@@ -71,10 +70,9 @@ public interface AsyncDriver {
      *
      * @param stepCallables
      * @param source
-     * @return
      * @throws InterruptedException
      */
-    <T> List<T> processSteps(List<Callable<T>> stepCallables, final AsyncSourceProcess source)
+    void processSteps(List<Callable<?>> stepCallables, final AsyncSourceProcess source)
             throws InterruptedException;
 
     /**

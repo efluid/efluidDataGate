@@ -7,7 +7,6 @@ import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.LobProperty;
 import fr.uem.efluid.services.types.CommitDetails;
 import fr.uem.efluid.services.types.CommitEditData;
-import fr.uem.efluid.services.types.DiffDisplay;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
@@ -75,13 +74,13 @@ public class CommitStepDefs extends CucumberStepDefs {
     @Then("^the saved commit content has these identified changes :$")
     public void commit_content_changes(DataTable data) {
 
-        // Get by tables
-        Map<String, List<Map<String, String>>> tables = data.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
+        List<PreparedIndexEntry> commitIndex = getSavedCommitIndex();
 
-        CommitDetails commit = getSavedCommit();
+        data.asMaps().forEach((t, v) -> {
 
-        tables.forEach((t, v) -> {
-            DiffDisplay<?> content = commit.getContent().stream()
+            PreparedIndexEntry diffLine = commitIndex.stream().filter(c -> c.get)
+
+            DiffDisplay<?> content = commitIndex.stream()
                     .filter(p -> p.getDictionaryEntryTableName().equals(t))
                     .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
 

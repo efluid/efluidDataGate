@@ -157,14 +157,36 @@ public class BacklogController extends CommonController {
     }
 
     /**
-     * @return content for paginated diffDisplay rendering
+     * @return content for paginated diff content rendering
      */
-    @RequestMapping(path = {"/prepare/page/{uuid}/{page}", "/merge/page/{uuid}/{page}"}, method = GET)
+    @RequestMapping(path = {"/prepare/page/{page}", "/merge/page/{page}"}, method = GET)
     @ResponseBody
-    public DiffDisplayPage preparationGetDiffDisplayPage(@PathVariable("uuid") UUID uuid, @PathVariable("page") int page,
-                                                         @RequestParam(required = false) String search) {
+    public DiffContentPage preparationGetDiffContentPage(
+            @PathVariable("page") int page,
+            @RequestParam(required = false) String search) {
 
-        return this.pilotableCommitService.getPaginatedDiffDisplay(uuid, page, search);
+        // TODO : use real search ...
+        DiffContentSearch diffContentSearch = new DiffContentSearch();
+        diffContentSearch.setKeySearch(search);
+
+        return this.pilotableCommitService.getPaginatedDiffContent(page, diffContentSearch);
+    }
+
+    /**
+     * @return content for paginated commit index rendering
+     */
+    @RequestMapping(path = "/details/{uuid}/page/{page}", method = GET)
+    @ResponseBody
+    public DiffContentPage commitDetailsContentPage(
+            @PathVariable("uuid") UUID uuid,
+            @PathVariable("page") int page,
+            @RequestParam(required = false) String search) {
+
+        // TODO : use real search ...
+        DiffContentSearch diffContentSearch = new DiffContentSearch();
+        diffContentSearch.setKeySearch(search);
+
+        return this.commitService.getPaginatedExistingCommitContent(uuid, page, diffContentSearch);
     }
 
     /**
@@ -184,40 +206,6 @@ public class BacklogController extends CommonController {
 
     /**
      * <p>
-     * Update selection for a selected domain
-     * </p>
-     *
-     * @param domainUUID
-     * @param selected
-     * @param rollbacked
-     */
-    @RequestMapping(path = {"/prepare/selection/domain/{domain}", "/merge/selection/domain/{domain}"}, method = POST)
-    @ResponseBody
-    public void preparationSelectionUpdateDomain(@PathVariable("domain") UUID domainUUID, @RequestParam boolean selected,
-                                                 @RequestParam boolean rollbacked) {
-
-        this.pilotableCommitService.updateDomainPreparationSelections(selected, rollbacked, domainUUID);
-    }
-
-    /**
-     * <p>
-     * Update selection for one diffDisplay
-     * </p>
-     *
-     * @param dictUUID
-     * @param selected
-     * @param rollbacked
-     */
-    @RequestMapping(path = {"/prepare/selection/dict/{dict}", "/merge/selection/dict/{dict}"}, method = POST)
-    @ResponseBody
-    public void preparationSelectionUpdateDiffDisplay(@PathVariable("dict") UUID dictUUID, @RequestParam boolean selected,
-                                                      @RequestParam boolean rollbacked) {
-
-        this.pilotableCommitService.updateDiffDisplayPreparationSelections(selected, rollbacked, dictUUID);
-    }
-
-    /**
-     * <p>
      * Update selection for one item
      * </p>
      *
@@ -227,10 +215,10 @@ public class BacklogController extends CommonController {
      */
     @RequestMapping(path = {"/prepare/selection/line/{index}", "/merge/selection/line/{index}"}, method = POST)
     @ResponseBody
-    public void preparationSelectionUpdateItem(@PathVariable("index") long itemIndex, @RequestParam boolean selected,
+    public void preparationSelectionUpdateItem(@PathVariable("index") String itemIndex, @RequestParam boolean selected,
                                                @RequestParam boolean rollbacked) {
 
-        this.pilotableCommitService.updateDiffLinePreparationSelections(selected, rollbacked, itemIndex);
+        this.pilotableCommitService.updateDiffLinePreparationSelections(itemIndex, selected, rollbacked);
     }
 
     /**
@@ -239,7 +227,7 @@ public class BacklogController extends CommonController {
      * @return
      */
     @RequestMapping(path = {"/prepare/commit", "/merge/commit"}, method = POST)
-    public String preparationCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation, @RequestAttribute(required = false) PilotedCommitPreparation<LocalPreparedDiff> preparationPush) {
+    public String preparationCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<?> preparation, @RequestAttribute(required = false) PilotedCommitPreparation<?> preparationPush) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
@@ -263,7 +251,7 @@ public class BacklogController extends CommonController {
      * @return
      */
     @RequestMapping(path = {"/prepare/save", "/merge/save"}, method = POST)
-    public String preparationSave(Model model, @ModelAttribute PilotedCommitPreparation<LocalPreparedDiff> preparation, @RequestAttribute(required = false) PilotedCommitPreparation<LocalPreparedDiff> preparationPush) {
+    public String preparationSave(Model model, @ModelAttribute PilotedCommitPreparation<?> preparation, @RequestAttribute(required = false) PilotedCommitPreparation<?> preparationPush) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;

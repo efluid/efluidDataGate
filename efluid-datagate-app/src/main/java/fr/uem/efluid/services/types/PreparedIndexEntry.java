@@ -8,17 +8,26 @@ import fr.uem.efluid.model.entities.IndexEntry;
 import java.util.UUID;
 
 /**
+ * <p>Rendering of a diff line for commit preparation. Provides access to display values for the rendering of the diff, and many
+ * selectors for the building of the final commit index / selection of lines to rollback</p>
+ *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
 public class PreparedIndexEntry implements DiffLine, Rendered {
 
-    private long indexForDiff;
+    private String indexForDiff;
 
     private Long id;
 
     private UUID dictionaryEntryUuid;
+
+    // Only for paginated display needs - the value is in most case not initialized
+    private String tableName;
+
+    // Only for paginated display needs - the value is in most case not initialized
+    private String domainName;
 
     private IndexAction action;
 
@@ -43,17 +52,11 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         super();
     }
 
-    /**
-     * @return the indexForDiff
-     */
-    public long getIndexForDiff() {
-        return this.indexForDiff;
+    public String getIndexForDiff() {
+        return indexForDiff;
     }
 
-    /**
-     * @param indexForDiff the indexForDiff to set
-     */
-    public void setIndexForDiff(long indexForDiff) {
+    public void setIndexForDiff(String indexForDiff) {
         this.indexForDiff = indexForDiff;
     }
 
@@ -99,6 +102,22 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
      */
     public void setDictionaryEntryUuid(UUID dictionaryEntryUuid) {
         this.dictionaryEntryUuid = dictionaryEntryUuid;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public String getDomainName() {
+        return domainName;
+    }
+
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
     }
 
     /**
@@ -276,6 +295,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         data.setKeyValue(combined.getKeyValue());
         data.setHrPayload(hrPayload);
         data.setTimestamp(combined.getTimestamp());
+        data.setIndexForDiff(combined.getDictionaryEntryUuid() + "_" + combined.getKeyValue());
 
         return data;
     }
@@ -314,6 +334,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         data.setKeyValue(existing.getKeyValue());
         data.setCommitUuid(existing.getCommit() != null ? existing.getCommit().getUuid() : null);
         data.setTimestamp(existing.getTimestamp());
+        data.setIndexForDiff(existing.getDictionaryEntryUuid() + "_" + existing.getKeyValue());
     }
 
 }
