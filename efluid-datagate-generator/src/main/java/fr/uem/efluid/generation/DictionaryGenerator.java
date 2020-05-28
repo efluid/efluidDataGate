@@ -181,7 +181,10 @@ public class DictionaryGenerator extends AbstractProcessor {
         possibleTables.forEach(p -> {
             // Exclude meta types
             if (!p.isIntermediate()) {
-                tables.computeIfAbsent(p.getSourceType(), k -> new ArrayList<>()).add(initOneParameterTableWithKeys(p, annotDomains));
+                if(!p.getSourceType().isAnnotationPresent(ParameterIgnored.class)) {
+                    tables.computeIfAbsent(p.getSourceType(), k -> new ArrayList<>())
+                            .add(initOneParameterTableWithKeys(p, annotDomains));
+                }
             }
         });
 
