@@ -43,6 +43,8 @@ public class UserController extends CommonController {
 
 		// Current user details
 		model.addAttribute("user", this.secu.getCurrentUserDetails());
+		model.addAttribute("currentLocationTitle", "Mon profil");
+
 
 		return "pages/user_me";
 	}
@@ -139,6 +141,8 @@ public class UserController extends CommonController {
 		model.addAttribute("users", this.secu.getAllUserDetails());
 
 		model.addAttribute("canCreate", !this.secu.canPreloadUserOnly());
+		model.addAttribute("currentLocationTitle", "Éditer les utilisateurs");
+
 
 		return "pages/users";
 	}
