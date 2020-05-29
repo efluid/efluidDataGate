@@ -11,7 +11,6 @@ import static fr.uem.efluid.GeneratorTester.onPackage;
  */
 public class SampleGenerationTest {
 
-
     @Test
     public void testCallGenerationOnAll() {
 
@@ -34,7 +33,8 @@ public class SampleGenerationTest {
                 "T_CHILD_TABLE_TYPE_CUSTO",
                 "T_CHILD_TABLE_TYPE_DROP",
                 "T_BASIC_ENTITY",
-                "T_OTHER_ENTITY"
+                "T_OTHER_ENTITY",
+                "CLASS_NOT_IGNORED"
         );
         tester.assertFoundLinkCountIs(0);
         tester.assertFoundMappingCountIs(0);
