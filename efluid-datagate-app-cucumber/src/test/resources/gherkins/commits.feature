@@ -48,7 +48,7 @@ Feature: The commit can be saved and are historised
     Given a diff analysis has been started and completed
     And the user has selected all content for commit
     And the user has specified a commit comment ":construction: Test commit"
-    When the user save the merge commit
+    When the user save the commit
     Then the commit ":construction: Test commit" is added to commit list for current project
     And the saved commit content has these identified changes :
       | Table      | Key | Action | Payload                            |

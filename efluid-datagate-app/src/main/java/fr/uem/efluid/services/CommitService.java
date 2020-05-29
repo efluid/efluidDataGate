@@ -384,15 +384,15 @@ public class CommitService extends AbstractApplicationService {
 
         // Load details (without the content)
         CommitDetails details = loadIndexContent
-                // No content - just get the size, for paginated navigation
-                ? CommitDetails.fromEntityWithoutContent(
-                this.commits.getOne(commitUUID),
-                this.indexes.countByCommitUuid(commitUUID),
-                getReferencedTablesForCommit(commitUUID))
                 // With full content - for testing, reading ...
-                : CommitDetails.fromEntityAndContent(
+                ? CommitDetails.fromEntityAndContent(
                 this.commits.getOne(commitUUID),
                 loadCommitIndex(project, commitUUID),
+                getReferencedTablesForCommit(commitUUID))
+                // No content - just get the size, for paginated navigation
+                : CommitDetails.fromEntityWithoutContent(
+                this.commits.getOne(commitUUID),
+                this.indexes.countByCommitUuid(commitUUID),
                 getReferencedTablesForCommit(commitUUID));
 
         List<Attachment> commitAtt = this.attachments.findByCommit(new Commit(commitUUID));

@@ -1,7 +1,6 @@
 package fr.uem.efluid.services.types;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,6 +26,9 @@ public abstract class DiffContentHolder<T extends PreparedIndexEntry> {
     private final Collection<T> diffContent;
 
     private final Map<UUID, DictionaryEntrySummary> referencedTables;
+
+    // For simplification of rendering
+    private boolean displayAll = true;
 
     protected DiffContentHolder(Collection<T> diffContent, Map<UUID, DictionaryEntrySummary> referencedTables) {
         this.diffContent = diffContent;
@@ -93,6 +95,29 @@ public abstract class DiffContentHolder<T extends PreparedIndexEntry> {
 
     public List<String> getReferencedDomainNames() {
         return this.referencedTables.values().stream().map(DictionaryEntrySummary::getDomainName).distinct().sorted().collect(Collectors.toList());
+    }
+
+    public boolean isDisplayAll() {
+        return this.displayAll;
+    }
+
+    public void setDisplayAll(boolean displayAll) {
+        this.displayAll = displayAll;
+    }
+
+    /**
+     * Quick access to covered Functional domains in preparation (used for commit detail
+     * page)
+     *
+     * @return
+     */
+    public Collection<String> getSelectedFunctionalDomainNames() {
+        return this.diffContent.stream()
+                .filter(PreparedIndexEntry::isSelected)
+                .map(PreparedIndexEntry::getDictionaryEntryUuid)
+                .distinct()
+                .map(u -> getReferencedTables().get(u).getDomainName())
+                .collect(Collectors.toSet());
     }
 
     /**

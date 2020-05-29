@@ -21,6 +21,7 @@ public class DiffContentSearch {
     private String valueSearch;
     private SortCriteria sortCriteria;
     private boolean sortAsc;
+    private boolean hideItemsWithoutAction ;
 
     private transient boolean doSearchDicts = false;
     private transient boolean doSearchKey = false;
@@ -115,6 +116,7 @@ public class DiffContentSearch {
             this.doSearchDicts = this.selectedDictionaryEntries != null && this.selectedDictionaryEntries.size() > 0;
             this.doSearchKey = StringUtils.hasText(this.keySearch);
             this.doSearchValue = StringUtils.hasText(this.valueSearch);
+            this.hideItemsWithoutAction = !holder.isDisplayAll();
 
             // Prepare comparator (here default fixed one)
             // TODO : apply real comparing feature
@@ -146,6 +148,10 @@ public class DiffContentSearch {
      * @return basic filtering result. Default is true : includes everything when not filtered
      */
     private boolean filter(PreparedIndexEntry preparedIndexEntry) {
+
+        if(this.hideItemsWithoutAction && !preparedIndexEntry.isNeedAction()){
+            return false;
+        }
 
         // Search by table - includes also the search by domains as the corresponding tables are added to criteria
         if (this.doSearchDicts && !this.selectedDictionaryEntries.contains(preparedIndexEntry.getDictionaryEntryUuid())) {

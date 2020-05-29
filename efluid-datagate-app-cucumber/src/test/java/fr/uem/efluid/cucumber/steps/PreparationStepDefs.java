@@ -416,7 +416,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
         tables.forEach((t, v) -> {
 
             List<ContentLineDisplay> remarkDisplays = preparation.getDiffRemarks().stream()
-                    .filter(r -> r.getLocation().equals(t))
+                    .filter(r -> r.getLocation().equals("table " + t))
                     .flatMap(c -> ((DiffRemark<List<ContentLineDisplay>>) c).getPayload().stream())
                     .collect(Collectors.toList());
 

@@ -142,6 +142,7 @@ public class MergeResolutionProcessor {
             resultEntry.setKeyValue(source.getKeyValue());
             resultEntry.setDictionaryEntryUuid(source.getDictionaryEntryUuid());
             resultEntry.setCommitUuid(source.getCommitUuid());
+            resultEntry.setIndexForDiff(source.getDictionaryEntryUuid() + "_" + source.getKeyValue());
         }
     }
 

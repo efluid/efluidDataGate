@@ -73,8 +73,6 @@ public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extend
     private boolean attachmentDisplaySupport;
     private boolean attachmentExecuteSupport;
 
-    // For simplification of rendering
-    private boolean displayAll = true;
 
     private TransformerProcessor transformerProcessor;
 
@@ -253,7 +251,6 @@ public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extend
         return this.preparingState;
     }
 
-
     /**
      * @return the diffLobs
      */
@@ -298,15 +295,6 @@ public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extend
      */
     public Collection<DiffRemark<?>> getDiffRemarks() {
         return this.diffRemarks;
-    }
-
-
-    public boolean isDisplayAll() {
-        return this.displayAll;
-    }
-
-    public void setDisplayAll(boolean displayAll) {
-        this.displayAll = displayAll;
     }
 
     /**
