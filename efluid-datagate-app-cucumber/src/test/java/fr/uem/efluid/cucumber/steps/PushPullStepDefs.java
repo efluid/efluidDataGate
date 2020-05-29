@@ -222,24 +222,20 @@ public class PushPullStepDefs extends CucumberStepDefs {
         commits.stream()
                 .filter(c -> c.getComment() != null && c.getComment().equals(name)).forEach(
                 c -> {
-                    CommitDetails details = CommitDetails.fromEntity(c);
-
-                    // Complete content with HR playload details for easy test on payload
-                    this.commitService.completeCommitDetailsWithIndexForProjectDict(getCurrentUserProject(), details, new ArrayList<>(c.getIndex()));
+                    CommitDetails details = this.commitService.getCommitDetailsFromSpecifiedContent(getCurrentUserProject(), c, c.getIndex());
 
                     tables.forEach((t, v) -> {
-                        DiffDisplay<?> content = details.getContent().stream()
-                                .filter(p -> p.getDictionaryEntryTableName().equals(t))
-                                .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
+                        List<PreparedIndexEntry> content = details.getDiffContentForTableName(t).stream()
+                                .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue))
+                                .collect(Collectors.toList());
 
-                        assertThat(content.getDiff().size()).isEqualTo(v.size());
+                        assertThat(content).hasSize(v.size());
 
-                        content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
                         v.sort(Comparator.comparing(m -> m.get("Key")));
 
                         // Keep order
-                        for (int i = 0; i < content.getDiff().size(); i++) {
-                            PreparedIndexEntry diffLine = content.getDiff().get(i);
+                        for (int i = 0; i < content.size(); i++) {
+                            PreparedIndexEntry diffLine = content.get(i);
                             Map<String, String> dataLine = v.get(i);
 
                             IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
@@ -323,7 +319,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
     }
 
     @Given("^the export package content has this dictionary definition extract for commit \"(.*)\" :$")
-    public void export_contains_version( String commitComment, DataTable data) {
+    public void export_contains_version(String commitComment, DataTable data) {
 
         List<Map<String, String>> content = data.asMaps(String.class, String.class);
 

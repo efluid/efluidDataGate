@@ -43,9 +43,9 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      *
      */
-    private CommitDetails(Map<UUID, DictionaryEntrySummary> referencedTables) {
+    protected CommitDetails(Collection<PreparedIndexEntry> diffContent, Map<UUID, DictionaryEntrySummary> referencedTables) {
         // Default : no content embedded, it is loaded from paginated search
-        super(Collections.emptyList(), referencedTables);
+        super(diffContent, referencedTables);
     }
 
     public long getIndexSize() {
@@ -66,7 +66,7 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      * @param uuid the uuid to set
      */
-    private void setUuid(UUID uuid) {
+    protected void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
 
@@ -80,7 +80,7 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      * @param hash the hash to set
      */
-    private void setHash(String hash) {
+    protected void setHash(String hash) {
         this.hash = hash;
     }
 
@@ -94,7 +94,7 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      * @param originalUserEmail the originalUserEmail to set
      */
-    private void setOriginalUserEmail(String originalUserEmail) {
+    protected void setOriginalUserEmail(String originalUserEmail) {
         this.originalUserEmail = originalUserEmail;
     }
 
@@ -108,7 +108,7 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      * @param comment the comment to set
      */
-    private void setComment(String comment) {
+    protected void setComment(String comment) {
         this.comment = comment;
     }
 
@@ -122,7 +122,7 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      * @param createdTime the createdTime to set
      */
-    private void setCreatedTime(LocalDateTime createdTime) {
+    protected void setCreatedTime(LocalDateTime createdTime) {
         this.createdTime = createdTime;
     }
 
@@ -136,7 +136,7 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      * @param importedTime the importedTime to set
      */
-    private void setImportedTime(LocalDateTime importedTime) {
+    protected void setImportedTime(LocalDateTime importedTime) {
         this.importedTime = importedTime;
     }
 
@@ -150,7 +150,7 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      * @param mergeSources the mergeSources to set
      */
-    private void setMergeSources(List<UUID> mergeSources) {
+    protected void setMergeSources(List<UUID> mergeSources) {
         this.mergeSources = mergeSources;
     }
 
@@ -164,7 +164,7 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     /**
      * @param state the state to set
      */
-    private void setState(CommitState state) {
+    protected void setState(CommitState state) {
         this.state = state;
     }
 
@@ -233,19 +233,46 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
     }
 
     /**
+     * Without content, for paginated navigation in index
+     *
      * @param commit           entity of specified commit
-     * @param indexSize real size of commit index
+     * @param indexSize        real size of commit index
+     * @param referencedTables all identified tables for this commit
+     * @return Ready to display commit content
+     */
+    public static CommitDetails fromEntityWithoutContent(
+            Commit commit,
+            long indexSize,
+            Map<UUID, DictionaryEntrySummary> referencedTables) {
+
+        CommitDetails details = new CommitDetails(Collections.emptyList(), referencedTables);
+
+        details.setIndexSize(indexSize);
+        completeFromExistingEntity(details, commit);
+
+        return details;
+    }
+
+    /**
+     * @param commit           entity of specified commit
+     * @param diffContent      real content
      * @param referencedTables all identified tables for this commit
      * @return Ready to display commit content
      */
     public static CommitDetails fromEntityAndContent(
             Commit commit,
-            long indexSize,
+            Collection<PreparedIndexEntry> diffContent,
             Map<UUID, DictionaryEntrySummary> referencedTables) {
 
-        CommitDetails details = new CommitDetails(referencedTables);
+        CommitDetails details = new CommitDetails(diffContent, referencedTables);
 
-        details.setIndexSize(indexSize);
+        details.setIndexSize(diffContent.size());
+        completeFromExistingEntity(details, commit);
+
+        return details;
+    }
+
+    protected static void completeFromExistingEntity(CommitDetails details, Commit commit) {
         details.setComment(commit.getComment());
         details.setCreatedTime(commit.getCreatedTime());
         details.setHash(commit.getHash());
@@ -256,7 +283,5 @@ public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
         details.setMergeSources(commit.getMergeSources());
         details.setVersionName(commit.getVersion().getName());
         details.setVersionModelId(commit.getVersion().getModelIdentity());
-
-        return details;
     }
 }

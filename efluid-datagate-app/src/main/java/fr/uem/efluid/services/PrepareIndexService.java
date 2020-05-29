@@ -535,6 +535,9 @@ public class PrepareIndexService {
         // Complete from dict
         entry.setDictionaryEntryUuid(dic.getUuid());
 
+        // Specify a temp id for diff management
+        entry.setIndexForDiff(dic.getUuid() + "_" + key);
+
         return entry;
     }
 
@@ -615,8 +618,9 @@ public class PrepareIndexService {
      * @param readyToRender List of <tt>PreparedIndexEntry</tt> for similar content search
      * @return list to finally render
      */
-    private <T extends PreparedIndexEntry> List<T> combineSimilarDiffEntries(Collection<T> readyToRender,
-                                                                             Function<Collection<T>, ? extends T> similarConvert) {
+    private <T extends PreparedIndexEntry> List<T> combineSimilarDiffEntries(
+            Collection<T> readyToRender,
+            Function<Collection<T>, ? extends T> similarConvert) {
 
         List<T> listToRender = new ArrayList<>();
 

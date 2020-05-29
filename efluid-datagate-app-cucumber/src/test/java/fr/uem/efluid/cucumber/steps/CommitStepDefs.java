@@ -13,10 +13,7 @@ import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
@@ -58,7 +55,7 @@ public class CommitStepDefs extends CucumberStepDefs {
     @Then("^the commit \"(.*)\" from current project is of type \"(.*)\"$")
     public void then_commit_is_added_with_comment_and_type(String comment, String type) {
 
-        CommitDetails commit = this.commitService.getExistingCommitDetails(backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment));
+        CommitDetails commit = this.commitService.getExistingCommitDetails(backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment), false);
 
         assertThat(commit).isNotNull();
         assertThat(commit.getState()).isEqualTo(CommitState.valueOf(type));
@@ -73,40 +70,6 @@ public class CommitStepDefs extends CucumberStepDefs {
 
     @Then("^the saved commit content has these identified changes :$")
     public void commit_content_changes(DataTable data) {
-
-        List<PreparedIndexEntry> commitIndex = getSavedCommitIndex();
-
-        data.asMaps().forEach((t, v) -> {
-
-            PreparedIndexEntry diffLine = commitIndex.stream().filter(c -> c.get)
-
-            DiffDisplay<?> content = commitIndex.stream()
-                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
-                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
-
-            assertThat(content.getDiff().size()).isEqualTo(v.size());
-
-            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
-            v.sort(Comparator.comparing(m -> m.get("Key")));
-
-            // Keep order
-            for (int i = 0; i < content.getDiff().size(); i++) {
-                PreparedIndexEntry diffLine = content.getDiff().get(i);
-                Map<String, String> dataLine = v.get(i);
-
-                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
-                assertThat(diffLine.getAction()).isEqualTo(action);
-                assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
-
-                // No need to check payload in delete
-                if (action != REMOVE) {
-                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
-                }
-
-            }
-
-        });
-
         // Process assert on last saved commit in DB
         checkCommitDetails(getSavedCommit(), data);
     }
@@ -187,16 +150,10 @@ public class CommitStepDefs extends CucumberStepDefs {
         checkCommitDetails(getCurrentSpecifiedProperty("details", CommitDetails.class), table);
     }
 
-    @Then("^the commit details are too large to be displayed$")
-    public void commit_detail_large() {
-        CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
-        assertThat(details.isTooMuchData()).isTrue();
-    }
-
     @Then("^the commit details are displayed with (\\d*) payloads$")
     public void commit_detail_size(int size) {
         CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
-        assertThat(details.getSize()).isEqualTo(size);
+        assertThat(details.getIndexSize()).isEqualTo(size);
     }
 
     private void checkCommitDetails(CommitDetails commit, DataTable table) {
@@ -205,18 +162,17 @@ public class CommitStepDefs extends CucumberStepDefs {
         Map<String, List<Map<String, String>>> tables = table.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
 
         tables.forEach((t, v) -> {
-            DiffDisplay<?> content = commit.getContent().stream()
-                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
-                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
+            List<PreparedIndexEntry> diff = commit.getDiffContentForTableName(t).stream()
+                    .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue))
+                    .collect(Collectors.toList());
 
-            assertThat(content.getDiff().size()).isEqualTo(v.size());
+            assertThat(diff).hasSize(v.size());
 
-            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
             v.sort(Comparator.comparing(m -> m.get("Key")));
 
             // Keep order
-            for (int i = 0; i < content.getDiff().size(); i++) {
-                PreparedIndexEntry diffLine = content.getDiff().get(i);
+            for (int i = 0; i < diff.size(); i++) {
+                PreparedIndexEntry diffLine = diff.get(i);
                 Map<String, String> dataLine = v.get(i);
 
                 IndexAction action = IndexAction.valueOf(dataLine.get("Action"));

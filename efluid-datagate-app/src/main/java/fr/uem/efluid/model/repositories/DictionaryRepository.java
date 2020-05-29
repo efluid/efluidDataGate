@@ -36,14 +36,14 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 	@Query("SELECT DISTINCT idx.dictionaryEntry.uuid FROM IndexEntry idx WHERE idx.commit.uuid = :uuid")
 	List<UUID> findUsedUuidsByCommitUuid(@Param("uuid") UUID commitUuid);
 
-	default Map<UUID, DictionaryEntry> findAllMappedByUuid(Project project) {
+	default Map<UUID, DictionaryEntry> findAllByProjectMappedToUuid(Project project) {
 
 		return findByDomainProject(project).stream()
 				.collect(Collectors.toMap(DictionaryEntry::getUuid, d -> d));
 
 	}
 
-	default Map<String, DictionaryEntry> findAllMappedByTableName(Project project) {
+	default Map<String, DictionaryEntry> findAllByProjectMappedToTableName(Project project) {
 
 		return findByDomainProject(project).stream()
 				.collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));

@@ -158,18 +158,7 @@ Feature: The commit can be saved and are historised
       | TTAB_TWO | JJJ2 | ADD    | VALUE:'One', OTHER:'Other JJJ2' |
       | TTAB_TWO | KKK2 | ADD    | VALUE:'Two', OTHER:'Other KKK2' |
 
-  Scenario: The details for an existing commit is hidden for very large commits
-    # configured over 10000
-    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
-    And the 10001 generated data in managed table "TTAB_TWO" :
-      | key  | value | other     |
-      | K_%% | LL%%  | Preset %% |
-    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
-    When the user access to list of commits
-    And the user select the details of commit ":construction: Update 1"
-    Then the commit details are too large to be displayed
-
-  Scenario: The details for an existing commit is never hidden for very large commits if count is bellow configured limit
+  Scenario: The details for an existing commit is available through pagination
     # configured over 10000
     Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
     And the 9999 generated data in managed table "TTAB_TWO" :

@@ -18,6 +18,7 @@ import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
+import io.cucumber.datatable.DataTable;
 import junit.framework.AssertionFailedError;
 import org.assertj.core.api.ObjectAssert;
 import org.junit.runner.RunWith;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static fr.uem.efluid.ColumnType.*;
 import static fr.uem.efluid.cucumber.stubs.ManagedDatabaseAccess.*;
+import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -787,19 +789,32 @@ public abstract class CucumberStepDefs {
 
         assertThat(savedCommitUUID).isNotNull();
 
-        return this.commitService.getExistingCommitDetails(savedCommitUUID);
+        return this.commitService.getExistingCommitDetails(savedCommitUUID, true);
     }
 
-    protected List<PreparedIndexEntry> getSavedCommitIndex() {
+    protected static void assertDiffContentIsCompliant(DiffContentHolder<?> holder, DataTable data) {
 
-        assertRequestWasOk();
+        assertThat(holder.getDiffContent().size()).isEqualTo(data.asMaps().size());
 
-        UUID savedCommitUUID = (UUID) Objects.requireNonNull(currentAction.andReturn()
-                .getModelAndView()).getModel().get("createdUUID");
+        data.asMaps().forEach(l -> {
 
-        assertThat(savedCommitUUID).isNotNull();
+            DictionaryEntrySummary table = holder.getReferencedTables().values().stream()
+                    .filter(t -> t.getTableName().equals(l.get("Table")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
 
-        return this.commitService.loadCommitIndex(getCurrentUserProject(), savedCommitUUID);
+            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
+
+            IndexAction action = IndexAction.valueOf(l.get("Action"));
+            assertThat(index.getAction()).isEqualTo(action);
+
+            // No need to check payload in delete
+            if (action != REMOVE) {
+                assertThat(index.getHrPayload()).isEqualTo(l.get("Payload"));
+            }
+        });
     }
 
     /**

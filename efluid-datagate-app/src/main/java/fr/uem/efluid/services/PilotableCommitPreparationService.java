@@ -848,7 +848,7 @@ public class PilotableCommitPreparationService {
 
             if (!preparation.getDiffContent().isEmpty()) {
 
-                Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid(new Project(preparation.getProjectUuid()));
+                Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllByProjectMappedToUuid(new Project(preparation.getProjectUuid()));
 
                 long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
 

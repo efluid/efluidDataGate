@@ -95,15 +95,7 @@ public class SimilarPreparedMergeIndexEntry extends PreparedMergeIndexEntry impl
 		PreparedIndexEntry first = diffItems.iterator().next();
 
 		// Some properties are from first one
-		comb.setAction(first.getAction());
-		comb.setCommitUuid(first.getCommitUuid());
-		comb.setDictionaryEntryUuid(first.getDictionaryEntryUuid());
-		comb.setHrPayload(first.getHrPayload());
-		comb.setPayload(first.getPayload());
-		comb.setTimestamp(first.getTimestamp());
-
-		// Including key for sorting / ref
-		comb.setKeyValue(first.getKeyValue());
+		copyFromEntry(comb, first);
 
 		comb.setCombineds(diffItems);
 

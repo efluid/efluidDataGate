@@ -100,7 +100,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
         LOGGER.debug("Identified change to apply on managed DB. Will process {} diffLines", lines.size());
 
         // Preload dictionary for direct access by uuid and tab name
-        Map<UUID, DictionaryEntry> dictEntries = this.dictionary.findAllMappedByUuid(project);
+        Map<UUID, DictionaryEntry> dictEntries = this.dictionary.findAllByProjectMappedToUuid(project);
         Map<String, DictionaryEntry> dictByTab = dictEntries.values().stream()
                 .collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
 

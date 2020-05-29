@@ -587,7 +587,7 @@ public class BacklogController extends CommonController {
         WebUtils.addTools(model);
 
         // Get updated preparation
-        model.addAttribute("details", this.commitService.getExistingCommitDetails(uuid));
+        model.addAttribute("details", this.commitService.getExistingCommitDetails(uuid, false));
 
         return "pages/details";
     }

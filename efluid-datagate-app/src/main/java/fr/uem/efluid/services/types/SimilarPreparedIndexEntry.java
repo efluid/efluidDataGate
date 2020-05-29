@@ -1,5 +1,7 @@
 package fr.uem.efluid.services.types;
 
+import fr.uem.efluid.model.entities.IndexEntry;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -90,15 +92,7 @@ public class SimilarPreparedIndexEntry extends PreparedIndexEntry implements Com
 		PreparedIndexEntry first = diffItems.iterator().next();
 
 		// Some properties are from first one
-		comb.setAction(first.getAction());
-		comb.setCommitUuid(first.getCommitUuid());
-		comb.setDictionaryEntryUuid(first.getDictionaryEntryUuid());
-		comb.setHrPayload(first.getHrPayload());
-		comb.setPayload(first.getPayload());
-		comb.setTimestamp(first.getTimestamp());
-
-		// Including key for sorting / ref
-		comb.setKeyValue(first.getKeyValue());
+		copyFromEntry(comb, first);
 
 		comb.setCombineds(diffItems);
 

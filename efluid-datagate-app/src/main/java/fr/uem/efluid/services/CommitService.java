@@ -368,10 +368,11 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
-     * @param commitUUID
-     * @return
+     * @param commitUUID       requested commit
+     * @param loadIndexContent true if the index content will be also loaded in the CommitDetails
+     * @return CommitDetails to display
      */
-    public CommitDetails getExistingCommitDetails(UUID commitUUID) {
+    public CommitDetails getExistingCommitDetails(UUID commitUUID, boolean loadIndexContent) {
 
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
@@ -382,9 +383,16 @@ public class CommitService extends AbstractApplicationService {
         assertCommitExists(commitUUID);
 
         // Load details (without the content)
-        CommitDetails details = CommitDetails.fromEntityAndContent(
+        CommitDetails details = loadIndexContent
+                // No content - just get the size, for paginated navigation
+                ? CommitDetails.fromEntityWithoutContent(
                 this.commits.getOne(commitUUID),
                 this.indexes.countByCommitUuid(commitUUID),
+                getReferencedTablesForCommit(commitUUID))
+                // With full content - for testing, reading ...
+                : CommitDetails.fromEntityAndContent(
+                this.commits.getOne(commitUUID),
+                loadCommitIndex(project, commitUUID),
                 getReferencedTablesForCommit(commitUUID));
 
         List<Attachment> commitAtt = this.attachments.findByCommit(new Commit(commitUUID));
@@ -403,18 +411,40 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
-     * Load commit details for rendering regarding the specified project dictionary, and the given index content
+     * Init a standard CommitDetails for a specified commit entity, without checking any
+     * referenced items in local db : can be used from imported commit data
      *
-     * @param project
-     * @param commitUuid commit uuid which index will be loaded
-     * @return PreparedIndexEntry : populated and completed for display
+     * @param project      project where the corresponding tables will be loaded
+     * @param commitEntity a commit to map as a "Details"
+     * @param index        a given index content
+     * @return Prepared CommitDetails to display / test
      */
-    public List<PreparedIndexEntry> loadCommitIndex(Project project, UUID commitUuid) {
+    public CommitDetails getCommitDetailsFromSpecifiedContent(Project project, Commit commitEntity, Collection<IndexEntry> index) {
 
-        Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid(project);
+        // Needs referenced table as summaries, loaded for project
+        Map<UUID, DictionaryEntrySummary> referencedTables = this.dictionary.findByDomainProject(project).stream()
+                .map(d -> DictionaryEntrySummary.fromEntity(d, "?"))
+                .collect(Collectors.toMap(DictionaryEntrySummary::getUuid, s -> s));
 
-        // Load index ...
-        return this.indexes.findByCommitUuid(commitUuid).stream()
+        return CommitDetails.fromEntityAndContent(
+                commitEntity,
+                completeCommitIndexForProjectDict(project, index),
+                referencedTables);
+    }
+
+    /**
+     * Complete the given index for rendering regarding the specified project dictionary
+     *
+     * @param project project where the corresponding tables will be loaded
+     * @param index   a given index content
+     * @return unsorted collection of index entries
+     */
+    public Collection<PreparedIndexEntry> completeCommitIndexForProjectDict(Project project, Collection<IndexEntry> index) {
+
+        Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllByProjectMappedToUuid(project);
+
+        // On given index ...
+        return index.stream()
                 // ... Prepare rendering types (at this point without HR payload) ...
                 .map(PreparedIndexEntry::fromExistingEntity)
                 // ... With associated dictionaryEntry ...
@@ -422,7 +452,20 @@ public class CommitService extends AbstractApplicationService {
                 .entrySet().stream()
                 // ... Then complete rendering of index entries, for each dict entry
                 .flatMap(e -> this.diffs.prepareDiffForRendering(mappedDict.get(e.getKey()), e.getValue()).stream())
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Load commit details for rendering regarding the specified project dictionary, and the given index content
+     *
+     * @param project
+     * @param commitUuid commit uuid which index will be loaded
+     * @return PreparedIndexEntry : populated and completed for display
+     */
+    public Collection<PreparedIndexEntry> loadCommitIndex(Project project, UUID commitUuid) {
+
+        // Load index and complete details
+        return completeCommitIndexForProjectDict(project, this.indexes.findByCommitUuid(commitUuid));
     }
 
 

@@ -106,7 +106,7 @@
 		</form>
 	</span>
     <script layout:fragment="script" th:inline="javascript">
-		 /*<![CDATA[*/
+		/*<![CDATA[*/
 
 		/* For pagination */
 
@@ -119,7 +119,7 @@
 				// Reset 3 buttons
 				$("#" + index + "_item button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
 				$("#" + index + "_item button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
-				$("#" + index + "_item button.ignore-button").removeClass("btn-outline").addClass("btn-outline-secondary");
+				$("#" + index + "_item button.ignore-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
 				
 				// Apply selected button
 				if(selected){
@@ -145,7 +145,7 @@
 		};
 		
 		const displayNavBar = (pageIndex, pageCount) => {
-			
+
 			var navBar = '<nav aria-label="navbar"><ul class="pagination">';
 
 			var splitOneStart = -1;
@@ -294,16 +294,23 @@
 			var selected = type === "select";
 			var rollbacked = type === "rollback";
 
-			$.post("/ui/prepare/selection/all?selected="+ selected + "&rollbacked=" + rollbacked, null);
+			console.info("full " + type);
+
+			$.post("/ui/prepare/selection/all?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+
+				// Reset buttons
+				$("button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
+				$("button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
+				$("button.ignore-button").removeClass("btn-secondary").addClass("btn-outline-secondary");
 
 				if(selected){
-					$("button.select-button").click();
-				} else if(rollbacked){
-					$("button.rollback-button").click();
+					$("button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
+				} else if(rollbacked) {
+					$("button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
 				} else {
-					$("button.ignore-button").click();
+					$("button.ignore-button").removeClass("btn-outline-secondary").addClass("btn-secondary");
 				}
-
+			});
 		};
 		
     	// Init actions

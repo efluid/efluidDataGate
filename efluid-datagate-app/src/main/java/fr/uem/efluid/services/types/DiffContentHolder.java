@@ -1,9 +1,6 @@
 package fr.uem.efluid.services.types;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,6 +44,7 @@ public abstract class DiffContentHolder<T extends PreparedIndexEntry> {
 
     /**
      * Accessor for common use of diffContent related to the dictionary Entries
+     *
      * @return
      */
     public Stream<Map.Entry<UUID, List<T>>> streamDiffContentMappedToDictionaryEntryUuid() {
@@ -95,5 +93,23 @@ public abstract class DiffContentHolder<T extends PreparedIndexEntry> {
 
     public List<String> getReferencedDomainNames() {
         return this.referencedTables.values().stream().map(DictionaryEntrySummary::getDomainName).distinct().sorted().collect(Collectors.toList());
+    }
+
+    /**
+     * For testing / quick validation of content, gives access to the diff for a specified table only
+     *
+     * @param name
+     * @return
+     */
+    public Collection<T> getDiffContentForTableName(String name) {
+
+        Optional<DictionaryEntrySummary> table = getReferencedTables().values().stream()
+                .filter(t -> t.getTableName().equals(name))
+                .findFirst();
+
+        return table.map(d -> getDiffContent().stream()
+                .filter(i -> i.getDictionaryEntryUuid().equals(d.getUuid()))
+                .collect(Collectors.toSet()))
+                .orElse(Collections.emptySet());
     }
 }

@@ -115,29 +115,26 @@
 		</form>
 	</span>
     <script layout:fragment="script" th:inline="javascript">
-		 /*<![CDATA[*/
-		
-		 /* For pagination */
-		
+		/*<![CDATA[*/
+
+		/* For pagination */
+
 		var hasPreparation = /*[[${preparation != null}]]*/ true ;
 		var defaultShow = /*[[${preparation != null && preparation.displayAll}?'show':'hide']]*/ 'hide';
-			
+
 		const updateSelectItem = (index, selected, rollbacked) => {
 
 			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
 				
-				// Reset 3 buttons
+				// Reset 2 buttons
 				$("#" + index + "_item button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
 				$("#" + index + "_item button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
-				$("#" + index + "_item button.ignore-button").removeClass("btn-outline").addClass("btn-outline-secondary");
-				
+
 				// Apply selected button
 				if(selected){
 					$("#" + index + "_item button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
-				} else if(rollbacked) {
-					$("#" + index + "_item button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
 				} else {
-					$("#" + index + "_item button.ignore-button").removeClass("btn-outline-secondary").addClass("btn-secondary");
+					$("#" + index + "_item button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
 				}
 			});
 		};
@@ -223,7 +220,7 @@
 			} else {
 				resetButton.prop('disabled', true);
 			}
-			
+
 			$.get("/ui/merge/page/" + page + "?search=" + search, (data, status) => {
 				
 				// Remove current page
@@ -377,16 +374,19 @@
 			
 			var selected = type === "select";
 			var rollbacked = type === "rollback";
-			
+
 			console.info("full " + type);
-			
+
 			$.post("/ui/merge/selection/all?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
+
+				// Reset buttons
+				$("button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
+				$("button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
+
 				if(selected){
-					$("#selectAllButton").click((e) => $("button.select-button").click());
-				} else if(rollbacked){
-					$("#rollbackAllButton").click((e) => $("button.rollback-button").click());
+					$("button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
 				} else {
-					$("#ignoreAllButton").click((e) => $("button.ignore-button").click());
+					$("button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
 				}
 			});
 		};
