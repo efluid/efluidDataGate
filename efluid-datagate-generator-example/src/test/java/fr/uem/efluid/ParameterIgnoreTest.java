@@ -1,17 +1,14 @@
 package fr.uem.efluid;
 
 import org.junit.Test;
+import static fr.uem.efluid.GeneratorTester.onPackage;
 
-/**
- * Test on ParameterValue search (by annotation or with other rules)
- */import static fr.uem.efluid.GeneratorTester.*;
-        import static fr.uem.efluid.GeneratorTester.onPackage;
-
-public class AnnotationParameterIgnoredExcludeClass {
+public class ParameterIgnoreTest {
 
     @Test
-    public void testIgnoredParameterForClass() {
+    public void testIgnoredParameterIsUsed() {
         GeneratorTester tester = onPackage("fr.uem.efluid.sample.remarks").generate();
+
         tester.assertFoundDomainsAre("Remarques Efluid", "Entities Efluid");
 
         tester.assertThatContentWereIdentified();
@@ -20,8 +17,9 @@ public class AnnotationParameterIgnoredExcludeClass {
     }
 
     @Test
-    public void testNoIgnoredParameterForClass() {
+    public void testIgnoredParameterIsNotUsed() {
         GeneratorTester tester = onPackage("fr.uem.efluid.sample.remarks").generate();
+
         tester.assertFoundDomainsAre("Remarques Efluid", "Entities Efluid");
 
         tester.assertThatContentWereIdentified();
