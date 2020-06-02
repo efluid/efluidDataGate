@@ -66,6 +66,20 @@ public class ProjectManagementService extends AbstractApplicationService {
     }
 
     /**
+     * This function is used to reduce length of title project
+     * display in FRONT.
+     * @param start is the beginning of title
+     * @param end is where to cut title
+     */
+    public String getProjectNameSubstring(int start, int end) {
+        if (ProjectData.fromEntity(getCurrentSelectedProjectEntity()).getName().length() > 10) {
+            return ProjectData.fromEntity(getCurrentSelectedProjectEntity()).getName().substring(start,end) + "...";
+        } else {
+            return ProjectData.fromEntity(getCurrentSelectedProjectEntity()).getName();
+        }
+    }
+
+    /**
      * <p>
      * Apply selected project to current user
      * </p>

@@ -70,12 +70,6 @@ public class HomeController extends CommonController {
             return REDIRECT_SELECT;
         }
 
-        if (getLengthProject > 10) {
-            model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProject().getName().substring(0,10) + "...");
-        } else {
-            model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProject().getName());
-        }
-
         WebUtils.addTools(model);
 
         model.addAttribute("details", this.applicationDetailsService.getCurrentDetails());
@@ -83,6 +77,8 @@ public class HomeController extends CommonController {
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
         model.addAttribute("project", this.projectManagementService.getCurrentSelectedProject());
         model.addAttribute("lastVersion", this.dicoManagmentService.getLastVersion().getName());
+        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+
 
 
         return "pages/index";

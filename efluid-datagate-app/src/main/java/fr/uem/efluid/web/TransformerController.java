@@ -45,6 +45,7 @@ public class TransformerController extends CommonController {
         model.addAttribute("transformerTypes", this.transformerService.getAllTransformerTypes());
         model.addAttribute("transformerDefs", this.transformerService.getAllTransformerDefs());
         model.addAttribute("currentLocationTitle", "Transformateurs du projet");
+        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
 
         return "pages/transformers_all";
     }
