@@ -65,7 +65,7 @@ public class BacklogController extends CommonController {
     @RequestMapping("/history")
     public String historyPage(Model model) {
         model.addAttribute("currentLocationTitle", "Historique des mises à jour");
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return historySearchPageNav(model, 0, null);
     }
@@ -134,7 +134,7 @@ public class BacklogController extends CommonController {
     @RequestMapping("/prepare")
     public String preparationPage(Model model) {
             model.addAttribute("currentLocationTitle", "Préparer un lot");
-            model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+            model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return startPreparationAndRouteRegardingStatus(model, false);
     }
@@ -329,7 +329,7 @@ public class BacklogController extends CommonController {
         model.addAttribute("checkVersion", this.dictService.isDictionaryUpdatedAfterLastVersion());
         model.addAttribute("version", this.dictService.getLastVersion());
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/push";
     }
@@ -438,7 +438,7 @@ public class BacklogController extends CommonController {
         }
 
         model.addAttribute("currentLocationTitle", "Importer un lot");
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/pull";
     }
@@ -584,7 +584,7 @@ public class BacklogController extends CommonController {
         // Get updated preparation
         model.addAttribute("commits", this.commitService.getAvailableCommits());
         model.addAttribute("currentLocationTitle", "Liste des lots");
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/commits";
     }

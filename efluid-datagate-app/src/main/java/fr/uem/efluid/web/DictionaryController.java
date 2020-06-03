@@ -74,7 +74,7 @@ public class DictionaryController extends CommonController {
         model.addAttribute("dictionaryManagementService", this.dictionaryManagementService);
         model.addAttribute("checkVersion", this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion());
         model.addAttribute("canCreateVersion", this.dictionaryManagementService.isVersionCanCreate());
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
 
         // If we use the model ID as version name, the name can be ignored / hidden
@@ -105,7 +105,7 @@ public class DictionaryController extends CommonController {
         }
 
         model.addAttribute("domains", this.dictionaryManagementService.getAvailableFunctionalDomains());
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/domains";
     }
@@ -119,7 +119,7 @@ public class DictionaryController extends CommonController {
 
         model.addAttribute("dictionary", this.dictionaryManagementService.getDictionnaryEntrySummaries());
         model.addAttribute("version", this.dictionaryManagementService.getLastVersion());
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/dictionary";
     }
@@ -312,7 +312,7 @@ public class DictionaryController extends CommonController {
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
         model.addAttribute("version", this.dictionaryManagementService.getLastVersion());
         model.addAttribute("currentLocationTitle", "Exporter/Importer un dictionnaire");
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/share";
     }

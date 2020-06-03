@@ -35,6 +35,7 @@ datagate-efluid:
         history-page-size: 20
         diff-page-size: 10
         test-row-max-size: 10
+        get-current-selected-project-short-name: 10
 
     web-options:
         enable-custom-h2-console: false

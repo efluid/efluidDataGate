@@ -39,7 +39,7 @@ public class ProjectController extends CommonController {
 
         model.addAttribute("projects", this.projectManagementService.getAllProjects());
         model.addAttribute("currentLocationTitle", "Gestion des projets");
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/projects_all";
     }
@@ -72,7 +72,7 @@ public class ProjectController extends CommonController {
         model.addAttribute("prefereds", this.projectManagementService.getPreferedProjectsForCurrentUser());
         model.addAttribute("projects", this.projectManagementService.getAllProjects());
         model.addAttribute("currentLocationTitle", "Mes projets préférés");
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/projects_pref";
     }
@@ -106,7 +106,7 @@ public class ProjectController extends CommonController {
 
         model.addAttribute("prefereds", this.projectManagementService.getPreferedProjectsForCurrentUser());
         model.addAttribute("project", this.projectManagementService.getCurrentSelectedProject());
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/projects_select";
     }
