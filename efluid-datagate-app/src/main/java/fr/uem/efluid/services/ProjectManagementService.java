@@ -10,6 +10,7 @@ import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,6 +41,9 @@ public class ProjectManagementService extends AbstractApplicationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectManagementService.class);
 
+    @Value("${datagate-efluid.display.get-current-selected-project-short-name}")
+    private int shortNameLength;
+
     @Autowired
     private ProjectRepository projects;
 
@@ -63,6 +67,17 @@ public class ProjectManagementService extends AbstractApplicationService {
         // model is not mandatory here regarding the needs
 
         return ProjectData.fromEntity(getCurrentSelectedProjectEntity());
+    }
+
+    /**
+     * This function is used to reduce length of title project
+     */
+    public String getCurrentSelectedProjectShortName() {
+        if (ProjectData.fromEntity(getCurrentSelectedProjectEntity()).getName().length() > this.shortNameLength) {
+            return ProjectData.fromEntity(getCurrentSelectedProjectEntity()).getName().substring(0, this.shortNameLength) + "...";
+        } else {
+            return ProjectData.fromEntity(getCurrentSelectedProjectEntity()).getName();
+        }
     }
 
     /**

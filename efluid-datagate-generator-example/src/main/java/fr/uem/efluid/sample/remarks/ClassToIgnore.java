@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @ParameterIgnored
 @ParameterTable(tableName = "CLASS_TO_IGNORED")
-public class ClassToIgnored {
+public class ClassToIgnore {
 
     private String value;
 
