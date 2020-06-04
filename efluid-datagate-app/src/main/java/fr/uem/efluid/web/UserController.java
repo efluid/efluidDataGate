@@ -44,7 +44,7 @@ public class UserController extends CommonController {
 		// Current user details
 		model.addAttribute("user", this.secu.getCurrentUserDetails());
 		model.addAttribute("currentLocationTitle", "Mon profil");
-		model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+		model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
 		return "pages/user_me";
 	}
@@ -143,7 +143,7 @@ public class UserController extends CommonController {
 		model.addAttribute("canCreate", !this.secu.canPreloadUserOnly());
 		model.addAttribute("currentLocationTitle", "Éditer les utilisateurs");
 		model.addAttribute("isNavBold", true);
-		model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+		model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
 		return "pages/users";
 	}

@@ -77,7 +77,7 @@ public class HomeController extends CommonController {
         model.addAttribute("modelDesc", this.applicationDetailsService.getCurrentModelId());
         model.addAttribute("project", this.projectManagementService.getCurrentSelectedProject());
         model.addAttribute("lastVersion", this.dicoManagmentService.getLastVersion().getName());
-        model.addAttribute("projectName", this.projectManagementService.getProjectNameSubstring(0,10));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
 
 
