@@ -255,6 +255,8 @@
 					
 						var itemRow = 
 							'<tr id="' + e.indexForDiff + '_item" class="pageHolder added-item">' +
+								'<td>' + e.domainName + '</td>' +
+								'<td>' + e.tableName + '</td>' +
 								'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
 								'<td width="72%">' +
 									'<span class="reducer reducer-sm reducer-open float-right" onclick="hideAndShowDisplayAction(\'' + e.indexForDiff + '_item\')">&nbsp;</span>' +

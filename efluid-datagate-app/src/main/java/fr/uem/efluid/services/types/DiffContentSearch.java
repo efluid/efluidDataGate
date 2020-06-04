@@ -1,12 +1,17 @@
 package fr.uem.efluid.services.types;
 
+import fr.uem.efluid.model.entities.IndexEntry;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Predicate;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * <p>For search / filter and Sort support on a diff content.</p>
+ * <p>For search / filter and Sort support on a diff content : can process an extracted content OR can create a criteria
+ * (as a <tt>Specification</tt>) to extract similar content in an <tt>IndexEntry</tt> repository</p>
  * <p>Used to specify the required DiffContent selection to display and navigate through</p>
  *
  * @author elecomte
@@ -21,7 +26,7 @@ public class DiffContentSearch {
     private String valueSearch;
     private SortCriteria sortCriteria;
     private boolean sortAsc;
-    private boolean hideItemsWithoutAction ;
+    private boolean hideItemsWithoutAction;
 
     private transient boolean doSearchDicts = false;
     private transient boolean doSearchKey = false;
@@ -87,7 +92,6 @@ public class DiffContentSearch {
      * <p>Apply the search on specified content. If not yet done, a preparation step is processed
      * to init some filter / sort shortcut. Once prepared the search cannot be reset : create a new one
      * on every search criteria change.</p>
-     * <p>After filtering, the index entries are completed for display of tableName and DomainName</p>
      *
      * <p>This process is not really optimized, and can be quite heavy on large diff ...</p>
      *
@@ -95,50 +99,51 @@ public class DiffContentSearch {
      * @param <T>    diff item type
      * @return filtered and sorted content, as a list (as it is now sorted)
      */
-    public <T extends PreparedIndexEntry> List<T> filterAndSortDiffContent(DiffContentHolder<T> holder) {
+    public <T extends PreparedIndexEntry> List<T> filterAndSortDiffContentInMemory(DiffContentHolder<T> holder) {
 
-        if (!this.prepared) {
-
-            // Prepare domain search (as table search)
-            if (this.selectedDomains != null && !this.selectedDomains.isEmpty()) {
-                if (this.selectedDictionaryEntries == null) {
-                    this.selectedDictionaryEntries = new HashSet<>();
-                }
-
-                // Complete selected table criteria with the tables of selected domains
-                this.selectedDomains.forEach(d ->
-                        holder.getReferencedTables().values().stream()
-                                .filter(t -> t.getDomainUuid().equals(d))
-                                .findFirst().ifPresent(c -> this.selectedDictionaryEntries.add(c.getUuid())));
-            }
-
-            // Identify basic checks on
-            this.doSearchDicts = this.selectedDictionaryEntries != null && this.selectedDictionaryEntries.size() > 0;
-            this.doSearchKey = StringUtils.hasText(this.keySearch);
-            this.doSearchValue = StringUtils.hasText(this.valueSearch);
-            this.hideItemsWithoutAction = !holder.isDisplayAll();
-
-            // Prepare comparator (here default fixed one)
-            // TODO : apply real comparing feature
-            this.comparator = Comparator.comparing(PreparedIndexEntry::getDictionaryEntryUuid)
-                    .thenComparing(PreparedIndexEntry::getCombinedKey);
-
-            this.prepared = true;
-        }
+        prepareCriterias(holder.getReferencedTables(), holder.isDisplayAll());
 
         // Use simple filtering then sorting on content
         return holder.getDiffContent().stream()
                 .filter(this::filter)
-                // Complete tableName / DomainName to display (only on listed results)
-                .peek(i -> {
-                    DictionaryEntrySummary dic = holder.getReferencedTables().get(i.getDictionaryEntryUuid());
-                    if (dic != null) {
-                        i.setTableName(dic.getTableName());
-                        i.setDomainName(dic.getDomainName());
-                    }
-                })
                 .sorted(this.comparator)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * From the current search definition, prepare a specification for criteria based content extract
+     * to get the filtered / sorted IndexEntry from a repository
+     *
+     * @param referencedTables current process referenced table (required for table / domain filtering)
+     * @return the Specification, providing an adapted Predicate to search for IndexEntry
+     */
+    public Specification<IndexEntry> toSpecification(Map<UUID, DictionaryEntrySummary> referencedTables, UUID commitUUID) {
+
+        prepareCriterias(referencedTables, true);
+
+        return (Specification<IndexEntry>) (root, query, builder) -> {
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            predicates.add(builder.equal(root.get("commit").get("uuid"), commitUUID));
+
+            if (DiffContentSearch.this.doSearchKey) {
+                predicates.add(builder.like(root.get("keyValue"), "%" + DiffContentSearch.this.keySearch.replaceAll("\\*", "%") + "%"));
+            }
+
+            if (DiffContentSearch.this.doSearchDicts) {
+                CriteriaBuilder.In<UUID> in = builder.in(root.get("dictionaryEntry").get("uuid"));
+                DiffContentSearch.this.selectedDictionaryEntries.forEach(in::value);
+                predicates.add(in);
+            }
+
+            query.orderBy(
+                    builder.asc(root.get("dictionaryEntry").get("uuid")),
+                    builder.asc(root.get("keyValue"))
+            );
+
+            return builder.and(predicates.toArray(new Predicate[]{}));
+        };
     }
 
     /**
@@ -149,7 +154,7 @@ public class DiffContentSearch {
      */
     private boolean filter(PreparedIndexEntry preparedIndexEntry) {
 
-        if(this.hideItemsWithoutAction && !preparedIndexEntry.isNeedAction()){
+        if (this.hideItemsWithoutAction && !preparedIndexEntry.isNeedAction()) {
             return false;
         }
 
@@ -163,6 +168,37 @@ public class DiffContentSearch {
         }
 
         return !this.doSearchValue || preparedIndexEntry.getHrPayload().contains(this.valueSearch);
+    }
+
+    private void prepareCriterias(Map<UUID, DictionaryEntrySummary> referencedTables, boolean displayAll) {
+        if (!this.prepared) {
+
+            // Prepare domain search (as table search)
+            if (this.selectedDomains != null && !this.selectedDomains.isEmpty()) {
+                if (this.selectedDictionaryEntries == null) {
+                    this.selectedDictionaryEntries = new HashSet<>();
+                }
+
+                // Complete selected table criteria with the tables of selected domains
+                this.selectedDomains.forEach(d ->
+                        referencedTables.values().stream()
+                                .filter(t -> t.getDomainUuid().equals(d))
+                                .findFirst().ifPresent(c -> this.selectedDictionaryEntries.add(c.getUuid())));
+            }
+
+            // Identify basic checks on
+            this.doSearchDicts = this.selectedDictionaryEntries != null && this.selectedDictionaryEntries.size() > 0;
+            this.doSearchKey = StringUtils.hasText(this.keySearch);
+            this.doSearchValue = StringUtils.hasText(this.valueSearch);
+            this.hideItemsWithoutAction = !displayAll;
+
+            // Prepare comparator (here default fixed one)
+            // TODO : apply real comparing feature
+            this.comparator = Comparator.comparing(PreparedIndexEntry::getDictionaryEntryUuid)
+                    .thenComparing(PreparedIndexEntry::getCombinedKey);
+
+            this.prepared = true;
+        }
     }
 
     public enum SortCriteria {

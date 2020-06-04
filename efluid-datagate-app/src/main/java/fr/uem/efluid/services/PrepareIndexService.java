@@ -88,7 +88,7 @@ public class PrepareIndexService {
 
     /**
      * <p>
-     * Prepare the diff content, by extracting current content and building value to value
+     * Prepare the diff content, by extracting current local content and building value to value
      * diff regarding the actual index content
      * </p>
      * <p>
@@ -101,7 +101,7 @@ public class PrepareIndexService {
      * @param lobs
      * @param project
      */
-    public void completeCurrentContentDiff(
+    public void completeLocalDiff(
             PilotedCommitPreparation<PreparedIndexEntry> preparation,
             DictionaryEntry entry,
             Map<String, byte[]> lobs,
@@ -175,7 +175,7 @@ public class PrepareIndexService {
      * @param mergeDiff          imported merge diff
      * @param project
      */
-    public void completeMergeIndexDiff(
+    public void completeMergeDiff(
             PilotedCommitPreparation<PreparedMergeIndexEntry> preparation,
             DictionaryEntry entry,
             Map<String, byte[]> lobs,
@@ -261,14 +261,14 @@ public class PrepareIndexService {
      * case they are provided as SimilarPreparedIndexEntry
      * </p>
      *
-     * @param dic
+     * @param dictionaryEntryUuid uuid of dict entry
      * @param index
      * @return List adapted for rendering : some results may be combined
      */
-    List<PreparedIndexEntry> prepareDiffForRendering(DictionaryEntry dic, List<PreparedIndexEntry> index) {
+    List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index) {
 
         // Get all previouses for HR payload init
-        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntriesExcludingExisting(dic, index);
+        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntriesExcludingExisting(new DictionaryEntry(dictionaryEntryUuid), index);
 
         // Complete HR payloads
         index.forEach(e -> {

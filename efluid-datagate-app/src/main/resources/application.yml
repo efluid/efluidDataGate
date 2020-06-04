@@ -32,9 +32,9 @@ datagate-efluid:
     display:
         combine-similar-diff-after: 10
         history-page-size: 20
-        diff-page-size: 10
+        diff-page-size: 15
         details-page-size: 15
-        test-row-max-size: 15
+        test-row-max-size: 10
 
     web-options:
         enable-custom-h2-console: false

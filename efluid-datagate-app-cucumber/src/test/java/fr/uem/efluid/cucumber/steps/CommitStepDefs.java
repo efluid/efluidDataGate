@@ -5,16 +5,16 @@ import fr.uem.efluid.model.entities.AttachmentType;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.LobProperty;
-import fr.uem.efluid.services.types.CommitDetails;
-import fr.uem.efluid.services.types.CommitEditData;
-import fr.uem.efluid.services.types.PreparedIndexEntry;
+import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static java.util.stream.Collectors.toMap;
@@ -71,7 +71,9 @@ public class CommitStepDefs extends CucumberStepDefs {
     @Then("^the saved commit content has these identified changes :$")
     public void commit_content_changes(DataTable data) {
         // Process assert on last saved commit in DB
-        checkCommitDetails(getSavedCommit(), data);
+        CommitDetails details = getSavedCommit();
+
+        checkCommitDetails(t -> details.getDiffContentForTableName(t).stream(), data);
     }
 
     @Then("^the saved merge commit content has these identified changes :$")
@@ -144,10 +146,17 @@ public class CommitStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the commit details are displayed with this content :$")
-    public void commit_detail_content(DataTable table) {
+    public void commit_detail_content(DataTable table) throws Exception {
 
-        // Get by tables
-        checkCommitDetails(getCurrentSpecifiedProperty("details", CommitDetails.class), table);
+        CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
+
+        DiffContentPage paginatedContent = getContent("/ui/details/" + details.getUuid() + "/page/0", DiffContentPage.class);
+
+        Map<String, UUID> tableUuids = details.getReferencedTables().values().stream()
+                .collect(Collectors.toMap(DictionaryEntrySummary::getTableName, DictionaryEntrySummary::getUuid));
+
+        // Get details directly with all content - the one in screen is
+        checkCommitDetails(t -> paginatedContent.getPage().stream().filter(i -> i.getDictionaryEntryUuid().equals(tableUuids.get(t))), table);
     }
 
     @Then("^the commit details are displayed with (\\d*) payloads$")
@@ -156,13 +165,13 @@ public class CommitStepDefs extends CucumberStepDefs {
         assertThat(details.getIndexSize()).isEqualTo(size);
     }
 
-    private void checkCommitDetails(CommitDetails commit, DataTable table) {
+    private void checkCommitDetails(Function<String, Stream<? extends PreparedIndexEntry>> contentAccessForTabme, DataTable table) {
 
         // Get by tables
         Map<String, List<Map<String, String>>> tables = table.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
 
         tables.forEach((t, v) -> {
-            List<PreparedIndexEntry> diff = commit.getDiffContentForTableName(t).stream()
+            List<PreparedIndexEntry> diff = contentAccessForTabme.apply(t)
                     .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue))
                     .collect(Collectors.toList());
 

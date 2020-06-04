@@ -332,10 +332,19 @@ public class PilotableCommitPreparationService {
 
         // Filter and sort content regarding the specified search
         if (current != null) {
-            return new DiffContentPage(
-                    pageIndex,
-                    currentSearch.filterAndSortDiffContent(current),
-                    this.diffDisplayPageSize);
+
+            List<? extends PreparedIndexEntry> diffContent = currentSearch.filterAndSortDiffContentInMemory(current);
+
+            // Complete tableName / DomainName to display (only on listed results)
+            diffContent.forEach(i -> {
+                DictionaryEntrySummary dic = current.getReferencedTables().get(i.getDictionaryEntryUuid());
+                if (dic != null) {
+                    i.setTableName(dic.getTableName());
+                    i.setDomainName(dic.getDomainName());
+                }
+            });
+
+            return new DiffContentPage(pageIndex, diffContent, this.diffDisplayPageSize);
         }
 
         throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation to filter");
@@ -854,6 +863,8 @@ public class PilotableCommitPreparationService {
 
                 // Process details
                 List<Callable<?>> callables = preparation.getDiffContent().stream()
+                        // Sort index by date for clean merge build
+                        .sorted(Comparator.comparing(PreparedIndexEntry::getTimestamp))
                         .collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
                         .entrySet().stream()
                         .filter(Objects::nonNull)
@@ -931,7 +942,7 @@ public class PilotableCommitPreparationService {
             assertDictionaryEntryIsRealTable(dict, current);
 
             // Search diff content
-            this.diffService.completeCurrentContentDiff(current, dict, current.getDiffLobs(), new Project(current.getProjectUuid()));
+            this.diffService.completeLocalDiff(current, dict, current.getDiffLobs(), new Project(current.getProjectUuid()));
 
             int rem = current.getProcessRemaining().decrementAndGet();
             LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", rem, current.getProcessStarted());
@@ -963,7 +974,7 @@ public class PilotableCommitPreparationService {
             assertDictionaryEntryIsRealTable(dict, current);
 
             // Then run one merge action for dictionaryEntry
-            this.diffService.completeMergeIndexDiff(current, dict, current.getDiffLobs(), lastLocalCommitTimestamp,
+            this.diffService.completeMergeDiff(current, dict, current.getDiffLobs(), lastLocalCommitTimestamp,
                     correspondingDiff, new Project(current.getProjectUuid()));
 
             int rem = current.getProcessRemaining().decrementAndGet();

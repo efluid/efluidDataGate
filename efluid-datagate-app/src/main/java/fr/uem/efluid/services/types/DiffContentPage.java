@@ -1,6 +1,9 @@
 package fr.uem.efluid.services.types;
 
+import org.springframework.data.domain.Page;
+
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -14,13 +17,13 @@ import java.util.List;
  */
 public class DiffContentPage {
 
-    private final int pageIndex;
+    private int pageIndex;
 
-    private final int pageCount;
+    private int pageCount;
 
-    private final long totalCount;
+    private long totalCount;
 
-    private final List<? extends PreparedIndexEntry> page;
+    private List<? extends PreparedIndexEntry> page;
 
     /**
      * Init from non paginated content, selecting only the required content to render
@@ -55,6 +58,41 @@ public class DiffContentPage {
         this.pageIndex = pageIndex;
         this.pageCount = pageCount;
         this.totalCount = diffDisplayContent.size();
+    }
+
+    /**
+     * Init from already paginated content, which can be converted to PreparedIndexEntry
+     *
+     * @param rawPage spring data jpa pagination result
+     * @param convert converter to get required List of PreparedIndexEntry from rawPage
+     */
+    public <X> DiffContentPage(Page<X> rawPage, Function<List<X>, List<? extends PreparedIndexEntry>> convert) {
+        super();
+
+        this.page = convert.apply(rawPage.getContent());
+        this.pageIndex = rawPage.getNumber();
+        this.pageCount = rawPage.getTotalPages();
+        this.totalCount = rawPage.getTotalElements();
+    }
+
+    public DiffContentPage() {
+        super();
+    }
+
+    public void setPageIndex(int pageIndex) {
+        this.pageIndex = pageIndex;
+    }
+
+    public void setPageCount(int pageCount) {
+        this.pageCount = pageCount;
+    }
+
+    public void setTotalCount(long totalCount) {
+        this.totalCount = totalCount;
+    }
+
+    public void setPage(List<? extends PreparedIndexEntry> page) {
+        this.page = page;
     }
 
     /**

@@ -535,6 +535,38 @@ public abstract class CucumberStepDefs {
      * </p>
      *
      * @param url
+     * @param contentType loaded type
+     * @return content loaded
+     * @throws Exception
+     */
+    protected final <T> T getContent(String url, Class<T> contentType) throws Exception {
+
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get(url);
+
+        if (currentStartPage != null) {
+            builder.header("Referer", currentStartPage);
+        }
+
+        // Add user token anyway
+        if (url.startsWith("/rest/")) {
+            builder.param("token", getCurrentUserApiToken());
+        }
+
+        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+
+        return this.mapper.readValue(this.mockMvc.perform(builder).andReturn().getResponse().getContentAsString(), contentType);
+    }
+
+    /**
+     * <p>
+     * Simplified post process with common rules :
+     * <ul>
+     * <li>Set the currentAction</li>
+     * <li>Take care of currentStartPage if any is set</li>
+     * </ul>
+     * </p>
+     *
+     * @param url
      * @param params
      * @throws Exception
      */

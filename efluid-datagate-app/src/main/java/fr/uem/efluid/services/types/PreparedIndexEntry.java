@@ -1,5 +1,6 @@
 package fr.uem.efluid.services.types;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
@@ -15,6 +16,7 @@ import java.util.UUID;
  * @version 2
  * @since v0.0.1
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PreparedIndexEntry implements DiffLine, Rendered {
 
     private String indexForDiff;

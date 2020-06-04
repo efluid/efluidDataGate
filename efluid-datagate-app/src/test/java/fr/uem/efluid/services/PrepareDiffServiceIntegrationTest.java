@@ -59,7 +59,7 @@ public class PrepareDiffServiceIntegrationTest {
 
         setupDatabase("diff7");
         PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
-        this.service.completeCurrentContentDiff(
+        this.service.completeLocalDiff(
                 preparation,
                 this.dictionary.getOne(this.dictionaryEntryUuid),
                 new HashMap<>(),
@@ -73,7 +73,7 @@ public class PrepareDiffServiceIntegrationTest {
 
         setupDatabase("diff8");
         PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
-        this.service.completeCurrentContentDiff(
+        this.service.completeLocalDiff(
                 preparation,
                 this.dictionary.getOne(this.dictionaryEntryUuid),
                 new HashMap<>(),

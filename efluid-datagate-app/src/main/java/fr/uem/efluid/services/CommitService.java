@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -337,9 +339,7 @@ public class CommitService extends AbstractApplicationService {
                 })
                 .sorted(Comparator.comparing(CommitEditData::getCreatedTime).reversed())
                 .collect(Collectors.toList());
-
     }
-
 
     /**
      * <p>Paginated / sorted access on an existing commit index.</p>
@@ -351,20 +351,15 @@ public class CommitService extends AbstractApplicationService {
      */
     public DiffContentPage getPaginatedExistingCommitContent(UUID commitUUID, int pageIndex, DiffContentSearch currentSearch) {
 
-        Project project = this.projectService.getCurrentSelectedProjectEntity();
+        Map<UUID, DictionaryEntrySummary> referencedTables = getReferencedTablesForCommit(commitUUID);
 
-        // Use a temp holder to apply filtering on it "as usual" - HEAVY !
-        DiffContentHolder<PreparedIndexEntry> tempHolder = new DiffContentHolder<>(
-                loadCommitIndex(project, commitUUID),
-                getReferencedTablesForCommit(commitUUID)) {
-        };
+        /* Search paginated content for page, using Specification built from search content */
+        Page<IndexEntry> pageContent = this.indexes.findAll(
+                currentSearch.toSpecification(referencedTables, commitUUID),
+                PageRequest.of(pageIndex, this.detailsDisplayPageSize));
 
         // Standard paginated display
-        return new DiffContentPage(
-                pageIndex,
-                // Standard filter / sort on content
-                currentSearch.filterAndSortDiffContent(tempHolder),
-                this.detailsDisplayPageSize);
+        return new DiffContentPage(pageContent, c -> completeCommitIndexForProjectDict(c, referencedTables));
     }
 
     /**
@@ -373,9 +368,6 @@ public class CommitService extends AbstractApplicationService {
      * @return CommitDetails to display
      */
     public CommitDetails getExistingCommitDetails(UUID commitUUID, boolean loadIndexContent) {
-
-        this.projectService.assertCurrentUserHasSelectedProject();
-        Project project = this.projectService.getCurrentSelectedProjectEntity();
 
         LOGGER.debug("Request for details on existing commit {}", commitUUID);
 
@@ -387,7 +379,7 @@ public class CommitService extends AbstractApplicationService {
                 // With full content - for testing, reading ...
                 ? CommitDetails.fromEntityAndContent(
                 this.commits.getOne(commitUUID),
-                loadCommitIndex(project, commitUUID),
+                loadCommitIndex(commitUUID),
                 getReferencedTablesForCommit(commitUUID))
                 // No content - just get the size, for paginated navigation
                 : CommitDetails.fromEntityWithoutContent(
@@ -428,20 +420,17 @@ public class CommitService extends AbstractApplicationService {
 
         return CommitDetails.fromEntityAndContent(
                 commitEntity,
-                completeCommitIndexForProjectDict(project, index),
+                completeCommitIndexForProjectDict(index, referencedTables),
                 referencedTables);
     }
 
     /**
      * Complete the given index for rendering regarding the specified project dictionary
      *
-     * @param project project where the corresponding tables will be loaded
-     * @param index   a given index content
+     * @param index a given index content
      * @return unsorted collection of index entries
      */
-    public Collection<PreparedIndexEntry> completeCommitIndexForProjectDict(Project project, Collection<IndexEntry> index) {
-
-        Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllByProjectMappedToUuid(project);
+    public List<PreparedIndexEntry> completeCommitIndexForProjectDict(Collection<IndexEntry> index, Map<UUID, DictionaryEntrySummary> referencedTables) {
 
         // On given index ...
         return index.stream()
@@ -451,21 +440,29 @@ public class CommitService extends AbstractApplicationService {
                 .collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
                 .entrySet().stream()
                 // ... Then complete rendering of index entries, for each dict entry
-                .flatMap(e -> this.diffs.prepareDiffForRendering(mappedDict.get(e.getKey()), e.getValue()).stream())
-                .collect(Collectors.toSet());
+                .flatMap(e -> this.diffs.prepareDiffForRendering(e.getKey(), e.getValue()).stream())
+                .peek(i -> {
+                    DictionaryEntrySummary dic = referencedTables.get(i.getDictionaryEntryUuid());
+                    if (dic != null) {
+                        i.setTableName(dic.getTableName());
+                        i.setDomainName(dic.getDomainName());
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     /**
      * Load commit details for rendering regarding the specified project dictionary, and the given index content
      *
-     * @param project
      * @param commitUuid commit uuid which index will be loaded
      * @return PreparedIndexEntry : populated and completed for display
      */
-    public Collection<PreparedIndexEntry> loadCommitIndex(Project project, UUID commitUuid) {
+    public Collection<PreparedIndexEntry> loadCommitIndex(UUID commitUuid) {
+
+        Map<UUID, DictionaryEntrySummary> referencedTables = getReferencedTablesForCommit(commitUuid);
 
         // Load index and complete details
-        return completeCommitIndexForProjectDict(project, this.indexes.findByCommitUuid(commitUuid));
+        return completeCommitIndexForProjectDict(this.indexes.findByCommitUuid(commitUuid), referencedTables);
     }
 
 
