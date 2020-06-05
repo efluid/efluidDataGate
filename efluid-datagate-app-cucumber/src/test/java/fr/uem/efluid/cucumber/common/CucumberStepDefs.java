@@ -18,6 +18,7 @@ import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
+import io.cucumber.datatable.DataTable;
 import junit.framework.AssertionFailedError;
 import org.assertj.core.api.ObjectAssert;
 import org.junit.runner.RunWith;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 
 import static fr.uem.efluid.ColumnType.*;
 import static fr.uem.efluid.cucumber.stubs.ManagedDatabaseAccess.*;
+import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -533,6 +535,38 @@ public abstract class CucumberStepDefs {
      * </p>
      *
      * @param url
+     * @param contentType loaded type
+     * @return content loaded
+     * @throws Exception
+     */
+    protected final <T> T getContent(String url, Class<T> contentType) throws Exception {
+
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get(url);
+
+        if (currentStartPage != null) {
+            builder.header("Referer", currentStartPage);
+        }
+
+        // Add user token anyway
+        if (url.startsWith("/rest/")) {
+            builder.param("token", getCurrentUserApiToken());
+        }
+
+        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+
+        return this.mapper.readValue(this.mockMvc.perform(builder).andReturn().getResponse().getContentAsString(), contentType);
+    }
+
+    /**
+     * <p>
+     * Simplified post process with common rules :
+     * <ul>
+     * <li>Set the currentAction</li>
+     * <li>Take care of currentStartPage if any is set</li>
+     * </ul>
+     * </p>
+     *
+     * @param url
      * @param params
      * @throws Exception
      */
@@ -787,7 +821,32 @@ public abstract class CucumberStepDefs {
 
         assertThat(savedCommitUUID).isNotNull();
 
-        return this.commitService.getExistingCommitDetails(savedCommitUUID);
+        return this.commitService.getExistingCommitDetails(savedCommitUUID, true);
+    }
+
+    protected static void assertDiffContentIsCompliant(DiffContentHolder<?> holder, DataTable data) {
+
+        assertThat(holder.getDiffContent().size()).isEqualTo(data.asMaps().size());
+
+        data.asMaps().forEach(l -> {
+
+            DictionaryEntrySummary table = holder.getReferencedTables().values().stream()
+                    .filter(t -> t.getTableName().equals(l.get("Table")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
+
+            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
+
+            IndexAction action = IndexAction.valueOf(l.get("Action"));
+            assertThat(index.getAction()).isEqualTo(action);
+
+            // No need to check payload in delete
+            if (action != REMOVE) {
+                assertThat(index.getHrPayload()).isEqualTo(l.get("Payload"));
+            }
+        });
     }
 
     /**

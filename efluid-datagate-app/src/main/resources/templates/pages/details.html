@@ -20,6 +20,7 @@
 					<li><b>Créé par</b> : <span th:text="${details.originalUserEmail}">perso@email.com</span></li>
 					<li><b>Créé le</b> : <span th:text="${custom.format(details.createdTime)}">jeudi</span></li>
 					<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>
+					<li><b>Nombre total de lignes</b> : <span th:text="${details.indexSize}">12</span></li>
 					<li><b>Version du dictionnaire</b> : <span class="version-name" th:text="${details.versionName}">0.1.2</span></li>
 					<li><b>Version du modèle associé</b> : <span th:text="${details.versionModelId}">0.1.2</span></li>
 					<li th:if="${details.state.name()}!='LOCAL'"><b>Importé le </b>: <span th:text="${custom.format(details.importedTime)}">vendredi</span></li>
@@ -55,42 +56,40 @@
 		</div>
 		
 		<!-- Diff content details -->
-		<div th:if="${not details.emptyDiff}" th:each="diffDisplay, tstat : ${details.content}" th:id="${tstat.index}">
-			<div th:if="${!diffDisplay.diff.isEmpty()}" class="dictionary-content" >
-				<div class="dictionary-summary">
-					<span class="dictionary-name" th:text="${diffDisplay.dictionaryEntryName}">Type de matériel</span>
-					<span class="dictionary-details" th:text="|- table : ${diffDisplay.dictionaryEntryTableName} - Domaine : ${diffDisplay.domainName}|">Domaine : Gestion du matériel</span>
-					<span class="dictionary-diff-size" th:text="|${diffDisplay.realDiffSize} valeur(s)|">15 valeurs</span>
-					<span class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</span>
-				</div>
-				<table class="table table-sm">
-					<thead>
-						<tr>
-							<th scope="col" width="15%">Clé (<span th:text="${diffDisplay.dictionaryEntryDisplayKeyName}">TITLE</span>)</th>
-							<th scope="col" width="10%">Type</th>
-							<th scope="col">Modification</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr th:each="entry, estat : ${diffDisplay.diff}" th:class="|action-line ${#strings.toLowerCase(entry.action.name())}|" class="action-add">
-							<td th:if="${!entry.displayOnly}" th:text="${entry.keyValue}">XAZER5555 - 22</td>
-							<td th:if="${entry.displayOnly}" class="similar-display" th:text="|${entry.keyValues.size()} entrées similaires|" th:title="|clées : ${entry.combinedKey}|">34 entrées similaires</td>
-							<td class="action-display" th:text="${entry.action.name()}=='ADD'?'Ajout':(${entry.action.name()}=='REMOVE'?'Suppression':'Modification')">Ajout</td>
-							<td><span class="change-display" th:utext="${entry.hrPayload}" th:title="|payload technique='${entry.payload}'|">"Compteur d'eau" / "abc" / "FS" => suppr</span></td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
+		<div th:if="${not details.emptyDiff}">
+			<p>
+				<h5>Ensemble des modifications référencées pour le lot</h5>
+			</p>
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th scope="col" width="15%">Domaine</th>
+						<th scope="col" width="15%">Table</th>
+						<th scope="col" width="15%">Clé</th>
+						<th scope="col" width="10%">Type</th>
+						<th scope="col">Modification</th>
+					</tr>
+				</thead>
+				<tbody class="pageHolder">
+					<tr id="searchBar">
+			    		<td colspan="100%">
+			    			<div>
+							    <input id="searchField" type="text" class="form-control float-left" name="search" style="width:400px!important;display:inline-block;height:31px;margin-right:10px" size="50" placeholder="Filtre"/>
+							    <button id="filterButton" type="button" class="btn btn-outline-success btn-sm float-left">Filtrer par clés</button>
+							    <button id="resetButton" type="button" class="btn btn-outline-secondary btn-sm float-left" disabled="disabled" style="margin-left:5px!important">Tout lister</button>
+							</div>
+						</td>
+			    	</tr>
+					<tr id="navBar">
+						<td colspan="100%"><div id="navBarContent"></div></td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 		
 		<!-- Empty content -->
-		<div th:if="${details.emptyDiff && !details.tooMuchData}">
+		<div th:if="${details.emptyDiff}">
 			<p>Ce lot de modification ne comportait pas de modifications de paramètrage</p>
-		</div>
-		
-		<!-- Too much content -->
-		<div th:if="${details.tooMuchData}">
-			<p>Ce lot de modification comporte un nombre de modifications de paramètrage trop volumineux (<span th:text="${details.size}">19998</span> lignes) pour être affiché</p>
 		</div>
 
 		<!-- Bottom button -->
@@ -118,39 +117,11 @@
 		</div>
 	
 	</span>
-    <script layout:fragment="script">
-		
-		// For table hidding
-		const hideAndShowTableAction = (tableUuid) => {
-			hideDisplays();
-			var table = $("#" + tableUuid + " table");
-			var button = $("#" + tableUuid + " span.reducer");
-			if(button.attr("class").indexOf('reducer-close') !== -1){
-				table.hide();
-				button.removeClass("reducer-close").addClass("reducer-open");
-			} else {
-				table.show();
-				button.removeClass("reducer-open").addClass("reducer-close");
-			}
-		};
-		
-		// For hidding all
-		const hideAndShowAllAction = (force) => {
-			$("span.reducer").each((index, e) => {
-				var tableUuid = e.parentElement.parentElement.parentElement.id;
-				var table = $("#" + tableUuid + " table");
-				var button = $("#" + tableUuid + " span.reducer");
-				if(force === 'hide'){
-					table.hide();
-					button.removeClass("reducer-close").addClass("reducer-open");
-				} else {
-					table.show();
-					button.removeClass("reducer-open").addClass("reducer-close");
-				}
-			});
-		};
-		
-        // For attachment read in modal
+    <script layout:fragment="script" th:inline="javascript">
+
+		var commitUuid = /*[[${details.uuid}]]*/ '1-2-3' ;
+
+		// For attachment read in modal
         const readAttach = (e) => {
         	hideDisplays();
 			var uuid = e.relatedTarget.id;
@@ -160,16 +131,147 @@
 				$("#contentModalLabel").html("Fichier <b>" + name + "</b>");
 			}); 
         };
-        
-    	// Init actions
+
+		const createNavBarItem = (active, num) => {
+			return '<li class="page-item' + (active ? ' active' : '') + '"><a class="page-link" style='+ (active ? 'color:#ffffff' : 'color:#007bff') + ' onclick="getPageContent(' + num + ')">' + (num + 1) + '</a></li>';
+		};
+
+		const createNavBarPrevious = (num) => {
+			return '<li class="page-item"><a class="page-link" style=color:#007bff onclick="getPageContent(' + num + ')">Précédent</a></li>';
+		};
+
+		const createNavBarNext = ( num) => {
+			return '<li class="page-item"><a class="page-link" style=color:#007bff onclick="getPageContent(' + num + ')">Suivant</a></li>';
+		};
+
+		const displayNavBar = (pageIndex, pageCount) => {
+
+			var navBar = '<nav aria-label="navbar"><ul class="pagination">';
+
+			var splitOneStart = -1;
+			var splitOneEnd = -1;
+			var splitTwoStart = -1 ;
+			var splitTwoEnd = -1 ;
+
+			// Intermediate "split" in navBar depending on current pos and size
+			if (pageCount >= 8) {
+
+				// Current at the beginning : 1 spacer
+				if (pageIndex < 4) {
+					splitOneStart = 4;
+					splitOneEnd = pageCount - 3;
+				}
+
+				// Current at the end : 1 spacer
+				else if (pageIndex > pageCount - 5) {
+					splitOneStart = 2;
+					splitOneEnd = pageCount - 5;
+				}
+
+				// Current elsewhere : 2 spacers around
+				else {
+					splitOneStart = 2;
+					splitOneEnd = pageIndex - 2;
+					splitTwoStart = pageIndex + 2;
+					splitTwoEnd = pageCount - 3;
+				}
+			}
+
+			if(pageIndex > 0){
+				navBar += createNavBarPrevious(pageIndex-1);
+			}
+
+			for(i = 0; i < pageCount; i++) {
+				// First optional split
+				if(i >= splitOneStart && i < splitOneEnd){
+					i = splitOneEnd;
+					navBar += '<li class="page-item disabled"><a class="page-link" href=""><span>...</span></a></li>';
+				} else if(i >= splitTwoStart && i < splitTwoEnd){
+					i = splitTwoEnd;
+					navBar += '<li class="page-item disabled"><a class="page-link" href=""><span>...</span></a></li>';
+				} else {
+					navBar += createNavBarItem(i == pageIndex, i);
+				}
+			}
+
+			if(pageIndex < pageCount){
+				navBar += createNavBarNext(pageIndex+1);
+			}
+
+			return navBar + '</ul></nav>';
+		};
+
+		const getPageContent = (page) => {
+
+			var searchField = $("#searchField");
+			var search = searchField.val();
+
+			var resetButton = $("#resetButton");
+
+			if(search !== ''){
+				resetButton.prop('disabled', false);
+			} else {
+				resetButton.prop('disabled', true);
+			}
+
+			$.get("/ui/details/" + commitUuid + "/page/" + page + "?search=" + search, (data, status) => {
+
+				// Remove current page
+				$(".added-item").remove();
+
+				var navBar = $("#navBar");
+
+				// Put new items
+				data.page.forEach(e => {
+
+					var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
+					var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
+					var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
+
+					var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
+					var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
+					var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
+
+					var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
+
+					var itemRow =
+							'<tr id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
+							'<td>' + e.domainName + '</td>' +
+							'<td>' + e.tableName + '</td>' +
+							'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
+							'<td class="action-display">' + actionDisplay + '</td>' +
+							'<td><span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload + '</span></td>' +
+							'</tr>';
+
+					navBar.before(itemRow);
+				});
+
+				// Update navBar displayNavBar
+				if(data.pageCount > 1){
+					$("#navBarContent").html(displayNavBar(data.pageIndex, data.pageCount));
+				} else {
+					$("#navBarContent").html("");
+				}
+			});
+		};
+
+		const filterPageData = () => {
+			getPageContent(0);
+		};
+
+		const resetFilterPageData = () => {
+			var searchField = $("#searchField");
+			searchField.val('');
+			getPageContent(0);
+		};
+
+		// Init actions
     	$(document).ready(() => {
-			// Default : hide all
-			hideAndShowAllAction('hide');
-			
-			$("span.reducer").click((e) => hideAndShowTableAction(e.target.parentElement.parentElement.parentElement.id));
-			$("#closeAllButton").click((e) => hideAndShowAllAction('hide'));
-			$("#showAllButton").click((e) => hideAndShowAllAction('show'));
 			$('#contentModal').on('show.bs.modal', readAttach);
+
+			getPageContent(0);
+			$("#filterButton").click(() => filterPageData());
+			$("#resetButton").click(() => resetFilterPageData());
 
 			// This page support gitmojis
 			supportGitmojis();

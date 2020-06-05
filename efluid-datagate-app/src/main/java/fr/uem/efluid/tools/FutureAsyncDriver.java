@@ -1,6 +1,5 @@
 package fr.uem.efluid.tools;
 
-import fr.uem.efluid.utils.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,15 +10,13 @@ import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static fr.uem.efluid.utils.ErrorType.PREPARATION_BIZ_FAILURE;
-
 /**
  * <p>
  * Default model for async start of completable
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.8
  */
 public class FutureAsyncDriver implements AsyncDriver {
@@ -27,8 +24,6 @@ public class FutureAsyncDriver implements AsyncDriver {
     private static final Logger LOGGER = LoggerFactory.getLogger(FutureAsyncDriver.class);
 
     private final ExecutorService executor;
-
-    private final long timeoutMs;
 
     private final Map<AsyncSourceProcess, CompletableFuture<?>> survey = new ConcurrentHashMap<>();
 
@@ -40,7 +35,6 @@ public class FutureAsyncDriver implements AsyncDriver {
     public FutureAsyncDriver(int poolSize, long timeoutMs, long checkIntervalMs) {
         super();
         this.executor = Executors.newFixedThreadPool(poolSize);
-        this.timeoutMs = timeoutMs;
 
         // Init survey on timeout
         startTimeoutSurvey(timeoutMs, checkIntervalMs);
@@ -108,11 +102,11 @@ public class FutureAsyncDriver implements AsyncDriver {
      * AsyncSourceProcess)
      */
     @Override
-    public <T> List<T> processSteps(List<Callable<T>> callables, final AsyncSourceProcess current)
+    public void processSteps(List<Callable<?>> callables, final AsyncSourceProcess current)
             throws InterruptedException {
 
         // Submit for completion (in same execution)
-        List<Future<T>> futures = callables.stream().map(this.executor::submit).collect(Collectors.toList());
+        List<Future<?>> futures = callables.stream().map(this.executor::submit).collect(Collectors.toList());
 
         // Add them to process
         futures.forEach(f -> this.steps.getOrDefault(current, this.steps.putIfAbsent(current, new ArrayList<>())).add(f));
@@ -124,17 +118,7 @@ public class FutureAsyncDriver implements AsyncDriver {
             Thread.sleep(200);
         }
 
-        LOGGER.info("Async steps for process {} are completed. Extract result", current.getDescription());
-
-        // Get result
-        List<T> results = futures.stream()
-                .map(c -> gatherResult(c, current))
-                .sorted()
-                .collect(Collectors.toList());
-
-        LOGGER.info("Async steps {} results for process {} are available", results.size(), current.getDescription());
-
-        return results;
+        LOGGER.info("Async steps for process {} are completed", current.getDescription());
     }
 
     private void startTimeoutSurvey(final long timeoutMs, final long checkIntervalMs) {
@@ -166,28 +150,4 @@ public class FutureAsyncDriver implements AsyncDriver {
             LOGGER.debug("Completed timeout survey");
         }, "AsyncDriver-Timeout-Survey").start();
     }
-
-    /**
-     * <p>
-     * Join future execution and gather exception if any
-     * </p>
-     *
-     * @param future
-     * @return
-     */
-    private static <T> T gatherResult(Future<T> future, final AsyncSourceProcess current) {
-
-        try {
-            return future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            LOGGER.error("Error will processing diff", e);
-
-            // If already identified, keep going on 1st identified error
-            if (current.hasSourceFailure()) {
-                throw current.getSourceFailure();
-            }
-            return current.fail(new ApplicationException(PREPARATION_BIZ_FAILURE, "Aborted on exception ", e));
-        }
-    }
-
 }

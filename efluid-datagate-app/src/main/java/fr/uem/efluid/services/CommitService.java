@@ -14,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +33,7 @@ import static fr.uem.efluid.utils.ErrorType.*;
  * </p>
  *
  * @author elecomte
- * @version 4
+ * @version 5
  * @since v0.0.1
  */
 @Transactional
@@ -50,8 +52,9 @@ public class CommitService extends AbstractApplicationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CommitService.class);
 
-    @Value("${datagate-efluid.display.details-index-max}")
-    private long maxDisplayDetails;
+    @Value("${datagate-efluid.display.details-page-size}")
+    private int detailsDisplayPageSize;
+
 
     @Autowired
     private CommitRepository commits;
@@ -336,39 +339,53 @@ public class CommitService extends AbstractApplicationService {
                 })
                 .sorted(Comparator.comparing(CommitEditData::getCreatedTime).reversed())
                 .collect(Collectors.toList());
-
     }
 
     /**
-     * @param commitUUID
-     * @return
+     * <p>Paginated / sorted access on an existing commit index.</p>
+     * <p>Not optimized (load, populate, filter and order ALL of index before pagination, on every call !!!)</p>
+     *
+     * @param pageIndex     requested paginated page index
+     * @param currentSearch all search (filter / sort) criteria in a combined component
+     * @return one page of content, filtered, sorted and paginated
      */
-    public CommitDetails getExistingCommitDetails(UUID commitUUID) {
+    public DiffContentPage getPaginatedExistingCommitContent(UUID commitUUID, int pageIndex, DiffContentSearch currentSearch) {
 
-        this.projectService.assertCurrentUserHasSelectedProject();
-        Project project = this.projectService.getCurrentSelectedProjectEntity();
+        Map<UUID, DictionaryEntrySummary> referencedTables = getReferencedTablesForCommit(commitUUID);
+
+        /* Search paginated content for page, using Specification built from search content */
+        Page<IndexEntry> pageContent = this.indexes.findAll(
+                currentSearch.toSpecification(referencedTables, commitUUID),
+                PageRequest.of(pageIndex, this.detailsDisplayPageSize));
+
+        // Standard paginated display
+        return new DiffContentPage(pageContent, c -> completeCommitIndexForProjectDict(c, referencedTables));
+    }
+
+    /**
+     * @param commitUUID       requested commit
+     * @param loadIndexContent true if the index content will be also loaded in the CommitDetails
+     * @return CommitDetails to display
+     */
+    public CommitDetails getExistingCommitDetails(UUID commitUUID, boolean loadIndexContent) {
 
         LOGGER.debug("Request for details on existing commit {}", commitUUID);
 
         // Must exist
         assertCommitExists(commitUUID);
 
-        // Load details
-        CommitDetails details = CommitDetails.fromEntity(this.commits.getOne(commitUUID));
-
-        long size = this.indexes.countByCommitUuid(commitUUID);
-
-        // Check index size for commit
-        if (size < this.maxDisplayDetails) {
-            completeCommitDetailsWithIndexForProjectDict(project, details, this.indexes.findByCommitUuid(commitUUID));
-        }
-
-        // Too much data, get only dictionary item listings
-        else {
-            details.setTooMuchData(true);
-        }
-
-        details.setSize(size);
+        // Load details (without the content)
+        CommitDetails details = loadIndexContent
+                // With full content - for testing, reading ...
+                ? CommitDetails.fromEntityAndContent(
+                this.commits.getOne(commitUUID),
+                loadCommitIndex(commitUUID),
+                getReferencedTablesForCommit(commitUUID))
+                // No content - just get the size, for paginated navigation
+                : CommitDetails.fromEntityWithoutContent(
+                this.commits.getOne(commitUUID),
+                this.indexes.countByCommitUuid(commitUUID),
+                getReferencedTablesForCommit(commitUUID));
 
         List<Attachment> commitAtt = this.attachments.findByCommit(new Commit(commitUUID));
 
@@ -386,26 +403,66 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
-     * Complete commit details for rendering regarding the specified project dictionary, and the given index content
+     * Init a standard CommitDetails for a specified commit entity, without checking any
+     * referenced items in local db : can be used from imported commit data
      *
-     * @param project
-     * @param details
-     * @param index
+     * @param project      project where the corresponding tables will be loaded
+     * @param commitEntity a commit to map as a "Details"
+     * @param index        a given index content
+     * @return Prepared CommitDetails to display / test
      */
-    public void completeCommitDetailsWithIndexForProjectDict(Project project, CommitDetails details, List<IndexEntry> index) {
+    public CommitDetails getCommitDetailsFromSpecifiedContent(Project project, Commit commitEntity, Collection<IndexEntry> index) {
 
-        Map<UUID, DictionaryEntry> mappedDict = this.dictionary.findAllMappedByUuid(project);
+        // Needs referenced table as summaries, loaded for project
+        Map<UUID, DictionaryEntrySummary> referencedTables = this.dictionary.findByDomainProject(project).stream()
+                .map(d -> DictionaryEntrySummary.fromEntity(d, "?"))
+                .collect(Collectors.toMap(DictionaryEntrySummary::getUuid, s -> s));
 
-        // Load commit index
-        CommitDetails.completeIndex(details, index);
+        return CommitDetails.fromEntityAndContent(
+                commitEntity,
+                completeCommitIndexForProjectDict(index, referencedTables),
+                referencedTables);
+    }
 
-        // Need to complete DictEnty + HRPayload for index entries
-        details.getContent().forEach(d -> {
-            DictionaryEntry dict = mappedDict.get(d.getDictionaryEntryUuid());
-            d.completeFromEntity(dict);
-            // Update for rendering
-            d.setDiff(this.diffs.prepareDiffForRendering(dict, d.getDiff()));
-        });
+    /**
+     * Complete the given index for rendering regarding the specified project dictionary
+     *
+     * @param index a given index content
+     * @return unsorted collection of index entries
+     */
+    public List<PreparedIndexEntry> completeCommitIndexForProjectDict(Collection<IndexEntry> index, Map<UUID, DictionaryEntrySummary> referencedTables) {
+
+        // On given index ...
+        return index.stream()
+                // ... Prepare rendering types (at this point without HR payload) ...
+                .map(PreparedIndexEntry::fromExistingEntity)
+                // ... With associated dictionaryEntry ...
+                .collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
+                .entrySet().stream()
+                // ... Then complete rendering of index entries, for each dict entry
+                .flatMap(e -> this.diffs.prepareDiffForRendering(e.getKey(), e.getValue()).stream())
+                .peek(i -> {
+                    DictionaryEntrySummary dic = referencedTables.get(i.getDictionaryEntryUuid());
+                    if (dic != null) {
+                        i.setTableName(dic.getTableName());
+                        i.setDomainName(dic.getDomainName());
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Load commit details for rendering regarding the specified project dictionary, and the given index content
+     *
+     * @param commitUuid commit uuid which index will be loaded
+     * @return PreparedIndexEntry : populated and completed for display
+     */
+    public Collection<PreparedIndexEntry> loadCommitIndex(UUID commitUuid) {
+
+        Map<UUID, DictionaryEntrySummary> referencedTables = getReferencedTablesForCommit(commitUuid);
+
+        // Load index and complete details
+        return completeCommitIndexForProjectDict(this.indexes.findByCommitUuid(commitUuid), referencedTables);
     }
 
 
@@ -443,11 +500,12 @@ public class CommitService extends AbstractApplicationService {
      * </p>
      */
     void applyExclusionsFromLocalCommit(
-            PilotedCommitPreparation<? extends DiffDisplay<? extends PreparedIndexEntry>> prepared) {
+            PilotedCommitPreparation<?> prepared) {
 
         LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
-        List<RollbackLine> rollbacked = prepared.streamDiffDisplay().flatMap(this::streamDiffRollbacks)
+        List<RollbackLine> rollbacked = prepared.streamDiffContentMappedToDictionaryEntryUuid()
+                .flatMap(e -> streamDiffRollbacks(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
 
         if (rollbacked.size() > 0) {
@@ -469,8 +527,8 @@ public class CommitService extends AbstractApplicationService {
      *                 preparation
      * @return created commit uuid
      */
-    <A extends DiffDisplay<? extends PreparedIndexEntry>> UUID saveAndApplyPreparedCommit(
-            PilotedCommitPreparation<A> prepared) {
+    UUID saveAndApplyPreparedCommit(
+            PilotedCommitPreparation<?> prepared) {
 
         LOGGER.debug("Process apply and saving of a new commit with state {} into project {}", prepared.getPreparingState(),
                 prepared.getProjectUuid());
@@ -480,8 +538,8 @@ public class CommitService extends AbstractApplicationService {
 
         LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commit.getUuid());
 
-        List<IndexEntry> entries = prepared.streamDiffDisplay()
-                .flatMap(l -> this.diffs.splitCombinedSimilar(l.getDiff()).stream())
+        List<IndexEntry> entries = prepared.streamDiffContentMappedToDictionaryEntryUuid()
+                .flatMap(l -> this.diffs.splitCombinedSimilar(l.getValue()).stream())
                 .filter(PreparedIndexEntry::isSelected)
                 .map(PreparedIndexEntry::toEntity)
                 .peek(e -> e.setCommit(commit))
@@ -557,9 +615,7 @@ public class CommitService extends AbstractApplicationService {
      *
      * @param importFile
      */
-    ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> importCommits(
-            ExportFile importFile,
-            PilotedCommitPreparation<MergePreparedDiff> currentPreparation) {
+    ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> importCommits(ExportFile importFile, final PilotedCommitPreparation<PreparedMergeIndexEntry> currentPreparation) {
 
         LOGGER.debug("Asking for an import of commit in piloted preparation context {}", currentPreparation.getIdentifier());
 
@@ -693,7 +749,7 @@ public class CommitService extends AbstractApplicationService {
         }
 
         // #5 Get all lobs
-        currentPreparation.setDiffLobs(
+        currentPreparation.getDiffLobs().putAll(
                 lobsPckg.getContent().stream()
                         .distinct()
                         .collect(Collectors.toConcurrentMap(LobProperty::getHash, LobProperty::getData)));
@@ -712,10 +768,10 @@ public class CommitService extends AbstractApplicationService {
         removeAlreadyImportedAttachments(currentPreparation);
 
         // Init prepared merge with imported index
-        currentPreparation.applyDiffDisplayContent(importedCommitIndexes(toProcess));
+        currentPreparation.getDiffContent().addAll(importedCommitIndexes(toProcess));
 
         // Result for direct display (with ref to preparation)
-        ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> result = new ExportImportResult<>(currentPreparation);
+        ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> result = new ExportImportResult<>(currentPreparation);
 
         // Can show number of processing commits
         result.addCount(PCKG_ALL, commitPckg.getContent().size(), toProcess.size(), 0);
@@ -822,12 +878,12 @@ public class CommitService extends AbstractApplicationService {
      * @param diff
      * @return
      */
-    private Stream<RollbackLine> streamDiffRollbacks(DiffDisplay<? extends PreparedIndexEntry> diff) {
+    private Stream<RollbackLine> streamDiffRollbacks(UUID dictionaryEntryUuid, Collection<? extends PreparedIndexEntry> diff) {
 
-        LOGGER.debug("Process identification of rollback on dictionaryEntry {}, if any", diff.getDictionaryEntryUuid());
+        LOGGER.debug("Process identification of rollback on dictionaryEntry {}, if any", dictionaryEntryUuid);
 
-        return getDiffRollbacks(new DictionaryEntry(diff.getDictionaryEntryUuid()),
-                diff.getDiff().stream().filter(PreparedIndexEntry::isRollbacked).collect(Collectors.toList()))
+        return getDiffRollbacks(new DictionaryEntry(dictionaryEntryUuid),
+                diff.stream().filter(PreparedIndexEntry::isRollbacked).collect(Collectors.toList()))
                 .stream();
     }
 
@@ -882,6 +938,12 @@ public class CommitService extends AbstractApplicationService {
                         allTableChanges,
                         errorMessages
                 ));
+    }
+
+    private Map<UUID, DictionaryEntrySummary> getReferencedTablesForCommit(UUID commitUUID) {
+        return this.dictionary.findAllById(this.dictionary.findUsedUuidsByCommitUuid(commitUUID)).stream()
+                .map(d -> DictionaryEntrySummary.fromEntity(d, "?"))
+                .collect(Collectors.toMap(DictionaryEntrySummary::getUuid, s -> s));
     }
 
     /**
@@ -947,30 +1009,10 @@ public class CommitService extends AbstractApplicationService {
      * @param importedSources
      * @return
      */
-    private Collection<MergePreparedDiff> importedCommitIndexes(List<Commit> importedSources) {
-
-        Map<UUID, MergePreparedDiff> groupedByDicEntry = new HashMap<>();
-
-        if (importedSources != null) {
-
-            for (Commit commit : importedSources) {
-
-                for (IndexEntry indexEntry : commit.getIndex()) {
-
-                    MergePreparedDiff diff = groupedByDicEntry.get(indexEntry.getDictionaryEntryUuid());
-
-                    if (diff == null) {
-                        DictionaryEntry dicEntry = this.dictionary.getOne(indexEntry.getDictionaryEntryUuid());
-                        diff = new MergePreparedDiff(dicEntry.getUuid(), dicEntry.getDomain().getUuid(), new ArrayList<>());
-                        groupedByDicEntry.put(indexEntry.getDictionaryEntryUuid(), diff);
-                    }
-
-                    diff.getDiff().add(PreparedMergeIndexEntry.fromImportedEntity(indexEntry));
-                }
-            }
-        }
-
-        return groupedByDicEntry.values();
+    private Collection<PreparedMergeIndexEntry> importedCommitIndexes(List<Commit> importedSources) {
+        return importedSources.stream().flatMap(c -> c.getIndex().stream())
+                .map(PreparedMergeIndexEntry::fromImportedEntity)
+                .collect(Collectors.toList());
     }
 
     /**

@@ -1,327 +1,287 @@
 package fr.uem.efluid.services.types;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.CommitState;
-import fr.uem.efluid.model.entities.IndexEntry;
+
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
-public class CommitDetails {
+public class CommitDetails extends DiffContentHolder<PreparedIndexEntry> {
 
-	private UUID uuid;
+    private UUID uuid;
 
-	private String hash;
+    private long indexSize;
 
-	private String originalUserEmail;
+    private String hash;
 
-	private String comment;
+    private String originalUserEmail;
 
-	private CommitState state;
-	
-	private LocalDateTime createdTime;
+    private String comment;
 
-	private LocalDateTime importedTime;
+    private CommitState state;
 
-	private List<UUID> mergeSources;
+    private LocalDateTime createdTime;
 
-	private List<DiffDisplay<PreparedIndexEntry>> content;
+    private LocalDateTime importedTime;
 
-	private boolean tooMuchData;
+    private List<UUID> mergeSources;
 
-	private long size;
+    private String versionName;
 
-	private String versionName;
+    private String versionModelId;
 
-	private String versionModelId;
+    private List<AttachmentLine> attachments;
 
-	private List<AttachmentLine> attachments;
+    // For attachments
+    private boolean attachmentDisplaySupport;
 
-	// For attachments
-	private boolean attachmentDisplaySupport;
+    /**
+     *
+     */
+    protected CommitDetails(Collection<PreparedIndexEntry> diffContent, Map<UUID, DictionaryEntrySummary> referencedTables) {
+        // Default : no content embedded, it is loaded from paginated search
+        super(diffContent, referencedTables);
+    }
 
-	/**
-	 * 
-	 */
-	private CommitDetails() {
-		super();
-	}
+    public long getIndexSize() {
+        return indexSize;
+    }
 
-	/**
-	 * @return the uuid
-	 */
-	public UUID getUuid() {
-		return this.uuid;
-	}
+    public void setIndexSize(long indexSize) {
+        this.indexSize = indexSize;
+    }
 
-	/**
-	 * @param uuid
-	 *            the uuid to set
-	 */
-	private void setUuid(UUID uuid) {
-		this.uuid = uuid;
-	}
+    /**
+     * @return the uuid
+     */
+    public UUID getUuid() {
+        return this.uuid;
+    }
 
-	/**
-	 * @return the hash
-	 */
-	public String getHash() {
-		return this.hash;
-	}
+    /**
+     * @param uuid the uuid to set
+     */
+    protected void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
 
-	/**
-	 * @param hash
-	 *            the hash to set
-	 */
-	private void setHash(String hash) {
-		this.hash = hash;
-	}
+    /**
+     * @return the hash
+     */
+    public String getHash() {
+        return this.hash;
+    }
 
-	/**
-	 * @return the originalUserEmail
-	 */
-	public String getOriginalUserEmail() {
-		return this.originalUserEmail;
-	}
+    /**
+     * @param hash the hash to set
+     */
+    protected void setHash(String hash) {
+        this.hash = hash;
+    }
 
-	/**
-	 * @param originalUserEmail
-	 *            the originalUserEmail to set
-	 */
-	private void setOriginalUserEmail(String originalUserEmail) {
-		this.originalUserEmail = originalUserEmail;
-	}
+    /**
+     * @return the originalUserEmail
+     */
+    public String getOriginalUserEmail() {
+        return this.originalUserEmail;
+    }
 
-	/**
-	 * @return the comment
-	 */
-	public String getComment() {
-		return this.comment;
-	}
+    /**
+     * @param originalUserEmail the originalUserEmail to set
+     */
+    protected void setOriginalUserEmail(String originalUserEmail) {
+        this.originalUserEmail = originalUserEmail;
+    }
 
-	/**
-	 * @param comment
-	 *            the comment to set
-	 */
-	private void setComment(String comment) {
-		this.comment = comment;
-	}
+    /**
+     * @return the comment
+     */
+    public String getComment() {
+        return this.comment;
+    }
 
-	/**
-	 * @return the createdTime
-	 */
-	public LocalDateTime getCreatedTime() {
-		return this.createdTime;
-	}
+    /**
+     * @param comment the comment to set
+     */
+    protected void setComment(String comment) {
+        this.comment = comment;
+    }
 
-	/**
-	 * @param createdTime
-	 *            the createdTime to set
-	 */
-	private void setCreatedTime(LocalDateTime createdTime) {
-		this.createdTime = createdTime;
-	}
+    /**
+     * @return the createdTime
+     */
+    public LocalDateTime getCreatedTime() {
+        return this.createdTime;
+    }
 
-	/**
-	 * @return the importedTime
-	 */
-	public LocalDateTime getImportedTime() {
-		return this.importedTime;
-	}
+    /**
+     * @param createdTime the createdTime to set
+     */
+    protected void setCreatedTime(LocalDateTime createdTime) {
+        this.createdTime = createdTime;
+    }
 
-	/**
-	 * @param importedTime
-	 *            the importedTime to set
-	 */
-	private void setImportedTime(LocalDateTime importedTime) {
-		this.importedTime = importedTime;
-	}
+    /**
+     * @return the importedTime
+     */
+    public LocalDateTime getImportedTime() {
+        return this.importedTime;
+    }
 
-	/**
-	 * @return the mergeSources
-	 */
-	public List<UUID> getMergeSources() {
-		return this.mergeSources;
-	}
+    /**
+     * @param importedTime the importedTime to set
+     */
+    protected void setImportedTime(LocalDateTime importedTime) {
+        this.importedTime = importedTime;
+    }
 
-	/**
-	 * @param mergeSources
-	 *            the mergeSources to set
-	 */
-	private void setMergeSources(List<UUID> mergeSources) {
-		this.mergeSources = mergeSources;
-	}
+    /**
+     * @return the mergeSources
+     */
+    public List<UUID> getMergeSources() {
+        return this.mergeSources;
+    }
 
-	/**
-	 * @return the content
-	 */
-	public List<DiffDisplay<PreparedIndexEntry>> getContent() {
-		return this.content;
-	}
+    /**
+     * @param mergeSources the mergeSources to set
+     */
+    protected void setMergeSources(List<UUID> mergeSources) {
+        this.mergeSources = mergeSources;
+    }
 
-	/**
-	 * @param content
-	 *            the content to set
-	 */
-	private void setContent(List<DiffDisplay<PreparedIndexEntry>> content) {
-		this.content = content;
-	}
+    /**
+     * @return the state
+     */
+    public CommitState getState() {
+        return this.state;
+    }
 
-	/**
-	 * @return the state
-	 */
-	public CommitState getState() {
-		return this.state;
-	}
+    /**
+     * @param state the state to set
+     */
+    protected void setState(CommitState state) {
+        this.state = state;
+    }
 
-	/**
-	 * @param state
-	 *            the state to set
-	 */
-	private void setState(CommitState state) {
-		this.state = state;
-	}
+    /**
+     * @return
+     */
+    public String getVersionName() {
+        return this.versionName;
+    }
 
-	/**
-	 * @return
-	 */
-	public boolean isEmptyDiff() {
-		return this.content == null || this.content.stream().allMatch(d -> d.getDiff().isEmpty());
-	}
+    /**
+     * @param versionName
+     */
+    public void setVersionName(String versionName) {
+        this.versionName = versionName;
+    }
 
-	/**
-	 * @return the tooMuchData
-	 */
-	public boolean isTooMuchData() {
-		return this.tooMuchData;
-	}
+    /**
+     * @return the versionModelId
+     */
+    public String getVersionModelId() {
+        return this.versionModelId;
+    }
 
-	/**
-	 * @param tooMuchData
-	 *            the tooMuchData to set
-	 */
-	public void setTooMuchData(boolean tooMuchData) {
-		this.tooMuchData = tooMuchData;
-	}
+    /**
+     * @param versionModelId the versionModelId to set
+     */
+    public void setVersionModelId(String versionModelId) {
+        this.versionModelId = versionModelId;
+    }
 
-	/**
-	 * @return the size
-	 */
-	public long getSize() {
-		return this.size;
-	}
+    /**
+     * @return the attachments
+     */
+    public List<AttachmentLine> getAttachments() {
+        return this.attachments;
+    }
 
-	/**
-	 * @param size
-	 *            the size to set
-	 */
-	public void setSize(long size) {
-		this.size = size;
-	}
+    /**
+     * @param attachments the attachments to set
+     */
+    public void setAttachments(List<AttachmentLine> attachments) {
+        this.attachments = attachments;
+    }
 
-	/**
-	 * @return
-	 */
-	public String getVersionName() {
-		return this.versionName;
-	}
+    /**
+     * @return the attachmentDisplaySupport
+     */
+    public boolean isAttachmentDisplaySupport() {
+        return this.attachmentDisplaySupport;
+    }
 
-	/**
-	 * @param versionName
-	 */
-	public void setVersionName(String versionName) {
-		this.versionName = versionName;
-	}
+    /**
+     * @param attachmentDisplaySupport the attachmentDisplaySupport to set
+     */
+    public void setAttachmentDisplaySupport(boolean attachmentDisplaySupport) {
+        this.attachmentDisplaySupport = attachmentDisplaySupport;
+    }
 
-	/**
-	 * @return the versionModelId
-	 */
-	public String getVersionModelId() {
-		return this.versionModelId;
-	}
+    /**
+     * @return
+     */
+    @Override
+    public boolean isEmptyDiff() {
+        return this.indexSize == 0;
+    }
 
-	/**
-	 * @param versionModelId
-	 *            the versionModelId to set
-	 */
-	public void setVersionModelId(String versionModelId) {
-		this.versionModelId = versionModelId;
-	}
+    /**
+     * Without content, for paginated navigation in index
+     *
+     * @param commit           entity of specified commit
+     * @param indexSize        real size of commit index
+     * @param referencedTables all identified tables for this commit
+     * @return Ready to display commit content
+     */
+    public static CommitDetails fromEntityWithoutContent(
+            Commit commit,
+            long indexSize,
+            Map<UUID, DictionaryEntrySummary> referencedTables) {
 
-	/**
-	 * @return the attachments
-	 */
-	public List<AttachmentLine> getAttachments() {
-		return this.attachments;
-	}
+        CommitDetails details = new CommitDetails(Collections.emptyList(), referencedTables);
 
-	/**
-	 * @param attachments
-	 *            the attachments to set
-	 */
-	public void setAttachments(List<AttachmentLine> attachments) {
-		this.attachments = attachments;
-	}
+        details.setIndexSize(indexSize);
+        completeFromExistingEntity(details, commit);
 
-	/**
-	 * @return the attachmentDisplaySupport
-	 */
-	public boolean isAttachmentDisplaySupport() {
-		return this.attachmentDisplaySupport;
-	}
+        return details;
+    }
 
-	/**
-	 * @param attachmentDisplaySupport the attachmentDisplaySupport to set
-	 */
-	public void setAttachmentDisplaySupport(boolean attachmentDisplaySupport) {
-		this.attachmentDisplaySupport = attachmentDisplaySupport;
-	}
+    /**
+     * @param commit           entity of specified commit
+     * @param diffContent      real content
+     * @param referencedTables all identified tables for this commit
+     * @return Ready to display commit content
+     */
+    public static CommitDetails fromEntityAndContent(
+            Commit commit,
+            Collection<PreparedIndexEntry> diffContent,
+            Map<UUID, DictionaryEntrySummary> referencedTables) {
 
-	/**
-	 * @param commit
-	 * @return
-	 */
-	public static CommitDetails fromEntity(Commit commit) {
+        CommitDetails details = new CommitDetails(diffContent, referencedTables);
 
-		CommitDetails details = new CommitDetails();
+        details.setIndexSize(diffContent.size());
+        completeFromExistingEntity(details, commit);
 
-		details.setComment(commit.getComment());
-		details.setCreatedTime(commit.getCreatedTime());
-		details.setHash(commit.getHash());
-		details.setImportedTime(commit.getImportedTime());
-		details.setState(commit.getState());
-		details.setOriginalUserEmail(commit.getOriginalUserEmail());
-		details.setUuid(commit.getUuid());
-		details.setMergeSources(commit.getMergeSources());
-		details.setVersionName(commit.getVersion().getName());
-		details.setVersionModelId(commit.getVersion().getModelIdentity());
-		
-		return details;
-	}
+        return details;
+    }
 
-	/**
-	 * @param details
-	 * @param index
-	 */
-	public static void completeIndex(CommitDetails details, List<IndexEntry> index) {
-
-		// Using DiffDisplay for grouping index values
-		details.setContent(index.stream()
-				.map(PreparedIndexEntry::fromExistingEntity)
-				.collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
-				.entrySet().stream()
-				.map(e -> {
-					DiffDisplay<PreparedIndexEntry> diff = new DiffDisplay<>();
-					diff.setDictionaryEntryUuid(e.getKey());
-					diff.setDiff(e.getValue());
-					return diff;
-				}).collect(Collectors.toList()));
-	}
+    protected static void completeFromExistingEntity(CommitDetails details, Commit commit) {
+        details.setComment(commit.getComment());
+        details.setCreatedTime(commit.getCreatedTime());
+        details.setHash(commit.getHash());
+        details.setImportedTime(commit.getImportedTime());
+        details.setState(commit.getState());
+        details.setOriginalUserEmail(commit.getOriginalUserEmail());
+        details.setUuid(commit.getUuid());
+        details.setMergeSources(commit.getMergeSources());
+        details.setVersionName(commit.getVersion().getName());
+        details.setVersionModelId(commit.getVersion().getModelIdentity());
+    }
 }

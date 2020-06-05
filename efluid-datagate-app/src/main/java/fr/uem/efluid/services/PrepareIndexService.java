@@ -88,7 +88,7 @@ public class PrepareIndexService {
 
     /**
      * <p>
-     * Prepare the diff content, by extracting current content and building value to value
+     * Prepare the diff content, by extracting current local content and building value to value
      * diff regarding the actual index content
      * </p>
      * <p>
@@ -96,18 +96,16 @@ public class PrepareIndexService {
      * </p>
      * <p>5 steps</p>
      *
-     * @param diffToComplete the specified <tt>LocalPreparedDiff</tt> to complete with content and
-     *                       remarks
-     * @param entry          dictionaryEntry
+     * @param preparation to complete
+     * @param entry       dictionaryEntry
      * @param lobs
      * @param project
      */
-    public void completeCurrentContentDiff(
-            LocalPreparedDiff diffToComplete,
+    public void completeLocalDiff(
+            PilotedCommitPreparation<PreparedIndexEntry> preparation,
             DictionaryEntry entry,
             Map<String, byte[]> lobs,
-            Project project,
-            PilotedCommitPreparation<?> preparation) {
+            Project project) {
 
         LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
 
@@ -128,7 +126,7 @@ public class PrepareIndexService {
 
         // Some diffs may add remarks
         LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
-        processOptionalCurrentContendDiffRemarks(diffToComplete, entry, project, actualContent);
+        processOptionalCurrentContendDiffRemarks(preparation, entry, project, actualContent);
 
         // Intermediate step for better percent process
         preparation.incrementProcessStep();
@@ -139,11 +137,14 @@ public class PrepareIndexService {
         // Intermediate step for better percent process
         preparation.incrementProcessStep();
 
-        // Detect and process similar entries for display
-        diffToComplete.setDiff(
-                combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar)
-                        .stream()
-                        .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+        // Detect and process similar entries for display, unsorted
+        List<PreparedIndexEntry> preparedDiff = combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar);
+
+        // Keep content and dict only if some results are found at the end
+        if (!preparedDiff.isEmpty()) {
+            preparation.getDiffContent().addAll(preparedDiff);
+            preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+        }
 
         // Intermediate step for better percent process
         preparation.incrementProcessStep();
@@ -167,23 +168,20 @@ public class PrepareIndexService {
      * </p>
      * <p>8 steps</p>
      *
-     * @param diffToComplete     the specified <tt>MergePreparedDiff</tt> to complete with content and
-     *                           remarks
+     * @param preparation        current preparation
      * @param entry              dictionaryEntry
      * @param lobs               for any extracted lobs
      * @param timeStampForSearch start point for merge process
      * @param mergeDiff          imported merge diff
      * @param project
-     * @param preparation        current preparation
      */
-    public void completeMergeIndexDiff(
-            MergePreparedDiff diffToComplete,
+    public void completeMergeDiff(
+            PilotedCommitPreparation<PreparedMergeIndexEntry> preparation,
             DictionaryEntry entry,
             Map<String, byte[]> lobs,
             long timeStampForSearch,
-            List<? extends PreparedIndexEntry> mergeDiff,
-            Project project,
-            PilotedCommitPreparation<?> preparation) {
+            List<PreparedMergeIndexEntry> mergeDiff,
+            Project project) {
 
         // Index "previous"
         List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqual(entry,
@@ -218,10 +216,14 @@ public class PrepareIndexService {
 
         preparation.incrementProcessStep();
 
-        // Combine similar
-        diffToComplete.setDiff(
-                combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar).stream()
-                        .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList()));
+        // Combine similar, unsorted
+        List<PreparedMergeIndexEntry> preparedDiff = combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar);
+
+        // Keep content and dict only if some results are found at the end
+        if (!preparedDiff.isEmpty()) {
+            preparation.getDiffContent().addAll(preparedDiff);
+            preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+        }
 
         preparation.incrementProcessStep();
     }
@@ -259,14 +261,14 @@ public class PrepareIndexService {
      * case they are provided as SimilarPreparedIndexEntry
      * </p>
      *
-     * @param dic
+     * @param dictionaryEntryUuid uuid of dict entry
      * @param index
      * @return List adapted for rendering : some results may be combined
      */
-    List<PreparedIndexEntry> prepareDiffForRendering(DictionaryEntry dic, List<PreparedIndexEntry> index) {
+    List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index) {
 
         // Get all previouses for HR payload init
-        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntriesExcludingExisting(dic, index);
+        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntriesExcludingExisting(new DictionaryEntry(dictionaryEntryUuid), index);
 
         // Complete HR payloads
         index.forEach(e -> {
@@ -402,13 +404,14 @@ public class PrepareIndexService {
      * </ul>
      * </p>
      *
-     * @param diffToComplete
+     * @param preparation   to complete
      * @param entry
      * @param project
      * @param actualContent
      */
     private void processOptionalCurrentContendDiffRemarks(
-            DiffDisplay<?> diffToComplete,
+
+            PilotedCommitPreparation<?> preparation,
             DictionaryEntry entry,
             Project project,
             Map<String, String> actualContent) {
@@ -431,7 +434,7 @@ public class PrepareIndexService {
                     DiffRemark<List<ContentLineDisplay>> remark = new DiffRemark<>(
                             MISSING_ON_UNCHECKED_JOIN, "table " + entry.getTableName(), missingContent);
 
-                    diffToComplete.addRemark(remark);
+                    preparation.getDiffRemarks().add(remark);
 
                     LOGGER.info("Found a count of {} missing entries with unchecked joins for table \"{}\"",
                             missingContent.size(), entry.getTableName());
@@ -532,6 +535,9 @@ public class PrepareIndexService {
         // Complete from dict
         entry.setDictionaryEntryUuid(dic.getUuid());
 
+        // Specify a temp id for diff management
+        entry.setIndexForDiff(dic.getUuid() + "_" + key);
+
         return entry;
     }
 
@@ -612,8 +618,9 @@ public class PrepareIndexService {
      * @param readyToRender List of <tt>PreparedIndexEntry</tt> for similar content search
      * @return list to finally render
      */
-    private <T extends PreparedIndexEntry> List<T> combineSimilarDiffEntries(Collection<T> readyToRender,
-                                                                             Function<Collection<T>, ? extends T> similarConvert) {
+    private <T extends PreparedIndexEntry> List<T> combineSimilarDiffEntries(
+            Collection<T> readyToRender,
+            Function<Collection<T>, ? extends T> similarConvert) {
 
         List<T> listToRender = new ArrayList<>();
 

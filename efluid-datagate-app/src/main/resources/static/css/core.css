@@ -620,3 +620,7 @@ textarea.configuration {
     padding: 0px;
     margin:0px;
 }
+
+li.page-item {
+    cursor: pointer;
+}

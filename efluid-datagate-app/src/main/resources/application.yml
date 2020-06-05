@@ -30,10 +30,10 @@ datagate-efluid:
         output-failed-query-set-file: update-errors.out
 
     display:
-        details-index-max: 10000
         combine-similar-diff-after: 10
         history-page-size: 20
-        diff-page-size: 10
+        diff-page-size: 15
+        details-page-size: 15
         test-row-max-size: 10
         get-current-selected-project-short-name: 10
 

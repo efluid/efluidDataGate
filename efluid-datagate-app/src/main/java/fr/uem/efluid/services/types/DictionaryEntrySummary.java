@@ -23,22 +23,18 @@ public final class DictionaryEntrySummary implements Comparable<DictionaryEntryS
 
     private final String tableName;
 
+    private final String keyName;
+
     private boolean canDelete;
 
-    /**
-     * @param uuid
-     * @param domainUuid
-     * @param domainName
-     * @param name
-     * @param query
-     */
-    public DictionaryEntrySummary(UUID uuid, UUID domainUuid, String domainName, String name, String tableName, String query) {
+    private DictionaryEntrySummary(UUID uuid, UUID domainUuid, String domainName, String name, String tableName, String keyName, String query) {
         super();
         this.uuid = uuid;
         this.domainUuid = domainUuid;
         this.domainName = domainName;
         this.name = name;
         this.tableName = tableName;
+        this.keyName = keyName;
         this.query = query;
     }
 
@@ -78,7 +74,11 @@ public final class DictionaryEntrySummary implements Comparable<DictionaryEntryS
     }
 
     public String getTableName() {
-        return tableName;
+        return this.tableName;
+    }
+
+    public String getKeyName() {
+        return this.keyName;
     }
 
     /**
@@ -123,6 +123,7 @@ public final class DictionaryEntrySummary implements Comparable<DictionaryEntryS
                 entity.getDomain().getName(),
                 entity.getParameterName(),
                 entity.getTableName(),
+                entity.getKeyName(),
                 selectQuery);
     }
 }

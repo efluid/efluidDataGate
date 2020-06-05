@@ -6,6 +6,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
  * @version 1
  * @since v0.0.1
  */
-public interface IndexRepository extends JpaRepository<IndexEntry, Long> {
+public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpecificationExecutor<IndexEntry> {
 
     /**
      * <p>

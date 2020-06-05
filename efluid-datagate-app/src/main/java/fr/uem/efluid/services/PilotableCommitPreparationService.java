@@ -23,11 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -89,7 +87,7 @@ public class PilotableCommitPreparationService {
     private AsyncDriver async;
 
     // One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
-    private Map<UUID, PilotedCommitPreparation<?>> currents = new HashMap<>();
+    private final Map<UUID, PilotedCommitPreparation<?>> currents = new HashMap<>();
 
     /**
      * <p>
@@ -114,7 +112,7 @@ public class PilotableCommitPreparationService {
                 })
                 .map(p -> {
                     // Start preparation for project
-                    PilotedCommitPreparation<LocalPreparedDiff> preparation = startLocalPreparation(p.getUuid());
+                    PilotedCommitPreparation<PreparedIndexEntry> preparation = startLocalPreparation(p.getUuid());
 
                     LOGGER.info("Request for a new commit preparation in wizard context - starting preparation"
                             + " {} for project \"{}\"", preparation.getIdentifier(), p.getName());
@@ -263,7 +261,7 @@ public class PilotableCommitPreparationService {
     /**
      * Start async diff analysis before commit
      */
-    public ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> startMergeCommitPreparation(ExportFile file) {
+    public ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> startMergeCommitPreparation(ExportFile file) {
 
         UUID projectUuid = getActiveProjectUuid();
 
@@ -280,20 +278,17 @@ public class PilotableCommitPreparationService {
         LOGGER.info("Request for a new merge commit preparation from an import - start a new one");
 
         // For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
-        PilotedCommitPreparation<MergePreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
+        PilotedCommitPreparation<PreparedMergeIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
         preparation.setProjectUuid(projectUuid);
 
         // Default filtered on needAction onlys
         preparation.setDisplayAll(false);
 
-        // Init domain data
-        preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
-
         // Init feature support for attachments
         setAttachmentFeatureSupports(preparation);
 
         // First step is NOT async : load the package and identify the appliable index
-        ExportImportResult<PilotedCommitPreparation<MergePreparedDiff>> importResult = this.commitService.importCommits(file,
+        ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> importResult = this.commitService.importCommits(file,
                 preparation);
 
         // Specify as active one
@@ -321,100 +316,51 @@ public class PilotableCommitPreparationService {
     }
 
     /**
-     * For access to filtered preparation content
-     *
-     * @param diffDisplay
-     * @param search
-     * @param displayAllIncludingSimilar
-     * @return
-     */
-    private static List<? extends PreparedIndexEntry> filterDiffDisplay(DiffDisplay<?> diffDisplay, String search, boolean displayAllIncludingSimilar) {
-
-        // Display all : quickly ignore filtering
-        if (search == null && displayAllIncludingSimilar) {
-            return diffDisplay.getDiff();
-        }
-
-        // If required, filter content
-        return diffDisplay.getDiff().stream()
-                .filter(i ->
-                        (search == null || i.getKeyValue().contains(search))
-                                && (displayAllIncludingSimilar || i.isNeedAction()))
-                .collect(Collectors.toList());
-    }
-
-    /**
      * <p>
      * Content of diffDisplay is rendered by paginated page. This method provides 1 page
      * for one diffDisplay content list. A search on key values can be specified (default
      * is null)
      * </p>
      *
-     * @param dictUUID
-     * @param pageIndex
-     * @param search
-     * @return
+     * @param pageIndex     requested paginated page index
+     * @param currentSearch all search (filter / sort) criteria in a combined component
+     * @return one page of content, filtered, sorted and paginated
      */
-    public DiffDisplayPage getPaginatedDiffDisplay(UUID dictUUID, int pageIndex, String search) {
+    public DiffContentPage getPaginatedDiffContent(int pageIndex, DiffContentSearch currentSearch) {
 
         PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
 
+        // Filter and sort content regarding the specified search
         if (current != null) {
 
-            Optional<? extends DiffDisplay<?>> searchDiffDisplay = current.getDomains().stream()
-                    .flatMap(d -> d.getPreparedContent().stream())
-                    .filter(c -> c.getDictionaryEntryUuid().equals(dictUUID))
-                    .findFirst();
+            List<? extends PreparedIndexEntry> diffContent = currentSearch.filterAndSortDiffContentInMemory(current);
 
-            if (searchDiffDisplay.isPresent()) {
-
-                DiffDisplay<?> diffDisplay = searchDiffDisplay.get();
-
-                // If required, filter content
-                List<? extends PreparedIndexEntry> diffDisplayContent = filterDiffDisplay(diffDisplay, search, current.isDisplayAll());
-
-                int pageCount = (int) Math.round(Math.ceil((double) diffDisplayContent.size() / this.diffDisplayPageSize));
-
-                List<? extends PreparedIndexEntry> pageContent;
-
-                // No pagination needed
-                if (pageCount == 1) {
-                    pageContent = diffDisplayContent;
+            // Complete tableName / DomainName to display (only on listed results)
+            diffContent.forEach(i -> {
+                DictionaryEntrySummary dic = current.getReferencedTables().get(i.getDictionaryEntryUuid());
+                if (dic != null) {
+                    i.setTableName(dic.getTableName());
+                    i.setDomainName(dic.getDomainName());
                 }
+            });
 
-                // Paginated
-                else if (pageIndex < pageCount - 1) {
-                    pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize,
-                            (pageIndex + 1) * this.diffDisplayPageSize);
-                }
-
-                // Special paginated case : last page
-                else {
-                    pageContent = diffDisplayContent.subList(pageIndex * this.diffDisplayPageSize, diffDisplayContent.size());
-                }
-
-                return new DiffDisplayPage(pageIndex, pageCount, diffDisplayContent.size(), pageContent, search);
-            }
+            return new DiffContentPage(pageIndex, diffContent, this.diffDisplayPageSize);
         }
 
-        throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation with dict " + dictUUID);
+        throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation to filter");
     }
 
     /**
      * <p>
-     * Update one line in preparation, for paginated navigation
+     * Update all preparation
      * </p>
      *
      * @param selected
      * @param rollbacked
-     * @param indexForDiff
      */
-    public void updateDiffLinePreparationSelections(boolean selected, boolean rollbacked, long indexForDiff) {
-
-        getPreparationContentForSelection().streamDiffDisplay()
-                .flatMap(d -> d.getDiff().stream())
-                .filter(i -> i.getIndexForDiff() == indexForDiff).findFirst()
-                .ifPresent(i -> {
+    public void updateAllPreparationSelections(boolean selected, boolean rollbacked) {
+        getPreparationContentForSelection().getDiffContent()
+                .forEach(i -> {
                     i.setRollbacked(rollbacked);
                     i.setSelected(selected);
                 });
@@ -428,52 +374,14 @@ public class PilotableCommitPreparationService {
      * @param selected
      * @param rollbacked
      */
-    public void updateAllPreparationSelections(boolean selected, boolean rollbacked) {
-        getPreparationContentForSelection().streamDiffDisplay()
-                .flatMap(d -> d.getDiff().stream())
-                .forEach(i -> {
-                    i.setRollbacked(rollbacked);
-                    i.setSelected(selected);
-                });
-    }
-
-    /**
-     * <p>
-     * Update preparation content for one domain
-     * </p>
-     *
-     * @param selected
-     * @param rollbacked
-     * @param domainUUID
-     */
-    public void updateDomainPreparationSelections(boolean selected, boolean rollbacked, UUID domainUUID) {
-        getPreparationContentForSelection().getDomains().stream()
-                .filter(d -> d.getDomainUuid().equals(domainUUID))
-                .flatMap(d -> d.getPreparedContent().stream())
-                .flatMap(t -> t.getDiff().stream())
-                .forEach(i -> {
-                    i.setRollbacked(rollbacked);
-                    i.setSelected(selected);
-                });
-    }
-
-    /**
-     * <p>
-     * Update preparation content for one diffDisplay (dict page)
-     * </p>
-     *
-     * @param selected
-     * @param rollbacked
-     * @param dictUUID
-     */
-    public void updateDiffDisplayPreparationSelections(boolean selected, boolean rollbacked, UUID dictUUID) {
-        getPreparationContentForSelection().streamDiffDisplay()
-                .filter(d -> d.getDictionaryEntryUuid().equals(dictUUID))
-                .flatMap(d -> d.getDiff().stream())
-                .forEach(i -> {
-                    i.setRollbacked(rollbacked);
-                    i.setSelected(selected);
-                });
+    public void updateDiffLinePreparationSelections(String itemIndex, boolean selected, boolean rollbacked) {
+        getPreparationContentForSelection().getDiffContent().stream()
+                .filter(d -> d.getIndexForDiff().equals(itemIndex)).findFirst()
+                .ifPresent(
+                        i -> {
+                            i.setRollbacked(rollbacked);
+                            i.setSelected(selected);
+                        });
     }
 
     /**
@@ -494,8 +402,8 @@ public class PilotableCommitPreparationService {
                 && current.getPreparingState() == CommitState.MERGED) {
 
             // Check if at least one content needs action
-            boolean result = ((PilotedCommitPreparation<MergePreparedDiff>) current)
-                    .isAnyDiffValidate(MergePreparedDiff::isDiffNeedAction);
+            boolean result = ((PilotedCommitPreparation<PreparedMergeIndexEntry>) current)
+                    .getDiffContent().stream().anyMatch(PreparedMergeIndexEntry::isNeedAction);
 
             LOGGER.debug("Checking if current merge commit needs action. Found {}", result);
 
@@ -640,52 +548,26 @@ public class PilotableCommitPreparationService {
      *
      * @param changedPreparation
      */
-    public <B extends PreparedIndexEntry, A extends DiffDisplay<B>> void copyCommitPreparationSelections(
-            PilotedCommitPreparation<A> changedPreparation) {
+    public void copyCommitPreparationSelections(PilotedCommitPreparation<?> changedPreparation) {
 
         // Can be empty if no content was selected (ex : import a commit when everything
         // is already managed locally)
-        if (changedPreparation.isHasDiffDisplay()) {
+        if (!changedPreparation.getDiffContent().isEmpty()) {
 
-            int endDomain = changedPreparation.getTotalDomainCount();
+            // Prepare direct access to index entries by there "index"
+            Map<String, PreparedIndexEntry> entries = changedPreparation.getDiffContent().stream()
+                    .collect(Collectors.toMap(PreparedIndexEntry::getIndexForDiff, p -> p));
 
-            LOGGER.debug("Process copy of preparation selection for {} domains", endDomain);
+            LOGGER.debug("Process copy of preparation selection for {} entries", entries.size());
 
-            // Iterate domains
-            for (int i = 0; i < endDomain; i++) {
-
-                DomainDiffDisplay<A> changedDomain = changedPreparation.getDomains().get(i);
-                DomainDiffDisplay<?> preparedDomain = getCurrentCommitPreparation().getDomains().get(i);
-
-                // Process copy on current domain
-                if (changedDomain.getPreparedContent() != null && changedDomain.getPreparedContent().size() > 0) {
-
-                    int endContent = changedDomain.getPreparedContent().size();
-                    LOGGER.debug("Processing selection for {} contents in current domain", endContent);
-
-                    // Use basic global iterate on both current and changed, for content
-                    for (int j = 0; j < endContent; j++) {
-
-                        var currentDiff = preparedDomain.getPreparedContent().get(j);
-                        var changedDiff = changedDomain.getPreparedContent().get(j);
-
-                        if (changedDiff != null && changedDiff.getDiff() != null) {
-
-                            int endDiff = changedDiff.getDiff().size();
-
-                            for (int k = 0; k < endDiff; k++) {
-
-                                PreparedIndexEntry currentEntry = currentDiff.getDiff().get(k);
-                                PreparedIndexEntry changedEntry = changedDiff.getDiff().get(k);
-
-                                // Editable values are "selected" and "rollbacked"
-                                currentEntry.setRollbacked(changedEntry.isRollbacked());
-                                currentEntry.setSelected(changedEntry.isSelected());
-                            }
-                        }
-                    }
+            // Iterate all local entries and apply selection (if any)
+            getCurrentCommitPreparation().getDiffContent().forEach(currentEntry -> {
+                PreparedIndexEntry changedEntry = entries.get(currentEntry.getIndexForDiff());
+                if (changedEntry != null) {
+                    currentEntry.setRollbacked(changedEntry.isRollbacked());
+                    currentEntry.setSelected(changedEntry.isSelected());
                 }
-            }
+            });
         }
 
         // Case : no identified selection
@@ -704,7 +586,7 @@ public class PilotableCommitPreparationService {
      * @param changedPreparation
      */
     public void copyCommitPreparationCommitData(
-            PilotedCommitPreparation<? extends DiffDisplay<? extends PreparedIndexEntry>> changedPreparation) {
+            PilotedCommitPreparation<? extends PreparedIndexEntry> changedPreparation) {
 
         setCommitPreparationCommitData(changedPreparation.getCommitData());
     }
@@ -731,11 +613,7 @@ public class PilotableCommitPreparationService {
             current.getCommitData().setComment(comment);
 
             // Mark all items as selecteds
-            current.getDomains().stream()
-                    .map(DomainDiffDisplay::getPreparedContent)
-                    .flatMap(Collection::stream)
-                    .flatMap(d -> d.getDiff().stream())
-                    .forEach(i -> i.setSelected(true));
+            current.getDiffContent().forEach(i -> i.setSelected(true));
         });
     }
 
@@ -878,14 +756,11 @@ public class PilotableCommitPreparationService {
      * @param projectUuid
      * @return
      */
-    private PilotedCommitPreparation<LocalPreparedDiff> startLocalPreparation(UUID projectUuid) {
+    private PilotedCommitPreparation<PreparedIndexEntry> startLocalPreparation(UUID projectUuid) {
 
         // For CommitState LOCAL => Use PreparedIndexEntry
-        PilotedCommitPreparation<LocalPreparedDiff> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
+        PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
         preparation.setProjectUuid(projectUuid);
-
-        // Init domain data
-        preparation.setDomains(prepareDomainDiffDisplays(preparation.getProjectUuid()));
 
         // Init feature support for attachments
         setAttachmentFeatureSupports(preparation);
@@ -921,7 +796,7 @@ public class PilotableCommitPreparationService {
      * CompletableFuture in call processes
      * </p>
      */
-    private void processAllDiff(PilotedCommitPreparation<LocalPreparedDiff> preparation) {
+    private void processAllDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation) {
 
         LOGGER.info("Begin diff process on commit preparation {}", preparation.getIdentifier());
 
@@ -931,26 +806,19 @@ public class PilotableCommitPreparationService {
             List<DictionaryEntry> dictEntries = this.dictionary.findByDomainProject(new Project(preparation.getProjectUuid()));
 
             // Process details
-            List<Callable<LocalPreparedDiff>> callables = dictEntries
+            List<Callable<?>> callables = dictEntries
                     .stream()
-                    .map(d -> callDiff(d, preparation))
+                    .map(d -> callDiff(preparation, d))
                     .collect(Collectors.toList());
 
             preparation.setProcessStarted(callables.size());
             preparation.setProcessRemaining(new AtomicInteger(callables.size()));
 
-            // Init lobs holder (concurrent)
-            preparation.setDiffLobs(new ConcurrentHashMap<>());
-
             LOGGER.info("Diff LOCAL process starting with {} diff to run", callables.size());
 
-            List<LocalPreparedDiff> fullDiff = this.async.processSteps(callables, preparation);
-
-            // Keep in preparation for commit build
-            preparation.applyDiffDisplayContent(fullDiff);
+            this.async.processSteps(callables, preparation);
 
             // Mark preparation as completed
-            preparation.setEnd(LocalDateTime.now());
             preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
             // And stop survey (on own thread)
@@ -958,7 +826,7 @@ public class PilotableCommitPreparationService {
 
             LOGGER.info("Diff process completed on commit preparation {}. Found {} index entries. Total process duration was {} ms",
                     preparation.getIdentifier(),
-                    fullDiff.size(),
+                    preparation.getDiffContent().size(),
                     System.currentTimeMillis() - startTimeout);
 
         } catch (ApplicationException a) {
@@ -980,48 +848,49 @@ public class PilotableCommitPreparationService {
      * CompletableFuture in call processes
      * </p>
      */
-    private void processAllMergeDiff(PilotedCommitPreparation<MergePreparedDiff> preparation) {
+    private void processAllMergeDiff(PilotedCommitPreparation<PreparedMergeIndexEntry> preparation) {
 
         LOGGER.info("Begin diff process on merge-commit preparation {}", preparation.getIdentifier());
 
         try {
             long startTimeout = System.currentTimeMillis();
 
-            if (preparation.isHasDiffDisplay()) {
+            if (!preparation.getDiffContent().isEmpty()) {
 
-                Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllMappedByUuid(new Project(preparation.getProjectUuid()));
+                Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllByProjectMappedToUuid(new Project(preparation.getProjectUuid()));
 
                 long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
 
                 // Process details
-                List<Callable<MergePreparedDiff>> callables = preparation.streamDiffDisplay()
+                List<Callable<?>> callables = preparation.getDiffContent().stream()
+                        // Sort index by date for clean merge build
+                        .sorted(Comparator.comparing(PreparedIndexEntry::getTimestamp))
+                        .collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
+                        .entrySet().stream()
                         .filter(Objects::nonNull)
-                        .map(p -> callMergeDiff(dictByUuid.get(p.getDictionaryEntryUuid()), searchTimestamp, p, preparation))
+                        // Reset content in preparation for commit build, once completed
+                        .peek(p -> preparation.getDiffContent().removeAll(p.getValue()))
+                        .map(p -> callMergeDiff(preparation, p.getValue(), dictByUuid.get(p.getKey()), searchTimestamp))
                         .collect(Collectors.toList());
+
                 preparation.setProcessStarted(callables.size());
                 preparation.setProcessRemaining(new AtomicInteger(callables.size()));
 
                 LOGGER.info("Diff MERGE process starting with {} diff to run", callables.size());
 
                 // Run all callables in parallel exec
-                List<MergePreparedDiff> fullDiff = this.async.processSteps(callables, preparation);
-
-                // Reset content in preparation for commit build, once completed
-                preparation.resetDiffDisplayContent();
-                preparation.applyDiffDisplayContent(fullDiff);
+                this.async.processSteps(callables, preparation);
 
                 // Mark preparation as completed
-                preparation.setEnd(LocalDateTime.now());
                 preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
                 LOGGER.info(
                         "Diff process completed on merge commit preparation {}. Found {} index entries. Total process duration was {} ms",
                         preparation.getIdentifier(),
-                        fullDiff.size(),
+                        preparation.getDiffContent().size(),
                         System.currentTimeMillis() - startTimeout);
             } else {
                 LOGGER.info("Import found no differences. No merge to run");
-                preparation.setEnd(LocalDateTime.now());
                 preparation.setStatus(PilotedCommitStatus.COMPLETED);
             }
 
@@ -1066,25 +935,19 @@ public class PilotableCommitPreparationService {
      * @param dict
      * @return
      */
-    private Callable<LocalPreparedDiff> callDiff(DictionaryEntry dict, final PilotedCommitPreparation<?> current) {
+    private Callable<Void> callDiff(final PilotedCommitPreparation<PreparedIndexEntry> current, DictionaryEntry dict) {
 
         return () -> {
             // Controle if table not yet specified
             assertDictionaryEntryIsRealTable(dict, current);
 
-            // Init table diff
-            LocalPreparedDiff tableDiff = LocalPreparedDiff.initFromDictionaryEntry(dict);
-
-            // Complete dictionary entry
-            tableDiff.completeFromEntity(dict);
-
             // Search diff content
-            this.diffService.completeCurrentContentDiff(tableDiff, dict, current.getDiffLobs(), new Project(current.getProjectUuid()), current);
+            this.diffService.completeLocalDiff(current, dict, current.getDiffLobs(), new Project(current.getProjectUuid()));
 
             int rem = current.getProcessRemaining().decrementAndGet();
             LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", rem, current.getProcessStarted());
 
-            return tableDiff;
+            return null;
         };
     }
 
@@ -1094,33 +957,30 @@ public class PilotableCommitPreparationService {
      * of diff in <tt>MergePreparedDiff</tt> is regenerated, and DictionaryEntry data are
      * completed.
      *
+     * @param current                  preparing preparation
      * @param dict
      * @param lastLocalCommitTimestamp
      * @param correspondingDiff
-     * @return
+     * @return Void (ignore result, content is updated in PilotedCommitPreparation)
      */
-    private Callable<MergePreparedDiff> callMergeDiff(
+    private Callable<Void> callMergeDiff(
+            final PilotedCommitPreparation<PreparedMergeIndexEntry> current,
+            List<PreparedMergeIndexEntry> correspondingDiff,
             DictionaryEntry dict,
-            long lastLocalCommitTimestamp,
-            MergePreparedDiff correspondingDiff,
-            final PilotedCommitPreparation<?> current) {
+            long lastLocalCommitTimestamp) {
 
         return () -> {
-            // Controle if table not yet specified
+            // Control if table not yet specified
             assertDictionaryEntryIsRealTable(dict, current);
 
-            // Complete dictionary entry
-            correspondingDiff.completeFromEntity(dict);
-
             // Then run one merge action for dictionaryEntry
-            this.diffService.completeMergeIndexDiff(correspondingDiff, dict, current.getDiffLobs(), lastLocalCommitTimestamp,
-                    correspondingDiff.getDiff(), new Project(current.getProjectUuid()), current);
+            this.diffService.completeMergeDiff(current, dict, current.getDiffLobs(), lastLocalCommitTimestamp,
+                    correspondingDiff, new Project(current.getProjectUuid()));
 
             int rem = current.getProcessRemaining().decrementAndGet();
             LOGGER.info("Completed 1 merge Diff. Remaining : {} / {}", rem, current.getProcessStarted());
 
-            // For chained process
-            return correspondingDiff;
+            return null;
         };
     }
 
@@ -1162,32 +1022,6 @@ public class PilotableCommitPreparationService {
             throw new ApplicationException(VERSION_NOT_UP_TO_DATE, "Project " + projectUuid + " has a version (" + last.getName()
                     + ") not up-to-date with last updates. Commit cannot be created", last.getName());
         }
-    }
-
-    /**
-     * <p>
-     * Prepare the Domain organized diffsplay for diff result content.
-     * </p>
-     * <p>
-     * Now the diffDisplays are managed in DomainDiffDisplay (one for each functional
-     * Domain), but the diffDisplay process is not processed domain after domain but table
-     * after table, so we have a flat list of table associated DiffDisplay, and we need to
-     * apply them in their corresponding Domain diff display
-     * </p>
-     *
-     * @param projectUuid
-     * @return
-     */
-    private <T extends DiffDisplay<?>> List<DomainDiffDisplay<T>> prepareDomainDiffDisplays(UUID projectUuid) {
-
-        return this.dictionary.findByDomainProject(new Project(projectUuid)).stream()
-                .map(DictionaryEntry::getDomain)
-                .distinct()
-                .map(d -> {
-                    DomainDiffDisplay<T> domainDiffDisplay = new DomainDiffDisplay<>();
-                    domainDiffDisplay.completeFromEntity(d);
-                    return domainDiffDisplay;
-                }).collect(Collectors.toList());
     }
 
 }

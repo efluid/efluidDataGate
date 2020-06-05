@@ -428,7 +428,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         List<UUID> usedIds = this.dictionary.findUsedIds();
 
         // For link building, need other dicts
-        Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName(project);
+        Map<String, DictionaryEntry> allDicts = this.dictionary.findAllByProjectMappedToTableName(project);
 
         return this.dictionary.findByDomainProject(project).stream()
                 .map(e -> DictionaryEntrySummary.fromEntity(e,
@@ -464,7 +464,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         DictionaryEntryEditData edit = DictionaryEntryEditData.fromEntity(entry);
 
         // For link building, need other dicts
-        Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName(project);
+        Map<String, DictionaryEntry> allDicts = this.dictionary.findAllByProjectMappedToTableName(project);
 
         // Links used for mapped tables
         List<TableLink> dicLinks = this.links.findByDictionaryEntry(entry);
@@ -610,7 +610,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         entry.setSelectClause(columnsAsSelectClause(editData.getColumns(),
                 this.links.findByDictionaryEntry(entry),
                 this.mappings.findByDictionaryEntry(entry),
-                this.dictionary.findAllMappedByTableName(project)));
+                this.dictionary.findAllByProjectMappedToTableName(project)));
 
         // And refresh dict Entry
         this.dictionary.save(entry);
@@ -627,7 +627,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
         // For link building, need other dicts
-        Map<String, DictionaryEntry> allDicts = this.dictionary.findAllMappedByTableName(project);
+        Map<String, DictionaryEntry> allDicts = this.dictionary.findAllByProjectMappedToTableName(project);
 
         // Will use a "temp" simulated dict entry
         DictionaryEntry entry = new DictionaryEntry();
@@ -651,7 +651,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         entry.setSelectClause(columnsAsSelectClause(editData.getColumns(),
                 links,
                 Collections.emptyList(),
-                this.dictionary.findAllMappedByTableName(project)));
+                this.dictionary.findAllByProjectMappedToTableName(project)));
 
         return this.queryGenerator.producesSelectParameterQuery(entry, links, allDicts);
     }

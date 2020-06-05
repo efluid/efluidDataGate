@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.FunctionalDomain;
 import fr.uem.efluid.model.entities.Project;
+import org.springframework.data.repository.query.Param;
 
 /**
  * @author elecomte
@@ -30,14 +31,19 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 
 	List<DictionaryEntry> findByDomainProject(Project project);
 
-	default Map<UUID, DictionaryEntry> findAllMappedByUuid(Project project) {
+	// @Query(value = "select dic.* from DICTIONARY dic where dic.UUID in (select distinct id.DICTIONARY_ENTRY_UUID from INDEXES id where id.COMMIT_UUID = :uuid )", nativeQuery = true)
+	// select distinct idx.dictionaryEntry from IndexEntry idx where idx.commit.uuid = :uuid
+	@Query("SELECT DISTINCT idx.dictionaryEntry.uuid FROM IndexEntry idx WHERE idx.commit.uuid = :uuid")
+	List<UUID> findUsedUuidsByCommitUuid(@Param("uuid") UUID commitUuid);
+
+	default Map<UUID, DictionaryEntry> findAllByProjectMappedToUuid(Project project) {
 
 		return findByDomainProject(project).stream()
 				.collect(Collectors.toMap(DictionaryEntry::getUuid, d -> d));
 
 	}
 
-	default Map<String, DictionaryEntry> findAllMappedByTableName(Project project) {
+	default Map<String, DictionaryEntry> findAllByProjectMappedToTableName(Project project) {
 
 		return findByDomainProject(project).stream()
 				.collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));

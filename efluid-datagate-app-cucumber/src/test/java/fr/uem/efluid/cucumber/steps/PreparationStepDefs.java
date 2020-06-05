@@ -298,10 +298,10 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
         // Various cases
         if (select != null && select.equals("ALL")) {
-            preparation.getDomains().forEach(d -> d.getPreparedContent().forEach(c -> c.getDiff().forEach(l -> {
+            preparation.getDiffContent().forEach(l -> {
                 l.setSelected(true);
                 l.setRollbacked(false);
-            })));
+            });
         }
 
         // Post prepared data
@@ -393,40 +393,11 @@ public class PreparationStepDefs extends CucumberStepDefs {
     @Then("^the commit content is rendered with these identified changes :$")
     public void commit_content_ready(DataTable data) {
 
-        // Get by tables
-        Map<String, List<Map<String, String>>> tables = data.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
-
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
         assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
-        assertThat(preparation.getTotalCount()).isEqualTo(data.asMaps().size());
-        assertThat(preparation.getDomains().size()).isEqualTo(1);
 
-        tables.forEach((t, v) -> {
-            DiffDisplay<?> content = preparation.getDomains().get(0).getPreparedContent().stream()
-                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
-                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
-
-            assertThat(content.getDiff().size()).isEqualTo(v.size());
-
-            content.getDiff().sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
-            v.sort(Comparator.comparing(m -> m.get("Key")));
-
-            // Keep order
-            for (int i = 0; i < content.getDiff().size(); i++) {
-                PreparedIndexEntry diffLine = content.getDiff().get(i);
-                Map<String, String> dataLine = v.get(i);
-
-                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
-                assertThat(diffLine.getAction()).isEqualTo(action);
-                assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
-
-                // No need to check payload in delete
-                if (action != REMOVE) {
-                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
-                }
-            }
-        });
+        assertDiffContentIsCompliant(preparation, data);
     }
 
     @Then("^these remarks on missing linked lines are rendered :$")
@@ -443,11 +414,9 @@ public class PreparationStepDefs extends CucumberStepDefs {
         assertThat(preparation.isHasSomeDiffRemarks()).isTrue();
 
         tables.forEach((t, v) -> {
-            DiffDisplay<?> content = preparation.getDomains().get(0).getPreparedContent().stream()
-                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
-                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding remarks for table " + t));
 
-            List<ContentLineDisplay> remarkDisplays = content.getRemarks().stream()
+            List<ContentLineDisplay> remarkDisplays = preparation.getDiffRemarks().stream()
+                    .filter(r -> r.getLocation().equals("table " + t))
                     .flatMap(c -> ((DiffRemark<List<ContentLineDisplay>>) c).getPayload().stream())
                     .collect(Collectors.toList());
 
@@ -472,13 +441,8 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
     @Then("^the commit content has (.*) entries for managed table \"(.*)\"$")
     public void commit_content_size(int size, String table) {
-
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
-
-        var diff = preparation.getDomains().stream().flatMap(d -> d.getPreparedContent().stream()).filter(c -> c.getDictionaryEntryTableName().equals(table)).findFirst();
-
-        assertThat(diff).isPresent();
-        assertThat(diff.get().getDiff()).hasSize(size);
+        assertThat(preparation.getDiffContentForTableName(table)).hasSize(size);
     }
 
     @Then("^no diff content has been found$")
@@ -500,30 +464,29 @@ public class PreparationStepDefs extends CucumberStepDefs {
         // If "need resolve" is specified, we want all lines, else only the ones "needing action"
         long currentCount = needResolveSpecified
                 ? preparation.getTotalCount()
-                : preparation.getDomains().stream().mapToLong(DomainDiffDisplay::getNeedActionTotalCount).sum();
+                : preparation.getDiffContent().stream().filter(PreparedIndexEntry::isNeedAction).count();
 
         assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
         assertThat(currentCount).isEqualTo(data.asMaps().size());
-        assertThat(preparation.getDomains().size()).isEqualTo(1);
 
         tables.forEach((t, v) -> {
-            DiffDisplay<?> content = preparation.getDomains().get(0).getPreparedContent().stream()
-                    .filter(p -> p.getDictionaryEntryTableName().equals(t))
-                    .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + t));
+            Collection<? extends PreparedIndexEntry> indexEntries = needResolveSpecified
+                    ? preparation.getDiffContentForTableName(t)
+                    : preparation.getDiffContentForTableName(t).stream().filter(PreparedIndexEntry::isNeedAction).collect(Collectors.toList());
 
-            List<? extends PreparedIndexEntry> indexEntries = needResolveSpecified
-                    ? content.getDiff()
-                    : content.getDiff().stream().filter(PreparedIndexEntry::isNeedAction).collect(Collectors.toList());
+            if (indexEntries.isEmpty()) {
+                throw new AssertionError("Cannot find corresponding diff for table " + t);
+            }
 
             assertThat(indexEntries.size()).isEqualTo(v.size());
 
-            indexEntries.sort(Comparator.comparing(PreparedIndexEntry::getKeyValue));
+            List<? extends PreparedIndexEntry> sortedIndexEntries = indexEntries.stream().sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList());
             v.sort(Comparator.comparing(m -> m.get("Key")));
 
             // Keep order
-            for (int i = 0; i < indexEntries.size(); i++) {
+            for (int i = 0; i < sortedIndexEntries.size(); i++) {
 
-                PreparedMergeIndexEntry diffLine = (PreparedMergeIndexEntry) indexEntries.get(i);
+                PreparedMergeIndexEntry diffLine = (PreparedMergeIndexEntry) sortedIndexEntries.get(i);
 
                 // If "need Resolve" not specified, only check the lines needing action
                 if (needResolveSpecified || diffLine.isNeedAction()) {
@@ -531,7 +494,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
                     IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
 
-                    String desc = " on table \"" + content.getDictionaryEntryTableName() + "\" on key \""
+                    String desc = " on table \"" + t + "\" on key \""
                             + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
 
                     assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
@@ -553,15 +516,11 @@ public class PreparationStepDefs extends CucumberStepDefs {
     @Then("^the merge commit content has these resolution details for table \"(.*)\" on key \"(.*)\" :$")
     public void merge_commit_content_details(String table, String key, DataTable data) {
 
-        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+        PilotedCommitPreparation<PreparedMergeIndexEntry> preparation = (PilotedCommitPreparation<PreparedMergeIndexEntry>) this.prep.getCurrentCommitPreparation();
 
         assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
-        MergePreparedDiff diff = (MergePreparedDiff) preparation.getDomains().get(0).getPreparedContent().stream()
-                .filter(p -> p.getDictionaryEntryTableName().equals(table))
-                .findFirst().orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table " + table));
-
-        PreparedMergeIndexEntry entry = diff.getDiff().stream()
+        PreparedMergeIndexEntry entry = preparation.getDiffContentForTableName(table).stream()
                 .filter(d -> d.getKeyValue().equals(key))
                 .findFirst().orElseThrow(() ->
                         new AssertionError("Cannot find corresponding diff entry for table " + table + " on key " + key));
@@ -632,10 +591,10 @@ public class PreparationStepDefs extends CucumberStepDefs {
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
         assertThat(preparation).isNotNull();
-        preparation.getDomains().forEach(d -> d.getPreparedContent().forEach(c -> c.getDiff().forEach(l -> {
+        preparation.getDiffContent().forEach(l -> {
             assertThat(l.isSelected()).isFalse();
             assertThat(l.isRollbacked()).isFalse();
-        })));
+        });
     }
 
     @Then("^all the diff preparation content is selected for commit$")
@@ -643,14 +602,12 @@ public class PreparationStepDefs extends CucumberStepDefs {
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
         assertThat(preparation).isNotNull();
-        preparation.getDomains().forEach(d -> d.getPreparedContent()
-                .forEach(c ->
-                        c.getDiff().stream()
-                                .filter(PreparedIndexEntry::isNeedAction)
-                                .forEach(l -> {
-                                    assertThat(l.isSelected()).isTrue();
-                                    assertThat(l.isRollbacked()).isFalse();
-                                })));
+        preparation.getDiffContent().stream()
+                .filter(PreparedIndexEntry::isNeedAction)
+                .forEach(l -> {
+                    assertThat(l.isSelected()).isTrue();
+                    assertThat(l.isRollbacked()).isFalse();
+                });
     }
 
     @Then("^the commit type is \"(.*)\"$")
@@ -661,21 +618,15 @@ public class PreparationStepDefs extends CucumberStepDefs {
         assertThat(preparation.getPreparingState()).isEqualTo(CommitState.valueOf(type));
     }
 
-    @Then("^the paginated json content rendering on page (.*) for table \"(.*)\" is equals to \"(.*)\"$")
-    public void then_display_paginated_content(int page, String tablename, String file) throws Exception {
+    @Then("^the paginated json content rendering on page (.*) is equals to \"(.*)\"$")
+    public void then_display_paginated_content(int page, String file) throws Exception {
         File contentFile = new File("src/test/resources/datasets/" + file);
         String content = String.join("\n", Files.readAllLines(contentFile.toPath()));
 
-        Optional<UUID> tabUuid = this.prep.getCurrentCommitPreparation().getDomains().stream().flatMap(d -> d.getPreparedContent().stream()).filter(c -> c.getDictionaryEntryTableName().equals(tablename)).map(c -> ((DiffDisplay) c).getDictionaryEntryUuid()).findFirst();
-
-        assertThat(tabUuid).as("Table identifier in current diff for name " + tablename).isPresent();
-
-        if (tabUuid.isPresent()) {
-            get("/ui/prepare/page/" + tabUuid.get() + "/" + page);
-            assertRequestWasOk();
-            currentAction.andDo(MockMvcResultHandlers.print());
-            currentAction.andExpect(content().string(containsString(content)));
-        }
+        get("/ui/prepare/page/" + page);
+        assertRequestWasOk();
+        currentAction.andDo(MockMvcResultHandlers.print());
+        currentAction.andExpect(content().string(containsString(content)));
     }
 
 }

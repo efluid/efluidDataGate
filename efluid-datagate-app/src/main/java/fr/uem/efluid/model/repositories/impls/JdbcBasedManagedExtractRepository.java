@@ -127,7 +127,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         String query = this.queryGenerator.producesSelectParameterQuery(
                 parameterEntry,
                 this.links.findByDictionaryEntry(parameterEntry),
-                this.dictionary.findAllMappedByTableName(project));
+                this.dictionary.findAllByProjectMappedToTableName(project));
 
         LOGGER.debug("Extracting values from managed table {} with query \"{}\"", parameterEntry.getTableName(), query);
 
@@ -156,7 +156,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         String query = this.queryGenerator.producesTestJoinParameterQuery(
                 parameterEntry,
                 this.links.findByDictionaryEntry(parameterEntry),
-                this.dictionary.findAllMappedByTableName(project));
+                this.dictionary.findAllByProjectMappedToTableName(project));
 
         LOGGER.debug("Checking values from managed table {} on unchecked Join with query \"{}\"", parameterEntry.getTableName(), query);
 
@@ -183,7 +183,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         String query = this.queryGenerator.producesSelectMissingParameterQuery(
                 parameterEntry,
                 this.links.findByDictionaryEntry(parameterEntry),
-                this.dictionary.findAllMappedByTableName(project));
+                this.dictionary.findAllByProjectMappedToTableName(project));
 
         LOGGER.debug("Extracting missing values from managed table {} on unchecked Join with query \"{}\"",
                 parameterEntry.getTableName(), query);
