@@ -262,10 +262,11 @@ public class PrepareIndexService {
      * </p>
      *
      * @param dictionaryEntryUuid uuid of dict entry
-     * @param index
+     * @param index loaded index content
+     * @param combineSimilars true if the similar entries must be combined in single lines
      * @return List adapted for rendering : some results may be combined
      */
-    List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index) {
+    List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index, boolean combineSimilars) {
 
         // Get all previouses for HR payload init
         Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntriesExcludingExisting(new DictionaryEntry(dictionaryEntryUuid), index);
@@ -277,8 +278,8 @@ public class PrepareIndexService {
             e.setHrPayload(hrPayload);
         });
 
-        // And then combine for rendering
-        return combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar);
+        // And then combine for rendering (if asked)
+        return combineSimilars ? combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar) : index;
     }
 
     /**

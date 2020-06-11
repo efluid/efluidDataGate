@@ -124,7 +124,7 @@ const supportGitmojis = () => {
     $.getJSON("/gitmoji/gitmojis.json", function (json) {
         $(".gitmoji").each((index, e) => updateGitmoji(e, json.gitmojis));
     });
-}
+};
 
 // Common accessor on element id containing an UUID for reference
 const getReferencedUuidInId = (e) => {
@@ -137,4 +137,4 @@ const getReferencedUuidInId = (e) => {
         return itemId;
     }
     return idParts[idParts.length - 1];
-}
+};

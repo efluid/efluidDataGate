@@ -55,36 +55,79 @@
 			</table>
 		</div>
 		
-		<!-- Diff content details -->
-		<div th:if="${not details.emptyDiff}">
-			<p>
-				<h5>Ensemble des modifications référencées pour le lot</h5>
-			</p>
-			<table class="table table-sm">
-				<thead>
-					<tr>
-						<th scope="col" width="15%">Domaine</th>
-						<th scope="col" width="15%">Table</th>
-						<th scope="col" width="15%">Clé</th>
-						<th scope="col" width="10%">Type</th>
-						<th scope="col">Modification</th>
-					</tr>
-				</thead>
-				<tbody class="pageHolder">
-					<tr id="searchBar">
-			    		<td colspan="100%">
-			    			<div>
-							    <input id="searchField" type="text" class="form-control float-left" name="search" style="width:400px!important;display:inline-block;height:31px;margin-right:10px" size="50" placeholder="Filtre"/>
-							    <button id="filterButton" type="button" class="btn btn-outline-success btn-sm float-left">Filtrer par clés</button>
-							    <button id="resetButton" type="button" class="btn btn-outline-secondary btn-sm float-left" disabled="disabled" style="margin-left:5px!important">Tout lister</button>
-							</div>
-						</td>
-			    	</tr>
-					<tr id="navBar">
-						<td colspan="100%"><div id="navBarContent"></div></td>
-					</tr>
-				</tbody>
-			</table>
+			<!-- Diff content details -->
+			<div th:if="${not details.emptyDiff}">
+				<p>
+					<h5>Ensemble des modifications référencées pour le lot</h5>
+				</p>
+				<table class="table table-sm">
+					<thead>
+						<tr>
+							<th scope="col" width="15%" class="filter filter-domain">Domaine</th>
+							<th scope="col" width="15%" class="filter filter-table">Table</th>
+							<th scope="col" width="15%" class="filter filter-key">Clé</th>
+							<th scope="col" width="10%" class="filter filter-type">Type</th>
+							<th scope="col">Modification</th>
+						</tr>
+					</thead>
+					<tbody class="pageHolder">
+						<tr id="domainSearchBar" class="search-bar" style="display: none">
+			     			<td colspan="100%">
+								<select id="domainSearchField" class="form-control form-control-sm col-md-2 float-left" name="domainSearch" style="margin-right:10px">
+									<option value="" label="Tous les domaines"/>
+									<option th:each="domain, dstat : ${details.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
+								</select>
+								<button id="domainFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
+								<button id="domainResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
+								<button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
+								<button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
+								<button id="domainSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
+								<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
+							</td>
+						</tr>
+						<tr id="tableSearchBar" class="search-bar" style="display: none">
+			     			<td colspan="100%">
+								<input id="tableSearchField" type="text" class="form-control form-control-sm col-md-3 float-left" style="margin-right:10px" name="tableSearch" size="50" placeholder="Table"/>
+								<button id="tableFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('table')">Filtrer par table</button>
+								<button id="tableResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('table')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
+								<button id="tableSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('table')" style="margin-left:15px!important">Tri ASC</button>
+								<button id="tableSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('table')" style="margin-left:2px!important">Tri DESC</button>
+								<button id="tableSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('table')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
+								<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
+							</td>
+						</tr>
+						<tr id="keySearchBar" class="search-bar" style="display: none">
+			     			<td colspan="100%">
+								<input id="keySearchField" type="text" class="form-control form-control-sm col-md-3 float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
+								<button id="keyFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('key')">Filtrer par clés</button>
+								<button id="keyResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('key')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
+								<button id="keySortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('key')" style="margin-left:15px!important">Tri ASC</button>
+								<button id="keySortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('key')" style="margin-left:2px!important">Tri DESC</button>
+								<button id="keySortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('key')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
+								<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
+							</td>
+						</tr>
+						<tr id="typeSearchBar" class="search-bar" style="display: none">
+			     			<td colspan="100%">
+								<select id="typeSearchField" class="form-control form-control-sm col-md-2 float-left" name="typeSearch" style="margin-right:10px">
+									<option value="" label="Tous les types de modifications"/>
+									<option value="ADD" label="Ajout"/>
+									<option value="REMOVE" label="Suppression"/>
+									<option value="UPDATE" label="Mise à jour"/>
+								</select>
+								<button id="typeFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('type')">Filtrer par type</button>
+								<button id="typeResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('type')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
+								<button id="typeSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('type')" style="margin-left:15px!important">Tri ASC</button>
+								<button id="typeSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('type')" style="margin-left:2px!important">Tri DESC</button>
+								<button id="typeSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('type')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
+								<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
+							</td>
+			     		</tr>
+						<tr id="navBar">
+							<td colspan="100%"><div id="navBarContent"></div></td>
+						</tr>
+					</tbody>
+				</table>
 		</div>
 		
 		<!-- Empty content -->
@@ -118,8 +161,86 @@
 	
 	</span>
     <script layout:fragment="script" th:inline="javascript">
+		/*<![CDATA[*/
 
+		// Full search
+		var activeSearch = {
+			filters: {
+				domain:"",
+				table:"",
+				key:"",
+				type:""
+			},
+			sorts: {
+				domain:"",
+				table:"",
+				key:"",
+				type:""
+			}
+		};
+		var associatedTables = /*[[${details.referencedTableNames}]]*/ [] ;
 		var commitUuid = /*[[${details.uuid}]]*/ '1-2-3' ;
+
+		const closeFilters = () => {
+			$(".search-bar").hide();
+		}
+
+		// filter filter-domain
+		const filterDisplay = (head) => {
+			var name = head.target.className.split(' ')[1].substr(7);
+			closeFilters();
+			$("#" + name + "SearchBar").show();
+		}
+
+		const enableFilter = (name) => {
+			console.info('enableFilter ' + name);
+			$("#" + name + "FilterButton").prop('disabled', true);
+			$("#" + name + "ResetButton").prop('disabled', false);
+			$(".filter-" + name).addClass("filtered");
+			var filter = $("#" + name + "SearchField").val();
+			activeSearch.filters[name] = filter;
+			getPageContent(0);
+		}
+
+		const disableFilter = (name) => {
+			console.info('disableFilter ' + name);
+			$("#" + name + "FilterButton").prop('disabled', false);
+			$("#" + name + "ResetButton").prop('disabled', true);
+			$(".filter-" + name).removeClass("filtered");
+			$("#" + name + "SearchField").val("");
+			activeSearch.filters[name] = "";
+			getPageContent(0);
+		}
+
+		const sortAsc = (name) => {
+			console.info('sortAsc ' + name);
+			$("#" + name + "SortAscButton").prop('disabled', true);
+			$("#" + name + "SortDescButton").prop('disabled', false);
+			$("#" + name + "SortResetButton").prop('disabled', false);
+			$(".filter-" + name).removeClass('sorted-desc').addClass('sorted-asc');
+			activeSearch.sorts[name] = "ASC";
+			getPageContent(0);
+		}
+
+		const sortDesc = (name) => {
+			console.info('sortDesc ' + name);
+			$("#" + name + "SortAscButton").prop('disabled', false);
+			$("#" + name + "SortDescButton").prop('disabled', true);
+			$("#" + name + "SortResetButton").prop('disabled', false);
+			$(".filter-" + name).removeClass('sorted-asc').addClass('sorted-desc');
+			activeSearch.sorts[name] = "DESC";
+			getPageContent(0);
+		}
+
+		const removeSort = (name) => {
+			console.info('removeSort ' + name);
+			$("#" + name + "SortAscButton").prop('disabled', false);
+			$("#" + name + "SortDescButton").prop('disabled', false);
+			$("#" + name + "SortResetButton").prop('disabled', true);
+			$(".filter-" + name).removeClass('sorted-asc').removeClass('sorted-desc');
+			activeSearch.sorts[name] = "";
+			getPageContent(0);
+		}
 
 		// For attachment read in modal
         const readAttach = (e) => {
@@ -132,6 +253,7 @@
 			}); 
         };
 
+		/* For pagination */
 		const createNavBarItem = (active, num) => {
 			return '<li class="page-item' + (active ? ' active' : '') + '"><a class="page-link" style='+ (active ? 'color:#ffffff' : 'color:#007bff') + ' onclick="getPageContent(' + num + ')">' + (num + 1) + '</a></li>';
 		};
@@ -140,7 +262,7 @@
 			return '<li class="page-item"><a class="page-link" style=color:#007bff onclick="getPageContent(' + num + ')">Précédent</a></li>';
 		};
 
-		const createNavBarNext = ( num) => {
+		const createNavBarNext = (num) => {
 			return '<li class="page-item"><a class="page-link" style=color:#007bff onclick="getPageContent(' + num + ')">Suivant</a></li>';
 		};
 
@@ -203,80 +325,72 @@
 
 		const getPageContent = (page) => {
 
-			var searchField = $("#searchField");
-			var search = searchField.val();
+			$.ajax({
+				type: "POST",
+				url: "/ui/details/" + commitUuid + "/page/" + page,
+				data: JSON.stringify(activeSearch),
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				success: (data, status) => {
 
-			var resetButton = $("#resetButton");
+					// Remove current page
+					$(".added-item").remove();
 
-			if(search !== ''){
-				resetButton.prop('disabled', false);
-			} else {
-				resetButton.prop('disabled', true);
-			}
+					var navBar = $("#navBar");
 
-			$.get("/ui/details/" + commitUuid + "/page/" + page + "?search=" + search, (data, status) => {
+					// Put new items
+					data.page.forEach(e => {
 
-				// Remove current page
-				$(".added-item").remove();
+						var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
+						var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
+						var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
 
-				var navBar = $("#navBar");
+						var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
+						var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
+						var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
 
-				// Put new items
-				data.page.forEach(e => {
+						var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
 
-					var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
-					var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
-					var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
+						var itemRow =
+								'<tr id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
+								'<td>' + e.domainName + '</td>' +
+								'<td>' + e.tableName + '</td>' +
+								'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
+								'<td class="action-display">' + actionDisplay + '</td>' +
+								'<td><span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload + '</span></td>' +
+								'</tr>';
 
-					var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
-					var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
-					var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
+						navBar.before(itemRow);
+					});
 
-					var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
-
-					var itemRow =
-							'<tr id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
-							'<td>' + e.domainName + '</td>' +
-							'<td>' + e.tableName + '</td>' +
-							'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
-							'<td class="action-display">' + actionDisplay + '</td>' +
-							'<td><span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload + '</span></td>' +
-							'</tr>';
-
-					navBar.before(itemRow);
-				});
-
-				// Update navBar displayNavBar
-				if(data.pageCount > 1){
-					$("#navBarContent").html(displayNavBar(data.pageIndex, data.pageCount));
-				} else {
-					$("#navBarContent").html("");
+					// Update navBar displayNavBar
+					if(data.pageCount > 1){
+						$("#navBarContent").html(displayNavBar(data.pageIndex, data.pageCount));
+					} else {
+						$("#navBarContent").html("");
+					}
 				}
 			});
 		};
 
-		const filterPageData = () => {
-			getPageContent(0);
-		};
-
-		const resetFilterPageData = () => {
-			var searchField = $("#searchField");
-			searchField.val('');
-			getPageContent(0);
-		};
+		/* End pagination */
 
 		// Init actions
-    	$(document).ready(() => {
+		$(document).ready(() => {
+			closeFilters();
 			$('#contentModal').on('show.bs.modal', readAttach);
 
 			getPageContent(0);
-			$("#filterButton").click(() => filterPageData());
-			$("#resetButton").click(() => resetFilterPageData());
+			$('#tableSearchField').autocomplete({
+				source: associatedTables
+			});
+			$('.filter').click((e) => filterDisplay(e));
 
 			// This page support gitmojis
 			supportGitmojis();
-		}); 
-		
+		});
+
+        /*]]>*/
     </script>
 </body>
 </html>

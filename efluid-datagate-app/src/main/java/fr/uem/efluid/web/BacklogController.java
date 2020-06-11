@@ -29,7 +29,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
  * </p>
  *
  * @author elecomte
- * @version 3
+ * @version 4
  * @since v0.0.1
  */
 @Controller
@@ -133,8 +133,8 @@ public class BacklogController extends CommonController {
      */
     @RequestMapping("/prepare")
     public String preparationPage(Model model) {
-            model.addAttribute("currentLocationTitle", "Préparer un lot");
-            model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
+        model.addAttribute("currentLocationTitle", "Préparer un lot");
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return startPreparationAndRouteRegardingStatus(model, false);
     }
@@ -164,34 +164,26 @@ public class BacklogController extends CommonController {
     /**
      * @return content for paginated diff content rendering
      */
-    @RequestMapping(path = {"/prepare/page/{page}", "/merge/page/{page}"}, method = GET)
+    @RequestMapping(path = {"/prepare/page/{page}", "/merge/page/{page}"}, method = {GET, POST})
     @ResponseBody
     public DiffContentPage preparationGetDiffContentPage(
             @PathVariable("page") int page,
-            @RequestParam(required = false) String search) {
+            @RequestBody(required = false) DiffContentSearch search) {
 
-        // TODO : use real search ...
-        DiffContentSearch diffContentSearch = new DiffContentSearch();
-        diffContentSearch.setKeySearch(search);
-
-        return this.pilotableCommitService.getPaginatedDiffContent(page, diffContentSearch);
+        return this.pilotableCommitService.getPaginatedDiffContent(page, search);
     }
 
     /**
      * @return content for paginated commit index rendering
      */
-    @RequestMapping(path = "/details/{uuid}/page/{page}", method = GET)
+    @RequestMapping(path = "/details/{uuid}/page/{page}", method = {GET, POST})
     @ResponseBody
     public DiffContentPage commitDetailsContentPage(
             @PathVariable("uuid") UUID uuid,
             @PathVariable("page") int page,
-            @RequestParam(required = false) String search) {
+            @RequestBody(required = false) DiffContentSearch search) {
 
-        // TODO : use real search ...
-        DiffContentSearch diffContentSearch = new DiffContentSearch();
-        diffContentSearch.setKeySearch(search);
-
-        return this.commitService.getPaginatedExistingCommitContent(uuid, page, diffContentSearch);
+        return this.commitService.getPaginatedExistingCommitContent(uuid, page, search);
     }
 
     /**
@@ -628,6 +620,9 @@ public class BacklogController extends CommonController {
 
         // Completed / available, basic prepare page
         model.addAttribute("preparation", prepare);
+
+        // For formatting
+        WebUtils.addTools(model);
 
         return "pages/prepare";
     }

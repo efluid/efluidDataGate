@@ -1,3 +1,13 @@
+#navbarColumn {
+    width: 15%;
+    padding: 0;
+    height: 100vh;
+}
+
+#bodyColumn {
+    width: 85%;
+}
+
 .navbar-brand-holder {
     width: 120px;
     margin-bottom: -20px !important;
@@ -44,10 +54,6 @@
     width: 100%;
     min-height: 100vh;
     overflow: hidden;
-}
-
-#colonne-navbar {
-    padding: 0;
 }
 
 .lead-nav {

@@ -65,6 +65,15 @@ public abstract class DiffContentHolder<T extends PreparedIndexEntry> {
     }
 
     /**
+     * Access to the referenced table names only, in a consistent list
+     *
+     * @return list of names, sorted
+     */
+    public List<String> getReferencedTableNames() {
+        return getReferencedTables().values().stream().map(DictionaryEntrySummary::getTableName).sorted().collect(Collectors.toList());
+    }
+
+    /**
      * @return
      */
     public boolean isEmptyDiff() {

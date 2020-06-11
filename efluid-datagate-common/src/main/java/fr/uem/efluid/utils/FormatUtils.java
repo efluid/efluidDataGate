@@ -130,6 +130,21 @@ public final class FormatUtils {
         return LDT_FORMATTER.format(date);
     }
 
+    public static String regexpToTokenSearch(String pattern){
+
+        return pattern
+                // All typed search
+                .replaceAll("\\\\.[\\*\\?\\+]?","*")
+                // All character def
+                .replaceAll("\\[.*\\][\\*\\?\\+]?","*")
+                // All full search
+                .replaceAll("\\.[\\*\\?\\+]+","*")
+                // Sized search
+                .replaceAll("\\{.*\\}","*")
+                // Final cleanup
+                .replaceAll("\\*\\*","*");
+    }
+
     /**
      * @param date
      * @return
