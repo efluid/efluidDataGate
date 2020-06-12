@@ -844,10 +844,25 @@ public class CommitService extends AbstractApplicationService {
         Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(entry,
                 diffContent.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
 
-        // Completed rollback
-        return diffContent.stream()
+        List<DiffLine> decombineds =
+                diffContent.stream()
+                .flatMap(l -> {
+                    if(l instanceof SimilarPreparedIndexEntry){
+                        SimilarPreparedIndexEntry combinedDiffLine = (SimilarPreparedIndexEntry) l;
+                        return combinedDiffLine.getKeyValues().stream().map(k-> {
+                            PreparedIndexEntry decombined = PreparedIndexEntry.fromCombined(combinedDiffLine,"");
+                            decombined.setKeyValue(k);
+                            return decombined;
+                        });
+                    } else {
+                        return Stream.of(l);
+                    }
+                }).collect(Collectors.toList());
+
+        return decombineds.stream()
                 .map(current -> new RollbackLine(current, previouses.get(current.getKeyValue())))
                 .collect(Collectors.toList());
+
     }
 
     /**
