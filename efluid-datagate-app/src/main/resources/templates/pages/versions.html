@@ -34,7 +34,7 @@
 				<tr th:if="${versions.empty}">
 					<td colspan="100%" class="empty-list-message">Aucune version</td>
 				</tr>
-                <tr th:each="version : ${versions}" th:id="${version.name}">
+                <tr th:each="version : ${versions}" th:id="${version.uuid}">
                      <td class="version-name" th:text="${version.name}" name="${version.name}">
                      	1.2.5-SNAPSHOT
                      </td>
