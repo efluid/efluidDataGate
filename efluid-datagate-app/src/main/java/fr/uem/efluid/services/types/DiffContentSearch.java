@@ -2,6 +2,7 @@ package fr.uem.efluid.services.types;
 
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.FormatUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
@@ -11,6 +12,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>For search / filter and Sort support on a diff content : can process an extracted content OR can create a criteria
@@ -24,10 +26,6 @@ import java.util.stream.Collectors;
  */
 public class DiffContentSearch {
 
-    public static final String PROP_DOMAIN = "domain";
-    public static final String PROP_TABLE = "table";
-    public static final String PROP_KEY = "key";
-    public static final String PROP_TYPE = "type";
 
     /*
     var activeSearch = {
@@ -106,9 +104,40 @@ public class DiffContentSearch {
         // Use simple filtering then sorting on content
         return holder.getDiffContent().stream()
                 .filter(this::filter)
+                .peek(i -> {
+                    if (i.getTableName() == null) {
+                        DictionaryEntrySummary dic = holder.getReferencedTables().get(i.getDictionaryEntryUuid());
+                        i.setTableName(dic.getTableName());
+                        i.setDomainName(dic.getDomainName());
+                    }
+                })
                 .sorted(this.comparator)
                 .collect(Collectors.toList());
     }
+
+
+    /**
+     * Apply only sort as specified in filterAndSortDiffContentInMemory.
+     * Must be initialized first (with filterAndSortDiffContentInMemory or toSpecification)
+     *
+     * @param <T> diff item type
+     * @return filtered and sorted content, as a list (as it is now sorted)
+     */
+    public <T extends PreparedIndexEntry> List<T> sortDiffContent(Map<UUID, DictionaryEntrySummary> referencedTables, Collection<T> content) {
+
+        // Use simple sorting on content
+        return content.stream()
+                .peek(i -> {
+            if (i.getTableName() == null) {
+                DictionaryEntrySummary dic = referencedTables.get(i.getDictionaryEntryUuid());
+                i.setTableName(dic.getTableName());
+                i.setDomainName(dic.getDomainName());
+            }
+        })
+                .sorted(this.comparator)
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * From the current search definition, prepare a specification for criteria based content extract
@@ -182,7 +211,7 @@ public class DiffContentSearch {
         if (!this.prepared) {
 
             // Apply search on domains (using the table criteria)
-            Pattern domainPattern = getFilterPattern(PROP_DOMAIN);
+            Pattern domainPattern = getFilterPattern(Property.DOMAIN.getKey());
             if (domainPattern != null) {
                 // Complete selected table uuids with the tables of matching domains
                 referencedTables.values().stream()
@@ -191,7 +220,7 @@ public class DiffContentSearch {
             }
 
             // Complete direct table criteria
-            Pattern tablePattern = getFilterPattern(PROP_TABLE);
+            Pattern tablePattern = getFilterPattern(Property.TABLE.getKey());
             if (tablePattern != null) {
                 // Complete selected table uuids applying the table pattern
                 referencedTables.values().stream()
@@ -200,7 +229,7 @@ public class DiffContentSearch {
             }
 
             // Prepare key pattern
-            this.keyPattern = getFilterPattern(PROP_KEY);
+            this.keyPattern = getFilterPattern(Property.KEY.getKey());
 
             // Prepare type search
             this.typeFilter = getFilterForType();
@@ -221,40 +250,40 @@ public class DiffContentSearch {
      * Init the comparator for java filtering sort
      */
     private void prepareComparator() {
-        for (Map.Entry<String, String> sort : this.sorts.entrySet()) {
 
-            if (StringUtils.hasText(sort.getValue())) {
-                Sort order = Sort.valueOf(sort.getValue());
+        if (this.sorts != null) {
+            sorts().forEach(
+                    sort -> {
+                        Function<PreparedIndexEntry, String> extractor;
 
-                Function<PreparedIndexEntry, String> extractor;
+                        // Apply property sorter
+                        switch (sort.getOne()) {
+                            case DOMAIN:
+                                extractor = PreparedIndexEntry::getDomainName;
+                                break;
+                            case TABLE:
+                                extractor = PreparedIndexEntry::getTableName;
+                                break;
+                            case KEY:
+                                extractor = PreparedIndexEntry::getCombinedKey;
+                                break;
+                            default:
+                                extractor = e -> e.getAction().name();
+                        }
 
-                // Apply property sorter
-                switch (sort.getKey()) {
-                    case PROP_DOMAIN:
-                        extractor = PreparedIndexEntry::getDomainName;
-                        break;
-                    case PROP_TABLE:
-                        extractor = PreparedIndexEntry::getTableName;
-                        break;
-                    case PROP_KEY:
-                        extractor = PreparedIndexEntry::getCombinedKey;
-                        break;
-                    default:
-                        extractor = e -> e.getAction().name();
-                }
+                        // Support chained comparator
+                        if (this.comparator == null) {
+                            this.comparator = Comparator.comparing(extractor);
+                        } else {
+                            this.comparator = this.comparator.thenComparing(extractor);
+                        }
 
-                // Support chained comparator
-                if (this.comparator == null) {
-                    this.comparator = Comparator.comparing(extractor);
-                } else {
-                    this.comparator = this.comparator.thenComparing(extractor);
-                }
+                        // Apply order
+                        if (sort.getTwo() == Sort.DESC) {
+                            this.comparator = this.comparator.reversed();
+                        }
 
-                // Apply order
-                if (order == Sort.DESC) {
-                    this.comparator = this.comparator.reversed();
-                }
-            }
+                    });
         }
 
         // Init a default comparator if no sort specified
@@ -263,35 +292,47 @@ public class DiffContentSearch {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private Order[] prepareSpecificationOrder(Root<IndexEntry> root, CriteriaBuilder builder) {
 
-        Order[] orders = this.sorts.entrySet().stream()
-                .filter(s -> StringUtils.hasText(s.getValue()))
-                .map(sort -> {
-                    Expression<?> extractor;
+        Order[] orders = null;
+        if (this.sorts != null) {
+            orders = sorts()
+                    .map(
+                            sort -> {
+                                Expression<?> extractor;
 
-                    // Apply property sorter
-                    switch (sort.getKey()) {
-                        case PROP_DOMAIN:
-                            extractor = root.get("dictionaryEntry").get("domain").get("name");
-                            break;
-                        case PROP_TABLE:
-                            extractor = root.get("dictionaryEntry").get("tableName");
-                            break;
-                        case PROP_KEY:
-                            extractor = root.get("keyValue");
-                            break;
-                        default:
-                            extractor = root.get("action");
-                    }
+                                // Apply property sorter
+                                switch (sort.getOne()) {
+                                    case DOMAIN:
+                                        extractor = root.get("dictionaryEntry").get("domain").get("name");
+                                        break;
+                                    case TABLE:
+                                        extractor = root.get("dictionaryEntry").get("tableName");
+                                        break;
+                                    case KEY:
+                                        extractor = root.get("keyValue");
+                                        break;
+                                    default:
+                                        extractor = root.get("action");
+                                }
 
-                    // Apply order
-                    return sort.getValue().equals(Sort.ASC.name()) ? builder.asc(extractor) : builder.desc(extractor);
-                })
-                .collect(Collectors.toList()).toArray(new Order[]{});
+                                // Apply order
+                                return sort.getTwo() == Sort.ASC ? builder.asc(extractor) : builder.desc(extractor);
+                            })
+                    .collect(Collectors.toList())
+                    .toArray(new Order[]{});
+        }
 
         // Default orders if no sort specified
-        return (orders.length == 0) ? new Order[]{builder.asc(root.get("timestamp"))} : orders;
+        return (orders == null || orders.length == 0) ? new Order[]{builder.asc(root.get("timestamp"))} : orders;
+    }
+
+    private Stream<Associate<Property, Sort>> sorts() {
+        return this.sorts.entrySet().stream()
+                .filter(e -> StringUtils.hasText(e.getValue()))
+                .map(e -> Associate.of(Property.fromKey(e.getKey()), Sort.valueOf(e.getValue())))
+                .sorted(Comparator.comparing(a -> a.getOne().getPriority()));
     }
 
     private Pattern getFilterPattern(String name) {
@@ -306,7 +347,7 @@ public class DiffContentSearch {
         if (this.filters == null) {
             return null;
         }
-        String value = this.filters.get(PROP_TYPE);
+        String value = this.filters.get(Property.TYPE.getKey());
         return StringUtils.hasText(value) ? IndexAction.valueOf(value) : null;
     }
 
@@ -314,5 +355,32 @@ public class DiffContentSearch {
         ASC, DESC
     }
 
+    public enum Property {
+
+        DOMAIN("domain", 1),
+        TABLE("table", 2),
+        KEY("key", 3),
+        TYPE("type", 4);
+
+        private final String key;
+        private final int priority;
+
+        Property(String key, int priority) {
+            this.key = key;
+            this.priority = priority;
+        }
+
+        String getKey() {
+            return key;
+        }
+
+        int getPriority() {
+            return priority;
+        }
+
+        static Property fromKey(String key) {
+            return Property.valueOf(key.toUpperCase());
+        }
+    }
 
 }

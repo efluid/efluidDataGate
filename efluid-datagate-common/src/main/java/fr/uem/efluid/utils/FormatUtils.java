@@ -142,7 +142,7 @@ public final class FormatUtils {
                 // Sized search
                 .replaceAll("\\{.*\\}","*")
                 // Final cleanup
-                .replaceAll("\\*\\*","*");
+                .replaceAll("\\*+","*");
     }
 
     /**

@@ -13,7 +13,7 @@ Feature: The commit can be saved and are historised
     And the existing data in managed table "TTAB_TWO" :
       | key | value | other     |
       | JJJ | One   | Other JJJ |
-      | KKK | Two   | Other KKK |
+      | VVV | Two   | Other VVV |
     And the existing data in managed table "TTAB_THREE" :
       | key   | value | other   |
       | 11111 | A     | Other A |
@@ -58,7 +58,7 @@ Feature: The commit can be saved and are historised
       | TTAB_ONE   | DDD | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
       | TTAB_ONE   | EEE | ADD    | PRESET:'Preset 5', SOMETHING:'EEE' |
       | TTAB_TWO   | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'     |
-      | TTAB_TWO   | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'     |
+      | TTAB_TWO   | VVV | ADD    | VALUE:'Two', OTHER:'Other VVV'     |
       | TTAB_THREE | A   | ADD    | OTHER:'Other A'                    |
       | TTAB_THREE | B   | ADD    | OTHER:'Other B'                    |
       | TTAB_THREE | C   | ADD    | OTHER:'Other C'                    |
@@ -125,7 +125,7 @@ Feature: The commit can be saved and are historised
     And these changes are applied to table "TTAB_TWO" :
       | change | key  | value | other      |
       | add    | JJJ2 | One   | Other JJJ2 |
-      | add    | KKK2 | Two   | Other KKK2 |
+      | add    | VVV2 | Two   | Other VVV2 |
     And a new commit ":construction: Update 2" has been saved with all the new identified diff content
     When the user access to list of commits
     Then the provided template is list of commits
@@ -148,7 +148,7 @@ Feature: The commit can be saved and are historised
     And these changes are applied to table "TTAB_TWO" :
       | change | key  | value | other      |
       | add    | JJJ2 | One   | Other JJJ2 |
-      | add    | KKK2 | Two   | Other KKK2 |
+      | add    | VVV2 | Two   | Other VVV2 |
     And a new commit ":construction: Update 2" has been saved with all the new identified diff content
     When the user access to list of commits
     And the user select the details of commit ":construction: Update 2"
@@ -156,7 +156,259 @@ Feature: The commit can be saved and are historised
     And the commit details are displayed with this content :
       | Table    | Key  | Action | Payload                         |
       | TTAB_TWO | JJJ2 | ADD    | VALUE:'One', OTHER:'Other JJJ2' |
-      | TTAB_TWO | KKK2 | ADD    | VALUE:'Two', OTHER:'Other KKK2' |
+      | TTAB_TWO | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2' |
+
+  Scenario: The details for an existing commit can be displayed and filtered - default no filter
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset           | something   |
+      | add    | 32  | LL32  | Preset 1         | AAA         |
+      | add    | 33  | LL33  | Preset 2         | BBB         |
+      | add    | 34  | LL34  | Preset 3         | CCC         |
+      | add    | 35  | LL35  | Preset 4         | DDD         |
+      | add    | 36  | LL36  | Preset 5         | EEE         |
+      | delete | 38  | DDD   |                  |             |
+      | update | 39  | EEE   | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | D     | Other D         |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    Then the commit details are displayed with this content :
+      | Table      | Key  | Action | Payload                                                               |
+      | TTAB_ONE   | LL32 | ADD    | PRESET:'Preset 1', SOMETHING:'AAA'                                    |
+      | TTAB_ONE   | LL33 | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'                                    |
+      | TTAB_ONE   | LL34 | ADD    | PRESET:'Preset 3', SOMETHING:'CCC'                                    |
+      | TTAB_ONE   | LL35 | ADD    | PRESET:'Preset 4', SOMETHING:'DDD'                                    |
+      | TTAB_ONE   | LL36 | ADD    | PRESET:'Preset 5', SOMETHING:'EEE'                                    |
+      | TTAB_ONE   | DDD  | REMOVE |                                                                       |
+      | TTAB_ONE   | EEE  | UPDATE | PRESET:'Preset 5'=>'Preset 5 updated', SOMETHING:'EEE'=>'EEE updated' |
+      | TTAB_TWO   | JJJ2 | ADD    | VALUE:'One', OTHER:'Other JJJ2'                                       |
+      | TTAB_TWO   | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'                                       |
+      | TTAB_TWO   | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'                                      |
+      | TTAB_THREE | C    | REMOVE |                                                                       |
+      | TTAB_THREE | B    | UPDATE | OTHER:'Other B'=>'Other B updated'                                    |
+      | TTAB_THREE | D    | ADD    | OTHER:'Other D'                                                       |
+
+  Scenario: The details for an existing commit can be displayed and filtered - regexp on table
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset           | something   |
+      | add    | 32  | LL32  | Preset 1         | AAA         |
+      | add    | 33  | LL33  | Preset 2         | BBB         |
+      | add    | 34  | LL34  | Preset 3         | CCC         |
+      | add    | 35  | LL35  | Preset 4         | DDD         |
+      | add    | 36  | LL36  | Preset 5         | EEE         |
+      | delete | 38  | DDD   |                  |             |
+      | update | 39  | EEE   | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | D     | Other D         |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    And apply a content filter criteria "TTA._T.*" on "table"
+    Then the commit details are displayed with this content :
+      | Table      | Key  | Action | Payload                            |
+      | TTAB_TWO   | JJJ2 | ADD    | VALUE:'One', OTHER:'Other JJJ2'    |
+      | TTAB_TWO   | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
+      | TTAB_TWO   | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'   |
+      | TTAB_THREE | C    | REMOVE |                                    |
+      | TTAB_THREE | B    | UPDATE | OTHER:'Other B'=>'Other B updated' |
+      | TTAB_THREE | D    | ADD    | OTHER:'Other D'                    |
+
+  Scenario: The details for an existing commit can be displayed and filtered - regexp key
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset           | something   |
+      | add    | 32  | LL32   | Preset 1         | AAA         |
+      | add    | 33  | LL33   | Preset 2         | BBB         |
+      | add    | 34  | VVV4   | Preset 3         | CCC         |
+      | add    | 35  | VVV5   | Preset 4         | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5         | EEE         |
+      | delete | 38  | DDD    |                  |             |
+      | update | 39  | EEE    | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | VVVD  | Other VVVD      |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    And apply a content filter criteria "VVV\d" on "key"
+    Then the commit details are displayed with this content :
+      | Table      | Key  | Action | Payload                            |
+      | TTAB_ONE   | VVV4 | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
+      | TTAB_ONE   | VVV5 | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
+      | TTAB_TWO   | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
+      | TTAB_TWO   | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'   |
+      | TTAB_THREE | VVVD | ADD    | OTHER:'Other VVVD'                 |
+
+  Scenario: The details for an existing commit can be displayed and filtered - value type
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset           | something   |
+      | add    | 32  | LL32   | Preset 1         | AAA         |
+      | add    | 33  | LL33   | Preset 2         | BBB         |
+      | add    | 34  | VVV4   | Preset 3         | CCC         |
+      | add    | 35  | VVV5   | Preset 4         | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5         | EEE         |
+      | delete | 38  | DDD    |                  |             |
+      | update | 39  | EEE    | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | VVVD  | Other VVVD      |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    And apply a content filter criteria "REMOVE" on "type"
+    Then the commit details are displayed with this content :
+      | Table      | Key  | Action | Payload                                                               |
+      | TTAB_ONE   | DDD  | REMOVE |                                                                       |
+      | TTAB_THREE | C    | REMOVE |                                                                       |
+
+  Scenario: The details for an existing commit can be displayed and filtered - regexp combined key and table
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset           | something   |
+      | add    | 32  | LL32   | Preset 1         | AAA         |
+      | add    | 33  | LL33   | Preset 2         | BBB         |
+      | add    | 34  | VVV4   | Preset 3         | CCC         |
+      | add    | 35  | VVV5   | Preset 4         | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5         | EEE         |
+      | delete | 38  | DDD    |                  |             |
+      | update | 39  | EEE    | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | VVVD  | Other VVVD      |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    And apply a content filter criteria "VVV\d" on "key"
+    And apply a content filter criteria "TTA._T.*" on "table"
+    Then the commit details are displayed with this content :
+      | Table      | Key  | Action | Payload                            |
+      | TTAB_TWO   | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
+      | TTAB_TWO   | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'   |
+      | TTAB_THREE | VVVD | ADD    | OTHER:'Other VVVD'                 |
+
+  Scenario: The details for an existing commit can be displayed and sorted - sort by key
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset           | something   |
+      | add    | 32  | LL32  | Preset 1         | AAA         |
+      | add    | 33  | LL33  | Preset 2         | BBB         |
+      | add    | 34  | LL34  | Preset 3         | CCC         |
+      | add    | 35  | LL35  | Preset 4         | DDD         |
+      | add    | 36  | LL36  | Preset 5         | EEE         |
+      | delete | 38  | DDD   |                  |             |
+      | update | 39  | EEE   | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | D     | Other D         |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    And apply a content sort criteria "ASC" on "key"
+    Then the commit details are displayed with this sorted content :
+      | Table      | Key  | Action | Payload                                                               |
+      | TTAB_THREE | B    | UPDATE | OTHER:'Other B'=>'Other B updated'                                    |
+      | TTAB_THREE | C    | REMOVE |                                                                       |
+      | TTAB_THREE | D    | ADD    | OTHER:'Other D'                                                       |
+      | TTAB_ONE   | DDD  | REMOVE |                                                                       |
+      | TTAB_ONE   | EEE  | UPDATE | PRESET:'Preset 5'=>'Preset 5 updated', SOMETHING:'EEE'=>'EEE updated' |
+      | TTAB_TWO   | JJJ2 | ADD    | VALUE:'One', OTHER:'Other JJJ2'                                       |
+      | TTAB_ONE   | LL32 | ADD    | PRESET:'Preset 1', SOMETHING:'AAA'                                    |
+      | TTAB_ONE   | LL33 | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'                                    |
+      | TTAB_ONE   | LL34 | ADD    | PRESET:'Preset 3', SOMETHING:'CCC'                                    |
+      | TTAB_ONE   | LL35 | ADD    | PRESET:'Preset 4', SOMETHING:'DDD'                                    |
+      | TTAB_ONE   | LL36 | ADD    | PRESET:'Preset 5', SOMETHING:'EEE'                                    |
+      | TTAB_TWO   | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'                                       |
+      | TTAB_TWO   | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'                                      |
+
+  Scenario: The details for an existing commit can be displayed and sorted - combined sort table and key
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset           | something   |
+      | add    | 32  | LL32  | Preset 1         | AAA         |
+      | add    | 33  | LL33  | Preset 2         | BBB         |
+      | add    | 34  | LL34  | Preset 3         | CCC         |
+      | add    | 35  | LL35  | Preset 4         | DDD         |
+      | add    | 36  | LL36  | Preset 5         | EEE         |
+      | delete | 38  | DDD   |                  |             |
+      | update | 39  | EEE   | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | D     | Other D         |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    And apply a content sort criteria "DESC" on "table"
+    And apply a content sort criteria "ASC" on "key"
+    Then the commit details are displayed with this sorted content :
+      | Table      | Key  | Action | Payload                                                               |
+      | TTAB_TWO   | JJJ2 | ADD    | VALUE:'One', OTHER:'Other JJJ2'                                       |
+      | TTAB_TWO   | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'                                       |
+      | TTAB_TWO   | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'                                      |
+      | TTAB_THREE | B    | UPDATE | OTHER:'Other B'=>'Other B updated'                                    |
+      | TTAB_THREE | C    | REMOVE |                                                                       |
+      | TTAB_THREE | D    | ADD    | OTHER:'Other D'                                                       |
+      | TTAB_ONE   | DDD  | REMOVE |                                                                       |
+      | TTAB_ONE   | EEE  | UPDATE | PRESET:'Preset 5'=>'Preset 5 updated', SOMETHING:'EEE'=>'EEE updated' |
+      | TTAB_ONE   | LL32 | ADD    | PRESET:'Preset 1', SOMETHING:'AAA'                                    |
+      | TTAB_ONE   | LL33 | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'                                    |
+      | TTAB_ONE   | LL34 | ADD    | PRESET:'Preset 3', SOMETHING:'CCC'                                    |
+      | TTAB_ONE   | LL35 | ADD    | PRESET:'Preset 4', SOMETHING:'DDD'                                    |
+      | TTAB_ONE   | LL36 | ADD    | PRESET:'Preset 5', SOMETHING:'EEE'                                    |
 
   Scenario: The details for an existing commit is available through pagination
     # configured over 10000
@@ -166,7 +418,7 @@ Feature: The commit can be saved and are historised
       | K_%% | LL%%  | Preset %% |
     And a new commit ":construction: Update 1" has been saved with all the new identified diff content
     And the 9999 generated data in managed table "TTAB_TWO" :
-      | key  | value | other     |
+      | key   | value | other     |
       | KB_%% | LL%%  | Preset %% |
     And a new commit ":construction: Update 2" has been saved with all the new identified diff content
     When the user access to list of commits

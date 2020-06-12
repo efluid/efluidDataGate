@@ -50,8 +50,8 @@ Feature: The update on parameter tables can be followed checked and stored as co
     And the diff is completed
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
-      | Table     | Key | Action | Payload                                                                                                        |
-      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81   |
+      | Table     | Key | Action | Payload                                                                                                                       |
+      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81 |
       | TTAB_FIVE | 2   | ADD    | DATA:<a href="/ui/lob/TURPbmVyR2cwaWtGQVJLdmloWDBmRkQ4VjJtVXA0K0tIZnJqaTJCeVBLRT0=" download="download">LOB</a>, SIMPLE:17.82 |
       | TTAB_FIVE | 3   | ADD    | DATA:<a href="/ui/lob/bUdiNG5wa1FiUnZSSnJKV3AvUUlwd0dQcVpURmtLaEkxRlU5bDlqTmoxTT0=" download="download">LOB</a>, SIMPLE:17.83 |
     And the commit content has these associated lob data :
@@ -71,8 +71,8 @@ Feature: The update on parameter tables can be followed checked and stored as co
     And the diff is completed
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
-      | Table    | Key | Action | Payload                                                                                                                         |
-      | TTAB_SIX | 7   | ADD    | TEXT:<a href="/ui/lob/QXlvSkNtWk5RWHdrenQyWmNIZ0c4Y3B2VXVjc2JHbmFuVHVRdStwYUdPcz0=" download="download">TEXT</a>, DATE:2012-01-15 00:00:00     |
+      | Table    | Key | Action | Payload                                                                                                                                    |
+      | TTAB_SIX | 7   | ADD    | TEXT:<a href="/ui/lob/QXlvSkNtWk5RWHdrenQyWmNIZ0c4Y3B2VXVjc2JHbmFuVHVRdStwYUdPcz0=" download="download">TEXT</a>, DATE:2012-01-15 00:00:00 |
       | TTAB_SIX | 8   | ADD    | TEXT:<a href="/ui/lob/S09wazdEUDlpTG5BbHM1L1JvRjErS1JEeFdNRGFBK2VTazJiVUdvOGczZz0=" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
       | TTAB_SIX | 9   | ADD    | TEXT:<a href="/ui/lob/K2Z1REFwVm0ycUh1OEJhU09Pa0tBdElDclRoYzVWTTlFU3pGTS9DL1ZHST0=" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
     And the commit content has these associated lob data :
@@ -236,3 +236,163 @@ Feature: The update on parameter tables can be followed checked and stored as co
       | TTAB_SEVEN | SEVEN_1 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_A', VALUE:'Truc', ENABLED:true    |
       | TTAB_SEVEN | SEVEN_3 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_B', VALUE:'Machin', ENABLED:true  |
       | TTAB_SEVEN | SEVEN_4 | ADD    | LN_OTHER_TABLE_VALUE:'THREE_C', VALUE:'Bidule', ENABLED:false |
+
+  Scenario: The diff content is paginated and filtered - full content
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | VVV | Two   | Other VVV |
+    And the existing data in managed table "TTAB_THREE" :
+      | key   | value | other   |
+      | 11111 | A     | Other A |
+      | 22222 | B     | Other B |
+      | 33333 | C     | Other C |
+    And a diff analysis can be started and completed
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset           | something   |
+      | add    | 32  | LL32   | Preset 1         | AAA         |
+      | add    | 33  | LL33   | Preset 2         | BBB         |
+      | add    | 34  | VVV4   | Preset 3         | CCC         |
+      | add    | 35  | VVV5   | Preset 4         | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5         | EEE         |
+      | delete | 38  | DDD    |                  |             |
+      | update | 39  | EEE    | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | VVVD  | Other VVVD      |
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the paginated commit content is rendered with these identified changes :
+      | Table      | Key    | Action | Payload                                                               |
+      | TTAB_ONE   | LL32   | ADD    | PRESET:'Preset 1', SOMETHING:'AAA'                                    |
+      | TTAB_ONE   | LL33   | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'                                    |
+      | TTAB_ONE   | VVV4   | ADD    | PRESET:'Preset 3', SOMETHING:'CCC'                                    |
+      | TTAB_ONE   | VVV5   | ADD    | PRESET:'Preset 4', SOMETHING:'DDD'                                    |
+      | TTAB_ONE   | LLVVV6 | ADD    | PRESET:'Preset 5', SOMETHING:'EEE'                                    |
+      | TTAB_ONE   | DDD    | REMOVE |                                                                       |
+      | TTAB_ONE   | EEE    | UPDATE | PRESET:'Preset 5'=>'Preset 5 updated', SOMETHING:'EEE'=>'EEE updated' |
+      | TTAB_TWO   | JJJ2   | ADD    | VALUE:'One', OTHER:'Other JJJ2'                                       |
+      | TTAB_TWO   | VVV2   | ADD    | VALUE:'Two', OTHER:'Other VVV2'                                       |
+      | TTAB_TWO   | VVV3   | ADD    | VALUE:'Three', OTHER:'Other 333'                                      |
+      | TTAB_THREE | C      | REMOVE |                                                                       |
+      | TTAB_THREE | B      | UPDATE | OTHER:'Other B'=>'Other B updated'                                    |
+      | TTAB_THREE | VVVD   | ADD    | OTHER:'Other VVVD'                                                    |
+
+  Scenario: The diff content is paginated and filtered - filtered by key
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | VVV | Two   | Other VVV |
+    And the existing data in managed table "TTAB_THREE" :
+      | key   | value | other   |
+      | 11111 | A     | Other A |
+      | 22222 | B     | Other B |
+      | 33333 | C     | Other C |
+    And a diff analysis can be started and completed
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset           | something   |
+      | add    | 32  | LL32   | Preset 1         | AAA         |
+      | add    | 33  | LL33   | Preset 2         | BBB         |
+      | add    | 34  | VVV4   | Preset 3         | CCC         |
+      | add    | 35  | VVV5   | Preset 4         | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5         | EEE         |
+      | delete | 38  | DDD    |                  |             |
+      | update | 39  | EEE    | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | VVVD  | Other VVVD      |
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    And apply a content filter criteria "VVV\d" on "key"
+    Then the paginated commit content is rendered with these identified changes :
+      | Table    | Key  | Action | Payload                            |
+      | TTAB_ONE | VVV4 | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
+      | TTAB_ONE | VVV5 | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
+      | TTAB_TWO | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
+      | TTAB_TWO | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'   |
+
+  Scenario: The diff content is paginated and filtered - filtered by table + type and sorted by table and key
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | VVV | Two   | Other VVV |
+    And the existing data in managed table "TTAB_THREE" :
+      | key   | value | other   |
+      | 11111 | A     | Other A |
+      | 22222 | B     | Other B |
+      | 33333 | C     | Other C |
+    And a diff analysis can be started and completed
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset           | something   |
+      | add    | 32  | LL32   | Preset 1         | AAA         |
+      | add    | 33  | LL33   | Preset 2         | BBB         |
+      | add    | 34  | VVV4   | Preset 3         | CCC         |
+      | add    | 35  | VVV5   | Preset 4         | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5         | EEE         |
+      | delete | 38  | DDD    |                  |             |
+      | update | 39  | EEE    | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | VVVD  | Other VVVD      |
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    And apply a content filter criteria "TTAB_[^W]*" on "table"
+    And apply a content filter criteria "ADD" on "type"
+    And apply a content sort criteria "DESC" on "table"
+    And apply a content sort criteria "ASC" on "key"
+    Then the paginated commit content is rendered with these identified sorted changes :
+      | Table      | Key    | Action | Payload                            |
+      | TTAB_THREE | VVVD   | ADD    | OTHER:'Other VVVD'                 |
+      | TTAB_ONE   | LL32   | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
+      | TTAB_ONE   | LL33   | ADD    | PRESET:'Preset 2', SOMETHING:'BBB' |
+      | TTAB_ONE   | LLVVV6 | ADD    | PRESET:'Preset 5', SOMETHING:'EEE' |
+      | TTAB_ONE   | VVV4   | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
+      | TTAB_ONE   | VVV5   | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |

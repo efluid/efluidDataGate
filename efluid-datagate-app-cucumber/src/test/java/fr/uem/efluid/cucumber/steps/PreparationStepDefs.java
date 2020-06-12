@@ -400,6 +400,28 @@ public class PreparationStepDefs extends CucumberStepDefs {
         assertDiffContentIsCompliant(preparation, data);
     }
 
+    @Then("^the paginated commit content is rendered with these identified changes :$")
+    public void commit_detail_content(DataTable table) throws Exception {
+
+        DiffContentPage paginatedContent = postContent("/ui/prepare/page/0", CommitStepDefs.currentSearch, DiffContentPage.class);
+
+        // Get details directly with all content
+        assertDiffContentIsCompliant(new DiffContentHolder<PreparedIndexEntry>(
+                                             new ArrayList<>(paginatedContent.getPage()), this.prep.getCurrentCommitPreparation().getReferencedTables()) {
+                                     },
+                table);
+    }
+
+    @Then("^the paginated commit content is rendered with these identified sorted changes :$")
+    public void commit_detail_content_sorted(DataTable table) throws Exception {
+
+        DiffContentPage paginatedContent = postContent("/ui/prepare/page/0", CommitStepDefs.currentSearch, DiffContentPage.class);
+
+        // Control with same sort rules
+        assertDiffContentIsCompliantOrdered(paginatedContent.getPage(), table);
+    }
+
+
     @Then("^these remarks on missing linked lines are rendered :$")
     public void commit_remarks_ready(DataTable data) {
 

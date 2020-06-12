@@ -7,6 +7,7 @@ import com.unboundid.ldap.sdk.LDAPException;
 import com.unboundid.ldif.LDIFReader;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.stubs.*;
+import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.security.UserHolder;
@@ -87,6 +88,8 @@ public abstract class CucumberStepDefs {
     protected static Exception currentException;
 
     protected static String currentStartPage;
+
+    protected static DiffContentSearch currentSearch = new DiffContentSearch();
 
     @Autowired
     protected ObjectMapper mapper;
@@ -567,6 +570,40 @@ public abstract class CucumberStepDefs {
      * </p>
      *
      * @param url
+     * @param contentType loaded type
+     * @return content loaded
+     * @throws Exception
+     */
+    protected final <T> T postContent(String url, Object requestBody, Class<T> contentType) throws Exception {
+
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post(url);
+
+        if (currentStartPage != null) {
+            builder.header("Referer", currentStartPage);
+        }
+
+        // Add user token anyway
+        if (url.startsWith("/rest/")) {
+            builder.param("token", getCurrentUserApiToken());
+        }
+
+        builder.content(this.mapper.writeValueAsString(requestBody));
+        builder.contentType(MediaType.APPLICATION_JSON_UTF8);
+        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+
+        return this.mapper.readValue(this.mockMvc.perform(builder).andReturn().getResponse().getContentAsString(), contentType);
+    }
+
+    /**
+     * <p>
+     * Simplified post process with common rules :
+     * <ul>
+     * <li>Set the currentAction</li>
+     * <li>Take care of currentStartPage if any is set</li>
+     * </ul>
+     * </p>
+     *
+     * @param url
      * @param params
      * @throws Exception
      */
@@ -847,6 +884,23 @@ public abstract class CucumberStepDefs {
                 assertThat(index.getHrPayload()).isEqualTo(l.get("Payload"));
             }
         });
+    }
+
+    protected static void assertDiffContentIsCompliantOrdered(List<? extends PreparedIndexEntry> diffLines, DataTable data) {
+
+        assertThat(diffLines).hasSize(data.height() - 1);
+
+        int i = 0;
+        for (Map<String, String> dataline : data.asMaps()) {
+            PreparedIndexEntry diff = diffLines.get(i);
+            assertThat(diff.getTableName()).isEqualTo(dataline.get("Table"));
+            assertThat(diff.getKeyValue()).isEqualTo(dataline.get("Key"));
+            assertThat(diff.getAction().name()).isEqualTo(dataline.get("Action"));
+            if (diff.getAction() != REMOVE) {
+                assertThat(diff.getHrPayload()).isEqualTo(dataline.get("Payload"));
+            }
+            i++;
+        }
     }
 
     /**

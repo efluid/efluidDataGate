@@ -360,7 +360,13 @@ public class CommitService extends AbstractApplicationService {
                 PageRequest.of(pageIndex, this.detailsDisplayPageSize));
 
         // Standard paginated display
-        return new DiffContentPage(pageContent, c -> completeCommitIndexForProjectDict(c, referencedTables, false));
+        return new DiffContentPage(pageContent,
+                // We must "re-sort" page after complete which use a grouping by table and destroy the existing sort
+                c -> currentSearch.sortDiffContent(
+                        referencedTables,
+                        completeCommitIndexForProjectDict(c, referencedTables, false)
+                )
+        );
     }
 
     /**
@@ -619,7 +625,7 @@ public class CommitService extends AbstractApplicationService {
      * <p>
      * Reserved for launch from <tt>PilotableCommitPreparationService</tt>
      *
-     * @param importFile content to import
+     * @param importFile         content to import
      * @param currentPreparation preparation in process, initialized for import
      */
     ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> importCommits(

@@ -10,6 +10,7 @@ import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.junit.Before;
 
 import java.util.*;
 import java.util.function.Function;
@@ -36,6 +37,22 @@ public class CommitStepDefs extends CucumberStepDefs {
 
         // Navigate
         get("/ui/details/" + commit.get().getUuid());
+    }
+
+    @When("^apply a content filter criteria \"(.*)\" on \"(.*)\"$")
+    public void apply_content_filter(String value, String criteria) {
+        if (currentSearch.getFilters() == null) {
+            currentSearch.setFilters(new HashMap<>());
+        }
+        currentSearch.getFilters().put(criteria, value);
+    }
+
+    @When("^apply a content sort criteria \"(.*)\" on \"(.*)\"$")
+    public void apply_content_sort(String value, String criteria) {
+        if (currentSearch.getSorts() == null) {
+            currentSearch.setSorts(new HashMap<>());
+        }
+        currentSearch.getSorts().put(criteria, value);
     }
 
     @Then("^the commit \"(.*)\" is added to commit list for current project$")
@@ -73,7 +90,8 @@ public class CommitStepDefs extends CucumberStepDefs {
         // Process assert on last saved commit in DB
         CommitDetails details = getSavedCommit();
 
-        checkCommitDetails(t -> details.getDiffContentForTableName(t).stream(), data);
+        //checkCommitDetails(t -> details.getDiffContentForTableName(t).stream(), data);
+        assertDiffContentIsCompliant(details, data);
     }
 
     @Then("^the saved merge commit content has these identified changes :$")
@@ -150,13 +168,24 @@ public class CommitStepDefs extends CucumberStepDefs {
 
         CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
 
-        DiffContentPage paginatedContent = getContent("/ui/details/" + details.getUuid() + "/page/0", DiffContentPage.class);
+        DiffContentPage paginatedContent = postContent("/ui/details/" + details.getUuid() + "/page/0", currentSearch, DiffContentPage.class);
 
-        Map<String, UUID> tableUuids = details.getReferencedTables().values().stream()
-                .collect(Collectors.toMap(DictionaryEntrySummary::getTableName, DictionaryEntrySummary::getUuid));
+        // Get details directly with all content
+        assertDiffContentIsCompliant(new DiffContentHolder<PreparedIndexEntry>(
+                                             new ArrayList<>(paginatedContent.getPage()), details.getReferencedTables()) {
+                                     },
+                table);
+    }
 
-        // Get details directly with all content - the one in screen is
-        checkCommitDetails(t -> paginatedContent.getPage().stream().filter(i -> i.getDictionaryEntryUuid().equals(tableUuids.get(t))), table);
+    @Then("^the commit details are displayed with this sorted content :$")
+    public void commit_detail_content_sorted(DataTable table) throws Exception {
+
+        CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
+
+        DiffContentPage paginatedContent = postContent("/ui/details/" + details.getUuid() + "/page/0", currentSearch, DiffContentPage.class);
+
+        // Get details directly with all content
+        assertDiffContentIsCompliantOrdered(paginatedContent.getPage(), table);
     }
 
     @Then("^the commit details are displayed with (\\d*) payloads$")
@@ -165,6 +194,7 @@ public class CommitStepDefs extends CucumberStepDefs {
         assertThat(details.getIndexSize()).isEqualTo(size);
     }
 
+    /*
     private void checkCommitDetails(Function<String, Stream<? extends PreparedIndexEntry>> contentAccessForTabme, DataTable table) {
 
         // Get by tables
@@ -185,8 +215,8 @@ public class CommitStepDefs extends CucumberStepDefs {
                 Map<String, String> dataLine = v.get(i);
 
                 IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
-                assertThat(diffLine.getAction()).isEqualTo(action);
-                assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
+                assertThat(diffLine.getKeyValue()).as("Diff line on table " + diffLine.getTableName()).isEqualTo(dataLine.get("Key"));
+                assertThat(diffLine.getAction()).as("Action for key " + diffLine.getKeyValue() + " on table " + diffLine.getTableName()).isEqualTo(action);
 
                 // No need to check payload in delete
                 if (action != REMOVE) {
@@ -196,5 +226,5 @@ public class CommitStepDefs extends CucumberStepDefs {
         });
 
 
-    }
+    }*/
 }
