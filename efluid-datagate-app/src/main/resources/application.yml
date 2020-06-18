@@ -136,5 +136,8 @@ spring:
             enabled: ALWAYS
 ## WEB SERVER CONFIG
 server:
-    servlet.context-path:
+    servlet:
+        context-path:
+        session.cookie:
+            name: JSESSIONID_${server.servlet.context-path}${server.port}
     port: 8081
