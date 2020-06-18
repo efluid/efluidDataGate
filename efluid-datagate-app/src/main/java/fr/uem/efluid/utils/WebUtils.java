@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -344,11 +345,21 @@ public class WebUtils {
         /**
          * For error display when a payload is a multi line string : can transform it to list of values
          *
-         * @param payload    single value to split by lines
+         * @param payload single value to split by lines
          * @return transforemer value. Should be rendered with th:utext thymeleaf instruction
          */
         public String formatMultilinePayload(String payload) {
             return payload != null ? Stream.of(payload.split("\n")).map(v -> String.format(MULTI_PAYLOAD_FORMAT, v)).collect(Collectors.joining()) : "";
+        }
+
+        /**
+         * Process any collection of items to convert it as a json array, for use in a javascript Thymeleaf template code
+         *
+         * @param values collection of whatever
+         * @return a javascript string array
+         */
+        public String toJavascriptArray(Collection<?> values) {
+            return "[" + values.stream().map(Object::toString).sorted().collect(Collectors.joining(",", "\"", "\"")) + "]";
         }
     }
 

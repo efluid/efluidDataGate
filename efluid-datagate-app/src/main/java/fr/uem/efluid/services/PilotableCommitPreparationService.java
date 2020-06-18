@@ -328,35 +328,18 @@ public class PilotableCommitPreparationService {
      */
     public DiffContentPage getPaginatedDiffContent(int pageIndex, DiffContentSearch currentSearch) {
 
-        PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
-
-        // Filter and sort content regarding the specified search
-        if (current != null) {
-
-            List<? extends PreparedIndexEntry> diffContent = currentSearch.filterAndSortDiffContentInMemory(current);
-
-            // Complete tableName / DomainName to display (only on listed results)
-            diffContent.forEach(i -> {
-                DictionaryEntrySummary dic = current.getReferencedTables().get(i.getDictionaryEntryUuid());
-                if (dic != null) {
-                    i.setTableName(dic.getTableName());
-                    i.setDomainName(dic.getDomainName());
-                }
-            });
-
-            return new DiffContentPage(pageIndex, diffContent, this.diffDisplayPageSize);
-        }
-
-        throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation to filter");
+        // Apply pagination on filtered content directly
+        return new DiffContentPage(pageIndex, getFilteredDiffContent(currentSearch), this.diffDisplayPageSize);
     }
+
 
     /**
      * <p>
-     * Update all preparation
+     * Update all preparation with selection states
      * </p>
      *
-     * @param selected
-     * @param rollbacked
+     * @param selected   true to apply "selected" state
+     * @param rollbacked true to apply "roolbacked" state
      */
     public void updateAllPreparationSelections(boolean selected, boolean rollbacked) {
         getPreparationContentForSelection().getDiffContent()
@@ -368,11 +351,29 @@ public class PilotableCommitPreparationService {
 
     /**
      * <p>
-     * Update all preparation
+     * Update the preparation items which match the specified filter
      * </p>
      *
-     * @param selected
-     * @param rollbacked
+     * @param search     filtering definition
+     * @param selected   true to apply "selected" state
+     * @param rollbacked true to apply "roolbacked" state
+     */
+    public void updateFilteredPreparationSelections(DiffContentSearch search, boolean selected, boolean rollbacked) {
+        getFilteredDiffContent(search)
+                .forEach(i -> {
+                    i.setRollbacked(rollbacked);
+                    i.setSelected(selected);
+                });
+    }
+
+    /**
+     * <p>
+     * Update one preparation item
+     * </p>
+     *
+     * @param itemIndex  temp identified for the item to update in diff
+     * @param selected   true to apply "selected" state
+     * @param rollbacked true to apply "roolbacked" state
      */
     public void updateDiffLinePreparationSelections(String itemIndex, boolean selected, boolean rollbacked) {
         getPreparationContentForSelection().getDiffContent().stream()
@@ -707,6 +708,35 @@ public class PilotableCommitPreparationService {
     }
 
     /**
+     * Apply a filtering on <i>CurrentCommitPreparation</i>
+     *
+     * @param currentSearch filter to apply
+     * @return filtered content.
+     * @throws ApplicationException if no content available
+     */
+    private List<? extends PreparedIndexEntry> getFilteredDiffContent(DiffContentSearch currentSearch) {
+
+        PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+
+        // Filter and sort content regarding the specified search
+        if (current != null) {
+
+            List<? extends PreparedIndexEntry> diffContent = currentSearch.filterAndSortDiffContentInMemory(current);
+
+            // Complete tableName / DomainName to display (only on listed results)
+            diffContent.forEach(i -> {
+                DictionaryEntrySummary dic = current.getReferencedTables().get(i.getDictionaryEntryUuid());
+                if (dic != null) {
+                    i.setTableName(dic.getTableName());
+                    i.setDomainName(dic.getDomainName());
+                }
+            });
+            return diffContent;
+        }
+        throw new ApplicationException(PREPARATION_NOT_READY, "Cannot get content of current preparation to filter");
+    }
+
+    /**
      * @return
      */
     private PilotedCommitPreparation<?> getPreparationContentForSelection() {
@@ -935,7 +965,8 @@ public class PilotableCommitPreparationService {
      * @param dict
      * @return
      */
-    private Callable<Void> callDiff(final PilotedCommitPreparation<PreparedIndexEntry> current, DictionaryEntry dict) {
+    private Callable<Void> callDiff(final PilotedCommitPreparation<PreparedIndexEntry> current, DictionaryEntry
+            dict) {
 
         return () -> {
             // Controle if table not yet specified

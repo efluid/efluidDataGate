@@ -46,7 +46,7 @@
     margin: 10% 10% 0 10%;
     background-color: #FFFFFF;
     box-shadow: 1px 1px 12px #555;
-    overflow: scroll !important;
+    overflow-y: auto !important;
 }
 
 #column-main {
@@ -623,4 +623,55 @@ textarea.configuration {
 
 li.page-item {
     cursor: pointer;
+}
+
+th.filter {
+    cursor: pointer;
+}
+
+th.filter:hover {
+    text-decoration: underline;
+}
+
+th.filter.filtered {
+    background: url("/filtered.png");
+    background-attachment: local;
+    background-repeat: no-repeat;
+    background-position: left center;
+    padding-left: 22px ;
+}
+
+th.filter.sorted-asc {
+    background: url("/sort-asc.png");
+    background-attachment: local;
+    background-repeat: no-repeat;
+    background-position: left center;
+    padding-left: 22px ;
+}
+
+th.filter.sorted-desc {
+    background: url("/sort-desc.png");
+    background-attachment: local;
+    background-repeat: no-repeat;
+    background-position: left center;
+    padding-left: 22px ;
+}
+
+.ui-autocomplete {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: default;
+    border: #aaa 1px solid;
+    box-shadow: 5px 5px 5px #aaa;
+    list-style-type: none !important;
+    padding: 5px !important;
+    background-color: #FFFFFF;
+    font-size: 11px;
+}
+
+.ui-autocomplete *:hover {
+    background-color: #aaa;
+    color: white;
+    font-weight: bold;
 }

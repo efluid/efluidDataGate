@@ -13,8 +13,8 @@
 <body>
 <div class="container-fluid" id="app-container">
     <div class="row app-row">
-        <div style="width: 15%; height: 100vh; overflow: scroll;" id="colonne-navbar" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
-        <div style="width: 85%; overflow: scroll;">
+        <div id="navbarColumn" th:insert="~{layouts/navbar-left :: navbar-left}"></div>
+        <div id="bodyColumn">
             <div th:insert="~{layouts/navbar-right :: navbar-right}"></div>
             <span layout:fragment="content" class="datagate-content">
 		        <div>Here page content</div>
@@ -31,6 +31,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script type="text/javascript" th:src="@{/webjars/jquery-ui/1.12.1/jquery-ui.min.js}"></script>
 <script layout:fragment="script">
                 let show = false;
                 $(".menuLanding").hide();

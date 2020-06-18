@@ -344,6 +344,7 @@ public class CommitService extends AbstractApplicationService {
     /**
      * <p>Paginated / sorted access on an existing commit index.</p>
      * <p>Not optimized (load, populate, filter and order ALL of index before pagination, on every call !!!)</p>
+     * <p>Do NOT combine similar lines</p>
      *
      * @param pageIndex     requested paginated page index
      * @param currentSearch all search (filter / sort) criteria in a combined component
@@ -359,7 +360,13 @@ public class CommitService extends AbstractApplicationService {
                 PageRequest.of(pageIndex, this.detailsDisplayPageSize));
 
         // Standard paginated display
-        return new DiffContentPage(pageContent, c -> completeCommitIndexForProjectDict(c, referencedTables));
+        return new DiffContentPage(pageContent,
+                // We must "re-sort" page after complete which use a grouping by table and destroy the existing sort
+                c -> currentSearch.sortDiffContent(
+                        referencedTables,
+                        completeCommitIndexForProjectDict(c, referencedTables, false)
+                )
+        );
     }
 
     /**
@@ -403,8 +410,8 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
-     * Init a standard CommitDetails for a specified commit entity, without checking any
-     * referenced items in local db : can be used from imported commit data
+     * <p>Init a standard CommitDetails for a specified commit entity, without checking any
+     * referenced items in local db : can be used from imported commit data</p>
      *
      * @param project      project where the corresponding tables will be loaded
      * @param commitEntity a commit to map as a "Details"
@@ -420,17 +427,22 @@ public class CommitService extends AbstractApplicationService {
 
         return CommitDetails.fromEntityAndContent(
                 commitEntity,
-                completeCommitIndexForProjectDict(index, referencedTables),
+                completeCommitIndexForProjectDict(index, referencedTables, true),
                 referencedTables);
     }
 
     /**
      * Complete the given index for rendering regarding the specified project dictionary
      *
-     * @param index a given index content
+     * @param index            a given index content
+     * @param referencedTables currently processing DictionaryEntries mapped to there uuids
+     * @param combineSimilars  true if the similar entries must be combined in single lines
      * @return unsorted collection of index entries
      */
-    public List<PreparedIndexEntry> completeCommitIndexForProjectDict(Collection<IndexEntry> index, Map<UUID, DictionaryEntrySummary> referencedTables) {
+    public List<PreparedIndexEntry> completeCommitIndexForProjectDict(
+            Collection<IndexEntry> index,
+            Map<UUID, DictionaryEntrySummary> referencedTables,
+            boolean combineSimilars) {
 
         // On given index ...
         return index.stream()
@@ -440,7 +452,7 @@ public class CommitService extends AbstractApplicationService {
                 .collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
                 .entrySet().stream()
                 // ... Then complete rendering of index entries, for each dict entry
-                .flatMap(e -> this.diffs.prepareDiffForRendering(e.getKey(), e.getValue()).stream())
+                .flatMap(e -> this.diffs.prepareDiffForRendering(e.getKey(), e.getValue(), combineSimilars).stream())
                 .peek(i -> {
                     DictionaryEntrySummary dic = referencedTables.get(i.getDictionaryEntryUuid());
                     if (dic != null) {
@@ -462,7 +474,7 @@ public class CommitService extends AbstractApplicationService {
         Map<UUID, DictionaryEntrySummary> referencedTables = getReferencedTablesForCommit(commitUuid);
 
         // Load index and complete details
-        return completeCommitIndexForProjectDict(this.indexes.findByCommitUuid(commitUuid), referencedTables);
+        return completeCommitIndexForProjectDict(this.indexes.findByCommitUuid(commitUuid), referencedTables, true);
     }
 
 
@@ -613,9 +625,12 @@ public class CommitService extends AbstractApplicationService {
      * <p>
      * Reserved for launch from <tt>PilotableCommitPreparationService</tt>
      *
-     * @param importFile
+     * @param importFile         content to import
+     * @param currentPreparation preparation in process, initialized for import
      */
-    ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> importCommits(ExportFile importFile, final PilotedCommitPreparation<PreparedMergeIndexEntry> currentPreparation) {
+    ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> importCommits(
+            ExportFile importFile,
+            final PilotedCommitPreparation<PreparedMergeIndexEntry> currentPreparation) {
 
         LOGGER.debug("Asking for an import of commit in piloted preparation context {}", currentPreparation.getIdentifier());
 
@@ -840,12 +855,29 @@ public class CommitService extends AbstractApplicationService {
      */
     private List<RollbackLine> getDiffRollbacks(DictionaryEntry entry, Collection<? extends DiffLine> diffContent) {
 
+        // diffContent -> intermediaire où c'est détricoté
+        Collection<? extends DiffLine> decombineds =
+                diffContent.stream()
+                        // DiffLine "normal" 1 -> 1
+                        // DiffLine "combinée" 1 -> X eclatées
+                        .flatMap(l -> {
+                            if (l instanceof SimilarPreparedIndexEntry) {
+                                SimilarPreparedIndexEntry combinedDiffLine = (SimilarPreparedIndexEntry) l;
+                                return combinedDiffLine.split().stream();
+                            } else {
+                                return Stream.of(l);
+                            }
+                        }).collect(Collectors.toList());
+
+        /* ... */
+        ;
+
         // All "previous" for current diff
         Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(entry,
-                diffContent.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
+                decombineds.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
 
         // Completed rollback
-        return diffContent.stream()
+        return decombineds.stream()
                 .map(current -> new RollbackLine(current, previouses.get(current.getKeyValue())))
                 .collect(Collectors.toList());
     }

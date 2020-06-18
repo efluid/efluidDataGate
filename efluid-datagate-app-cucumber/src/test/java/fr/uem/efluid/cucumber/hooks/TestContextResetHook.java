@@ -1,6 +1,7 @@
 package fr.uem.efluid.cucumber.hooks;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
+import fr.uem.efluid.services.types.DiffContentSearch;
 import io.cucumber.java.Before;
 import org.junit.Ignore;
 
@@ -13,6 +14,7 @@ public class TestContextResetHook extends CucumberStepDefs {
     @Before(order = 3)
     public void resetContext() {
 
+        currentSearch = new DiffContentSearch();
         currentAction = null;
         currentException = null;
         currentStartPage = null;

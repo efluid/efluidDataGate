@@ -23,8 +23,8 @@
     <url>https://github.com/efluid/datagate</url>
     <developers>
         <developer>
-            <id>elecompte-pro</id>
-            <name>Emmanuel Lecompte</name>
+            <id>elecomte-pro</id>
+            <name>Emmanuel Lecomte</name>
         </developer>
         <developer>
             <id>MCO</id>
@@ -95,6 +95,7 @@
         <dependency.jquery.version>3.5.0</dependency.jquery.version>
         <dependency.popper.version>1.13.0</dependency.popper.version>
         <dependency.swagger-ui.version>2.2.10</dependency.swagger-ui.version>
+        <dependency.jquery-ui.version>1.12.1</dependency.jquery-ui.version>
 
         <!-- Fixed plugins -->
         <plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
@@ -448,6 +449,13 @@
                 <artifactId>swagger-ui</artifactId>
                 <version>${dependency.swagger-ui.version}</version>
             </dependency>
+
+            <dependency>
+                <groupId>org.webjars</groupId>
+                <artifactId>jquery-ui</artifactId>
+                <version>${dependency.jquery-ui.version}</version>
+            </dependency>
+
 
             <!-- Dependencies for maven plugin development -->
 

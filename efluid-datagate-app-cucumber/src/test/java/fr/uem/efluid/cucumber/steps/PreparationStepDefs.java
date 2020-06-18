@@ -321,9 +321,20 @@ public class PreparationStepDefs extends CucumberStepDefs {
     public void user_select_all_content() throws Exception {
 
         // Call select all uri
-        post("/prepare/selection/all", p("selected", "true"), p("rollbacked", "false"));
+        post("/ui/prepare/selection/all", p("selected", "true"), p("rollbacked", "false"));
 
         select = "ALL";
+    }
+
+    @When("^the user select the filtered diff content for commit$")
+    public void user_select_filtered_content() throws Exception {
+
+        // Call select all uri
+        postWithBody("/ui/prepare/selection/filtered", CommitStepDefs.currentSearch, p("selected", "true"), p("rollbacked", "false"));
+
+        assertRequestWasOk();
+
+        select = "FILTERED";
     }
 
     @When("^the user select all prepared diff content for merge commit$")
@@ -399,6 +410,39 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
         assertDiffContentIsCompliant(preparation, data);
     }
+
+    @Then("^the commit content is selected as this :$")
+    public void commit_content_selected(DataTable data) {
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+
+        assertDiffContentSelect(preparation, data);
+    }
+
+
+    @Then("^the paginated commit content is rendered with these identified changes :$")
+    public void commit_detail_content(DataTable table) throws Exception {
+
+        DiffContentPage paginatedContent = postContent("/ui/prepare/page/0", CommitStepDefs.currentSearch, DiffContentPage.class);
+
+        // Get details directly with all content
+        assertDiffContentIsCompliant(new DiffContentHolder<PreparedIndexEntry>(
+                                             new ArrayList<>(paginatedContent.getPage()), this.prep.getCurrentCommitPreparation().getReferencedTables()) {
+                                     },
+                table);
+    }
+
+    @Then("^the paginated commit content is rendered with these identified sorted changes :$")
+    public void commit_detail_content_sorted(DataTable table) throws Exception {
+
+        DiffContentPage paginatedContent = postContent("/ui/prepare/page/0", CommitStepDefs.currentSearch, DiffContentPage.class);
+
+        // Control with same sort rules
+        assertDiffContentIsCompliantOrdered(paginatedContent.getPage(), table);
+    }
+
 
     @Then("^these remarks on missing linked lines are rendered :$")
     public void commit_remarks_ready(DataTable data) {
@@ -511,6 +555,14 @@ public class PreparationStepDefs extends CucumberStepDefs {
                 }
             }
         });
+    }
+
+    @Then("^the paginated merge commit content is rendered with these identified sorted changes :$")
+    public void merge_detail_content_sorted(DataTable table) throws Exception {
+
+        DiffContentPage paginatedContent = postContent("/ui/merge/page/0", CommitStepDefs.currentSearch, DiffContentPage.class);
+
+        assertDiffContentIsCompliantOrdered(paginatedContent.getPage(), table);
     }
 
     @Then("^the merge commit content has these resolution details for table \"(.*)\" on key \"(.*)\" :$")
