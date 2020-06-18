@@ -112,7 +112,8 @@ Les paramètres gérés sont :
 * `datagate-efluid.display.details-index-max`: nombre de ligne de diff maxi avant d'utiliser une vue simplifier dans l'écran détail d'un lot existant
 * `datagate-efluid.display.combine-similar-diff-after`: nombre de changement similaire nécessaires avant de les combiner dans l'écran diff sous la forme d'un seul changement
 * `datagate-efluid.display.history-page-size`: Nombre d'items par page pour la pagination de l'historique des changements enregistrés
-* `datagate-efluid.display.diff-page-size`: Nombre d'items par page pour la pagination du diff d'une table dans la préparation d'un lot
+* `datagate-efluid.display.diff-page-size`: Nombre d'items par page pour la pagination du diff d'une préparation d'un lot
+* `datagate-efluid.display.details-page-size`: Nombre d'items par page pour la pagination du diff présenté en consultant le contenu d'un lot existant
 * `datagate-efluid.display.test-row-max-size`: Nombre d'items par page pour la pagination de la vue "test" de donnée dans la spécification d'une table de paramètrage
 * `datagate-efluid.web-options.enable-custom-h2-console`: true pour activer la console h2 (quand une BDD H2 est utilisée comme BDD gérée, c'est à dire uniquement en mode démo)
 * `datagate-efluid.dictionary.select-pk-as-default-keys`: true si les PK des tables peuvent être pré-selectionnées comme clés dans l'édition d'une table de paramètrage
