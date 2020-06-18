@@ -396,3 +396,62 @@ Feature: The update on parameter tables can be followed checked and stored as co
       | TTAB_ONE   | LLVVV6 | ADD    | PRESET:'Preset 5', SOMETHING:'EEE' |
       | TTAB_ONE   | VVV4   | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
       | TTAB_ONE   | VVV5   | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
+
+  Scenario: The diff content can be selected regarding the current filter - filtered by table
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | VVV | Two   | Other VVV |
+    And the existing data in managed table "TTAB_THREE" :
+      | key   | value | other   |
+      | 11111 | A     | Other A |
+      | 22222 | B     | Other B |
+      | 33333 | C     | Other C |
+    And a diff analysis can be started and completed
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset           | something   |
+      | add    | 32  | LL32   | Preset 1         | AAA         |
+      | add    | 33  | LL33   | Preset 2         | BBB         |
+      | add    | 34  | VVV4   | Preset 3         | CCC         |
+      | add    | 35  | VVV5   | Preset 4         | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5         | EEE         |
+      | delete | 38  | DDD    |                  |             |
+      | update | 39  | EEE    | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | VVVD  | Other VVVD      |
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    And apply a content filter criteria "TTAB_[^W]*" on "table"
+    And the user select the filtered diff content for commit
+    Then the commit content is selected as this :
+      | Table      | Key    | Action | Selection |
+      | TTAB_ONE   | LL32   | ADD    | selected  |
+      | TTAB_ONE   | LL33   | ADD    | selected  |
+      | TTAB_ONE   | VVV4   | ADD    | selected  |
+      | TTAB_ONE   | VVV5   | ADD    | selected  |
+      | TTAB_ONE   | LLVVV6 | ADD    | selected  |
+      | TTAB_ONE   | DDD    | REMOVE | selected  |
+      | TTAB_ONE   | EEE    | UPDATE | selected  |
+      | TTAB_TWO   | JJJ2   | ADD    | ignored   |
+      | TTAB_TWO   | VVV2   | ADD    | ignored   |
+      | TTAB_TWO   | VVV3   | ADD    | ignored   |
+      | TTAB_THREE | C      | REMOVE | selected  |
+      | TTAB_THREE | B      | UPDATE | selected  |
+      | TTAB_THREE | VVVD   | ADD    | selected  |

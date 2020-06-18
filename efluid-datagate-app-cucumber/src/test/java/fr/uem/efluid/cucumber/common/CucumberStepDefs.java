@@ -32,6 +32,8 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import javax.annotation.Nullable;
+import javax.validation.constraints.Null;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -599,6 +601,26 @@ public abstract class CucumberStepDefs {
      * Simplified post process with common rules :
      * <ul>
      * <li>Set the currentAction</li>
+     * <li>Apply the given body</li>
+     * <li>Take care of currentStartPage if any is set</li>
+     * </ul>
+     * </p>
+     *
+     * @param url
+     * @param requestBody post body
+     * @param params
+     * @throws Exception
+     */
+    @SafeVarargs
+    protected final void postWithBody(String url, final Object requestBody, final Associate<String, String>... params) throws Exception {
+        post(url, Arrays.asList(params), requestBody);
+    }
+
+    /**
+     * <p>
+     * Simplified post process with common rules :
+     * <ul>
+     * <li>Set the currentAction</li>
      * <li>Take care of currentStartPage if any is set</li>
      * </ul>
      * </p>
@@ -609,7 +631,7 @@ public abstract class CucumberStepDefs {
      */
     @SafeVarargs
     protected final void post(String url, final Associate<String, String>... params) throws Exception {
-        post(url, Arrays.asList(params));
+        post(url, Arrays.asList(params), null);
     }
 
     /**
@@ -618,15 +640,16 @@ public abstract class CucumberStepDefs {
      * @throws Exception
      */
     protected final void post(String url, final PostParamSet params) throws Exception {
-        post(url, params.getParams());
+        post(url, params.getParams(), null);
     }
 
     /**
      * @param url
      * @param params
+     * @param requestBody optional
      * @throws Exception
      */
-    private void post(String url, Collection<Associate<String, String>> params) throws Exception {
+    private void post(String url, Collection<Associate<String, String>> params, @Nullable Object requestBody) throws Exception {
 
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.post(url);
 
@@ -636,6 +659,11 @@ public abstract class CucumberStepDefs {
 
         if (currentStartPage != null) {
             builder.header("Referer", currentStartPage);
+        }
+
+        if (requestBody != null) {
+            builder.content(this.mapper.writeValueAsString(requestBody));
+            builder.contentType(MediaType.APPLICATION_JSON_UTF8);
         }
 
         builder.accept(MediaType.APPLICATION_JSON_UTF8);
@@ -882,6 +910,42 @@ public abstract class CucumberStepDefs {
             // No need to check payload in delete
             if (action != REMOVE) {
                 assertThat(index.getHrPayload()).isEqualTo(l.get("Payload"));
+            }
+        });
+    }
+
+    protected static void assertDiffContentSelect(DiffContentHolder<?> holder, DataTable data) {
+
+        assertThat(holder.getDiffContent().size()).isEqualTo(data.asMaps().size());
+
+        data.asMaps().forEach(l -> {
+
+            DictionaryEntrySummary table = holder.getReferencedTables().values().stream()
+                    .filter(t -> t.getTableName().equals(l.get("Table")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
+
+            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
+
+            IndexAction action = IndexAction.valueOf(l.get("Action"));
+            assertThat(index.getAction()).isEqualTo(action);
+
+            switch (l.get("Selection")) {
+                case "selected":
+                    assertThat(index.isSelected()).as("Selected for line on table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\"").isTrue();
+                    assertThat(index.isRollbacked()).as("Rollbacked for line on table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\"").isFalse();
+                    break;
+                case "rollbacked":
+                    assertThat(index.isSelected()).as("Selected for line on table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\"").isFalse();
+                    assertThat(index.isRollbacked()).as("Rollbacked for line on table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\"").isTrue();
+                    break;
+                case "ignored":
+                default:
+                    assertThat(index.isSelected()).as("Selected for line on table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\"").isFalse();
+                    assertThat(index.isRollbacked()).as("Rollbacked for line on table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\"").isFalse();
+                    break;
             }
         });
     }

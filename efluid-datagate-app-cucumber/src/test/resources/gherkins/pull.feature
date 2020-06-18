@@ -69,6 +69,28 @@ Feature: The backlog can be imported and merged with local changes
       | TTAB_SIX  | 8   | ADD    | true         | TEXT:<a href="/ui/lob/S09wazdEUDlpTG5BbHM1L1JvRjErS1JEeFdNRGFBK2VTazJiVUdvOGczZz0=" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
       | TTAB_SIX  | 9   | ADD    | true         | TEXT:<a href="/ui/lob/K2Z1REFwVm0ycUh1OEJhU09Pa0tBdElDclRoYzVWTTlFU3pGTS9DL1ZHST0=" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
 
+  Scenario: The dedicated merge diff is paginated and filtered - filtered by table sorted by key
+    Given the commit ":tada: Test commit init source" has been saved and exported with all the identified initial diff content
+    And the user accesses to the destination environment with the same dictionary
+    And the existing data in managed table "TTAB_TWO" in destination environment :
+      | key | value | other     |
+      | VVV | 333   | Other VVV |
+      | III | 444   | Other III |
+    And a commit ":construction: Destination commit 1" has been saved with all the new identified diff content in destination environment
+    And a merge diff has already been launched with the available source package
+    And the merge diff is completed
+    When the user access to merge commit page
+    And apply a content filter criteria "TTAB_[^W]*" on "table"
+    And apply a content sort criteria "ASC" on "key"
+    Then the paginated merge commit content is rendered with these identified sorted changes :
+      | Table     | Key | Action | Payload                                                                                                                                    |
+      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81              |
+      | TTAB_FIVE | 2   | ADD    | DATA:<a href="/ui/lob/TURPbmVyR2cwaWtGQVJLdmloWDBmRkQ4VjJtVXA0K0tIZnJqaTJCeVBLRT0=" download="download">LOB</a>, SIMPLE:17.82              |
+      | TTAB_FIVE | 3   | ADD    | DATA:<a href="/ui/lob/bUdiNG5wa1FiUnZSSnJKV3AvUUlwd0dQcVpURmtLaEkxRlU5bDlqTmoxTT0=" download="download">LOB</a>, SIMPLE:17.83              |
+      | TTAB_SIX  | 7   | ADD    | TEXT:<a href="/ui/lob/QXlvSkNtWk5RWHdrenQyWmNIZ0c4Y3B2VXVjc2JHbmFuVHVRdStwYUdPcz0=" download="download">TEXT</a>, DATE:2012-01-15 00:00:00 |
+      | TTAB_SIX  | 8   | ADD    | TEXT:<a href="/ui/lob/S09wazdEUDlpTG5BbHM1L1JvRjErS1JEeFdNRGFBK2VTazJiVUdvOGczZz0=" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
+      | TTAB_SIX  | 9   | ADD    | TEXT:<a href="/ui/lob/K2Z1REFwVm0ycUh1OEJhU09Pa0tBdElDclRoYzVWTTlFU3pGTS9DL1ZHST0=" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
+
   Scenario: The dedicated merge diff content can be selected to prepare a merge commit
     Given the commit ":tada: Test commit init source" has been saved and exported with all the identified initial diff content
     And the user accesses to the destination environment with the same dictionary

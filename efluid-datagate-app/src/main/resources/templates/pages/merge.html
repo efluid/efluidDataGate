@@ -53,6 +53,10 @@
 				<p>
 					<h5>Ensemble des modifications identifiées
 						<div class="float-right">
+							<div th:if="${needsAction}" id="filteredSelectGroup" class="btn-group" role="group" style="padding-right:10px; display:None;">
+								<button type="button" id="selectFilteredButton" class="btn btn-outline-primary btn-sm">Appliquer les lignes filtrées</button>
+								<button type="button" id="rollbackFilteredButton"  class="btn btn-outline-danger btn-sm">Ignorer les lignes filtrées</button>
+							</div>&nbsp;
 							<div th:if="${needsAction}" class="btn-group" role="group">
 								<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout appliquer</button>
 								<button type="button" id="rollbackAllButton"  class="btn btn-outline-danger btn-sm">Tout ignorer</button>
@@ -163,6 +167,14 @@
 		var hasPreparation = /*[[${preparation != null}]]*/ true ;
 		var defaultShow = /*[[${preparation != null && preparation.displayAll}?'show':'hide']]*/ 'hide';
 
+		const updateFilterSelectButtonGroup = () => {
+			if(Object.values(activeSearch.filters).every(i => i === "")){
+				$("#filteredSelectGroup").hide();
+			} else {
+				$("#filteredSelectGroup").show();
+			}
+		}
+
 		const closeFilters = () => {
 			$(".search-bar").hide();
 		}
@@ -181,6 +193,7 @@
 			$(".filter-" + name).addClass("filtered");
 			var filter = $("#" + name + "SearchField").val();
 			activeSearch.filters[name] = filter;
+			updateFilterSelectButtonGroup();
 			getPageContent(0);
 		}
 
@@ -191,6 +204,7 @@
 			$(".filter-" + name).removeClass("filtered");
 			$("#" + name + "SearchField").val("");
 			activeSearch.filters[name] = "";
+			updateFilterSelectButtonGroup();
 			getPageContent(0);
 		}
 
@@ -310,7 +324,7 @@
 
 			return navBar + '</ul></nav>';
 		};
-		
+
 		const getPageContent = (page) => {
 
 			$.ajax({
@@ -430,6 +444,19 @@
 
 		/* End pagination */
 
+		// Update item buttons selection (on all buttons)
+		const updateDisplayedButtons = (selected, rollbacked) => {
+			// Reset buttons
+			$("button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
+			$("button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
+
+			if(selected){
+				$("button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
+			} else {
+				$("button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
+			}
+		}
+
 		// For remarks hidding
 		const hideAndShowDiffRemarksAction = () => {
 			hideDisplays();
@@ -460,6 +487,26 @@
 			}
 		};
 
+		// For "select filtered / rollback filtered / ignore filtered"
+		const processFiltered = (type) => {
+
+			var selected = type === "select";
+			var rollbacked = type === "rollback";
+
+			console.info("filtered " + type);
+
+			$.ajax({
+				type: "POST",
+				url: "/ui/merge/selection/filtered?selected="+ selected + "&rollbacked=" + rollbacked,
+				data: JSON.stringify(activeSearch),
+				contentType: "application/json; charset=utf-8",
+				dataType: "json",
+				complete: (data, status) => {
+					updateDisplayedButtons(selected, rollbacked);
+				}
+			});
+		};
+
 		// For "select All / rollback All / ignore All"
 		const processAll = (type) => {
 
@@ -469,22 +516,14 @@
 			console.info("full " + type);
 
 			$.post("/ui/merge/selection/all?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
-
-				// Reset buttons
-				$("button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
-				$("button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
-
-				if(selected){
-					$("button.select-button").removeClass("btn-outline-primary").addClass("btn-primary");
-				} else {
-					$("button.rollback-button").removeClass("btn-outline-danger").addClass("btn-danger");
-				}
+				updateDisplayedButtons(selected, rollbacked);
 			});
 		};
-		
+
     	// Init actions
     	$(document).ready(() => {
 			closeFilters();
+			updateFilterSelectButtonGroup();
 			getPageContent(0);
 			$("span.change-details").hide();
 			$("button.select-button").click((e) => selectAction(e.target.parentElement.parentElement.parentElement.id));
@@ -493,13 +532,15 @@
 			$("button.all-button-domain").click((e) => processAllDomain(e.target.id));
 			$("#selectAllButton").click((e) => processAll('select'));
 			$("#rollbackAllButton").click((e) => processAll('rollback'));
+			$("#selectFilteredButton").click((e) => processFiltered('select'));
+			$("#rollbackFilteredButton").click((e) => processFiltered('rollback'));
 			$("#diffRemarkAreaButton").click((e) => hideAndShowDiffRemarksAction());
 			$('#tableSearchField').autocomplete({
 				source: associatedTables
 			});
 			$('.filter').click((e) => filterDisplay(e));
-		}); 
-		
+		});
+
         /*]]>*/
     </script>
 </body>

@@ -191,8 +191,8 @@ public class BacklogController extends CommonController {
      * Update selection for the whole diff
      * </p>
      *
-     * @param selected
-     * @param rollbacked
+     * @param selected   state "selected", arg param
+     * @param rollbacked state "rollbacked", arg param
      */
     @RequestMapping(path = {"/prepare/selection/all", "/merge/selection/all"}, method = POST)
     @ResponseBody
@@ -203,12 +203,31 @@ public class BacklogController extends CommonController {
 
     /**
      * <p>
+     * Update selection for a filtered diff
+     * </p>
+     *
+     * @param selected   state "selected", arg param
+     * @param rollbacked state "rollbacked", arg param
+     * @param search     body content search
+     */
+    @RequestMapping(path = {"/prepare/selection/filtered", "/merge/selection/filtered"}, method = POST)
+    @ResponseBody
+    public void preparationSelectionUpdateFiltered(
+            @RequestParam boolean selected,
+            @RequestParam boolean rollbacked,
+            @RequestBody(required = false) DiffContentSearch search) {
+
+        this.pilotableCommitService.updateFilteredPreparationSelections(search, selected, rollbacked);
+    }
+
+    /**
+     * <p>
      * Update selection for one item
      * </p>
      *
-     * @param itemIndex
-     * @param selected
-     * @param rollbacked
+     * @param itemIndex  selected item temp identifier, as path param
+     * @param selected   state "selected", arg param
+     * @param rollbacked state "rollbacked", arg param
      */
     @RequestMapping(path = {"/prepare/selection/line/{index}", "/merge/selection/line/{index}"}, method = POST)
     @ResponseBody
