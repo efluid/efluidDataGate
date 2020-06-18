@@ -113,7 +113,7 @@ spring:
 
     jpa:
         open-in-view: false
-        show-sql: true
+        show-sql: false
         hibernate:
             ddl-auto: validate
 
@@ -141,3 +141,14 @@ server:
         session.cookie:
             name: JSESSIONID_${server.servlet.context-path}${server.port}
     port: 8081
+
+## TEST LOGGING CONFIG
+logging:
+    level:
+        fr.uem.efluid: INFO
+        org.flywaydb: INFO
+        extractor.queries: INFO
+        identifier.queries: INFO
+    pattern:
+        file: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+        console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} - %clr(${LOG_LEVEL_PATTERN:%5p}) %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"

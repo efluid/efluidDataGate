@@ -149,6 +149,7 @@ Les paramètres gérés sont :
 * `spring.ldap.urls`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) URL du référentiel LDAP. Support ldap et ldaps. Par exemple `ldap://my-server:389`
 * `server.contextPath`: context web de l'application
 * `server.port`: Port TCP de l'application
+* `logging.*` : Configuration des logs standards
 
 > Il existe des paramètres supplémentaires liés à la configuration par défaut fixée par `spring-boot`. Tous les paramètres pouvant être utilisés sont donnés ici https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html
 
@@ -231,14 +232,19 @@ Par rapport à la configuration surchargeable, les propriétés suivantes sont l
 
 ### Configuration des logs
 
-Les logs sont définis par défaut par un fichier `logback.xml` embarqué dans l'application. Il est possible de le surcharger en spécifiant un emplacement d'un autre fichier de log avec la propriété standard spring-boot `logging.config`
+Les traces de type "INFO" sont sorties par défaut sur la sortie standard uniquement.
 
-Par exemple au démarrage en ligne de commande, en ajoutant l'argument : 
+* Seul un paramètrage minimal est défini dans l'`application.yml` embarqué dans l'application.
+* Ce paramètrage peut être surchargé. Par exemple pour ajouter une sortie dans un fichier de log `/usr/logs/datagate.log`, le paramètre `logging.file` peut être spécifié, comme ici :
+```
+java -jar ... --logging.file=/usr/logs/datagate.log"
+```
+* Pour d'avantage de possibilités, un fichier de configuration supplémentaire `logback.xml` peut être spécifié avec la propriété `logging.config`, en configuration ou en argument au démarrage, comme par exemple ici :
 ```
 java -jar ... --logging.config=file:$log_cfg"
 ```
 
-> Il est également possible de spécifier directement les niveaux de log ou les appenders grace à d'autres propriétés standards de spring-boot : voir le détail sur les propriétés `logging.*` dans https://docs.spring.io/spring-boot/docs/current/reference/html/appendix-application-properties.html#core-properties Comme ce sont des propriétés classiques, elles peuvent aussi être données dans un fichier, en argument, en variable d'environnement ...
+> Il est également possible de spécifier directement les niveaux de log ou les appenders grace à d'autres propriétés standards de spring-boot : voir https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-logging
 
 ## Proposition de configuration pour un déploiement
 
