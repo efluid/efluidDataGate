@@ -605,6 +605,7 @@ public class BacklogController extends CommonController {
 
         // Get updated preparation
         model.addAttribute("details", this.commitService.getExistingCommitDetails(uuid, false));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/details";
     }
