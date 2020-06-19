@@ -17,8 +17,8 @@ import java.util.stream.Collectors;
  */
 public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTransformer.Config, R extends ColumnTransformer.Runner<C>> extends Transformer<C, R> {
 
-    protected ColumnTransformer(ManagedValueConverter converter) {
-        super(converter);
+    protected ColumnTransformer(ManagedValueConverter converter, TransformerValueProvider provider) {
+        super(converter, provider);
     }
 
     public abstract static class Config extends TransformerConfig {
@@ -74,8 +74,8 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
 
     public abstract static class Runner<C extends ColumnTransformer.Config> extends TransformerRunner<C> {
 
-        public Runner(C config, DictionaryEntry dict) {
-            super(config, dict);
+        public Runner(TransformerValueProvider provider, C config, DictionaryEntry dict) {
+            super(provider, config, dict);
         }
 
         @Override
