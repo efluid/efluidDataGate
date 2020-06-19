@@ -817,3 +817,80 @@ Feature: A complete set of test case are specified for Efluid needs
       | T_EFLUID_TEST_AUDIT | NO_CHG_2 | UPDATE | true         | DATE_SUPPRESSION:2020-05-11 00:00:00=>2018-02-17 00:00:00                                                                                                                                                                                                                    |
       | T_EFLUID_TEST_AUDIT | CHG_5    | ADD    | true         | VALUE:'77', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:2018-02-17 00:00:00, DATE_MODIFICATION:2020-05-11 00:00:00, DATE_CREATION:2020-05-11 00:00:00, ACTEUR_SUPPRESSION:'evt SUPPR', ACTEUR_MODIFICATION:'evt MOD', ACTEUR_CREATION:'evt CRE'                                  |
       | T_EFLUID_TEST_AUDIT | NO_CHG_3 | ADD    | true         | VALUE:'88', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:2018-02-17 00:00:00, DATE_MODIFICATION:2018-02-16 00:00:00, DATE_CREATION:2018-02-15 00:00:00, ACTEUR_SUPPRESSION:'admin_del_src2', ACTEUR_MODIFICATION:'admin_src2', ACTEUR_CREATION:'admin_src2'                       |
+
+  @TestEfluidAuditTransformerRules
+  Scenario: The audit transformer apply generated audit data on specified values even when null - matcher out of scope
+    Given the test is an Efluid standard scenario
+    And the configured transformers for project "Default" :
+      | name  | type         | priority | configuration                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":"bob"}} |
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
+      | id | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | 1  | 1     |           |                 |                  |              |                   |                    |                |
+      | 2  | 2     |           |                 |                  |              |                   |                    |                |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 1" and this customization for transformer "Audit" :
+      """json
+      {
+          "tablePattern" : ".*",
+          "appliedKeyPatterns" : [ "TRA$.*" ],
+          "appliedValueFilterPatterns" : {
+              "ETAT_OBJET" : "0"
+          },
+          "dateUpdates" : {
+              "DATE_SUPPRESSION" : "current_date",
+              "DATE_MODIFICATION" : "current_date",
+              "DATE_CREATION" : "current_date"
+          },
+          "actorUpdates" : {
+              "ACTEUR_MODIFICATION" : "evt 12345",
+              "ACTEUR_CREATION" : "evt 67890",
+              "ACTEUR_SUPPRESSION" : "evt 295556"
+          }
+      }
+      """
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table               | Key | Action | Need Resolve | Payload                                                                                                                                            |
+      | T_EFLUID_TEST_AUDIT | 1   | ADD    | true         | VALUE:'1', ETAT_OBJET:'', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'' |
+      | T_EFLUID_TEST_AUDIT | 2   | ADD    | true         | VALUE:'2', ETAT_OBJET:'', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'' |
+
+  @TestEfluidAuditTransformerRules
+  Scenario: The audit transformer apply generated audit data on specified values even when null - correct matcher
+    Given the test is an Efluid standard scenario
+    And the configured transformers for project "Default" :
+      | name  | type         | priority | configuration                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":"bob"}} |
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
+      | id | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | 1  | 1     |           |                 |                  |              |                   |                    |                |
+      | 2  | 2     |           |                 |                  |              |                   |                    |                |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 1" and this customization for transformer "Audit" :
+      """json
+      {
+          "tablePattern" : ".*",
+          "appliedKeyPatterns" : [ ".*" ],
+          "dateUpdates" : {
+              "DATE_SUPPRESSION" : "current_date",
+              "DATE_MODIFICATION" : "current_date",
+              "DATE_CREATION" : "current_date"
+          },
+          "actorUpdates" : {
+              "ACTEUR_MODIFICATION" : "evt 12345",
+              "ACTEUR_CREATION" : "evt 67890",
+              "ACTEUR_SUPPRESSION" : "evt 295556"
+          }
+      }
+      """
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table               | Key | Action | Need Resolve | Payload                                                                                                                                                                                                                                 |
+      | T_EFLUID_TEST_AUDIT | 1   | ADD    | true         | VALUE:'1', ETAT_OBJET:'', DATE_SUPPRESSION:2020-06-12 22:14:00, DATE_MODIFICATION:2020-06-12 22:14:00, DATE_CREATION:2020-06-12 22:14:00, ACTEUR_SUPPRESSION:'evt 295556', ACTEUR_MODIFICATION:'evt 12345', ACTEUR_CREATION:'evt 67890' |
+      | T_EFLUID_TEST_AUDIT | 2   | ADD    | true         | VALUE:'2', ETAT_OBJET:'', DATE_SUPPRESSION:2020-06-12 22:14:00, DATE_MODIFICATION:2020-06-12 22:14:00, DATE_CREATION:2020-06-12 22:14:00, ACTEUR_SUPPRESSION:'evt 295556', ACTEUR_MODIFICATION:'evt 12345', ACTEUR_CREATION:'evt 67890' |

@@ -4,8 +4,10 @@ import fr.uem.efluid.cucumber.stubs.TweakedAsyncDriver;
 import fr.uem.efluid.security.providers.DatabaseOnlyAccountProvider;
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
+import fr.uem.efluid.tools.TransformerValueProvider;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
+import fr.uem.efluid.utils.FormatUtils;
 import org.h2.server.web.WebServer;
 import org.h2.tools.Server;
 import org.slf4j.Logger;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 
 import static fr.uem.efluid.Application.Packages.*;
 import static fr.uem.efluid.cucumber.common.SystemTestConfig.SYS_TEST_ROOT;
@@ -150,5 +153,22 @@ public class SystemTestConfig {
     @Primary
     public SwitchableLdapAccountProvider switchableAccountProvider() {
         return new SwitchableLdapAccountProvider(databaseOnlyAccountProvider());
+    }
+
+    /**
+     * Customized provider of transformation values for testing
+     * (override for example the "current_date" value to use a fixed one)
+     *
+     * @return override provider for test needs
+     */
+    @Bean
+    @Primary
+    public TransformerValueProvider fixedTransformerValueProvider() {
+        return new TransformerValueProvider() {
+            @Override
+            public String getFormatedCurrentTime() {
+                return FormatUtils.format(LocalDateTime.of(2020, 06, 12, 22, 14));
+            }
+        };
     }
 }

@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,8 +35,8 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
     public static final String CURRENT_DATE_EXPR = "current_date";
 
     @Autowired
-    public EfluidAuditDataTransformer(ManagedValueConverter converter) {
-        super(converter);
+    public EfluidAuditDataTransformer(ManagedValueConverter converter, TransformerValueProvider provider) {
+        super(converter, provider);
     }
 
     @Override
@@ -52,7 +51,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
 
     @Override
     protected Runner runner(Config config, DictionaryEntry dict) {
-        return new Runner(config, dict);
+        return new Runner(getValueProvider(), config, dict);
     }
 
     public static class Config extends Transformer.TransformerConfig {
@@ -235,8 +234,8 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
 
         private final Map<Pattern, String> mappedReplacedValues;
 
-        private Runner(Config config, DictionaryEntry dict) {
-            super(config, dict);
+        private Runner(TransformerValueProvider provider, Config config, DictionaryEntry dict) {
+            super(provider, config, dict);
             this.mappedReplacedValues = prepareMappedReplacedValues(config);
         }
 
@@ -269,7 +268,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
          */
         private Map<Pattern, String> prepareMappedReplacedValues(Config config) {
 
-            String currentTime = FormatUtils.format(LocalDateTime.now());
+            String currentTime = this.provider.getFormatedCurrentTime();
 
             Map<Pattern, String> replacements = config.getActorUpdates() != null
                     ? new HashMap<>(config.getActorUpdates().entrySet().stream().collect(

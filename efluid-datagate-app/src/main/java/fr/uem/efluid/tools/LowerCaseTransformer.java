@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 public class LowerCaseTransformer extends ColumnTransformer<LowerCaseTransformer.Config, LowerCaseTransformer.Runner> {
 
     @Autowired
-    public LowerCaseTransformer(ManagedValueConverter converter) {
-        super(converter);
+    public LowerCaseTransformer(ManagedValueConverter converter, TransformerValueProvider provider) {
+        super( converter, provider);
     }
 
     @Override
@@ -28,7 +28,7 @@ public class LowerCaseTransformer extends ColumnTransformer<LowerCaseTransformer
 
     @Override
     protected Runner runner(LowerCaseTransformer.Config config, DictionaryEntry dict) {
-        return new Runner(config, dict);
+        return new Runner(getValueProvider(), config, dict);
     }
 
     public static class Config extends ColumnTransformer.Config {
@@ -40,8 +40,8 @@ public class LowerCaseTransformer extends ColumnTransformer<LowerCaseTransformer
 
     public static class Runner extends ColumnTransformer.Runner<LowerCaseTransformer.Config> {
 
-        public Runner(LowerCaseTransformer.Config config, DictionaryEntry dict) {
-            super(config, dict);
+        public Runner(TransformerValueProvider provider, LowerCaseTransformer.Config config, DictionaryEntry dict) {
+            super(provider, config, dict);
         }
 
         @Override

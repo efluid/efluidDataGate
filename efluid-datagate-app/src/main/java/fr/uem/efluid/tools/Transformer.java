@@ -35,8 +35,11 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
     private final ManagedValueConverter converter;
 
-    protected Transformer(ManagedValueConverter converter) {
+    private final TransformerValueProvider provider;
+
+    protected Transformer(ManagedValueConverter converter, TransformerValueProvider provider) {
         this.converter = converter;
+        this.provider = provider;
     }
 
     /**
@@ -88,6 +91,15 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      */
     public boolean isApplyOnDictionaryEntry(DictionaryEntry dict, Transformer.TransformerConfig config) {
         return config.isTableNameMatches(dict);
+    }
+
+    /**
+     * Access to current value provider for needs of transformer processes
+     *
+     * @return available provider
+     */
+    protected TransformerValueProvider getValueProvider() {
+        return this.provider;
     }
 
     /**
@@ -227,7 +239,10 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
         protected final DictionaryEntry dict;
 
-        public TransformerRunner(C config, DictionaryEntry dict) {
+        protected final TransformerValueProvider provider;
+
+        public TransformerRunner(TransformerValueProvider provider, C config, DictionaryEntry dict) {
+            this.provider = provider;
             this.config = config;
             this.dict = dict;
         }

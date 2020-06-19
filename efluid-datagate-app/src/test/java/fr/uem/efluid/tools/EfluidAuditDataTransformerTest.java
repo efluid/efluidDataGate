@@ -23,8 +23,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class EfluidAuditDataTransformerTest {
 
+    private static final String CURRENT_DATE = FormatUtils.format(LocalDateTime.of(2020, 06, 12, 22, 14));
+
     private ManagedValueConverter converter = new ManagedValueConverter();
-    private EfluidAuditDataTransformer transformer = new EfluidAuditDataTransformer(this.converter);
+    private TransformerValueProvider provider =   new TransformerValueProvider() {
+        @Override
+        public String getFormatedCurrentTime() {
+            return CURRENT_DATE;
+        }
+    };
+    private EfluidAuditDataTransformer transformer = new EfluidAuditDataTransformer(this.converter, this.provider);
 
     private static final String OLD = FormatUtils.format(LocalDateTime.of(2015, 12, 25, 15, 25, 46));
 
@@ -187,6 +195,31 @@ public class EfluidAuditDataTransformerTest {
         // All are changed
         check(diff, 0).isEqualTo("VALUE:'INIT_1', ETAT_OBJET:'TODO_DELETED', DATE_SUPPRESSION:'2020-05-11 00:00:00', DATE_MODIFICATION:'2020-05-11 00:00:00', DATE_CREATION:'2020-05-11 00:00:00', ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
         check(diff, 1).isEqualTo("VALUE:'INIT_2', ETAT_OBJET:'TODO_UPDATE', DATE_SUPPRESSION:'2020-05-11 00:00:00', DATE_MODIFICATION:'2020-05-11 00:00:00', DATE_CREATION:'2020-05-11 00:00:00', ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
+    }
+
+    @Test
+    public void testApplyCurrentDate() {
+
+        List<? extends PreparedIndexEntry> diff = diff(
+                l("1", p("VALUE", "INIT_1"), p("ETAT_OBJET", "TODO_DELETED"), p("DATE_SUPPRESSION", OLD), p("DATE_MODIFICATION", OLD), p("DATE_CREATION", OLD), p("ACTEUR_SUPPRESSION", "admin_del_src"), p("ACTEUR_MODIFICATION", "admin_src"), p("ACTEUR_CREATION", "admin_src")),
+                l("2", p("VALUE", "INIT_2"), p("ETAT_OBJET", "TODO_UPDATE"), p("DATE_SUPPRESSION", OLD), p("DATE_MODIFICATION", OLD), p("DATE_CREATION", OLD), p("ACTEUR_SUPPRESSION", "admin_del_src2"), p("ACTEUR_MODIFICATION", "admin_src2"), p("ACTEUR_CREATION", "admin_src2"))
+        );
+
+        this.transformer.transform(
+                table("TOTHER"),
+                config(
+                        "  {" +
+                                "  \"tablePattern\":\"T_EFLUID_TEST_AUDIT\"," +
+                                "  \"appliedKeyPatterns\":[\".*\"]," +
+                                "  \"dateUpdates\":{\"DATE_.*\":\"current_date\"}," +
+                                "  \"actorUpdates\":{\"ACTEUR_.*\":\"evt 154654\"}" +
+                                "}"
+                ), diff
+        );
+
+        // All are changed
+        check(diff, 0).isEqualTo("VALUE:'INIT_1', ETAT_OBJET:'TODO_DELETED', DATE_SUPPRESSION:'" + CURRENT_DATE + "', DATE_MODIFICATION:'" + CURRENT_DATE + "', DATE_CREATION:'" + CURRENT_DATE + "', ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
+        check(diff, 1).isEqualTo("VALUE:'INIT_2', ETAT_OBJET:'TODO_UPDATE', DATE_SUPPRESSION:'" + CURRENT_DATE + "', DATE_MODIFICATION:'" + CURRENT_DATE + "', DATE_CREATION:'" + CURRENT_DATE + "', ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
     }
 
     private AbstractStringAssert<?> check(List<? extends PreparedIndexEntry> transformed, int index) {
