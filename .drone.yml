@@ -10,6 +10,24 @@ steps:
     commands:
       - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
       - cp efluid-datagate-app/src/docker/build-ci/* efluid-datagate-app/target
+  - name: test-all
+    image: maven:3-jdk-11
+    volumes:
+      - name: mvncache
+        path: /root/.m2
+    commands:
+      - mvn verify
+  - name: publish-coverage
+    image: plugins/codecov
+    settings:
+      token:
+        from_secret: codecov_token
+      files:
+        - ./efluid-datagate-app/target/site/jacoco-aggregate/jacoco.xml
+        - ./efluid-datagate-app-cucumber/target/site/jacoco-aggregate/jacoco.xml
+    when:
+      branch:
+        - develop
   - name: docker-build
     image: plugins/docker
     volumes:
@@ -32,6 +50,9 @@ steps:
     commands:
       - docker rm -f datagate
       - docker run --name datagate -p 8085:8080 -v /opt/server/datagate/cfg:/cfg -v /opt/server/datagate/tmp:/tmp -v /opt/server/datagate/logs:/logs -e TZ=Europe/Paris -d micro-server:443/datagate/latest
+    when:
+      branch:
+        - develop
   - name: notification
     image: plugins/slack
     settings:
