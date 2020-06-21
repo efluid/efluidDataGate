@@ -152,3 +152,6 @@ logging:
     pattern:
         file: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
         console: "%clr(%d{${LOG_DATEFORMAT_PATTERN:yyyy-MM-dd HH:mm:ss.SSS}}){faint} - %clr(${LOG_LEVEL_PATTERN:%5p}) %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:%wEx}"
+    file:
+        max-history: 30
+        max-size: 10MB

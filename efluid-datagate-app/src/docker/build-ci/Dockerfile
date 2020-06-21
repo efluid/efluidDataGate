@@ -10,6 +10,7 @@ EXPOSE 8000
 ENV remoteXdebug=false
 ENV xms=256m
 ENV xmx=512m
+ENV customLogging=disabled
 
 RUN mkdir /app
 
