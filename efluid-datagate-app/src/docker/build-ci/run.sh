@@ -8,7 +8,7 @@ app_cfg="/cfg/application.yml"
 ## OPTIONS FOR DEBUG
 activate_debug_param="-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=y"
 activate_log_param="--logging.file=$customLogging"
-java_option="-Xmx$xmx -Xms$xms -jar /app/efluid-datagate-app-exec.jar --spring.config.location=/application.yml,file:$app_cfg"
+java_option="-Xmx$xmx -Xms$xms -jar /app/efluid-datagate-app-exec.jar --spring.config.location=classpath:/application.yml,file:$app_cfg"
 
 echo "STARTING EFLUID-DATAGATE"
 
