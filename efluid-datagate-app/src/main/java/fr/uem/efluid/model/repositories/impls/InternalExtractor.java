@@ -1,6 +1,7 @@
 package fr.uem.efluid.model.repositories.impls;
 
 import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.IntSet;
@@ -13,22 +14,24 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * <p>
- * Standardized model for managed database value extractor. Produces a payload for each RS
- * line, mapped to key
+ * Standardized model for managed database value extractor. RS process is streamed for lower memory use.
+ * Each content can be easily processed as <tt>ContentLine</tt>
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.8
  */
-public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<String, String>> {
+public abstract class InternalExtractor<T> implements ResultSetExtractor<Stream<ContentLine>> {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(InternalExtractor.class);
 
@@ -48,31 +51,32 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<Str
     }
 
     /**
+     * Init a stream on content
+     *
      * @param rs
      * @return
      * @throws SQLException
      * @throws DataAccessException
-     * @see org.springframework.jdbc.core.ResultSetExtractor#extractData(java.sql.ResultSet)
+     * @see ResultSetExtractor#extractData(ResultSet)
      */
     @Override
-    public Map<String, String> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    public Stream<ContentLine> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
-        int totalSize = 1;
-        Map<String, String> extraction = new HashMap<>();
+        final AtomicInteger totalSize = new AtomicInteger(1);
 
         final Set<String> keyNames = this.parameterEntry.keyNames().map(String::toUpperCase).collect(Collectors.toSet());
         ResultSetMetaData meta = rs.getMetaData();
 
-        // Prepare data definition from meta
+        // Prepare data definition from metadata
         final int count = meta.getColumnCount();
-        String[] columnNames = new String[count];
-        ColumnType[] columnType = new ColumnType[count];
-        int[] nativeTypes = new int[count];
-        IntSet keyPos = new IntSet();
+        final String[] columnNames = new String[count];
+        final ColumnType[] columnType = new ColumnType[count];
+        final int[] nativeTypes = new int[count];
+        final IntSet keyPos = new IntSet();
 
-        // Identify columns
+        // Identify columns from prepared
         for (int i = 0; i < count; i++) {
-            String colname = extractColumnName(meta,i );
+            String colname = extractColumnName(meta, i);
             if (keyNames.contains(colname)) {
                 keyPos.add(i);
             }
@@ -83,38 +87,55 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<Str
             columnType[i] = ColumnType.forJdbcType(nativeType);
         }
 
-        // Process content
-        while (rs.next()) {
-            T payload = initLineHolder();
-            StringBuilder keyValue = new StringBuilder();
-            for (int i = 0; i < count; i++) {
-                try {
-                    if (!keyPos.contains(i)) {
-                        // Internally specified extractor process
-                        appendProcessValue(this.valueConverter, payload, columnType[i], nativeTypes[i], columnNames[i], i + 1, rs);
+        return StreamSupport.stream(
+                new Spliterators.AbstractSpliterator<ContentLine>(Long.MAX_VALUE, Spliterator.ORDERED) {
 
-                    } else {
-                        this.valueConverter.appendExtractedKeyValue(keyValue, rs.getString(i + 1));
+                    @Override
+                    public boolean tryAdvance(Consumer<? super ContentLine> action) {
+                        try {
+                            if (!rs.next()) return false;
+
+                            T payload = initLineHolder();
+                            StringBuilder keyValue = new StringBuilder();
+                            for (int i = 0; i < count; i++) {
+                                try {
+                                    if (!keyPos.contains(i)) {
+                                        // Internally specified extractor process
+                                        appendProcessValue(InternalExtractor.this.valueConverter, payload, columnType[i], nativeTypes[i], columnNames[i], i + 1, rs);
+
+                                    } else {
+                                        InternalExtractor.this.valueConverter.appendExtractedKeyValue(keyValue, rs.getString(i + 1));
+                                    }
+
+                                } catch (SQLException s) {
+                                    throw new DataRetrievalFailureException("Cannot process append on value #" + i + " from dataset, of type "
+                                            + nativeTypes[i] + " at column " + columnNames[i] + ". Identified as internal type " + columnType[i], s);
+                                }
+                            }
+
+                            ExtractedContentLine line = new ExtractedContentLine(keyValue.toString(), getFinalizedPayload(InternalExtractor.this.valueConverter, payload));
+
+                            // Only on debug : alert on large data load
+                            if (LOGGER.isDebugEnabled()) {
+                                if (totalSize.get() % 100000 == 0) {
+                                    LOGGER.debug("Large data extraction - table \"{}\" - extracted {} items", InternalExtractor.this.parameterEntry.getTableName(), totalSize);
+                                }
+                                totalSize.incrementAndGet();
+                            }
+
+                            action.accept(line);
+                            return true;
+                        } catch (SQLException ex) {
+                            throw new RuntimeException(ex);
+                        }
                     }
-
-                } catch (SQLException s) {
-                    throw new DataRetrievalFailureException("Cannot process append on value #" + i + " from dataset, of type "
-                            + nativeTypes[i] + " at column " + columnNames[i] + ". Identified as internal type " + columnType[i], s);
-                }
+                }, false).onClose(() -> {
+            try {
+                rs.close();
+            } catch (SQLException t) {
+                throw new DataRetrievalFailureException("Cannot process closure of RS", t);
             }
-
-            extraction.put(keyValue.toString(), getFinalizedPayload(this.valueConverter, payload));
-
-            // Only on debug : alert on large data load
-            if (LOGGER.isDebugEnabled()) {
-                if (totalSize % 100000 == 0) {
-                    LOGGER.debug("Large data extraction - table \"{}\" - extracted {} items", this.parameterEntry.getTableName(), totalSize);
-                }
-                totalSize++;
-            }
-        }
-
-        return extraction;
+        });
     }
 
     /**
@@ -166,15 +187,40 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Map<Str
 
     /**
      * Regarding the database type, the behavior of "label" may be different. Can switch between name or label
+     *
      * @param meta
      * @param index
      * @return
      * @throws SQLException
      */
     private String extractColumnName(ResultSetMetaData meta, int index) throws SQLException {
-        if(this.useLabelForColNames){
+        if (this.useLabelForColNames) {
             return meta.getColumnLabel(index + 1).toUpperCase();
         }
         return meta.getColumnName(index + 1).toUpperCase();
+    }
+
+    /**
+     * One line of content extracted in a stream
+     */
+    private static class ExtractedContentLine implements ContentLine {
+
+        private final String key;
+        private final String payload;
+
+        public ExtractedContentLine(String key, String payload) {
+            this.key = key;
+            this.payload = payload;
+        }
+
+        @Override
+        public String getKeyValue() {
+            return this.key;
+        }
+
+        @Override
+        public String getPayload() {
+            return this.payload;
+        }
     }
 }

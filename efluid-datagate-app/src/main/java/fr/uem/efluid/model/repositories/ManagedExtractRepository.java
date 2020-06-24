@@ -2,7 +2,9 @@ package fr.uem.efluid.model.repositories;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
+import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Project;
 
@@ -34,9 +36,9 @@ public interface ManagedExtractRepository {
 	 *            where the extracted lob values will be stored
 	 * @param project
 	 *            working project
-	 * @return extracted content (key - payload map)
+	 * @return stream on content line rendering (key - payload map)
 	 */
-	Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project);
+	Stream<ContentLine> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project);
 
 	/**
 	 * <p>
@@ -67,9 +69,9 @@ public interface ManagedExtractRepository {
 	 *            table identifier for extraction
 	 * @param project
 	 *            working project
-	 * @return extracted missing content (key - payload map)
+	 * @return extracted missing content processing stream (with content lines)
 	 */
-	Map<String, String> extractCurrentMissingContentWithUncheckedJoins(DictionaryEntry parameterEntry, Project project);
+	Stream<ContentLine> extractCurrentMissingContentWithUncheckedJoins(DictionaryEntry parameterEntry, Project project);
 
 	/**
 	 * <p>

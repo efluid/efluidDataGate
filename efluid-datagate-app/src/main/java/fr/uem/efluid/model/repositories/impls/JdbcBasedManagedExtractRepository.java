@@ -1,6 +1,7 @@
 package fr.uem.efluid.model.repositories.impls;
 
 import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
@@ -26,6 +27,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -35,6 +37,7 @@ import java.util.stream.Collectors;
  * <li>Test on the existing content</li>
  * <li>Check on missing joins for "remarks" building</li>
  * </ul>
+ * All in processing streams
  * </p>
  * <p>
  * Access to raw data of parameters : can read from Parameter source table using JDBC call
@@ -45,7 +48,7 @@ import java.util.stream.Collectors;
  * </p>
  *
  * @author elecomte
- * @version 4
+ * @version 5
  * @since v0.0.1
  */
 @Repository
@@ -122,7 +125,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
      * java.util.Map, fr.uem.efluid.model.entities.Project)
      */
     @Override
-    public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project) {
+    public Stream<ContentLine> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project) {
 
         String query = this.queryGenerator.producesSelectParameterQuery(
                 parameterEntry,
@@ -134,13 +137,8 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         postProcessQuery(query);
 
         // Get columns for all table
-        Map<String, String> payloads = this.managedSource.query(query,
+        return this.managedSource.query(query,
                 new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames, lobs));
-
-        LOGGER.debug("Extracted values from managed table {} with query \"{}\". Found {} results",
-                parameterEntry.getTableName(), query, payloads != null ? payloads.size() : -1);
-
-        return payloads;
     }
 
     /**
@@ -178,7 +176,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
      * fr.uem.efluid.model.entities.Project)
      */
     @Override
-    public Map<String, String> extractCurrentMissingContentWithUncheckedJoins(DictionaryEntry parameterEntry, Project project) {
+    public Stream<ContentLine> extractCurrentMissingContentWithUncheckedJoins(DictionaryEntry parameterEntry, Project project) {
 
         String query = this.queryGenerator.producesSelectMissingParameterQuery(
                 parameterEntry,
@@ -191,12 +189,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         postProcessQuery(query);
 
         // Get columns for all table
-        Map<String, String> payloads = this.managedSource.query(query, new DisplayInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames));
-
-        LOGGER.debug("Extracted values from managed table {} on unchecked Join with query \"{}\". Found {} results",
-                parameterEntry.getTableName(), query, payloads != null ? payloads.size() : -1);
-
-        return payloads;
+        return this.managedSource.query(query, new DisplayInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames));
     }
 
     /**
