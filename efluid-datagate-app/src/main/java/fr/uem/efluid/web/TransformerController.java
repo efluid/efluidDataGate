@@ -80,6 +80,7 @@ public class TransformerController extends CommonController {
         }
 
         model.addAttribute("def", this.transformerService.editTransformerDef(uuid));
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/transformers_edit";
     }
