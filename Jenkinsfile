@@ -4,7 +4,7 @@ JenkinsUtils jenkinsUtils = new JenkinsUtils(this)
 
 def body = {
     def credentialsId = env.credentialsId
-    git branch: env.BRANCH_NAME, credentialsId: credentialsId, url: 'https://github.com/efluid/datagate'
+    git branch: env.BRANCH_NAME, credentialsId: credentialsId, url: 'git@github.com:efluid/efluidDataGate.git'
 
     try {
         def adressMailFrom = env.adressMailFrom
