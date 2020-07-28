@@ -40,7 +40,7 @@
 					</span>
 				</div>
 			</div>
-			<div id="container-filter-header">
+			<div id="prepare-header">
 				<h5>Ensemble des modifications identifiées</h5>
 					<div class="float-right">
 						<div id="filteredSelectGroup" class="btn-group" role="group" style="padding-right:10px; display:None;">
@@ -57,12 +57,12 @@
 						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-sm" type="button">Regénérer</a>
 					</div>
 			</div>
-			<div id="container-filter">
+			<div id="prepare-filter">
 				<div th:if="${not preparation.emptyDiff}">
 						<table class="table table-sm">
 							<thead>
-								<span id="span-span">
-									<div id="nav-nav" class="filter filter-domain">
+								<span id="navigation-filter">
+									<div id="navigation-domain" class="filter filter-domain">
 										<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
 										<div class="card" id="card-domain" style="width: 150px;">
 										  <div class="card-header">
@@ -81,7 +81,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="nav-nav" class="filter filter-table">
+									<div id="navigation-table" class="filter filter-table">
 										<p onclick="showCardFilter('table')">Table</p>
 										<div class="card" id="card-table" style="width: 150px;">
 										  <div class="card-header">
@@ -97,7 +97,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="nav-nav" class="filter filter-key">
+									<div id="navigation-key" class="filter filter-key">
 										<p onclick="showCardFilter('key')">Clé</p>
 										<div class="card" id="card-key" style="width: 150px;">
 										  <div class="card-header">
@@ -113,7 +113,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="nav-nav" class="filter filter-type">
+									<div id="navigation-type" class="filter filter-type">
 										<p onclick="showCardFilter('type')">Type</p>
 										<div class="card" id="card-type" style="width: 150px;">
 										  <div class="card-header">
@@ -134,8 +134,8 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="nav-nav-modif"><p>Modification</p></div>
-									<div id="nav-nav-btn"></div>
+									<div id="navigation-modif"><p>Modification</p></div>
+									<div id="navigation-btns"></div>
 								</span>
 
 							</thead>
@@ -195,11 +195,11 @@
 
 							</tbody>
 						</table>
-								<div id="navBar">
-									<div id="navBarContent"></div>
-								</div>
+						<div id="navBar">
+							<div id="navBarContent"></div>
+						</div>
 						<p>
-							<div id="button-confirm-filter">
+							<div id="btn-confirm">
 								<input type="submit" class="btn btn-sm" value="Confirmer les opérations"/><br/><br/>
 							</div>
 						</p>
@@ -495,15 +495,15 @@
 								'</tr>';
 
 						var test =
-							'<div class="tata" id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
-								'<div id="toto">'+ e.domainName + '</div>'+
-								'<div id="toto">'+ e.tableName + '</div>'+
-								'<div id="toto" title="' + keyTitle + '">'+ keyDisplay + '</div>'+
-								'<div id="toto" class="action-display">'+ actionDisplay + '</div>'+
-								'<div id="toto">' +
+							'<div class="cell" id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
+								'<div id="domain-name">'+ e.domainName + '</div>'+
+								'<div id="table-name">'+ e.tableName + '</div>'+
+								'<div id="key-name" title="' + keyTitle + '">'+ keyDisplay + '</div>'+
+								'<div id="action-name" class="action-display">'+ actionDisplay + '</div>'+
+								'<div id="payload-name">' +
 								'<span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload +
 								'</span></div>' +
-								'<div id="btn-btn">' +
+								'<div id="btns-groupe">' +
 									'<button type="button" class="' + butSelecClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',true,false)"><i class="fas fa-check"></i></button>' +
 									'<button type="button" class="' + butRollbackClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,true)"><i class="fas fa-times"></i></button>' +
 									'<button type="button" class="' + butIgnoreClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,false)"><i class="fas fa-minus-circle"></i></button>' +
