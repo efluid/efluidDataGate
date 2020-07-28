@@ -62,13 +62,82 @@
 						<table class="table table-sm">
 							<thead>
 								<span id="span-span">
-									<div id="nav-nav" class="filter filter-domain"><p>Domaine</p></div>
-									<div id="nav-nav" class="filter filter-table"><p>Table</p></div>
-									<div id="nav-nav" class="filter filter-key"><p>Clé</p></div>
-									<div id="nav-nav" class="filter filter-type"><p>Type</p></div>
+									<div id="nav-nav" class="filter filter-domain">
+										<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
+										<div class="card" id="card-domain" style="width: 150px;">
+										  <div class="card-header">
+											Filtre
+											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('domain')"></i>
+										  </div>
+										  <ul class="list-group list-group-flush">
+											<li class="list-group-item">
+												<select id="domainSearchField" class="form-control form-control-sm float-left" name="domainSearch" style="margin-right:10px">
+													<option value="Tous les domaines" label="Tous les domaines"/>
+													<option th:each="domain, dstat : ${preparation.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
+												</select>
+											</li>
+											<li class="list-group-item" onclick="sortAsc('domain')">ASC</li>
+											  <li class="list-group-item" onclick="sortDesc('domain')">DESC</li>
+										  </ul>
+										</div>
+									</div>
+									<div id="nav-nav" class="filter filter-table">
+										<p onclick="showCardFilter('table')">Table</p>
+										<div class="card" id="card-table" style="width: 150px;">
+										  <div class="card-header">
+											Filtre
+											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('table')"></i>
+										  </div>
+										  <ul class="list-group list-group-flush">
+											<li class="list-group-item">
+												<input id="tableSearchField" type="text" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
+											</li>
+											<li class="list-group-item" onclick="sortAsc('table')">ASC</li>
+											  <li class="list-group-item" onclick="sortDesc('table')">DESC</li>
+										  </ul>
+										</div>
+									</div>
+									<div id="nav-nav" class="filter filter-key">
+										<p onclick="showCardFilter('key')">Clé</p>
+										<div class="card" id="card-key" style="width: 150px;">
+										  <div class="card-header">
+											Filtre
+											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('key')"></i>
+										  </div>
+										  <ul class="list-group list-group-flush">
+											<li class="list-group-item">
+												<input id="keySearchField" type="text" class="form-control form-control-sm float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
+											</li>
+											<li class="list-group-item" onclick="sortAsc('key')">ASC</li>
+											  <li class="list-group-item" onclick="sortDesc('key')">DESC</li>
+										  </ul>
+										</div>
+									</div>
+									<div id="nav-nav" class="filter filter-type">
+										<p onclick="showCardFilter('type')">Type</p>
+										<div class="card" id="card-type" style="width: 150px;">
+										  <div class="card-header">
+											Filtre
+											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('type')"></i>
+										  </div>
+										  <ul class="list-group list-group-flush">
+											<li class="list-group-item">
+												<select id="typeSearchField" class="form-control form-control-sm float-left" name="typeSearch" style="margin-right:10px">
+													<option value="" label="Tous les types de modifications"/>
+													<option value="ADD" label="Ajout"/>
+													<option value="REMOVE" label="Suppression"/>
+													<option value="UPDATE" label="Mise à jour"/>
+												</select>
+											</li>
+											  <li class="list-group-item" onclick="sortAsc('type')">ASC</li>
+											  <li class="list-group-item" onclick="sortDesc('type')">DESC</li>
+										  </ul>
+										</div>
+									</div>
 									<div id="nav-nav-modif"><p>Modification</p></div>
-									<div id="nav-nav-btn"><p>&nbsp;</p></div>
+									<div id="nav-nav-btn"></div>
 								</span>
+
 							</thead>
 							<tbody class="pageHolder">
 								<tr id="domainSearchBar" class="search-bar" style="display: none">
@@ -185,11 +254,53 @@
 			}
 		}
 
-		const closeFilters = () => {
-			$(".search-bar").hide();
+		$('#card-domain').hide();
+		$('#card-table').hide();
+		$('#card-key').hide();
+		$('#card-type').hide();
+
+		const showCardFilter = (name) => {
+			switch (name) {
+				case 'domain':
+					$('#card-domain').show();
+					break;
+
+				case 'table':
+					$('#card-table').show();
+					break;
+
+				case 'key':
+					$('#card-key').show();
+					break;
+
+				case 'type':
+					$('#card-type').show();
+					break;
+
+			}
 		}
 
-		// filter filter-domain
+		const closeFilters = (name) => {
+			switch (name) {
+				case 'domain':
+					$('#card-domain').hide();
+					break;
+
+				case 'table':
+					$('#card-table').hide();
+					break;
+
+				case 'key':
+					$('#card-key').hide();
+					break;
+
+				case 'type':
+					$('#card-type').hide();
+					break;
+
+			}
+		}
+
 		const filterDisplay = (head) => {
 			var name = head.target.className.split(' ')[1].substr(7);
 			closeFilters();
@@ -250,6 +361,7 @@
 
 		const updateSelectItem = (index, selected, rollbacked) => {
 
+			console.log('should update');
 			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
 
 				// Reset 3 buttons
@@ -396,6 +508,8 @@
 									'<button type="button" class="' + butRollbackClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,true)"><i class="fas fa-times"></i></button>' +
 									'<button type="button" class="' + butIgnoreClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,false)"><i class="fas fa-minus-circle"></i></button>' +
 								'</div>'
+
+
 							+'</div>';
 
 						navBar.before(test);
