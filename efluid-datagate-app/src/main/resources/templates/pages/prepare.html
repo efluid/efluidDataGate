@@ -72,12 +72,14 @@
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
 												<select id="domainSearchField" class="form-control form-control-sm float-left" name="domainSearch" style="margin-right:10px">
-													<option value="Tous les domaines" label="Tous les domaines"/>
+													<option value="" label="Tous les domaines"/>
 													<option th:each="domain, dstat : ${preparation.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
 												</select>
 											</li>
-											<li class="list-group-item" onclick="sortAsc('domain')">ASC</li>
-											  <li class="list-group-item" onclick="sortDesc('domain')">DESC</li>
+											  <!--<li class="list-group-item" id="domain-asc" onclick="sortAsc('domain')">ASC</li>
+											  <li class="list-group-item" id="domain-desc" onclick="sortDesc('domain')">DESC</li>-->
+											  <button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
+											  <button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
 										  </ul>
 										</div>
 									</div>
@@ -92,8 +94,9 @@
 											<li class="list-group-item">
 												<input id="tableSearchField" type="text" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
 											</li>
-											<li class="list-group-item" onclick="sortAsc('table')">ASC</li>
-											  <li class="list-group-item" onclick="sortDesc('table')">DESC</li>
+											  <li class="list-group-item" id="table-asc" onclick="sortAsc('table')">ASC</li>
+											  <li class="list-group-item" id="table-desc" onclick="sortDesc('table')">DESC</li>
+
 										  </ul>
 										</div>
 									</div>
@@ -108,8 +111,8 @@
 											<li class="list-group-item">
 												<input id="keySearchField" type="text" class="form-control form-control-sm float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
 											</li>
-											<li class="list-group-item" onclick="sortAsc('key')">ASC</li>
-											  <li class="list-group-item" onclick="sortDesc('key')">DESC</li>
+											<li class="list-group-item" id="key-asc" onclick="sortAsc('key')">ASC</li>
+											  <li class="list-group-item" id="key-desc" onclick="sortDesc('key')">DESC</li>
 										  </ul>
 										</div>
 									</div>
@@ -129,16 +132,17 @@
 													<option value="UPDATE" label="Mise à jour"/>
 												</select>
 											</li>
-											  <li class="list-group-item" onclick="sortAsc('type')">ASC</li>
-											  <li class="list-group-item" onclick="sortDesc('type')">DESC</li>
+											  <li class="list-group-item" id="type-asc" onclick="sortAsc('type')">ASC</li>
+											  <li class="list-group-item" id="type-desc" onclick="sortDesc('type')">DESC</li>
 										  </ul>
 										</div>
 									</div>
 									<div id="navigation-modif"><p>Modification</p></div>
 									<div id="navigation-btns"></div>
 								</span>
-
 							</thead>
+							<div id="container-list-filter">
+							</div>
 							<tbody class="pageHolder">
 								<tr id="domainSearchBar" class="search-bar" style="display: none">
 									<td colspan="100%">
@@ -259,6 +263,13 @@
 		$('#card-key').hide();
 		$('#card-type').hide();
 
+		const getUsedFilter = (filter) => {
+			console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<");
+			//ajouter ici les règles d'ajout de filter
+
+			//$("container-list-filter").append('tototo');
+		}
+
 		const showCardFilter = (name) => {
 			switch (name) {
 				case 'domain':
@@ -302,6 +313,7 @@
 		}
 
 		const filterDisplay = (head) => {
+			console.log(head.target.className)
 			var name = head.target.className.split(' ')[1].substr(7);
 			closeFilters();
 			$("#" + name + "SearchBar").show();
@@ -479,23 +491,7 @@
 						var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
 
 						var itemRow =
-								'<tr id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
-								'<td>' + e.domainName + '</td>' +
-								'<td>' + e.tableName + '</td>' +
-								'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
-								'<td class="action-display">' + actionDisplay + '</td>' +
-								'<td><span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload + '</span></td>' +
-								'<td>' +
-								'<div class="btn-group float-right" role="group">' +
-								'<button type="button" class="' + butSelecClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',true,false)">Garder</button>' +
-								'<button type="button" class="' + butRollbackClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,true)">Annuler</button>' +
-								'<button type="button" class="' + butIgnoreClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,false)">Ignorer</button>' +
-								'</div>' +
-								'</td>' +
-								'</tr>';
-
-						var test =
-							'<div class="cell" id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
+							'<div title="cell" id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
 								'<div id="domain-name">'+ e.domainName + '</div>'+
 								'<div id="table-name">'+ e.tableName + '</div>'+
 								'<div id="key-name" title="' + keyTitle + '">'+ keyDisplay + '</div>'+
@@ -508,11 +504,9 @@
 									'<button type="button" class="' + butRollbackClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,true)"><i class="fas fa-times"></i></button>' +
 									'<button type="button" class="' + butIgnoreClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,false)"><i class="fas fa-minus-circle"></i></button>' +
 								'</div>'
-
-
 							+'</div>';
 
-						navBar.before(test);
+						navBar.before(itemRow);
 					});
 
 					// Update navBar displayNavBar

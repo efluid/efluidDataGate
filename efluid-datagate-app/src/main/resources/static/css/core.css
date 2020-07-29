@@ -708,6 +708,14 @@ th.filter.sorted-desc {
     color: white;
 }
 
+#container-list-filter {
+    width: 100%;
+    min-height: 60px;
+    border: 2px solid black;
+    background-color: white;
+    overflow: scroll;
+}
+
 #prepare-filter {
     width: 100%;
     height: auto;
@@ -746,7 +754,7 @@ th.filter.sorted-desc {
     align-items: center;
 }
 
-.cell{
+[title~="cell"]{
     width: 100%;
     height: 100px;
     display: flex;
