@@ -3,14 +3,14 @@
 <head>
 </head>
 <body>
-	<span layout:fragment="content">
+<span layout:fragment="content">
 		<span th:if="${preparation.status.name()}=='FAILED'">
 			<div class="alert alert-danger">
 				<h4>La preparation du lot de modification a rencontré une erreur</h4>
 				<div th:replace="layouts/commons::error-display (${preparation.errorDuringPreparation.error},${preparation.errorDuringPreparation.payload})">...</div>
 				<span class="remark">
-					La préparation implique une extraction de toutes les données des tables identifiées comme du paramétrage dans le dictionnaire. 
-					En cas de soucis sur ces données, le processus peut ne pas aboutir. 
+					La préparation implique une extraction de toutes les données des tables identifiées comme du paramétrage dans le dictionnaire.
+					En cas de soucis sur ces données, le processus peut ne pas aboutir.
 					Si nécessaire, merci de communiquer le code d'erreur suivant : <span th:text="|${preparation.errorDuringPreparation.error}-${preparation.errorDuringPreparation.timestamp}|">JSON_WRITE_ERROR-12414421224112</span>
 				</span>
 			</div>
@@ -40,175 +40,100 @@
 					</span>
 				</div>
 			</div>
-			<div id="prepare-header">
-				<h5>Ensemble des modifications identifiées</h5>
-					<div class="float-right">
-						<div id="filteredSelectGroup" class="btn-group" role="group" style="padding-right:10px; display:None;">
-							<button type="button" id="selectFilteredButton" class="btn btn-sm">Garder les lignes filtrées</button>
-							<button type="button" id="rollbackFilteredButton" class="btn btn-sm">Annuler les lignes filtrées</button>
-							<button type="button" id="ignoreFilteredButton"  class="btn btn-sm">Ignorer les lignes filtrées</button>
-						</div>&nbsp;
-						<div class="btn-group" role="group">
-							<button type="button" id="selectAllButton" class="btn  btn-sm">Tout garder</button>
-							<button type="button" id="rollbackAllButton" class="btn btn-sm">Tout annuler</button>
-							<button type="button" id="ignoreAllButton"  class="btn btn-sm">Tout ignorer</button>
-						</div>&nbsp;
-						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-sm">Abandonner</a>
-						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-sm" type="button">Regénérer</a>
-					</div>
-			</div>
-			<div id="prepare-filter">
-				<div th:if="${not preparation.emptyDiff}">
-						<table class="table table-sm">
-							<thead>
-								<span id="navigation-filter">
-									<div id="navigation-domain" class="filter filter-domain">
-										<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
-										<div class="card" id="card-domain" style="width: 150px;">
-										  <div class="card-header">
-											Filtre
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('domain')"></i>
-										  </div>
-										  <ul class="list-group list-group-flush">
-											<li class="list-group-item">
-												<select id="domainSearchField" class="form-control form-control-sm float-left" name="domainSearch" style="margin-right:10px">
-													<option value="" label="Tous les domaines"/>
-													<option th:each="domain, dstat : ${preparation.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
-												</select>
-											</li>
-											  <!--<li class="list-group-item" id="domain-asc" onclick="sortAsc('domain')">ASC</li>
-											  <li class="list-group-item" id="domain-desc" onclick="sortDesc('domain')">DESC</li>-->
-											  <button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
-											  <button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
-										  </ul>
-										</div>
-									</div>
-									<div id="navigation-table" class="filter filter-table">
-										<p onclick="showCardFilter('table')">Table</p>
-										<div class="card" id="card-table" style="width: 150px;">
-										  <div class="card-header">
-											Filtre
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('table')"></i>
-										  </div>
-										  <ul class="list-group list-group-flush">
-											<li class="list-group-item">
-												<input id="tableSearchField" type="text" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
-											</li>
-											  <li class="list-group-item" id="table-asc" onclick="sortAsc('table')">ASC</li>
-											  <li class="list-group-item" id="table-desc" onclick="sortDesc('table')">DESC</li>
-
-										  </ul>
-										</div>
-									</div>
-									<div id="navigation-key" class="filter filter-key">
-										<p onclick="showCardFilter('key')">Clé</p>
-										<div class="card" id="card-key" style="width: 150px;">
-										  <div class="card-header">
-											Filtre
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('key')"></i>
-										  </div>
-										  <ul class="list-group list-group-flush">
-											<li class="list-group-item">
-												<input id="keySearchField" type="text" class="form-control form-control-sm float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
-											</li>
-											<li class="list-group-item" id="key-asc" onclick="sortAsc('key')">ASC</li>
-											  <li class="list-group-item" id="key-desc" onclick="sortDesc('key')">DESC</li>
-										  </ul>
-										</div>
-									</div>
-									<div id="navigation-type" class="filter filter-type">
-										<p onclick="showCardFilter('type')">Type</p>
-										<div class="card" id="card-type" style="width: 150px;">
-										  <div class="card-header">
-											Filtre
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('type')"></i>
-										  </div>
-										  <ul class="list-group list-group-flush">
-											<li class="list-group-item">
-												<select id="typeSearchField" class="form-control form-control-sm float-left" name="typeSearch" style="margin-right:10px">
-													<option value="" label="Tous les types de modifications"/>
-													<option value="ADD" label="Ajout"/>
-													<option value="REMOVE" label="Suppression"/>
-													<option value="UPDATE" label="Mise à jour"/>
-												</select>
-											</li>
-											  <li class="list-group-item" id="type-asc" onclick="sortAsc('type')">ASC</li>
-											  <li class="list-group-item" id="type-desc" onclick="sortDesc('type')">DESC</li>
-										  </ul>
-										</div>
-									</div>
-									<div id="navigation-modif"><p>Modification</p></div>
-									<div id="navigation-btns"></div>
-								</span>
-							</thead>
-							<div id="container-list-filter">
-							</div>
-							<tbody class="pageHolder">
-								<tr id="domainSearchBar" class="search-bar" style="display: none">
-									<td colspan="100%">
-										<select id="domainSearchField" class="form-control form-control-sm col-md-2 float-left" name="domainSearch" style="margin-right:10px">
-											<option value="" label="Tous les domaines"/>
-											<option th:each="domain, dstat : ${preparation.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
-										</select>
-										<button id="domainFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
-										<button id="domainResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
-										<button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
-										<button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
-										<button id="domainSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
-										<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
-									</td>
-								</tr>
-								<tr id="tableSearchBar" class="search-bar" style="display: none">
-									<td colspan="100%">
-										<input id="tableSearchField" type="text" class="form-control form-control-sm col-md-3 float-left" style="margin-right:10px" name="tableSearch" size="50" placeholder="Table"/>
-										<button id="tableFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('table')">Filtrer par table</button>
-										<button id="tableResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('table')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
-										<button id="tableSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('table')" style="margin-left:15px!important">Tri ASC</button>
-										<button id="tableSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('table')" style="margin-left:2px!important">Tri DESC</button>
-										<button id="tableSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('table')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
-										<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
-									</td>
-								</tr>
-								<tr id="keySearchBar" class="search-bar" style="display: none">
-									<td colspan="100%">
-										<input id="keySearchField" type="text" class="form-control form-control-sm col-md-3 float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
-										<button id="keyFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('key')">Filtrer par clés</button>
-										<button id="keyResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('key')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
-										<button id="keySortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('key')" style="margin-left:15px!important">Tri ASC</button>
-										<button id="keySortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('key')" style="margin-left:2px!important">Tri DESC</button>
-										<button id="keySortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('key')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
-										<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
-									</td>
-								</tr>
-								<tr id="typeSearchBar" class="search-bar" style="display: none">
-									<td colspan="100%">
-										<select id="typeSearchField" class="form-control form-control-sm col-md-2 float-left" name="typeSearch" style="margin-right:10px">
-											<option value="" label="Tous les types de modifications"/>
-											<option value="ADD" label="Ajout"/>
-											<option value="REMOVE" label="Suppression"/>
-											<option value="UPDATE" label="Mise à jour"/>
-										</select>
-										<button id="typeFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('type')">Filtrer par type</button>
-										<button id="typeResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('type')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
-										<button id="typeSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('type')" style="margin-left:15px!important">Tri ASC</button>
-										<button id="typeSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('type')" style="margin-left:2px!important">Tri DESC</button>
-										<button id="typeSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('type')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
-										<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
-									</td>
-								</tr>
-
-							</tbody>
-						</table>
-						<div id="navBar">
-							<div id="navBarContent"></div>
+			<div th:if="${not preparation.emptyDiff}">
+				<p>
+					<h5>Ensemble des modifications identifiées
+						<div class="float-right">
+							<div id="filteredSelectGroup" class="btn-group" role="group" style="padding-right:10px; display:None;">
+								<button type="button" id="selectFilteredButton" class="btn btn-outline-primary btn-sm">Garder les lignes filtrées</button>
+								<button type="button" id="rollbackFilteredButton" class="btn btn-outline-danger btn-sm">Annuler les lignes filtrées</button>
+								<button type="button" id="ignoreFilteredButton"  class="btn btn-outline-secondary btn-sm">Ignorer les lignes filtrées</button>
+							</div>&nbsp;
+							<div class="btn-group" role="group">
+								<button type="button" id="selectAllButton" class="btn btn-outline-primary btn-sm">Tout garder</button>
+								<button type="button" id="rollbackAllButton" class="btn btn-outline-danger btn-sm">Tout annuler</button>
+								<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary btn-sm">Tout ignorer</button>
+							</div>&nbsp;
+							<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
+							<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-dark btn-sm" type="button">Regénérer</a>
 						</div>
-						<p>
-							<div id="btn-confirm">
-								<input type="submit" class="btn btn-sm" value="Confirmer les opérations"/><br/><br/>
-							</div>
-						</p>
+					</h5>
+				</p>
+				<table class="table table-sm">
+					<thead>
+						<tr>
+							<th scope="col" width="15%" class="filter filter-domain">Domaine</th>
+							<th scope="col" width="15%" class="filter filter-table">Table</th>
+							<th scope="col" width="15%" class="filter filter-key">Clé</th>
+							<th scope="col" width="10%" class="filter filter-type">Type</th>
+							<th scope="col">Modification</th>
+							<th scope="col" width="18%">&nbsp;</th>
+						</tr>
+					</thead>
+					<tbody class="pageHolder">
+						<tr id="domainSearchBar" class="search-bar" style="display: none">
+			     			<td colspan="100%">
+								<select id="domainSearchField" class="form-control form-control-sm col-md-2 float-left" name="domainSearch" style="margin-right:10px">
+									<option value="" label="Tous les domaines"/>
+									<option th:each="domain, dstat : ${preparation.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
+								</select>
+								<button id="domainFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
+								<button id="domainResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
+								<button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
+								<button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
+								<button id="domainSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
+								<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
+							</td>
+						</tr>
+						<tr id="tableSearchBar" class="search-bar" style="display: none">
+			     			<td colspan="100%">
+								<input id="tableSearchField" type="text" class="form-control form-control-sm col-md-3 float-left" style="margin-right:10px" name="tableSearch" size="50" placeholder="Table"/>
+								<button id="tableFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('table')">Filtrer par table</button>
+								<button id="tableResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('table')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
+								<button id="tableSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('table')" style="margin-left:15px!important">Tri ASC</button>
+								<button id="tableSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('table')" style="margin-left:2px!important">Tri DESC</button>
+								<button id="tableSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('table')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
+								<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
+							</td>
+						</tr>
+						<tr id="keySearchBar" class="search-bar" style="display: none">
+			     			<td colspan="100%">
+								<input id="keySearchField" type="text" class="form-control form-control-sm col-md-3 float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
+								<button id="keyFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('key')">Filtrer par clés</button>
+								<button id="keyResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('key')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
+								<button id="keySortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('key')" style="margin-left:15px!important">Tri ASC</button>
+								<button id="keySortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('key')" style="margin-left:2px!important">Tri DESC</button>
+								<button id="keySortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('key')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
+								<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
+							</td>
+						</tr>
+						<tr id="typeSearchBar" class="search-bar" style="display: none">
+			     			<td colspan="100%">
+								<select id="typeSearchField" class="form-control form-control-sm col-md-2 float-left" name="typeSearch" style="margin-right:10px">
+									<option value="" label="Tous les types de modifications"/>
+									<option value="ADD" label="Ajout"/>
+									<option value="REMOVE" label="Suppression"/>
+									<option value="UPDATE" label="Mise à jour"/>
+								</select>
+								<button id="typeFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('type')">Filtrer par type</button>
+								<button id="typeResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('type')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
+								<button id="typeSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('type')" style="margin-left:15px!important">Tri ASC</button>
+								<button id="typeSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('type')" style="margin-left:2px!important">Tri DESC</button>
+								<button id="typeSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="removeSort('type')" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
+								<button id="domainClose" type="button" class="btn btn-outline-danger btn-sm float-right" onclick="closeFilters()">Fermer</button>
+							</td>
+			     		</tr>
+						<tr id="navBar">
+							<td colspan="100%"><div id="navBarContent"></div></td>
+						</tr>
+					</tbody>
+				</table>
+				<p>
+					<div id="btn-confirm">
+						<input type="submit" class="btn btn-sm" value="Confirmer les opérations"/><br/><br/>
 					</div>
-				</div>
+				</p>
+			</div>
 			<div th:if="${preparation.emptyDiff}">
 				<p>
 					<h5>Aucune nouvelle modification identifiée dans les données de paramètrage.
@@ -228,7 +153,7 @@
 			</div>
 		</form>
 	</span>
-    <script layout:fragment="script" th:inline="javascript">
+<script layout:fragment="script" th:inline="javascript">
 		/*<![CDATA[*/
 
 		$('#color-nav-2').css("font-weight", "bold");
@@ -258,62 +183,12 @@
 			}
 		}
 
-		$('#card-domain').hide();
-		$('#card-table').hide();
-		$('#card-key').hide();
-		$('#card-type').hide();
-
-		const getUsedFilter = (filter) => {
-			console.log("<<<<<<<<<<<<<<<<<<<<<<<<<<");
-			//ajouter ici les règles d'ajout de filter
-
-			//$("container-list-filter").append('tototo');
+		const closeFilters = () => {
+			$(".search-bar").hide();
 		}
 
-		const showCardFilter = (name) => {
-			switch (name) {
-				case 'domain':
-					$('#card-domain').show();
-					break;
-
-				case 'table':
-					$('#card-table').show();
-					break;
-
-				case 'key':
-					$('#card-key').show();
-					break;
-
-				case 'type':
-					$('#card-type').show();
-					break;
-
-			}
-		}
-
-		const closeFilters = (name) => {
-			switch (name) {
-				case 'domain':
-					$('#card-domain').hide();
-					break;
-
-				case 'table':
-					$('#card-table').hide();
-					break;
-
-				case 'key':
-					$('#card-key').hide();
-					break;
-
-				case 'type':
-					$('#card-type').hide();
-					break;
-
-			}
-		}
-
+		// filter filter-domain
 		const filterDisplay = (head) => {
-			console.log(head.target.className)
 			var name = head.target.className.split(' ')[1].substr(7);
 			closeFilters();
 			$("#" + name + "SearchBar").show();
@@ -373,7 +248,6 @@
 
 		const updateSelectItem = (index, selected, rollbacked) => {
 
-			console.log('should update');
 			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
 
 				// Reset 3 buttons
@@ -491,20 +365,20 @@
 						var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
 
 						var itemRow =
-							'<div title="cell" id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
-								'<div id="domain-name">'+ e.domainName + '</div>'+
-								'<div id="table-name">'+ e.tableName + '</div>'+
-								'<div id="key-name" title="' + keyTitle + '">'+ keyDisplay + '</div>'+
-								'<div id="action-name" class="action-display">'+ actionDisplay + '</div>'+
-								'<div id="payload-name">' +
-								'<span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload +
-								'</span></div>' +
-								'<div id="btns-groupe">' +
-									'<button type="button" class="' + butSelecClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',true,false)"><i class="fas fa-check"></i></button>' +
-									'<button type="button" class="' + butRollbackClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,true)"><i class="fas fa-times"></i></button>' +
-									'<button type="button" class="' + butIgnoreClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,false)"><i class="fas fa-minus-circle"></i></button>' +
-								'</div>'
-							+'</div>';
+								'<tr id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +
+								'<td>' + e.domainName + '</td>' +
+								'<td>' + e.tableName + '</td>' +
+								'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
+								'<td class="action-display">' + actionDisplay + '</td>' +
+								'<td><span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload + '</span></td>' +
+								'<td>' +
+								'<div class="btn-group float-right" role="group">' +
+								'<button type="button" class="' + butSelecClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',true,false)">Garder</button>' +
+								'<button type="button" class="' + butRollbackClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,true)">Annuler</button>' +
+								'<button type="button" class="' + butIgnoreClass + '" onclick="updateSelectItem(\'' +  e.indexForDiff + '\',false,false)">Ignorer</button>' +
+								'</div>' +
+								'</td>' +
+								'</tr>';
 
 						navBar.before(itemRow);
 					});

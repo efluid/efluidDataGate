@@ -691,7 +691,7 @@ th.filter.sorted-desc {
     color: white;
 }
 
-#prepare-header {
+/*#prepare-header {
     width: 100%;
     height: 70px;
     padding: 7px 7px 7px 7px;
@@ -772,7 +772,7 @@ th.filter.sorted-desc {
     align-items: center;
     width: 25%;
 }
-
+*/
 #btn-confirm {
     display: flex;
     height: 40px;
