@@ -1,25 +1,32 @@
 package fr.uem.efluid.services;
 
+import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
+import fr.uem.efluid.model.repositories.ManagedExtractRepository.Extraction;
 import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
+import fr.uem.efluid.utils.DatasourceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -58,8 +65,6 @@ public class PrepareIndexService {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareIndexService.class);
 
     private static final Logger MERGE_LOGGER = LoggerFactory.getLogger("merge.analysis");
-
-    private static final boolean USE_PARALLEL_DIFF = false;
 
     @Autowired
     private ManagedExtractRepository rawParameters;
@@ -101,6 +106,11 @@ public class PrepareIndexService {
      * @param lobs
      * @param project
      */
+    @Transactional(
+            isolation = Isolation.READ_UNCOMMITTED,
+            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER,
+            propagation = Propagation.NOT_SUPPORTED
+    )
     public void completeLocalDiff(
             PilotedCommitPreparation<PreparedIndexEntry> preparation,
             DictionaryEntry entry,
@@ -119,35 +129,38 @@ public class PrepareIndexService {
         preparation.incrementProcessStep();
 
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
-        Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
+        AtomicLong totalProcessed = new AtomicLong(0);
 
-        // Intermediate step for better percent process
-        preparation.incrementProcessStep();
+        try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
-        // Some diffs may add remarks
-        LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
-        processOptionalCurrentContendDiffRemarks(preparation, entry, project, actualContent);
+            // Process actual content in stream
+            Collection<PreparedIndexEntry> index = generateDiffIndexFromContent(
+                    extraction.stream(),
+                    PreparedIndexEntry::new,
+                    knewContent,
+                    c -> totalProcessed.incrementAndGet(),
+                    entry,
+                    preparation);
 
-        // Intermediate step for better percent process
-        preparation.incrementProcessStep();
+            // Some diffs may add remarks
+            LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
+            processOptionalCurrentContendDiffRemarks(preparation, entry, project, totalProcessed.get());
 
-        // Completed diff
-        Collection<PreparedIndexEntry> index = generateDiffIndexFromContent(PreparedIndexEntry::new, knewContent, actualContent, entry);
+            // Intermediate step for better percent process
+            preparation.incrementProcessStep();
 
-        // Intermediate step for better percent process
-        preparation.incrementProcessStep();
+            // Detect and process similar entries for display, unsorted
+            List<PreparedIndexEntry> preparedDiff = combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar);
 
-        // Detect and process similar entries for display, unsorted
-        List<PreparedIndexEntry> preparedDiff = combineSimilarDiffEntries(index, SimilarPreparedIndexEntry::fromSimilar);
+            // Keep content and dict only if some results are found at the end
+            if (!preparedDiff.isEmpty()) {
+                preparation.getDiffContent().addAll(preparedDiff);
+                preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+            }
 
-        // Keep content and dict only if some results are found at the end
-        if (!preparedDiff.isEmpty()) {
-            preparation.getDiffContent().addAll(preparedDiff);
-            preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+            // Intermediate step for better percent process
+            preparation.incrementProcessStep();
         }
-
-        // Intermediate step for better percent process
-        preparation.incrementProcessStep();
     }
 
     /**
@@ -175,6 +188,11 @@ public class PrepareIndexService {
      * @param mergeDiff          imported merge diff
      * @param project
      */
+    @Transactional(
+            isolation = Isolation.READ_UNCOMMITTED,
+            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER,
+            propagation = Propagation.NOT_SUPPORTED
+    )
     public void completeMergeDiff(
             PilotedCommitPreparation<PreparedMergeIndexEntry> preparation,
             DictionaryEntry entry,
@@ -195,37 +213,45 @@ public class PrepareIndexService {
         preparation.incrementProcessStep();
 
         // Get actual content
-        Map<String, String> actualContent = this.rawParameters.extractCurrentContent(entry, lobs, project);
+        LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
+        Set<String> allActualKeys = ConcurrentHashMap.newKeySet();
 
-        preparation.incrementProcessStep();
+        try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
-        // Build a direct diff between previous content and actual content
-        Collection<PreparedIndexEntry> mineDiff = generateDiffIndexFromContent(PreparedIndexEntry::new, previousContent, actualContent, entry);
+            // Process actual content in stream
+            Collection<PreparedIndexEntry> mineDiff = generateDiffIndexFromContent(
+                    extraction.stream(),
+                    PreparedIndexEntry::new,
+                    previousContent,
+                    c -> allActualKeys.add(c.getKeyValue()),
+                    entry,
+                    preparation);
 
-        preparation.incrementProcessStep();
+            preparation.incrementProcessStep();
 
-        // Apply transformer on merge content
-        List<? extends PreparedIndexEntry> transformedMergeDiff = preparation.getTransformerProcessor() != null
-                ? preparation.getTransformerProcessor().transform(entry, mergeDiff) : mergeDiff;
+            // Apply transformer on merge content
+            List<? extends PreparedIndexEntry> transformedMergeDiff = preparation.getTransformerProcessor() != null
+                    ? preparation.getTransformerProcessor().transform(entry, mergeDiff) : mergeDiff;
 
-        preparation.incrementProcessStep();
+            preparation.incrementProcessStep();
 
-        // Build merge diff entries from 2 source of Diff + previous content
-        Collection<PreparedMergeIndexEntry> completedMergeDiff =
-                completeMergeIndexes(entry, actualContent, mineDiff, transformedMergeDiff, previousContent, preparation);
+            // Build merge diff entries from 2 source of Diff + previous content
+            Collection<PreparedMergeIndexEntry> completedMergeDiff =
+                    completeMergeIndexes(entry, allActualKeys, mineDiff, transformedMergeDiff, previousContent, preparation);
 
-        preparation.incrementProcessStep();
+            preparation.incrementProcessStep();
 
-        // Combine similar, unsorted
-        List<PreparedMergeIndexEntry> preparedDiff = combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar);
+            // Combine similar, unsorted
+            List<PreparedMergeIndexEntry> preparedDiff = combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar);
 
-        // Keep content and dict only if some results are found at the end
-        if (!preparedDiff.isEmpty()) {
-            preparation.getDiffContent().addAll(preparedDiff);
-            preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+            // Keep content and dict only if some results are found at the end
+            if (!preparedDiff.isEmpty()) {
+                preparation.getDiffContent().addAll(preparedDiff);
+                preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+            }
+
+            preparation.incrementProcessStep();
         }
-
-        preparation.incrementProcessStep();
     }
 
     /**
@@ -242,7 +268,7 @@ public class PrepareIndexService {
      * </p>
      *
      * @param entry
-     * @return test data in dedicated bean with total count + configured extracted lines
+     * @return
      */
     TestQueryData testActualContent(DictionaryEntry entry) {
 
@@ -262,8 +288,8 @@ public class PrepareIndexService {
      * </p>
      *
      * @param dictionaryEntryUuid uuid of dict entry
-     * @param index loaded index content
-     * @param combineSimilars true if the similar entries must be combined in single lines
+     * @param index               loaded index content
+     * @param combineSimilars     true if the similar entries must be combined in single lines
      * @return List adapted for rendering : some results may be combined
      */
     List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index, boolean combineSimilars) {
@@ -291,34 +317,44 @@ public class PrepareIndexService {
      * Their is no need for natural order process, so use parallel processes whenever it's
      * possible.
      * </p>
+     * <p>Add 3 steps</p>
      *
-     * @param knewContent
      * @param actualContent
-     * @param dic
+     * @param diffTypeBuilder
+     * @param knewContent
+     * @param eachLineAccumulator processed on all lines from actual
+     * @param entry
+     * @param preparation         for step update
      * @return
      */
     <T extends PreparedIndexEntry> Collection<T> generateDiffIndexFromContent(
+            final Stream<ContentLine> actualContent,
             final Supplier<T> diffTypeBuilder,
             final Map<String, String> knewContent,
-            final Map<String, String> actualContent,
-            DictionaryEntry dic) {
+            final Consumer<ContentLine> eachLineAccumulator,
+            final DictionaryEntry entry,
+            final PilotedCommitPreparation<?> preparation) {
 
-        LOGGER.info("Start diff index Generate for table \"{}\"", dic.getTableName());
+        LOGGER.info("Start diff index Generate for table \"{}\"", entry.getTableName());
 
-        final Set<T> diff = ConcurrentHashMap.newKeySet();
+        preparation.incrementProcessStep();
 
-        // Use parallel process for higher distribution of verification
-        switchedStream(actualContent).forEach(actualOne -> searchDiff(diffTypeBuilder, actualOne, knewContent, diff, dic));
+        Collection<T> diff = actualContent
+                .peek(eachLineAccumulator)
+                .map(l -> toDiff(diffTypeBuilder, l, knewContent, entry))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet));
 
-        LOGGER.info("Existing vs Knew content diff completed for table \"{}\". Start not managed knew content", dic.getTableName());
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
 
         // Remaining in knewContent are deleted ones
-        switchedStream(knewContent).forEach(e -> {
-            LOGGER.debug("New endex entry for {} : REMOVE from \"{}\"", e.getKey(), e.getValue());
-            diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.REMOVE, e.getKey(), null, e.getValue(), dic));
+        knewContent.forEach((k, v) -> {
+            LOGGER.debug("New index entry for {} : REMOVE from \"{}\"", k, v);
+            diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.REMOVE, k, null, v, entry));
         });
 
-        LOGGER.info("Not managed knew content completed for table \"{}\".", dic.getTableName());
+        preparation.incrementProcessStep();
 
         return diff;
     }
@@ -405,56 +441,43 @@ public class PrepareIndexService {
      * </ul>
      * </p>
      *
-     * @param preparation   to complete
+     * @param preparation       to complete
      * @param entry
      * @param project
-     * @param actualContent
+     * @param actualContentSize
      */
     private void processOptionalCurrentContendDiffRemarks(
-
             PilotedCommitPreparation<?> preparation,
             DictionaryEntry entry,
             Project project,
-            Map<String, String> actualContent) {
+            long actualContentSize) {
 
         // If parameter table has links, check also the count with unchecked joins
         if (this.links.countLinksForDictionaryEntry(entry) > 0) {
             LOGGER.debug("Start checking count of entries with unchecked joins for table \"{}\"", entry.getTableName());
 
             // If difference identified in content size with unchecked join, add a remark
-            if (this.rawParameters.countCurrentContentWithUncheckedJoins(entry, project) > actualContent.size()) {
+            if (this.rawParameters.countCurrentContentWithUncheckedJoins(entry, project) > actualContentSize) {
 
-                // Get the missign payloads as display list
-                List<ContentLineDisplay> missingContent = this.rawParameters.extractCurrentMissingContentWithUncheckedJoins(entry, project)
-                        .entrySet().stream()
-                        .map(e -> new ContentLineDisplay(e.getKey(), e.getValue(), entry.getKeyName()))
-                        .collect(Collectors.toList());
+                try (Extraction missingContents = this.rawParameters.extractCurrentMissingContentWithUncheckedJoins(entry, project)) {
+                    // Get the missign payloads as display list
+                    List<ContentLineDisplay> missingContent = missingContents.stream()
+                            .map(e -> new ContentLineDisplay(e.getKeyValue(), e.getPayload(), entry.getKeyName()))
+                            .collect(Collectors.toList());
 
-                if (missingContent.size() > 0) {
-                    // Prepare the corresponding remark
-                    DiffRemark<List<ContentLineDisplay>> remark = new DiffRemark<>(
-                            MISSING_ON_UNCHECKED_JOIN, "table " + entry.getTableName(), missingContent);
+                    if (missingContent.size() > 0) {
+                        // Prepare the corresponding remark
+                        DiffRemark<List<ContentLineDisplay>> remark = new DiffRemark<>(
+                                MISSING_ON_UNCHECKED_JOIN, "table " + entry.getTableName(), missingContent);
 
-                    preparation.getDiffRemarks().add(remark);
+                        preparation.getDiffRemarks().add(remark);
 
-                    LOGGER.info("Found a count of {} missing entries with unchecked joins for table \"{}\"",
-                            missingContent.size(), entry.getTableName());
+                        LOGGER.info("Found a count of {} missing entries with unchecked joins for table \"{}\"",
+                                missingContent.size(), entry.getTableName());
+                    }
                 }
             }
         }
-    }
-
-    /**
-     * @param source
-     * @return
-     */
-    private Stream<Map.Entry<String, String>> switchedStream(Map<String, String> source) {
-
-        if (this.USE_PARALLEL_DIFF) {
-            return source.entrySet().parallelStream();
-        }
-
-        return source.entrySet().stream();
     }
 
     /**
@@ -465,31 +488,30 @@ public class PrepareIndexService {
      * @param diffTypeBuilder
      * @param actualOne
      * @param knewContent
-     * @param diff
      * @param dic
      * @param <T>
+     * @return null if not to keep in diff
      */
-    private <T extends PreparedIndexEntry> void searchDiff(
+    private <T extends PreparedIndexEntry> T toDiff(
             final Supplier<T> diffTypeBuilder,
-            final Map.Entry<String, String> actualOne,
+            final ContentLine actualOne,
             final Map<String, String> knewContent,
-            final Set<T> diff,
             final DictionaryEntry dic) {
 
-        boolean wasKnew = knewContent.containsKey(actualOne.getKey());
+        boolean wasKnew = knewContent.containsKey(actualOne.getKeyValue());
 
         // Found : for delete identification immediately remove from found ones
-        String knewPayload = knewContent.remove(actualOne.getKey());
+        String knewPayload = knewContent.remove(actualOne.getKeyValue());
 
         // Exist already
         if (!StringUtils.isEmpty(knewPayload)) {
 
             // Content is different : it's an Update
-            if (!actualOne.getValue().equals(knewPayload)) {
-                LOGGER.debug("New endex entry for {} : UPDATED from \"{}\" to \"{}\"", actualOne.getKey(), knewPayload,
-                        actualOne.getValue());
-                diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.UPDATE, actualOne.getKey(), actualOne.getValue(), knewPayload,
-                        dic));
+            if (!actualOne.getPayload().equals(knewPayload)) {
+                LOGGER.debug("New endex entry for {} : UPDATED from \"{}\" to \"{}\"", actualOne.getKeyValue(), knewPayload,
+                        actualOne.getPayload());
+                return preparedIndexEntry(diffTypeBuilder, IndexAction.UPDATE, actualOne.getKeyValue(), actualOne.getPayload(), knewPayload,
+                        dic);
             }
         }
 
@@ -497,11 +519,14 @@ public class PrepareIndexService {
         else {
 
             // Except if new is also empty will content is knew : it's a managed empty line
-            if (!(wasKnew && StringUtils.isEmpty(actualOne.getValue()))) {
-                LOGGER.debug("New endex entry for {} : ADD with \"{}\"", actualOne.getKey(), actualOne.getValue());
-                diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKey(), actualOne.getValue(), null, dic));
+            if (!(wasKnew && StringUtils.isEmpty(actualOne.getPayload()))) {
+                LOGGER.debug("New endex entry for {} : ADD with \"{}\"", actualOne.getKeyValue(), actualOne.getPayload());
+                return preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKeyValue(), actualOne.getPayload(), null, dic);
             }
         }
+
+        // Nullify lines to ignore (already in knew content)
+        return null;
     }
 
     /**
@@ -545,7 +570,7 @@ public class PrepareIndexService {
 
     /**
      * @param dict
-     * @param actualContent
+     * @param allActualKeys
      * @param mines
      * @param theirs
      * @param previousContent
@@ -554,7 +579,7 @@ public class PrepareIndexService {
      */
     private Collection<PreparedMergeIndexEntry> completeMergeIndexes(
             DictionaryEntry dict,
-            Map<String, String> actualContent,
+            Set<String> allActualKeys,
             Collection<? extends DiffLine> mines,
             Collection<? extends DiffLine> theirs,
             Map<String, String> previousContent,
@@ -595,14 +620,12 @@ public class PrepareIndexService {
                 preparation.incrementProcessStep();
             }
 
-            String actual = actualContent.get(key);
-
-            PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actual);
+            PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, allActualKeys.contains(key));
 
             // Dedicated logger output for resolutions
             if (MERGE_LOGGER.isDebugEnabled()) {
-                MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", actual = \"{}\" -> Get \"{}\" with rule \"{}\"",
-                        dict.getTableName(), key, mineEntry, theirEntry, actual, resolved, resolved.getResolutionRule());
+                MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
+                        dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
             }
 
             return resolved;

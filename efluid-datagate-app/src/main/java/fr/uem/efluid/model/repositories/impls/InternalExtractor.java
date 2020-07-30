@@ -4,6 +4,8 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.IntSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +16,9 @@ import org.springframework.jdbc.core.ResultSetExtractor;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -126,7 +130,7 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Stream<
                             action.accept(line);
                             return true;
                         } catch (SQLException ex) {
-                            throw new RuntimeException(ex);
+                            throw new ApplicationException(ErrorType.EXTRACTION_ERROR, ex);
                         }
                     }
                 }, false).onClose(() -> {

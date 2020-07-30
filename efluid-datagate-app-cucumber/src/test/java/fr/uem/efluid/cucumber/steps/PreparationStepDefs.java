@@ -111,6 +111,8 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
         // Completed
         a_diff_is_completed();
+
+
     }
 
     @Given("^a merge diff analysis has been started and completed with the available source package$")
