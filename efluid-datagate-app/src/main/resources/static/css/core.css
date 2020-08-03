@@ -706,10 +706,9 @@ th.filter.sorted-desc {
 #prepare-header h5 {
     margin: 0;
     color: white;
-    width: 100%;
 }
 
-/*#container-list-filter {
+#container-list-filter {
     width: 100%;
     min-height: 60px;
     border: 2px solid black;
@@ -773,7 +772,7 @@ th.filter.sorted-desc {
     align-items: center;
     width: 25%;
 }
-*/
+
 #btn-confirm {
     display: flex;
     height: 40px;
@@ -784,3 +783,14 @@ th.filter.sorted-desc {
     background-color: #336DA4;
     color: white;
 }
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#domainFilterButton {
+    width: 100%;
+}
+
