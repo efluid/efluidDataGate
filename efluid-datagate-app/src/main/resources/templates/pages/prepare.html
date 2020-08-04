@@ -63,7 +63,10 @@
 							<thead>
 								<span id="navigation-filter">
 									<div id="navigation-domain" class="filter filter-domain">
-										<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
+										<div class="container-is-used">
+											<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
+											<i class="far fa-check-square" id="filter-used-domain"></i>
+										</div>
 										<div class="card" id="card-domain" style="width: 150px;">
 										  <div class="card-header">
 											Domaine
@@ -76,6 +79,7 @@
 													<option th:each="domain, dstat : ${preparation.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
 												</select>
 												<button id="domainFilterButton" type="button" class="btn btn-dark" onclick="enableFilter('domain');">Filtrer</button>
+												<button id="domainResetButton" type="button" class="btn " onclick="disableFilter('domain')" style="margin-left:5px!important">Supprimer le filtre</button>
 											</li>
 											  <li class="list-group-item" id="domain-asc" onclick="sortAsc('domain')"><i class="fas fa-sort-alpha-up-alt"></i></li>
 											  <li class="list-group-item" id="domain-desc" onclick="sortDesc('domain')"><i class="fas fa-sort-alpha-down-alt"></i></li>
@@ -83,7 +87,10 @@
 										</div>
 									</div>
 									<div id="navigation-table" class="filter filter-table">
-										<p onclick="showCardFilter('table')">Table</p>
+										<div class="container-is-used">
+											<p id="title-table" onclick="showCardFilter('table')">Table</p>
+											<i class="far fa-check-square" id="filter-used-table"></i>
+										</div>
 										<div class="card" id="card-table" style="width: 150px;">
 										  <div class="card-header">
 											Table
@@ -93,6 +100,7 @@
 											<li class="list-group-item">
 												<input id="tableSearchField" type="text" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
 												<button id="domainFilterButton" type="button" class="btn btn-dark" onclick="enableFilter('table')">Filtrer</button>
+												<button id="tableResetButton" type="button" class="btn" onclick="disableFilter('table')">Supprimer le filtre</button>
 											</li>
 											  <li class="list-group-item" id="table-asc" onclick="sortAsc('table')"><i class="fas fa-sort-alpha-up-alt"></i></li>
 											  <li class="list-group-item" id="table-desc" onclick="sortDesc('table')"><i class="fas fa-sort-alpha-down-alt"></i></li>
@@ -101,7 +109,10 @@
 										</div>
 									</div>
 									<div id="navigation-key" class="filter filter-key">
-										<p onclick="showCardFilter('key')">Clé</p>
+										<div class="container-is-used">
+											<p id="title-key" onclick="showCardFilter('key')">Clé</p>
+											<i class="far fa-check-square" id="filter-used-key"></i>
+										</div>
 										<div class="card" id="card-key" style="width: 150px;">
 										  <div class="card-header">
 											Clé
@@ -111,6 +122,7 @@
 											<li class="list-group-item">
 												<input id="keySearchField" type="text" class="form-control form-control-sm float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
 												<button id="domainFilterButton" type="button" class="btn btn-dark" onclick="enableFilter('key')">Filtrer</button>
+												<button id="keyResetButton" type="button" class="btn" onclick="disableFilter('key')">Supprimer le filtre</button>
 											</li>
 											<li class="list-group-item" id="key-asc" onclick="sortAsc('key')"><i class="fas fa-sort-alpha-up-alt"></i></li>
 											  <li class="list-group-item" id="key-desc" onclick="sortDesc('key')"><i class="fas fa-sort-alpha-down-alt"></i></li>
@@ -118,7 +130,10 @@
 										</div>
 									</div>
 									<div id="navigation-type" class="filter filter-type">
-										<p onclick="showCardFilter('type')">Type</p>
+										<div class="container-is-used">
+											<p id="title-type" onclick="showCardFilter('type')">Type</p>
+											<i class="far fa-check-square" id="filter-used-type"></i>
+										</div>
 										<div class="card" id="card-type" style="width: 150px;">
 										  <div class="card-header">
 											Type
@@ -133,6 +148,7 @@
 													<option value="UPDATE" label="Mise à jour"/>
 												</select>
 												<button id="domainFilterButton" type="button" class="btn btn-dark" onclick="enableFilter('type')">Filtrer</button>
+												<button id="typeResetButton" type="button" class="btn" onclick="disableFilter('type')">Supprimer le filtre</button>
 											</li>
 											  <li class="list-group-item" id="type-asc" onclick="sortAsc('type')"><i class="fas fa-sort-alpha-up-alt"></i></li>
 											  <li class="list-group-item" id="type-desc" onclick="sortDesc('type')"><i class="fas fa-sort-alpha-down-alt"></i></li>
@@ -143,54 +159,6 @@
 									<div id="navigation-btns"></div>
 								</span>
 							</thead>
-							<tbody class="pageHolder">
-								<tr id="domainSearchBar" class="search-bar" style="display: none">
-									<td colspan="100%">
-										<select id="domainSearchField" class="form-control form-control-sm col-md-2 float-left" name="domainSearch" style="margin-right:10px">
-											<option value="" label="Tous les domaines"/>
-											<option th:each="domain, dstat : ${preparation.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
-										</select>
-										<button id="domainFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
-										<button id="domainResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
-										<button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
-										<button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
-										<button id="domainSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
-									</td>
-								</tr>
-								<tr id="tableSearchBar" class="search-bar" style="display: none">
-									<td colspan="100%">
-										<input id="tableSearchField" type="text" class="form-control form-control-sm col-md-3 float-left" style="margin-right:10px" name="tableSearch" size="50" placeholder="Table"/>
-										<button id="tableFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('table')">Filtrer par table</button>
-										<button id="tableSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('table')" style="margin-left:15px!important">Tri ASC</button>
-										<button id="tableSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('table')" style="margin-left:2px!important">Tri DESC</button>
-										<button id="tableSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
-									</td>
-								</tr>
-								<tr id="keySearchBar" class="search-bar" style="display: none">
-									<td colspan="100%">
-										<input id="keySearchField" type="text" class="form-control form-control-sm col-md-3 float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
-										<button id="keyFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('key')">Filtrer par clés</button>
-										<button id="keySortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('key')" style="margin-left:15px!important">Tri ASC</button>
-										<button id="keySortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('key')" style="margin-left:2px!important">Tri DESC</button>
-										<button id="keySortResetButton" type="button" class="btn btn-secondary btn-sm float-left" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
-									</td>
-								</tr>
-								<tr id="typeSearchBar" class="search-bar" style="display: none">
-									<td colspan="100%">
-										<select id="typeSearchField" class="form-control form-control-sm col-md-2 float-left" name="typeSearch" style="margin-right:10px">
-											<option value="" label="Tous les types de modifications"/>
-											<option value="ADD" label="Ajout"/>
-											<option value="REMOVE" label="Suppression"/>
-											<option value="UPDATE" label="Mise à jour"/>
-										</select>
-										<button id="typeFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('type')">Filtrer par type</button>
-										<button id="typeSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('type')" style="margin-left:15px!important">Tri ASC</button>
-										<button id="typeSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('type')" style="margin-left:2px!important">Tri DESC</button>
-										<button id="typeSortResetButton" type="button" class="btn btn-secondary btn-sm float-left" disabled="disabled" style="margin-left:5px!important">Supprimer le tri</button>
-									</td>
-								</tr>
-
-							</tbody>
 						</table>
 						<div id="navBar">
 							<div id="navBarContent"></div>
@@ -225,6 +193,11 @@
 		/*<![CDATA[*/
 
 		$('#color-nav-2').css("font-weight", "bold");
+		$("#filter-used-domain").hide();
+		$("#filter-used-table").hide();
+		$("#filter-used-key").hide();
+		$("#filter-used-type").hide();
+
 
 		// Full search
 		var activeSearch = {
@@ -315,12 +288,25 @@
 			$("#" + name + "FilterButton").prop('disabled', false);
 			$("#" + name + "ResetButton").prop('disabled', false);
 			$(".filter-" + name).addClass("filtered");
+			$("#filter-used-" + name).show();
 			var filter = $("#" + name + "SearchField").val();
 			activeSearch.filters[name] = filter;
 			updateFilterSelectButtonGroup();
 			getPageContent(0);
-			getUsedFilter(name)
 		}
+
+		const disableFilter = (name) => {
+			console.info('disableFilter ' + name);
+			$("#" + name + "FilterButton").prop('disabled', false);
+			$("#" + name + "ResetButton").prop('disabled', true);
+			$(".filter-" + name).removeClass("filtered");
+			$("#" + name + "SearchField").val("");
+			$("#filter-used-" + name).hide();
+			activeSearch.filters[name] = "";
+			updateFilterSelectButtonGroup();
+			getPageContent(0);
+		}
+
 
 		const sortAsc = (name) => {
 			console.info('sortAsc ' + name);

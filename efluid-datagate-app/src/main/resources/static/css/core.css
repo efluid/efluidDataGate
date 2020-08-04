@@ -797,3 +797,12 @@ th.filter.sorted-desc {
 .change-display {
     width: 100%;
 }
+
+.container-is-used {
+    display: flex;
+    align-items: center;
+}
+
+#title-domain, #title-table, #title-key, #title-type {
+    margin: 0;
+}
