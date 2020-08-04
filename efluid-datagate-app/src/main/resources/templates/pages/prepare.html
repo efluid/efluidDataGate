@@ -43,11 +43,6 @@
 			<div id="prepare-header">
 				<h5>Ensemble des modifications identifiées</h5>
 					<div class="float-right">
-						<div id="filteredSelectGroup" class="btn-group" role="group" style="padding-right:10px; display:None;">
-							<button type="button" id="selectFilteredButton" class="btn btn-sm">Garder les lignes filtrées</button>
-							<button type="button" id="rollbackFilteredButton" class="btn btn-sm">Annuler les lignes filtrées</button>
-							<button type="button" id="ignoreFilteredButton"  class="btn btn-sm">Ignorer les lignes filtrées</button>
-						</div>&nbsp;
 						<div class="btn-group" role="group">
 							<button type="button" id="selectAllButton" class="btn  btn-sm">Tout garder</button>
 							<button type="button" id="rollbackAllButton" class="btn btn-sm">Tout annuler</button>
@@ -56,6 +51,13 @@
 						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-sm">Abandonner</a>
 						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-sm" type="button">Regénérer</a>
 					</div>
+			</div>
+			<div id="keep-filtered-ligne" style="padding-right:10px; display:None;">
+				<div id="keep-buttons" class="btn-group" role="group">
+					<button type="button" id="selectFilteredButton" class="btn btn-sm">Garder les lignes filtrées</button>
+					<button type="button" id="rollbackFilteredButton" class="btn btn-sm">Annuler les lignes filtrées</button>
+					<button type="button" id="ignoreFilteredButton"  class="btn btn-sm">Ignorer les lignes filtrées</button>
+				</div>&nbsp;
 			</div>
 			<div id="prepare-filter">
 				<div th:if="${not preparation.emptyDiff}">
@@ -234,9 +236,9 @@
 
 		const updateFilterSelectButtonGroup = () => {
 			if(Object.values(activeSearch.filters).every(i => i === "")){
-				$("#filteredSelectGroup").hide();
+				$("#keep-filtered-ligne").hide();
 			} else {
-				$("#filteredSelectGroup").show();
+				$("#keep-filtered-ligne").show();
 			}
 		}
 

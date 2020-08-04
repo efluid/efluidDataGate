@@ -830,3 +830,14 @@ th.filter.sorted-desc {
 li {
     list-style-type: none;
 }
+
+#keep-filtered-ligne {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100%;
+    height: 50px;
+    border-radius: 10px;
+    background-color: #F6F6F6;
+    margin-bottom: 20px;
+}
