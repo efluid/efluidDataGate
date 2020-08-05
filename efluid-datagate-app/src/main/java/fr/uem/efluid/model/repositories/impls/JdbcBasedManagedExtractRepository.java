@@ -208,6 +208,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         try {
             DataSource ds = Objects.requireNonNull(this.managedSource.getDataSource());
             Connection con = ds.getConnection();
+            con.beginRequest();
             Statement stmt = con.createStatement();
             ResultSet rs = stmt.executeQuery(sql);
             return new JdbcExtraction(ds, con, stmt, rs, extractor.extractData(rs));
@@ -634,7 +635,17 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         @Override
         public void close() {
 
+
             String failedOne = "";
+
+            try {
+                if (this.con != null) {
+                    this.con.endRequest();
+                }
+            } catch (Throwable ex) {
+                failedOne += " Request unit ending";
+                LOGGER.error("Error on Request unit end", ex);
+            }
 
             try {
                 if (this.rs != null) {
