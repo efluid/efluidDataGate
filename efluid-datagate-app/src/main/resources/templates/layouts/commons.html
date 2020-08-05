@@ -5,8 +5,9 @@
 <div th:fragment="error-display (code,payload)">
 			<span th:if="${code}">
 				<span th:switch="${code.name()}">
+					<p th:case="'EXTRACTION_ERROR'">L'extraction est impossible. Vérifiez la configuration de la base de données gérée</p>
 					<p th:case="'PREPARATION_INTERRUPTED'">La préparation du diff a été interrompue</p>
-					<p th:case="'PREPARATION_BIZ_FAILURE'">Le traitement du diff a rencontré une erreur suivante</p>
+					<p th:case="'PREPARATION_BIZ_FAILURE'">Le traitement du diff a rencontré une erreur pour la table <span th:text="${payload}">table</span></p>
 					<p th:case="'PREPARATION_CANNOT_START'">Impossible de démarrer un diff quand un traitement est déjà en cours</p>
 					<p th:case="'UNSUPPORTED_UUID'">L'identifiant uuid indiqué n'est pas valide</p>
 					<p th:case="'COMMIT_IMPORT_INVALID'">Le fichier d'import de lot de modification n'est pas valide ou référence des données inconnues</p>

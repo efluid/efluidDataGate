@@ -1,6 +1,7 @@
 package fr.uem.efluid.model.repositories.impls;
 
 import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
@@ -9,6 +10,8 @@ import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +19,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.jdbc.support.JdbcUtils;
 import org.springframework.stereotype.Repository;
 
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import javax.sql.DataSource;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -35,17 +39,18 @@ import java.util.stream.Collectors;
  * <li>Test on the existing content</li>
  * <li>Check on missing joins for "remarks" building</li>
  * </ul>
+ * All in processing streams
  * </p>
  * <p>
  * Access to raw data of parameters : can read from Parameter source table using JDBC call
  * </p>
  * <p>
- * Default implements using <tt>JdbcTemplate</tt> with various {@link ResultSetExtractor}
  * depending on required results. SQL query generation is done by a {@link ManagedQueriesGenerator}
  * </p>
+ * <p>The extraction must be "finalized" : the process is transactional</p>
  *
  * @author elecomte
- * @version 4
+ * @version 5
  * @since v0.0.1
  */
 @Repository
@@ -122,7 +127,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
      * java.util.Map, fr.uem.efluid.model.entities.Project)
      */
     @Override
-    public Map<String, String> extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project) {
+    public JdbcExtraction extractCurrentContent(DictionaryEntry parameterEntry, Map<String, byte[]> lobs, Project project) {
 
         String query = this.queryGenerator.producesSelectParameterQuery(
                 parameterEntry,
@@ -134,13 +139,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         postProcessQuery(query);
 
         // Get columns for all table
-        Map<String, String> payloads = this.managedSource.query(query,
-                new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames, lobs));
-
-        LOGGER.debug("Extracted values from managed table {} with query \"{}\". Found {} results",
-                parameterEntry.getTableName(), query, payloads != null ? payloads.size() : -1);
-
-        return payloads;
+        return query(query, new ValueInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames, lobs));
     }
 
     /**
@@ -178,7 +177,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
      * fr.uem.efluid.model.entities.Project)
      */
     @Override
-    public Map<String, String> extractCurrentMissingContentWithUncheckedJoins(DictionaryEntry parameterEntry, Project project) {
+    public JdbcExtraction extractCurrentMissingContentWithUncheckedJoins(DictionaryEntry parameterEntry, Project project) {
 
         String query = this.queryGenerator.producesSelectMissingParameterQuery(
                 parameterEntry,
@@ -191,12 +190,30 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         postProcessQuery(query);
 
         // Get columns for all table
-        Map<String, String> payloads = this.managedSource.query(query, new DisplayInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames));
+        return query(query, new DisplayInternalExtractor(parameterEntry, this.valueConverter, this.useLabelForColNames));
+    }
 
-        LOGGER.debug("Extracted values from managed table {} on unchecked Join with query \"{}\". Found {} results",
-                parameterEntry.getTableName(), query, payloads != null ? payloads.size() : -1);
+    /**
+     * Process a query <b>Without closing RS</b> and provides a pointer to the extraction as a JdbcExtraction
+     *
+     * @param sql       query to run
+     * @param extractor extractor to run for producing a new <tt>Stream</tt> of <tt>ContentLine</tt>
+     * @return JdbcExtraction with <tt>Stream</tt> of <tt>ContentLine</tt> and referenced ResultSet
+     * @throws DataAccessException for any processing exception
+     */
+    private JdbcExtraction query(
+            final String sql,
+            final ResultSetExtractor<Stream<ContentLine>> extractor) {
 
-        return payloads;
+        try {
+            DataSource ds = Objects.requireNonNull(this.managedSource.getDataSource());
+            Connection con = ds.getConnection();
+            Statement stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
+            return new JdbcExtraction(ds, con, stmt, rs, extractor.extractData(rs));
+        } catch (SQLException ex) {
+            throw new ApplicationException(ErrorType.EXTRACTION_ERROR, ex);
+        }
     }
 
     /**
@@ -577,6 +594,78 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
                     holder.add(val);
                 }
 
+            }
+        }
+    }
+
+    /**
+     * Holder for an extraction with JDBC : stream of content and source ResultSet
+     */
+    public static class JdbcExtraction implements Extraction {
+
+        private final Stream<ContentLine> stream;
+        private final ResultSet rs;
+        private final Statement stmt;
+        private final Connection con;
+        private final DataSource ds;
+
+        /**
+         * Init with all stack chain for SQL Extraction
+         *
+         * @param ds
+         * @param con
+         * @param stmt
+         * @param rs
+         * @param stream
+         */
+        JdbcExtraction(DataSource ds, Connection con, Statement stmt, ResultSet rs, Stream<ContentLine> stream) {
+            this.stream = stream;
+            this.rs = rs;
+            this.stmt = stmt;
+            this.con = con;
+            this.ds = ds;
+        }
+
+        @Override
+        public Stream<ContentLine> stream() {
+            return this.stream;
+        }
+
+        @Override
+        public void close() {
+
+            String failedOne = "";
+
+            try {
+                if (this.rs != null) {
+                    this.rs.close();
+                }
+            } catch (Throwable ex) {
+                failedOne += " ResultSet close";
+                LOGGER.error("Error on Resultset close", ex);
+            }
+
+            try {
+                if (this.stmt != null && !this.stmt.isClosed()) {
+                    JdbcUtils.closeStatement(this.stmt);
+                }
+            } catch (Throwable ex) {
+                failedOne += " Statement close";
+                LOGGER.error("Error on Statement close", ex);
+            }
+
+            try {
+                if (this.con != null && !this.con.isClosed()) {
+                    DataSourceUtils.releaseConnection(this.con, this.ds);
+                }
+            } catch (Throwable ex) {
+                failedOne += " Connection close";
+                LOGGER.error("Error on Connection close", ex);
+            }
+
+            // Complete by a single ex on any error
+            if (failedOne.length() > 0) {
+                throw new ApplicationException(ErrorType.EXTRACTION_ERROR, "Error on extraction close !");
             }
         }
     }

@@ -11,6 +11,7 @@ import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.slf4j.Logger;
@@ -973,8 +974,12 @@ public class PilotableCommitPreparationService {
             assertDictionaryEntryIsRealTable(dict, current);
 
             // Search diff content
-            this.diffService.completeLocalDiff(current, dict, current.getDiffLobs(), new Project(current.getProjectUuid()));
-
+            try {
+                this.diffService.completeLocalDiff(current, dict, current.getDiffLobs(), new Project(current.getProjectUuid()));
+            } catch (Throwable ex) {
+                LOGGER.error("Error on local diff process for table {}", dict.getTableName(), ex);
+                throw new ApplicationException(PREPARATION_BIZ_FAILURE, "Error on local diff process for dict entry " + dict.getUuid(), ex, dict.getTableName());
+            }
             int rem = current.getProcessRemaining().decrementAndGet();
             LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", rem, current.getProcessStarted());
 

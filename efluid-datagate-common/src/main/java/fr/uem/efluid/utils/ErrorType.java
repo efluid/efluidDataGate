@@ -15,6 +15,9 @@ public enum ErrorType {
 
     WRONG_CLIENT_CALL,
 
+    /** Cannot process SQL extraction of current content */
+    EXTRACTION_ERROR,
+
     PREPARATION_INTERRUPTED,
     PREPARATION_BIZ_FAILURE,
     PREPARATION_CANNOT_START,
