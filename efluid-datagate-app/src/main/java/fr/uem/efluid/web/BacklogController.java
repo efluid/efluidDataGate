@@ -149,6 +149,7 @@ public class BacklogController extends CommonController {
      */
     @RequestMapping("/prepare/restart")
     public String preparationRestart(Model model) {
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
         return startPreparationAndRouteRegardingStatus(model, true);
     }
 
