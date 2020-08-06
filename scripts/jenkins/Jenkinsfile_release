@@ -10,7 +10,7 @@ node('socle-jenkins-maven-docker-14-4G') {
   String subject = "Release efluidDataGate ${releaseVersion}"
 
   try{
-    env.JAVA_HOME = "${variables.jdkPathPrefix}11.0.1"
+    env.JAVA_HOME = "${variables.jdkPathPrefix}11.0.8"
     withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.httpProxyAuthentication, passwordVariable: 'proxyPassword', usernameVariable: 'proxyUsername']]) {
       env.HTTP_PROXY="http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
       env.HTTPS_PROXY="http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
