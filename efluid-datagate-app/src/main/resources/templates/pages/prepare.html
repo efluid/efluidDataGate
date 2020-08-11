@@ -59,8 +59,8 @@
 					<button type="button" id="ignoreFilteredButton"  class="btn btn-sm">Ignorer les lignes filtrées</button>
 				</div>&nbsp;
 			</div>
-			<div id="prepare-filter">
-				<div th:if="${not preparation.emptyDiff}">
+			<div th:if="${not preparation.emptyDiff}" id="prepare-filter">
+				<div>
 						<table class="table table-sm">
 							<thead>
 								<span id="navigation-filter">
