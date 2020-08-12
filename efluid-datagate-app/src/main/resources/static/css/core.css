@@ -746,8 +746,16 @@ th.filter.sorted-desc {
     justify-content: flex-end;
 }
 
-#domain-name, #table-name, #key-name, #action-name, #payload-name {
+#domain-name, #table-name, #key-name, #action-name {
     width: 15%;
+    height: 100px;
+    background-color: white;
+    display:flex;
+    align-items: center;
+}
+
+#payload-name {
+    width: 27%;
     height: 100px;
     background-color: white;
     display:flex;
@@ -763,14 +771,13 @@ th.filter.sorted-desc {
 }
 
 #btns-groupe {
-    width: 20%;
+    width: 14%;
     height: 100px;
     background-color: white;
     display: flex;
     margin: auto 0 auto auto;
     justify-content: space-around;
     align-items: center;
-    width: 25%;
 }
 
 #btn-confirm {
@@ -816,6 +823,8 @@ th.filter.sorted-desc {
 }
 .change-display {
     width: 100%;
+    max-height: 90px;
+    overflow: scroll;
 }
 
 .container-is-used {
