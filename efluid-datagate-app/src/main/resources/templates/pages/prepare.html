@@ -44,12 +44,12 @@
 				<h5>Ensemble des modifications identifiées</h5>
 					<div class="float-right">
 						<div class="btn-group" role="group">
-							<button type="button" id="selectAllButton" class="btn  btn-sm">Tout garder</button>
-							<button type="button" id="rollbackAllButton" class="btn btn-sm">Tout annuler</button>
-							<button type="button" id="ignoreAllButton"  class="btn btn-sm">Tout ignorer</button>
+							<button type="button" id="selectAllButton" class="btn btn-outline-primary">Tout garder</button>
+							<button type="button" id="rollbackAllButton" class="btn btn-outline-danger">Tout annuler</button>
+							<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary">Tout ignorer</button>
 						</div>&nbsp;
-						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-sm">Abandonner</a>
-						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-sm" type="button">Regénérer</a>
+						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-outline-light">Abandonner</a>
+						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-outline-dark" type="button">Regénérer</a>
 					</div>
 			</div>
 			<div id="keep-filtered-ligne" style="padding-right:10px; display:None;">
@@ -254,46 +254,28 @@
 			$('container-list-filter').add('toto');
 		}
 
+		$('#card-domain').hide();
+
 		const showCardFilter = (name) => {
-			switch (name) {
-				case 'domain':
+
+			let domainIsOpen = false;
+			/*let tableIsOpen = false;
+			let keyIsOpen = false;
+			let typeIsOpen = false;*/
+
+			console.log(domainIsOpen)
+
+			if (name === 'domain') {
+				if(!domainIsOpen) {
 					$('#card-domain').show();
-					break;
-
-				case 'table':
-					$('#card-table').show();
-					break;
-
-				case 'key':
-					$('#card-key').show();
-					break;
-
-				case 'type':
-					$('#card-type').show();
-					break;
-
-			}
-		}
-
-		const closeFilters = (name) => {
-			switch (name) {
-				case 'domain':
+					domainIsOpen = true;
+				} else {
 					$('#card-domain').hide();
-					break;
-
-				case 'table':
-					$('#card-table').hide();
-					break;
-
-				case 'key':
-					$('#card-key').hide();
-					break;
-
-				case 'type':
-					$('#card-type').hide();
-					break;
+				}
 
 			}
+
+			console.log(name);
 		}
 
 		const filterDisplay = (head) => {
@@ -563,7 +545,6 @@
 
     	// Init actions
     	$(document).ready(() => {
-			closeFilters();
 			updateFilterSelectButtonGroup();
 			getPageContent(0);
 			$("#selectAllButton").click((e) => processAll('select'));
