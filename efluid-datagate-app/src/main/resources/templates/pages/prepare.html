@@ -72,7 +72,6 @@
 										<div class="card" id="card-domain" style="width: 150px;">
 										  <div class="card-header">
 											Domaine
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('domain')"></i>
 										  </div>
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
@@ -100,7 +99,6 @@
 										<div class="card" id="card-table" style="width: 150px;">
 										  <div class="card-header">
 											Table
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('table')"></i>
 										  </div>
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
@@ -126,7 +124,6 @@
 										<div class="card" id="card-key" style="width: 150px;">
 										  <div class="card-header">
 											Clé
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('key')"></i>
 										  </div>
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
@@ -151,7 +148,6 @@
 										<div class="card" id="card-type" style="width: 150px;">
 										  <div class="card-header">
 											Type
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('type')"></i>
 										  </div>
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
@@ -249,33 +245,55 @@
 		$('#card-key').hide();
 		$('#card-type').hide();
 
-		const getUsedFilter = (filter) => {
-			console.log(filter);
-			$('container-list-filter').add('toto');
-		}
+		let domainIsOpen = false;
+		let keyIsOpen = false;
+		let typeIsOpen = false;
+		let tableIsOpen = false;
 
-		$('#card-domain').hide();
 
 		const showCardFilter = (name) => {
 
-			let domainIsOpen = false;
-			/*let tableIsOpen = false;
-			let keyIsOpen = false;
-			let typeIsOpen = false;*/
+			let item = name;
 
-			console.log(domainIsOpen)
-
-			if (name === 'domain') {
-				if(!domainIsOpen) {
+			if (item === 'domain') {
+				if (!domainIsOpen) {
 					$('#card-domain').show();
 					domainIsOpen = true;
 				} else {
 					$('#card-domain').hide();
+					domainIsOpen = false;
 				}
-
 			}
 
-			console.log(name);
+			else if (item === 'table') {
+				if (!tableIsOpen) {
+					$('#card-table').show();
+					tableIsOpen = true;
+				} else {
+					$('#card-table').hide();
+					tableIsOpen = false;
+				}
+			}
+
+			else if (item === 'key') {
+				if (!keyIsOpen) {
+					$('#card-key').show();
+					keyIsOpen = true;
+				} else {
+					$('#card-key').hide();
+					keyIsOpen = false;
+				}
+			}
+
+			else {
+				if (!typeIsOpen) {
+					$('#card-type').show();
+					typeIsOpen = true;
+				} else {
+					$('#card-type').hide();
+					typeIsOpen = false;
+				}
+			}
 		}
 
 		const filterDisplay = (head) => {
