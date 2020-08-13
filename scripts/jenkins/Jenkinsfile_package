@@ -1,4 +1,7 @@
 import com.efluid.jenkinsfile.Jenkinsfile
+import com.efluid.jenkins.*
+
+JenkinsUtils jenkinsUtils = new JenkinsUtils(this)
 
 // variables globales
 def body = {

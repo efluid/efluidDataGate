@@ -1,5 +1,8 @@
 import com.efluid.mail.legacy.MailUtils
 import com.efluid.github.GitHubUtils
+import com.efluid.jenkins.*
+
+JenkinsUtils jenkinsUtils = new JenkinsUtils(this)
 
 def body = {
 
