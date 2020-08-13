@@ -428,5 +428,6 @@ public class TestDataLoader {
         User user = this.userHolder.getCurrentUser();
         user.setSelectedProject(pro);
         this.users.save(user);
+        this.users.flush();
     }
 }

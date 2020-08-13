@@ -44,12 +44,12 @@
 				<h5>Ensemble des modifications identifiées</h5>
 					<div class="float-right">
 						<div class="btn-group" role="group">
-							<button type="button" id="selectAllButton" class="btn  btn-sm">Tout garder</button>
-							<button type="button" id="rollbackAllButton" class="btn btn-sm">Tout annuler</button>
-							<button type="button" id="ignoreAllButton"  class="btn btn-sm">Tout ignorer</button>
+							<button type="button" id="selectAllButton" class="btn btn-outline-primary">Tout garder</button>
+							<button type="button" id="rollbackAllButton" class="btn btn-outline-danger">Tout annuler</button>
+							<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary">Tout ignorer</button>
 						</div>&nbsp;
-						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-sm">Abandonner</a>
-						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-sm" type="button">Regénérer</a>
+						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-outline-light">Abandonner</a>
+						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-outline-dark" type="button">Regénérer</a>
 					</div>
 			</div>
 			<div id="keep-filtered-ligne" style="padding-right:10px; display:None;">
@@ -59,8 +59,8 @@
 					<button type="button" id="ignoreFilteredButton"  class="btn btn-sm">Ignorer les lignes filtrées</button>
 				</div>&nbsp;
 			</div>
-			<div id="prepare-filter">
-				<div th:if="${not preparation.emptyDiff}">
+			<div th:if="${not preparation.emptyDiff}" id="prepare-filter">
+				<div>
 						<table class="table table-sm">
 							<thead>
 								<span id="navigation-filter">
@@ -72,7 +72,6 @@
 										<div class="card" id="card-domain" style="width: 150px;">
 										  <div class="card-header">
 											Domaine
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('domain')"></i>
 										  </div>
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
@@ -100,7 +99,6 @@
 										<div class="card" id="card-table" style="width: 150px;">
 										  <div class="card-header">
 											Table
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('table')"></i>
 										  </div>
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
@@ -126,7 +124,6 @@
 										<div class="card" id="card-key" style="width: 150px;">
 										  <div class="card-header">
 											Clé
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('key')"></i>
 										  </div>
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
@@ -151,7 +148,6 @@
 										<div class="card" id="card-type" style="width: 150px;">
 										  <div class="card-header">
 											Type
-											<i class="fas fa-times" aria-hidden="true" onclick="closeFilters('type')"></i>
 										  </div>
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
@@ -249,50 +245,54 @@
 		$('#card-key').hide();
 		$('#card-type').hide();
 
-		const getUsedFilter = (filter) => {
-			console.log(filter);
-			$('container-list-filter').add('toto');
-		}
+		let domainIsOpen = false;
+		let keyIsOpen = false;
+		let typeIsOpen = false;
+		let tableIsOpen = false;
+
 
 		const showCardFilter = (name) => {
-			switch (name) {
-				case 'domain':
+
+			let item = name;
+
+			if (item === 'domain') {
+				if (!domainIsOpen) {
 					$('#card-domain').show();
-					break;
-
-				case 'table':
-					$('#card-table').show();
-					break;
-
-				case 'key':
-					$('#card-key').show();
-					break;
-
-				case 'type':
-					$('#card-type').show();
-					break;
-
-			}
-		}
-
-		const closeFilters = (name) => {
-			switch (name) {
-				case 'domain':
+					domainIsOpen = true;
+				} else {
 					$('#card-domain').hide();
-					break;
+					domainIsOpen = false;
+				}
+			}
 
-				case 'table':
+			else if (item === 'table') {
+				if (!tableIsOpen) {
+					$('#card-table').show();
+					tableIsOpen = true;
+				} else {
 					$('#card-table').hide();
-					break;
+					tableIsOpen = false;
+				}
+			}
 
-				case 'key':
+			else if (item === 'key') {
+				if (!keyIsOpen) {
+					$('#card-key').show();
+					keyIsOpen = true;
+				} else {
 					$('#card-key').hide();
-					break;
+					keyIsOpen = false;
+				}
+			}
 
-				case 'type':
+			else {
+				if (!typeIsOpen) {
+					$('#card-type').show();
+					typeIsOpen = true;
+				} else {
 					$('#card-type').hide();
-					break;
-
+					typeIsOpen = false;
+				}
 			}
 		}
 
@@ -313,6 +313,7 @@
 			activeSearch.filters[name] = filter;
 			updateFilterSelectButtonGroup();
 			getPageContent(0);
+			$("#card-domain").hyde();
 		}
 
 		const disableFilter = (name) => {
@@ -563,7 +564,6 @@
 
     	// Init actions
     	$(document).ready(() => {
-			closeFilters();
 			updateFilterSelectButtonGroup();
 			getPageContent(0);
 			$("#selectAllButton").click((e) => processAll('select'));

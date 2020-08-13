@@ -9,6 +9,7 @@ import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.stubs.DataLoadResult;
 import fr.uem.efluid.stubs.TestDataLoader;
+import fr.uem.efluid.stubs.TesterWithIndependentTransaction;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +31,7 @@ import java.util.stream.Collectors;
  * @version 1
  * @since v0.0.1
  */
-@Transactional(propagation = Propagation.REQUIRES_NEW)
+@Transactional
 @RunWith(SpringRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = {IntegrationTestConfig.class})
@@ -40,30 +41,19 @@ public class PrepareDiffServiceIntegrationTest {
     private PrepareIndexService service;
 
     @Autowired
-    private TestDataLoader loader;
+    private TesterWithIndependentTransaction tester;
 
-    @Autowired
-    private DictionaryRepository dictionary;
-
-    private UUID dictionaryEntryUuid;
-    private UUID projectUuid;
-
-    public void setupDatabase(String diff) {
-        DataLoadResult res = this.loader.setupDatabaseForDiff(diff);
-        this.dictionaryEntryUuid = res.getDicUuid();
-        this.projectUuid = res.getProjectUuid();
-    }
 
     @Test
     public void testProcessDiffNoIndex() {
 
-        setupDatabase("diff7");
+        this.tester.setupDatabase("diff7");
         PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
         this.service.completeLocalDiff(
                 preparation,
-                this.dictionary.getOne(this.dictionaryEntryUuid),
+                this.tester.dict(),
                 new HashMap<>(),
-                new Project(this.projectUuid));
+                this.tester.proj());
 
         Assert.assertEquals(0, preparation.getDiffContent().size());
     }
@@ -71,13 +61,13 @@ public class PrepareDiffServiceIntegrationTest {
     @Test
     public void testProcessDiffLargeIndex() {
 
-        setupDatabase("diff8");
+        this.tester.setupDatabase("diff8");
         PilotedCommitPreparation<PreparedIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.LOCAL);
         this.service.completeLocalDiff(
                 preparation,
-                this.dictionary.getOne(this.dictionaryEntryUuid),
+                this.tester.dict(),
                 new HashMap<>(),
-                new Project(this.projectUuid));
+                this.tester.proj());
         Assert.assertEquals(80 + 100 + 85, preparation.getDiffContent().size());
         List<PreparedIndexEntry> adds = preparation.getDiffContent().stream()
                 .filter(i -> i.getAction() == IndexAction.ADD)

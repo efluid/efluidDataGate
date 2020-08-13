@@ -59,7 +59,7 @@ datagate-efluid:
         version: @project.version@
 
     extractor:
-        show-sql: true
+        show-sql: false
         use-label-for-col-name: false
 
     attachments:
@@ -78,7 +78,7 @@ datagate-efluid:
     model-identifier:
         enabled: true
         class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
-        show-sql: true
+        show-sql: false
 
     merge.rule-file: classpath:merge-resolution-rules.json
 

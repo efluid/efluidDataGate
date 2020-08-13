@@ -196,7 +196,7 @@ public class DataGenerationUtils {
         commit.setHash(detail);
         commit.setCreatedTime(LocalDateTime.now().minusDays(daysOld));
         commit.setState(CommitState.LOCAL);
-        commit.setOriginalUserEmail(user.getEmail());
+        commit.setOriginalUserEmail(user.getLogin() + "@efluid.fr");
         commit.setUser(user);
         commit.setProject(proj);
         commit.setVersion(version);

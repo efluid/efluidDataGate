@@ -158,7 +158,7 @@ public class TestUtils {
 					.filter(e -> datasToCompare.remove(e) == null)
 					.collect(Collectors.toList());
 			List<String> added = datasToCompare.keySet().stream().collect(Collectors.toList());
-			throw new AssertionError("Dataset is not of the expected size. " + realSize + " items are present will " + expecteds.size()
+			throw new AssertionError("Dataset is not of the expected size. " + realSize + " items are present while " + expecteds.size()
 					+ " items are expected. New ones are with keys " + added + ", removed ones are with keys " + missing);
 		}
 
