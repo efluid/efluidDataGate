@@ -48,8 +48,7 @@ steps:
       - name: dockersock
         path: /var/run/docker.sock
     commands:
-      - docker rm -f datagate
-      - docker run --name datagate -p 8085:8080 -v /opt/server/datagate/cfg:/cfg -v /opt/server/datagate/tmp:/tmp -v /opt/server/datagate/logs:/logs -e TZ=Europe/Paris -d micro-server:443/datagate/latest
+      - docker run -rm --name datagate -p 8085:8080 -v /opt/server/datagate/cfg:/cfg -v /opt/server/datagate/tmp:/tmp -v /opt/server/datagate/logs:/logs -e TZ=Europe/Paris -d micro-server:443/datagate/latest
     when:
       branch:
         - develop
