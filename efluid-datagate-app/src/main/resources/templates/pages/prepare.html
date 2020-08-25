@@ -44,12 +44,14 @@
 				<h5>Ensemble des modifications identifiées</h5>
 					<div class="float-right">
 						<div class="btn-group" role="group">
-							<button type="button" id="selectAllButton" class="btn btn-outline-primary">Tout garder</button>
-							<button type="button" id="rollbackAllButton" class="btn btn-outline-danger">Tout annuler</button>
-							<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary">Tout ignorer</button>
+							<button type="button" id="selectAllButton" class="btn btn-primary">Tout garder</button>
+							<button type="button" id="rollbackAllButton" class="btn btn-danger">Tout annuler</button>
+							<button type="button" id="ignoreAllButton"  class="btn btn-secondary">Tout ignorer</button>
 						</div>&nbsp;
-						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-outline-light">Abandonner</a>
-						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-outline-dark" type="button">Regénérer</a>
+					</div>
+					<div class="btn-right">
+						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-light">Abandonner</a>
+						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-dark" type="button">Regénérer</a>
 					</div>
 			</div>
 			<div id="keep-filtered-ligne" style="padding-right:10px; display:None;">
