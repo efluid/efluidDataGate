@@ -745,13 +745,23 @@ th.filter.sorted-desc {
     justify-content: flex-end;
 }
 
-#domain-name, #table-name, #action-name {
+#table-name, #action-name {
     width: 15%;
     height: 100px;
     background-color: white;
     display:flex;
     align-items: center;
     padding-left: 10px;
+}
+
+#domain-name {
+       display:flex;
+       align-items: center;
+       justify-content: center;
+       width: 15%;
+       height: 100px;
+       background-color: white;
+       padding-left: 10px;
 }
 
 #key-name{
@@ -840,7 +850,7 @@ th.filter.sorted-desc {
 .change-display {
     width: 100%;
     max-height: 90px;
-    overflow: scroll;
+    overflow: hidden;
 }
 
 .container-is-used {
