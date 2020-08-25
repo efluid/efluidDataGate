@@ -834,7 +834,7 @@ th.filter.sorted-desc {
     height: 100%;
     margin: 0;
     padding: 20px 12px 20px 12px;
-    font-size: 0.8em;
+    font-size: 1em;
 }
 
 #filter-menu-delete {
@@ -844,7 +844,7 @@ th.filter.sorted-desc {
     height: 100%;
     margin: 0;
     padding: 20px 12px 20px 12px;
-    font-size: 0.8em;
+    font-size: 1em;
 
 }
 .change-display {
