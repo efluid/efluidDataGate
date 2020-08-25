@@ -745,7 +745,7 @@ th.filter.sorted-desc {
     justify-content: flex-end;
 }
 
-#domain-name, #table-name, #key-name, #action-name {
+#domain-name, #table-name, #action-name {
     width: 15%;
     height: 100px;
     background-color: white;
@@ -753,6 +753,22 @@ th.filter.sorted-desc {
     align-items: center;
     padding-left: 10px;
 }
+
+#key-name{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 15%;
+    height: 100px;
+    background-color: white;
+}
+
+#action-name {
+     display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 
 #payload-name {
     width: 30%;
@@ -830,6 +846,7 @@ th.filter.sorted-desc {
 .container-is-used {
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
 #title-domain, #title-table, #title-key, #title-type {
