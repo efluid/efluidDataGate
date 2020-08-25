@@ -861,6 +861,7 @@ th.filter.sorted-desc {
 
 #title-domain, #title-table, #title-key, #title-type {
     margin: 0;
+    font-weight: bold;
 }
 
 li {
