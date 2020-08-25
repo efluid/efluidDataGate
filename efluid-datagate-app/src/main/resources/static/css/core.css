@@ -324,15 +324,18 @@ select.select-column {
 }
 
 .action-line.add .change-display {
-    background-color: rgb(243, 250, 243);
+    color: #40916c;
+    border: 2px solid #40916c;
 }
 
 .action-line.update .change-display {
-    background-color: rgb(236, 229, 204);
+    color: #fb990e;
+    border: 2px solid #fb990e;
 }
 
 .action-line.remove .change-display {
-    background-color: rgb(255, 220, 220);
+    color: #dc2f02;
+    border: 2px solid #dc2f02;
 }
 
 .file-display {
