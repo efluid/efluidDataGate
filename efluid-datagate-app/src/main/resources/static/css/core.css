@@ -751,10 +751,11 @@ th.filter.sorted-desc {
     background-color: white;
     display:flex;
     align-items: center;
+    padding-left: 10px;
 }
 
 #payload-name {
-    width: 27%;
+    width: 30%;
     height: 100px;
     background-color: white;
     display:flex;
@@ -770,7 +771,7 @@ th.filter.sorted-desc {
 }
 
 #btns-groupe {
-    width: 14%;
+    width: 10%;
     height: 100px;
     background-color: white;
     display: flex;
