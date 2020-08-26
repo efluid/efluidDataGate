@@ -19,7 +19,7 @@
 			<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-dark btn-sm">Annuler la préparation</a>
 		</span>
 		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/ui/prepare/commit}" method="post">
-			<div th:if="${not preparation.diffRemarks.empty}" id="message-alert" role="alert">
+-          <div th:if="${not preparation.diffRemarks.empty}" id="message-alert" role="alert">
 				<div class="diff-remarks">
 					<div id="diffRemarkAreaButton" class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</div>
 					<span><b>Des avertissements ont été identifiés suite à la recherche de différences :</b></span>
