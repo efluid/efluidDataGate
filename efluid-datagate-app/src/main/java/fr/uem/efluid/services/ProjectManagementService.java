@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 import static fr.uem.efluid.utils.ErrorType.PROJECT_MANDATORY;
 import static fr.uem.efluid.utils.ErrorType.PROJECT_NAME_EXIST;
-import static fr.uem.efluid.utils.ErrorType.PROJECT_ID_ARE_NOT_SAME;
+import static fr.uem.efluid.utils.ErrorType.PROJECT_WRONG_ID;
 
 /**
  * <p>
@@ -196,7 +196,7 @@ public class ProjectManagementService extends AbstractApplicationService {
 
             LOGGER.debug("Update project name {}", newNameProject);
         } else {
-            throw new ApplicationException(PROJECT_ID_ARE_NOT_SAME, "Les ids ne correspondent pas, le nom du projet ne peut pas être modifié.");
+            throw new ApplicationException(PROJECT_WRONG_ID, "Les ids ne correspondent pas, le nom du projet ne peut pas être modifié.");
         }
 
         return project;
