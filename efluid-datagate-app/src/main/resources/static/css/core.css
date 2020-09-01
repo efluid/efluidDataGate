@@ -850,3 +850,10 @@ li {
     background-color: #F6F6F6;
     margin-bottom: 20px;
 }
+
+#container-btn {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}

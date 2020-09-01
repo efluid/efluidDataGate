@@ -15,8 +15,10 @@
             </thead>
             <tbody>
                 <tr th:each="project : ${projects}" th:id="${project.uuid}" th:class="|project-theme-${project.color}|">
-                     <td colspan="2" th:text="${project.name}">Production</td>
-                     <td>&nbsp;</td>
+                     <td colspan="2" th:text="${project.name}" th:id="item- + ${project.uuid}">Production</td>
+					<td colspan="2" th:id="${project.uuid}" th:name="${project.name}" class="pencil-update">
+						 <i class="fas fa-pencil-alt"></i>
+					 </td>
 			     </tr>
 			     <tr id="projectListInjectBefore">
 			         <td><input type="text" id="projectName" class="form-control" placeholder="Nom" required="true" size="40"/></td>
@@ -31,6 +33,10 @@
 						</span>
 					</td>
 			         <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+					 <td scope="col" id="container-btn">
+						 <button type="button" id="modifButton" class="btn btn-success btn-sm float-right">Modifier</button>
+						 <button type="button" id="cancelButton" class="btn btn-danger btn-sm float-right">Annuler</button>
+					 </td>
 			     </tr>
 			</tbody>
 		</table>
@@ -39,11 +45,15 @@
 		</div>
     </span>
     <script layout:fragment="script">
-
+		$('#modifButton').hide();
+		$('#cancelButton').hide();
+		$('#cross-modif').hide();
+		$('.color-picker').hide();
 		$('#color-nav-3').css("font-weight", "bold");
 		$('#collapseExample3').css("display", "block");
 		$('#li-11').css("font-weight", "bolder");
     	$("#projectAlreadyExists").hide();
+    	$(".pencil-update i").css({"display":"flex", "justify-content": "flex-end"});
 
 		const getPickedColor = () => {
 			return $(".project-color:checked").val();
@@ -71,11 +81,66 @@
 				$("#projectAlreadyExists").show();
 			});
 		};
-    
+
+		let uuid;
+		let oldName;
+
+		const modifButtonAction = () => {
+			var inputName = $("#projectName");
+			let newName = inputName.val();
+
+			$.post("/ui/projects/modif/" + newName + "/" + uuid + "/"+ oldName, null, (data, status) => {
+				inputName.val("");
+				showSuccess("Le nom du projet a été modifié avec succès.");
+				$("#projectAlreadyExists").hide();
+				window.location.replace("/ui/projects");
+		    })
+		    .fail(function() {
+		    	console.log("error");
+		    	$("#projectAlreadyExists").show();
+			});
+
+		}
+
+		const displayModifNameProject = (id) => {
+			uuid =  id;
+			oldName = $('#' + id).text().trim()
+			$('#projectName').attr('placeholder', oldName.trim());
+			$('#addButton').hide();
+			$('.color-picker').hide();
+			$('#cancelButton').show();
+			$('#modifButton').show();
+			$('#cross-modif').show();
+			$(".pencil-update i").css({"display":"none"});
+		}
+
+		const closeModifNameProject = () => {
+			let shouldCloseModif = false;
+
+			if (!shouldCloseModif) {
+				$('#modifButton').hide();
+				$('#cross-modif').hide();
+				$('#addButton').show();
+				$('#cancelButton').hide();
+				shouldCloseModif = true;
+				$(".pencil-update i").css({"display":"flex", "justify-content": "flex-end"});
+			} else {
+				$('#modifButton').show();
+				$('#cancelButton').show();
+				$('#cross-modif').hide();
+				$(".pencil-update i").css({"display":"none"});
+
+			}
+
+		}
+
     	// Init actions
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);
-		}); 
+			$("#modifButton").click(modifButtonAction);
+			$('#cancelButton').click(() => closeModifNameProject());
+			$(".pencil-update").click((e) => displayModifNameProject(e.target.parentElement.id));
+		});
     </script>
 </body>
 </html>
