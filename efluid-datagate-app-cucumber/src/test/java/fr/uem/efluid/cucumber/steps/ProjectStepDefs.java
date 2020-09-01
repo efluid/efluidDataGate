@@ -24,15 +24,12 @@ public class ProjectStepDefs extends CucumberStepDefs {
     public void the_existing_projects(String projectRaw) throws Throwable {
         List<String> projects = Stream.of(projectRaw.split(", ")).collect(Collectors.toList());
 
-        // Implicit init with default domain / project
         initMinimalWizzardData();
 
-        // Implicit authentication and on page
         implicitlyAuthenticatedAndOnPage("projects page");
 
-        // Init with specified versions
         modelDatabase().getAllProjects();
-        // Keep version for update check
+
         specifiedProjects = projects;
 
     }
