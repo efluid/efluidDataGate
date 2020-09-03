@@ -325,6 +325,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         List<PossibleKeyAnnotation> keys = Stream.concat(
                 foundFields.stream().map(PossibleKeyAnnotation::new),
                 foundMethods.stream().map(PossibleKeyAnnotation::new))
+                .filter(k -> k.canKeepInType(tableType))
                 .sorted(Comparator.comparing(PossibleKeyAnnotation::getValidName))
                 .collect(Collectors.toList());
 
@@ -342,7 +343,7 @@ public class DictionaryGenerator extends AbstractProcessor {
                     foundKeySpec = searchKey(tableType, paramTable);
 
                 } else {
-                    foundKeySpec = new PossibleKeyAnnotation(paramTable);
+                    foundKeySpec = new PossibleKeyAnnotation(tableType, paramTable);
                     getLog().debug("Specified keytype " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
                 }
 
@@ -508,11 +509,12 @@ public class DictionaryGenerator extends AbstractProcessor {
                         foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))
                 ).collect(Collectors.toList());
 
-        List<Class<?>> excludeInheriteds = new ArrayList<>();
+        List<ParameterInheritance> excludeInheriteds = new ArrayList<>();
         searchAllCombinedExcludeInheritedFrom(tableType, excludeInheriteds);
 
         // Prepare value columns (with support for composite)
         List<String> columnNames = values.stream()
+                .filter(v -> v.canKeepInType(tableType))
                 .filter(v -> !v.isExcluded(excludeInheriteds))
                 .flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
                 .filter(v -> !v.equalsIgnoreCase(def.getKeyName())) // Remove key if present
@@ -535,7 +537,6 @@ public class DictionaryGenerator extends AbstractProcessor {
                 allTables);
 
         getLog().debug("Generated select clause for type " + tableType.getName() + " is " + selectClause);
-
 
         def.setSelectClause(selectClause);
         allLinks.addAll(links);
@@ -561,11 +562,11 @@ public class DictionaryGenerator extends AbstractProcessor {
         // Valid methods (regarding anot)
         Set<Method> foundMethods = searchMethods(tableType);
 
-        List<Class<?>> excludeInheriteds = new ArrayList<>();
+        List<ParameterInheritance> excludeInheriteds = new ArrayList<>();
         searchAllCombinedExcludeInheritedFrom(tableType, excludeInheriteds);
 
         // Add set also
-        excludeInheriteds.addAll(Arrays.asList(paramTableSet.excludeInheritedFrom()));
+        excludeInheriteds.addAll(Arrays.asList(paramTableSet.excludeInherited()));
 
         for (ParameterTableDefinition def : defs) {
 
@@ -576,6 +577,7 @@ public class DictionaryGenerator extends AbstractProcessor {
                             foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))),
                     streamPossibleValueInDirectTablesDef(tableType, paramTableSet))
                     .filter(v -> v.isCompliantTable(def.getTableName())) // Only compliant
+                    .filter(v -> v.canKeepInType(tableType))
                     .filter(v -> !v.isExcluded(excludeInheriteds))
                     .collect(Collectors.toList());
 
@@ -928,7 +930,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         return searchPossible(tableType, possibleTables);
     }
 
-    private static void searchAllCombinedExcludeInheritedFrom(Class<?> tableType, List<Class<?>> excludeds) {
+    private static void searchAllCombinedExcludeInheritedFrom(Class<?> tableType, List<ParameterInheritance> excludeds) {
 
         if (tableType == Object.class) {
             return;
@@ -936,7 +938,7 @@ public class DictionaryGenerator extends AbstractProcessor {
 
         // Init possible on specified parent type
         if (tableType.getAnnotation(ParameterTable.class) != null) {
-            Class<?>[] excludedsLocally = tableType.getAnnotation(ParameterTable.class).excludeInheritedFrom();
+            ParameterInheritance[] excludedsLocally = tableType.getAnnotation(ParameterTable.class).excludeInherited();
 
             if (excludedsLocally.length > 0) {
                 excludeds.addAll(Arrays.asList(excludedsLocally));

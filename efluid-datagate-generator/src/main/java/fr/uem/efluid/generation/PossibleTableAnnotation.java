@@ -1,9 +1,6 @@
 package fr.uem.efluid.generation;
 
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.ParameterTable;
-import fr.uem.efluid.ParameterTableSet;
-import fr.uem.efluid.ParameterValue;
+import fr.uem.efluid.*;
 import fr.uem.efluid.model.ParameterDomainDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
 
@@ -33,7 +30,7 @@ class PossibleTableAnnotation {
     private String keyField;
     private ColumnType keyType;
     private boolean useAllFields;
-    private Class<?>[] excludeInheritedFrom;
+    private ParameterInheritance[] excludeInheritances;
     private ParameterValue[] values;
 
     /**
@@ -44,7 +41,7 @@ class PossibleTableAnnotation {
         this.intermediate = intermediate;
         this.sourceType = source;
         this.domainName = paramTable.domainName();
-        this.excludeInheritedFrom = paramTable.excludeInheritedFrom();
+        this.excludeInheritances = paramTable.excludeInherited();
         this.filterClause = paramTable.filterClause();
         this.keyField = paramTable.keyField();
         this.keyType = paramTable.keyType();
@@ -65,7 +62,7 @@ class PossibleTableAnnotation {
 
         if (existing == null) {
             this.domainName = localParamTable.domainName();
-            this.excludeInheritedFrom = localParamTable.excludeInheritedFrom();
+            this.excludeInheritances = localParamTable.excludeInherited();
             this.filterClause = localParamTable.filterClause();
             this.keyField = localParamTable.keyField();
             this.keyType = localParamTable.keyType();
@@ -83,7 +80,7 @@ class PossibleTableAnnotation {
                     : existing.getSourceType().getAnnotation(ParameterTable.class);
 
             this.domainName = failback(paramTable.domainName(), existing.getDomainName());
-            this.excludeInheritedFrom = paramTable.excludeInheritedFrom().length > 0 ? paramTable.excludeInheritedFrom() : existing.getExcludeInheritedFrom();
+            this.excludeInheritances = paramTable.excludeInherited().length > 0 ? paramTable.excludeInherited() : existing.getExcludeInheritances();
             this.filterClause = failback(paramTable.filterClause(), existing.getFilterClause());
             this.keyField = failback(paramTable.keyField(), existing.getKeyField());
             this.keyType = paramTable.keyType() != ColumnType.UNKNOWN ? paramTable.keyType() : existing.getKeyType();
@@ -146,8 +143,8 @@ class PossibleTableAnnotation {
         return useAllFields;
     }
 
-    Class<?>[] getExcludeInheritedFrom() {
-        return excludeInheritedFrom;
+    ParameterInheritance[] getExcludeInheritances() {
+        return this.excludeInheritances;
     }
 
     ParameterValue[] getValues() {
