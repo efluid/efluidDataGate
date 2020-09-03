@@ -890,6 +890,13 @@ li {
     margin-bottom: 20px;
 }
 
+#container-btn {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
 .btn-right {
     margin-right: 0;
 }
