@@ -1,11 +1,11 @@
-package fr.uem.efluid.tests.inheritance.exclude.onKey;
+package fr.uem.efluid.tests.inheritance.exclude.onValue;
 
 import fr.uem.efluid.ParameterTable;
 import fr.uem.efluid.ParameterTableSet;
 
 @ParameterTableSet(tables = {
-        @ParameterTable(tableName = "MY_TYPE", keyField = "keyOne"),
-        @ParameterTable(tableName = "MY_TYPE_CHILD", keyField = "keyOne")
+        @ParameterTable(tableName = "MY_TYPE"),
+        @ParameterTable(tableName = "MY_TYPE_CHILD")
 })
 public class InheritedTypeWithSet extends RootType {
 

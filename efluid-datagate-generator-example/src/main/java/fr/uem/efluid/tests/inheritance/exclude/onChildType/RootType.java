@@ -1,5 +1,4 @@
-package fr.uem.efluid.tests.inheritance.exclude.onValue;
-
+package fr.uem.efluid.tests.inheritance.exclude.onChildType;
 
 import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
@@ -14,6 +13,6 @@ public class RootType {
     @ParameterValue
     private String value;
 
-    @ParameterValue(name = "TO_EXCLUDE", notInherited = true)
-    private int otherToExclude;
+    @ParameterValue
+    private int other;
 }

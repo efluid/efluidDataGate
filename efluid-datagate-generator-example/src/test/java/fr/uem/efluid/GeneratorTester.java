@@ -58,6 +58,13 @@ public class GeneratorTester {
         return this;
     }
 
+    /**
+     * Init the generator for the specified tested classes / package, and extract the dictionary.
+     * All processed dictionary content are prepared for validation with the tester : after generate every tests can
+     * be specified
+     *
+     * @return Current generator, with processed dict content, ready to be used for testing
+     */
     public GeneratorTester generate() {
         DictionaryGenerator generator = new DictionaryGenerator(this.config);
         DictionaryContent ct;

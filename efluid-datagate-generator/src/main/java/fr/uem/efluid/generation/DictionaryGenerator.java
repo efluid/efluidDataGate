@@ -181,7 +181,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         possibleTables.forEach(p -> {
             // Exclude meta types
             if (!p.isIntermediate()) {
-                if(!p.getSourceType().isAnnotationPresent(ParameterIgnored.class)) {
+                if (!p.getSourceType().isAnnotationPresent(ParameterIgnored.class)) {
                     tables.computeIfAbsent(p.getSourceType(), k -> new ArrayList<>())
                             .add(initOneParameterTableWithKeys(p, annotDomains));
                 }
@@ -277,6 +277,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         return Stream.empty();
     }
 
+
     private ParameterTableDefinition initOneParameterTableWithKeys(
             PossibleTableAnnotation possible,
             Map<Class<?>, String> annotDomains) {
@@ -287,7 +288,9 @@ public class DictionaryGenerator extends AbstractProcessor {
         def.setDomain(new ParameterDomainDefinition()); // Will be merged later
 
         // Found domain name
-        def.getDomain().setName(failback(possible.getDomainName(), annotDomains.get(possible.getSourceType())));
+        def.getDomain().setName(failback(
+                possible.getDomainName(),
+                searchDomainNameInParents(possible.getSourceType(), annotDomains)));
 
         // Domain is mandatory
         if (def.getDomain().getName() == null) {
@@ -328,8 +331,6 @@ public class DictionaryGenerator extends AbstractProcessor {
                 .filter(k -> k.canKeepInType(tableType))
                 .sorted(Comparator.comparing(PossibleKeyAnnotation::getValidName))
                 .collect(Collectors.toList());
-
-        int keyFounds = 0;
 
         // No keys found on fields / methods, search other / auto-select
         if (keys.size() == 0) {
@@ -373,13 +374,11 @@ public class DictionaryGenerator extends AbstractProcessor {
                     // Init key def
                     def.setKeyName(i, foundKeySpec.getValidName());
                     def.setKeyType(i, foundKeySpec.getValidType());
-                    keyFounds++;
+
+                    getLog().debug("Found key " + foundKeySpec.getValidName() + " of type " + foundKeySpec.getValidType() + " for type " + tableType.getName());
                 }
             }
         }
-
-        getLog().debug("Found key " + def.getKeyName() + " of type " + def.getKeyType() + " for type " + tableType.getName()
-                + ((def.getExt1KeyName() != null) ? " and " + (keyFounds - 1) + " other ext keys" : ""));
     }
 
     private PossibleKeyAnnotation searchKey(Class<?> tableType, PossibleTableAnnotation paramTable) {
