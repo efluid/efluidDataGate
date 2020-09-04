@@ -223,6 +223,10 @@ public class ModelDatabaseAccess {
         return this.projects.findByName(name);
     }
 
+    public Project getAllProjects() {
+        return this.projects.getAllProjects();
+    }
+
     public Optional<TransformerDef> findTransformerDefByProjectAndNameAndType(Project pro, String name, Transformer<?, ?> tran) {
         return this.transformerDefs.findByProjectAndNameAndType(pro, name, tran.getClass().getSimpleName());
     }

@@ -1,30 +1,47 @@
 import com.efluid.jenkinsfile.Jenkinsfile
+import com.efluid.jenkins.*
+
+JenkinsUtils jenkinsUtils = new JenkinsUtils(this)
 
 // variables globales
-node('socle-jenkins-maven-docker-14-4G'){
-def credentialsId = env.credentialsId
-git branch: env.BRANCH_NAME, credentialsId: credentialsId, url: 'https://github.com/efluid/efluidDataGate'
+def body = {
+   def credentialsId = env.credentialsId
+   git branch: env.BRANCH_NAME, credentialsId: credentialsId, url: 'https://github.com/efluid/efluidDataGate'
 
-withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.httpProxyAuthentication, passwordVariable: 'proxyPassword', usernameVariable: 'proxyUsername']]) {
-           env.HTTP_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
-           env.HTTPS_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
-}
-try{
-	def applicationVersion = readMavenPom().getVersion()
-    def urlArtifactoryRelease = env.urlArtifactoryRelease
-	def urlArtifactorySnapshot = env.urlArtifactorySnapshot
-	def adressMailFrom = env.adressMailFrom
-	def adressMailTo = env.adressMailTo
-	sh 'mvn clean deploy -DskipNexusStagingDeployMojo=false -DskipTests=true -DurlArtifactoryRelease=${urlArtifactoryRelease} -DurlArtifactorySnapshot=${urlArtifactorySnapshot}'
-	sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
-	sh 'cp efluid-datagate-app/src/docker/build-serv-efluid/logback.xml efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
-	sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
-	sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion}"
-} catch (Exception e) {
-	mail bcc: '', body: """EfluidDataGate en erreur
+   withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.httpProxyAuthentication, passwordVariable: 'proxyPassword', usernameVariable: 'proxyUsername']]) {
+              env.HTTP_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
+              env.HTTPS_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
+   }
+   try{
+      def applicationVersion = readMavenPom().getVersion()
+       def urlArtifactoryRelease = env.urlArtifactoryRelease
+      def urlArtifactorySnapshot = env.urlArtifactorySnapshot
+      def adressMailFrom = env.adressMailFrom
+      def adressMailTo = env.adressMailTo
+      sh 'mvn clean deploy -DskipNexusStagingDeployMojo=false -DskipTests=true -DurlArtifactoryRelease=${urlArtifactoryRelease} -DurlArtifactorySnapshot=${urlArtifactorySnapshot}'
+      sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
+      sh 'cp efluid-datagate-app/src/docker/build-serv-efluid/logback.xml efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
+      sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
+      sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion}"
+   } catch (Exception e) {
+      mail bcc: '', body: """EfluidDataGate en erreur
 
-	${env.BUILD_URL}""", cc: '', from: adressMailFrom, replyTo: '', subject: 'Test EfluidDataGate', to: adressMailTo
-	throw e
+      ${env.BUILD_URL}""", cc: '', from: adressMailFrom, replyTo: '', subject: 'Test EfluidDataGate', to: adressMailTo
+      throw e
+   }
 }
+
+
+if (jenkinsUtils.isCjeProd()) {
+    node('socle-jenkins-maven-docker-14-4G') {
+        body.call()
+    }
+} else {
+    new EfluidPodTemplate(this).addContainer(new Container(this).containerType("maven-14").memory("4G")).execute() {
+        container("maven-14") {
+            body.call()
+        }
+    }
 }
+
 return this;

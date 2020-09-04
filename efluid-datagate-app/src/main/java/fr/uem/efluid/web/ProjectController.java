@@ -1,5 +1,6 @@
 package fr.uem.efluid.web;
 
+import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.stereotype.Controller;
@@ -54,6 +55,20 @@ public class ProjectController extends CommonController {
     @ResponseBody
     public ProjectData addProjectData(@PathVariable("name") String name, @PathVariable("color") int color) {
         return this.projectManagementService.createNewProject(name, color);
+    }
+
+    /**
+     * Rest Method for AJAX push
+     *
+     * @param oldNameProject
+     * @param newNameProject
+     * @param uuidProject
+     * @return
+     */
+    @RequestMapping(value = "/projects/modif/{oldNameProject}/{uuidProject}/{newNameProject}", method = POST)
+    @ResponseBody
+    public Project modifProjectData(@PathVariable("oldNameProject") String oldNameProject, @PathVariable("newNameProject") String newNameProject,  @PathVariable("uuidProject") UUID uuidProject) {
+        return this.projectManagementService.updateNameProject(oldNameProject, newNameProject, uuidProject);
     }
 
     /**

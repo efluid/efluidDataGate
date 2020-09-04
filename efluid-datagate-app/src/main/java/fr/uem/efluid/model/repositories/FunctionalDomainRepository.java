@@ -22,7 +22,7 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 
 	List<FunctionalDomain> findByProject(Project project);
 
-	@Query("SELECT DISTINCT do.uuid FROM IndexEntry ind INNER JOIN ind.dictionaryEntry.domain do GROUP BY do.uuid")
+	@Query("SELECT DISTINCT domain.uuid FROM DictionaryEntry")
 	List<UUID> findUsedIds();
 
 	/**

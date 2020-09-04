@@ -19,7 +19,7 @@
 			<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-dark btn-sm">Annuler la préparation</a>
 		</span>
 		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/ui/prepare/commit}" method="post">
-			<div th:if="${not preparation.diffRemarks.empty}" id="message-alert" role="alert">
+-          <div th:if="${not preparation.diffRemarks.empty}" id="message-alert" role="alert">
 				<div class="diff-remarks">
 					<div id="diffRemarkAreaButton" class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</div>
 					<span><b>Des avertissements ont été identifiés suite à la recherche de différences :</b></span>
@@ -44,12 +44,14 @@
 				<h5>Ensemble des modifications identifiées</h5>
 					<div class="float-right">
 						<div class="btn-group" role="group">
-							<button type="button" id="selectAllButton" class="btn btn-outline-primary">Tout garder</button>
-							<button type="button" id="rollbackAllButton" class="btn btn-outline-danger">Tout annuler</button>
-							<button type="button" id="ignoreAllButton"  class="btn btn-outline-secondary">Tout ignorer</button>
+							<button type="button" id="selectAllButton" class="btn btn-primary">Tout garder</button>
+							<button type="button" id="rollbackAllButton" class="btn btn-danger">Tout annuler</button>
+							<button type="button" id="ignoreAllButton"  class="btn btn-secondary">Tout ignorer</button>
 						</div>&nbsp;
-						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-outline-light">Abandonner</a>
-						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-outline-dark" type="button">Regénérer</a>
+					</div>
+					<div class="btn-right">
+						<a th:href="@{/ui/prepare/cancel}" href="#" class="btn btn-light">Abandonner</a>
+						<a th:href="@{/ui/prepare/restart}" href="#" class="btn btn-dark" type="button">Regénérer</a>
 					</div>
 			</div>
 			<div id="keep-filtered-ligne" style="padding-right:10px; display:None;">
@@ -69,10 +71,7 @@
 											<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
 											<i class="far fa-check-square" id="filter-used-domain"></i>
 										</div>
-										<div class="card" id="card-domain" style="width: 150px;">
-										  <div class="card-header">
-											Domaine
-										  </div>
+										<div class="card" id="card-domain" style="width: 170px;">
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
 												<select id="domainSearchField" class="form-control form-control-sm float-left" name="domainSearch" style="margin-right:10px">
@@ -96,10 +95,7 @@
 											<p id="title-table" onclick="showCardFilter('table')">Table</p>
 											<i class="far fa-check-square" id="filter-used-table"></i>
 										</div>
-										<div class="card" id="card-table" style="width: 150px;">
-										  <div class="card-header">
-											Table
-										  </div>
+										<div class="card" id="card-table" style="width: 170px;">
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
 												<input id="tableSearchField" type="text" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
@@ -121,10 +117,7 @@
 											<p id="title-key" onclick="showCardFilter('key')">Clé</p>
 											<i class="far fa-check-square" id="filter-used-key"></i>
 										</div>
-										<div class="card" id="card-key" style="width: 150px;">
-										  <div class="card-header">
-											Clé
-										  </div>
+										<div class="card" id="card-key" style="width: 170px;">
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
 												<input id="keySearchField" type="text" class="form-control form-control-sm float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
@@ -145,10 +138,7 @@
 											<p id="title-type" onclick="showCardFilter('type')">Type</p>
 											<i class="far fa-check-square" id="filter-used-type"></i>
 										</div>
-										<div class="card" id="card-type" style="width: 150px;">
-										  <div class="card-header">
-											Type
-										  </div>
+										<div class="card" id="card-type" style="width: 170px;">
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
 												<select id="typeSearchField" class="form-control form-control-sm float-left" name="typeSearch" style="margin-right:10px">

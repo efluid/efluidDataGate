@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import static fr.uem.efluid.utils.ErrorType.PROJECT_MANDATORY;
 import static fr.uem.efluid.utils.ErrorType.PROJECT_NAME_EXIST;
+import static fr.uem.efluid.utils.ErrorType.PROJECT_WRONG_ID;
 
 /**
  * <p>
@@ -171,6 +172,34 @@ public class ProjectManagementService extends AbstractApplicationService {
         this.accountProvider.updateUser(user);
 
         return ProjectData.fromEntity(project);
+    }
+
+    /**
+     * <p>
+     * For edit
+     * </p>
+     *
+     * @param oldNameProject old name project needed to find Project in list
+     * @param newNameProject new name project needed to update
+     * @throws ApplicationException if id on project is not known in DB do not update project return error
+     */
+    public Project updateNameProject(String newNameProject, String oldNameProject,  UUID uuidProject) {
+
+        Project project = this.projects.findByName(oldNameProject);
+
+        if(uuidProject.compareTo(project.getUuid()) == 0) { //verify that id are the same and we're not trying to change the project project's name
+            assertProjectNameIsAvailable(newNameProject);
+
+            project.setName(newNameProject);
+
+            project = this.projects.save(project);
+
+            LOGGER.debug("Update project name {}", newNameProject);
+        } else {
+            throw new ApplicationException(PROJECT_WRONG_ID, "Les ids ne correspondent pas, le nom du projet ne peut pas être modifié.");
+        }
+
+        return project;
     }
 
     /**
