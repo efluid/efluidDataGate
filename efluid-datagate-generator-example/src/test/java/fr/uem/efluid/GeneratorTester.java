@@ -53,12 +53,19 @@ public class GeneratorTester {
         this.config = config(pack, Stream.of(searchTypes).collect(Collectors.toSet()));
     }
 
-    public GeneratorTester withSpecifiedVersion(String version){
+    public GeneratorTester withSpecifiedVersion(String version) {
         this.projectVersion = version;
         return this;
     }
 
-    public GeneratorTester generate(){
+    /**
+     * Init the generator for the specified tested classes / package, and extract the dictionary.
+     * All processed dictionary content are prepared for validation with the tester : after generate every tests can
+     * be specified
+     *
+     * @return Current generator, with processed dict content, ready to be used for testing
+     */
+    public GeneratorTester generate() {
         DictionaryGenerator generator = new DictionaryGenerator(this.config);
         DictionaryContent ct;
 
@@ -75,7 +82,6 @@ public class GeneratorTester {
 
         return this;
     }
-
 
 
     public void exportWithUpload(int port, String token) {
@@ -223,8 +229,17 @@ public class GeneratorTester {
         }
 
         public GeneratedTableAssert hasKey(String keyname, ColumnType type) {
-            Assert.assertEquals("Specified key is not valid. Expected \"" + keyname + "\" but get \"" + this.tableOpt.get().getKeyName() + "\" for table \"" + tableName + "\"", keyname, this.tableOpt.get().getKeyName());
-            Assert.assertEquals("Specified key type is not valid. Expected \"" + type + "\" but get \"" + this.tableOpt.get().getKeyType() + "\" for table \"" + tableName + "\"", type, this.tableOpt.get().getKeyType());
+            List<String> names = this.tableOpt.get().getAllKeyNames();
+            List<ColumnType> types = this.tableOpt.get().getAllKeyTypes();
+            Assert.assertTrue("Specified key is not valid. Expected to found \"" + keyname + "\" but get \"" + Arrays.toString(names.toArray()) + "\" for table \"" + tableName + "\"", names.contains(keyname));
+            ColumnType found = types.get(names.indexOf(keyname));
+            Assert.assertEquals("Specified key type is not valid. Expected to found \"" + type + "\" but get \"" + Arrays.toString(types.toArray()) + "\" for table \"" + tableName + "\"", type, found);
+            return this;
+        }
+
+        public GeneratedTableAssert doesntHaveKey(String keyname) {
+            List<String> names = this.tableOpt.get().getAllKeyNames();
+            Assert.assertFalse("Specified key is not valid. Expected to not found \"" + keyname + "\" but get \"" + Arrays.toString(names.toArray()) + "\" for table \"" + tableName + "\"", names.contains(keyname));
             return this;
         }
 

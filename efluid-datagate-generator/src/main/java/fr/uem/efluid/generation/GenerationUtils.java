@@ -3,14 +3,19 @@ package fr.uem.efluid.generation;
 import fr.uem.efluid.*;
 import fr.uem.efluid.utils.RuntimeValuesUtils;
 import org.reflections.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Some common tools for generation
@@ -46,6 +51,16 @@ class GenerationUtils {
 
     static Set<Method> searchMethods(Class<?> tableType) {
         return ReflectionUtils.getAllMethods(tableType, GenerationUtils::isMethodValue);
+    }
+
+    static String searchDomainNameInParents(Class<?> source, Map<Class<?>, String> annotDomains) {
+
+        String found = annotDomains.get(source);
+
+        if (StringUtils.isEmpty(found) && !source.equals(Object.class)) {
+            return searchDomainNameInParents(source.getSuperclass(), annotDomains);
+        }
+        return found;
     }
 
 

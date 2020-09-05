@@ -1,9 +1,10 @@
 package fr.uem.efluid.sample.remarks;
 
+import fr.uem.efluid.ParameterInheritance;
 import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
 
-@ParameterTable(tableName = "T_CHILD_TABLE_TYPE_DROP", excludeInheritedFrom = ParentType.class)
+@ParameterTable(tableName = "T_CHILD_TABLE_TYPE_DROP", excludeInherited = @ParameterInheritance(of = ParentType.class))
 public class InheritingParentTypeTestDrop extends ParentType {
 
     @ParameterKey

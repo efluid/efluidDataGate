@@ -1,11 +1,9 @@
 package fr.uem.efluid.generation;
 
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.ParameterTable;
-import fr.uem.efluid.ParameterTableSet;
-import fr.uem.efluid.ParameterValue;
+import fr.uem.efluid.*;
 import fr.uem.efluid.model.ParameterDomainDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
+import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Modifier;
 import java.time.LocalDateTime;
@@ -33,7 +31,7 @@ class PossibleTableAnnotation {
     private String keyField;
     private ColumnType keyType;
     private boolean useAllFields;
-    private Class<?>[] excludeInheritedFrom;
+    private ParameterInheritance[] excludeInheritances;
     private ParameterValue[] values;
 
     /**
@@ -43,8 +41,8 @@ class PossibleTableAnnotation {
 
         this.intermediate = intermediate;
         this.sourceType = source;
-        this.domainName = paramTable.domainName();
-        this.excludeInheritedFrom = paramTable.excludeInheritedFrom();
+        this.domainName = failback(paramTable.domainName(), searchDomainNameInHierarchy(source));
+        this.excludeInheritances = paramTable.excludeInherited();
         this.filterClause = paramTable.filterClause();
         this.keyField = paramTable.keyField();
         this.keyType = paramTable.keyType();
@@ -64,8 +62,9 @@ class PossibleTableAnnotation {
         this.sourceType = source;
 
         if (existing == null) {
-            this.domainName = localParamTable.domainName();
-            this.excludeInheritedFrom = localParamTable.excludeInheritedFrom();
+
+            this.domainName = failback(localParamTable.domainName(), searchDomainNameInHierarchy(source));
+            this.excludeInheritances = localParamTable.excludeInherited();
             this.filterClause = localParamTable.filterClause();
             this.keyField = localParamTable.keyField();
             this.keyType = localParamTable.keyType();
@@ -82,8 +81,8 @@ class PossibleTableAnnotation {
                     ? localParamTable
                     : existing.getSourceType().getAnnotation(ParameterTable.class);
 
-            this.domainName = failback(paramTable.domainName(), existing.getDomainName());
-            this.excludeInheritedFrom = paramTable.excludeInheritedFrom().length > 0 ? paramTable.excludeInheritedFrom() : existing.getExcludeInheritedFrom();
+            this.domainName = failback(paramTable.domainName(), existing.getDomainName(), failback(searchDomainNameInHierarchy(source), searchDomainNameInHierarchy(existing.getSourceType())));
+            this.excludeInheritances = paramTable.excludeInherited().length > 0 ? paramTable.excludeInherited() : existing.getExcludeInheritances();
             this.filterClause = failback(paramTable.filterClause(), existing.getFilterClause());
             this.keyField = failback(paramTable.keyField(), existing.getKeyField());
             this.keyType = paramTable.keyType() != ColumnType.UNKNOWN ? paramTable.keyType() : existing.getKeyType();
@@ -102,16 +101,30 @@ class PossibleTableAnnotation {
         this(localParamTable, source, existing, intermediate);
 
         if (existing != null) {
-            ParameterTable paramTable = localParamTable != null
-                    ? localParamTable
-                    : existing.getSourceType().getAnnotation(ParameterTable.class);
+            String inheritedDomain = searchDomainNameInHierarchy(existing.getSourceType());
 
             // Double failover
-            this.domainName = failback(paramTable.domainName(), paramTableSet.domainName(), existing.getDomainName()); // 2 failovers
+            this.domainName = failback(inheritedDomain, paramTableSet.domainName(), existing.getDomainName()); // 2 failovers
         } else {
             this.domainName = failback(localParamTable.domainName(), paramTableSet.domainName());
         }
 
+    }
+
+    static String searchDomainNameInHierarchy(Class<?> source) {
+
+        String found = null;
+
+        ParameterTable paramTable = source.getAnnotation(ParameterTable.class);
+
+        if (paramTable != null) {
+            found = paramTable.domainName();
+        }
+
+        if (StringUtils.isEmpty(found) && !source.equals(Object.class)) {
+            return searchDomainNameInHierarchy(source.getSuperclass());
+        }
+        return found;
     }
 
     public Class<?> getSourceType() {
@@ -146,8 +159,8 @@ class PossibleTableAnnotation {
         return useAllFields;
     }
 
-    Class<?>[] getExcludeInheritedFrom() {
-        return excludeInheritedFrom;
+    ParameterInheritance[] getExcludeInheritances() {
+        return this.excludeInheritances;
     }
 
     ParameterValue[] getValues() {

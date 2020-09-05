@@ -19,7 +19,7 @@ import java.lang.annotation.Target;
  * <p>
  * <b>Here an example of use with <code>forTable</code> reference (or auto-set reference)
  * :</b>
- * 
+ *
  * <pre>
  * &#64;ParameterTableSet({
  *       &#64;ParameterTable(tableName="T_TABLE_ONE"),
@@ -27,28 +27,28 @@ import java.lang.annotation.Target;
  *       &#64;ParameterTable(tableName="T_TABLE_THREE")
  * })
  * public class TypeOnMultipleTablesFirst {
- * 
+ *
  *       &#64;ParameterKey // Si pas indiqué =&gt; Commun à toutes les tables du set
  *       private Long key;
- *       
+ *
  *       &#64;ParameterValue // Si pas indiqué =&gt; Commun à toutes les tables du set
  *       private String valueOnAll;
- *       
+ *
  *       &#64;ParameterValue(forTable="T_TABLE_ONE")
  *       private String valueA;
- *       
+ *
  *       &#64;ParameterValue(forTable="T_TABLE_ONE")
  *       private String valueB;
- *       
+ *
  *       &#64;ParameterValue(forTable="T_TABLE_TWO")
  *       private String valueC;
- *       
+ *
  *       &#64;ParameterValue(forTable="T_TABLE_TWO")
  *       private String valueD;
- *       
+ *
  *       &#64;ParameterValue(forTable="T_TABLE_THREE")
  *       private String valueE;
- *       
+ *
  *       &#64;ParameterValue(forTable="T_TABLE_THREE")
  *       private String valueF;
  * </pre>
@@ -56,7 +56,7 @@ import java.lang.annotation.Target;
  * <p>
  * <b>Here another example where the values and keys are specified directly into parameter
  * table annotations:</b>
- * 
+ *
  * <pre>
  * &#64;ParameterTableSet({
  *    &#64;ParameterTable(tableName="T_TABLE_ONE", keyField="keyOne", useAllFields=false, values = {
@@ -76,35 +76,35 @@ import java.lang.annotation.Target;
  *    })
  * })
  * public class TypeOnMultipleTablesSecond {
- * 
+ *
  *       private Long keyOne;
- *       
+ *
  *       private Long keyTwo;
- *       
+ *
  *       private Long keyThree;
- *       
+ *
  *       private String valueOnAll;
- *       
+ *
  *       private String valueA;
- *       
+ *
  *       private String valueB;
- *       
+ *
  *       private String valueC;
- *       
+ *
  *       private String valueD;
- *       
+ *
  *       private String valueE;
- *       
+ *
  *       private String valueF;
  * </pre>
  * </p>
  * <p>
  * The domain can be specified at set level with {@link #domainName()}
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 @Documented
 @Retention(RUNTIME)
@@ -112,45 +112,47 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface ParameterTableSet {
 
-	/**
-	 * <p>
-	 * Alias for <code>tables</code>
-	 * </p>
-	 */
-	ParameterTable[] value() default {};
+    /**
+     * <p>
+     * Alias for <code>tables</code>
+     * </p>
+     */
+    ParameterTable[] value() default {};
 
-	/**
-	 * <p>
-	 * The specified tables for the current set
-	 * </p>
-	 */
-	ParameterTable[] tables() default {};
+    /**
+     * <p>
+     * The specified tables for the current set
+     * </p>
+     */
+    ParameterTable[] tables() default {};
 
-	/**
-	 * <p>
-	 * Used instead of {@link ParameterTable#useAllFields()} for similar result on current
-	 * type
-	 * </p>
-	 */
-	boolean useAllFields() default true;
+    /**
+     * <p>
+     * Used instead of {@link ParameterTable#useAllFields()} for similar result on current
+     * type
+     * </p>
+     */
+    boolean useAllFields() default true;
 
-	/**
-	 * <p>
-	 * Domain to associate to all of the parameter table of the set. Used as default value
-	 * for the table, but can still be overwritten by domain defined in
-	 * <tt>ParameterTable</tt> annotation
-	 * </p>
-	 */
-	String domainName() default "";
+    /**
+     * <p>
+     * Domain to associate to all of the parameter table of the set. Used as default value
+     * for the table, but can still be overwritten by domain defined in
+     * <tt>ParameterTable</tt> annotation
+     * </p>
+     */
+    String domainName() default "";
 
-	/**
-	 * <p>
-	 * To force exclusion for default fields from specified inherited type.
-	 * Allows to specify a table mapping on a type will excluding any technical field from,
-	 * for example, a technical top level type (like with some Efluid ORM model types)
-	 * </p>
-	 *
-	 * @return array of types to exclude from field inclusion
-	 */
-	Class<?>[] excludeInheritedFrom() default {};
+    /**
+     * <p>
+     * To force exclusion for default fields from specified inherited type.
+     * Allows to specify a table mapping on a type will excluding any technical field from,
+     * for example, a technical top level type (like with some Efluid ORM model types)
+     * </p>
+     * <p>On each inheritance, if no fields are specified, then all are excluded. Else only the specified
+     * fields will be excluded</p>
+     *
+     * @return array of inheritance spec to exclude from field inclusion
+     */
+    ParameterInheritance[] excludeInherited() default {};
 }

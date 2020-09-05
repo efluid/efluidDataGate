@@ -54,4 +54,10 @@ public @interface ParameterKey {
 	 * </p>
 	 */
 	String[] forTable() default {};
+
+	/**
+	 * <p>Allows to specify that this mapping is not inherited in sub classes. Default is false</p>
+	 * @return boolean state for allowed inheritance for this value
+	 */
+	boolean notInherited() default false;
 }

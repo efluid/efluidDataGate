@@ -1,9 +1,6 @@
 package fr.uem.efluid.generation;
 
-import fr.uem.efluid.ParameterCompositeValue;
-import fr.uem.efluid.ParameterLink;
-import fr.uem.efluid.ParameterMapping;
-import fr.uem.efluid.ParameterValue;
+import fr.uem.efluid.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -129,10 +126,13 @@ class PossibleValueAnnotation {
         return this.forTable == null || this.forTable.contains(name);
     }
 
-    boolean isExcluded(List<Class<?>> types) {
+    boolean isExcluded(List<ParameterInheritance> inheritances) {
 
-        if (types.size() > 0) {
-            return types.stream().anyMatch(t -> t == this.sourceClazz);
+        if (inheritances.size() > 0) {
+            return inheritances.stream().anyMatch(t ->
+                    t.of() == this.sourceClazz
+                            && (t.fields().length == 0 || Arrays.asList(t.fields()).contains(this.validName))
+            );
         }
 
         return false;
@@ -228,5 +228,10 @@ class PossibleValueAnnotation {
         }
 
         return new String[]{};
+    }
+
+    boolean canKeepInType(Class<?> type) {
+        return this.sourceClazz.equals(type)
+                || (this.valueAnnot == null || !this.valueAnnot.notInherited());
     }
 }
