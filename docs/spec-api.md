@@ -155,6 +155,7 @@ _Cette annotation **@ParameterTable** intègre les propriétés suivantes :_
 * **keyType** : le type de valeur pour la clé si **keyField** est spécifié
 * **useAllFields** : par défaut true. Indique d’utiliser tous les fields de l’objet courant comme colonne de valeur a moins qu’ils soient explicitement exclus
 * **values** : La spécification explicite des colonnes de valeur si les annotations spécifiques ne sont pas utilisées et si **useAllFields** est false
+* **excludeInherited** : Liste des héritages à exclure du mapping pour la table courante. Les exclusions peuvent porter sur tous les fields d'une classe, ou sur certains fields seulement
 
 Cette annotation est portée par une classe java : on indique donc une table à partir d’un objet java la représentant (type entité ou DAO).
 
@@ -169,6 +170,7 @@ Les valeurs et clés peuvent être spécifiés via les annotations dédiées **f
 * **value** : le nom de la colonne correspondant au field / à la méthode annotée à utiliser comme clé
 * **type** : le type de valeur pour la clé. Utilise l'enum **fr.uem.efluid.ColumnType** avec : BINARY = les blobs / clobs, ATOMIC = les numériques (int, float ...), STRING = les litérales (varchar...), BOOLEAN = les booléens, TEMPORAL = les dates, times, timestamps ...
 * **forTable** : Dans le cas d'une utilisation d'un "set de table de paramètrage" (voir plus loin), permet d'indiquer pour quel table la clé est mappée
+* **notInherited** : La clé est pris en compte pour générer l'entré de dictionnaire pour la classe courante, mais sera ignoré pour les entrés de dictionnaire générés pour toutes ses classes filles
 
 N'importe quel field ou méthode peut être utilisé comme clé. Si **value** n'est pas précisé, alors ces le nom du field ou de la méthode en majuscule qui est utilisé. Le **type** est également déterminé automatiquement à partir du type java. Tous les types java standards de définition de clées fonctionnelles sont supportés : String, Long ... Le type doit être précisé quand il n'est pas explicite (cas d'un type interne par exemple)
 
@@ -177,6 +179,7 @@ Pour préciser une clé composite, il suffit d'indiquer **@ParameterKey** pour c
 *Les propriétés de __@ParameterValue__ :*
 * **value** = **name** : Utiliser l'un ou l'autre pour définir le nom de la colonne correspondante au field / méthode
 * **forTable** : Idem **@ParameterKey**
+* **notInherited** : Le field est pris en compte pour générer l'entré de dictionnaire pour la classe courante, mais sera ignoré pour les entrés de dictionnaire générés pour toutes ses classes filles
 
 La même règle de génération du nom de colonne que pour les clé est utilisée si value ou name ne sont pas précisé. Par ailleurs une valeur peut être implicite : Si dans **@ParameterTable** **useAllFields** est true (ce qui est le cas par défaut) alors tous les fields de l'objet java sont considérés comme des Values, à moins qu'ils soient annoté comme des clés ou avec l'annotation d'exclusion **@ParameterIgnored**.
 
@@ -539,7 +542,7 @@ Ainsi, avec l'exemple suivant :
 
 Toutes les tables présentées sont traitées comme des parameterTable, sauf si elles sont abstract. Les classes filles ont toutes les propriétés définies dans TopType.
 
-Pour exclure des fields des colonnes de valeur, l'attribut `excludeInheritedFrom` peut être utiliser pour indiquer les classes dont les fields ou méthodes doivent être ignorés.
+Pour exclure des fields des colonnes de valeur, l'attribut `excludeInherited` peut être utiliser pour indiquer les classes dont les fields ou méthodes doivent être ignorés : l'héritage à exclure est alors représenté par un `@ParameterInheritance` où est indiqué la classe et les champs spécifiques (tous les fields de la classe seront exclus si l'attribut `fields` n'est pas renseigné)
 
 Avec ces règles d'héritage et cette possible exclusion, il devient possible de préciser un type parent, par exemple pour tous les DAO Efluid, dont les champs propres seraient exclus automatiquement, avec le code suivant : 
 
@@ -550,7 +553,7 @@ Avec ces règles d'héritage et cette possible exclusion, il devient possible de
  * 
  * Le field "internal" est ignoré (car les fields de MyParentEntityType sont exclus des héritages)
  */
-@ParameterTable(excludeInheritedFrom = MyParentEntityType.class, keyField = "id", domainName = "Entities Efluid")
+@ParameterTable(excludeInherited = @ParameterInheritance(of = MyParentEntityType.class), keyField = "id", domainName = "Entities Efluid")
 public abstract class MyParentEntityType {
 
     private String internal;

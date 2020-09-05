@@ -15,7 +15,7 @@ public enum CommitState {
     /**
      * Commit was imported, without conflict / diff : simply applied, and kept locally
      */
-    IMPORTED(7),
+    IMPORTED(8),
 
     /**
      * Commit was created as a merge from an imported commit. Ref to the imported is kept
@@ -27,7 +27,7 @@ public enum CommitState {
     /**
      * Commit was fully created locally
      */
-    LOCAL(5);
+    LOCAL(6);
 
     private final int processingSteps;
 

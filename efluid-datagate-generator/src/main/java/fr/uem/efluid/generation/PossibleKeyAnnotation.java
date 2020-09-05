@@ -25,6 +25,7 @@ class PossibleKeyAnnotation {
     private final String validName;
     private final ColumnType validType;
     private final Collection<String> forTable;
+    private final Class<?> sourceClazz;
 
     PossibleKeyAnnotation(Method method) {
         this(method, null);
@@ -40,6 +41,7 @@ class PossibleKeyAnnotation {
                 : ColumnType.forClass(method.getReturnType());
         this.forTable = this.keyAnnot != null && this.keyAnnot.forTable().length > 0 ? Arrays.asList(this.keyAnnot.forTable())
                 : null;
+        this.sourceClazz = method.getDeclaringClass();
     }
 
     PossibleKeyAnnotation(Field field) {
@@ -52,13 +54,15 @@ class PossibleKeyAnnotation {
                 : ColumnType.forClass(field.getType());
         this.forTable = this.keyAnnot != null && this.keyAnnot.forTable().length > 0 ? Arrays.asList(this.keyAnnot.forTable())
                 : null;
+        this.sourceClazz = field.getDeclaringClass();
     }
 
-    PossibleKeyAnnotation(PossibleTableAnnotation possibleTableAnnotation) {
+    PossibleKeyAnnotation(Class<?> declaringClazz, PossibleTableAnnotation possibleTableAnnotation) {
         this.keyAnnot = null;
         this.validName = possibleTableAnnotation.getKeyField().toUpperCase();
         this.validType = possibleTableAnnotation.getKeyType();
         this.forTable = Collections.singletonList(possibleTableAnnotation.getName());
+        this.sourceClazz = declaringClazz;
     }
 
     /**
@@ -83,4 +87,9 @@ class PossibleKeyAnnotation {
         return this.forTable == null || this.forTable.contains(name);
     }
 
+
+    boolean canKeepInType(Class<?> type) {
+        return this.sourceClazz.equals(type)
+                || (this.keyAnnot == null || !this.keyAnnot.notInherited());
+    }
 }

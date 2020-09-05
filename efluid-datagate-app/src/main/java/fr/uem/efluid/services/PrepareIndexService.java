@@ -227,8 +227,6 @@ public class PrepareIndexService {
                     entry,
                     preparation);
 
-            preparation.incrementProcessStep();
-
             // Apply transformer on merge content
             List<? extends PreparedIndexEntry> transformedMergeDiff = preparation.getTransformerProcessor() != null
                     ? preparation.getTransformerProcessor().transform(entry, mergeDiff) : mergeDiff;

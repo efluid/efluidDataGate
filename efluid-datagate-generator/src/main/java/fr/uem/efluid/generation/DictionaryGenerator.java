@@ -181,7 +181,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         possibleTables.forEach(p -> {
             // Exclude meta types
             if (!p.isIntermediate()) {
-                if(!p.getSourceType().isAnnotationPresent(ParameterIgnored.class)) {
+                if (!p.getSourceType().isAnnotationPresent(ParameterIgnored.class)) {
                     tables.computeIfAbsent(p.getSourceType(), k -> new ArrayList<>())
                             .add(initOneParameterTableWithKeys(p, annotDomains));
                 }
@@ -277,6 +277,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         return Stream.empty();
     }
 
+
     private ParameterTableDefinition initOneParameterTableWithKeys(
             PossibleTableAnnotation possible,
             Map<Class<?>, String> annotDomains) {
@@ -287,7 +288,9 @@ public class DictionaryGenerator extends AbstractProcessor {
         def.setDomain(new ParameterDomainDefinition()); // Will be merged later
 
         // Found domain name
-        def.getDomain().setName(failback(possible.getDomainName(), annotDomains.get(possible.getSourceType())));
+        def.getDomain().setName(failback(
+                possible.getDomainName(),
+                searchDomainNameInParents(possible.getSourceType(), annotDomains)));
 
         // Domain is mandatory
         if (def.getDomain().getName() == null) {
@@ -325,10 +328,9 @@ public class DictionaryGenerator extends AbstractProcessor {
         List<PossibleKeyAnnotation> keys = Stream.concat(
                 foundFields.stream().map(PossibleKeyAnnotation::new),
                 foundMethods.stream().map(PossibleKeyAnnotation::new))
+                .filter(k -> k.canKeepInType(tableType))
                 .sorted(Comparator.comparing(PossibleKeyAnnotation::getValidName))
                 .collect(Collectors.toList());
-
-        int keyFounds = 0;
 
         // No keys found on fields / methods, search other / auto-select
         if (keys.size() == 0) {
@@ -342,7 +344,7 @@ public class DictionaryGenerator extends AbstractProcessor {
                     foundKeySpec = searchKey(tableType, paramTable);
 
                 } else {
-                    foundKeySpec = new PossibleKeyAnnotation(paramTable);
+                    foundKeySpec = new PossibleKeyAnnotation(tableType, paramTable);
                     getLog().debug("Specified keytype " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
                 }
 
@@ -372,13 +374,11 @@ public class DictionaryGenerator extends AbstractProcessor {
                     // Init key def
                     def.setKeyName(i, foundKeySpec.getValidName());
                     def.setKeyType(i, foundKeySpec.getValidType());
-                    keyFounds++;
+
+                    getLog().debug("Found key " + foundKeySpec.getValidName() + " of type " + foundKeySpec.getValidType() + " for type " + tableType.getName());
                 }
             }
         }
-
-        getLog().debug("Found key " + def.getKeyName() + " of type " + def.getKeyType() + " for type " + tableType.getName()
-                + ((def.getExt1KeyName() != null) ? " and " + (keyFounds - 1) + " other ext keys" : ""));
     }
 
     private PossibleKeyAnnotation searchKey(Class<?> tableType, PossibleTableAnnotation paramTable) {
@@ -508,11 +508,12 @@ public class DictionaryGenerator extends AbstractProcessor {
                         foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))
                 ).collect(Collectors.toList());
 
-        List<Class<?>> excludeInheriteds = new ArrayList<>();
+        List<ParameterInheritance> excludeInheriteds = new ArrayList<>();
         searchAllCombinedExcludeInheritedFrom(tableType, excludeInheriteds);
 
         // Prepare value columns (with support for composite)
         List<String> columnNames = values.stream()
+                .filter(v -> v.canKeepInType(tableType))
                 .filter(v -> !v.isExcluded(excludeInheriteds))
                 .flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
                 .filter(v -> !v.equalsIgnoreCase(def.getKeyName())) // Remove key if present
@@ -535,7 +536,6 @@ public class DictionaryGenerator extends AbstractProcessor {
                 allTables);
 
         getLog().debug("Generated select clause for type " + tableType.getName() + " is " + selectClause);
-
 
         def.setSelectClause(selectClause);
         allLinks.addAll(links);
@@ -561,11 +561,11 @@ public class DictionaryGenerator extends AbstractProcessor {
         // Valid methods (regarding anot)
         Set<Method> foundMethods = searchMethods(tableType);
 
-        List<Class<?>> excludeInheriteds = new ArrayList<>();
+        List<ParameterInheritance> excludeInheriteds = new ArrayList<>();
         searchAllCombinedExcludeInheritedFrom(tableType, excludeInheriteds);
 
         // Add set also
-        excludeInheriteds.addAll(Arrays.asList(paramTableSet.excludeInheritedFrom()));
+        excludeInheriteds.addAll(Arrays.asList(paramTableSet.excludeInherited()));
 
         for (ParameterTableDefinition def : defs) {
 
@@ -576,6 +576,7 @@ public class DictionaryGenerator extends AbstractProcessor {
                             foundMethods.stream().map(m -> new PossibleValueAnnotation(m, ccl))),
                     streamPossibleValueInDirectTablesDef(tableType, paramTableSet))
                     .filter(v -> v.isCompliantTable(def.getTableName())) // Only compliant
+                    .filter(v -> v.canKeepInType(tableType))
                     .filter(v -> !v.isExcluded(excludeInheriteds))
                     .collect(Collectors.toList());
 
@@ -928,7 +929,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         return searchPossible(tableType, possibleTables);
     }
 
-    private static void searchAllCombinedExcludeInheritedFrom(Class<?> tableType, List<Class<?>> excludeds) {
+    private static void searchAllCombinedExcludeInheritedFrom(Class<?> tableType, List<ParameterInheritance> excludeds) {
 
         if (tableType == Object.class) {
             return;
@@ -936,7 +937,7 @@ public class DictionaryGenerator extends AbstractProcessor {
 
         // Init possible on specified parent type
         if (tableType.getAnnotation(ParameterTable.class) != null) {
-            Class<?>[] excludedsLocally = tableType.getAnnotation(ParameterTable.class).excludeInheritedFrom();
+            ParameterInheritance[] excludedsLocally = tableType.getAnnotation(ParameterTable.class).excludeInherited();
 
             if (excludedsLocally.length > 0) {
                 excludeds.addAll(Arrays.asList(excludedsLocally));

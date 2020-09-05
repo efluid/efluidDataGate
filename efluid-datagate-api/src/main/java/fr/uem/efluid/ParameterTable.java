@@ -133,10 +133,12 @@ public @interface ParameterTable {
      * Allows to specify a table mapping on a type will excluding any technical field from,
      * for example, a technical top level type (like with some Efluid ORM model types)
      * </p>
+     * <p>On each inheritance, if no fields are specified, then all are excluded. Else only the specified
+     * fields will be excluded</p>
      *
-     * @return array of types to exclude from field inclusion
+     * @return array of inheritance spec to exclude from field inclusion
      */
-    Class<?>[] excludeInheritedFrom() default {};
+    ParameterInheritance[] excludeInherited() default {};
 
     /**
      * <p>
