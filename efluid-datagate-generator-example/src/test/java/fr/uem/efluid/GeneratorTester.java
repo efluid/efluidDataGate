@@ -12,6 +12,7 @@ import org.junit.Assert;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,6 +49,12 @@ public class GeneratorTester {
     private Pattern keySearch = Pattern.compile("^Found key (.*) of type (.*) for type (.*)$");
     private Pattern tableSearch = Pattern.compile("^Found new mapped parameter .* in type (.*) with table (.*) and generated UUID (.*)$");
     private Pattern valueSearch = Pattern.compile("^Found selected value (.*) for type (.*)$");
+
+    private static final Function<String, String> CLEAN_COLUMN = v ->
+            v.replaceAll("cur\\.\"", "")
+                    .replaceAll("\"", "")
+                    .replaceAll(".* as ln_", "")
+                    .trim();
 
     private GeneratorTester(String pack, Class<?>... searchTypes) {
         this.config = config(pack, Stream.of(searchTypes).collect(Collectors.toSet()));
@@ -247,14 +254,14 @@ public class GeneratorTester {
             String[] splitSelect = this.tableOpt.get().getSelectClause().split(", ");
             Assert.assertEquals("Specified select is not valid. Do not find the correct number of columns in current select \"" + this.tableOpt.get().getSelectClause()
                     + "\" for table \"" + tableName + "\"", selectCols.length, splitSelect.length);
-            List<String> cols = Stream.of(splitSelect).map(v -> v.replaceAll("cur\\.\"", "").replaceAll("\"", "")).collect(Collectors.toList());
+            List<String> cols = Stream.of(splitSelect).map(CLEAN_COLUMN).collect(Collectors.toList());
             Stream.of(selectCols).forEach(v -> Assert.assertTrue("Specified select is not valid. Cannot found specified col \"" + v + "\" for table \"" + tableName + "\"", cols.contains(v)));
             return this;
         }
 
         public GeneratedTableAssert doesntHaveColumns(String... selectCols) {
             String[] splitSelect = this.tableOpt.get().getSelectClause().split(", ");
-            List<String> cols = Stream.of(splitSelect).map(v -> v.replaceAll("cur\\.\"", "").replaceAll("\"", "")).collect(Collectors.toList());
+            List<String> cols = Stream.of(splitSelect).map(CLEAN_COLUMN).collect(Collectors.toList());
             Stream.of(selectCols).forEach(v -> Assert.assertFalse("Specified select is not valid. Found unexpected col \"" + v + "\" for table \"" + tableName + "\"", cols.contains(v)));
             return this;
         }

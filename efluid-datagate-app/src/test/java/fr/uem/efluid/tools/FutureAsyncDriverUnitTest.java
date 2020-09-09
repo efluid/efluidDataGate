@@ -41,7 +41,7 @@ public class FutureAsyncDriverUnitTest {
         driver.start(proc, (p) -> p.process(driver));
 
         // After timeout
-        Thread.sleep(400);
+        Thread.sleep(1000);
 
         // Must be active
         assertThat(driver.listCurrentInSurvey()).isEmpty();
