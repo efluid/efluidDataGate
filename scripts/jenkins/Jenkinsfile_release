@@ -19,7 +19,7 @@ def body = {
          sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion} -DaltReleaseDeploymentRepository=releases::releases::${urlArtifactoryRelease}"
        }
        withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-         sh('git push --all ssh://${GIT_USERNAME}@github.com/efluid/efluidDataGate.git')
+         sh('git push --all ssh://${GIT_USERNAME}@github.com:efluid/efluidDataGate.git')
        }
       
       sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
