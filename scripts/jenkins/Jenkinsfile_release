@@ -25,9 +25,10 @@ def body = {
       
       sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
       sh 'cp efluid-datagate-app/src/docker/build-serv-efluid/logback.xml efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
-      sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
-      sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion}"
-      
+      container("docker-14") {
+         sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
+         sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion}"
+      }
       gitHubUtils.createRelease('efluidDataGate',releaseVersion)
 	}
     String mailDetail = "efluidDataGate tool from open source project https://github.com/efluid/efluidDataGate was successfull released in version ${releaseVersion}"
@@ -44,7 +45,10 @@ if (jenkinsUtils.isCjeProd()) {
         body.call()
     }
 } else {
-    new EfluidPodTemplate(this).addContainer(new Container(this).containerType("maven-14").memory("4G")).execute() {
+    new EfluidPodTemplate(this)
+         .addContainer(new Container(this).containerType("maven-14").memory("6G"))
+         .addContainer(new Container(this).containerType("docker-14").memory("4G"))
+         .execute() {
         container("maven-14") {
             body.call()
         }
