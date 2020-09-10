@@ -373,6 +373,7 @@ public class DictionaryEntryEditData {
 
             ColumnEditData editData = new ColumnEditData();
             editData.setName(selected);
+            editData.setType(ColumnType.UNKNOWN);
 
             // Specify if key
             for (int i = 0; i < keyNames.size(); i++) {
@@ -381,8 +382,9 @@ public class DictionaryEntryEditData {
                     editData.setType(keyTypes.get(i));
                     break;
                 }
-                editData.setSelected(true);
             }
+
+            editData.setSelected(true);
 
             if (linkUpdate != null) {
                 editData.setForeignKeyTable(linkUpdate.getLink().getTableTo());

@@ -23,8 +23,10 @@ steps:
       token:
         from_secret: codecov_token
       files:
+        - ./efluid-datagate-common/target/site/jacoco-aggregate/jacoco.xml
         - ./efluid-datagate-app/target/site/jacoco-aggregate/jacoco.xml
         - ./efluid-datagate-app-cucumber/target/site/jacoco-aggregate/jacoco.xml
+        - ./efluid-datagate-generator-example/target/site/jacoco-aggregate/jacoco.xml
     when:
       branch:
         - develop

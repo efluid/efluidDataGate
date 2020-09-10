@@ -55,8 +55,8 @@
 					<tbody>
 						<tr th:each="column, stat : ${entry.columns}" th:id="${column.name}">
 							<td><span th:class="${column.key}?'table-key'" class="table-key" th:title="${column.key}?'Clé selectionnée'" th:text="${column.name}">COLKEY</span></td>
-							<td>Inconnu<input type="hidden" th:id="|selectFor${column.name}|" value="true"></input></td>
-							<td>Inconnu</td>
+							<td><span th:text="${column.type.displayName}">Inconnu</span><input type="hidden" th:id="|selectFor${column.name}|" value="true"></input></td>
+							<td><span th:if="${column.foreignKeyTable != null}" th:text="|${column.foreignKeyTable} - ${column.foreignKeyColumn}|">Inconnu</span></td>
 						</tr>
 						<!--/* forced hidden "unselected" to make the query building using column names and not "*" */-->
 						<tr style="display:none" id="FORCER56TT">

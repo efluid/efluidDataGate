@@ -51,7 +51,7 @@ public enum ColumnType {
     STRING('S', "Litteral", false),
     BOOLEAN('1', "Booleen", false),
     TEMPORAL('T', "Temporal", false),
-    UNKNOWN('U', "Unknown", false),
+    UNKNOWN('U', "Inconnu", false),
     PK_ATOMIC('!', "Identifiant Num", true),
     PK_STRING('§', "Identifiant Char", true);
 
