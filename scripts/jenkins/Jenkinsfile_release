@@ -9,7 +9,8 @@ def body = {
   MailUtils mailUtils = new MailUtils(this)
   GitHubUtils gitHubUtils = new GitHubUtils(this)
 
-  git branch: branch, credentialsId: credentials.efluidGithubAccount, url: 'https://github.com/efluid/efluidDataGate'
+  def credentialsId = env.credentialsId
+  git branch: env.BRANCH_NAME, credentialsId: credentialsId, url: 'git@github.com:efluid/efluidDataGate.git'
   String subject = "Release efluidDataGate ${releaseVersion}"
 
   try{
@@ -22,7 +23,7 @@ def body = {
       sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion} -DaltReleaseDeploymentRepository=releases::releases::${urlArtifactoryRelease}"
     }
     withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-      sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/efluidDataGate.git')
+      sh('git push --all ssh://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/efluidDataGate.git')
     }
 	
 	sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
