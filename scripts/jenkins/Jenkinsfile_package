@@ -5,9 +5,8 @@ JenkinsUtils jenkinsUtils = new JenkinsUtils(this)
 
 // variables globales
 def body = {
-   def credentialsId = env.credentialsId
-   git branch: env.BRANCH_NAME, credentialsId: credentialsId, url: 'git@github.com:efluid/efluidDataGate.git'
-
+   git branch: branch, credentialsId: credentials.efluidGithubAccount, url: 'git@github.com:efluid/efluidDataGate.git'
+    
    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.httpProxyAuthentication, passwordVariable: 'proxyPassword', usernameVariable: 'proxyUsername']]) {
               env.HTTP_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"
               env.HTTPS_PROXY = "http://${env.proxyUsername}:${env.proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort}"

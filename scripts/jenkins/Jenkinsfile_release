@@ -9,8 +9,7 @@ def body = {
   MailUtils mailUtils = new MailUtils(this)
   GitHubUtils gitHubUtils = new GitHubUtils(this)
 
-  def credentialsId = env.credentialsId
-  git branch: env.BRANCH_NAME, credentialsId: credentialsId, url: 'git@github.com:efluid/efluidDataGate.git'
+   git branch: branch, credentialsId: credentials.efluidGithubAccount, url: 'git@github.com:efluid/efluidDataGate.git'
   String subject = "Release efluidDataGate ${releaseVersion}"
 
   try{
