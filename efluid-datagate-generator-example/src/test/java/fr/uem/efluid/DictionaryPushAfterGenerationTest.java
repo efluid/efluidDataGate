@@ -11,6 +11,8 @@ import fr.uem.efluid.services.types.DictionaryEntrySummary;
 import fr.uem.efluid.tests.deleteAfterUpload.EfluidFunction;
 import fr.uem.efluid.tests.deleteAfterUpload.EfluidWorkflowDomain;
 import fr.uem.efluid.tests.deleteAfterUpload.EfluidWorkflowStepRoot;
+import fr.uem.efluid.tests.inheritance.onValues.EfluidSubRoot;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +22,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static fr.uem.efluid.GeneratorTester.onPackage;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,6 +60,13 @@ public class DictionaryPushAfterGenerationTest {
     @Autowired
     private ProjectManagementService projectManagementService;
 
+    @Before
+    public void reset() {
+
+        this.userHolder.setCurrentUser(new User("login"));
+        this.dictionaryManagementService.getDictionnaryEntrySummaries()
+                .forEach(e -> this.dictionaryManagementService.deleteDictionaryEntry(e.getUuid()));
+    }
 
     @Test
     public void testVersionIsUpdatedOnUploadWithModelId() {
@@ -279,6 +286,187 @@ public class DictionaryPushAfterGenerationTest {
         // Check updated
         tabs = this.dictionaryManagementService.getDictionnaryEntrySummaries();
         assertThat(tabs).hasSize(2);
+    }
+
+    @Test
+    public void testEfluidValueInheritanceGeneration() {
+
+        var tester = onPackage(fr.uem.efluid.tests.inheritance.onValues.EfluidSubRoot.class.getPackageName())
+                .withSpecifiedVersion(VERSION)
+                .generate();
+
+        tester.assertThatContentWereIdentified();
+
+        tester.assertThatTable("TCOMBINAISONCOMPLEXE")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.onValues.EfluidCombination.class)
+                .isInDomain(EfluidWorkflowDomain.NAME)
+                .isInProject(EfluidWorkflowDomain.PROJECT)
+                .hasKey("ID", ColumnType.ATOMIC)
+                .hasColumns("VALUE", "CREATEDAT");
+
+        tester.assertThatTable("TMODELEDECAMPAGNE")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.onValues.ModeleDeCampagne.class)
+                .isInDomain(EfluidWorkflowDomain.NAME)
+                .isInProject(EfluidWorkflowDomain.PROJECT)
+                .hasKey("ID", ColumnType.STRING)
+                .hasColumns(
+                        "DELAIEXECUTIONPREVU",
+                        "TYPECAMPAGNE",
+                        "CONFIDENTIALITE",
+                        "CLOTUREAUTOMATIQUE",
+                        "NATURECAMPAGNE",
+                        "EXECUTIONAUTOMATIQUEECHEANCES",
+                        "EXECUTIONMULTIECHEANCES",
+                        "AUTORISERFERMETURESURSELECVIDE",
+                        "GENERATIONAUTOPLANNINGSUIVANT",
+                        "MODELESDELOTS",
+                        "SOMETHING")
+                .doesntHaveColumns("MODELELOTISOLE", "CONFIDENTIALITEMODIFIEE", "STATUTMODELEDECAMPAGNE");
+
+        tester.assertThatTable("TMODELEDECAMPAGNEWKF")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.onValues.ModeleDeCampagneWorkflow.class)
+                .isInDomain(EfluidWorkflowDomain.NAME)
+                .isInProject(EfluidWorkflowDomain.PROJECT)
+                .hasKey("ID", ColumnType.STRING)
+                .hasColumns(
+                        "DELAIEXECUTIONPREVU",
+                        "TYPECAMPAGNE",
+                        "CONFIDENTIALITE",
+                        "CLOTUREAUTOMATIQUE",
+                        "NATURECAMPAGNE",
+                        "EXECUTIONAUTOMATIQUEECHEANCES",
+                        "EXECUTIONMULTIECHEANCES",
+                        "AUTORISERFERMETURESURSELECVIDE",
+                        "GENERATIONAUTOPLANNINGSUIVANT",
+                        "MODELESDELOTS",
+                        "COMBINAISON_ID")
+                .doesntHaveColumns("MODELELOTISOLE", "CONFIDENTIALITEMODIFIEE", "STATUTMODELEDECAMPAGNE", "SOMETHING")
+                .hasLinkForColumn("COMBINAISON_ID");
+
+        tester.assertThatTable("TMODELEDECAMPAGNEWKFSECOND")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.onValues.ModeleDeCampagneWorkflowSecond.class)
+                .isInDomain(EfluidWorkflowDomain.NAME)
+                .isInProject(EfluidWorkflowDomain.PROJECT)
+                .hasKey("ID", ColumnType.STRING)
+                .hasColumns(
+                        "DELAIEXECUTIONPREVU",
+                        "TYPECAMPAGNE",
+                        "CONFIDENTIALITE",
+                        "CLOTUREAUTOMATIQUE",
+                        "NATURECAMPAGNE",
+                        "EXECUTIONAUTOMATIQUEECHEANCES",
+                        "EXECUTIONMULTIECHEANCES",
+                        "AUTORISERFERMETURESURSELECVIDE",
+                        "GENERATIONAUTOPLANNINGSUIVANT",
+                        "MODELESDELOTS",
+                        "SOMETHING",
+                        "COMBINAISON_ID")
+                .doesntHaveColumns("MODELELOTISOLE", "CONFIDENTIALITEMODIFIEE", "STATUTMODELEDECAMPAGNE")
+                .hasLinkForColumn("COMBINAISON_ID");
+    }
+
+    @Test
+    public void testEfluidValueInheritanceUpload() {
+
+        var tester = onPackage(fr.uem.efluid.tests.inheritance.onValues.EfluidSubRoot.class.getPackageName())
+                .withSpecifiedVersion(VERSION)
+                .generate();
+
+        tester.assertThatContentWereIdentified();
+        tester.exportWithUpload(this.serverPort, TOKEN);
+        tester.assertNoExportErrorWasMet();
+
+        // Need to say that we are on same project
+        switchUserToUploadedProject(tester);
+
+        Version version = this.dictionaryManagementService.getLastUpdatedVersion();
+
+        // Check it is the version from model identifier
+        assertThat(version.getName()).isEqualTo(VERSION);
+        assertThat(version.getModelIdentity()).isEqualTo(FixedModelIdentifier.VERSION);
+
+        // Check content is here
+        assertThat(version.getDictionaryContent()).isNotEmpty();
+
+        // Check available table entries
+        var tabs = this.dictionaryManagementService.getDictionnaryEntrySummaries();
+
+        assertThat(tabs).hasSize(4);
+
+        // Check all table entries on pushed content
+        var fcombcplx = tabs.stream().filter(e -> e.getTableName().equals("TCOMBINAISONCOMPLEXE")).findFirst();
+        var fmodcam = tabs.stream().filter(e -> e.getTableName().equals("TMODELEDECAMPAGNE")).findFirst();
+        var fmodcamw = tabs.stream().filter(e -> e.getTableName().equals("TMODELEDECAMPAGNEWKF")).findFirst();
+        var fmodcamw2 = tabs.stream().filter(e -> e.getTableName().equals("TMODELEDECAMPAGNEWKFSECOND")).findFirst();
+
+        assertThat(fcombcplx).isPresent();
+        assertThat(fmodcam).isPresent();
+        assertThat(fmodcamw).isPresent();
+        assertThat(fmodcamw2).isPresent();
+
+        assertThat(fcombcplx.get().getDomainName()).isEqualTo(EfluidWorkflowDomain.NAME);
+        assertThat(fcombcplx.get().getName()).isEqualTo("CombinaisonComplexe");
+
+        assertDictionnaryColumnsAre(fcombcplx.get(),
+                key("ID", ColumnType.ATOMIC),
+                col("VALUE"),
+                col("CREATEDAT")
+        );
+
+        assertThat(fmodcam.get().getDomainName()).isEqualTo(EfluidWorkflowDomain.NAME);
+        assertThat(fmodcam.get().getName()).isEqualTo("ModeleDeCampagne");
+
+        assertDictionnaryColumnsAre(fmodcam.get(),
+                key("ID", ColumnType.STRING),
+                col("DELAIEXECUTIONPREVU"),
+                col("TYPECAMPAGNE"),
+                col("CONFIDENTIALITE"),
+                col("CLOTUREAUTOMATIQUE"),
+                col("NATURECAMPAGNE"),
+                col("EXECUTIONAUTOMATIQUEECHEANCES"),
+                col("EXECUTIONMULTIECHEANCES"),
+                col("AUTORISERFERMETURESURSELECVIDE"),
+                col("GENERATIONAUTOPLANNINGSUIVANT"),
+                col("MODELESDELOTS"),
+                col("SOMETHING")
+        );
+
+        assertThat(fmodcamw.get().getDomainName()).isEqualTo(EfluidWorkflowDomain.NAME);
+        assertThat(fmodcamw.get().getName()).isEqualTo("ModeleDeCampagneWorkflow");
+
+        assertDictionnaryColumnsAre(fmodcamw.get(),
+                key("ID", ColumnType.STRING),
+                col("DELAIEXECUTIONPREVU"),
+                col("TYPECAMPAGNE"),
+                col("CONFIDENTIALITE"),
+                col("CLOTUREAUTOMATIQUE"),
+                col("NATURECAMPAGNE"),
+                col("EXECUTIONAUTOMATIQUEECHEANCES"),
+                col("EXECUTIONMULTIECHEANCES"),
+                col("AUTORISERFERMETURESURSELECVIDE"),
+                col("GENERATIONAUTOPLANNINGSUIVANT"),
+                col("MODELESDELOTS"),
+                ln("COMBINAISON_ID", "TCOMBINAISONCOMPLEXE", "ID")
+        );
+
+        assertThat(fmodcamw2.get().getDomainName()).isEqualTo(EfluidWorkflowDomain.NAME);
+        assertThat(fmodcamw2.get().getName()).isEqualTo("ModeleDeCampagneWorkflowSecond");
+
+        assertDictionnaryColumnsAre(fmodcamw2.get(),
+                key("ID", ColumnType.STRING),
+                col("DELAIEXECUTIONPREVU"),
+                col("TYPECAMPAGNE"),
+                col("CONFIDENTIALITE"),
+                col("CLOTUREAUTOMATIQUE"),
+                col("NATURECAMPAGNE"),
+                col("EXECUTIONAUTOMATIQUEECHEANCES"),
+                col("EXECUTIONMULTIECHEANCES"),
+                col("AUTORISERFERMETURESURSELECVIDE"),
+                col("GENERATIONAUTOPLANNINGSUIVANT"),
+                col("MODELESDELOTS"),
+                col("SOMETHING"),
+                ln("COMBINAISON_ID", "TCOMBINAISONCOMPLEXE", "ID")
+        );
     }
 
     private void switchUserToUploadedProject(GeneratorTester tester) {

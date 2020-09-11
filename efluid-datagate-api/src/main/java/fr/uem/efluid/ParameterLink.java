@@ -31,7 +31,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 @Documented
@@ -47,6 +47,17 @@ public @interface ParameterLink {
      * </p>
      */
     Class<?> toParameter() default Void.class;
+
+    /**
+     * <p>Allows to specify a custom "from" column name when the link is specified on a field not directly annotated with @ParameterValue
+     * (for example when the value is specified in @ParameterTable <code>values</code>)
+     * </p><p>
+     * <b>Will be ignored if a @ParameterValue is specified on the field direclty !</b>
+     * </p>
+     *
+     * @return optional "forced" name for the corresponding value
+     */
+    String withValueName() default "";
 
     /**
      * <p>
