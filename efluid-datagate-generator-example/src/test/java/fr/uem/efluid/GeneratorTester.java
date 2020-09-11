@@ -311,6 +311,14 @@ public class GeneratorTester {
             return new GeneratedTableAssertLink(colname, links);
         }
 
+        public GeneratedTableAssert doenstHaveLinkForColumn(String colname) {
+            Set<ParameterLinkDefinition> links = GeneratorTester.this.content.getAllLinks().stream().filter(l -> l.getDictionaryEntry().getTableName().equals(this.tableName) && l.getColumnFrom().equals(colname)).collect(Collectors.toSet());
+            if (links.size() > 0) {
+                throw new AssertionError("Found an unexpected link from column " + colname + " in table " + tableName);
+            }
+            return this;
+        }
+
         public class GeneratedTableAssertLink {
             private final String colname;
             private final Set<ParameterLinkDefinition> links;

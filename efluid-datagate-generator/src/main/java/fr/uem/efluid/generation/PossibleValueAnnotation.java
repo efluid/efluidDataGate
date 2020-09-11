@@ -50,9 +50,9 @@ class PossibleValueAnnotation {
 
         this.valueAnnot = method.getAnnotation(ParameterValue.class);
         this.compositeValueAnnot = method.getAnnotation(ParameterCompositeValue.class);
-        // If not set on ParameterValue annotation, uses method name
-        this.validName = prepareValidName(this.valueAnnot, method.getName());
         this.linkAnnot = method.getAnnotation(ParameterLink.class);
+        // If not set on ParameterValue annotation, uses method name
+        this.validName = prepareValidName(this.valueAnnot, this.linkAnnot ,method.getName());
         this.mappingAnnot = method.getAnnotation(ParameterMapping.class);
         this.validType = this.mappingAnnot != null ? getMappingType(method, contextClassLoader) : method.getReturnType();
         this.compositeNames = prepareCompositeNames(this.compositeValueAnnot);
@@ -65,15 +65,16 @@ class PossibleValueAnnotation {
 
         this.valueAnnot = field.getAnnotation(ParameterValue.class);
         this.compositeValueAnnot = field.getAnnotation(ParameterCompositeValue.class);
-        // If not set on ParameterValue annotation, uses field name
-        this.validName = prepareValidName(this.valueAnnot, field.getName());
         this.linkAnnot = field.getAnnotation(ParameterLink.class);
+        // If not set on ParameterValue annotation, uses field name
+        this.validName = prepareValidName(this.valueAnnot, this.linkAnnot , field.getName());
         this.mappingAnnot = field.getAnnotation(ParameterMapping.class);
         // Type must be found from generic collection
         this.validType = this.mappingAnnot != null ? getMappingType(field, contextClassLoader) : field.getType();
         this.compositeNames = prepareCompositeNames(this.compositeValueAnnot);
         this.forTable = prepareValidForTable(this.valueAnnot, this.compositeValueAnnot);
         this.sourceClazz = field.getDeclaringClass();
+
     }
 
     // Declared directly into ParameterTable annot
@@ -82,7 +83,7 @@ class PossibleValueAnnotation {
         this.valueAnnot = directValueSpec;
         this.compositeValueAnnot = null;
         // If not set on ParameterValue annotation, uses field name
-        this.validName = prepareValidName(this.valueAnnot, null);
+        this.validName = prepareValidName(this.valueAnnot, null, null);
         this.linkAnnot = null;
         this.mappingAnnot = null;
         this.validType = null;
@@ -176,7 +177,7 @@ class PossibleValueAnnotation {
         return rawType;
     }
 
-    private static String prepareValidName(ParameterValue annot, String holderName) {
+    private static String prepareValidName(ParameterValue annot, ParameterLink linkAnnot, String holderName) {
 
         if (annot != null) {
             // Specified name
@@ -188,6 +189,8 @@ class PossibleValueAnnotation {
             if (!"".equals(annot.value())) {
                 return annot.value();
             }
+        } else if (linkAnnot != null){
+            return linkAnnot.withValueName();
         }
 
         // If not found from annotation, use holderName

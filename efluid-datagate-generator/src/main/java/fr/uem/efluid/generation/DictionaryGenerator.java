@@ -518,6 +518,7 @@ public class DictionaryGenerator extends AbstractProcessor {
                 .flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
                 .filter(v -> !v.equalsIgnoreCase(def.getKeyName())) // Remove key if present
                 .map(String::toUpperCase)
+                .distinct()
                 .peek(v -> getLog().debug("Found selected value " + v + " for type " + tableType.getName()))
                 .collect(Collectors.toList());
 
@@ -584,6 +585,7 @@ public class DictionaryGenerator extends AbstractProcessor {
             List<String> columnNames = values.stream()
                     .flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
                     .map(String::toUpperCase)
+                    .distinct()
                     .peek(v -> getLog().debug("Found selected value " + v + " for type " + tableType.getName()))
                     .collect(Collectors.toList());
 
