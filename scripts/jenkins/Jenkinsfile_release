@@ -9,7 +9,8 @@ def body = {
   MailUtils mailUtils = new MailUtils(this)
   GitHubUtils gitHubUtils = new GitHubUtils(this)
 
-   git branch: branch, credentialsId: credentials.efluidGithubAccount, url: 'git@github.com:efluid/efluidDataGate.git'
+  currentBuild.displayName = releaseVersion
+  git branch: branch, credentialsId: credentials.efluidGithubAccount, url: 'git@github.com:efluid/efluidDataGate.git'
   String subject = "Release efluidDataGate ${releaseVersion}"
 
   try{
@@ -19,14 +20,17 @@ def body = {
          sh "mvn -B release:prepare release:perform -Darguments=-Dmaven.test.skip=${skipTest} -DgpgPassphrase=${env.gpgPassword} -DreleaseVersion=${releaseVersion} -DdevelopmentVersion=${developmentVersion} -DaltReleaseDeploymentRepository=releases::releases::${urlArtifactoryRelease}"
        }
        withCredentials([usernamePassword(credentialsId: credentials.efluidGithubAccount, passwordVariable: 'GIT_PASSWORD', usernameVariable: 'GIT_USERNAME')]) {
-         sh('git push --all https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/efluid/efluidDataGate.git')
+         sh('git push --all')
        }
       
       sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
       sh 'cp efluid-datagate-app/src/docker/build-serv-efluid/logback.xml efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
-      sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
-      sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion}"
-      
+      container("docker-14") {
+         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: credentials.httpProxyAuthentication, passwordVariable: 'proxyPassword', usernameVariable: 'proxyUsername']]) {
+               sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2 --build-arg http_proxy=http://${proxyUsername}:${proxyPassword}@${variables.httpProxyHost}:${variables.httpProxyPort} "
+               sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${releaseVersion}"
+         }
+      }
       gitHubUtils.createRelease('efluidDataGate',releaseVersion)
 	}
     String mailDetail = "efluidDataGate tool from open source project https://github.com/efluid/efluidDataGate was successfull released in version ${releaseVersion}"
@@ -43,7 +47,10 @@ if (jenkinsUtils.isCjeProd()) {
         body.call()
     }
 } else {
-    new EfluidPodTemplate(this).addContainer(new Container(this).containerType("maven-14").memory("4G")).execute() {
+    new EfluidPodTemplate(this)
+         .addContainer(new Container(this).containerType("maven-14").memory("6G"))
+         .addContainer(new Container(this).containerType("docker-14").memory("4G"))
+         .execute() {
         container("maven-14") {
             body.call()
         }

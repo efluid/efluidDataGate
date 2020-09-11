@@ -20,7 +20,9 @@ def body = {
       sh 'mvn clean deploy -DskipNexusStagingDeployMojo=false -DskipTests=true -DurlArtifactoryRelease=${urlArtifactoryRelease} -DurlArtifactorySnapshot=${urlArtifactorySnapshot}'
       sh 'cp efluid-datagate-app/target/efluid-datagate-app-exec.jar efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
       sh 'cp efluid-datagate-app/src/docker/build-serv-efluid/logback.xml efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2'
-      sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
+      
+      
+sh "docker build -t ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion} efluid-datagate-app/src/docker/build-serv-efluid/standalone-with-h2"
       sh "docker push ${variables.artifactoryDockerRegistryAlias}/efluid-datagate:${applicationVersion}"
    } catch (Exception e) {
       mail bcc: '', body: """EfluidDataGate en erreur
@@ -36,7 +38,10 @@ if (jenkinsUtils.isCjeProd()) {
         body.call()
     }
 } else {
-    new EfluidPodTemplate(this).addContainer(new Container(this).containerType("maven-14").memory("4G")).execute() {
+    new EfluidPodTemplate(this)
+         .addContainer(new Container(this).containerType("maven-14").memory("4G"))
+         .addContainer(new Container(this).containerType("docker-14").memory("4G"))
+         .execute() {
         container("maven-14") {
             body.call()
         }
