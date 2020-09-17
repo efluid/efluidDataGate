@@ -11,6 +11,8 @@ import fr.uem.efluid.services.types.DictionaryEntrySummary;
 import fr.uem.efluid.tests.deleteAfterUpload.EfluidFunction;
 import fr.uem.efluid.tests.deleteAfterUpload.EfluidWorkflowDomain;
 import fr.uem.efluid.tests.deleteAfterUpload.EfluidWorkflowStepRoot;
+import fr.uem.efluid.tests.inheritance.conflicts.OtherOne;
+import fr.uem.efluid.tests.inheritance.conflicts.OtherTwo;
 import fr.uem.efluid.tests.inheritance.onValues.EfluidSubRoot;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +24,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static fr.uem.efluid.GeneratorTester.onPackage;
@@ -468,6 +471,76 @@ public class DictionaryPushAfterGenerationTest {
                 ln("COMBINAISON_ID", "TCOMBINAISONCOMPLEXE", "ID")
         );
     }
+
+    @Test
+    public void testLinkConflictFromChildGeneration() {
+
+        var tester = onPackage(fr.uem.efluid.tests.inheritance.conflicts.RootEntity.class.getPackageName())
+                .withSpecifiedVersion(VERSION)
+                .generate();
+
+        tester.assertThatContentWereIdentified();
+
+        tester.assertThatTable("TETAPEWORKFLOW")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.conflicts.OtherOne.class)
+                .isInDomain("Test conflicts")
+                .isInProject("Default")
+                .hasKey("ID", ColumnType.STRING)
+                .hasKey("ROLE", ColumnType.STRING)
+                .hasColumns("VALUE");
+
+
+        tester.assertThatTable("TTRAITEMENTEXECUTIONETAPE")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.conflicts.OtherTwo.class)
+                .isInDomain("Test conflicts")
+                .isInProject("Default")
+                .hasKey("ID", ColumnType.STRING)
+                .hasColumns("VALUE");
+
+        tester.assertThatTable("SAME_TABLE")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.conflicts.RootEntity.class)
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.conflicts.ChildOne.class)
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.conflicts.ChildTwo.class)
+                .isInDomain("Test conflicts")
+                .isInProject("Default")
+                .hasKey("KEY", ColumnType.ATOMIC)
+                .hasColumns(
+                        "VALUE",
+                        "SOMETHING",
+                        "OTHER_VALUE",
+                        "ETAPEDUTRAITEMENTDEMASSE_ID", "ETAPEDUTRAITEMENTDEMASSE_ROLE",
+                        "CONFIRMATIONNECESSAIRE",
+                        "TYPECHARGEMENTOBJETTRAITE",
+                        "TYPECHARGEMENTOBJETCONNEXE",
+                        "ETAPEDUTRAITEMENTINIT", "ETAPEDUTRAITEMENTINIT_ROLE",
+                        "ETAPEDUTRAITEMENTUNITAIRE_ID", "ETAPEDUTRAITEMENTUNITAIRE_ROLE",
+                        "ETAPEDUTRAITEMENTFILDELEAU_ID", "ETAPEDUTRAITMTFILDELEAU_ROLE",
+                        "TRAITEMENTREGROUPEMENT_ID"
+                )
+                .doesntHaveColumns(
+                        "CHARGERSPECIFIQUEEDP",
+                        "ETAPEDUTRAITEMENTDEMASSE",
+                        "ETAPEDUTRAITEMENTINITIALISATION",
+                        "ETAPEDUTRAITEMENTUNITAIRE",
+                        "ETAPEDUTRAITEMENTFILDELEAU",
+                        "TRAITEMENTREGROUPEMENT"
+                )
+                .hasLinkForColumns("ETAPEDUTRAITEMENTDEMASSE_ID", "ETAPEDUTRAITEMENTDEMASSE_ROLE").with("TETAPEWORKFLOW", "ID", "ROLE")
+                .hasLinkForColumns("ETAPEDUTRAITEMENTINIT", "ETAPEDUTRAITEMENTINIT_ROLE").with("TETAPEWORKFLOW", "ID", "ROLE")
+                .hasLinkForColumns("ETAPEDUTRAITEMENTUNITAIRE_ID", "ETAPEDUTRAITEMENTUNITAIRE_ROLE").with("TETAPEWORKFLOW", "ID", "ROLE")
+                .hasLinkForColumns("ETAPEDUTRAITEMENTFILDELEAU_ID", "ETAPEDUTRAITMTFILDELEAU_ROLE").with("TETAPEWORKFLOW", "ID", "ROLE")
+                .hasLinkForColumn("TRAITEMENTREGROUPEMENT_ID").with("TTRAITEMENTEXECUTIONETAPE", "ID")
+                .doesntHaveLinkForColumns(
+                        "ETAPEDUTRAITEMENTDEMASSE",
+                        "ETAPEDUTRAITEMENTINITIALISATION",
+                        "ETAPEDUTRAITEMENTUNITAIRE",
+                        "ETAPEDUTRAITEMENTFILDELEAU",
+                        "TRAITEMENTREGROUPEMENT"
+                );
+    }
+
+
+    /* ####################################### TOOLS ###################################### */
 
     private void switchUserToUploadedProject(GeneratorTester tester) {
         this.userHolder.setCurrentUser(new User("login"));

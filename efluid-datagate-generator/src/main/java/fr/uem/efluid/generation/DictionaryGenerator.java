@@ -35,6 +35,8 @@ public class DictionaryGenerator extends AbstractProcessor {
 
     final String DEBUG_BG_RED = "\u001B[41m";
 
+    final String DEBUG_BG_BLUE = "\u001B[46m";
+
     final String DEBUG_RESET_COLOUR = "\u001B[0m";
 
     final String DEBUG_TEXT_BLACK = "\u001B[30m";
@@ -58,8 +60,8 @@ public class DictionaryGenerator extends AbstractProcessor {
 
             /* Will prepare project, links and mappings when found */
             Map<String, ParameterProject> projects = new HashMap<>();
-            List<ParameterLinkDefinition> allLinks = new ArrayList<>();
-            List<ParameterMappingDefinition> allMappings = new ArrayList<>();
+            Set<ParameterLinkDefinition> allLinks = new HashSet<>();
+            Set<ParameterMappingDefinition> allMappings = new HashSet<>();
 
             /* Process all tables init + key for clean link building */
             Map<Class<?>, List<ParameterTableDefinition>> typeTables = initParameterTablesWithKeys(reflections,
@@ -74,13 +76,11 @@ public class DictionaryGenerator extends AbstractProcessor {
             /* Then, extract domains */
             Collection<ParameterDomainDefinition> allDomains = completeParameterDomains(typeTables, projects, projectDefs);
 
-            /* Finally, prepare a version for each projects */
+            /* Then, prepare a version for each projects */
             Collection<ParameterVersionDefinition> allVersions = specifyVersionsByProjects(projectDefs.values());
 
-            /* Check everything is OK */
-            if (config().isCheckDuplicateTables()) {
-                assertTableNotDuplicated(typeTables);
-            }
+            /* Finally, merge all duplicated changes and build final select clauses */
+            combineTablesAndGenerateSelectClauses(typeTables, allLinks, allMappings);
 
             /* Now can export */
             return new DictionaryContent(projectDefs, allDomains, typeTables, allLinks, allMappings, allVersions);
@@ -423,32 +423,11 @@ public class DictionaryGenerator extends AbstractProcessor {
         return foundKeySpec;
     }
 
-    private static void assertTableNotDuplicated(Map<Class<?>, List<ParameterTableDefinition>> defs) {
-
-        // Get duplicated table name (and count for each)
-        Map<String, Integer> duplicates = defs.values().stream()
-                .flatMap(Collection::stream)
-                .map(ParameterTableDefinition::getTableName)
-                .collect(Collectors.groupingBy(v -> v))
-                .entrySet().stream()
-                .filter(e -> e.getValue().size() > 1)
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().size()));
-
-        // Shouldn't have duplicate on table name
-        if (duplicates.size() > 0) {
-            StringBuilder details = new StringBuilder();
-            details.append("Error on duplicated table names : ");
-            duplicates.forEach((key, value) -> details.append("table \"").append(key).append("\" (duplicated ").append(value).append(" times) "));
-            details.append("Check @ParameterTable and @ParameterTableSet definition");
-
-            throw new IllegalArgumentException(details.toString());
-        }
-    }
 
     private void completeParameterValuesWithLinksAndMappings(
             Map<Class<?>, List<ParameterTableDefinition>> defs,
-            List<ParameterLinkDefinition> allLinks,
-            List<ParameterMappingDefinition> allMappings,
+            Set<ParameterLinkDefinition> allLinks,
+            Set<ParameterMappingDefinition> allMappings,
             ClassLoader ccl) {
 
         getLog().debug("Process completion of values, links and mappings for " + defs.size() + " identified tables");
@@ -478,8 +457,8 @@ public class DictionaryGenerator extends AbstractProcessor {
             Class<?> tableType,
             Map<String, ParameterTableDefinition> allTables,
             Map<Class<?>, List<ParameterTableDefinition>> defs,
-            List<ParameterLinkDefinition> allLinks,
-            List<ParameterMappingDefinition> allMappings,
+            Set<ParameterLinkDefinition> allLinks,
+            Set<ParameterMappingDefinition> allMappings,
             ClassLoader ccl) {
 
         // Table cfg - includes inherited
@@ -512,7 +491,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         searchAllCombinedExcludeInheritedFrom(tableType, excludeInheriteds);
 
         // Prepare value columns (with support for composite)
-        List<String> columnNames = values.stream()
+        def.setIdentifiedColumnNames(values.stream()
                 .filter(v -> v.canKeepInType(tableType))
                 .filter(v -> !v.isExcluded(excludeInheriteds))
                 .flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
@@ -520,35 +499,23 @@ public class DictionaryGenerator extends AbstractProcessor {
                 .map(String::toUpperCase)
                 .distinct()
                 .peek(v -> getLog().debug("Found selected value " + v + " for type " + tableType.getName()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet()));
+
 
         // Search for specified links
-        Collection<ParameterLinkDefinition> links = extractLinksFromValues(defs, allTables, def, values);
+        Collection<ParameterLinkDefinition> foundLinks = extractLinksFromValues(defs, allTables, def, values);
+        allLinks.addAll(foundLinks);
 
         // Search for specified mappings
-        Collection<ParameterMappingDefinition> mappings = extractMappingsFromValues(defs, allTables, def, values);
-
-        // Produces select clause
-        String selectClause = this.selectClauseGen.mergeSelectClause(
-                columnNames,
-                columnNames.size() + 2,
-                links,
-                mappings,
-                allTables);
-
-        getLog().debug("Generated select clause for type " + tableType.getName() + " is " + selectClause);
-
-        def.setSelectClause(selectClause);
-        allLinks.addAll(links);
-        allMappings.addAll(mappings);
+        allMappings.addAll(extractMappingsFromValues(defs, allTables, def, values));
     }
 
     private void processParameterValueSet(
             Class<?> tableType,
             Map<String, ParameterTableDefinition> allTables,
             Map<Class<?>, List<ParameterTableDefinition>> allDefs,
-            List<ParameterLinkDefinition> allLinks,
-            List<ParameterMappingDefinition> allMappings,
+            Set<ParameterLinkDefinition> allLinks,
+            Set<ParameterMappingDefinition> allMappings,
             ClassLoader ccl) {
 
         ParameterTableSet paramTableSet = tableType.getAnnotation(ParameterTableSet.class);
@@ -582,34 +549,20 @@ public class DictionaryGenerator extends AbstractProcessor {
                     .collect(Collectors.toList());
 
             // Prepare value columns (with support for composite)
-            List<String> columnNames = values.stream()
+            def.setIdentifiedColumnNames(values.stream()
                     .flatMap(v -> v.isComposite() ? Stream.of(v.getCompositeNames()) : Stream.of(v.getValidName()))
                     .map(String::toUpperCase)
                     .distinct()
                     .peek(v -> getLog().debug("Found selected value " + v + " for type " + tableType.getName()))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toSet()));
 
             // Search for specified links
-            Collection<ParameterLinkDefinition> links = extractLinksFromValues(allDefs, allTables, def, values);
+            Collection<ParameterLinkDefinition> foundLinks = extractLinksFromValues(allDefs, allTables, def, values);
+            allLinks.addAll(foundLinks);
 
             // Search for specified mappings
-            Collection<ParameterMappingDefinition> mappings = extractMappingsFromValues(allDefs, allTables, def, values);
-
-            // Produces select clause
-            String selectClause = this.selectClauseGen.mergeSelectClause(
-                    columnNames,
-                    columnNames.size() + 2,
-                    links,
-                    mappings,
-                    allTables);
-
-            getLog().debug(DEBUG_BG_RED + DEBUG_TEXT_BLACK + "Generated select clause for type " + tableType.getName() + " is " + selectClause + DEBUG_RESET_COLOUR);
-
-            def.setSelectClause(selectClause);
-            allLinks.addAll(links);
-            allMappings.addAll(mappings);
+            allMappings.addAll(extractMappingsFromValues(allDefs, allTables, def, values));
         }
-
     }
 
     private static Stream<PossibleValueAnnotation> streamPossibleValueInDirectTablesDef(Class<?> declaringClazz, ParameterTableSet setAnnot) {
@@ -662,6 +615,7 @@ public class DictionaryGenerator extends AbstractProcessor {
         return toDef;
     }
 
+
     private Collection<ParameterLinkDefinition> extractLinksFromValues(
             Map<Class<?>, List<ParameterTableDefinition>> defs,
             Map<String, ParameterTableDefinition> allTables,
@@ -672,7 +626,7 @@ public class DictionaryGenerator extends AbstractProcessor {
          * Keeps the links mapped to their table "to" for clean association of multiple
          * link definition in case of composite key
          */
-        Map<String, ParameterLinkDefinition> linksByTablesTo = new HashMap<>();
+        Map<String, List<ParameterLinkDefinition>> linksByTablesTo = new HashMap<>();
 
         // Prepare links (where found)
         values.stream()
@@ -696,12 +650,12 @@ public class DictionaryGenerator extends AbstractProcessor {
                     String linkName = failback(annot.name(), toDef.getParameterName());
 
                     // Get link already referenced or update "composite key" link
-                    ParameterLinkDefinition link = linksByTablesTo.get(toDef.getTableName());
+                    List<ParameterLinkDefinition> links = linksByTablesTo.computeIfAbsent(toDef.getTableName(), k -> new ArrayList<>());
 
                     // Most case will only go there
-                    if (link == null) {
+                    if (links.isEmpty() || a.isComposite()) {
 
-                        link = new ParameterLinkDefinition();
+                        ParameterLinkDefinition link = new ParameterLinkDefinition();
 
                         link.setCreatedTime(LocalDateTime.now());
                         link.setUpdatedTime(link.getCreatedTime());
@@ -743,13 +697,19 @@ public class DictionaryGenerator extends AbstractProcessor {
                         getLog().debug("Found link " + refForUuid + " with generated UUID " + link.getUuid().toString() + " for type "
                                 + currentTableDef.getTableName());
 
-                        linksByTablesTo.put(toDef.getTableName(), link);
+                        links.add(link);
                     }
 
                     // Rare case : composite key - multiple def (all keys referenced
                     // directly)
                     else {
-                        int colIndex = (int) link.columnTos().count();
+                        if (links.isEmpty()) {
+                            throw new IllegalArgumentException("Cannot define links for name " + a.getValidName() + " into "
+                                    + currentTableDef.getParameterName() + " as both @ParameterValueComposite and dispatched" +
+                                    "@ParameterValue : use only one kind of composite for the same table");
+                        }
+                        ParameterLinkDefinition link = links.get(0);
+                        int colIndex = (int) links.get(0).columnTos().count();
 
                         link.setColumnFrom(colIndex, a.getValidName());
                         link.setColumnTo(colIndex, columnTo);
@@ -757,7 +717,7 @@ public class DictionaryGenerator extends AbstractProcessor {
 
                 });
 
-        return linksByTablesTo.values();
+        return linksByTablesTo.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
     }
 
     private List<ParameterMappingDefinition> extractMappingsFromValues(
@@ -843,6 +803,54 @@ public class DictionaryGenerator extends AbstractProcessor {
         projectByNames.put(ParameterProjectDefinition.DEFAULT_PROJECT, defaultDef);
 
         return projectByNames;
+    }
+
+    private void combineTablesAndGenerateSelectClauses(
+            Map<Class<?>, List<ParameterTableDefinition>> allTables,
+            Set<ParameterLinkDefinition> allLinks,
+            Set<ParameterMappingDefinition> allMappings) {
+
+        Map<String, ParameterTableDefinition> allTableByNames = new HashMap<>();
+        Map<String, List<Class<?>>> allTableSourceTypes = new HashMap<>();
+
+        allTables.forEach((t, l) -> {
+
+            for (int i = 0; i < l.size(); i++) {
+
+                ParameterTableDefinition found = l.get(i);
+
+                allTableSourceTypes.computeIfAbsent(found.getTableName(), k -> new ArrayList<>()).add(t);
+                ParameterTableDefinition existing = allTableByNames.get(found.getTableName());
+                Collection<ParameterLinkDefinition> foundLinks = allLinks.stream().filter(k -> k.getDictionaryEntry().equals(found)).collect(Collectors.toSet());
+                Collection<ParameterMappingDefinition> foundMappings = allMappings.stream().filter(k -> k.getDictionaryEntry().equals(found)).collect(Collectors.toSet());
+                if (existing != null) {
+                    l.set(i, existing);
+                    existing.getIdentifiedColumnNames().addAll(found.getIdentifiedColumnNames());
+                    foundLinks.forEach(k -> k.setDictionaryEntry(existing));
+                    foundMappings.forEach(k -> k.setDictionaryEntry(existing));
+                } else {
+                    allTableByNames.put(found.getTableName(), found);
+                }
+            }
+        });
+
+        // Final select clause generation
+        allTableByNames.values().forEach(p -> {
+            Collection<ParameterLinkDefinition> foundLinks = allLinks.stream().filter(k -> k.getDictionaryEntry().equals(p)).collect(Collectors.toSet());
+            Collection<ParameterMappingDefinition> foundMappings = allMappings.stream().filter(k -> k.getDictionaryEntry().equals(p)).collect(Collectors.toSet());
+
+            // Produces select clause
+            p.setSelectClause(this.selectClauseGen.mergeSelectClause(
+                    p.getIdentifiedColumnNames(),
+                    p.getIdentifiedColumnNames().size() + 2,
+                    foundLinks,
+                    foundMappings,
+                    allTableByNames));
+
+            getLog().debug(DEBUG_BG_RED + DEBUG_TEXT_BLACK + "Generated select clause for table " + p.getTableName() + " is " + p.getSelectClause() + DEBUG_RESET_COLOUR);
+            getLog().debug(DEBUG_BG_BLUE + DEBUG_TEXT_BLACK + "Parameter table " + p.getTableName() + " was found on types : " + Arrays.toString(allTableSourceTypes.get(p.getTableName()).toArray()) + DEBUG_RESET_COLOUR);
+
+        });
     }
 
     private Collection<ParameterVersionDefinition> specifyVersionsByProjects(
@@ -948,4 +956,5 @@ public class DictionaryGenerator extends AbstractProcessor {
 
         searchAllCombinedExcludeInheritedFrom(tableType.getSuperclass(), excludeds);
     }
+
 }

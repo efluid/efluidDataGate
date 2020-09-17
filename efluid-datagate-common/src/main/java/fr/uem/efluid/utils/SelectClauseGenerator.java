@@ -122,7 +122,7 @@ public class SelectClauseGenerator {
      * @return the select part of the query, ready to be saved
      */
     public String mergeSelectClause(
-            List<String> selectedColumnNames,
+            Collection<String> selectedColumnNames,
             int availableColumnNumber,
             Collection<? extends ExportAwareTableLink<?>> links,
             Collection<? extends ExportAwareTableMapping<?>> mappings, // TODO : use this

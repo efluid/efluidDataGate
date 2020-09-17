@@ -5,7 +5,7 @@ import fr.uem.efluid.ParameterTable;
 import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * <p>
@@ -54,6 +54,8 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
     private LocalDateTime updatedTime;
 
     private ParameterDomainDefinition domain;
+
+    private transient Set<String> identifiedColumnNames = new HashSet<>();
 
     /**
      *
@@ -135,6 +137,19 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
      */
     public void setSelectClause(String selectClause) {
         this.selectClause = selectClause;
+    }
+
+    public void setIdentifiedColumnNames(Set<String> identifiedColumnNames) {
+        this.identifiedColumnNames = identifiedColumnNames;
+    }
+
+    /**
+     * Used only for generation
+     *
+     * @return
+     */
+    public Set<String> getIdentifiedColumnNames() {
+        return this.identifiedColumnNames;
     }
 
     /**

@@ -46,7 +46,7 @@ public class ParameterLinkTest {
                 .hasKey("ID", ColumnType.ATOMIC)
                 .hasColumns("OTHER")
                 .doesntHaveColumns("ASSOCIATED", "ASSOCIATED_ID")
-                .doenstHaveLinkForColumn("ASSOCIATED_ID");
+                .doesntHaveLinkForColumn("ASSOCIATED_ID");
     }
 
     @Test
