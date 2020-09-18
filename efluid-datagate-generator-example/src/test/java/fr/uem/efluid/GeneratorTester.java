@@ -250,6 +250,13 @@ public class GeneratorTester {
             return this;
         }
 
+        /**
+         * Check for the exact specified columns. One is missing and it's an error !
+         * Must include also the columns used for links !
+         *
+         * @param selectCols
+         * @return
+         */
         public GeneratedTableAssert hasColumns(String... selectCols) {
             String[] splitSelect = this.tableOpt.get().getSelectClause().split(", ");
             Assert.assertEquals("Specified select is not valid. Do not find the correct number of columns in current select \"" + this.tableOpt.get().getSelectClause()
@@ -308,10 +315,41 @@ public class GeneratorTester {
             if (links.isEmpty()) {
                 throw new AssertionError("Couldn't find any link from column " + colname + " in table " + tableName);
             }
-            return new GeneratedTableAssertLink(colname, links);
+            if (links.size() > 1) {
+                throw new AssertionError("Fond more than one link from column " + colname + " in table " + tableName);
+            }
+
+            return new GeneratedTableAssertLink(new String[]{colname}, links);
         }
 
-        public GeneratedTableAssert doenstHaveLinkForColumn(String colname) {
+        /**
+         * For composite only !
+         *
+         * @param colnames
+         * @return
+         */
+        public GeneratedTableAssertLink hasLinkForColumns(String... colnames) {
+            Set<ParameterLinkDefinition> links = GeneratorTester.this.content.getAllLinks().stream()
+                    .filter(l -> l.getDictionaryEntry().getTableName().equals(this.tableName)
+                            && l.getColumnFrom().equals(colnames[0])
+                            && (colnames.length <= 1 || l.getExt1ColumnFrom().equals(colnames[1]))
+                            && (colnames.length <= 2 || l.getExt2ColumnFrom().equals(colnames[2]))
+                            && (colnames.length <= 3 || l.getExt3ColumnFrom().equals(colnames[3]))
+                            && (colnames.length <= 4 || l.getExt4ColumnFrom().equals(colnames[4]))
+                    ).collect(Collectors.toSet());
+
+            if (links.isEmpty()) {
+                throw new AssertionError("Couldn't find any link from column(s) " + Arrays.toString(colnames) + " in table " + tableName);
+            }
+
+            if (links.size() > 1) {
+                throw new AssertionError("Fond more than one link from column(s) " + Arrays.toString(colnames) + " in table " + tableName);
+            }
+
+            return new GeneratedTableAssertLink(colnames, links);
+        }
+
+        public GeneratedTableAssert doesntHaveLinkForColumn(String colname) {
             Set<ParameterLinkDefinition> links = GeneratorTester.this.content.getAllLinks().stream().filter(l -> l.getDictionaryEntry().getTableName().equals(this.tableName) && l.getColumnFrom().equals(colname)).collect(Collectors.toSet());
             if (links.size() > 0) {
                 throw new AssertionError("Found an unexpected link from column " + colname + " in table " + tableName);
@@ -319,21 +357,78 @@ public class GeneratorTester {
             return this;
         }
 
+        public GeneratedTableAssert doesntHaveLinkForColumns(String... colnames) {
+            Set<String> cols = Stream.of(colnames).collect(Collectors.toSet());
+            Set<ParameterLinkDefinition> links = GeneratorTester.this.content.getAllLinks().stream()
+                    .filter(l ->
+                            l.getDictionaryEntry().getTableName().equals(this.tableName)
+                                    && cols.contains(l.getColumnFrom())
+                    ).collect(Collectors.toSet());
+            if (links.size() > 0) {
+                throw new AssertionError("Found an unexpected link from column " + Arrays.toString(colnames) + " in table " + tableName);
+            }
+            return this;
+        }
+
+        /**
+         * Support composite keys
+         */
         public class GeneratedTableAssertLink {
-            private final String colname;
+            private final String[] colnames;
             private final Set<ParameterLinkDefinition> links;
 
-            private GeneratedTableAssertLink(String colname, Set<ParameterLinkDefinition> links) {
+            private GeneratedTableAssertLink(String[] colnames, Set<ParameterLinkDefinition> links) {
                 super();
                 this.links = links;
-                this.colname = colname;
+                this.colnames = colnames;
             }
 
-            public GeneratedTableAssert with(String tableTo, String colTo) {
-                this.links.stream().filter(l -> l.getTableTo().equals(tableTo) && l.getColumnTo().equals(colTo)).findFirst()
+            /**
+             * @param tableTo table
+             * @param colTo1  default
+             * @param colTos  for composites
+             * @return tester
+             */
+            public GeneratedTableAssert with(String tableTo, String colTo1, String... colTos) {
+                this.links.stream().filter(l -> l.getTableTo().equals(tableTo) && l.getColumnTo().equals(colTo1)).findFirst()
                         .orElseThrow(() -> new AssertionError("Couldn't found referenced link from column "
-                                + colname + " in table " + GeneratedTableAssert.this.tableName
-                                + " to column " + colTo + " in table " + tableTo));
+                                + colTo1 + " in table " + GeneratedTableAssert.this.tableName
+                                + " to column " + colTo1 + " in table " + tableTo));
+
+                if (colTos.length + 1 != this.colnames.length) {
+                    throw new AssertionError("Invalid reference on composite key definition for link to table " + tableTo);
+                }
+
+                // Basic EXT test
+
+                if (colTos.length >= 1) {
+                    this.links.stream().filter(l -> l.getTableTo().equals(tableTo) && l.getExt1ColumnTo().equals(colTos[0])).findFirst()
+                            .orElseThrow(() -> new AssertionError("Couldn't found referenced link from column "
+                                    + colTos[0] + " in table " + GeneratedTableAssert.this.tableName
+                                    + " to column " + colTos[0] + " in table " + tableTo));
+                }
+
+                if (colTos.length >= 2) {
+                    this.links.stream().filter(l -> l.getTableTo().equals(tableTo) && l.getExt2ColumnTo().equals(colTos[1])).findFirst()
+                            .orElseThrow(() -> new AssertionError("Couldn't found referenced link from column "
+                                    + colTos[1] + " in table " + GeneratedTableAssert.this.tableName
+                                    + " to column " + colTos[1] + " in table " + tableTo));
+                }
+
+                if (colTos.length >= 3) {
+                    this.links.stream().filter(l -> l.getTableTo().equals(tableTo) && l.getExt3ColumnTo().equals(colTos[2])).findFirst()
+                            .orElseThrow(() -> new AssertionError("Couldn't found referenced link from column "
+                                    + colTos[2] + " in table " + GeneratedTableAssert.this.tableName
+                                    + " to column " + colTos[2] + " in table " + tableTo));
+                }
+
+                if (colTos.length == 4) {
+                    this.links.stream().filter(l -> l.getTableTo().equals(tableTo) && l.getExt4ColumnTo().equals(colTos[3])).findFirst()
+                            .orElseThrow(() -> new AssertionError("Couldn't found referenced link from column "
+                                    + colTos[3] + " in table " + GeneratedTableAssert.this.tableName
+                                    + " to column " + colTos[3] + " in table " + tableTo));
+                }
+
                 return GeneratedTableAssert.this;
             }
         }

@@ -30,7 +30,7 @@ public class GeneratedDictionaryPackage extends DictionaryExportPackage<Paramete
      */
     @Override
     protected ParameterTableDefinition initContent() {
-        return new ParameterTableDefinition();
+        return new ParameterTableDefinition(true);
     }
 
     /**

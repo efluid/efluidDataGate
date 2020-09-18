@@ -40,6 +40,7 @@ public class DictionaryContent {
                 .collect(Collectors.toList());
         this.allDomains = allDomains;
         this.allTables = typeTables.values().stream()
+                .distinct()
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());
         this.allLinks = allLinks;

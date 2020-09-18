@@ -34,6 +34,7 @@ public interface DictionaryGeneratorConfig {
 
     String getProjectVersion();
 
+    @Deprecated
     boolean isCheckDuplicateTables();
 
 
