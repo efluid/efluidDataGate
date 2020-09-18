@@ -282,7 +282,7 @@ public class DictionaryGenerator extends AbstractProcessor {
             PossibleTableAnnotation possible,
             Map<Class<?>, String> annotDomains) {
 
-        ParameterTableDefinition def = new ParameterTableDefinition();
+        ParameterTableDefinition def = new ParameterTableDefinition(possible.isHierarchyTop());
         def.setCreatedTime(LocalDateTime.now());
         def.setUpdatedTime(def.getCreatedTime());
         def.setDomain(new ParameterDomainDefinition()); // Will be merged later
@@ -828,6 +828,12 @@ public class DictionaryGenerator extends AbstractProcessor {
                     existing.getIdentifiedColumnNames().addAll(found.getIdentifiedColumnNames());
                     foundLinks.forEach(k -> k.setDictionaryEntry(existing));
                     foundMappings.forEach(k -> k.setDictionaryEntry(existing));
+
+                    // Priority on hierarchy top properties
+                    if (found.isHierarchyTop()) {
+                        existing.setParameterName(found.getParameterName());
+                        existing.setDomain(found.getDomain());
+                    }
                 } else {
                     allTableByNames.put(found.getTableName(), found);
                 }
@@ -847,8 +853,12 @@ public class DictionaryGenerator extends AbstractProcessor {
                     foundMappings,
                     allTableByNames));
 
-            getLog().debug(DEBUG_BG_RED + DEBUG_TEXT_BLACK + "Generated select clause for table " + p.getTableName() + " is " + p.getSelectClause() + DEBUG_RESET_COLOUR);
-            getLog().debug(DEBUG_BG_BLUE + DEBUG_TEXT_BLACK + "Parameter table " + p.getTableName() + " was found on types : " + Arrays.toString(allTableSourceTypes.get(p.getTableName()).toArray()) + DEBUG_RESET_COLOUR);
+            getLog().info(DEBUG_BG_RED + DEBUG_TEXT_BLACK + "Found parameter Table \"" + p.getParameterName() + "\" for table " + p.getTableName() + " :" + DEBUG_RESET_COLOUR);
+            getLog().info(DEBUG_BG_BLUE + DEBUG_TEXT_BLACK + "Generated select clause is " + p.getSelectClause() + DEBUG_RESET_COLOUR);
+            getLog().info(DEBUG_BG_BLUE + DEBUG_TEXT_BLACK + "It was found on types : " + Arrays.toString(allTableSourceTypes.get(p.getTableName()).toArray()) + DEBUG_RESET_COLOUR);
+            getLog().info(DEBUG_BG_BLUE + DEBUG_TEXT_BLACK + "Links are : "
+                    + (foundLinks.isEmpty() ? "none found" : foundLinks.stream().map(Object::toString).collect(Collectors.joining(" , "))) + DEBUG_RESET_COLOUR);
+
 
         });
     }

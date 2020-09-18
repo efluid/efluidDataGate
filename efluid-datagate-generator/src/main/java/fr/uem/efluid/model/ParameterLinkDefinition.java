@@ -353,4 +353,17 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
         // Not implemented
     }
 
+    @Override
+    public String toString() {
+        return columnFrom
+                + (ext1ColumnFrom != null ? "|" + ext1ColumnFrom : "")
+                + (ext2ColumnFrom != null ? "|" + ext2ColumnFrom : "")
+                + (ext3ColumnFrom != null ? "|" + ext3ColumnFrom : "")
+                + (ext4ColumnFrom != null ? "|" + ext4ColumnFrom : "")
+                + " => " + tableTo + ":" + columnTo
+                + (ext1ColumnTo != null ? "|" + ext1ColumnTo : "")
+                + (ext2ColumnTo != null ? "|" + ext2ColumnTo : "")
+                + (ext3ColumnTo != null ? "|" + ext3ColumnTo : "")
+                + (ext4ColumnTo != null ? "|" + ext4ColumnTo : "");
+    }
 }

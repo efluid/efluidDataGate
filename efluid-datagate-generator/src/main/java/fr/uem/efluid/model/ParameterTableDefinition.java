@@ -5,7 +5,9 @@ import fr.uem.efluid.ParameterTable;
 import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * <p>
@@ -57,11 +59,14 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
 
     private transient Set<String> identifiedColumnNames = new HashSet<>();
 
+    private transient final boolean hierarchyTop;
+
     /**
      *
      */
-    public ParameterTableDefinition() {
+    public ParameterTableDefinition(boolean hierarchyTop) {
         super();
+        this.hierarchyTop = hierarchyTop;
     }
 
     /**
@@ -346,6 +351,10 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
     @Override
     public ColumnType getKeyType() {
         return this.keyType;
+    }
+
+    public boolean isHierarchyTop() {
+        return this.hierarchyTop;
     }
 
     /**

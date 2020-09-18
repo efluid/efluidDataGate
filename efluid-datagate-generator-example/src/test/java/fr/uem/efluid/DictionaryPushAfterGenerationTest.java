@@ -539,6 +539,66 @@ public class DictionaryPushAfterGenerationTest {
                 );
     }
 
+    @Test
+    public void testLinkConflictFromChildUpload() {
+
+        var tester = onPackage(fr.uem.efluid.tests.inheritance.conflicts.RootEntity.class.getPackageName())
+                .withSpecifiedVersion(VERSION)
+                .generate();
+
+        tester.assertThatContentWereIdentified();
+        tester.exportWithUpload(this.serverPort, TOKEN);
+        tester.assertNoExportErrorWasMet();
+
+        // Need to say that we are on same project
+        switchUserToUploadedProject(tester);
+
+        Version version = this.dictionaryManagementService.getLastUpdatedVersion();
+
+        // Check it is the version from model identifier
+        assertThat(version.getName()).isEqualTo(VERSION);
+        assertThat(version.getModelIdentity()).isEqualTo(FixedModelIdentifier.VERSION);
+
+        // Check content is here
+        assertThat(version.getDictionaryContent()).isNotEmpty();
+
+        // Check available table entries
+        var tabs = this.dictionaryManagementService.getDictionnaryEntrySummaries();
+
+        assertThat(tabs).hasSize(3);
+
+        // Check all table entries on pushed content
+        var fsame = tabs.stream().filter(e -> e.getTableName().equals("SAME_TABLE")).findFirst();
+        var fother1 = tabs.stream().filter(e -> e.getTableName().equals("TETAPEWORKFLOW")).findFirst();
+        var fother2 = tabs.stream().filter(e -> e.getTableName().equals("TTRAITEMENTEXECUTIONETAPE")).findFirst();
+
+        assertThat(fsame).isPresent();
+        assertThat(fother1).isPresent();
+        assertThat(fother2).isPresent();
+
+        assertThat(fsame.get().getDomainName()).isEqualTo("Test conflicts");
+        assertThat(fsame.get().getName()).isEqualTo("RootEntity");
+
+        assertDictionnaryColumnsAre(fsame.get(),
+                key("KEY", ColumnType.ATOMIC),
+                col("VALUE"),
+                col("SOMETHING"),
+                col("OTHER_VALUE"),
+                ln("ETAPEDUTRAITEMENTDEMASSE_ID", "TETAPEWORKFLOW", "ID"),
+                ln("ETAPEDUTRAITEMENTDEMASSE_ROLE", "TETAPEWORKFLOW", "ROLE"),
+                col("CONFIRMATIONNECESSAIRE"),
+                col("TYPECHARGEMENTOBJETTRAITE"),
+                col("TYPECHARGEMENTOBJETCONNEXE"),
+                ln("ETAPEDUTRAITEMENTINIT", "TETAPEWORKFLOW", "ID"),
+                ln("ETAPEDUTRAITEMENTINIT_ROLE", "TETAPEWORKFLOW", "ROLE"),
+                ln("ETAPEDUTRAITEMENTUNITAIRE_ID", "TETAPEWORKFLOW", "ID"),
+                ln("ETAPEDUTRAITEMENTUNITAIRE_ROLE", "TETAPEWORKFLOW", "ROLE"),
+                ln("ETAPEDUTRAITEMENTFILDELEAU_ID", "TETAPEWORKFLOW", "ID"),
+                ln("ETAPEDUTRAITMTFILDELEAU_ROLE", "TCOMBINAISONCOMPLEXE", "ROLE"),
+                ln("TRAITEMENTREGROUPEMENT_ID", "TTRAITEMENTEXECUTIONETAPE", "ID")
+        );
+    }
+
 
     /* ####################################### TOOLS ###################################### */
 

@@ -1,16 +1,11 @@
 package fr.uem.efluid.generation;
 
 import fr.uem.efluid.*;
-import fr.uem.efluid.model.ParameterDomainDefinition;
-import fr.uem.efluid.model.ParameterTableDefinition;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Modifier;
-import java.time.LocalDateTime;
-import java.util.Map;
 
 import static fr.uem.efluid.generation.GenerationUtils.failback;
-import static fr.uem.efluid.generation.GenerationUtils.generateFixedUUID;
 
 /**
  * Combined table details search
@@ -22,6 +17,7 @@ import static fr.uem.efluid.generation.GenerationUtils.generateFixedUUID;
 class PossibleTableAnnotation {
 
     private final boolean intermediate;
+    private boolean hierarchyTop;
     private Class<?> sourceType;
 
     private String name;
@@ -39,6 +35,7 @@ class PossibleTableAnnotation {
      */
     PossibleTableAnnotation(ParameterTable paramTable, Class<?> source, boolean intermediate) {
 
+        this.hierarchyTop = source.getDeclaredAnnotation(ParameterTable.class) == paramTable;
         this.intermediate = intermediate;
         this.sourceType = source;
         this.domainName = failback(paramTable.domainName(), searchDomainNameInHierarchy(source));
@@ -63,6 +60,7 @@ class PossibleTableAnnotation {
 
         if (existing == null) {
 
+            this.hierarchyTop = source.getDeclaredAnnotation(ParameterTable.class) == localParamTable;
             this.domainName = failback(localParamTable.domainName(), searchDomainNameInHierarchy(source));
             this.excludeInheritances = localParamTable.excludeInherited();
             this.filterClause = localParamTable.filterClause();
@@ -81,6 +79,7 @@ class PossibleTableAnnotation {
                     ? localParamTable
                     : existing.getSourceType().getAnnotation(ParameterTable.class);
 
+            this.hierarchyTop = false;
             this.domainName = failback(paramTable.domainName(), existing.getDomainName(), failback(searchDomainNameInHierarchy(source), searchDomainNameInHierarchy(existing.getSourceType())));
             this.excludeInheritances = paramTable.excludeInherited().length > 0 ? paramTable.excludeInherited() : existing.getExcludeInheritances();
             this.filterClause = failback(paramTable.filterClause(), existing.getFilterClause());
@@ -99,6 +98,8 @@ class PossibleTableAnnotation {
     PossibleTableAnnotation(ParameterTable localParamTable, ParameterTableSet paramTableSet, Class<?> source, PossibleTableAnnotation existing, boolean intermediate) {
 
         this(localParamTable, source, existing, intermediate);
+
+        this.hierarchyTop = source.getDeclaredAnnotation(ParameterTableSet.class) == paramTableSet;
 
         if (existing != null) {
             String inheritedDomain = searchDomainNameInHierarchy(existing.getSourceType());
@@ -171,33 +172,7 @@ class PossibleTableAnnotation {
         return this.intermediate;
     }
 
-    /**
-     * Convert to definition
-     */
-    ParameterTableDefinition toDefinition(Map<Class<?>, String> annotDomains) {
-
-        ParameterTableDefinition def = new ParameterTableDefinition();
-        def.setCreatedTime(LocalDateTime.now());
-        def.setUpdatedTime(def.getCreatedTime());
-        def.setDomain(new ParameterDomainDefinition()); // Will be merged later
-
-        // Found domain name
-        def.getDomain().setName(failback(getDomainName(), annotDomains.get(getSourceType())));
-
-        // Domain is mandatory
-        if (def.getDomain().getName() == null) {
-            throw new IllegalArgumentException(
-                    "No domain found for type " + getName()
-                            + ". Need to specify the domain with meta-annotation, with package annotation or with domainName property in @ParameterTable");
-        }
-
-        // Init table def
-        def.setParameterName(failback(getName(), getSourceType().getSimpleName()));
-        def.setTableName(failback(getTableName(), getSourceType().getSimpleName().toUpperCase()));
-        def.setWhereClause(getFilterClause());
-        def.setUuid(generateFixedUUID(def.getTableName(), ParameterTableDefinition.class));
-
-        return def;
+    public boolean isHierarchyTop() {
+        return this.hierarchyTop;
     }
-
 }
