@@ -3,6 +3,8 @@ package fr.uem.efluid.services.types;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.IndexAction;
 
+import java.util.Objects;
+
 /**
  * @author elecomte
  * @since v0.0.1
@@ -65,6 +67,7 @@ public class RollbackLine {
 					this.previous.getDictionaryEntryUuid(),
 					this.previous.getKeyValue(),
 					this.previous.getPayload(),
+					null,
 					IndexAction.ADD,
 					timestamp);
 		}
@@ -75,14 +78,16 @@ public class RollbackLine {
 					this.current.getDictionaryEntryUuid(),
 					this.current.getKeyValue(),
 					this.current.getPayload(),
+					null,
 					IndexAction.REMOVE,
 					timestamp);
 		}
 
 		// Other case are update current => previous
 		return DiffLine.combined(
-				this.current.getDictionaryEntryUuid(),
+				Objects.requireNonNull(this.current).getDictionaryEntryUuid(),
 				this.current.getKeyValue(),
+				Objects.requireNonNull(this.previous).getPayload(),
 				this.previous.getPayload(),
 				IndexAction.UPDATE,
 				timestamp);

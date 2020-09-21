@@ -292,14 +292,12 @@ public class PrepareIndexService {
      */
     List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index, boolean combineSimilars) {
 
-        // Get all previouses for HR payload init
-        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntriesExcludingExisting(new DictionaryEntry(dictionaryEntryUuid), index);
-
         // Complete HR payloads
         index.forEach(e -> {
-            IndexEntry previous = previouses.get(e.getKeyValue());
-            String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
-            e.setHrPayload(hrPayload);
+            if (e.getKeyValue().equals("EEE")){
+                System.out.println("gotcha");
+            }
+            e.setHrPayload(getConverter().convertToHrPayload(e.getPayload(),e.getPrevious()));
         });
 
         // And then combine for rendering (if asked)
@@ -550,6 +548,7 @@ public class PrepareIndexService {
 
         // No need to save from / to payload : from is always already in index table !
         entry.setPayload(currentPayload);
+        entry.setPrevious(previousPayload);
 
         // But for human readability, need a custom display payload (not saved)
         entry.setHrPayload(getConverter().convertToHrPayload(currentPayload, previousPayload));

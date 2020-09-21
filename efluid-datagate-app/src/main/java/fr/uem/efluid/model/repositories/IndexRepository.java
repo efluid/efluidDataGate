@@ -109,6 +109,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      * @param index           current index which previous entries are required
      * @return previous index content, for HR generate
      */
+    /*
     default Map<String, IndexEntry> findAllPreviousIndexEntriesExcludingExisting(
             DictionaryEntry dictionaryEntry,
             List<PreparedIndexEntry> index) {
@@ -138,5 +139,5 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
                         .collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v))));
 
         return result;
-    }
+    }*/
 }

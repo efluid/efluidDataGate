@@ -1,6 +1,5 @@
 package fr.uem.efluid.services.types;
 
-import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.IndexEntry;
 
 /**
@@ -10,7 +9,7 @@ import fr.uem.efluid.model.entities.IndexEntry;
  * <p>The resolution is processed with basic rules, from :<ul><li>"Their" type of modif</li><li>"Mine" type of modif</li><li>Temporal</li></ul></p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
 public class PreparedMergeIndexEntry extends PreparedIndexEntry {
@@ -82,25 +81,10 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
     }
 
     /**
-     * <p>
-     * For merge resolution : apply given diff as resolution (change current modification)
-     * </p>
-     *
-     * @param combined
-     * @param hrPayload
-     */
-    public void applyResolution(DiffLine combined, String hrPayload) {
-
-        setAction(combined.getAction());
-        setPayload(combined.getPayload());
-        setHrPayload(hrPayload);
-    }
-
-    /**
      * Used when reading an imported index content
      *
-     * @param existing
-     * @return
+     * @param existing entry from import
+     * @return for merge
      */
     public static PreparedMergeIndexEntry fromImportedEntity(IndexEntry existing) {
 
@@ -111,30 +95,12 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
         return data;
     }
 
-    /**
-     * Used when reading an imported index content
-     *
-     * @param their
-     * @return
-     */
-    public static PreparedMergeIndexEntry fromExistingTheir(PreparedIndexEntry their) {
-
-        PreparedMergeIndexEntry merge = new PreparedMergeIndexEntry();
-
-        merge.setDictionaryEntryUuid(their.getDictionaryEntryUuid());
-        merge.setKeyValue(their.getKeyValue());
-        merge.setTheir(their);
-        merge.setMine(their);
-
-        return merge;
-    }
-
     @Override
     public boolean isSelected() {
 
         // If no need for action, never selected
-        
-        if(isNeedAction()) {
+
+        if (isNeedAction()) {
             return super.isSelected();
         }
 

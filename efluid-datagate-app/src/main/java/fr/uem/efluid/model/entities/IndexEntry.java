@@ -17,7 +17,7 @@ import java.util.UUID;
  * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 @Entity
@@ -40,6 +40,9 @@ public class IndexEntry implements DiffLine {
 
     @Lob
     private String payload;
+
+    @Lob
+    private String previous;
 
     private String keyValue;
 
@@ -124,6 +127,15 @@ public class IndexEntry implements DiffLine {
         this.payload = payload;
     }
 
+    @Override
+    public String getPrevious() {
+        return this.previous;
+    }
+
+    public void setPrevious(String previous) {
+        this.previous = previous;
+    }
+
     /**
      * @return the keyValue
      */
@@ -172,6 +184,7 @@ public class IndexEntry implements DiffLine {
                 .with("act", getAction())
                 .with("key", getKeyValue())
                 .with("pay", getPayload())
+                .with("pre", getPrevious())
                 .with("tim", getTimestamp())
                 .toString();
     }
@@ -185,6 +198,7 @@ public class IndexEntry implements DiffLine {
                 .applyString("act", a -> setAction(IndexAction.valueOf(a)))
                 .applyString("key", this::setKeyValue)
                 .applyString("pay", this::setPayload)
+                .applyString("pre", this::setPrevious)
                 .applyString("tim", t -> setTimestamp(Long.parseLong(t)));
     }
 
