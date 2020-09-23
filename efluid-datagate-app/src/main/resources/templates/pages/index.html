@@ -7,9 +7,9 @@
 	<div layout:fragment="content" class="datagate-home">
 
 		<div class="left-bloc">
-			<p th:text="'Version: '+ ${lastVersion}"></p>
-			<p th:if="${project != null}">Domaines fonctionnels : <span th:text="${details.domainsCountForProject}">15</span></p>
-			<p>Tables administrées : <span th:text="${details.dictionaryCount}">100</span></p>
+			<p>Instance <span th:text="${details.info.instanceName}">SOURCE</span>, version applicative v<span th:text="${details.info.version}">1</span></p>
+			<p>Base de données source : <span th:text="${details.dbUrl}">ORACLE_DB_SERVER_123</span></p>
+			<p th:if="${details.modelDesc != null}">Schema source : <span th:text="${details.modelDesc.schema}">EFLUID</span></p>
 		</div>
 		<div class="right-bloc">
 			<p style="font-size: 1rem;" th:text="'Mon projet'"></p>
@@ -20,7 +20,7 @@
 			<table class="table table-sm">
 				<thead>
 				<tr>
-					<th scope="col">Derniers lots de modifications</th>
+					<th scope="col">Derniers lots de modifications tt</th>
 					<th scope="col">Le</th>
 				</tr>
 				</thead>
