@@ -104,7 +104,7 @@ public class UpgradeServiceIntegrationTest {
         assertThat(record2).isPresent();
         assertThat(record1.get().getIndex()).isEqualTo(14);
         assertThat(record2.get().getIndex()).isEqualTo(1);
-        assertThat(record1.get().getRunTime()).isAfter(record2.get().getRunTime());
+        assertThat(record1.get().getRunTime()).isAfterOrEqualTo(record2.get().getRunTime());
     }
 
     @Test
@@ -125,7 +125,7 @@ public class UpgradeServiceIntegrationTest {
         var record = this.upgrades.findById("previous-payload-init");
 
         assertThat(record).isPresent();
-        assertThat(record.get().getRunTime()).isAfter(begin);
+        assertThat(record.get().getRunTime()).isAfterOrEqualTo(begin);
     }
 
     @Test

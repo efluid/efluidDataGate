@@ -1,5 +1,6 @@
 package fr.uem.efluid.model;
 
+import fr.uem.efluid.model.entities.IndexAction;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -117,14 +118,15 @@ public class DiffLineUnitTest {
         String key = "NAME1";
 
         DiffLine combined = DiffLine.combinedOnSameTableAndKey(Arrays.asList(
-                DiffLine.combined(dict, key, "ADD1", null, ADD, 1),
+                DiffLine.combined(dict, key, "ADD", null, ADD, 1),
                 DiffLine.combined(dict, key, "MODIF1", null, UPDATE, 2),
                 DiffLine.combined(dict, key, null, null, REMOVE, 3),
                 DiffLine.combined(dict, key, "ADD2", null, ADD, 4),
                 DiffLine.combined(dict, key, "MODIF2", null, UPDATE, 5),
                 DiffLine.combined(dict, key, "MODIF3", null, UPDATE, 6)), false);
 
-        Assert.assertEquals("MODIF2", combined.getPrevious());
+        Assert.assertNull(combined.getPrevious());
+        Assert.assertEquals(ADD, combined.getAction());
     }
 
 
