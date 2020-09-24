@@ -16,12 +16,14 @@ import java.util.Collection;
  * Dedicated processing unit for merge : process "mine" and "their" entries built using basic rules,
  * and apply the resolution specified in ResolutionRules configuration
  *
- * @version 1
+ * @version 2
  * @since v0.2
  */
 public class MergeResolutionProcessor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MergeResolutionProcessor.class);
+
+    private static final Logger MERGE_WARNING_LOGGER = LoggerFactory.getLogger("merge.warnings");
 
     private final Collection<ResolutionCase> cases;
 
@@ -31,7 +33,7 @@ public class MergeResolutionProcessor {
     /**
      * Init from loaded configured Resolution cases
      *
-     * @param cases
+     * @param cases loaded resolution config
      */
     public MergeResolutionProcessor(Collection<ResolutionCase> cases) {
         this.cases = cases;
@@ -40,8 +42,8 @@ public class MergeResolutionProcessor {
     /**
      * Process one entry against resolution case rules
      *
-     * @param mineEntry
-     * @param theirEntry
+     * @param mineEntry        current "mine" : entry on local db
+     * @param theirEntry       current "their" : imported combined entry
      * @param hasActualContent true if has corresponding actual content
      * @return built merge entry
      */
@@ -49,19 +51,34 @@ public class MergeResolutionProcessor {
 
         ResolutionCase resolutionCase = searchResolutionCase(mineEntry, theirEntry);
 
-        LOGGER.debug("For mineEntry {}, theirEntry {}, found resolution case {}", mineEntry, theirEntry, resolutionCase.getCaseName());
-
         // If resolution or resolution action is null, drop it
         if (resolutionCase.getResolution() == null || resolutionCase.getResolution().getAction() == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Mine:{}, Their:{}, no resolution, drop the line",
+                        renderDiffLine(mineEntry), renderDiffLine(theirEntry));
+            }
             return null;
         }
 
         PreparedMergeIndexEntry entry = applyResolutionResult(resolutionCase, mineEntry, theirEntry);
 
         if (!hasActualContent && entry.getAction() != IndexAction.ADD) {
-            LOGGER.debug("Drop unknown update on entry {} for dict entry {} with update {} as this key doesn't exist at all locally",
-                    entry.getKeyValue(), entry.getDictionaryEntryUuid(), entry.getAction());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Mine:{}, Their:{}, unknown key for update or remove, drop the line",
+                        renderDiffLine(mineEntry), renderDiffLine(theirEntry));
+            }
             return null;
+        }
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Mine:{}, Their:{}, resolution {}, produces {}",
+                    renderDiffLine(mineEntry), renderDiffLine(theirEntry),
+                    resolutionCase.getCaseName(), renderDiffLine(entry));
+        }
+
+        // Trace all resolution warnings
+        if (entry.getResolutionWarning() != null && MERGE_WARNING_LOGGER.isInfoEnabled()) {
+            MERGE_WARNING_LOGGER.info("{} => {}", renderDiffLine(entry), entry.getResolutionWarning());
         }
 
         return entry;
@@ -69,11 +86,6 @@ public class MergeResolutionProcessor {
 
     /**
      * From identified resolutionCase, apply specified Result
-     *
-     * @param resolutionCase
-     * @param mineEntry
-     * @param theirEntry
-     * @return
      */
     private PreparedMergeIndexEntry applyResolutionResult(
             ResolutionCase resolutionCase,
@@ -89,6 +101,9 @@ public class MergeResolutionProcessor {
 
         // Always requires timestamp
         entry.setTimestamp(System.currentTimeMillis());
+
+        // Keep reference to table
+        entry.setTableName(mineEntry != null ? mineEntry.getTableName() : theirEntry.getTableName());
 
         // All are selected as default in merge
         entry.setSelected(true);
@@ -109,16 +124,11 @@ public class MergeResolutionProcessor {
                 case THEIR_PAYLOAD:
                     copyPayloads(entry, theirEntry);
                     break;
-                case THEIR_PAYLOAD_REGENERATE_HR_FROM_MINE:
-                    // 1st copy payload from their
-                    copyPayloads(entry, theirEntry);
-
-                    // Then regen HR
-                    entry.setHrPayload(
-                            this.valueConverter.convertToHrPayload(
-                                    theirEntry != null ? theirEntry.getPayload() : null,
-                                    mineEntry != null ? mineEntry.getPayload() : null));
-                    break;
+                case THEIR_PREVIOUS: /* Unsupported */
+                case MINE_PREVIOUS: /* Unsupported */
+                    throw new ApplicationException(ErrorType.MERGE_RESOLUTION_UNKNOWN,
+                            "Unsupported merge case resolution. Cannot use THEIR_PREVIOUS or MINE_PREVIOUS " +
+                                    "in payload resolution in case \"" + resolutionCase.getCaseName() + "\"");
                 case MINE_PAYLOAD:
                 default:
                     copyPayloads(entry, mineEntry);
@@ -126,17 +136,47 @@ public class MergeResolutionProcessor {
             }
         }
 
+        // Copy previous regarding source values
+        if (resolutionCase.getResolution().getPrevious() != null) {
+            switch (resolutionCase.getResolution().getPrevious()) {
+                case THEIR_PAYLOAD:
+                    if (theirEntry != null) {
+                        entry.setPrevious(theirEntry.getPayload());
+                    }
+                    break;
+                case MINE_PAYLOAD:
+                    if(mineEntry != null) {
+                        entry.setPrevious(mineEntry.getPayload());
+                    }
+                    break;
+                case THEIR_PREVIOUS:
+                    if (theirEntry != null) {
+                        entry.setPrevious(theirEntry.getPrevious());
+                    }
+                    break;
+                case MINE_PREVIOUS:
+                default:
+                    if(mineEntry != null) {
+                        entry.setPrevious(mineEntry.getPrevious());
+                    }
+                    break;
+            }
+        }
+
+        // Alway regenerate HR Payload
+        entry.setHrPayload(this.valueConverter.convertToHrPayload(entry.getPayload(), entry.getPrevious()));
+
         // Refer applied resolution rule (for validation)
         entry.setResolutionRule(resolutionCase.getCaseName());
+
+        // Keep warning if any
+        entry.setResolutionWarning(resolutionCase.getResolution().getWarning());
 
         return entry;
     }
 
     /**
      * Copy properties which are used to identify the diff entry : commit uuid if any, dic uuid, key ...
-     *
-     * @param resultEntry
-     * @param source
      */
     private void copyIdentifier(PreparedMergeIndexEntry resultEntry, PreparedIndexEntry source) {
         if (source != null) {
@@ -149,9 +189,6 @@ public class MergeResolutionProcessor {
 
     /**
      * Copy payload + hrPayload from specified source
-     *
-     * @param resultEntry
-     * @param source
      */
     private void copyPayloads(PreparedMergeIndexEntry resultEntry, PreparedIndexEntry source) {
         if (source != null) {
@@ -162,10 +199,6 @@ public class MergeResolutionProcessor {
 
     /**
      * Copy mine / their to reference regarding nullability
-     *
-     * @param resultEntry
-     * @param mineEntry
-     * @param theirEntry
      */
     private void copySourceEntries(
             PreparedMergeIndexEntry resultEntry,
@@ -194,10 +227,23 @@ public class MergeResolutionProcessor {
                 mineEntry != null ? mineEntry.getPayload() : null
         ) ? ResolutionCase.PayloadType.SIMILAR : ResolutionCase.PayloadType.DIFFERENT;
 
+        ResolutionCase.PayloadType previous = ObjectUtils.nullSafeEquals(
+                theirEntry != null ? theirEntry.getPrevious() : null,
+                mineEntry != null ? mineEntry.getPrevious() : null
+        ) ? ResolutionCase.PayloadType.SIMILAR : ResolutionCase.PayloadType.DIFFERENT;
+
         return this.cases.stream()
-                .filter(r -> r.getMine() == mine && r.getTheir() == their && r.getPayload() == payload).findFirst()
+                .filter(r -> r.getMine() == mine
+                        && r.getTheir() == their
+                        && r.getPayload() == payload
+                        && r.getPrevious() == previous)
+                .findFirst()
                 .orElseThrow(() -> new ApplicationException(ErrorType.MERGE_RESOLUTION_UNKNOWN,
-                        "Unsupported merge case resolution. Get their=\"" + their + "\", mine=\"" + mine + "\", payload=\"" + payload + "\""));
+                        "Unsupported merge case resolution. Get their=\"" + their + "\", mine=\"" + mine + "\", payload=\"" + payload + "\", previous=\"" + previous + "\""));
+    }
+
+    private static String renderDiffLine(PreparedIndexEntry entry) {
+        return entry != null ? entry.toLogRendering() : " - null - ";
     }
 
     /**
@@ -209,6 +255,7 @@ public class MergeResolutionProcessor {
         private IndexAction their;
         private IndexAction mine;
         private PayloadType payload;
+        private PayloadType previous;
         private Result resolution;
 
         public ResolutionCase() {
@@ -246,6 +293,14 @@ public class MergeResolutionProcessor {
             this.payload = payload;
         }
 
+        public PayloadType getPrevious() {
+            return previous;
+        }
+
+        public void setPrevious(PayloadType previous) {
+            this.previous = previous;
+        }
+
         public Result getResolution() {
             return resolution;
         }
@@ -257,22 +312,32 @@ public class MergeResolutionProcessor {
         public static class Result {
 
             private PayloadResultType payload;
+            private PayloadResultType previous;
             private IndexAction action;
             private boolean needAction;
+            private String warning;
 
             public Result() {
             }
 
             public PayloadResultType getPayload() {
-                return payload;
+                return this.payload;
             }
 
             public void setPayload(PayloadResultType payload) {
                 this.payload = payload;
             }
 
+            public PayloadResultType getPrevious() {
+                return this.previous;
+            }
+
+            public void setPrevious(PayloadResultType previous) {
+                this.previous = previous;
+            }
+
             public IndexAction getAction() {
-                return action;
+                return this.action;
             }
 
             public void setAction(IndexAction action) {
@@ -280,15 +345,23 @@ public class MergeResolutionProcessor {
             }
 
             public boolean isNeedAction() {
-                return needAction;
+                return this.needAction;
             }
 
             public void setNeedAction(boolean needAction) {
                 this.needAction = needAction;
             }
 
+            public String getWarning() {
+                return this.warning;
+            }
+
+            public void setWarning(String warning) {
+                this.warning = warning;
+            }
+
             public enum PayloadResultType {
-                THEIR_PAYLOAD, MINE_PAYLOAD, THEIR_PAYLOAD_REGENERATE_HR_FROM_MINE
+                THEIR_PAYLOAD, MINE_PAYLOAD, THEIR_PREVIOUS, MINE_PREVIOUS
             }
 
 
