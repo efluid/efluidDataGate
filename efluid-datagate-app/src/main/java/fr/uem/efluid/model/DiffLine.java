@@ -67,8 +67,8 @@ public interface DiffLine extends ContentLine, Comparable<DiffLine> {
                     // If updating an addition, became a new addition
                     if (currentAction != IndexAction.ADD) {
                         currentAction = line.getAction();
+                        previousPayload = currentPayload;
                     }
-                    previousPayload = currentPayload;
                     currentPayload = line.getPayload();
                     break;
                 case REMOVE:
