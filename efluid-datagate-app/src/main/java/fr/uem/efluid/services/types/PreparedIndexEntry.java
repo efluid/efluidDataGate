@@ -270,6 +270,10 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
                 '}';
     }
 
+    public String toLogRendering() {
+        return "[" + getTableName() + "." + getCombinedKey() + "] : " + getAction() + " \"" + getHrPayload() + "\"";
+    }
+
     /**
      * Used only when creating a new one as index are immutable
      *
@@ -299,12 +303,13 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
      * @param hrPayload
      * @return
      */
-    public static PreparedIndexEntry fromCombined(DiffLine combined, String hrPayload) {
+    public static PreparedIndexEntry fromCombined(DiffLine combined, String tableName, String hrPayload) {
 
         PreparedIndexEntry data = new PreparedIndexEntry();
 
         data.setAction(combined.getAction());
         data.setDictionaryEntryUuid(combined.getDictionaryEntryUuid());
+        data.setTableName(tableName);
         data.setPayload(combined.getPayload());
         data.setPrevious(combined.getPrevious());
         data.setKeyValue(combined.getKeyValue());

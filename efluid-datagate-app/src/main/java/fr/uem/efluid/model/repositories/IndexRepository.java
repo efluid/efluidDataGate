@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
-import fr.uem.efluid.services.types.PreparedIndexEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
 public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpecificationExecutor<IndexEntry> {
@@ -48,22 +47,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      */
     List<IndexEntry> findByDictionaryEntry(DictionaryEntry dictionaryEntry);
 
-    List<IndexEntry> findByDictionaryEntryAndTimestampGreaterThanEqual(DictionaryEntry dictionaryEntry, long timestamp);
-
     List<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqual(DictionaryEntry dictionaryEntry, long timestamp);
-
-    /**
-     * <b><font color="red">Query for internal use only</font></b>
-     */
-    @Query(value = "select i.* "
-            + "from indexes i "
-            + "inner join ("
-            + "	select max(ii.id) as max_id, ii.key_value from indexes ii where ii.dictionary_entry_uuid = :uuid group by ii.key_value"
-            + ") mi on i.id = mi.max_id "
-            + "where i.key_value in (:keys)", nativeQuery = true)
-    List<IndexEntry> _internal_findAllPreviousIndexEntries(
-            @Param("uuid") String dictionaryEntryUuid,
-            @Param("keys") List<String> keyValues);
 
     /**
      * <b><font color="red">Query for internal use only</font></b>
@@ -80,39 +64,15 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
             @Param("excludeIds") List<Long> excludeIds);
 
     /**
-     * <p>
-     * Get the "last" IndexEntry for each given KeyValue, using the specified
-     * DictionaryEntry as scope select.
-     * </p>
-     *
-     * @param dictionaryEntry dict entry
-     * @param keyValues       keys
-     * @return entries mapped to their key
-     */
-    default Map<String, IndexEntry> findAllPreviousIndexEntries(
-            DictionaryEntry dictionaryEntry,
-            List<String> keyValues) {
-
-        // Do not attempt to select with an empty "in"
-        if (keyValues == null || keyValues.isEmpty()) {
-            return new HashMap<>();
-        }
-
-        return _internal_findAllPreviousIndexEntries(dictionaryEntry.getUuid().toString(), keyValues).stream()
-                .collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v));
-    }
-
-    /**
      * Search previous entries, with support for large data volumes, ignoring existing entries
      *
      * @param dictionaryEntry current DictionaryEntry
      * @param index           current index which previous entries are required
      * @return previous index content, for HR generate
      */
-    /*
     default Map<String, IndexEntry> findAllPreviousIndexEntriesExcludingExisting(
             DictionaryEntry dictionaryEntry,
-            List<PreparedIndexEntry> index) {
+            List<IndexEntry> index) {
 
         // Do not attempt to select with an empty "in"
         if (index == null || index.isEmpty()) {
@@ -124,7 +84,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
             return _internal_findAllPreviousIndexEntries(
                     dictionaryEntry.getUuid().toString(),
                     index.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()),
-                    index.stream().map(PreparedIndexEntry::getId).collect(Collectors.toList())).stream()
+                    index.stream().map(IndexEntry::getId).collect(Collectors.toList())).stream()
                     .collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v));
         }
 
@@ -135,9 +95,9 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
                 i -> result.putAll(_internal_findAllPreviousIndexEntries(
                         dictionaryEntry.getUuid().toString(),
                         i.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()),
-                        i.stream().map(PreparedIndexEntry::getId).collect(Collectors.toList())).stream()
+                        i.stream().map(IndexEntry::getId).collect(Collectors.toList())).stream()
                         .collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v))));
 
         return result;
-    }*/
+    }
 }

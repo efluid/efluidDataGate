@@ -7,9 +7,10 @@ import fr.uem.efluid.model.entities.IndexEntry;
  * If result is null after prepare, then this entry is totaly IGNORED
  * </p>
  * <p>The resolution is processed with basic rules, from :<ul><li>"Their" type of modif</li><li>"Mine" type of modif</li><li>Temporal</li></ul></p>
+ * <p>For some resolutions, a "warning message" can be specified if the merge content is not "standard"</p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 public class PreparedMergeIndexEntry extends PreparedIndexEntry {
@@ -19,6 +20,8 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
     private PreparedIndexEntry their;
 
     private boolean needAction;
+
+    private String resolutionWarning;
 
     private String resolutionRule;
 
@@ -65,6 +68,7 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
         this.their = their;
     }
 
+
     /**
      * @return the needAction
      */
@@ -78,6 +82,14 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
      */
     public void setNeedAction(boolean needAction) {
         this.needAction = needAction;
+    }
+
+    public String getResolutionWarning() {
+        return this.resolutionWarning;
+    }
+
+    public void setResolutionWarning(String resolutionWarning) {
+        this.resolutionWarning = resolutionWarning;
     }
 
     /**
