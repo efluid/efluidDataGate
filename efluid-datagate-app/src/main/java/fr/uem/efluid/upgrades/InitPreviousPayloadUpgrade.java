@@ -2,6 +2,7 @@ package fr.uem.efluid.upgrades;
 
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
@@ -30,7 +31,6 @@ import java.util.stream.Collectors;
  * @since v2.0.19
  */
 @Component
-@Profile("!test")
 public class InitPreviousPayloadUpgrade implements UpgradeProcess {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UpgradeService.class);
@@ -66,13 +66,14 @@ public class InitPreviousPayloadUpgrade implements UpgradeProcess {
         AtomicInteger current = new AtomicInteger(1);
         allCommits.forEach(c -> {
 
-            Map<UUID, List<IndexEntry>> entriesByTables = this.index.findByCommitUuid(c.getUuid()).stream().collect(Collectors.groupingBy(IndexEntry::getDictionaryEntryUuid));
+            Map<UUID, List<IndexEntry>> entriesByTables = this.index.findWithUpgradablePreviosByCommitUuid(c.getUuid().toString()).stream()
+                    .collect(Collectors.groupingBy(IndexEntry::getDictionaryEntryUuid));
             List<IndexEntry> toUpdate = new ArrayList<>();
             entriesByTables.forEach((t, i) -> {
 
                 DictionaryEntry entry = this.dictionary.getOne(t);
 
-                Map<String, IndexEntry> previouses = this.index.findAllPreviousIndexEntries(entry, i.stream().map(IndexEntry::getKeyValue).collect(Collectors.toList()));
+                Map<String, IndexEntry> previouses = this.index.findAllPreviousIndexEntriesExcludingExisting(entry, i);
 
                 i.forEach(e -> {
                     IndexEntry previous = previouses.get(e.getKeyValue());
@@ -85,6 +86,7 @@ public class InitPreviousPayloadUpgrade implements UpgradeProcess {
             });
 
             this.index.saveAll(toUpdate);
+            this.index.flush();
 
             LOGGER.info("[UPGRADE] Upgraded commit {}/{}", current.getAndIncrement(), allCommits.size());
         });

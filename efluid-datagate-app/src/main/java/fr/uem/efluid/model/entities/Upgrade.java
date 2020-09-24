@@ -1,5 +1,6 @@
 package fr.uem.efluid.model.entities;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -13,6 +14,7 @@ public class Upgrade {
     @Id
     private String name;
 
+    @Column(name = "idx_num")
     private int index;
 
     private LocalDateTime runTime;
