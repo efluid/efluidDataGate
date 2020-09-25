@@ -27,16 +27,16 @@ public class MergeResolutionProcessor {
 
     private final Collection<ResolutionCase> cases;
 
-    @Autowired
-    private ManagedValueConverter valueConverter;
+    private final ManagedValueConverter valueConverter;
 
     /**
      * Init from loaded configured Resolution cases
      *
      * @param cases loaded resolution config
      */
-    public MergeResolutionProcessor(Collection<ResolutionCase> cases) {
+    public MergeResolutionProcessor(Collection<ResolutionCase> cases, ManagedValueConverter valueConverter) {
         this.cases = cases;
+        this.valueConverter = valueConverter;
     }
 
     /**
@@ -145,7 +145,7 @@ public class MergeResolutionProcessor {
                     }
                     break;
                 case MINE_PAYLOAD:
-                    if(mineEntry != null) {
+                    if (mineEntry != null) {
                         entry.setPrevious(mineEntry.getPayload());
                     }
                     break;
@@ -156,7 +156,7 @@ public class MergeResolutionProcessor {
                     break;
                 case MINE_PREVIOUS:
                 default:
-                    if(mineEntry != null) {
+                    if (mineEntry != null) {
                         entry.setPrevious(mineEntry.getPrevious());
                     }
                     break;
