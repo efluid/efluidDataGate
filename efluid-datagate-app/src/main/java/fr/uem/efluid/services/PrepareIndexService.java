@@ -11,7 +11,9 @@ import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
+import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.DatasourceUtils;
+import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -292,14 +294,12 @@ public class PrepareIndexService {
      */
     List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index, boolean combineSimilars) {
 
-        // Get all previouses for HR payload init
-        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntriesExcludingExisting(new DictionaryEntry(dictionaryEntryUuid), index);
-
         // Complete HR payloads
         index.forEach(e -> {
-            IndexEntry previous = previouses.get(e.getKeyValue());
-            String hrPayload = getConverter().convertToHrPayload(e.getPayload(), previous != null ? previous.getPayload() : null);
-            e.setHrPayload(hrPayload);
+            if (e.getKeyValue().equals("EEE")) {
+                System.out.println("gotcha");
+            }
+            e.setHrPayload(getConverter().convertToHrPayload(e.getPayload(), e.getPrevious()));
         });
 
         // And then combine for rendering (if asked)
@@ -550,6 +550,7 @@ public class PrepareIndexService {
 
         // No need to save from / to payload : from is always already in index table !
         entry.setPayload(currentPayload);
+        entry.setPrevious(previousPayload);
 
         // But for human readability, need a custom display payload (not saved)
         entry.setHrPayload(getConverter().convertToHrPayload(currentPayload, previousPayload));
@@ -598,35 +599,39 @@ public class PrepareIndexService {
         // One combined key for each keys
         return allKeys.stream().map(key -> {
 
-            String previous = previousContent.get(key);
-            DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key), false);
-            DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key), true);
+            try {
+                String previous = previousContent.get(key);
+                DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key), false);
+                DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key), true);
 
-            // Ignore dead entries (ADDED then DELETED in regenerated content)
-            if (mine == null && their == null) {
-                return null;
+                // Ignore dead entries (ADDED then DELETED in regenerated content)
+                if (mine == null && their == null) {
+                    return null;
+                }
+
+                String mineHr = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null, previous);
+                String theirHr = getConverter().convertToHrPayload(their != null ? their.getPayload() : null, previous);
+
+                PreparedIndexEntry mineEntry = mine != null ? PreparedIndexEntry.fromCombined(mine, dict.getTableName(), mineHr) : null;
+                PreparedIndexEntry theirEntry = their != null ? PreparedIndexEntry.fromCombined(their, dict.getTableName(), theirHr) : null;
+
+                // One increment only (when half are processed)
+                if (count.incrementAndGet() == fireIncrem) {
+                    preparation.incrementProcessStep();
+                }
+
+                PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, allActualKeys.contains(key));
+
+                // Dedicated logger output for resolutions
+                if (MERGE_LOGGER.isDebugEnabled()) {
+                    MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
+                            dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
+                }
+                return resolved;
+            } catch (Throwable t) {
+                LOGGER.error("Failed to process merge index entry on " + dict.getTableName() + "." + key + ", get error", t);
+                throw new ApplicationException(ErrorType.MERGE_FAILURE, t);
             }
-
-            String mineHr = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null, previous);
-            String theirHr = getConverter().convertToHrPayload(their != null ? their.getPayload() : null, previous);
-
-            PreparedIndexEntry mineEntry = mine != null ? PreparedIndexEntry.fromCombined(mine, mineHr) : null;
-            PreparedIndexEntry theirEntry = their != null ? PreparedIndexEntry.fromCombined(their, theirHr) : null;
-
-            // One increment only (when half are processed)
-            if (count.incrementAndGet() == fireIncrem) {
-                preparation.incrementProcessStep();
-            }
-
-            PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, allActualKeys.contains(key));
-
-            // Dedicated logger output for resolutions
-            if (MERGE_LOGGER.isDebugEnabled()) {
-                MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
-                        dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
-            }
-
-            return resolved;
         }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 

@@ -84,6 +84,11 @@ public class CommonStepDefs extends CucumberStepDefs {
         get(link);
     }
 
+    @When("^we check content in datagate database$")
+    public void check_database() {
+        // Nothing required
+    }
+
     @Then("^the user is (.+) to (.+)$")
     public void the_user_is_oriented_to_page(String action, String page) throws Throwable {
 

@@ -1,9 +1,6 @@
 package fr.uem.efluid.cucumber.stubs;
 
-import fr.uem.efluid.model.entities.ApplyHistoryEntry;
-import fr.uem.efluid.model.entities.Commit;
-import fr.uem.efluid.model.entities.LobProperty;
-import fr.uem.efluid.model.entities.Project;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.CommitDetails;
 import org.slf4j.Logger;
@@ -46,6 +43,10 @@ public class BacklogDatabaseAccess {
 
     public List<LobProperty> loadCommitLobs(CommitDetails details) {
         return this.lobs.findByCommitUuidIn(Collections.singletonList(details.getUuid()));
+    }
+
+    public List<IndexEntry> loadCommitIndex(CommitDetails details) {
+        return this.index.findByCommitUuid(details.getUuid());
     }
 
     public UUID searchCommitWithName(Project project, String name) {

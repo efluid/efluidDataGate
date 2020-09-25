@@ -1,10 +1,8 @@
 package fr.uem.efluid.cucumber.steps;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
-import fr.uem.efluid.model.entities.AttachmentType;
-import fr.uem.efluid.model.entities.CommitState;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.LobProperty;
+import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
@@ -176,6 +174,29 @@ public class CommitStepDefs extends CucumberStepDefs {
                                      },
                 table);
     }
+
+    @Then("^the commit index has these managed technical payloads :$")
+    public void commit_detail_index(DataTable table) throws Exception {
+
+        CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
+
+        var index = backlogDatabase().loadCommitIndex(details);
+
+        // Get details directly with all content
+        assertIndexIsTechnicallyCompliant(index, details.getReferencedTables(), table);
+    }
+
+    @Then("^the index for commit \"(.*)\" has these managed technical payloads :$")
+    public void commit_detail_index(String comment, DataTable table) throws Exception {
+
+        CommitDetails details = this.commitService.getExistingCommitDetails(backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment), false);
+
+        var index = backlogDatabase().loadCommitIndex(details);
+
+        // Get details directly with all content
+        assertIndexIsTechnicallyCompliant(index, details.getReferencedTables(), table);
+    }
+
 
     @Then("^the commit details are displayed with this sorted content :$")
     public void commit_detail_content_sorted(DataTable table) throws Exception {
