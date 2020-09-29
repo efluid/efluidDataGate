@@ -900,3 +900,9 @@ li {
 .btn-right {
     margin-right: 0;
 }
+
+#warning-login, #warning-pwd, #warning-email, #email-validator,
+#email-validator, #login-validator, #warning-empty, #warning-empty,
+#validator-input, #input-empty {
+    color: red;
+}

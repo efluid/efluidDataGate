@@ -27,7 +27,11 @@
 					</td>
 			     </tr>
 			     <tr id="domainListInjectBefore">
-			         <td><input type="text" id="domainName" class="form-control" placeholder="Nom" required="true"/></td>
+			         <td>
+                         <input type="text" id="domainName" class="form-control" placeholder="Nom" required="true"/>
+                         <p id="warning-empty">Veuillez saisir un nom de domaine</p>
+                         <p id="validator-input">Votre nom de domaine ne doit pas contenir de caractères spéciaux</p>
+                     </td>
 			         <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
 			     </tr>
 			</tbody>
@@ -39,6 +43,31 @@
        	$('#color-nav-1').css("font-weight", "bold");
 	 	$('#collapseExample1').css("display", "block");
 		$('#li-3').css("font-weight", "bolder");
+		$("#warning-empty").show()
+		$("#validator-input").hide();
+
+		var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
+
+		const isInputEmpty = e => {
+		    var inputValue = e.target.value;
+		    if (e.target.id === "domainName") {
+		        if (!inputValue.length) {
+		            $("#warning-empty").show();
+		            $("#validator-input").hide();
+		            $("#addButton").hide();
+		        } else {
+		            if(regex.test(inputValue)) {
+		                $("#validator-input").show();
+		                $("#warning-empty").hide();
+		                $("#addButton").hide();
+		            } else {
+		                $("#warning-empty").hide();
+		                $("#validator-input").hide();
+		                $("#addButton").show();
+		            }
+		        }
+		    }
+		}
     
 		// Delete buttons
 		const deleteButtonAction = (e) => {
@@ -72,6 +101,7 @@
     	$(document).ready(() => {
 			$("button.delete-button").click(deleteButtonAction);
 			$("#addButton").click(addButtonAction);
+			$("#domainName").keyup(e => { isInputEmpty(e) });
 		}); 
     </script>
 </body>
