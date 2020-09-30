@@ -160,7 +160,15 @@
 										</div>
 									</div>
 									<div id="navigation-modif"><p>Modification</p></div>
-									<div id="navigation-btns"></div>
+									<div id="navigation-list-table" style="margin-right: 0px; display: flex; flex-direction: column;">
+										<div class="container-is-used">
+											<button type="button" class="btn btn-warning" style="min-width: 100% !important;" onclick="showCardFilter('list-table')">Tables modifiées</button>
+										</div>
+										<div class="card" id="card-list-table">
+										  <ul class="list-group list-group-flush">
+										  </ul>
+										</div>
+									</div>
 								</span>
 							</thead>
 						</table>
@@ -222,6 +230,14 @@
 		};
 		var associatedTables = /*[[${preparation.referencedTableNames}]]*/ [] ;
 
+		for(let i = 0; i < associatedTables.length; i++) {
+			if(associatedTables[i].length > 12) {
+				$("#card-list-table ul").append('<li>' + associatedTables[i].substring(0, 14) + '...' + '</li>')
+			} else {
+				$("#card-list-table ul").append('<li>' + associatedTables[i] + '</li>')
+			}
+		}
+
 		const updateFilterSelectButtonGroup = () => {
 			if(Object.values(activeSearch.filters).every(i => i === "")){
 				$("#keep-filtered-ligne").hide();
@@ -234,15 +250,16 @@
 		$('#card-table').hide();
 		$('#card-key').hide();
 		$('#card-type').hide();
+		$('#card-list-table').hide();
 
 		let domainIsOpen = false;
 		let keyIsOpen = false;
 		let typeIsOpen = false;
 		let tableIsOpen = false;
+		let listTableIsOpen = false;
 
 
 		const showCardFilter = (name) => {
-
 			let item = name;
 
 			if (item === 'domain') {
@@ -275,7 +292,7 @@
 				}
 			}
 
-			else {
+			else if (item === 'type'){
 				if (!typeIsOpen) {
 					$('#card-type').show();
 					typeIsOpen = true;
@@ -284,6 +301,18 @@
 					typeIsOpen = false;
 				}
 			}
+
+			else {
+				if (!listTableIsOpen) {
+					$('#card-list-table').show();
+					listTableIsOpen = true;
+				} else {
+					$('#card-list-table').hide();
+					listTableIsOpen = false;
+				}
+			}
+
+
 		}
 
 		const filterDisplay = (head) => {
