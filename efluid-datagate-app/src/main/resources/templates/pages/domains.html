@@ -51,10 +51,8 @@
                 if (e.target.id === "domainName") {
                     if(regex.test(inputValue)) {
                         $("#validator-input").show();
-                        $("#warning-empty").hide();
                         $("#addButton").hide();
                     } else {
-                        $("#warning-empty").hide();
                         $("#validator-input").hide();
                         $("#addButton").show();
                     }
