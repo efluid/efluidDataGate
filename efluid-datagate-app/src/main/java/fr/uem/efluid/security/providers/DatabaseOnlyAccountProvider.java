@@ -84,7 +84,11 @@ public class DatabaseOnlyAccountProvider implements AccountProvider {
         user.setEmail(email);
         user.setToken(generateToken());
         user.setCreatedTime(LocalDateTime.now());
-        user.setSelectedProject(getCurrentSelectedProjectEntity());
+
+        // Keep current user project, except in wizzard
+        if (getCurrentUser() != null) {
+            user.setSelectedProject(getCurrentSelectedProjectEntity());
+        }
 
         return this.users.save(user);
     }
