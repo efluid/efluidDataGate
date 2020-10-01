@@ -13,7 +13,7 @@ import java.util.UUID;
  * selectors for the building of the final commit index / selection of lines to rollback</p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,6 +36,8 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
     private String keyValue;
 
     private String payload;
+
+    private String previous;
 
     private String hrPayload;
 
@@ -233,6 +235,15 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         this.commitUuid = commitUuid;
     }
 
+    @Override
+    public String getPrevious() {
+        return previous;
+    }
+
+    public void setPrevious(String previous) {
+        this.previous = previous;
+    }
+
     /**
      * @return
      * @see fr.uem.efluid.services.types.Rendered#getCombinedKey()
@@ -259,6 +270,10 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
                 '}';
     }
 
+    public String toLogRendering() {
+        return "[" + getTableName() + "." + getCombinedKey() + "] : " + getAction() + " \"" + getHrPayload() + "\"";
+    }
+
     /**
      * Used only when creating a new one as index are immutable
      *
@@ -273,6 +288,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         entry.setDictionaryEntry(new DictionaryEntry(data.getDictionaryEntryUuid()));
         entry.setKeyValue(data.getKeyValue());
         entry.setPayload(data.getPayload());
+        entry.setPrevious(data.getPrevious());
         entry.setTimestamp(data.getTimestamp()); // Can have one ?
 
         return entry;
@@ -287,13 +303,15 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
      * @param hrPayload
      * @return
      */
-    public static PreparedIndexEntry fromCombined(DiffLine combined, String hrPayload) {
+    public static PreparedIndexEntry fromCombined(DiffLine combined, String tableName, String hrPayload) {
 
         PreparedIndexEntry data = new PreparedIndexEntry();
 
         data.setAction(combined.getAction());
         data.setDictionaryEntryUuid(combined.getDictionaryEntryUuid());
+        data.setTableName(tableName);
         data.setPayload(combined.getPayload());
+        data.setPrevious(combined.getPrevious());
         data.setKeyValue(combined.getKeyValue());
         data.setHrPayload(hrPayload);
         data.setTimestamp(combined.getTimestamp());
@@ -332,6 +350,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         }
 
         data.setPayload(existing.getPayload());
+        data.setPrevious(existing.getPrevious());
         data.setId(existing.getId());
         data.setKeyValue(existing.getKeyValue());
         data.setCommitUuid(existing.getCommit() != null ? existing.getCommit().getUuid() : null);
@@ -353,6 +372,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         comb.setDictionaryEntryUuid(first.getDictionaryEntryUuid());
         comb.setHrPayload(first.getHrPayload());
         comb.setPayload(first.getPayload());
+        comb.setPrevious(first.getPrevious());
         comb.setTimestamp(first.getTimestamp());
 
         // Including key for sorting / ref

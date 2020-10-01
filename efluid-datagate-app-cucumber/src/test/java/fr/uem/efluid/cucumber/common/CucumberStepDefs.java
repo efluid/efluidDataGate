@@ -14,6 +14,7 @@ import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.Transformer;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
@@ -31,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.xmlunit.diff.Diff;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.Null;
@@ -152,6 +154,9 @@ public abstract class CucumberStepDefs {
 
     @Autowired
     private InMemoryDirectoryServer ldapServer;
+
+    @Autowired
+    private ManagedValueConverter valueConverter;
 
     /**
      * <p>
@@ -911,6 +916,39 @@ public abstract class CucumberStepDefs {
             if (action != REMOVE) {
                 assertThat(index.getHrPayload()).isEqualTo(l.get("Payload"));
             }
+        });
+    }
+
+    /**
+     * Check on encoded payload + previous payload
+     *
+     * @param content          any form of index
+     * @param referencedTables associated tables
+     * @param data
+     */
+    protected void assertIndexIsTechnicallyCompliant(Collection<? extends DiffLine> content, Map<UUID, DictionaryEntrySummary> referencedTables, DataTable data) {
+
+        assertThat(content.size()).isEqualTo(data.asMaps().size());
+
+        data.asMaps().forEach(l -> {
+
+            DictionaryEntrySummary table = referencedTables.values().stream()
+                    .filter(t -> t.getTableName().equals(l.get("Table")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
+
+            DiffLine index = content.stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+                    .findFirst()
+                    .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
+
+            IndexAction action = IndexAction.valueOf(l.get("Action"));
+            assertThat(index.getAction()).isEqualTo(action);
+
+            // No need to check payload in delete
+            if (action != REMOVE) {
+                assertThat(this.valueConverter.convertToHrPayload(index.getPayload(), null)).isEqualTo(l.get("Current payload"));
+            }
+            assertThat(this.valueConverter.convertToHrPayload(index.getPrevious(), null)).isEqualTo(l.get("Previous payload"));
         });
     }
 

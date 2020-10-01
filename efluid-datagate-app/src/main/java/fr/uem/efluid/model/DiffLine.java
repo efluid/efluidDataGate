@@ -2,6 +2,7 @@ package fr.uem.efluid.model;
 
 import fr.uem.efluid.model.entities.IndexAction;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,10 +12,10 @@ import java.util.UUID;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
-public interface DiffLine extends ContentLine {
+public interface DiffLine extends ContentLine, Comparable<DiffLine> {
 
     UUID getDictionaryEntryUuid();
 
@@ -22,8 +23,10 @@ public interface DiffLine extends ContentLine {
 
     long getTimestamp();
 
-    static DiffLine combined(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action, long timestamp) {
-        return new CombinedDiffLine(dictionaryEntryUuid, keyValue, payload, action, timestamp);
+    String getPrevious();
+
+    static DiffLine combined(UUID dictionaryEntryUuid, String keyValue, String payload, String previous, IndexAction action, long timestamp) {
+        return new CombinedDiffLine(dictionaryEntryUuid, keyValue, payload, previous, action, timestamp);
     }
 
     /**
@@ -46,6 +49,7 @@ public interface DiffLine extends ContentLine {
 
         IndexAction currentAction = null;
         String currentPayload = null;
+        String previousPayload = null;
         long timestamp = 0;
 
         // Replay, regarding each line action
@@ -56,17 +60,20 @@ public interface DiffLine extends ContentLine {
             switch (line.getAction()) {
                 case ADD:
                     currentAction = line.getAction();
+                    previousPayload = null;
                     currentPayload = line.getPayload();
                     break;
                 case UPDATE:
                     // If updating an addition, became a new addition
                     if (currentAction != IndexAction.ADD) {
                         currentAction = line.getAction();
+                        previousPayload = currentPayload;
                     }
                     currentPayload = line.getPayload();
                     break;
                 case REMOVE:
                 default:
+                    previousPayload = currentPayload;
                     // If was added in same scope : drop it totaly
                     if (!keepDeleted && currentAction == IndexAction.ADD) {
                         currentAction = null;
@@ -80,7 +87,7 @@ public interface DiffLine extends ContentLine {
 
         // Produces simulated diffline, with merged replayed value
         return currentAction != null
-                ? DiffLine.combined(first.getDictionaryEntryUuid(), first.getKeyValue(), currentPayload, currentAction, timestamp)
+                ? DiffLine.combined(first.getDictionaryEntryUuid(), first.getKeyValue(), currentPayload, previousPayload, currentAction, timestamp)
                 : null;
     }
 
@@ -97,15 +104,18 @@ public interface DiffLine extends ContentLine {
 
         private final String payload;
 
+        private final String previous;
+
         private final IndexAction action;
 
         private final long timestamp;
 
-        CombinedDiffLine(UUID dictionaryEntryUuid, String keyValue, String payload, IndexAction action, long timestamp) {
+        CombinedDiffLine(UUID dictionaryEntryUuid, String keyValue, String payload, String previous, IndexAction action, long timestamp) {
             super();
             this.dictionaryEntryUuid = dictionaryEntryUuid;
             this.keyValue = keyValue;
             this.payload = payload;
+            this.previous = previous;
             this.action = action;
             this.timestamp = timestamp;
         }
@@ -148,6 +158,11 @@ public interface DiffLine extends ContentLine {
         @Override
         public long getTimestamp() {
             return this.timestamp;
+        }
+
+        @Override
+        public String getPrevious() {
+            return this.previous;
         }
 
         /**
@@ -203,5 +218,10 @@ public interface DiffLine extends ContentLine {
                 return false;
             return true;
         }
+    }
+
+    @Override
+    default int compareTo(DiffLine o) {
+        return Long.compare(getTimestamp(), o.getTimestamp());
     }
 }

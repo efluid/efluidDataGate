@@ -291,9 +291,9 @@ Feature: The commit can be saved and are historised
     And the user select the details of commit ":construction: Update 1"
     And apply a content filter criteria "REMOVE" on "type"
     Then the commit details are displayed with this content :
-      | Table      | Key  | Action | Payload                                                               |
-      | TTAB_ONE   | DDD  | REMOVE |                                                                       |
-      | TTAB_THREE | C    | REMOVE |                                                                       |
+      | Table      | Key | Action | Payload |
+      | TTAB_ONE   | DDD | REMOVE |         |
+      | TTAB_THREE | C   | REMOVE |         |
 
   Scenario: The details for an existing commit can be displayed and filtered - regexp combined key and table
     Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
@@ -322,10 +322,10 @@ Feature: The commit can be saved and are historised
     And apply a content filter criteria "VVV\d" on "key"
     And apply a content filter criteria "TTA._T.*" on "table"
     Then the commit details are displayed with this content :
-      | Table      | Key  | Action | Payload                            |
-      | TTAB_TWO   | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
-      | TTAB_TWO   | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'   |
-      | TTAB_THREE | VVVD | ADD    | OTHER:'Other VVVD'                 |
+      | Table      | Key  | Action | Payload                          |
+      | TTAB_TWO   | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'  |
+      | TTAB_TWO   | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333' |
+      | TTAB_THREE | VVVD | ADD    | OTHER:'Other VVVD'               |
 
   Scenario: The details for an existing commit can be displayed and sorted - sort by key
     Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
@@ -424,3 +424,56 @@ Feature: The commit can be saved and are historised
     When the user access to list of commits
     And the user select the details of commit ":construction: Update 2"
     Then the commit details are displayed with 9999 payloads
+
+  Scenario: The commit indexes keep previous payload at each change - simple commit
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset           | something   |
+      | delete | 38  | DDD   |                  |             |
+      | update | 39  | EEE   | Preset 5 updated | EEE updated |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    Then the commit index has these managed technical payloads :
+      | Table    | Key | Action | Current payload                                    | Previous payload                   |
+      | TTAB_ONE | DDD | REMOVE |                                                    | PRESET:'Preset 4', SOMETHING:'DDD' |
+      | TTAB_ONE | EEE | UPDATE | PRESET:'Preset 5 updated', SOMETHING:'EEE updated' | PRESET:'Preset 5', SOMETHING:'EEE' |
+
+  Scenario: The commit indexes keep previous payload at each change - multiple commits
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset           | something   |
+      | delete | 38  | DDD   |                  |             |
+      | update | 39  | EEE   | Preset 5 updated | EEE updated |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset                 | something         |
+      | delete | 14  | AAA   |                        |                   |
+      | update | 39  | EEE   | Preset 5 updated again | EEE updated again |
+      | add    | 38  | DDD   | Recreate line          | DDD Recreate line |
+      | add    | 99  | NEW   | New line               | New line          |
+    And a new commit ":construction: Update 2" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset               | something                |
+      | delete | 39  | EEE   |                      |                          |
+      | update | 38  | DDD   | Recreate line update | DDD Recreate line update |
+      | delete | 99  | NEW   |                      |                          |
+      | add    | 14  | AAA   | Recreate aaa         | DDD Recreate aaa         |
+    And a new commit ":construction: Update 3" has been saved with all the new identified diff content
+    When we check content in datagate database
+    Then the index for commit ":construction: Update 1" has these managed technical payloads :
+      | Table    | Key | Action | Current payload                                    | Previous payload                   |
+      | TTAB_ONE | DDD | REMOVE |                                                    | PRESET:'Preset 4', SOMETHING:'DDD' |
+      | TTAB_ONE | EEE | UPDATE | PRESET:'Preset 5 updated', SOMETHING:'EEE updated' | PRESET:'Preset 5', SOMETHING:'EEE' |
+    And the index for commit ":construction: Update 2" has these managed technical payloads :
+      | Table    | Key | Action | Current payload                                                | Previous payload                                   |
+      | TTAB_ONE | AAA | REMOVE |                                                                | PRESET:'Preset 1', SOMETHING:'AAA'                 |
+      | TTAB_ONE | EEE | UPDATE | PRESET:'Preset 5 updated again', SOMETHING:'EEE updated again' | PRESET:'Preset 5 updated', SOMETHING:'EEE updated' |
+      | TTAB_ONE | DDD | ADD    | PRESET:'Recreate line', SOMETHING:'DDD Recreate line'          |                                                    |
+      | TTAB_ONE | NEW | ADD    | PRESET:'New line', SOMETHING:'New line'                        |                                                    |
+    And the index for commit ":construction: Update 3" has these managed technical payloads :
+      | Table    | Key   | Action   | Current payload                                                     | Previous payload                                               |
+      | TTAB_ONE | EEE   | REMOVE   |                                                                     | PRESET:'Preset 5 updated again', SOMETHING:'EEE updated again' |
+      | TTAB_ONE | DDD   | UPDATE   | PRESET:'Recreate line update', SOMETHING:'DDD Recreate line update' | PRESET:'Recreate line', SOMETHING:'DDD Recreate line'          |
+      | TTAB_ONE | NEW   | REMOVE   |                                                                     | PRESET:'New line', SOMETHING:'New line'                        |
+      | TTAB_ONE | AAA   | ADD      | PRESET:'Recreate aaa', SOMETHING:'DDD Recreate aaa'                 |                                                                |

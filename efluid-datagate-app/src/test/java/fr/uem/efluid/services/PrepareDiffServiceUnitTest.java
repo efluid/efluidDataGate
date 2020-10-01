@@ -2,6 +2,7 @@ package fr.uem.efluid.services;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -21,6 +22,8 @@ import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.stubs.TestUtils;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author elecomte
@@ -63,11 +66,35 @@ public class PrepareDiffServiceUnitTest {
     }
 
     @Test
+    public void testGenerateDiffIndexAddedNoPrevious() {
+        Collection<PreparedIndexEntry> index = getDiff("diff2");
+
+        assertThat(index).allMatch(i -> i.getAction() == IndexAction.ADD && i.getPrevious() == null);
+    }
+
+    @Test
     public void testGenerateDiffIndexRemovedTwo() {
         Collection<PreparedIndexEntry> index = getDiff("diff3");
         Assert.assertEquals(2, index.size());
         Assert.assertTrue(index.stream().allMatch(i -> i.getAction() == IndexAction.REMOVE));
         Assert.assertTrue(index.stream().allMatch(i -> i.getPayload() == null));
+    }
+
+    @Test
+    public void testGenerateDiffIndexRemovedDetectPrevious() {
+        Collection<PreparedIndexEntry> index = getDiff("diff3");
+
+        Optional<PreparedIndexEntry> o12i = index.stream().filter(i -> i.getKeyValue().equals("12")).findFirst();
+        Optional<PreparedIndexEntry> o13i = index.stream().filter(i -> i.getKeyValue().equals("13")).findFirst();
+
+        assertThat(o12i).isPresent();
+        assertThat(o13i).isPresent();
+
+        assertThat(o12i.get().getPrevious()).isEqualTo("VALUE=S/RGlmZmVyZW50,PRESET=S/T3RoZXI=,SOMETHING=S/MTIzMzM0");
+        assertThat(o12i.get().getPayload()).isNull();
+
+        assertThat(o13i.get().getPrevious()).isEqualTo("VALUE=S/RGlmZmVyZW50,PRESET=S/T3RoZXI=,SOMETHING=S/MTI5ODk0NA==");
+        assertThat(o13i.get().getPayload()).isNull();
     }
 
     @Test
@@ -80,6 +107,23 @@ public class PrepareDiffServiceUnitTest {
         Assert.assertTrue(index.stream()
                 .allMatch(i -> Value.mapped(this.converter.expandInternalValue(i.getPayload())).get("VALUE").getValueAsString()
                         .equals("Modified")));
+    }
+
+    @Test
+    public void testGenerateDiffIndexModifiedDetectPrevious() {
+        Collection<PreparedIndexEntry> index = getDiff("diff4");
+
+        Optional<PreparedIndexEntry> o5i = index.stream().filter(i -> i.getKeyValue().equals("5")).findFirst();
+        Optional<PreparedIndexEntry> o8i = index.stream().filter(i -> i.getKeyValue().equals("8")).findFirst();
+
+        assertThat(o5i).isPresent();
+        assertThat(o8i).isPresent();
+
+        assertThat(o5i.get().getPrevious()).isEqualTo("VALUE=S/U29tZXRoaW5n,PRESET=S/T3RoZXI=,SOMETHING=S/MTI2MzQ=");
+        assertThat(o5i.get().getPayload()).isEqualTo("VALUE=S/TW9kaWZpZWQ=,PRESET=S/T3RoZXI=,SOMETHING=S/MTI2MzQ=");
+
+        assertThat(o8i.get().getPrevious()).isEqualTo("VALUE=S/U29tZXRoaW5n,PRESET=S/T3RoZXI=,SOMETHING=S/MTc3MjM0");
+        assertThat(o8i.get().getPayload()).isEqualTo("VALUE=S/TW9kaWZpZWQ=,PRESET=S/T3RoZXI=,SOMETHING=S/MTc3MjM0");
     }
 
     @Test

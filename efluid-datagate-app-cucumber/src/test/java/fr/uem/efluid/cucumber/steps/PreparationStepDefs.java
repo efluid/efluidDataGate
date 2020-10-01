@@ -600,7 +600,11 @@ public class PreparationStepDefs extends CucumberStepDefs {
                     assertThat(entry.getTheir().getAction()).as("Action" + desc).isEqualTo(action);
                     break;
                 case "resolution":
-                    assertThat(entry.getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                    if (entry.getAction() == REMOVE){
+                        assertThat(entry.getPayload()).as("Payload" + desc).isNull();
+                    } else {
+                        assertThat(entry.getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                    }
                     assertThat(entry.getAction()).as("Action" + desc).isEqualTo(action);
                     break;
                 default:

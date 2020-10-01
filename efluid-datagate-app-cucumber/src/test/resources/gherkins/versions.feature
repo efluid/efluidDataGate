@@ -130,11 +130,11 @@ Feature: A dictionary is associated to versions
       | TTAB_ONE | 39  | ADD    | VALUE:'EEE' |
     And the export package content has these identified changes for commit with name ":construction: Commit on version v2 source" :
       | Table    | Key | Action | Payload                          |
-      | TTAB_ONE | 14  | UPDATE | VALUE:'AAA', PRESET:'Preset 1'   |
-      | TTAB_ONE | 25  | UPDATE | VALUE:'BBB', PRESET:'Preset 2'   |
-      | TTAB_ONE | 37  | UPDATE | VALUE:'CCC', PRESET:'Preset 3'   |
-      | TTAB_ONE | 38  | UPDATE | VALUE:'DDD', PRESET:'Preset 4'   |
-      | TTAB_ONE | 39  | UPDATE | VALUE:'EEE', PRESET:'Preset 5'   |
+      | TTAB_ONE | 14  | UPDATE | PRESET:n/a=>'Preset 1'           |
+      | TTAB_ONE | 25  | UPDATE | PRESET:n/a=>'Preset 2'           |
+      | TTAB_ONE | 37  | UPDATE | PRESET:n/a=>'Preset 3'           |
+      | TTAB_ONE | 38  | UPDATE | PRESET:n/a=>'Preset 4'           |
+      | TTAB_ONE | 39  | UPDATE | PRESET:n/a=>'Preset 5'           |
       | TTAB_TWO | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'   |
       | TTAB_TWO | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'   |
       | TTAB_TWO | LLL | ADD    | VALUE:'Three', OTHER:'Other LLL' |

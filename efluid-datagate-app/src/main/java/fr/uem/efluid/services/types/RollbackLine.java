@@ -3,89 +3,83 @@ package fr.uem.efluid.services.types;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.IndexAction;
 
+import java.util.Objects;
+
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public class RollbackLine {
 
-	private final DiffLine current;
+    private final DiffLine source;
 
-	private final DiffLine previous;
+    /**
+     * @param source
+     */
+    public RollbackLine(DiffLine source) {
+        super();
+        this.source = source;
+    }
 
-	/**
-	 * @param current
-	 * @param previous
-	 */
-	public RollbackLine(DiffLine current, DiffLine previous) {
-		super();
-		this.current = current;
-		this.previous = previous;
-	}
+    /**
+     * @return the current
+     */
+    public DiffLine getSource() {
+        return this.source;
+    }
 
-	/**
-	 * @return the current
-	 */
-	public DiffLine getCurrent() {
-		return this.current;
-	}
+    /**
+     * <p>
+     * Convert the rollback data spec to a combined diff which can be ran as usual
+     * (managed DB updates are always processed from DiffLine). So use basic rules to
+     * define how the rollback can be applied :
+     * <ul>
+     * <li>If current data is null and previous are not, parameter was deleted =&gt; rollback
+     * is an add, to set back previous values</li>
+     * <li>If current is not null but previous, parameter was added =&gt; rollback is a
+     * delete</li>
+     * <li>If both are present, it was an update =&gt; rollback is an other "reverted"
+     * update</li>
+     * </ul>
+     * </p>
+     *
+     * @return merged data from rollback to make it as a diffLine
+     */
+    public DiffLine toCombinedDiff() {
 
-	/**
-	 * @return the previous
-	 */
-	public DiffLine getPrevious() {
-		return this.previous;
-	}
+        long timestamp = System.currentTimeMillis();
 
-	/**
-	 * <p>
-	 * Convert the rollback data spec to a combined diff which can be ran as usual
-	 * (managed DB updates are always processed from DiffLine). So use basic rules to
-	 * define how the rollback can be applied :
-	 * <ul>
-	 * <li>If current data is null and previous are not, parameter was deleted =&gt; rollback
-	 * is an add, to set back previous values</li>
-	 * <li>If current is not null but previous, parameter was added =&gt; rollback is a
-	 * delete</li>
-	 * <li>If both are present, it was an update =&gt; rollback is an other "reverted"
-	 * update</li>
-	 * </ul>
-	 * </p>
-	 * 
-	 * @return merged data from rollback to make it as a diffLine
-	 */
-	public DiffLine toCombinedDiff() {
+        // Rollback on delete => became an add
+        if (this.source.getAction() == IndexAction.REMOVE) {
+            return DiffLine.combined(
+                    this.source.getDictionaryEntryUuid(),
+                    this.source.getKeyValue(),
+                    this.source.getPrevious(),
+                    null,
+                    IndexAction.ADD,
+                    timestamp);
+        }
 
-		long timestamp = System.currentTimeMillis();
+        // Rollback on add => became an delete
+        if (this.source.getAction() == IndexAction.ADD) {
+            return DiffLine.combined(
+                    this.source.getDictionaryEntryUuid(),
+                    this.source.getKeyValue(),
+                    null,
+                    this.source.getPayload(),
+                    IndexAction.REMOVE,
+                    timestamp);
+        }
 
-		// Rollback on delete => became an add
-		if ((this.current == null || this.current.getPayload() == null) && this.previous != null && this.previous.getPayload() != null) {
-			return DiffLine.combined(
-					this.previous.getDictionaryEntryUuid(),
-					this.previous.getKeyValue(),
-					this.previous.getPayload(),
-					IndexAction.ADD,
-					timestamp);
-		}
-
-		// Rollback on add => became an delete
-		if ((this.previous == null || this.previous.getPayload() == null) && this.current != null && this.current.getPayload() != null) {
-			return DiffLine.combined(
-					this.current.getDictionaryEntryUuid(),
-					this.current.getKeyValue(),
-					this.current.getPayload(),
-					IndexAction.REMOVE,
-					timestamp);
-		}
-
-		// Other case are update current => previous
-		return DiffLine.combined(
-				this.current.getDictionaryEntryUuid(),
-				this.current.getKeyValue(),
-				this.previous.getPayload(),
-				IndexAction.UPDATE,
-				timestamp);
-	}
+        // Other case are update current => previous
+        return DiffLine.combined(
+                this.source.getDictionaryEntryUuid(),
+                this.source.getKeyValue(),
+                this.source.getPrevious(),
+                this.source.getPayload(),
+                IndexAction.UPDATE,
+                timestamp);
+    }
 
 }

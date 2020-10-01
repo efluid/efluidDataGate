@@ -20,6 +20,12 @@
 		</encoder>
 	</appender>
 
+	<appender name="STDOUT_RESOLUTIONS" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%boldBlue([RESOLUTION]) %blue(%msg%n)</pattern>
+		</encoder>
+	</appender>
+
 	<!-- Explicit logger for Extractor queries. Log it here into current console on custom format -->
 	<logger name="extractor.queries" additivity="false">
 		<level value="WARN" />
@@ -36,6 +42,11 @@
 	<logger name="transformer.results" additivity="false">
 		<level value="INFO" />
 		<appender-ref ref="STDOUT_TRANSFORMERS" />
+	</logger>
+
+	<logger name="fr.uem.efluid.tools.MergeResolutionProcessor" additivity="false">
+		<level value="DEBUG" />
+		<appender-ref ref="STDOUT_RESOLUTIONS" />
 	</logger>
 
 	<root level="WARN">
