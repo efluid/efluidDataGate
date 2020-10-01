@@ -156,7 +156,7 @@ public abstract class CucumberStepDefs {
     private InMemoryDirectoryServer ldapServer;
 
     @Autowired
-    private ManagedValueConverter valueConverter;
+    protected ManagedValueConverter valueConverter;
 
     /**
      * <p>

@@ -583,7 +583,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
             assertThat(entry.getResolutionRule()).describedAs("Resolution rule for table " + table + " on key " + key).isEqualTo(l.get("Rule"));
             assertThat(entry.isNeedAction()).describedAs("Need action for table " + table + " on key " + key).isEqualTo(Boolean.valueOf(l.get("Need Act")));
-            assertThat(entry.getPrevious()).describedAs("Resolved source content for table " + table + " on key " + key).isEqualTo(l.get("Res. Previous"));
+            assertThat(this.valueConverter.convertToHrPayload(entry.getPrevious(), null)).describedAs("Resolved source content for table " + table + " on key " + key).isEqualTo(l.get("Res. Previous"));
         });
     }
 
