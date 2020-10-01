@@ -1,13 +1,11 @@
 package fr.uem.efluid.services;
 
+import fr.uem.efluid.model.AnomalyContextType;
 import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.IndexRepository;
-import fr.uem.efluid.model.repositories.ManagedExtractRepository;
+import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository.Extraction;
-import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
-import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
@@ -62,7 +60,7 @@ import static fr.uem.efluid.services.types.DiffRemark.RemarkType.MISSING_ON_UNCH
  */
 @Service
 @Transactional
-public class PrepareIndexService {
+public class PrepareIndexService extends AbstractApplicationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareIndexService.class);
 
@@ -79,6 +77,9 @@ public class PrepareIndexService {
 
     @Autowired
     private MergeResolutionProcessor mergeResolutionProcessor;
+
+    @Autowired
+    private AnomalyAndWarningService anomalyService;
 
     @Value("${datagate-efluid.display.combine-similar-diff-after}")
     private long maxSimilarBeforeCombined;
@@ -593,6 +594,7 @@ public class PrepareIndexService {
         allKeys.addAll(minesByKey.keySet());
         allKeys.addAll(theirsByKey.keySet());
 
+        boolean recordWarnings = this.features.isEnabled(Feature.RECORD_IMPORT_WARNINGS);
         AtomicInteger count = new AtomicInteger(0);
         int fireIncrem = allKeys.size() / 2;
 
@@ -624,8 +626,19 @@ public class PrepareIndexService {
 
                 // Dedicated logger output for resolutions
                 if (MERGE_LOGGER.isDebugEnabled()) {
-                    MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
-                            dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
+                    if (resolved != null) {
+                        MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
+                                dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
+                    } else {
+                        MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> droped",
+                                dict.getTableName(), key, mineEntry, theirEntry);
+                    }
+                }
+
+                if (recordWarnings && resolved != null && resolved.getResolutionWarning() != null) {
+                    this.anomalyService.addAnomaly(AnomalyContextType.MERGE, preparation.getSourceFilename(),
+                            "Warning from " + resolved.getResolutionRule(),
+                            "On " + resolved.toLogRendering() + " : " + resolved.getResolutionWarning());
                 }
                 return resolved;
             } catch (Throwable t) {

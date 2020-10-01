@@ -1,6 +1,8 @@
 package fr.uem.efluid.rest.v1;
 
+import fr.uem.efluid.model.AnomalyContextType;
 import fr.uem.efluid.rest.RestApi;
+import fr.uem.efluid.rest.v1.model.AnomalyView;
 import fr.uem.efluid.rest.v1.model.CommitCreatedResultView;
 import fr.uem.efluid.rest.v1.model.CommitPrepareDetailsView;
 import fr.uem.efluid.rest.v1.model.StartedMergeView;
@@ -14,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -112,4 +117,29 @@ public interface BacklogApi {
     })
     StartedMergeView uploadAndInitPreparedCommit(@RequestParam("file") MultipartFile file) throws ApplicationException;
 
+    /**
+     * <p>
+     * Get the names of merge with anomalies
+     * </p>
+     */
+    @RequestMapping(value = "/merge/anomalies/types", method = GET)
+    @ResponseBody
+    @ApiOperation("Get the names of merge with anomalies")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+    })
+    List<String> getMergeAnomaliesNames();
+
+    /**
+     * <p>
+     * Get the anomalies for a specified merge
+     * </p>
+     */
+    @RequestMapping(value = "/merge/anomalies", method = GET)
+    @ResponseBody
+    @ApiOperation("Get the anomalies for a specified merge")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+    })
+    List<AnomalyView> getMergeAnomaliesForContext(@RequestParam String name);
 }

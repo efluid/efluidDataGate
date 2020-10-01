@@ -89,7 +89,6 @@ public class PreparationStepDefs extends CucumberStepDefs {
         modelDatabase().initVersions(getCurrentUserProject(), Collections.singletonList("vCurrent"), 0);
     }
 
-
     @Given("^a diff analysis can be started$")
     public void a_diff_analysis_can_be_started() {
 
@@ -111,8 +110,6 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
         // Completed
         a_diff_is_completed();
-
-
     }
 
     @Given("^a merge diff analysis has been started and completed with the available source package$")
@@ -122,10 +119,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
         // Completed
         a_merge_diff_is_completed();
-
-
     }
-
 
     @Given("^no diff is running$")
     public void no_diff_is_running() {
@@ -567,6 +561,32 @@ public class PreparationStepDefs extends CucumberStepDefs {
         assertDiffContentIsCompliantOrdered(paginatedContent.getPage(), table);
     }
 
+    @Then("^the merge commit content has these resolution details :$")
+    public void merge_commit_content_details(DataTable data) {
+
+        PilotedCommitPreparation<PreparedMergeIndexEntry> preparation = (PilotedCommitPreparation<PreparedMergeIndexEntry>) this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+
+        data.asMaps().forEach(l -> {
+
+            String table = l.get("Table");
+            String key = l.get("Key");
+            PreparedMergeIndexEntry entry = preparation.getDiffContentForTableName(table).stream()
+                    .filter(d -> d.getKeyValue().equals(key))
+                    .findFirst().orElseThrow(() ->
+                            new AssertionError("Cannot find corresponding diff entry for table " + table + " on key " + key));
+
+            check_resolution_line(entry, "their", l.get("Their Act"), entry.getTheir().getHrPayload());
+            check_resolution_line(entry, "mine", l.get("Mine Act"), entry.getMine().getHrPayload());
+            check_resolution_line(entry, "resolution", l.get("Res. Act"), l.get("Res. Payload"));
+
+            assertThat(entry.getResolutionRule()).describedAs("Resolution rule for table " + table + " on key " + key).isEqualTo(l.get("Rule"));
+            assertThat(entry.isNeedAction()).describedAs("Need action for table " + table + " on key " + key).isEqualTo(Boolean.valueOf(l.get("Need Act")));
+            assertThat(entry.getPrevious()).describedAs("Resolved source content for table " + table + " on key " + key).isEqualTo(l.get("Res. Previous"));
+        });
+    }
+
     @Then("^the merge commit content has these resolution details for table \"(.*)\" on key \"(.*)\" :$")
     public void merge_commit_content_details(String table, String key, DataTable data) {
 
@@ -580,38 +600,41 @@ public class PreparationStepDefs extends CucumberStepDefs {
                         new AssertionError("Cannot find corresponding diff entry for table " + table + " on key " + key));
 
         data.asMaps().forEach(l -> {
-            String payload = l.get("Payload");
-            if (StringUtils.isEmpty(payload)) {
-                payload = null;
-            }
-            String type = l.get("Type");
-            String actStr = l.get("Action");
-            IndexAction action = StringUtils.hasText(actStr) ? IndexAction.valueOf(actStr) : null;
-            String desc = " on table \"" + table + "\" on key \"" + key + "\" for type "
-                    + type + ". Resolution was \"" + entry.getResolutionRule() + "\"";
-
-            switch (type) {
-                case "mine":
-                    assertThat(entry.getMine().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
-                    assertThat(entry.getMine().getAction()).as("Action" + desc).isEqualTo(action);
-                    break;
-                case "their":
-                    assertThat(entry.getTheir().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
-                    assertThat(entry.getTheir().getAction()).as("Action" + desc).isEqualTo(action);
-                    break;
-                case "resolution":
-                    if (entry.getAction() == REMOVE){
-                        assertThat(entry.getPayload()).as("Payload" + desc).isNull();
-                    } else {
-                        assertThat(entry.getHrPayload()).as("Payload" + desc).isEqualTo(payload);
-                    }
-                    assertThat(entry.getAction()).as("Action" + desc).isEqualTo(action);
-                    break;
-                default:
-                    throw new AssertionError("Unsupported data type \"" + type + "\" for resolution details");
-            }
+            check_resolution_line(entry, l.get("Type"), l.get("Action"), l.get("Payload"));
         });
 
+    }
+
+    private void check_resolution_line(PreparedMergeIndexEntry entry, String type, String actStr, String payload) {
+
+        if (StringUtils.isEmpty(payload)) {
+            payload = null;
+        }
+
+        IndexAction action = StringUtils.hasText(actStr) ? IndexAction.valueOf(actStr) : null;
+        String desc = " on table \"" + entry.getTableName() + "\" on key \"" + entry.getKeyValue() + "\" for type "
+                + type + ". Resolution was \"" + entry.getResolutionRule() + "\"";
+
+        switch (type) {
+            case "mine":
+                assertThat(entry.getMine().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                assertThat(entry.getMine().getAction()).as("Action" + desc).isEqualTo(action);
+                break;
+            case "their":
+                assertThat(entry.getTheir().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                assertThat(entry.getTheir().getAction()).as("Action" + desc).isEqualTo(action);
+                break;
+            case "resolution":
+                if (entry.getAction() == REMOVE) {
+                    assertThat(entry.getPayload()).as("Payload" + desc).isNull();
+                } else {
+                    assertThat(entry.getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                }
+                assertThat(entry.getAction()).as("Action" + desc).isEqualTo(action);
+                break;
+            default:
+                throw new AssertionError("Unsupported data type \"" + type + "\" for resolution details");
+        }
     }
 
     @Then("^the commit content has these associated lob data :$")

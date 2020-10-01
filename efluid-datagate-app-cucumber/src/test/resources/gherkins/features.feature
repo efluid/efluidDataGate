@@ -12,3 +12,4 @@ Feature: Some features can be managed on application for dynamic updates of beha
       | USE_MODEL_ID_AS_VERSION_NAME              | disabled |
       | CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT | disabled |
       | VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT   | disabled |
+      | RECORD_IMPORT_WARNINGS                    | enabled  |

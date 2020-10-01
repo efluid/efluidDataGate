@@ -281,6 +281,7 @@ public class PilotableCommitPreparationService {
         // For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
         PilotedCommitPreparation<PreparedMergeIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
         preparation.setProjectUuid(projectUuid);
+        preparation.setSourceFilename(file.getFilename());
 
         // Default filtered on needAction onlys
         preparation.setDisplayAll(false);
