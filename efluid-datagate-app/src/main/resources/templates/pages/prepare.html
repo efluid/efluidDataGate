@@ -4,6 +4,7 @@
 </head>
 <body>
 	<span layout:fragment="content">
+		<div id="modal" th:insert="~{components/modal-prepare :: modal-prepare}"></div>
 		<span th:if="${preparation.status.name()}=='FAILED'">
 			<div class="alert alert-danger">
 				<h4>La preparation du lot de modification a rencontré une erreur</h4>
@@ -164,10 +165,6 @@
 										<div class="container-is-used">
 											<button type="button" class="btn btn-warning" style="min-width: 100% !important;" onclick="showCardFilter('list-table')">Tables modifiées</button>
 										</div>
-										<div class="card" id="card-list-table">
-										  <ul class="list-group list-group-flush">
-										  </ul>
-										</div>
 									</div>
 								</span>
 							</thead>
@@ -230,11 +227,10 @@
 		};
 		var associatedTables = /*[[${preparation.referencedTableNames}]]*/ [] ;
 
-		for(let i = 0; i < associatedTables.length; i++) {
-			if(associatedTables[i].length > 12) {
-				$("#card-list-table ul").append('<li>' + associatedTables[i].substring(0, 14) + '...' + '</li>')
-			} else {
-				$("#card-list-table ul").append('<li>' + associatedTables[i] + '</li>')
+		if(associatedTables.length) {
+			console.log('okok')
+			for(let i = 0; i < associatedTables.length; i++) {
+				$("#list-table ul").append('<li>' + associatedTables[i] + '</li>')
 			}
 		}
 
@@ -250,7 +246,7 @@
 		$('#card-table').hide();
 		$('#card-key').hide();
 		$('#card-type').hide();
-		$('#card-list-table').hide();
+		$('#modal-prepare').hide();
 
 		let domainIsOpen = false;
 		let keyIsOpen = false;
@@ -303,11 +299,12 @@
 			}
 
 			else {
+				console.log(listTableIsOpen)
 				if (!listTableIsOpen) {
-					$('#card-list-table').show();
+					$('#modal-prepare').show();
 					listTableIsOpen = true;
 				} else {
-					$('#card-list-table').hide();
+					$('#modal-prepare').hide();
 					listTableIsOpen = false;
 				}
 			}
