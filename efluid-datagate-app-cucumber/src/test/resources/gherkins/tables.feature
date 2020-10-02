@@ -61,3 +61,26 @@ Feature: The managed parameters are specified by table in the dictionary
     When the parameter table is saved by user
     Then the parameter table for managed table "TTAB_ONLY_KEYS" is added to the current user's project dictionary
     And the selection clause for the parameter table for managed table "TTAB_ONLY_KEYS" is empty
+
+  Scenario: A filter clause can be specified for all the parameter tables of a dictionary
+    Given the existing projects "Default"
+    And the parameter table for managed table "TTAB_ONE" already exists
+    And the parameter table for managed table "TTAB_THREE" already exists
+    And the parameter table for managed table "TTAB_TWO" already exists
+    When the user access to list of parameter tables page
+    And the user asks to update the filter clause for current project with "value = 'something'"
+    Then no error is provided
+    And the parameter table for managed table "TTAB_ONE" has the filter clause "value = 'something'"
+    And the parameter table for managed table "TTAB_TWO" has the filter clause "value = 'something'"
+    And the parameter table for managed table "TTAB_THREE" has the filter clause "value = 'something'"
+
+  Scenario: The forced filter clause specified for a dictionary overwrite existing clauses in parameter tables
+    Given the existing projects "Default"
+    And the parameter table for managed table "TTAB_ONE" is specified with filter clause "1=1"
+    And the parameter table for managed table "TTAB_THREE" is specified with filter clause "2=2"
+    And the parameter table for managed table "TTAB_TWO" is specified with filter clause "3=3"
+    When the user access to list of parameter tables page
+    And the user asks to update the filter clause for current project with "value = 'something'"
+    And the parameter table for managed table "TTAB_ONE" has the filter clause "value = 'something'"
+    And the parameter table for managed table "TTAB_TWO" has the filter clause "value = 'something'"
+    And the parameter table for managed table "TTAB_THREE" has the filter clause "value = 'something'"
