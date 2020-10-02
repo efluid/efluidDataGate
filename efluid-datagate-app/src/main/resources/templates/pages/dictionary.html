@@ -33,6 +33,12 @@
 						<button class="btn btn-secondary btn-sm delete-button" type="button" th:title="!${entry.canDelete}?'Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent'" th:disabled="!${entry.canDelete}">Supprimer</button>
 					</span></td>
 				</tr>
+			     <tr>
+					<form action="#" th:action="@{/ui/dictionary/clause}" method="post">
+			         <td colspan="3"><input type="text" name="clause" id="whereClause" class="form-control" placeholder="Nouveau critère de filtrage pour toutes les tables" aria-label="Nouveau critère de filtrage"/></td>
+                     <td><input type="submit" class="btn btn-outline-secondary btn-sm float-right" disabled="disabled" id="clauseSubmit" value="Appliquer le critère"/></td>
+					</form>
+				 </tr>
 			</tbody>
 		</table>
 	</span>
@@ -52,14 +58,28 @@
 				$("#" + uuid).remove();
 			});
 		};
-		
+
+		const checkChangeCriteria = () => {
+			hideDisplays();
+			if($("#whereClause").val().length > 0){
+				$("#clauseSubmit").prop('disabled', false);
+				$("#clauseSubmit").removeClass("btn-outline-secondary").addClass("btn-secondary");
+			} else {
+				$("#clauseSubmit").prop('disabled', true);
+				$("#clauseSubmit").removeClass("btn-secondary").addClass("btn-outline-secondary");
+			}
+		}
+
     	// Init actions
     	$(document).ready(() => {
 			$("button.delete-button").click(deleteButtonAction);
+			$("#whereClause").bind('input',checkChangeCriteria)
 			var fromType = /*[[${from}?${from}:'']]*/ 'success_edit';
 			if(fromType === 'success_edit') showSuccess("Table de paramètrage ajoutée avec succès au dictionnaire");
-		}); 
-		
+			if(fromType === 'success_clause') showSuccess("Critère de filtrage appliqué avec succès sur toutes les tables");
+
+		});
+
 	</script>
 </body>
 </html>
