@@ -1,7 +1,9 @@
 package fr.uem.efluid.cucumber.common;
 
 import fr.uem.efluid.cucumber.stubs.TweakedAsyncDriver;
+import fr.uem.efluid.cucumber.stubs.TweakedPreparationUpdater;
 import fr.uem.efluid.security.providers.DatabaseOnlyAccountProvider;
+import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.tools.TransformerValueProvider;
@@ -132,6 +134,16 @@ public class SystemTestConfig {
     @Bean
     public AsyncDriver futureAsyncDriver() {
         return new TweakedAsyncDriver();
+    }
+
+    /**
+     * To allow some post-init changes in preparation data, BEFORE run of diff / merge
+     *
+     * @return
+     */
+    @Bean
+    public TweakedPreparationUpdater tweakedPreparationUpdater() {
+        return new TweakedPreparationUpdater();
     }
 
     /**

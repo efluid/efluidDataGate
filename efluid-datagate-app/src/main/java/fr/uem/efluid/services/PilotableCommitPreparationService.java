@@ -87,6 +87,9 @@ public class PilotableCommitPreparationService {
     @Autowired
     private AsyncDriver async;
 
+    @Autowired(required = false)
+    private PreparationUpdater updater;
+
     // One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
     private final Map<UUID, PilotedCommitPreparation<?>> currents = new HashMap<>();
 
@@ -270,7 +273,7 @@ public class PilotableCommitPreparationService {
         if (this.currents.get(projectUuid) != null) {
 
             // Impossible situation
-            LOGGER.error("Cannot proced to import entry point for processing merge commit will a preparation is still running.");
+            LOGGER.error("Cannot proceed to import entry point for processing merge commit will a preparation is still running.");
             throw new ApplicationException(PREPARATION_CANNOT_START,
                     "Cannot proced to import entry point for processing merge commit will a "
                             + "preparation is still running.");
@@ -289,9 +292,14 @@ public class PilotableCommitPreparationService {
         // Init feature support for attachments
         setAttachmentFeatureSupports(preparation);
 
-        // First step is NOT async : load the package and identify the appliable index
+        // First step is NOT async : load the package and identify the applicable index
         ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> importResult = this.commitService.importCommits(file,
                 preparation);
+
+        // Support for some post processes
+        if(this.updater != null){
+            this.updater.completeForMerge(preparation, projectUuid);
+        }
 
         // Specify as active one
         this.currents.put(projectUuid, preparation);
@@ -801,6 +809,11 @@ public class PilotableCommitPreparationService {
         // Init feature support for attachments
         setAttachmentFeatureSupports(preparation);
 
+        // Support for some post processes
+        if(this.updater != null){
+            this.updater.completeForDiff(preparation, projectUuid);
+        }
+
         // Specify as active one
         this.currents.put(projectUuid, preparation);
 
@@ -895,7 +908,7 @@ public class PilotableCommitPreparationService {
 
                 Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllByProjectMappedToUuid(new Project(preparation.getProjectUuid()));
 
-                long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
+                long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond() * 1000;
 
                 // Process details
                 List<Callable<?>> callables = preparation.getDiffContent().stream()
@@ -1065,4 +1078,10 @@ public class PilotableCommitPreparationService {
         }
     }
 
+     public interface PreparationUpdater {
+
+        void completeForDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation, UUID projectUUID);
+
+        void completeForMerge(PilotedCommitPreparation<PreparedMergeIndexEntry> preparation, UUID projectUUID);
+    }
 }

@@ -384,6 +384,8 @@ public class ManagedDatabaseAccess {
                 // Get existing entry
                 entity = getOne(keyVal, type);
 
+                assertThat(entity).describedAs("Updated entity of type " + type + " for key " + keyVal + " doesn't exist!").isNotNull();
+
                 // Call setters on entry (except on key) to update it
                 setters.entrySet().stream()
                         .filter(s -> !s.getKey().equals(firstCol))

@@ -93,7 +93,12 @@ public abstract class CucumberStepDefs {
 
     protected static String currentStartPage;
 
+    protected static Map<String, ExportImportResult<ExportFile>> currentExports = new HashMap<>();
+
     protected static DiffContentSearch currentSearch = new DiffContentSearch();
+
+    @Autowired
+    private TweakedPreparationUpdater preparationUpdater;
 
     @Autowired
     protected ObjectMapper mapper;
@@ -441,6 +446,14 @@ public abstract class CucumberStepDefs {
      */
     protected void resetAsyncProcess() {
         this.asyncDriver.reset();
+    }
+
+    protected void postponeImportedPackageTime(boolean val){
+        this.preparationUpdater.setPostponeImportedPackageTime(val);
+    }
+
+    protected void resetPreparationUpdater(){
+        this.preparationUpdater.setPostponeImportedPackageTime(false);
     }
 
     protected void resetDatabaseIdentifier() {
@@ -1113,6 +1126,18 @@ public abstract class CucumberStepDefs {
         assertThat(datas).isNotNull();
         assertThat(datas).hasSize(properties.size());
         assertThat(datas).allMatch(i -> properties.contains(propertyAccess.apply(i)));
+    }
+
+    protected static ExportImportResult<ExportFile> getSingleCurrentExport() {
+
+        if (currentExports.size() == 0) {
+            throw new AssertionError("Cannot import available source package if none defined first");
+        }
+        if (currentExports.size() > 1) {
+            throw new AssertionError("Cannot import \"the available source package\" if more than one are specified. Use name to identify it");
+        }
+
+        return currentExports.values().iterator().next();
     }
 
     @SuppressWarnings("unchecked")

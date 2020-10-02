@@ -121,6 +121,57 @@ public class PreparationStepDefs extends CucumberStepDefs {
         a_merge_diff_is_completed();
     }
 
+    @Given("^the exported package for commit \"(.*)\" has been merged in destination environment$")
+    public void a_merge_has_been_done(String name) throws Throwable {
+
+        // Cancel anything running
+        no_diff_is_running();
+
+        // Start new merge from available package
+        this.prep.startMergeCommitPreparation(currentExports.get(name).getResult());
+
+        // And get diff uuid for testing
+        runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
+
+        // Completed
+        a_merge_diff_is_completed();
+
+        // Selected all
+        user_has_selected_all_ready_content_for_merge();
+
+        // Name commit
+        user_has_defined_commit_comment("merged " + name);
+
+        // It's a normal commit
+        user_save_commit();
+    }
+
+    @Given("^a merge diff analysis has been started and completed with the package of commit \"(.*)\"$")
+    public void a_merge_diff_analysis_has_been_started_and_completed_from_package(String name) throws Throwable {
+        // Import started
+
+        // Cancel anything running
+        no_diff_is_running();
+
+        // Start new merge from available package
+        this.prep.startMergeCommitPreparation(currentExports.get(name).getResult());
+
+        // And get diff uuid for testing
+        runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
+
+        // Completed
+        a_merge_diff_is_completed();
+    }
+
+    @Given("^a merge diff analysis has been started and completed with the package of commit \"(.*)\" created a moment after$")
+    public void a_merge_diff_analysis_has_been_started_and_completed_from_package_created_after(String name) throws Throwable {
+
+        // Normal merge, but with postponed package
+        postponeImportedPackageTime(true);
+        a_merge_diff_analysis_has_been_started_and_completed_from_package(name);
+        postponeImportedPackageTime(false); // Reset
+    }
+
     @Given("^no diff is running$")
     public void no_diff_is_running() {
         this.prep.cancelCommitPreparation();
@@ -146,7 +197,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
         no_diff_is_running();
 
         // Start new merge from available package
-        this.prep.startMergeCommitPreparation(PushPullStepDefs.currentExport.getResult());
+        this.prep.startMergeCommitPreparation(getSingleCurrentExport().getResult());
 
         // And get diff uuid for testing
         runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
@@ -274,14 +325,14 @@ public class PreparationStepDefs extends CucumberStepDefs {
     public void new_init_commit_exported(String comment) throws Throwable {
         commit_has_been_added_with_comment(comment);
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushPullStepDefs.currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
+        currentExports.put(comment, processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit));
     }
 
     @Given("^the commit \"(.*)\" has been saved and exported with all the new identified diff content$")
     public void new_update_commit_exported(String comment) throws Throwable {
         new_commit_was_added_with_comment(comment);
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushPullStepDefs.currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
+        currentExports.put(comment, processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit));
     }
 
     /* ########################################### ALL WHENS ################################################ */
