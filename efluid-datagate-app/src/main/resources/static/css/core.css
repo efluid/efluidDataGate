@@ -900,3 +900,7 @@ li {
 .btn-right {
     margin-right: 0;
 }
+
+#validator-input {
+    color: red;
+}
