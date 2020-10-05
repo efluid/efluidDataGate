@@ -23,7 +23,7 @@
 			     <tr id="projectListInjectBefore">
 			         <td>
 						 <input type="text" id="projectName" class="form-control" placeholder="Nom" required="true" size="40"/>
-						 <p id="validator-input">Attention votre nom de project ne doit pas contenir de caractères spéciaux</p>
+						 <p id="validator-input">Attention votre nom de projet ne doit pas contenir de caractères spéciaux</p>
 					 </td>
 			         <td>
 				         <span class="color-picker" style="margin-top: 10px">
@@ -57,7 +57,6 @@
 		$('#li-11').css("font-weight", "bolder");
     	$("#projectAlreadyExists").hide();
     	$(".pencil-update i").css({"display":"flex", "justify-content": "flex-end"});
-    	$('#input-empty').show();
     	$("#validator-input").hide();
 
 		const getPickedColor = () => {
@@ -145,16 +144,16 @@
 
 		const checkCharacters = e => {
 		    var inputValue = e.target.value;
-			if(regex.test(inputValue)) {
-				$("#validator-input").show();
-				$("#addButton").hide();
-				$("#modifButton").hide();
-			} else {
-				$("#validator-input").hide();
-				$("#input-empty").hide();
-				$("#addButton").show();
-			}
-		}
+        if(regex.test(inputValue)) {
+          $("#validator-input").show();
+          $("#addButton").hide();
+          $("#modifButton").hide();
+        } else {
+          $("#validator-input").hide();
+          $("#input-empty").hide();
+          $("#addButton").show();
+        }
+      }
 
     	// Init actions
     	$(document).ready(() => {

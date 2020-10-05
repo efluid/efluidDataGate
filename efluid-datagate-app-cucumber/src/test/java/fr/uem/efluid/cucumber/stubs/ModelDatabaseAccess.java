@@ -135,6 +135,12 @@ public class ModelDatabaseAccess {
         this.versions.flush();
     }
 
+    public void updateDictionaryFilterClause(String tableName, String filterclause) {
+        DictionaryEntry dict = this.entries.findByTableName(tableName);
+        dict.setWhereClause(filterclause);
+        this.entries.saveAndFlush(dict);
+    }
+
     /**
      * <p>
      * Set versions. Will create them at startDaysBefore days before now. If more than

@@ -20,6 +20,7 @@
   "/ui/share": ["dictionary export page"],
   "/ui/dictionary/save" : ["save parameter table", "saved parameter table"],
   "/ui/dictionary/test" : ["test parameter table", "tested parameter table"],
+  "/ui/dictionary/clause" : ["force parameter table filter clause"],
   "/ui/prepare" : ["diff launch page", "diff commit page"],
   "/ui/prepare/commit" : ["commit saving page"],
   "/ui/prepare/save" : ["commit save"],
