@@ -59,6 +59,9 @@
     	$(".pencil-update i").css({"display":"flex", "justify-content": "flex-end"});
     	$("#validator-input").hide();
 
+    	var modifProjectActivated = false;
+
+
 		const getPickedColor = () => {
 			return $(".project-color:checked").val();
 		};
@@ -107,6 +110,7 @@
 		}
 
 		const displayModifNameProject = (id) => {
+			modifProjectActivated = true;
 			uuid =  id;
 			oldName = $('#' + id).text().trim()
 			$('#projectName').val(oldName);
@@ -120,6 +124,7 @@
 
 		const closeModifNameProject = () => {
 			let shouldCloseModif = false;
+			modifProjectActivated = false;
 			$("#projectName").val('');
 			$("#validator-input").hide();
 
@@ -143,19 +148,21 @@
 		var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
 
 		const checkCharacters = e => {
-		    var inputValue = e.target.value;
-		    if (e.target.id === "projectName") {
-				if(regex.test(inputValue)) {
-					$("#validator-input").show();
-					$("#addButton").hide();
-					$("#modifButton").hide();
+			var inputValue = e.target.value;
+			if(regex.test(inputValue)) {
+			  $("#validator-input").show();
+			  $("#addButton").hide();
+			  $("#modifButton").hide();
+			} else {
+				if(!modifProjectActivated) {
+					$("#addButton").show();
 				} else {
+					$("#modifButton").show();
 					$("#validator-input").hide();
 					$("#input-empty").hide();
-					$("#addButton").show();
 				}
 			}
-		}
+      }
 
     	// Init actions
     	$(document).ready(() => {
