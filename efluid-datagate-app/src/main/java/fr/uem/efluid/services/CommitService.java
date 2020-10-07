@@ -625,6 +625,10 @@ public class CommitService extends AbstractApplicationService {
         return commit.getUuid();
     }
 
+    LocalDateTime getLastImportedCommitTime(){
+        return this.commits.findLastImportedCommitTime();
+    }
+
     /**
      * <p>
      * Reserved for launch from <tt>PilotableCommitPreparationService</tt>

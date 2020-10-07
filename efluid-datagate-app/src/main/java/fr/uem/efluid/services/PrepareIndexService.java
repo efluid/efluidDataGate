@@ -187,7 +187,6 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param preparation        current preparation
      * @param entry              dictionaryEntry
      * @param lobs               for any extracted lobs
-     * @param timeStampForSearch start point for merge process
      * @param mergeDiff          imported merge diff
      * @param project
      */
@@ -200,9 +199,12 @@ public class PrepareIndexService extends AbstractApplicationService {
             PilotedCommitPreparation<PreparedMergeIndexEntry> preparation,
             DictionaryEntry entry,
             Map<String, byte[]> lobs,
-            long timeStampForSearch,
             List<PreparedMergeIndexEntry> mergeDiff,
             Project project) {
+
+       long localIndexToTimeStamp = this.indexes.findMaxIndexTimestampOfLastImportedCommit();
+
+       if
 
         // Index "previous"
         List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqual(entry,

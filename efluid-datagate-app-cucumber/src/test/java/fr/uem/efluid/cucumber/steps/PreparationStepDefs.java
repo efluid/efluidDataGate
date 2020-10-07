@@ -167,9 +167,9 @@ public class PreparationStepDefs extends CucumberStepDefs {
     public void a_merge_diff_analysis_has_been_started_and_completed_from_package_created_after(String name) throws Throwable {
 
         // Normal merge, but with postponed package
-        postponeImportedPackageTime(true);
+        postponeImportedPackageTime(getSavedCommit().getCreatedTime().plusMinutes(1));
         a_merge_diff_analysis_has_been_started_and_completed_from_package(name);
-        postponeImportedPackageTime(false); // Reset
+        postponeImportedPackageTime(null); // Reset
     }
 
     @Given("^no diff is running$")

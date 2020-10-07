@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -448,12 +449,12 @@ public abstract class CucumberStepDefs {
         this.asyncDriver.reset();
     }
 
-    protected void postponeImportedPackageTime(boolean val){
-        this.preparationUpdater.setPostponeImportedPackageTime(val);
+    protected void postponeImportedPackageTime(LocalDateTime time){
+        this.preparationUpdater.setPostponeImportedPackageTime(time);
     }
 
     protected void resetPreparationUpdater(){
-        this.preparationUpdater.setPostponeImportedPackageTime(false);
+        this.preparationUpdater.setPostponeImportedPackageTime(null);
     }
 
     protected void resetDatabaseIdentifier() {

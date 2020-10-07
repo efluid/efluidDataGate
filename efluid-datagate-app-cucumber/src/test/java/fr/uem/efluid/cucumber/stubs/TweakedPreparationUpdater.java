@@ -11,7 +11,7 @@ import java.util.UUID;
 public class TweakedPreparationUpdater implements PilotableCommitPreparationService.PreparationUpdater {
 
     // In some tests we want to make it like if the imported package was created AFTER the last "destination" environment commit
-    private boolean postponeImportedPackageTime;
+    private LocalDateTime postponedImportedPackageTime;
 
     @Override
     public void completeForDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation, UUID projectUUID) {
@@ -20,12 +20,13 @@ public class TweakedPreparationUpdater implements PilotableCommitPreparationServ
 
     @Override
     public void completeForMerge(PilotedCommitPreparation<PreparedMergeIndexEntry> preparation, UUID projectUUID) {
-        if (this.postponeImportedPackageTime) {
+        if (this.postponedImportedPackageTime != null) {
             preparation.getCommitData().setRangeStartTime(LocalDateTime.now().plusMinutes(1));
         }
     }
 
-    public void setPostponeImportedPackageTime(boolean postponeImportedPackageTime) {
-        this.postponeImportedPackageTime = postponeImportedPackageTime;
+    // Put null to disable
+    public void setPostponeImportedPackageTime(LocalDateTime time) {
+        this.postponedImportedPackageTime = time;
     }
 }

@@ -1,5 +1,6 @@
 package fr.uem.efluid.model.repositories;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,5 +26,8 @@ public interface CommitRepository extends JpaRepository<Commit, UUID> {
 
 	@Query("select count(c) from Commit c where c.version.uuid = :versionUuid")
 	long countCommitsForVersion(@Param("versionUuid") UUID versionUuid);
+
+	@Query("select max(c.importedTime) from Commit c")
+	LocalDateTime findLastImportedCommitTime();
 
 }

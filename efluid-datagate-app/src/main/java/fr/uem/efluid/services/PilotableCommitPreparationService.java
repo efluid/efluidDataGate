@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -297,7 +298,7 @@ public class PilotableCommitPreparationService {
                 preparation);
 
         // Support for some post processes
-        if(this.updater != null){
+        if (this.updater != null) {
             this.updater.completeForMerge(preparation, projectUuid);
         }
 
@@ -810,7 +811,7 @@ public class PilotableCommitPreparationService {
         setAttachmentFeatureSupports(preparation);
 
         // Support for some post processes
-        if(this.updater != null){
+        if (this.updater != null) {
             this.updater.completeForDiff(preparation, projectUuid);
         }
 
@@ -908,8 +909,6 @@ public class PilotableCommitPreparationService {
 
                 Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllByProjectMappedToUuid(new Project(preparation.getProjectUuid()));
 
-                long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond() * 1000;
-
                 // Process details
                 List<Callable<?>> callables = preparation.getDiffContent().stream()
                         // Sort index by date for clean merge build
@@ -919,7 +918,7 @@ public class PilotableCommitPreparationService {
                         .filter(Objects::nonNull)
                         // Reset content in preparation for commit build, once completed
                         .peek(p -> preparation.getDiffContent().removeAll(p.getValue()))
-                        .map(p -> callMergeDiff(preparation, p.getValue(), dictByUuid.get(p.getKey()), searchTimestamp))
+                        .map(p -> callMergeDiff(preparation, p.getValue(), dictByUuid.get(p.getKey())))
                         .collect(Collectors.toList());
 
                 preparation.setProcessStarted(callables.size());
@@ -1013,22 +1012,20 @@ public class PilotableCommitPreparationService {
      *
      * @param current                  preparing preparation
      * @param dict
-     * @param lastLocalCommitTimestamp
      * @param correspondingDiff
      * @return Void (ignore result, content is updated in PilotedCommitPreparation)
      */
     private Callable<Void> callMergeDiff(
             final PilotedCommitPreparation<PreparedMergeIndexEntry> current,
             List<PreparedMergeIndexEntry> correspondingDiff,
-            DictionaryEntry dict,
-            long lastLocalCommitTimestamp) {
+            DictionaryEntry dict) {
 
         return () -> {
             // Control if table not yet specified
             assertDictionaryEntryIsRealTable(dict, current);
 
             // Then run one merge action for dictionaryEntry
-            this.diffService.completeMergeDiff(current, dict, current.getDiffLobs(), lastLocalCommitTimestamp,
+            this.diffService.completeMergeDiff(current, dict, current.getDiffLobs(),
                     correspondingDiff, new Project(current.getProjectUuid()));
 
             int rem = current.getProcessRemaining().decrementAndGet();
@@ -1078,7 +1075,7 @@ public class PilotableCommitPreparationService {
         }
     }
 
-     public interface PreparationUpdater {
+    public interface PreparationUpdater {
 
         void completeForDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation, UUID projectUUID);
 
