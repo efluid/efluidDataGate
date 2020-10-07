@@ -16,7 +16,7 @@
             <tbody>
                 <tr th:each="project : ${projects}" th:id="${project.uuid}" th:class="|project-theme-${project.color}|">
                      <td colspan="2" th:text="${project.name}" th:id="item- + ${project.uuid}">Production</td>
-					<td colspan="2" th:id="${project.uuid}" th:name="${project.name}" th:title="${project.name}" class="pencil-update">
+					<td colspan="2" th:id="${project.uuid}" th:name="${project.name}" class="pencil-update">
 						 <i class="fas fa-pencil-alt"></i>
 					 </td>
 			     </tr>
@@ -55,7 +55,7 @@
 		$('#color-nav-3').css("font-weight", "bold");
 		$('#collapseExample3').css("display", "block");
 		$('#li-11').css("font-weight", "bolder");
-    	$("#projectAlreadyExists").css({"display":"none"});
+    	$("#projectAlreadyExists").hide();
     	$(".pencil-update i").css({"display":"flex", "justify-content": "flex-end"});
     	$("#validator-input").hide();
 
@@ -77,13 +77,12 @@
 				var newProjectRow = '<tr id="' + data.uuid + '" class="project-theme-bg-' + data.color + '"><td colspan="2">' + data.name + '</td><td>&nbsp;</td></tr>';
 				$("#projectListInjectBefore").before(newProjectRow);
 				inputName.val("");
-				$("#projectAlreadyExists").css({"display":"none"});
-
+				$("#projectAlreadyExists").hide();
 
 		    })
 		    .fail(function() {
 		    	console.log("error");
-				$("#projectAlreadyExists").css({"display":"block"});
+				$("#projectAlreadyExists").show();
 			});
 		};
 
@@ -102,27 +101,27 @@
 		    })
 		    .fail(function() {
 		    	console.log("error");
-		    	$("#projectAlreadyExists").css({"display":"block"});
+		    	$("#projectAlreadyExists").show();
 			});
 
 		}
 
-		const displayModifNameProject = (name, id) => {
-			uuid = id;
-			oldName = name;
-
-			$('#projectName').val(name)
+		const displayModifNameProject = (id) => {
+			uuid =  id;
+			oldName = $('#' + id).text().trim()
+			$('#projectName').val(oldName);
 			$('#addButton').hide();
 			$('.color-picker').hide();
 			$('#cancelButton').show();
 			$('#modifButton').show();
 			$('#cross-modif').show();
 			$(".pencil-update i").css({"display":"none"});
-			$("td#"+id+".pencil-update").css({"pointer-events":"none"});
 		}
 
 		const closeModifNameProject = () => {
 			let shouldCloseModif = false;
+			$("#projectName").val('');
+			$("#validator-input").hide();
 
 			if (!shouldCloseModif) {
 				$('#modifButton').hide();
@@ -136,6 +135,7 @@
 				$('#cancelButton').show();
 				$('#cross-modif').hide();
 				$(".pencil-update i").css({"display":"none"});
+
 			}
 
 		}
@@ -144,18 +144,16 @@
 
 		const checkCharacters = e => {
 		    var inputValue = e.target.value;
-		    if (e.target.id === "projectName") {
-				if(regex.test(inputValue)) {
-					$("#validator-input").show();
-					$("#addButton").hide();
-					$("#modifButton").hide();
-				} else {
-					$("#validator-input").hide();
-					$("#input-empty").hide();
-					$("#addButton").show();
-				}
-		    }
-		}
+        if(regex.test(inputValue)) {
+          $("#validator-input").show();
+          $("#addButton").hide();
+          $("#modifButton").hide();
+        } else {
+          $("#validator-input").hide();
+          $("#input-empty").hide();
+          $("#addButton").show();
+        }
+      }
 
     	// Init actions
     	$(document).ready(() => {

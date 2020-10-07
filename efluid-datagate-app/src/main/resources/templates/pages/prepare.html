@@ -67,7 +67,7 @@
 						<table class="table table-sm">
 							<thead>
 								<span id="navigation-filter">
-									<div id="navigation-domain" class="filter filter-domain" onmouseleave="closeCardFilter('domain')">
+									<div id="navigation-domain" class="filter filter-domain">
 										<div class="container-is-used">
 											<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
 											<i class="far fa-check-square" id="filter-used-domain"></i>
@@ -91,7 +91,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-table" class="filter filter-table" onmouseleave="closeCardFilter('table')">
+									<div id="navigation-table" class="filter filter-table">
 										<div class="container-is-used">
 											<p id="title-table" onclick="showCardFilter('table')">Table</p>
 											<i class="far fa-check-square" id="filter-used-table"></i>
@@ -99,7 +99,7 @@
 										<div class="card" id="card-table" style="width: 170px;">
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
-												<input id="tableSearchField" type="text" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
+												<input id="tableSearchField" type="text" title="toto" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
 											</li>
 											  <li>
 												  <p id="filter-menu-click" onclick="enableFilter('table')">Filtrer</p>
@@ -113,7 +113,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-key" class="filter filter-key" onmouseleave="closeCardFilter('key')">
+									<div id="navigation-key" class="filter filter-key">
 										<div class="container-is-used">
 											<p id="title-key" onclick="showCardFilter('key')">Clé</p>
 											<i class="far fa-check-square" id="filter-used-key"></i>
@@ -134,7 +134,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-type" class="filter filter-type" onmouseleave="closeCardFilter('type')">
+									<div id="navigation-type" class="filter filter-type">
 										<div class="container-is-used">
 											<p id="title-type" onclick="showCardFilter('type')">Type</p>
 											<i class="far fa-check-square" id="filter-used-type"></i>
@@ -225,6 +225,7 @@
 				type:""
 			}
 		};
+
 		var associatedTables = /*[[${preparation.referencedTableNames}]]*/ [] ;
 
 		if(associatedTables.length) {
@@ -287,36 +288,35 @@
 
 		}
 
-		const closeCardFilter = (name) => {
+		const closeCardFilter = (e) => {
 
-			let item = name;
+		const $cardDomain = $("#card-domain");
+		const $cardTable = $("#card-table");
+		const $cardList = "ui-menu-item"
+		const $cardKey = $("#card-key");
+		const $cardType = $("#card-type");
 
-			if (item === 'domain') {
-				if (domainIsOpen) {
-					$('#card-domain').hide();
-					domainIsOpen = false;
-				}
+			if (!$cardDomain.is(e.target) && $cardDomain.has(e.target).length === 0) {
+				$('#card-domain').hide();
+				domainIsOpen = false;
 			}
 
-			else if (item === 'table') {
-				if (tableIsOpen) {
+			if (!$cardTable.is(e.target) && $cardTable.has(e.target).length === 0) {
+				let getIdItem = e.target.id
+				if(!getIdItem.includes('ui-id-')) { //prevent auto-close, if it is an item from list the modal should display filter
 					$('#card-table').hide();
 					tableIsOpen = false;
 				}
 			}
 
-			else if (item === 'key') {
-				if (keyIsOpen) {
-					$('#card-key').hide();
-					keyIsOpen = false;
-				}
+			if(!$cardKey.is(e.target) && $cardKey.has(e.target).length === 0) {
+				$('#card-key').hide();
+				keyIsOpen = false;
 			}
 
-			else {
-				if (typeIsOpen) {
-					$('#card-type').hide();
-					typeIsOpen = false;
-				}
+			if (!$cardType.is(e.target) && $cardType.has(e.target).length === 0) {
+				$('#card-type').hide();
+				typeIsOpen = false;
 			}
 
 			else {
@@ -332,8 +332,6 @@
 
 
 		}
-
-
 
 		const filterDisplay = (head) => {
 			console.log(head.target.className)
@@ -619,6 +617,7 @@
 				source: associatedTables
 			});
 			$('.filter').click((e) => filterDisplay(e));
+			$(document).mouseup((e) => closeCardFilter(e));
 		});
 
         /*]]>*/
