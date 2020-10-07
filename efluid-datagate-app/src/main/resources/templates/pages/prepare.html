@@ -286,6 +286,15 @@
 				}
 			}
 
+			else if (item === 'list-table'){
+				if (!listTableIsOpen) {
+					$('#modal-prepare').show();
+					listTableIsOpen = true;
+				} else {
+					$('#modal-prepare').hide();
+					listTableIsOpen = false;
+				}
+			}
 		}
 
 		const closeCardFilter = (e) => {
