@@ -6,10 +6,19 @@
 
 	<div layout:fragment="content" class="datagate-home">
 
-		<div class="left-bloc">
+		<div class="left-bloc"
+			 style="text-align: center;
+    		 overflow: scroll;">
 			<p th:text="'Version: '+ ${lastVersion}"></p>
 			<p th:if="${project != null}">Domaines fonctionnels : <span th:text="${details.domainsCountForProject}">15</span></p>
 			<p>Tables administrées : <span th:text="${details.dictionaryCount}">100</span></p>
+			<li>Base de données source : <span th:text="${details.dbUrl}">ORACLE_DB_SERVER_123</span></li>
+			<li th:if="${details.modelDesc != null}">Schema source : <span th:text="${details.modelDesc.schema}">EFLUID</span></li>
+			<li th:if="${details.modelDesc != null}">Modèle de données identifié :
+				<span th:text="${details.modelDesc.identity}">v1.2.2, schéma ABCDEF</span>
+				<span th:if="${details.modelDesc.details != null}" th:text="| - ${details.modelDesc.details}|"> - détails</span>
+				<span th:if="${details.modelDesc.updatedTime != null}" th:text="| (dernière mise à jour : ${custom.format(details.modelDesc.updatedTime)})|">(dernier maj : 01/02/2018)</span>
+			</li>
 		</div>
 		<div class="right-bloc">
 			<p style="font-size: 1rem;" th:text="'Mon projet'"></p>
