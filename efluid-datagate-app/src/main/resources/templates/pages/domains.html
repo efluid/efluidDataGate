@@ -1,108 +1,99 @@
 <!DOCTYPE html>
-<html layout:decorate="~{layouts/pages.html}">
-<head>
-</head>
-<body>
+    <html layout:decorate="~{layouts/pages.html}">
+    <head>
+    </head>
+    <body>
     <span layout:fragment="content">
-		<h5>Edition des domaines fonctionnels pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
-        <span class="help">Les domaines fonctionnels représentent les ensembles de données prises en compte comme étant du paramètrage. 
-        Les opérations d'import / export et d'applications de modifications de paramètres peuvent être organisées par domaine fonctionnel.</span>
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th scope="col" width="70%">Domaines fonctionnels</th>
-                    <th scope="col"></th>
-                </tr>
-            </thead>
-            <tbody>
-				<tr th:if="${domains.empty}">
-					<td colspan="100%" class="empty-list-message">Aucun domaine fonctionnel existant</td>
-				</tr>
-                <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
-                     <td th:text="${domain.name}">Gestion du matériel</td>
-                     <td>
-                     	<span class="float-right">
-                     		<button class="delete-button btn btn-secondary btn-sm" type="button" th:title="!${domain.canDelete}?'Impossible de supprimer un domaine fonctionnel pour lequel des lots de paramètrage existent'" th:disabled="!${domain.canDelete}">Supprimer</button>
-						</span>
-					</td>
-			     </tr>
-			     <tr id="domainListInjectBefore">
-			         <td>
-                         <input type="text" id="domainName" class="form-control" placeholder="Nom" required="true"/>
-                         <p id="warning-empty">Veuillez saisir un nom de domaine</p>
-                         <p id="validator-input">Votre nom de domaine ne doit pas contenir de caractères spéciaux</p>
-                     </td>
-			         <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
-			     </tr>
-			</tbody>
-		</table>
-    </span>
-    <script layout:fragment="script">
 
-       	$('#currentLocation').text("Domaines fonctionnels");
-       	$('#color-nav-1').css("font-weight", "bold");
-	 	$('#collapseExample1').css("display", "block");
-		$('#li-3').css("font-weight", "bolder");
-		$("#warning-empty").show()
-		$("#validator-input").hide();
+        <h5>Edition des domaines fonctionnels pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
+        <span class="help">Les domaines fonctionnels représentent les ensembles de données prises en compte comme étant du paramètrage.
+            Les opérations d'import / export et d'applications de modifications de paramètres peuvent être organisées par domaine fonctionnel.</span>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th scope="col" width="70%">Domaines fonctionnels</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${domains.empty}">
+                        <td colspan="100%" class="empty-list-message">Aucun domaine fonctionnel existant</td>
+                    </tr>
+                    <tr th:each="domain : ${domains}" th:id="${domain.uuid}">
+                         <td th:text="${domain.name}">Gestion du matériel</td>
+                         <td>
+                            <span class="float-right">
+                                <button class="delete-button btn btn-secondary btn-sm" type="button" th:title="!${domain.canDelete}?'Impossible de supprimer un domaine fonctionnel pour lequel des lots de paramètrage existent'" th:disabled="!${domain.canDelete}">Supprimer</button>
+                            </span>
+                        </td>
+                     </tr>
+                     <tr id="domainListInjectBefore">
+                         <td>
+                             <input type="text" id="domainName" class="form-control" placeholder="Nom" required="true"/>
+                             <p id="validator-input">Votre nom de domaine ne doit pas contenir de caractères spéciaux</p>
+                         </td>
+                         <td scope="col"><button type="button" id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+                     </tr>
+                </tbody>
+            </table>
+        </span>
+        <script layout:fragment="script">
 
-		var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
+            $('#currentLocation').text("Domaines fonctionnels");
+            $('#color-nav-1').css("font-weight", "bold");
+            $('#collapseExample1').css("display", "block");
+            $('#li-3').css("font-weight", "bolder");
+            $("#validator-input").hide();
 
-		const isInputEmpty = e => {
-		    var inputValue = e.target.value;
-		    if (e.target.id === "domainName") {
-		        if (!inputValue.length) {
-		            $("#warning-empty").show();
-		            $("#validator-input").hide();
-		            $("#addButton").hide();
-		        } else {
-		            if(regex.test(inputValue)) {
-		                $("#validator-input").show();
-		                $("#warning-empty").hide();
-		                $("#addButton").hide();
-		            } else {
-		                $("#warning-empty").hide();
-		                $("#validator-input").hide();
-		                $("#addButton").show();
-		            }
-		        }
-		    }
-		}
-    
-		// Delete buttons
-		const deleteButtonAction = (e) => {
-			hideDisplays();
-			var uuid = e.target.parentElement.parentElement.parentElement.id;
-			$.post("/ui/domains/remove/" + uuid, null, (data, status) => {
-				showSuccess("Domaine fonctionnel retiré avec succès");
-				$("#" + uuid).remove();
-			});
-		};
+            var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
 
-		// Add row button
-		const addButtonAction = () => {
-			hideDisplays();
-			var inputName = $("#domainName");
-			var name = inputName.val();
-			if(name == null || name === ''){
-				setInvalid("#domainName","Le nom du domaine fonctionnel est obligatoire");
-			}
-			$.post("/ui/domains/add/" + inputName.val(), null, (data, status) => {
-				showSuccess("Domaine fonctionnel ajouté avec succès");
-		        var newDomainRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td><button class="delete-button btn btn-secondary btn-sm" type="button">Supprimer</button></td></tr>';
-				$("#domainListInjectBefore").before(newDomainRow);
-				$(".empty-list-message").remove();
-				inputName.val("");
-				$("#" + data.uuid + " td button").click(deleteButtonAction);
-		    });
-		};
-    
-    	// Init actions
-    	$(document).ready(() => {
-			$("button.delete-button").click(deleteButtonAction);
-			$("#addButton").click(addButtonAction);
-			$("#domainName").keyup(e => { isInputEmpty(e) });
-		}); 
-    </script>
-</body>
+            const checkCharacters = e => {
+                var inputValue = e.target.value;
+                if (e.target.id === "domainName") {
+                    if(regex.test(inputValue)) {
+                        $("#validator-input").show();
+                        $("#addButton").hide();
+                    } else {
+                        $("#validator-input").hide();
+                        $("#addButton").show();
+                    }
+                }
+            }
+
+            // Delete buttons
+            const deleteButtonAction = (e) => {
+                hideDisplays();
+                var uuid = e.target.parentElement.parentElement.parentElement.id;
+                $.post("/ui/domains/remove/" + uuid, null, (data, status) => {
+                    showSuccess("Domaine fonctionnel retiré avec succès");
+                    $("#" + uuid).remove();
+                });
+            };
+
+            // Add row button
+            const addButtonAction = () => {
+                hideDisplays();
+                var inputName = $("#domainName");
+                var name = inputName.val();
+                if(name == null || name === ''){
+                    setInvalid("#domainName","Le nom du domaine fonctionnel est obligatoire");
+                }
+                $.post("/ui/domains/add/" + inputName.val(), null, (data, status) => {
+                    showSuccess("Domaine fonctionnel ajouté avec succès");
+                    var newDomainRow = '<tr id="' + data.uuid + '"><td>' + data.name + '</td><td><button class="delete-button btn btn-secondary btn-sm" type="button">Supprimer</button></td></tr>';
+                    $("#domainListInjectBefore").before(newDomainRow);
+                    $(".empty-list-message").remove();
+                    inputName.val("");
+                    $("#" + data.uuid + " td button").click(deleteButtonAction);
+                });
+            };
+
+            // Init actions
+            $(document).ready(() => {
+                $("button.delete-button").click(deleteButtonAction);
+                $("#addButton").click(addButtonAction);
+                $("#domainName").keyup(e => { checkCharacters(e) });
+            });
+        </script>
+    </body>
 </html>

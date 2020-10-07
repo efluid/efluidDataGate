@@ -1,5 +1,8 @@
 package fr.uem.efluid.security.providers;
 
+import fr.uem.efluid.model.entities.Project;
+import fr.uem.efluid.model.repositories.ProjectRepository;
+import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.UserRepository;
 import org.pac4j.core.credentials.password.PasswordEncoder;
@@ -28,6 +31,13 @@ public class DatabaseOnlyAccountProvider implements AccountProvider {
     @Autowired
     private UserRepository users;
 
+    @Autowired
+    protected UserHolder holder;
+
+    @Autowired
+    private ProjectRepository projects;
+
+
     public DatabaseOnlyAccountProvider() {
         LOGGER.info("[SECURITY] Using pure database accounting and authentication");
     }
@@ -53,6 +63,18 @@ public class DatabaseOnlyAccountProvider implements AccountProvider {
         return this.users.findAll();
     }
 
+    /**
+     * Need the current user to get current selected project and add it for
+     * the new user
+     */
+    public User getCurrentUser() {
+        return this.holder.getCurrentUser();
+    }
+
+    public Project getCurrentSelectedProjectEntity() {
+        return this.projects.findSelectedProjectForUserLogin(getCurrentUser().getLogin());
+    }
+
     @Override
     public User createUser(String login, String email, String password) {
 
@@ -62,6 +84,11 @@ public class DatabaseOnlyAccountProvider implements AccountProvider {
         user.setEmail(email);
         user.setToken(generateToken());
         user.setCreatedTime(LocalDateTime.now());
+
+        // Keep current user project, except in wizzard
+        if (getCurrentUser() != null) {
+            user.setSelectedProject(getCurrentSelectedProjectEntity());
+        }
 
         return this.users.save(user);
     }

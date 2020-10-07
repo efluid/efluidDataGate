@@ -3,7 +3,7 @@
 <head>
 </head>
 <body>
-    <span layout:fragment="content">
+<span layout:fragment="content">
 		<h5>Edition des projets</h5>
         <span class="help">Les projets permettent d'organiser le dictionnaire et les données en sous ensembles indépendants. Ils sont représentés par un nom unique et par une couleur, reprise dans le menu haut quand un projet est actif.</span>
         <table class="table table-sm">
@@ -16,15 +16,14 @@
             <tbody>
                 <tr th:each="project : ${projects}" th:id="${project.uuid}" th:class="|project-theme-${project.color}|">
                      <td colspan="2" th:text="${project.name}" th:id="item- + ${project.uuid}">Production</td>
-					<td colspan="2" th:id="${project.uuid}" th:name="${project.name}" class="pencil-update">
+					<td colspan="2" th:id="${project.uuid}" th:name="${project.name}" th:title="${project.name}" class="pencil-update">
 						 <i class="fas fa-pencil-alt"></i>
 					 </td>
 			     </tr>
 			     <tr id="projectListInjectBefore">
 			         <td>
 						 <input type="text" id="projectName" class="form-control" placeholder="Nom" required="true" size="40"/>
-						 <p id="input-empty">Veuillez saisir un nom de projet</p>
-						 <p id="validator-input">Attention votre nom de project ne doit pas contenir de caractères spéciaux</p>
+						 <p id="validator-input">Attention votre nom de projet ne doit pas contenir de caractères spéciaux</p>
 					 </td>
 			         <td>
 				         <span class="color-picker" style="margin-top: 10px">
@@ -48,7 +47,7 @@
 		  Ce nom de projet est déjà utilisé.
 		</div>
     </span>
-    <script layout:fragment="script">
+<script layout:fragment="script">
 		$('#modifButton').hide();
 		$('#cancelButton').hide();
 		$('#cross-modif').hide();
@@ -56,10 +55,9 @@
 		$('#color-nav-3').css("font-weight", "bold");
 		$('#collapseExample3').css("display", "block");
 		$('#li-11').css("font-weight", "bolder");
-    	$("#projectAlreadyExists").hide();
-    	$(".pencil-update i").css({"display":"flex", "justify-content": "flex-end"});
-    	$('#input-empty').show();
-    	$("#validator-input").hide();
+    $("#projectAlreadyExists").css({"display":"none"});
+    $(".pencil-update i").css({"display":"flex", "justify-content": "flex-end"});
+    $("#validator-input").hide();
 
 		const getPickedColor = () => {
 			return $(".project-color:checked").val();
@@ -79,12 +77,13 @@
 				var newProjectRow = '<tr id="' + data.uuid + '" class="project-theme-bg-' + data.color + '"><td colspan="2">' + data.name + '</td><td>&nbsp;</td></tr>';
 				$("#projectListInjectBefore").before(newProjectRow);
 				inputName.val("");
-				$("#projectAlreadyExists").hide();
+				$("#projectAlreadyExists").css({"display":"none"});
+
 
 		    })
 		    .fail(function() {
 		    	console.log("error");
-				$("#projectAlreadyExists").show();
+				$("#projectAlreadyExists").css({"display":"block"});
 			});
 		};
 
@@ -103,21 +102,23 @@
 		    })
 		    .fail(function() {
 		    	console.log("error");
-		    	$("#projectAlreadyExists").show();
+		    	$("#projectAlreadyExists").css({"display":"block"});
 			});
 
 		}
 
-		const displayModifNameProject = (id) => {
-			uuid =  id;
-			oldName = $('#' + id).text().trim()
-			$('#projectName').attr('placeholder', oldName.trim());
+		const displayModifNameProject = (name, id) => {
+			uuid = id;
+			oldName = name;
+
+			$('#projectName').val(name)
 			$('#addButton').hide();
 			$('.color-picker').hide();
 			$('#cancelButton').show();
 			$('#modifButton').show();
 			$('#cross-modif').show();
 			$(".pencil-update i").css({"display":"none"});
+			$("td#"+id+".pencil-update").css({"pointer-events":"none"});
 		}
 
 		const closeModifNameProject = () => {
@@ -135,31 +136,24 @@
 				$('#cancelButton').show();
 				$('#cross-modif').hide();
 				$(".pencil-update i").css({"display":"none"});
-
 			}
 
 		}
 
 		var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
 
-		const isInputEmpty = e => {
+		const checkCharacters = e => {
 		    var inputValue = e.target.value;
 		    if (e.target.id === "projectName") {
-		        if (!inputValue.length) {
-		            $("#input-empty").show();
-		            $("#validator-input").hide();
-		        } else {
-		            if(regex.test(inputValue)) {
-		                $("#validator-input").show();
-		                $("#addButton").hide();
-		                $("#modifButton").hide();
-		            } else {
-		                $("#validator-input").hide();
-		                $("#input-empty").hide();
-		                $("#addButton").show();
-		            }
-		        }
-		    }
+				if(regex.test(inputValue)) {
+					$("#validator-input").show();
+					$("#addButton").hide();
+					$("#modifButton").hide();
+				} else {
+					$("#validator-input").hide();
+					$("#input-empty").hide();
+					$("#addButton").show();
+				}
 		}
 
     	// Init actions
@@ -168,7 +162,7 @@
 			$("#modifButton").click(modifButtonAction);
 			$('#cancelButton').click(() => closeModifNameProject());
 			$(".pencil-update").click((e) => displayModifNameProject(e.target.parentElement.id));
-			$("#projectName").keyup(e => isInputEmpty(e));
+			$("#projectName").keyup(e => checkCharacters(e));
 		});
     </script>
 </body>
