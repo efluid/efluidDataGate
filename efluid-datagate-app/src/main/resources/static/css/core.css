@@ -902,6 +902,8 @@ li {
     margin-right: 0;
 }
 
-#validator-input {
+#warning-login, #warning-pwd, #warning-email, #email-validator,
+#email-validator, #login-validator, #warning-empty, #warning-empty,
+#validator-input, #input-empty {
     color: red;
 }

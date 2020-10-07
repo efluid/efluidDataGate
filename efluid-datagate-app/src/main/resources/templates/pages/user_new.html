@@ -9,15 +9,20 @@
 			<h5>Création d'un utilisateur</h5>
 			<div class="form-group">
 				<label for="login">Login</label>
-				<input type="text" class="form-control" name="login" size="50"/>
+				<input type="text" id="input-login" class="form-control" name="login" size="50"/>
+				<p id="warning-login">Veuillez saisir un login</p>
+				<p id="login-validator">Attention le login n'est pas valide il ne doit pas contenir de caractère spéciaux</p>
 			</div>
 			<div class="form-group">
 				<label for="password">Mot de passe</label>
-				<input type="password" class="form-control" name="password" size="50"/>
+				<input type="password" id="input-pwd" class="form-control" name="password" size="50"/>
+				<p id="warning-pwd">Veuillez saisir un mot de passe</p>
 			</div>
 			<div class="form-group">
 				<label for="email">Adresse email</label>
-				<input type="text" class="form-control" name="email" size="50"/>
+				<input type="text" id="input-email" class="form-control" name="email" size="50"/>
+				<p id="warning-email">Veuillez saisir un email</p>
+				<p id="email-validator">Attention l'email n'est pas valide</p>
 			</div>
 			<div>
 				<table class="table table-sm">
@@ -43,6 +48,64 @@
 	</span>
 	<script layout:fragment="script" th:inline="javascript">
 		$('#color-nav-4').css("font-weight", "bold");
+		$("#warning-login").hide();
+		$("#warning-pwd").hide();
+		$("#warning-email").hide();
+		$("#email-validator").hide();
+		$("#login-validator").hide();
+
+		var regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+		var regexSpecial = /[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
+
+		const isInputEmpty = (e) => {
+
+			let inputValue = e.target.value
+
+			switch (e.target.id) {
+				case 'input-login':
+
+					if(!inputValue.length) {
+						$("#warning-login").show();
+						$("#login-validator").hide();
+						allOk = false;
+					} else {
+						if(regexSpecial.test(inputValue)) {
+							$("#login-validator").show();
+							allOk = false;
+						} else {
+							$("#warning-login").hide();
+							$("#login-validator").hide();
+						}
+					}
+				break;
+
+				case 'input-pwd':
+					if(!inputValue.length) {
+						$("#warning-pwd").show();
+					} else {
+						$("#warning-pwd").hide();
+					}
+				break;
+
+				case 'input-email':
+
+					if(!inputValue.length) {
+						$("#warning-email").show();
+						$("#email-validator").hide();
+						allOk = false;
+					} else {
+						if(!regexEmail.test(inputValue)) {
+							console.log('batard');
+							$("#email-validator").show();
+							allOk = false;
+						} else {
+							$("#warning-email").hide();
+							$("#email-validator").hide();
+						}
+					}
+				break;
+			}
+		}
 
 		const checkContinue = () => {
 			var allOk = true; 
@@ -66,8 +129,9 @@
     	$(document).ready(() => {
 			$("input").change(checkContinue);
 			$("input").keypress(checkContinue);
+			$("input").keyup(e => { isInputEmpty(e) } );
 			checkContinue();
-		}); 
+		});
     </script>
 </body>
 </html>

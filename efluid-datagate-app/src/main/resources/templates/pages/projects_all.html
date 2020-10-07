@@ -144,16 +144,18 @@
 
 		const checkCharacters = e => {
 		    var inputValue = e.target.value;
-        if(regex.test(inputValue)) {
-          $("#validator-input").show();
-          $("#addButton").hide();
-          $("#modifButton").hide();
-        } else {
-          $("#validator-input").hide();
-          $("#input-empty").hide();
-          $("#addButton").show();
-        }
-      }
+		    if (e.target.id === "projectName") {
+				if(regex.test(inputValue)) {
+					$("#validator-input").show();
+					$("#addButton").hide();
+					$("#modifButton").hide();
+				} else {
+					$("#validator-input").hide();
+					$("#input-empty").hide();
+					$("#addButton").show();
+				}
+			}
+		}
 
     	// Init actions
     	$(document).ready(() => {
