@@ -4,6 +4,7 @@
 </head>
 <body>
 	<span layout:fragment="content">
+		<div id="modal" th:insert="~{components/modal-prepare :: modal-prepare}"></div>
 		<span th:if="${preparation.status.name()}=='FAILED'">
 			<div class="alert alert-danger">
 				<h4>La preparation du lot de modification a rencontré une erreur</h4>
@@ -160,7 +161,11 @@
 										</div>
 									</div>
 									<div id="navigation-modif"><p>Modification</p></div>
-									<div id="navigation-btns"></div>
+									<div id="navigation-list-table" style="margin-right: 0px; display: flex; flex-direction: column;">
+										<div class="container-is-used">
+											<button type="button" class="btn btn-warning" style="min-width: 100% !important;" onclick="showCardFilter('list-table')">Tables modifiées</button>
+										</div>
+									</div>
 								</span>
 							</thead>
 						</table>
@@ -223,6 +228,13 @@
 
 		var associatedTables = /*[[${preparation.referencedTableNames}]]*/ [] ;
 
+		if(associatedTables.length) {
+			console.log('okok')
+			for(let i = 0; i < associatedTables.length; i++) {
+				$("#list-table ul").append('<li>' + associatedTables[i] + '</li>')
+			}
+		}
+
 		const updateFilterSelectButtonGroup = () => {
 			if(Object.values(activeSearch.filters).every(i => i === "")){
 				$("#keep-filtered-ligne").hide();
@@ -235,14 +247,15 @@
 		$('#card-table').hide();
 		$('#card-key').hide();
 		$('#card-type').hide();
+		$('#modal-prepare').hide();
 
 		let domainIsOpen = false;
 		let keyIsOpen = false;
 		let typeIsOpen = false;
 		let tableIsOpen = false;
+		let listTableIsOpen = false;
 
 		const showCardFilter = (name) => {
-
 			let item = name;
 
 			if (item === 'domain') {
@@ -266,7 +279,7 @@
 				}
 			}
 
-			else {
+			else if (item === 'type'){
 				if (!typeIsOpen) {
 					$('#card-type').show();
 					typeIsOpen = true;
@@ -305,6 +318,19 @@
 				$('#card-type').hide();
 				typeIsOpen = false;
 			}
+
+			else {
+				console.log(listTableIsOpen)
+				if (!listTableIsOpen) {
+					$('#modal-prepare').show();
+					listTableIsOpen = true;
+				} else {
+					$('#modal-prepare').hide();
+					listTableIsOpen = false;
+				}
+			}
+
+
 		}
 
 		const filterDisplay = (head) => {

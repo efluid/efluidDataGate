@@ -733,7 +733,7 @@ th.filter.sorted-desc {
      cursor: pointer;
 }
 
-#navigation-domain, #navigation-table, #navigation-key, #navigation-type {
+#navigation-domain, #navigation-table, #navigation-key, #navigation-type, #navigation-list-table {
     width: 15%;
 }
 
@@ -754,6 +754,7 @@ th.filter.sorted-desc {
     display:flex;
     align-items: center;
     padding-left: 10px;
+    justify-content: center;
 }
 
 #action-name {
