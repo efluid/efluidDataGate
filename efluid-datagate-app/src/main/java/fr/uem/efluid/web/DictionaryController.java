@@ -1,9 +1,7 @@
 package fr.uem.efluid.web;
 
-import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.FeatureManager;
 import fr.uem.efluid.services.ApplicationDetailsService;
-import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.Feature;
 import fr.uem.efluid.services.types.*;
@@ -20,7 +18,8 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import javax.validation.Valid;
 import java.util.UUID;
 
-import static org.springframework.web.bind.annotation.RequestMethod.*;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 /**
  * <p>
@@ -51,7 +50,6 @@ public class DictionaryController extends CommonController {
 
     @RequestMapping("/versions/refresh")
     public String versionsPageRefreshModel(Model model) {
-
 
 
         // Use versions page
@@ -88,11 +86,11 @@ public class DictionaryController extends CommonController {
      *
      * @param
      * @return
-     * */
+     */
 
     @RequestMapping(value = "/versions/remove/{uuid}", method = POST)
     @ResponseBody
-    public void  deleteVersion(@PathVariable("uuid") UUID uuid) {
+    public void deleteVersion(@PathVariable("uuid") UUID uuid) {
         this.dictionaryManagementService.deleteVersionById(uuid);
     }
 
@@ -195,6 +193,21 @@ public class DictionaryController extends CommonController {
         model.addAttribute("entry", this.dictionaryManagementService.prepareNewEditableDictionaryEntry(name));
 
         return "pages/table_edit";
+    }
+
+    @RequestMapping(path = "/dictionary/clause", method = POST)
+    public String dictionaryApplyFilterClause(Model model, @RequestParam String clause) {
+
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
+        this.dictionaryManagementService.applySingleSelectClauseForDictionary(clause);
+
+        // For success apply message
+        model.addAttribute("from", "success_clause");
+
+        return dictionaryPage(model);
     }
 
     /**

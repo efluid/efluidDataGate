@@ -20,7 +20,7 @@
 			<a href="#" th:href="@{/ui/prepare/cancel}" class="btn btn-dark btn-sm">Annuler la préparation</a>
 		</span>
 		<form th:if="${preparation.status.name()}!='FAILED'" action="/commit.html" th:action="@{/ui/prepare/commit}" method="post">
--          <div th:if="${not preparation.diffRemarks.empty}" id="message-alert" role="alert">
+          <div th:if="${not preparation.diffRemarks.empty}" id="message-alert" role="alert">
 				<div class="diff-remarks">
 					<div id="diffRemarkAreaButton" class="reducer reducer-close float-right" title="afficher / masquer le détail pour la table de paramétrage">&nbsp;</div>
 					<span><b>Des avertissements ont été identifiés suite à la recherche de différences :</b></span>
@@ -57,9 +57,9 @@
 			</div>
 			<div id="keep-filtered-ligne" style="padding-right:10px; display:None;">
 				<div id="keep-buttons" class="btn-group" role="group">
-					<button type="button" id="selectFilteredButton" class="btn btn-sm">Garder les lignes filtrées</button>
-					<button type="button" id="rollbackFilteredButton" class="btn btn-sm">Annuler les lignes filtrées</button>
-					<button type="button" id="ignoreFilteredButton"  class="btn btn-sm">Ignorer les lignes filtrées</button>
+					<button type="button" id="selectFilteredButton" class="btn btn-outline-info">Garder les lignes filtrées</button>
+					<button type="button" id="rollbackFilteredButton" class="btn btn-outline-secondary">Annuler les lignes filtrées</button>
+					<button type="button" id="ignoreFilteredButton"  class="btn btn-outline-warning">Ignorer les lignes filtrées</button>
 				</div>&nbsp;
 			</div>
 			<div th:if="${not preparation.emptyDiff}" id="prepare-filter">
@@ -67,7 +67,7 @@
 						<table class="table table-sm">
 							<thead>
 								<span id="navigation-filter">
-									<div id="navigation-domain" class="filter filter-domain">
+									<div id="navigation-domain" class="filter filter-domain" onmouseleave="closeCardFilter('domain')">
 										<div class="container-is-used">
 											<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
 											<i class="far fa-check-square" id="filter-used-domain"></i>
@@ -91,7 +91,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-table" class="filter filter-table">
+									<div id="navigation-table" class="filter filter-table" onmouseleave="closeCardFilter('table')">
 										<div class="container-is-used">
 											<p id="title-table" onclick="showCardFilter('table')">Table</p>
 											<i class="far fa-check-square" id="filter-used-table"></i>
@@ -113,7 +113,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-key" class="filter filter-key">
+									<div id="navigation-key" class="filter filter-key" onmouseleave="closeCardFilter('key')">
 										<div class="container-is-used">
 											<p id="title-key" onclick="showCardFilter('key')">Clé</p>
 											<i class="far fa-check-square" id="filter-used-key"></i>
@@ -121,7 +121,7 @@
 										<div class="card" id="card-key" style="width: 170px;">
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
-												<input id="keySearchField" type="text" class="form-control form-control-sm float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé"/>
+												<input id="keySearchField" type="text" class="form-control form-control-sm float-left" name="keySearch" style="margin-right:10px" size="50" placeholder="Clé" />
 											</li>
 											  <li>
 												  <p id="filter-menu-click" onclick="enableFilter('key')">Filtrer</p>
@@ -134,7 +134,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-type" class="filter filter-type">
+									<div id="navigation-type" class="filter filter-type" onmouseleave="closeCardFilter('type')">
 										<div class="container-is-used">
 											<p id="title-type" onclick="showCardFilter('type')">Type</p>
 											<i class="far fa-check-square" id="filter-used-type"></i>
@@ -254,7 +254,6 @@
 		let tableIsOpen = false;
 		let listTableIsOpen = false;
 
-
 		const showCardFilter = (name) => {
 			let item = name;
 
@@ -262,9 +261,6 @@
 				if (!domainIsOpen) {
 					$('#card-domain').show();
 					domainIsOpen = true;
-				} else {
-					$('#card-domain').hide();
-					domainIsOpen = false;
 				}
 			}
 
@@ -272,9 +268,6 @@
 				if (!tableIsOpen) {
 					$('#card-table').show();
 					tableIsOpen = true;
-				} else {
-					$('#card-table').hide();
-					tableIsOpen = false;
 				}
 			}
 
@@ -282,9 +275,6 @@
 				if (!keyIsOpen) {
 					$('#card-key').show();
 					keyIsOpen = true;
-				} else {
-					$('#card-key').hide();
-					keyIsOpen = false;
 				}
 			}
 
@@ -292,7 +282,38 @@
 				if (!typeIsOpen) {
 					$('#card-type').show();
 					typeIsOpen = true;
-				} else {
+				}
+			}
+
+		}
+
+		const closeCardFilter = (name) => {
+
+			let item = name;
+
+			if (item === 'domain') {
+				if (domainIsOpen) {
+					$('#card-domain').hide();
+					domainIsOpen = false;
+				}
+			}
+
+			else if (item === 'table') {
+				if (tableIsOpen) {
+					$('#card-table').hide();
+					tableIsOpen = false;
+				}
+			}
+
+			else if (item === 'key') {
+				if (keyIsOpen) {
+					$('#card-key').hide();
+					keyIsOpen = false;
+				}
+			}
+
+			else {
+				if (typeIsOpen) {
 					$('#card-type').hide();
 					typeIsOpen = false;
 				}
@@ -312,6 +333,8 @@
 
 		}
 
+
+
 		const filterDisplay = (head) => {
 			console.log(head.target.className)
 			var name = head.target.className.split(' ')[1].substr(7);
@@ -329,7 +352,7 @@
 			activeSearch.filters[name] = filter;
 			updateFilterSelectButtonGroup();
 			getPageContent(0);
-			$("#card-domain").hyde();
+			$("#card-" + name).hide();
 		}
 
 		const disableFilter = (name) => {
@@ -342,6 +365,7 @@
 			activeSearch.filters[name] = "";
 			updateFilterSelectButtonGroup();
 			getPageContent(0);
+			$("#card-" + name).hide();
 		}
 
 
@@ -353,6 +377,7 @@
 			$(".filter-" + name).removeClass('sorted-desc').addClass('sorted-asc');
 			activeSearch.sorts[name] = "ASC";
 			getPageContent(0);
+			$("#card-" + name).hide();
 		}
 
 		const sortDesc = (name) => {
@@ -363,6 +388,7 @@
 			$(".filter-" + name).removeClass('sorted-asc').addClass('sorted-desc');
 			activeSearch.sorts[name] = "DESC";
 			getPageContent(0);
+			$("#card-" + name).hide();
 		}
 
 		const updateSelectItem = (index, selected, rollbacked) => {

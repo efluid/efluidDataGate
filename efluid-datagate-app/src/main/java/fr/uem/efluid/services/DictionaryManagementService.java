@@ -442,6 +442,27 @@ public class DictionaryManagementService extends AbstractApplicationService {
     }
 
     /**
+     * Apply a single select clause to all dictionary tables for the current project
+     * Overwrite the existing clause
+     *
+     * @param clause a new select clause to apply
+     */
+    public void applySingleSelectClauseForDictionary(String clause) {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        Collection<DictionaryEntry> tables = this.dictionary.findAllByProjectMappedToUuid(project).values();
+
+        tables.forEach(t -> {
+            t.setWhereClause(clause);
+            t.setUpdatedTime(LocalDateTime.now());
+        });
+
+        this.dictionary.saveAll(tables);
+    }
+
+    /**
      * When editing an existing entry
      *
      * @param entryUuid
@@ -963,8 +984,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 completeVersionContents(last);
                 this.versions.save(last); // Refresh
             }
-        } 
-        
+        }
+
         // Ignore failure on missing project / version (can occurs with wizzard)
         catch (ApplicationException e) {
             LOGGER.warn("Cannot process version update on import - ignore \"{}\"", e.getMessage());
