@@ -71,6 +71,12 @@ public class TableStepDefs extends CucumberStepDefs {
         initDictionaryForDefaultVersionWithTables(getDefaultDomainFromCurrentProject(), getCurrentUserProject(), table);
     }
 
+    @Given("^the parameter table for managed table \"(.*)\" is specified with filter clause \"(.*)\"$")
+    public void existing_parameter_table(String table, String filter) throws Throwable {
+        initDictionaryForDefaultVersionWithTables(getDefaultDomainFromCurrentProject(), getCurrentUserProject(), table);
+        modelDatabase().updateDictionaryFilterClause(table, filter);
+    }
+
     @Given("^a prepared parameter table data with name \"(.*)\" for managed table \"(.*)\"$")
     public void a_prepared_parameter_table_data(String name, String table) throws Throwable {
 
@@ -141,6 +147,11 @@ public class TableStepDefs extends CucumberStepDefs {
                 .with("columns", data.getColumns());
     }
 
+    @When("^the user asks to update the filter clause for current project with \"(.*)\"$")
+    public void when_force_filter_clause(String clause) throws Exception {
+        post(getCorrespondingLinkForPageName("force parameter table filter clause"), p("clause", clause));
+    }
+
     @When("^the user request a test on parameter table content$")
     public void when_user_request_test_content() throws Throwable {
 
@@ -160,6 +171,12 @@ public class TableStepDefs extends CucumberStepDefs {
         // Post prepared data
         post(getCorrespondingLinkForPageName(type + " parameter table"), params);
 
+    }
+
+    @Then("^the parameter table for managed table \"(.*)\" has the filter clause \"(.*)\"$")
+    public void the_parameter_table_clause_is(String table, String clause) {
+        DictionaryEntry dict = modelDatabase().findDictionaryEntryByProjectAndTableName(getCurrentUserProject(), table);
+        assertThat(dict.getWhereClause()).isEqualTo(clause);
     }
 
     @Then("^the existing tables are displayed$")

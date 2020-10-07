@@ -1,6 +1,5 @@
 package fr.uem.efluid.services;
 
-import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
@@ -516,8 +515,9 @@ public class CommitService extends AbstractApplicationService {
 
         LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
-        List<RollbackLine> rollbacked = prepared.streamDiffContentMappedToDictionaryEntryUuid()
-                .flatMap(e -> streamDiffRollbacks(e.getKey(), e.getValue()))
+        List<RollbackLine> rollbacked = prepared
+                .streamDiffContentMappedToDictionaryEntryUuid()
+                .flatMap(e -> toDiffRollbacks(e.getValue()))
                 .collect(Collectors.toList());
 
         if (rollbacked.size() > 0) {
@@ -549,6 +549,10 @@ public class CommitService extends AbstractApplicationService {
         final Commit commit = createCommit(prepared);
 
         LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commit.getUuid());
+
+        if (commit.getComment().equals(":construction: merge commit test with changes")) {
+            System.out.println("gotcha");
+        }
 
         List<IndexEntry> entries = prepared.streamDiffContentMappedToDictionaryEntryUuid()
                 .flatMap(l -> this.diffs.splitCombinedSimilar(l.getValue()).stream())
@@ -849,37 +853,24 @@ public class CommitService extends AbstractApplicationService {
      * Complete given diff as a one to rollback
      * </p>
      *
-     * @param entry
      * @param diffContent
      * @return
      */
-    private List<RollbackLine> getDiffRollbacks(DictionaryEntry entry, Collection<? extends DiffLine> diffContent) {
+    private Stream<RollbackLine> toDiffRollbacks(Collection<? extends PreparedIndexEntry> diffContent) {
 
-        // diffContent -> intermediaire où c'est détricoté
-        Collection<? extends DiffLine> decombineds =
-                diffContent.stream()
-                        // DiffLine "normal" 1 -> 1
-                        // DiffLine "combinée" 1 -> X eclatées
-                        .flatMap(l -> {
-                            if (l instanceof SimilarPreparedIndexEntry) {
-                                SimilarPreparedIndexEntry combinedDiffLine = (SimilarPreparedIndexEntry) l;
-                                return combinedDiffLine.split().stream();
-                            } else {
-                                return Stream.of(l);
-                            }
-                        }).collect(Collectors.toList());
-
-        /* ... */
-        ;
-
-        // All "previous" for current diff
-        Map<String, IndexEntry> previouses = this.indexes.findAllPreviousIndexEntries(entry,
-                decombineds.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()));
-
-        // Completed rollback
-        return decombineds.stream()
-                .map(current -> new RollbackLine(current, previouses.get(current.getKeyValue())))
-                .collect(Collectors.toList());
+        // Split combined lines and convert to rollbacks
+        return diffContent.stream()
+                .filter(PreparedIndexEntry::isRollbacked)
+                .flatMap(l -> {
+                    if (l instanceof SimilarPreparedIndexEntry) {
+                        SimilarPreparedIndexEntry combinedDiffLine = (SimilarPreparedIndexEntry) l;
+                        return combinedDiffLine.split().stream();
+                    } else {
+                        return Stream.of(l);
+                    }
+                })
+                .map(RollbackLine::new)
+                ;
     }
 
     /**
@@ -900,23 +891,6 @@ public class CommitService extends AbstractApplicationService {
                 .filter(c -> !c.isRefOnly()).map(Commit::getVersion)
                 .peek(v -> v.setSerializeDictionaryContents(true))
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * <p>
-     * Get rollback specified in one DiffDisplay
-     * </p>
-     *
-     * @param diff
-     * @return
-     */
-    private Stream<RollbackLine> streamDiffRollbacks(UUID dictionaryEntryUuid, Collection<? extends PreparedIndexEntry> diff) {
-
-        LOGGER.debug("Process identification of rollback on dictionaryEntry {}, if any", dictionaryEntryUuid);
-
-        return getDiffRollbacks(new DictionaryEntry(dictionaryEntryUuid),
-                diff.stream().filter(PreparedIndexEntry::isRollbacked).collect(Collectors.toList()))
-                .stream();
     }
 
     /**

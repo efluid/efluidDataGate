@@ -2,6 +2,7 @@ package fr.uem.efluid.config;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,9 @@ public class MergeResolutionConfig {
     @Autowired
     private MergeProperties properties;
 
+    @Autowired
+    private ManagedValueConverter valueConverter;
+
     @Bean
     public MergeResolutionProcessor mergeResolutionProcessor() throws IOException {
 
@@ -38,7 +42,7 @@ public class MergeResolutionConfig {
 
         LOGGER.info("[MERGE-CFG] Loaded {} resolution cases from json file {}", cases.size(), this.properties.getRuleFile());
 
-        return new MergeResolutionProcessor(cases);
+        return new MergeResolutionProcessor(cases, this.valueConverter);
     }
 
     @ConfigurationProperties(prefix = "datagate-efluid.merge")

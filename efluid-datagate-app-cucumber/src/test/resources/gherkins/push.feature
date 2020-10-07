@@ -85,7 +85,7 @@ Feature: The backlog can be exported
       | add    | 76  | ZZZ   | Preset 76        | ZZZX      |
       | add    | 55  | HHH   | Preset 2         | BBB       |
       | delete | 37  | CCC   | Preset 3         | CCC       |
-      | update | 38  | DDD   | Preset 4 updated | DDD       |
+      | update | 38  | DDD   | Preset 4 updated | DDD2      |
     And a new commit ":construction: Update 1" has been saved with all the new identified diff content
     And these changes are applied to table "TTAB_TWO" :
       | change | key | value | other     |
@@ -97,11 +97,11 @@ Feature: The backlog can be exported
     Then the export download start automatically
     Then the export package contains 1 commit contents
     And the export package content has these identified changes for commit with name ":construction: Update 1" :
-      | Table    | Key | Action | Payload                                    |
-      | TTAB_ONE | ZZZ | ADD    | PRESET:'Preset 76', SOMETHING:'ZZZX'       |
-      | TTAB_ONE | HHH | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'         |
-      | TTAB_ONE | CCC | REMOVE |                                            |
-      | TTAB_ONE | DDD | UPDATE | PRESET:'Preset 4 updated', SOMETHING:'DDD' |
+      | Table    | Key | Action | Payload                                                        |
+      | TTAB_ONE | ZZZ | ADD    | PRESET:'Preset 76', SOMETHING:'ZZZX'                           |
+      | TTAB_ONE | HHH | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'                             |
+      | TTAB_ONE | CCC | REMOVE |                                                                |
+      | TTAB_ONE | DDD | UPDATE | PRESET:'Preset 4'=>'Preset 4 updated', SOMETHING:'DDD'=>'DDD2' |
     And the provided template is selection of commits to export
 
   Scenario: All the existing commits from the backlog can be exported in a single archive
@@ -137,13 +137,13 @@ Feature: The backlog can be exported
     When the user request an export of the commit with name ":construction: Update 1"
     Then the export package contains 1 commit contents
     And the export package content has these identified changes for commit with name ":construction: Update 1" :
-      | Table    | Key | Action | Payload                                    |
-      | TTAB_ONE | ZZZ | ADD    | PRESET:'Preset 76', SOMETHING:'ZZZX'       |
-      | TTAB_ONE | HHH | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'         |
-      | TTAB_ONE | CCC | REMOVE |                                            |
-      | TTAB_ONE | DDD | UPDATE | PRESET:'Preset 4 updated', SOMETHING:'DDD' |
-      | TTAB_TWO | LLL | ADD    | VALUE:'One', OTHER:'Other JJJ'             |
-      | TTAB_TWO | MMM | ADD    | VALUE:'Two', OTHER:'Other KKK'             |
+      | Table    | Key | Action | Payload                               |
+      | TTAB_ONE | ZZZ | ADD    | PRESET:'Preset 76', SOMETHING:'ZZZX'  |
+      | TTAB_ONE | HHH | ADD    | PRESET:'Preset 2', SOMETHING:'BBB'    |
+      | TTAB_ONE | CCC | REMOVE |                                       |
+      | TTAB_ONE | DDD | UPDATE | PRESET:'Preset 4'=>'Preset 4 updated' |
+      | TTAB_TWO | LLL | ADD    | VALUE:'One', OTHER:'Other JJJ'        |
+      | TTAB_TWO | MMM | ADD    | VALUE:'Two', OTHER:'Other KKK'        |
 
   Scenario: All blob content from a commit is exported
     Given the existing data in managed table "TTAB_FIVE" :
