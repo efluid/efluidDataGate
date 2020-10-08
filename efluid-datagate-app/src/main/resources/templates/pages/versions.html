@@ -52,7 +52,7 @@
 			     <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
 			         <td th:if="!${noVersionName}" colspan="4">
                          <input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/>
-                         <p id="validator-input">Votre nom de version ne doit pas contenir des caractères spéciaux</p>
+                         <p id="input-empty">Veuillez saisir un nom de projet</p>
                      </td>
                      <td th:if="${noVersionName}" colspan="3"><strong><span th:if="${modelDesc != null}" class="float-right" th:text="|Ajouter une nouvelle version pour le modèle de l'application actuel (${modelDesc.identity})|">Model</span></strong></td>
 			         <td><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
@@ -68,6 +68,7 @@
 		$('#color-nav-1').css("font-weight", "bold");
 		$('#collapseExample1').css("display", "block");
 		$('#li-1').css("font-weight", "bolder");
+		$("#input-empty").hide();
 
 		// Add row button
 		const addButtonAction = () => {
@@ -127,20 +128,18 @@
 		    $('#modal').css("display","none");
 		}
 
-		var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
-
-            const checkCharacters = e => {
-                var inputValue = e.target.value;
-                if (e.target.id === "versionName") {
-                    if(regex.test(inputValue)) {
-                        $("#validator-input").show();
-                        $("#addButton").hide();
-                    } else {
-                        $("#validator-input").hide();
-                        $("#addButton").show();
-                    }
+        const checkInputEmpty = e => {
+            var inputValue = e.target.value;
+            if (e.target.id === "versionName") {
+                if(!inputValue.length) {
+                    $("#input-empty").show();
+                    $("#addButton").hide();
+                } else {
+                    $("#input-empty").hide();
+                    $("#addButton").show();
                 }
             }
+        }
 
     	// Init actions
     	$(document).ready(() => {
@@ -148,7 +147,7 @@
 			$("#cancelDelete").click(cancelButton);
 			$("button.updateButton").click((e) => updateButtonAction(e.target.id));
 			$("button.deleteButton").click((e) => deleteButtonAction(e.target.parentElement.parentElement.parentElement.id));
-			$("#versionName").keyup(e => { checkCharacters(e) });
+			$("#versionName").keyup(e => { checkInputEmpty(e) });
 		}); 
     </script>
 </body>

@@ -99,7 +99,7 @@
 										<div class="card" id="card-table" style="width: 170px;">
 										  <ul class="list-group list-group-flush">
 											<li class="list-group-item">
-												<input id="tableSearchField" type="text" title="toto" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
+												<input id="tableSearchField" type="text" class="form-control form-control-sm float-left" style="margin-right:10px" name="tableSearch" size="150" placeholder="Table"/>
 											</li>
 											  <li>
 												  <p id="filter-menu-click" onclick="enableFilter('table')">Filtrer</p>
@@ -163,7 +163,7 @@
 									<div id="navigation-modif"><p>Modification</p></div>
 									<div id="navigation-list-table" style="margin-right: 0px; display: flex; flex-direction: column;">
 										<div class="container-is-used">
-											<button type="button" class="btn btn-warning" style="min-width: 100% !important;" onclick="showCardFilter('list-table')">Tables modifiées</button>
+											<button type="button" class="btn btn-warning" style="min-width: 100% !important;" id="btn-list-table" onclick="showListTable()">Tables modifiées</button>
 										</div>
 									</div>
 								</span>
@@ -229,7 +229,6 @@
 		var associatedTables = /*[[${preparation.referencedTableNames}]]*/ [] ;
 
 		if(associatedTables.length) {
-			console.log('okok')
 			for(let i = 0; i < associatedTables.length; i++) {
 				$("#list-table ul").append('<li>' + associatedTables[i] + '</li>')
 			}
@@ -286,15 +285,6 @@
 				}
 			}
 
-			else if (item === 'list-table'){
-				if (!listTableIsOpen) {
-					$('#modal-prepare').show();
-					listTableIsOpen = true;
-				} else {
-					$('#modal-prepare').hide();
-					listTableIsOpen = false;
-				}
-			}
 		}
 
 		const closeCardFilter = (e) => {
@@ -304,6 +294,7 @@
 		const $cardList = "ui-menu-item"
 		const $cardKey = $("#card-key");
 		const $cardType = $("#card-type");
+		const $listTable = $("#btn-list-table");
 
 			if (!$cardDomain.is(e.target) && $cardDomain.has(e.target).length === 0) {
 				$('#card-domain').hide();
@@ -328,24 +319,21 @@
 				typeIsOpen = false;
 			}
 
-			else {
-				console.log(listTableIsOpen)
-				if (!listTableIsOpen) {
-					$('#modal-prepare').show();
-					listTableIsOpen = true;
-				} else {
-					$('#modal-prepare').hide();
-					listTableIsOpen = false;
-				}
+		}
+
+		const showListTable = () => {
+			if (!listTableIsOpen) {
+				$('#modal-prepare').show();
+				listTableIsOpen = true;
+			} else {
+				$('#modal-prepare').hide();
+				listTableIsOpen = false;
 			}
-
-
 		}
 
 		const filterDisplay = (head) => {
 			console.log(head.target.className)
 			var name = head.target.className.split(' ')[1].substr(7);
-			closeFilters();
 			$("#" + name + "SearchBar").show();
 		}
 

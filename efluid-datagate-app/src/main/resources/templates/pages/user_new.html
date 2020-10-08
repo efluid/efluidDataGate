@@ -35,7 +35,7 @@
 					<tbody>
 						<tr th:each="project, stat : ${projects}" th:id="${project.uuid}">
 							<td th:text="${project.name}">Autre</td>
-							<td><input type="checkbox" name="prefered" th:value="${project.uuid}"/></td>
+							<td><input type="checkbox" name="prefered" id="prefered-project-checkbox" th:value="${project.uuid}"/></td>
 						</tr>
 					</tbody>
 			    </table>
@@ -95,8 +95,8 @@
 						allOk = false;
 					} else {
 						if(!regexEmail.test(inputValue)) {
-							console.log('batard');
 							$("#email-validator").show();
+							$("#warning-email").hide();
 							allOk = false;
 						} else {
 							$("#warning-email").hide();
@@ -106,13 +106,17 @@
 				break;
 			}
 		}
-
+		// !$("#prefered-project-checkbox:checked").length
 		const checkContinue = () => {
-			var allOk = true; 
+			var allOk = true;
 			$("input").each( (i,e) => {
-				if(e.type != 'checkbox' && e.value === ''){ 
-					allOk = false; 
+				if(e.type != 'checkbox' && e.value === ''){
+					allOk = false;
 					console.info(i + "->" + e.value);
+				}
+
+				if(!$("#prefered-project-checkbox:checked").length) {
+					allOk = false;
 				}
 			});
 			
