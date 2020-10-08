@@ -132,7 +132,6 @@ public class PrepareIndexService extends AbstractApplicationService {
         preparation.incrementProcessStep();
 
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
-        AtomicLong totalProcessed = new AtomicLong(0);
 
         try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
@@ -141,13 +140,12 @@ public class PrepareIndexService extends AbstractApplicationService {
                     extraction.stream(),
                     PreparedIndexEntry::new,
                     knewContent,
-                    c -> totalProcessed.incrementAndGet(),
                     entry,
                     preparation);
 
             // Some diffs may add remarks
             LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
-            processOptionalCurrentContendDiffRemarks(preparation, entry, project, totalProcessed.get());
+            processOptionalCurrentContendDiffRemarks(preparation, entry, project, index.size());
 
             // Intermediate step for better percent process
             preparation.incrementProcessStep();
@@ -184,10 +182,10 @@ public class PrepareIndexService extends AbstractApplicationService {
      * </p>
      * <p>8 steps</p>
      *
-     * @param preparation        current preparation
-     * @param entry              dictionaryEntry
-     * @param lobs               for any extracted lobs
-     * @param mergeDiff          imported merge diff
+     * @param preparation current preparation
+     * @param entry       dictionaryEntry
+     * @param lobs        for any extracted lobs
+     * @param mergeDiff   imported merge diff
      * @param project
      */
     @Transactional(
@@ -202,13 +200,15 @@ public class PrepareIndexService extends AbstractApplicationService {
             List<PreparedMergeIndexEntry> mergeDiff,
             Project project) {
 
-       long localIndexToTimeStamp = this.indexes.findMaxIndexTimestampOfLastImportedCommit();
+        Long searchTimeStamp = this.indexes.findMaxIndexTimestampOfLastImportedCommit();
 
-       if
+        // On 1st merge, get everything until now
+        if (searchTimeStamp == null) {
+            searchTimeStamp = System.currentTimeMillis();
+        }
 
         // Index "previous"
-        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqual(entry,
-                timeStampForSearch);
+        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqual(entry, searchTimeStamp);
 
         preparation.incrementProcessStep();
 
@@ -219,7 +219,6 @@ public class PrepareIndexService extends AbstractApplicationService {
 
         // Get actual content
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
-        Set<String> allActualKeys = ConcurrentHashMap.newKeySet();
 
         try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
@@ -228,7 +227,6 @@ public class PrepareIndexService extends AbstractApplicationService {
                     extraction.stream(),
                     PreparedIndexEntry::new,
                     previousContent,
-                    c -> allActualKeys.add(c.getKeyValue()),
                     entry,
                     preparation);
 
@@ -240,7 +238,7 @@ public class PrepareIndexService extends AbstractApplicationService {
 
             // Build merge diff entries from 2 source of Diff + previous content
             Collection<PreparedMergeIndexEntry> completedMergeDiff =
-                    completeMergeIndexes(entry, allActualKeys, mineDiff, transformedMergeDiff, previousContent, preparation);
+                    completeMergeIndexes(entry, mineDiff, transformedMergeDiff, previousContent, preparation);
 
             preparation.incrementProcessStep();
 
@@ -323,7 +321,6 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param actualContent
      * @param diffTypeBuilder
      * @param knewContent
-     * @param eachLineAccumulator processed on all lines from actual
      * @param entry
      * @param preparation         for step update
      * @return
@@ -332,7 +329,6 @@ public class PrepareIndexService extends AbstractApplicationService {
             final Stream<ContentLine> actualContent,
             final Supplier<T> diffTypeBuilder,
             final Map<String, String> knewContent,
-            final Consumer<ContentLine> eachLineAccumulator,
             final DictionaryEntry entry,
             final PilotedCommitPreparation<?> preparation) {
 
@@ -341,7 +337,6 @@ public class PrepareIndexService extends AbstractApplicationService {
         preparation.incrementProcessStep();
 
         Collection<T> diff = actualContent
-                .peek(eachLineAccumulator)
                 .map(l -> toDiff(diffTypeBuilder, l, knewContent, entry))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet));
@@ -572,7 +567,6 @@ public class PrepareIndexService extends AbstractApplicationService {
 
     /**
      * @param dict
-     * @param allActualKeys
      * @param mines
      * @param theirs
      * @param previousContent
@@ -581,7 +575,6 @@ public class PrepareIndexService extends AbstractApplicationService {
      */
     private Collection<PreparedMergeIndexEntry> completeMergeIndexes(
             DictionaryEntry dict,
-            Set<String> allActualKeys,
             Collection<? extends DiffLine> mines,
             Collection<? extends DiffLine> theirs,
             Map<String, String> previousContent,
@@ -624,25 +617,27 @@ public class PrepareIndexService extends AbstractApplicationService {
                     preparation.incrementProcessStep();
                 }
 
-                PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, allActualKeys.contains(key));
+                PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, previousContent.get(key));
 
                 // Dedicated logger output for resolutions
                 if (MERGE_LOGGER.isDebugEnabled()) {
-                    if (resolved != null) {
+                    if (resolved.isSelected()) {
                         MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
                                 dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
                     } else {
-                        MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> droped",
-                                dict.getTableName(), key, mineEntry, theirEntry);
+                        MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> droped by rule \"{}\"",
+                                dict.getTableName(), key, mineEntry, theirEntry, resolved.getResolutionRule());
                     }
                 }
 
-                if (recordWarnings && resolved != null && resolved.getResolutionWarning() != null) {
+                if (recordWarnings && resolved.getResolutionWarning() != null) {
                     this.anomalyService.addAnomaly(AnomalyContextType.MERGE, preparation.getSourceFilename(),
                             "Warning from " + resolved.getResolutionRule(),
                             "On " + resolved.toLogRendering() + " : " + resolved.getResolutionWarning());
                 }
-                return resolved;
+
+                // Drop immediately unselected line after resolutions (we wanted only to log / trace warnings for them)
+                return resolved.isSelected() ? resolved : null;
             } catch (Throwable t) {
                 LOGGER.error("Failed to process merge index entry on " + dict.getTableName() + "." + key + ", get error", t);
                 throw new ApplicationException(ErrorType.MERGE_FAILURE, t);

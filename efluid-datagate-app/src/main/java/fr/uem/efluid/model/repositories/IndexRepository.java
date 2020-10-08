@@ -53,7 +53,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     long countByCommitUuid(UUID commitUuid);
 
     @Query("select max(i.timestamp) from IndexEntry i where i.commit.importedTime = (select max(c.importedTime) from Commit c)")
-    long findMaxIndexTimestampOfLastImportedCommit();
+    Long findMaxIndexTimestampOfLastImportedCommit();
 
     /**
      * <p>

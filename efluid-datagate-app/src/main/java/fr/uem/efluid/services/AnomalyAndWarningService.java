@@ -11,12 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A core service to manage warnings and anomalies identified during any datagate commit process
@@ -47,18 +50,37 @@ public class AnomalyAndWarningService {
     }
 
     @Transactional
+    public List<Anomaly> getAllAnomalies() {
+        List<Anomaly> founds = new ArrayList<>(this.anomalies.findAll());
+        // Add not written anomalies
+        founds.addAll(this.toWrite);
+        return founds;
+    }
+
+    @Transactional
     public List<Anomaly> getAnomaliesSince(LocalDateTime time) {
-        return this.anomalies.findByDetectTimeAfter(time);
+        List<Anomaly> founds = new ArrayList<>(this.anomalies.findByDetectTimeAfter(time));
+        this.toWrite.stream().filter(a -> a.getDetectTime().isAfter(time)).forEach(founds::add);
+        return founds;
     }
 
     @Transactional
     public List<Anomaly> getAnomaliesForContext(AnomalyContextType contextType, String contextName) {
-        return this.anomalies.findByContextTypeAndContextName(contextType, contextName);
+        List<Anomaly> founds = new ArrayList<>(this.anomalies.findByContextTypeAndContextName(contextType, contextName));
+        this.toWrite.stream().filter(a ->
+                a.getContextType() == contextType && a.getContextName().equals(contextName)
+        ).forEach(founds::add);
+        return founds;
     }
 
     @Transactional
     public List<String> getContextNamesForType(AnomalyContextType contextType) {
-        return this.anomalies.findContextNamesForType(contextType);
+        return Stream.concat(
+                this.anomalies.findContextNamesForType(contextType).stream(),
+                this.toWrite.stream()
+                        .filter(a -> a.getContextType() == contextType)
+                        .map(Anomaly::getContextName)
+        ).distinct().collect(Collectors.toList());
     }
 
     @Transactional

@@ -124,7 +124,7 @@ public class MergeResolutionProcessorTest {
             res.setPrevious(previous);
             res.setAction(action);
             res.setNeedAction(needAction);
-            res.setWarning(warning);
+            this.current.setWarning(warning);
             this.current.setResolution(res);
 
             return this.current;

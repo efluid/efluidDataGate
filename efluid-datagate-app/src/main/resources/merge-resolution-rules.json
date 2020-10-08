@@ -1,55 +1,91 @@
 [
   {
     "caseName": "ADD - same value",
+    "lineExists": false,
     "their": "ADD",
     "mine": "ADD",
     "payload": "SIMILAR",
-    "previous": "SIMILAR",
+    "previous": "ANY",
     "resolution": {
       "payload": "THEIR_PAYLOAD",
       "previous" : null,
       "action": "ADD",
-      "needAction": false,
-      "warning": null
-    }
+      "needAction": false
+    },
+    "warning": "La ligne est déjà ajoutée avec la même valeur"
   },
   {
     "caseName": "ADD - different value",
+    "lineExists": false,
     "their": "ADD",
     "mine": "ADD",
     "payload": "DIFFERENT",
-    "previous": "SIMILAR",
-    "resolution": {
-      "payload": "THEIR_PAYLOAD",
-      "previous" : "MINE_PAYLOAD",
-      "action": "UPDATE",
-      "needAction": true,
-      "warning": null
-    }
-  },
-  {
-    "caseName": "ADD - only their",
-    "their": "ADD",
-    "mine": null,
-    "payload": "DIFFERENT",
-    "previous": "SIMILAR",
+    "previous": "ANY",
     "resolution": {
       "payload": "THEIR_PAYLOAD",
       "previous" : null,
       "action": "ADD",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": "La ligne est déjà ajoutée avec une valeur différente"
   },
   {
+    "caseName": "ADD - only their, line exists, same content",
+    "lineExists": true,
+    "their": "ADD",
+    "mine": null,
+    "payload": "SIMILAR",
+    "previous": "ANY",
+    "resolution": null,
+    "warning": "La ligne existait déjà avec le même contenu"
+  },
+  {
+    "caseName": "ADD - only their, line exists, different content",
+    "lineExists": true,
+    "their": "ADD",
+    "mine": null,
+    "payload": "DIFFERENT",
+    "previous": "ANY",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "previous" : "ACTUAL_CONTENT",
+      "action": "UPDATE",
+      "needAction": true
+    },
+    "warning": "La ligne existait déjà avec un contenu différent"
+  },
+  {
+    "lineExists": false,
+    "caseName": "ADD - only their, line doesn't exists",
+    "their": "ADD",
+    "mine": null,
+    "payload": "ANY",
+    "previous": "ANY",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "previous" : null,
+      "action": "ADD",
+      "needAction": true
+    },
+    "warning": null
+  },
+  {
+    "lineExists": true,
     "caseName": "ADD - only mine",
     "their": null,
     "mine": "ADD",
     "payload": "DIFFERENT",
     "previous": "SIMILAR",
-    "resolution": null
+    "resolution": {
+      "payload": "MINE_PAYLOAD",
+      "previous" : null,
+      "action": "ADD",
+      "needAction": true
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "REMOVE - both - same previous",
     "their": "REMOVE",
     "mine": "REMOVE",
@@ -59,11 +95,12 @@
       "payload": null,
       "previous" : "MINE_PREVIOUS",
       "action": "REMOVE",
-      "needAction": false,
-      "warning": null
-    }
+      "needAction": false
+    },
+    "warning": "La ligne n'existe déjà plus"
   },
   {
+    "lineExists": true,
     "caseName": "REMOVE - both - different previous",
     "their": "REMOVE",
     "mine": "REMOVE",
@@ -73,27 +110,42 @@
       "payload": null,
       "previous" : "MINE_PREVIOUS",
       "action": "REMOVE",
-      "needAction": false,
-      "warning": "La valeur de la ligne supprimée était différente entre les données locales et les données importées"
-    }
+      "needAction": false
+    },
+    "warning": "La valeur de la ligne supprimée était différente entre les données locales et les données importées"
   },
   {
+    "lineExists": true,
     "caseName": "REMOVE - only mine",
     "their": null,
     "mine": "REMOVE",
     "payload": "SIMILAR",
     "previous": "DIFFERENT",
-    "resolution": null
+    "resolution": null,
+    "warning": null
   },
   {
-    "caseName": "REMOVE - only their",
+    "lineExists": false,
+    "caseName": "REMOVE - only their - not exists",
     "their": "REMOVE",
     "mine": null,
     "payload": "SIMILAR",
     "previous": "DIFFERENT",
-    "resolution": null
+    "resolution": null,
+    "warning": "La ligne supprimée n'existait pas"
   },
   {
+    "lineExists": true,
+    "caseName": "REMOVE - only their - exists",
+    "their": "REMOVE",
+    "mine": null,
+    "payload": "SIMILAR",
+    "previous": "DIFFERENT",
+    "resolution": null,
+    "warning": null
+  },
+  {
+    "lineExists": true,
     "caseName": "REMOVE mine - ADD their",
     "their": "ADD",
     "mine": "REMOVE",
@@ -103,11 +155,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": null,
       "action": "ADD",
-      "needAction": true,
-      "warning": "La ligne est supprimée dans les données locales alors qu'elle était un ajout sur les données importées"
-    }
+      "needAction": true
+    },
+    "warning": "La ligne est supprimée dans les données locales alors qu'elle était un ajout sur les données importées"
   },
   {
+    "lineExists": true,
     "caseName": "REMOVE their - ADD mine",
     "their": "REMOVE",
     "mine": "ADD",
@@ -117,11 +170,12 @@
       "payload": null,
       "previous": "MINE_PAYLOAD",
       "action": "REMOVE",
-      "needAction": true,
-      "warning": "La ligne a été ajoutée dans les données locales alors qu'elle était une suppression sur les données importées"
-    }
+      "needAction": true
+    },
+    "warning": "La ligne a été ajoutée dans les données locales alors qu'elle était une suppression sur les données importées"
   },
   {
+    "lineExists": true,
     "caseName": "REMOVE mine - UPDATE their - same previous",
     "their": "UPDATE",
     "mine": "REMOVE",
@@ -131,11 +185,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": null,
       "action": "ADD",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": "Mise à jour d'une ligne qui a été supprimée localement"
   },
   {
+    "lineExists": true,
     "caseName": "REMOVE mine - UPDATE their - different previous",
     "their": "UPDATE",
     "mine": "REMOVE",
@@ -145,11 +200,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": null,
       "action": "ADD",
-      "needAction": true,
-      "warning": "La valeur originale de la ligne était différente entre les données locales et les données importées"
-    }
+      "needAction": true
+    },
+    "warning": "La valeur originale de la ligne était différente entre les données locales et les données importées"
   },
   {
+    "lineExists": true,
     "caseName": "REMOVE their - UPDATE mine - same previous",
     "their": "REMOVE",
     "mine": "UPDATE",
@@ -159,11 +215,12 @@
       "payload": null,
       "previous": "MINE_PAYLOAD",
       "action": "REMOVE",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "REMOVE their - UPDATE mine - different previous",
     "their": "REMOVE",
     "mine": "UPDATE",
@@ -173,11 +230,12 @@
       "payload": null,
       "previous": "MINE_PAYLOAD",
       "action": "REMOVE",
-      "needAction": true,
-      "warning": "La valeur de la ligne supprimée est différente entre les données locales et les données importées"
-    }
+      "needAction": true
+    },
+    "warning": "La valeur de la ligne supprimée est différente entre les données locales et les données importées"
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE - same value - same previous",
     "their": "UPDATE",
     "mine": "UPDATE",
@@ -187,11 +245,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": "MINE_PAYLOAD",
       "action": "UPDATE",
-      "needAction": false,
-      "warning": null
-    }
+      "needAction": false
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE - same value - different previous",
     "their": "UPDATE",
     "mine": "UPDATE",
@@ -201,11 +260,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": "MINE_PAYLOAD",
       "action": "UPDATE",
-      "needAction": false,
-      "warning": "La valeur de la ligne supprimée est différente entre les données locales et les données importées"
-    }
+      "needAction": false
+    },
+    "warning": "La valeur de la ligne supprimée est différente entre les données locales et les données importées"
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE - different value - same previous",
     "their": "UPDATE",
     "mine": "UPDATE",
@@ -215,11 +275,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": "MINE_PAYLOAD",
       "action": "UPDATE",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE - different value - different previous",
     "their": "UPDATE",
     "mine": "UPDATE",
@@ -229,12 +290,13 @@
       "payload": "THEIR_PAYLOAD",
       "previous": "MINE_PAYLOAD",
       "action": "UPDATE",
-      "needAction": true,
-      "warning": "La valeur de la ligne modifiée est différente entre les données locales et les données importées"
-    }
+      "needAction": true
+    },
+    "warning": "La valeur de la ligne modifiée est différente entre les données locales et les données importées"
   },
   {
-    "caseName": "UPDATE - only their",
+    "lineExists": true,
+    "caseName": "UPDATE - only their - exists",
     "their": "UPDATE",
     "mine": null,
     "payload": "DIFFERENT",
@@ -243,19 +305,32 @@
       "payload": "THEIR_PAYLOAD",
       "previous": "THEIR_PREVIOUS",
       "action": "UPDATE",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": null
   },
   {
+    "lineExists": false,
+    "caseName": "UPDATE - only their - not exists",
+    "their": "UPDATE",
+    "mine": null,
+    "payload": "DIFFERENT",
+    "previous": "DIFFERENT",
+    "resolution": null,
+    "warning": "La ligne mise à jour n'existe pas localement"
+  },
+  {
+    "lineExists": true,
     "caseName": "UPDATE - only mine",
     "their": null,
     "mine": "UPDATE",
     "payload": "DIFFERENT",
     "previous": "DIFFERENT",
-    "resolution": null
+    "resolution": null,
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE mine - REMOVE their - same previous",
     "their": "REMOVE",
     "mine": "UPDATE",
@@ -265,11 +340,12 @@
       "payload": null,
       "previous": "MINE_PAYLOAD",
       "action": "REMOVE",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE mine - REMOVE their - different previous",
     "their": "REMOVE",
     "mine": "UPDATE",
@@ -279,11 +355,12 @@
       "payload": null,
       "previous": "MINE_PAYLOAD",
       "action": "REMOVE",
-      "needAction": true,
-      "warning": "La ligne modifiée localement avait une valeur différente de la ligne supprimée dans les données importées"
-    }
+      "needAction": true
+    },
+    "warning": "La ligne modifiée localement avait une valeur différente de la ligne supprimée dans les données importées"
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE their - REMOVE mine - same previous",
     "their": "UPDATE",
     "mine": "REMOVE",
@@ -293,11 +370,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": null,
       "action": "ADD",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE their - REMOVE mine - different previous",
     "their": "UPDATE",
     "mine": "REMOVE",
@@ -307,11 +385,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": null,
       "action": "ADD",
-      "needAction": true,
-      "warning": "La ligne supprimée localement avait une valeur différente de la ligne modifiée dans les données importées"
-    }
+      "needAction": true
+    },
+    "warning": "La ligne supprimée localement avait une valeur différente de la ligne modifiée dans les données importées"
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE mine - ADD their - similar",
     "their": "ADD",
     "mine": "UPDATE",
@@ -321,11 +400,12 @@
       "payload": "MINE_PAYLOAD",
       "previous": null,
       "action": "ADD",
-      "needAction": false,
-      "warning": null
-    }
+      "needAction": false
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE mine - ADD their - different",
     "their": "ADD",
     "mine": "UPDATE",
@@ -335,11 +415,12 @@
       "payload": "THEIR_PAYLOAD",
       "previous": "MINE_PAYLOAD",
       "action": "UPDATE",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE their - ADD mine - similar",
     "their": "UPDATE",
     "mine": "ADD",
@@ -349,11 +430,12 @@
       "payload": "MINE_PAYLOAD",
       "previous": null,
       "action": "ADD",
-      "needAction": false,
-      "warning": null
-    }
+      "needAction": false
+    },
+    "warning": null
   },
   {
+    "lineExists": true,
     "caseName": "UPDATE their - ADD mine - different",
     "their": "UPDATE",
     "mine": "ADD",
@@ -363,9 +445,9 @@
       "payload": "THEIR_PAYLOAD",
       "previous": "MINE_PAYLOAD",
       "action": "UPDATE",
-      "needAction": true,
-      "warning": null
-    }
+      "needAction": true
+    },
+    "warning": null
   }
 ]
 

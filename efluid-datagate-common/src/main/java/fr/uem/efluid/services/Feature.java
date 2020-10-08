@@ -62,7 +62,7 @@ public enum Feature {
     /**
      * For import / merge : keep as "anomaly" identified resolution errors
      */
-    RECORD_IMPORT_WARNINGS("datagate-efluid.record-merge-warnings");
+    RECORD_IMPORT_WARNINGS("datagate-efluid.imports.record-merge-warnings");
 
 
     private final String propertyKey;
