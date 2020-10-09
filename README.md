@@ -18,7 +18,7 @@ La documentation générale est disponible ici : [accueil doc](docs/README.md) (
 
 ### Build standard 
 
-La gestion du build est portée par maven.
+La gestion du build est portée par maven. Frontend et backend sont gérés dans le même projet.
 
 Pour packager l'application, lancer : 
 ```

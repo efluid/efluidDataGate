@@ -4,6 +4,7 @@
 </head>
 <body>
 	<span layout:fragment="content">
+		<div id="modal" th:insert="~{components/modal-prepare :: modal-prepare}"></div>
 		<span th:if="${preparation.status.name()}=='FAILED'">
 			<div class="alert alert-danger">
 				<h4>La preparation du lot de modification a rencontré une erreur</h4>
@@ -66,7 +67,7 @@
 						<table class="table table-sm">
 							<thead>
 								<span id="navigation-filter">
-									<div id="navigation-domain" class="filter filter-domain" onmouseleave="closeCardFilter('domain')">
+									<div id="navigation-domain" class="filter filter-domain">
 										<div class="container-is-used">
 											<p id="title-domain" onclick="showCardFilter('domain')">Domaine</p>
 											<i class="far fa-check-square" id="filter-used-domain"></i>
@@ -90,7 +91,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-table" class="filter filter-table" onmouseleave="closeCardFilter('table')">
+									<div id="navigation-table" class="filter filter-table">
 										<div class="container-is-used">
 											<p id="title-table" onclick="showCardFilter('table')">Table</p>
 											<i class="far fa-check-square" id="filter-used-table"></i>
@@ -112,7 +113,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-key" class="filter filter-key" onmouseleave="closeCardFilter('key')">
+									<div id="navigation-key" class="filter filter-key">
 										<div class="container-is-used">
 											<p id="title-key" onclick="showCardFilter('key')">Clé</p>
 											<i class="far fa-check-square" id="filter-used-key"></i>
@@ -133,7 +134,7 @@
 										  </ul>
 										</div>
 									</div>
-									<div id="navigation-type" class="filter filter-type" onmouseleave="closeCardFilter('type')">
+									<div id="navigation-type" class="filter filter-type">
 										<div class="container-is-used">
 											<p id="title-type" onclick="showCardFilter('type')">Type</p>
 											<i class="far fa-check-square" id="filter-used-type"></i>
@@ -160,7 +161,11 @@
 										</div>
 									</div>
 									<div id="navigation-modif"><p>Modification</p></div>
-									<div id="navigation-btns"></div>
+									<div id="navigation-list-table" style="margin-right: 0px; display: flex; flex-direction: column;">
+										<div class="container-is-used">
+											<button type="button" class="btn btn-warning" style="min-width: 100% !important;" id="btn-list-table" onclick="showListTable()">Tables modifiées</button>
+										</div>
+									</div>
 								</span>
 							</thead>
 						</table>
@@ -220,7 +225,14 @@
 				type:""
 			}
 		};
+
 		var associatedTables = /*[[${preparation.referencedTableNames}]]*/ [] ;
+
+		if(associatedTables.length) {
+			for(let i = 0; i < associatedTables.length; i++) {
+				$("#list-table ul").append('<li>' + associatedTables[i] + '</li>')
+			}
+		}
 
 		const updateFilterSelectButtonGroup = () => {
 			if(Object.values(activeSearch.filters).every(i => i === "")){
@@ -234,14 +246,15 @@
 		$('#card-table').hide();
 		$('#card-key').hide();
 		$('#card-type').hide();
+		$('#modal-prepare').hide();
 
 		let domainIsOpen = false;
 		let keyIsOpen = false;
 		let typeIsOpen = false;
 		let tableIsOpen = false;
+		let listTableIsOpen = false;
 
 		const showCardFilter = (name) => {
-
 			let item = name;
 
 			if (item === 'domain') {
@@ -265,7 +278,7 @@
 				}
 			}
 
-			else {
+			else if (item === 'type'){
 				if (!typeIsOpen) {
 					$('#card-type').show();
 					typeIsOpen = true;
@@ -274,45 +287,53 @@
 
 		}
 
-		const closeCardFilter = (name) => {
+		const closeCardFilter = (e) => {
 
-			let item = name;
+		const $cardDomain = $("#card-domain");
+		const $cardTable = $("#card-table");
+		const $cardList = "ui-menu-item"
+		const $cardKey = $("#card-key");
+		const $cardType = $("#card-type");
+		const $listTable = $("#btn-list-table");
 
-			if (item === 'domain') {
-				if (domainIsOpen) {
-					$('#card-domain').hide();
-					domainIsOpen = false;
-				}
+			if (!$cardDomain.is(e.target) && $cardDomain.has(e.target).length === 0) {
+				$('#card-domain').hide();
+				domainIsOpen = false;
 			}
 
-			else if (item === 'table') {
-				if (tableIsOpen) {
+			if (!$cardTable.is(e.target) && $cardTable.has(e.target).length === 0) {
+				let getIdItem = e.target.id
+				if(!getIdItem.includes('ui-id-')) { //prevent auto-close, if it is an item from list the modal should display filter
 					$('#card-table').hide();
 					tableIsOpen = false;
 				}
 			}
 
-			else if (item === 'key') {
-				if (keyIsOpen) {
-					$('#card-key').hide();
-					keyIsOpen = false;
-				}
+			if(!$cardKey.is(e.target) && $cardKey.has(e.target).length === 0) {
+				$('#card-key').hide();
+				keyIsOpen = false;
 			}
 
-			else {
-				if (typeIsOpen) {
-					$('#card-type').hide();
-					typeIsOpen = false;
-				}
+			if (!$cardType.is(e.target) && $cardType.has(e.target).length === 0) {
+				$('#card-type').hide();
+				typeIsOpen = false;
 			}
+
 		}
 
-
+		const showListTable = () => {
+			if (!listTableIsOpen) {
+				$('#modal-prepare').show();
+				listTableIsOpen = true;
+			} else {
+				$('#modal-prepare').hide();
+				listTableIsOpen = false;
+			}
+		}
 
 		const filterDisplay = (head) => {
 			console.log(head.target.className)
 			var name = head.target.className.split(' ')[1].substr(7);
-			closeFilters();
 			$("#" + name + "SearchBar").show();
 		}
 
@@ -593,6 +614,7 @@
 				source: associatedTables
 			});
 			$('.filter').click((e) => filterDisplay(e));
+			$(document).mouseup((e) => closeCardFilter(e));
 		});
 
         /*]]>*/
