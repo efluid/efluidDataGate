@@ -128,7 +128,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
         no_diff_is_running();
 
         // Start new merge from available package
-        this.prep.startMergeCommitPreparation(currentExports.get(name).getResult());
+        this.prep.startMergeCommitPreparation(getNamedExportOrSingleCurrentOne(name).getResult());
 
         // And get diff uuid for testing
         runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
@@ -154,7 +154,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
         no_diff_is_running();
 
         // Start new merge from available package
-        this.prep.startMergeCommitPreparation(currentExports.get(name).getResult());
+        this.prep.startMergeCommitPreparation(getNamedExportOrSingleCurrentOne(name).getResult());
 
         // And get diff uuid for testing
         runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();

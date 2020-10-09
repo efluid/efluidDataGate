@@ -449,11 +449,11 @@ public abstract class CucumberStepDefs {
         this.asyncDriver.reset();
     }
 
-    protected void postponeImportedPackageTime(LocalDateTime time){
+    protected void postponeImportedPackageTime(LocalDateTime time) {
         this.preparationUpdater.setPostponeImportedPackageTime(time);
     }
 
-    protected void resetPreparationUpdater(){
+    protected void resetPreparationUpdater() {
         this.preparationUpdater.setPostponeImportedPackageTime(null);
     }
 
@@ -1129,6 +1129,7 @@ public abstract class CucumberStepDefs {
         assertThat(datas).allMatch(i -> properties.contains(propertyAccess.apply(i)));
     }
 
+
     protected static ExportImportResult<ExportFile> getSingleCurrentExport() {
 
         if (currentExports.size() == 0) {
@@ -1139,6 +1140,13 @@ public abstract class CucumberStepDefs {
         }
 
         return currentExports.values().iterator().next();
+    }
+
+    protected static ExportImportResult<ExportFile> getNamedExportOrSingleCurrentOne(String name) {
+        if (currentExports.size() == 1) {
+            return getSingleCurrentExport();
+        }
+        return currentExports.get(name);
     }
 
     @SuppressWarnings("unchecked")

@@ -43,16 +43,28 @@ public class MergeResolutionProcessor {
     /**
      * Process one entry against resolution case rules
      *
-     * @param mineEntry     current "mine" : entry on local db
-     * @param theirEntry    current "their" : imported combined entry
-     * @param actualPayload actual active payload
+     * @param mineEntry      current "mine" : entry on local db
+     * @param theirEntry     current "their" : imported combined entry
+     * @param actualPayload  actual active content in the managed database, as a payload
+     * @param actualPrevious the last "previous" managed for the entry in the backlog. Used to build new "previous" for some results
      * @return built merge entry
      */
-    public PreparedMergeIndexEntry resolveMerge(PreparedIndexEntry mineEntry, PreparedIndexEntry theirEntry, String actualPayload) {
+    public PreparedMergeIndexEntry resolveMerge(
+            PreparedIndexEntry mineEntry,
+            PreparedIndexEntry theirEntry,
+            String actualPayload,
+            String actualPrevious) {
 
-        ResolutionCase resolutionCase = searchResolutionCase(mineEntry, theirEntry, actualPayload);
+        ResolutionCase resolutionCase =
+                searchResolutionCase(mineEntry, theirEntry, actualPayload, actualPrevious);
 
-        PreparedMergeIndexEntry entry = applyResolutionResult(resolutionCase, mineEntry, theirEntry, actualPayload);
+        PreparedMergeIndexEntry entry =
+                applyResolutionResult(
+                        resolutionCase,
+                        mineEntry,
+                        theirEntry,
+                        actualPayload,
+                        actualPrevious);
 
         // Trace all resolution warnings
         if (entry.getResolutionWarning() != null && MERGE_WARNING_LOGGER.isInfoEnabled()) {
@@ -69,7 +81,8 @@ public class MergeResolutionProcessor {
             ResolutionCase resolutionCase,
             PreparedIndexEntry mineEntry,
             PreparedIndexEntry theirEntry,
-            String actualPayload) {
+            String actualPayload,
+            String actualPrevious) {
 
         // Impossible case
         if (mineEntry == null && theirEntry == null) {
@@ -83,7 +96,6 @@ public class MergeResolutionProcessor {
 
         // Keep reference to table
         entry.setTableName(mineEntry != null ? mineEntry.getTableName() : theirEntry.getTableName());
-
 
         // Apply identifier from available source
         copyIdentifier(entry, theirEntry != null ? theirEntry : mineEntry);
@@ -99,7 +111,8 @@ public class MergeResolutionProcessor {
 
         if (resolutionCase.getResolution() != null && resolutionCase.getResolution().getAction() != null) {
 
-            // All are selected as default in merge
+            // All are kept and selected as default in merge
+            entry.setKeep(true);
             entry.setSelected(true);
 
             // Apply resolution "as this" on action check
@@ -145,6 +158,9 @@ public class MergeResolutionProcessor {
                     case ACTUAL_CONTENT:
                         entry.setPrevious(actualPayload);
                         break;
+                    case ACTUAL_PREVIOUS:
+                        entry.setPrevious(actualPrevious);
+                        break;
                     case MINE_PREVIOUS:
                     default:
                         if (mineEntry != null) {
@@ -164,8 +180,8 @@ public class MergeResolutionProcessor {
             }
 
         } else {
-            // Without resolution, we mark as not selected (will be dropped of merge result)
-            entry.setSelected(false);
+            // Without resolution, we mark as not kept (will be dropped)
+            entry.setKeep(false);
 
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("[DROP] Mine:{}, Their:{}, resolution {}, drop the line",
@@ -220,27 +236,29 @@ public class MergeResolutionProcessor {
         }
     }
 
-    private ResolutionCase searchResolutionCase(PreparedIndexEntry mineEntry, PreparedIndexEntry theirEntry, String actualPayload) {
+    private ResolutionCase searchResolutionCase(PreparedIndexEntry mineEntry, PreparedIndexEntry theirEntry, String actualPayload, String lastKnewPrevious) {
 
         IndexAction their = theirEntry != null ? theirEntry.getAction() : null;
         IndexAction mine = mineEntry != null ? mineEntry.getAction() : null;
 
         ResolutionCase.PayloadType payload;
+        ResolutionCase.PayloadType previous;
 
-        // No local diff but existing content => use actual for payload compare
+        // No local diff but existing content => use actual for payload / previous compare
         if (theirEntry != null && mineEntry == null && actualPayload != null) {
-            payload = (theirEntry.getPayload().equals(actualPayload)) ? ResolutionCase.PayloadType.SIMILAR : ResolutionCase.PayloadType.DIFFERENT;
+            payload = ObjectUtils.nullSafeEquals(theirEntry.getPayload(), actualPayload) ? ResolutionCase.PayloadType.SIMILAR : ResolutionCase.PayloadType.DIFFERENT;
+            previous = ObjectUtils.nullSafeEquals(theirEntry.getPrevious(), lastKnewPrevious) ? ResolutionCase.PayloadType.SIMILAR : ResolutionCase.PayloadType.DIFFERENT;
         } else {
             payload = ObjectUtils.nullSafeEquals(
                     theirEntry != null ? theirEntry.getPayload() : null,
                     mineEntry != null ? mineEntry.getPayload() : null
             ) ? ResolutionCase.PayloadType.SIMILAR : ResolutionCase.PayloadType.DIFFERENT;
-        }
 
-        ResolutionCase.PayloadType previous = ObjectUtils.nullSafeEquals(
-                theirEntry != null ? theirEntry.getPrevious() : null,
-                mineEntry != null ? mineEntry.getPrevious() : null
-        ) ? ResolutionCase.PayloadType.SIMILAR : ResolutionCase.PayloadType.DIFFERENT;
+            previous = ObjectUtils.nullSafeEquals(
+                    theirEntry != null ? theirEntry.getPrevious() : null,
+                    mineEntry != null ? mineEntry.getPrevious() : null
+            ) ? ResolutionCase.PayloadType.SIMILAR : ResolutionCase.PayloadType.DIFFERENT;
+        }
 
         List<ResolutionCase> found = this.cases.stream()
                 .filter(r -> r.getMine() == mine
@@ -397,7 +415,7 @@ public class MergeResolutionProcessor {
             }
 
             public enum PayloadResultType {
-                THEIR_PAYLOAD, MINE_PAYLOAD, THEIR_PREVIOUS, MINE_PREVIOUS, ACTUAL_CONTENT
+                THEIR_PAYLOAD, MINE_PAYLOAD, THEIR_PREVIOUS, MINE_PREVIOUS, ACTUAL_CONTENT, ACTUAL_PREVIOUS
             }
 
 

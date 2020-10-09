@@ -132,6 +132,7 @@ public class PrepareIndexService extends AbstractApplicationService {
         preparation.incrementProcessStep();
 
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
+        AtomicLong totalProcessed = new AtomicLong(0);
 
         try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
@@ -140,12 +141,13 @@ public class PrepareIndexService extends AbstractApplicationService {
                     extraction.stream(),
                     PreparedIndexEntry::new,
                     knewContent,
+                    c -> totalProcessed.incrementAndGet(),
                     entry,
                     preparation);
 
             // Some diffs may add remarks
             LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
-            processOptionalCurrentContendDiffRemarks(preparation, entry, project, index.size());
+            processOptionalCurrentContendDiffRemarks(preparation, entry, project, totalProcessed.get());
 
             // Intermediate step for better percent process
             preparation.incrementProcessStep();
@@ -207,13 +209,20 @@ public class PrepareIndexService extends AbstractApplicationService {
             searchTimeStamp = System.currentTimeMillis();
         }
 
-        // Index "previous"
-        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqual(entry, searchTimeStamp);
+        // Index "previous", sorted
+        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(entry, searchTimeStamp);
 
         preparation.incrementProcessStep();
 
         // Build "previous" content from index
         Map<String, String> previousContent = this.regeneratedParamaters.regenerateKnewContent(localIndexToTimeStamp);
+
+        // Will be populated from extraction
+        final Map<String, String> actualContent = new HashMap<>();
+
+        // Identify the last knew previous for lines without changes (used for merged item build)
+        final Map<String, String> lastKnewPreviousContent = new HashMap<>();
+        localIndexToTimeStamp.forEach(i -> lastKnewPreviousContent.put(i.getKeyValue(), i.getPrevious()));
 
         preparation.incrementProcessStep();
 
@@ -223,12 +232,14 @@ public class PrepareIndexService extends AbstractApplicationService {
         try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
             // Process actual content in stream
-            Collection<PreparedIndexEntry> mineDiff = generateDiffIndexFromContent(
-                    extraction.stream(),
-                    PreparedIndexEntry::new,
-                    previousContent,
-                    entry,
-                    preparation);
+            Collection<PreparedIndexEntry> mineDiff =
+                    generateDiffIndexFromContent(
+                            extraction.stream(),
+                            PreparedIndexEntry::new,
+                            previousContent,
+                            l -> actualContent.put(l.getKeyValue(), l.getPayload()),
+                            entry,
+                            preparation);
 
             // Apply transformer on merge content
             List<? extends PreparedIndexEntry> transformedMergeDiff = preparation.getTransformerProcessor() != null
@@ -238,12 +249,20 @@ public class PrepareIndexService extends AbstractApplicationService {
 
             // Build merge diff entries from 2 source of Diff + previous content
             Collection<PreparedMergeIndexEntry> completedMergeDiff =
-                    completeMergeIndexes(entry, mineDiff, transformedMergeDiff, previousContent, preparation);
+                    completeMergeIndexes(
+                            entry,
+                            actualContent,
+                            mineDiff,
+                            transformedMergeDiff,
+                            previousContent,
+                            lastKnewPreviousContent,
+                            preparation);
 
             preparation.incrementProcessStep();
 
             // Combine similar, unsorted
-            List<PreparedMergeIndexEntry> preparedDiff = combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar);
+            List<PreparedMergeIndexEntry> preparedDiff =
+                    combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar);
 
             // Keep content and dict only if some results are found at the end
             if (!preparedDiff.isEmpty()) {
@@ -288,18 +307,14 @@ public class PrepareIndexService extends AbstractApplicationService {
      * case they are provided as SimilarPreparedIndexEntry
      * </p>
      *
-     * @param dictionaryEntryUuid uuid of dict entry
-     * @param index               loaded index content
-     * @param combineSimilars     true if the similar entries must be combined in single lines
+     * @param index           loaded index content
+     * @param combineSimilars true if the similar entries must be combined in single lines
      * @return List adapted for rendering : some results may be combined
      */
-    List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index, boolean combineSimilars) {
+    List<PreparedIndexEntry> prepareDiffForRendering(List<PreparedIndexEntry> index, boolean combineSimilars) {
 
         // Complete HR payloads
         index.forEach(e -> {
-            if (e.getKeyValue().equals("EEE")) {
-                System.out.println("gotcha");
-            }
             e.setHrPayload(getConverter().convertToHrPayload(e.getPayload(), e.getPrevious()));
         });
 
@@ -322,13 +337,14 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param diffTypeBuilder
      * @param knewContent
      * @param entry
-     * @param preparation         for step update
+     * @param preparation     for step update
      * @return
      */
     <T extends PreparedIndexEntry> Collection<T> generateDiffIndexFromContent(
             final Stream<ContentLine> actualContent,
             final Supplier<T> diffTypeBuilder,
             final Map<String, String> knewContent,
+            final Consumer<ContentLine> eachLineAccumulator,
             final DictionaryEntry entry,
             final PilotedCommitPreparation<?> preparation) {
 
@@ -337,6 +353,7 @@ public class PrepareIndexService extends AbstractApplicationService {
         preparation.incrementProcessStep();
 
         Collection<T> diff = actualContent
+                .peek(eachLineAccumulator)
                 .map(l -> toDiff(diffTypeBuilder, l, knewContent, entry))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet));
@@ -569,15 +586,17 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param dict
      * @param mines
      * @param theirs
-     * @param previousContent
+     * @param diffPreviousContent
      * @param preparation
      * @return
      */
     private Collection<PreparedMergeIndexEntry> completeMergeIndexes(
             DictionaryEntry dict,
+            Map<String, String> actualContent,
             Collection<? extends DiffLine> mines,
             Collection<? extends DiffLine> theirs,
-            Map<String, String> previousContent,
+            Map<String, String> diffPreviousContent,
+            Map<String, String> lastKnewPreviousContent,
             PilotedCommitPreparation<?> preparation) {
 
         LOGGER.debug("Completing merge data from index for parameter table {}", dict.getTableName());
@@ -597,7 +616,7 @@ public class PrepareIndexService extends AbstractApplicationService {
         return allKeys.stream().map(key -> {
 
             try {
-                String previous = previousContent.get(key);
+                String previous = diffPreviousContent.get(key);
                 DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key), false);
                 DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key), true);
 
@@ -617,11 +636,11 @@ public class PrepareIndexService extends AbstractApplicationService {
                     preparation.incrementProcessStep();
                 }
 
-                PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, previousContent.get(key));
+                PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actualContent.get(key), lastKnewPreviousContent.get(key));
 
                 // Dedicated logger output for resolutions
                 if (MERGE_LOGGER.isDebugEnabled()) {
-                    if (resolved.isSelected()) {
+                    if (resolved.isKept()) {
                         MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
                                 dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
                     } else {
@@ -637,7 +656,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 }
 
                 // Drop immediately unselected line after resolutions (we wanted only to log / trace warnings for them)
-                return resolved.isSelected() ? resolved : null;
+                return resolved.isKept() ? resolved : null;
             } catch (Throwable t) {
                 LOGGER.error("Failed to process merge index entry on " + dict.getTableName() + "." + key + ", get error", t);
                 throw new ApplicationException(ErrorType.MERGE_FAILURE, t);

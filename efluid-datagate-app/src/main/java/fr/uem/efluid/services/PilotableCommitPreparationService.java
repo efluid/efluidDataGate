@@ -695,10 +695,6 @@ public class PilotableCommitPreparationService {
             throw new ApplicationException(COMMIT_MISS_COMMENT, "Commit preparation cannot be saved without a fixed comment");
         }
 
-        if (current.getCommitData().getComment().equals(":construction: merge commit test with changes")) {
-            System.out.println("Gotcha");
-        }
-
         current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
 
         // Apply rollbacks on local commits only

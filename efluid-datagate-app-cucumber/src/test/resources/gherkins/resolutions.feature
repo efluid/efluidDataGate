@@ -29,9 +29,9 @@ Feature: The imported backlog is merged regarding specified resolution rules
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content has these resolution details :
-      | Table    | Key | Their Act | Mine Act | Res. Act | Res. Payload                  | Res. Previous | Need Act | Rule                              |
-      | TTAB_TWO | A   | UPDATE    | ADD      | ADD      | VALUE:'1', OTHER:'Same a upd' |               | false    | UPDATE their - ADD mine - similar |
-      | TTAB_TWO | C   | ADD       | ADD      | ADD      | VALUE:'3', OTHER:'Same c add' |               | false    | ADD - same value                  |
+      | Table    | Key | Their Act | Mine Act | Res. Act | Res. Payload                  | Res. Previous             | Need Act | Rule                                        |
+      | TTAB_TWO | A   | UPDATE    |          | UPDATE   | OTHER:'Same a'=>'Same a upd'  | VALUE:'1', OTHER:'Same a' | false    | UPDATE - only their - exists same content   |
+      | TTAB_TWO | C   | ADD       |          | ADD      | VALUE:'3', OTHER:'Same c add' |                           | false    | ADD - only their, line exists, same content |
 
   Scenario: Merge are resolved using specified rules - commit without history - same source, different change
     Given the existing data in managed table "TTAB_TWO" :
@@ -61,9 +61,9 @@ Feature: The imported backlog is merged regarding specified resolution rules
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content has these resolution details :
-      | Table    | Key | Their Act | Mine Act | Res. Act | Res. Payload                          | Res. Previous                      | Need Act | Rule                                |
-      | TTAB_TWO | A   | UPDATE    | ADD      | UPDATE   | OTHER:'Different a upd'=>'Same a upd' | VALUE:'1', OTHER:'Different a upd' | true     | UPDATE their - ADD mine - different |
-      | TTAB_TWO | C   | ADD       | ADD      | UPDATE   | OTHER:'Different c add'=>'Same c add' | VALUE:'3', OTHER:'Different c add' | true     | ADD - different value               |
+      | Table    | Key | Their Act | Mine Act | Res. Act | Res. Payload                          | Res. Previous                      | Need Act | Rule                                             |
+      | TTAB_TWO | A   | UPDATE    |          | UPDATE   | OTHER:'Different a upd'=>'Same a upd' | VALUE:'1', OTHER:'Different a upd' | true     | UPDATE - only their - exists different content   |
+      | TTAB_TWO | C   | ADD       |          | UPDATE   | OTHER:'Different c add'=>'Same c add' | VALUE:'3', OTHER:'Different c add' | true     | ADD - only their, line exists, different content |
 
   Scenario: Merge are resolved using specified rules - commit with history - various changes
     Given the existing data in managed table "TTAB_TWO" :
@@ -134,6 +134,6 @@ Feature: The imported backlog is merged regarding specified resolution rules
     Then these warnings are recorded for the merge of export of commit "source update 2":
       | Table    | Key | Code                                                       | Message                                                                                                                                            |
       | TTAB_TWO | A   | Warning from UPDATE - different value - different previous | UPDATE "OTHER:'Different a upd'=>'Same a upd3'" : La valeur de la ligne modifiée est différente entre les données locales et les données importées |
-      | TTAB_TWO | B   | Warning from ADD - different value                         | UPDATE "OTHER:'Different b add'=>'Same b add'" : La ligne existait déjà avec une valeur différente                                                 |
+      | TTAB_TWO | B   | Warning from ADD - different value                         | ADD "VALUE:'2', OTHER:'Same b add'" : La ligne est déjà ajoutée avec une valeur différente                                                         |
       | TTAB_TWO | C   | Warning from UPDATE - only their - not exists              | no action : La ligne mise à jour n'existe pas localement                                                                                           |
       | TTAB_TWO | D   | Warning from REMOVE - only their - not exists              | no action : La ligne supprimée n'existait pas                                                                                                      |

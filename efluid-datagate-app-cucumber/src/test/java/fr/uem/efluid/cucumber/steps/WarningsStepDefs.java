@@ -30,7 +30,7 @@ public class WarningsStepDefs extends CucumberStepDefs {
     @Then("^these warnings are recorded for the merge of export of commit \"(.*)\":$")
     public void then_warnings(String commit, DataTable dataTable) {
 
-        List<Anomaly> anomalies = this.anomalyAndWarningService.getAnomaliesForContext(AnomalyContextType.MERGE, currentExports.get(commit).getResult().getFilename());
+        List<Anomaly> anomalies = this.anomalyAndWarningService.getAnomaliesForContext(AnomalyContextType.MERGE, getNamedExportOrSingleCurrentOne(commit).getResult().getFilename());
 
         var data = dataTable.asMaps();
         assertThat(anomalies).hasSize(data.size());

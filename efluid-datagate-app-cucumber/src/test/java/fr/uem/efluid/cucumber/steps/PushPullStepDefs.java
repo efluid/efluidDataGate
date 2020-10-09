@@ -157,7 +157,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
     @Then("^an export package \"(.*)\" is available$")
     public void then_export_file_name(String name) {
 
-        ExportImportResult<ExportFile> currentExport = currentExports.get(name);
+        ExportImportResult<ExportFile> currentExport = getNamedExportOrSingleCurrentOne(name);
 
         assertThat(currentExport).isNotNull();
         assertThat(currentExport.getResult().getFilename()).isEqualTo(name);
@@ -188,7 +188,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
     @Then("^the exported commit \"(.*)\" is not present in the destination environment$")
     public void commit_not_imported_in_dest(String name) {
 
-        List<Commit> commits = readPackageCommits(currentExports.get(name));
+        List<Commit> commits = readPackageCommits(getNamedExportOrSingleCurrentOne(name));
 
         // Get from package
         UUID commitUUID = commits.stream()
@@ -204,7 +204,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
     public void commit_imported_in_dest(String name) {
 
         // Get from package
-        UUID commitUUID = readPackageCommits(currentExports.get(name)).stream()
+        UUID commitUUID = readPackageCommits(getNamedExportOrSingleCurrentOne(name)).stream()
                 .filter(c -> c.getComment().equals(name))
                 .map(Commit::getUuid)
                 .findFirst()
@@ -220,7 +220,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         Map<String, List<Map<String, String>>> tables = data.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
 
         // Commits (ignoring ref commits)
-        List<Commit> commits = readPackageCommits(currentExports.get(name)).stream().filter(c -> c.getIndex() != null && c.getIndex().size() > 0).collect(Collectors.toList());
+        List<Commit> commits = readPackageCommits(getNamedExportOrSingleCurrentOne(name)).stream().filter(c -> c.getIndex() != null && c.getIndex().size() > 0).collect(Collectors.toList());
 
         // Check this commit content exists
         assertThat(commits).anyMatch(c -> c.getComment() != null && c.getComment().equals(name));
@@ -265,14 +265,14 @@ public class PushPullStepDefs extends CucumberStepDefs {
         Map<String, String> datas = table.asMaps().stream().collect(Collectors.toMap(i -> i.get("hash"), i -> i.get("data")));
 
         // Get from package
-        UUID commitUUID = readPackageCommits(currentExports.get(name)).stream()
+        UUID commitUUID = readPackageCommits(getNamedExportOrSingleCurrentOne(name)).stream()
                 .filter(c -> c.getComment().equals(name))
                 .map(Commit::getUuid)
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Cannot find content for commit with name " + name + " in exported package"));
 
         // Get corresponding lobs from package
-        List<LobProperty> lobs = readPackageLobs(currentExports.get(name)).stream().filter(l -> l.getCommit().getUuid().equals(commitUUID)).collect(Collectors.toList());
+        List<LobProperty> lobs = readPackageLobs(getNamedExportOrSingleCurrentOne(name)).stream().filter(l -> l.getCommit().getUuid().equals(commitUUID)).collect(Collectors.toList());
 
         assertThat(lobs).hasSize(datas.size());
 
@@ -329,8 +329,8 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
         List<Map<String, String>> content = data.asMaps(String.class, String.class);
 
-        List<Version> versions = readPackageVersions(currentExports.get(commitComment));
-        Optional<Commit> commit = readPackageCommits(currentExports.get(commitComment)).stream().filter(c -> c.getComment().equals(commitComment)).findFirst();
+        List<Version> versions = readPackageVersions(getNamedExportOrSingleCurrentOne(commitComment));
+        Optional<Commit> commit = readPackageCommits(getNamedExportOrSingleCurrentOne(commitComment)).stream().filter(c -> c.getComment().equals(commitComment)).findFirst();
 
         assertThat(commit).isPresent();
 

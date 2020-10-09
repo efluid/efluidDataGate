@@ -12,8 +12,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import static fr.uem.efluid.model.entities.IndexAction.*;
-import static fr.uem.efluid.tools.MergeResolutionProcessor.ResolutionCase.PayloadType.DIFFERENT;
-import static fr.uem.efluid.tools.MergeResolutionProcessor.ResolutionCase.PayloadType.SIMILAR;
+import static fr.uem.efluid.tools.MergeResolutionProcessor.ResolutionCase.PayloadType.*;
 import static fr.uem.efluid.tools.MergeResolutionProcessor.ResolutionCase.Result.PayloadResultType.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -26,27 +25,27 @@ public class MergeResolutionProcessorTest {
     public void testBasicResolutionRulesAccess() {
 
         MergeResolutionProcessor processor = processor(
-                res("test1").onActions(ADD, ADD).onPayloads(SIMILAR, SIMILAR).thenNoResolution(),
-                res("test2").onActions(UPDATE, UPDATE).onPayloads(SIMILAR, SIMILAR).thenNoResolution(),
-                res("test3").onActions(null, UPDATE).onPayloads(DIFFERENT, DIFFERENT).thenResolution(UPDATE, THEIR_PAYLOAD, THEIR_PREVIOUS, true, null)
+                res("test1").onLineExists(false).onActions(ADD, ADD).onPayloads(SIMILAR, SIMILAR).thenNoResolution(),
+                res("test2").onLineExists(true).onActions(UPDATE, UPDATE).onPayloads(SIMILAR, SIMILAR).thenNoResolution(),
+                res("test3").onLineExists(true).onActions(null, UPDATE).onPayloads(DIFFERENT, ANY).thenResolution(UPDATE, THEIR_PAYLOAD, THEIR_PREVIOUS, true, null)
         );
 
-        assertThat(processor.resolveMerge(entry(ADD, "BOB", null), entry(ADD, "BOB", null), true)).isNull();
-        assertThat(processor.resolveMerge(entry(UPDATE, "BOB", "OLD"), entry(UPDATE, "BOB", "OLD"), true)).isNull();
-        assertThat(processor.resolveMerge(null, entry(UPDATE, "BOB", "OLD"), true)).matches(res(UPDATE, "BOB", "OLD", true, null));
+        assertThat(processor.resolveMerge(entry(ADD, "BOB", null), entry(ADD, "BOB", null), null, null).isSelected()).isFalse();
+        assertThat(processor.resolveMerge(entry(UPDATE, "BOB", "OLD"), entry(UPDATE, "BOB", "OLD"), payload("OLD"), payload("OLDOLD")).isSelected()).isFalse();
+        assertThat(processor.resolveMerge(null, entry(UPDATE, "BOB", "OLD"), payload("OLD"), payload("OLDOLD"))).matches(res(UPDATE, "BOB", "OLD", true, null));
     }
 
     @Test
     public void testMissingResolutionRulesFail() {
 
         MergeResolutionProcessor processor = processor(
-                res("test1").onActions(ADD, ADD).onPayloads(SIMILAR, SIMILAR).thenNoResolution(),
-                res("test2").onActions(UPDATE, UPDATE).onPayloads(SIMILAR, SIMILAR).thenNoResolution(),
-                res("test3").onActions(null, UPDATE).onPayloads(DIFFERENT, DIFFERENT).thenResolution(UPDATE, THEIR_PAYLOAD, THEIR_PREVIOUS, true, null)
+                res("test1").onLineExists(false).onActions(ADD, ADD).onPayloads(SIMILAR, SIMILAR).thenNoResolution(),
+                res("test2").onLineExists(true).onActions(UPDATE, UPDATE).onPayloads(SIMILAR, SIMILAR).thenNoResolution(),
+                res("test3").onLineExists(true).onActions(null, UPDATE).onPayloads(DIFFERENT, DIFFERENT).thenResolution(UPDATE, THEIR_PAYLOAD, THEIR_PREVIOUS, true, null)
         );
 
         try {
-            processor.resolveMerge(entry(ADD, "BOB", null), entry(UPDATE, "BOB", "PREV"), true);
+            processor.resolveMerge(entry(ADD, "BOB", null), entry(UPDATE, "BOB", "PREV"), payload("OLD"), payload("OLDOLD"));
             fail("Must fail on exception");
         } catch (Throwable t) {
             assertThat(t).hasMessageContaining("Unsupported merge case resolution");
@@ -73,10 +72,14 @@ public class MergeResolutionProcessorTest {
         PreparedIndexEntry entry = new PreparedIndexEntry();
         entry.setTableName("TABLE");
         entry.setKeyValue("KEY");
-        entry.setPrevious(previous != null ? CONVERTER.convertToExtractedValue(new LinkedHashMap<>(Collections.singletonMap("COL", previous))) : null);
-        entry.setPayload(payload != null ? CONVERTER.convertToExtractedValue(new LinkedHashMap<>(Collections.singletonMap("COL", payload))) : null);
+        entry.setPrevious(payload (previous));
+        entry.setPayload(payload(payload ));
         entry.setAction(action);
         return entry;
+    }
+
+    private static String payload(String testValue){
+        return testValue != null ? CONVERTER.convertToExtractedValue(new LinkedHashMap<>(Collections.singletonMap("COL", testValue))) : null;
     }
 
     private static MergeResolutionProcessor processor(MergeResolutionProcessor.ResolutionCase... cases) {
@@ -100,6 +103,11 @@ public class MergeResolutionProcessorTest {
         public ResolutionCaseBuilder onPayloads(MergeResolutionProcessor.ResolutionCase.PayloadType payload, MergeResolutionProcessor.ResolutionCase.PayloadType previous) {
             this.current.setPayload(payload);
             this.current.setPrevious(previous);
+            return this;
+        }
+
+        public ResolutionCaseBuilder onLineExists(boolean lineExists) {
+            this.current.setLineExists(lineExists);
             return this;
         }
 
