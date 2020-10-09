@@ -13,6 +13,27 @@
     align-items: center;
 }
 
+.left-bloc {
+    /* width */
+    ::-webkit-scrollbar {
+      opacity: 0;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+      opacity: 0;
+    }
+
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+      opacity: 0;
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+    }
+}
+
 .datagate-home .left-bloc {
     display: flex;
     flex-direction: column;

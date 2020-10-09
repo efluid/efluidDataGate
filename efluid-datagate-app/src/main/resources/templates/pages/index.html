@@ -17,7 +17,6 @@
 			<li th:if="${details.modelDesc != null}">Modèle de données identifié :
 				<span th:text="${details.modelDesc.identity}">v1.2.2, schéma ABCDEF</span>
 				<span th:if="${details.modelDesc.details != null}" th:text="| - ${details.modelDesc.details}|"> - détails</span>
-				<span th:if="${details.modelDesc.updatedTime != null}" th:text="| (dernière mise à jour : ${custom.format(details.modelDesc.updatedTime)})|">(dernier maj : 01/02/2018)</span>
 			</li>
 		</div>
 		<div class="right-bloc">
@@ -29,7 +28,7 @@
 			<table class="table table-sm">
 				<thead>
 				<tr>
-					<th scope="col">Derniers lots de modifications tt</th>
+					<th scope="col">Derniers lots de modifications</th>
 					<th scope="col">Le</th>
 				</tr>
 				</thead>
@@ -46,6 +45,7 @@
 		</div>
 	</div>
 	<script layout:fragment="script">
+		$("#left-bloc").scrollTop(0)
 		$(document).ready(() => {
     		supportGitmojis();
 		});
