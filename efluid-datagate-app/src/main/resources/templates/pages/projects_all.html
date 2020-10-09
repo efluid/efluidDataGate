@@ -81,6 +81,7 @@
 				$("#projectListInjectBefore").before(newProjectRow);
 				inputName.val("");
 				$("#projectAlreadyExists").hide();
+				window.location.replace("/ui/projects");
 
 		    })
 		    .fail(function() {
@@ -156,6 +157,7 @@
 			} else {
 				if(!modifProjectActivated) {
 					$("#addButton").show();
+					$("#validator-input").hide();
 				} else {
 					$("#modifButton").show();
 					$("#validator-input").hide();
