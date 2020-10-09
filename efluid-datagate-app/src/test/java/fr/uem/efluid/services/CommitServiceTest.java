@@ -74,10 +74,15 @@ public class CommitServiceTest {
                 this.loader.initIndexEntry(P, "6", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"666\""),
                 this.loader.initIndexEntry(C, "6", ADD, "VALUE=\"child-test\",PARENT=\"8\""),
                 this.loader.initIndexEntry(P, "7", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"777\""),
-                this.loader.initIndexEntry(P, "8", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""));
+                this.loader.initIndexEntry(P, "8", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""),
+                this.loader.initIndexEntry(P, "9", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""),
+                this.loader.initIndexEntry(P, "10", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""),
+                this.loader.initIndexEntry(P, "11", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""),
+                this.loader.initIndexEntry(P, "12", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""));
+
 
         this.service.applyDiff(diff, new HashMap<>());
 
-        Assert.assertEquals(6, this.service.getHistory(1, P).getTotalCount());
+        Assert.assertEquals(10, this.service.getHistory(1, P).getTotalCount());
     }
 }
