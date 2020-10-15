@@ -27,6 +27,8 @@
   "/ui/merge" : ["merge commit page"],
   "/ui/commits" : ["list of commits"],
   "/rest/v1/features/" : ["feature listing rest service"],
+  "/rest/v1/backlog/merge/anomalies/" : ["merge anomalies rest service"],
+  "/rest/v1/backlog/merge/anomalies/types" : ["merge anomaly names rest service"],
   "/ui/transformers" : ["list of transformers"],
   "/ui/transformers/new" : ["new transformer page"],
   "/ui/projects" : ["projects page"]

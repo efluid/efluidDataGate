@@ -335,6 +335,13 @@ public class PreparationStepDefs extends CucumberStepDefs {
         currentExports.put(comment, processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit));
     }
 
+    @Given("^the user has saved the merge commit$")
+    public void user_has_saved_merge_commit() throws Exception {
+
+        // It's a normal commit
+        user_save_commit();
+    }
+
     /* ########################################### ALL WHENS ################################################ */
 
     @When("^the user accesses to preparation commit page$")
