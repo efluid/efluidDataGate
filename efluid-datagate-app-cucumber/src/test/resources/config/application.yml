@@ -46,6 +46,7 @@ datagate-efluid:
         check-model-version: true
         check-dictionary-compatibility: false
         check-missing-ref-commits: false
+        record-merge-warnings: true
 
     model-identifier:
         enabled: true

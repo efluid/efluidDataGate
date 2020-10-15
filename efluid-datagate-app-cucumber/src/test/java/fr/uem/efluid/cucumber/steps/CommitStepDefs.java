@@ -99,7 +99,6 @@ public class CommitStepDefs extends CucumberStepDefs {
         commit_content_changes(data);
     }
 
-
     @Then("^these attachment documents are associated to the commit in the current project backlog:$")
     public void then_commit_contains_attachments(DataTable table) {
 
@@ -137,7 +136,6 @@ public class CommitStepDefs extends CucumberStepDefs {
             }
             assertThat(FormatUtils.toString(lobProperty.getData())).isEqualTo(datas.get(lobProperty.getHash()));
         });
-
     }
 
     @Then("^the list of commits is :$")
@@ -170,9 +168,8 @@ public class CommitStepDefs extends CucumberStepDefs {
 
         // Get details directly with all content
         assertDiffContentIsCompliant(new DiffContentHolder<PreparedIndexEntry>(
-                                             new ArrayList<>(paginatedContent.getPage()), details.getReferencedTables()) {
-                                     },
-                table);
+                new ArrayList<>(paginatedContent.getPage()), details.getReferencedTables()) {
+        }, table);
     }
 
     @Then("^the commit index has these managed technical payloads :$")
@@ -197,7 +194,6 @@ public class CommitStepDefs extends CucumberStepDefs {
         assertIndexIsTechnicallyCompliant(index, details.getReferencedTables(), table);
     }
 
-
     @Then("^the commit details are displayed with this sorted content :$")
     public void commit_detail_content_sorted(DataTable table) throws Exception {
 
@@ -214,38 +210,4 @@ public class CommitStepDefs extends CucumberStepDefs {
         CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
         assertThat(details.getIndexSize()).isEqualTo(size);
     }
-
-    /*
-    private void checkCommitDetails(Function<String, Stream<? extends PreparedIndexEntry>> contentAccessForTabme, DataTable table) {
-
-        // Get by tables
-        Map<String, List<Map<String, String>>> tables = table.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
-
-        tables.forEach((t, v) -> {
-            List<PreparedIndexEntry> diff = contentAccessForTabme.apply(t)
-                    .sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue))
-                    .collect(Collectors.toList());
-
-            assertThat(diff).hasSize(v.size());
-
-            v.sort(Comparator.comparing(m -> m.get("Key")));
-
-            // Keep order
-            for (int i = 0; i < diff.size(); i++) {
-                PreparedIndexEntry diffLine = diff.get(i);
-                Map<String, String> dataLine = v.get(i);
-
-                IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
-                assertThat(diffLine.getKeyValue()).as("Diff line on table " + diffLine.getTableName()).isEqualTo(dataLine.get("Key"));
-                assertThat(diffLine.getAction()).as("Action for key " + diffLine.getKeyValue() + " on table " + diffLine.getTableName()).isEqualTo(action);
-
-                // No need to check payload in delete
-                if (action != REMOVE) {
-                    assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
-                }
-            }
-        });
-
-
-    }*/
 }

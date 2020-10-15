@@ -5,6 +5,8 @@ import fr.uem.efluid.services.types.DiffContentSearch;
 import io.cucumber.java.Before;
 import org.junit.Ignore;
 
+import java.util.HashMap;
+
 /**
  * Reset test context on each scenario. For details on "context", see {@link CucumberStepDefs} for details
  */
@@ -18,10 +20,12 @@ public class TestContextResetHook extends CucumberStepDefs {
         currentAction = null;
         currentException = null;
         currentStartPage = null;
+        currentExports = new HashMap<>();
 
         resetAuthentication();
         resetAsyncProcess();
         resetDatabaseIdentifier();
+        resetPreparationUpdater();
         disableLdap();
     }
 }

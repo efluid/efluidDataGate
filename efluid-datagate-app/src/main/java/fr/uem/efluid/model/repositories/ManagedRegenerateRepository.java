@@ -27,11 +27,11 @@ public interface ManagedRegenerateRepository {
 
 	/**
 	 * <p>
-	 * Produces the knew content for specified table, from recorded index on parameter
+	 * Produces the knew content for specified table, from sorted recorded index on parameter
 	 * until specified ldt, then with specified index (adapted for merge process)
 	 * </p>
 	 */
-	Map<String, String> regenerateKnewContent(List<? extends DiffLine> specifiedIndex);
+	Map<String, String> regenerateKnewContent(/* sorted */List<? extends DiffLine> specifiedIndex);
 
 	/**
 	 * Refresh cached data if any

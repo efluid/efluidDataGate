@@ -33,8 +33,6 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
     @Autowired
     private IndexRepository coreIndex;
 
-    private static final Comparator<DiffLine> INDEX_SORTER = Comparator.comparingLong(DiffLine::getTimestamp);
-
     /**
      * Produces the knew content for specified table, from recorded index
      *
@@ -64,7 +62,7 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
 
         // Sorting must be specified at list level as the order may be non
         // consistent regarding database model for timestamp based sort
-        specifiedIndex.stream().sorted(INDEX_SORTER).forEach(line -> {
+        specifiedIndex.forEach(line -> {
 
             // Addition : add / update directly
             if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {

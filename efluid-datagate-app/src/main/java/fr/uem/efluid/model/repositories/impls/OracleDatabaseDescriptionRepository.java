@@ -370,11 +370,6 @@ public class OracleDatabaseDescriptionRepository extends AbstractDatabaseDescrip
                     TableDescription desc = descs.get(rs.getString(1));
 
                     if (desc != null) {
-
-                        if (desc.getName().equals("T_REFERER_WITH_NAT_COMPO")) {
-                            System.out.println("gotcha");
-                        }
-
                         setForeignKey(desc, rs.getString(2), rs.getString(3), rs.getString(4));
                     }
                 }

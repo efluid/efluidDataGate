@@ -173,8 +173,7 @@ public class PrepareDiffServiceUnitTest {
                             }
                         }), PreparedIndexEntry::new,
                 diff1Knew,
-                c -> {
-                },
+                l -> {},
                 DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock", proj), "s*", "table", "1=1", "key", ColumnType.STRING),
                 new PilotedCommitPreparation<PreparedIndexEntry>(CommitState.LOCAL));
 

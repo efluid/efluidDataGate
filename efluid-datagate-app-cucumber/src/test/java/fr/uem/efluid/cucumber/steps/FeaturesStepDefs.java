@@ -42,7 +42,7 @@ public class FeaturesStepDefs extends CucumberStepDefs {
 
         result.forEach((k, v) -> {
             Map<String, String> expectedLine = expected.stream().filter(e -> e.get("feature").equals(k)).findFirst().orElseThrow();
-            assertThat(v).isEqualTo(String.valueOf(expectedLine.get("state").equals("enabled")));
+            assertThat(v).describedAs("Feature " + k).isEqualTo(String.valueOf(expectedLine.get("state").equals("enabled")));
         });
 
     }

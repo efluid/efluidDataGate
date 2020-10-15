@@ -1,13 +1,11 @@
 package fr.uem.efluid.services;
 
+import fr.uem.efluid.model.AnomalyContextType;
 import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.IndexRepository;
-import fr.uem.efluid.model.repositories.ManagedExtractRepository;
+import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository.Extraction;
-import fr.uem.efluid.model.repositories.ManagedRegenerateRepository;
-import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
@@ -62,7 +60,7 @@ import static fr.uem.efluid.services.types.DiffRemark.RemarkType.MISSING_ON_UNCH
  */
 @Service
 @Transactional
-public class PrepareIndexService {
+public class PrepareIndexService extends AbstractApplicationService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareIndexService.class);
 
@@ -79,6 +77,9 @@ public class PrepareIndexService {
 
     @Autowired
     private MergeResolutionProcessor mergeResolutionProcessor;
+
+    @Autowired
+    private AnomalyAndWarningService anomalyService;
 
     @Value("${datagate-efluid.display.combine-similar-diff-after}")
     private long maxSimilarBeforeCombined;
@@ -183,11 +184,10 @@ public class PrepareIndexService {
      * </p>
      * <p>8 steps</p>
      *
-     * @param preparation        current preparation
-     * @param entry              dictionaryEntry
-     * @param lobs               for any extracted lobs
-     * @param timeStampForSearch start point for merge process
-     * @param mergeDiff          imported merge diff
+     * @param preparation current preparation
+     * @param entry       dictionaryEntry
+     * @param lobs        for any extracted lobs
+     * @param mergeDiff   imported merge diff
      * @param project
      */
     @Transactional(
@@ -199,35 +199,47 @@ public class PrepareIndexService {
             PilotedCommitPreparation<PreparedMergeIndexEntry> preparation,
             DictionaryEntry entry,
             Map<String, byte[]> lobs,
-            long timeStampForSearch,
             List<PreparedMergeIndexEntry> mergeDiff,
             Project project) {
 
-        // Index "previous"
-        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqual(entry,
-                timeStampForSearch);
+        Long searchTimeStamp = this.indexes.findMaxIndexTimestampOfLastImportedCommit();
+
+        // On 1st merge, get everything until now
+        if (searchTimeStamp == null) {
+            searchTimeStamp = System.currentTimeMillis();
+        }
+
+        // Index "previous", sorted
+        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(entry, searchTimeStamp);
 
         preparation.incrementProcessStep();
 
         // Build "previous" content from index
         Map<String, String> previousContent = this.regeneratedParamaters.regenerateKnewContent(localIndexToTimeStamp);
 
+        // Will be populated from extraction
+        final Map<String, String> actualContent = new HashMap<>();
+
+        // Identify the last knew previous for lines without changes (used for merged item build)
+        final Map<String, String> lastKnewPreviousContent = new HashMap<>();
+        localIndexToTimeStamp.forEach(i -> lastKnewPreviousContent.put(i.getKeyValue(), i.getPrevious()));
+
         preparation.incrementProcessStep();
 
         // Get actual content
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
-        Set<String> allActualKeys = ConcurrentHashMap.newKeySet();
 
         try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
             // Process actual content in stream
-            Collection<PreparedIndexEntry> mineDiff = generateDiffIndexFromContent(
-                    extraction.stream(),
-                    PreparedIndexEntry::new,
-                    previousContent,
-                    c -> allActualKeys.add(c.getKeyValue()),
-                    entry,
-                    preparation);
+            Collection<PreparedIndexEntry> mineDiff =
+                    generateDiffIndexFromContent(
+                            extraction.stream(),
+                            PreparedIndexEntry::new,
+                            previousContent,
+                            l -> actualContent.put(l.getKeyValue(), l.getPayload()),
+                            entry,
+                            preparation);
 
             // Apply transformer on merge content
             List<? extends PreparedIndexEntry> transformedMergeDiff = preparation.getTransformerProcessor() != null
@@ -237,12 +249,20 @@ public class PrepareIndexService {
 
             // Build merge diff entries from 2 source of Diff + previous content
             Collection<PreparedMergeIndexEntry> completedMergeDiff =
-                    completeMergeIndexes(entry, allActualKeys, mineDiff, transformedMergeDiff, previousContent, preparation);
+                    completeMergeIndexes(
+                            entry,
+                            actualContent,
+                            mineDiff,
+                            transformedMergeDiff,
+                            previousContent,
+                            lastKnewPreviousContent,
+                            preparation);
 
             preparation.incrementProcessStep();
 
             // Combine similar, unsorted
-            List<PreparedMergeIndexEntry> preparedDiff = combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar);
+            List<PreparedMergeIndexEntry> preparedDiff =
+                    combineSimilarDiffEntries(completedMergeDiff, SimilarPreparedMergeIndexEntry::fromSimilar);
 
             // Keep content and dict only if some results are found at the end
             if (!preparedDiff.isEmpty()) {
@@ -287,18 +307,14 @@ public class PrepareIndexService {
      * case they are provided as SimilarPreparedIndexEntry
      * </p>
      *
-     * @param dictionaryEntryUuid uuid of dict entry
-     * @param index               loaded index content
-     * @param combineSimilars     true if the similar entries must be combined in single lines
+     * @param index           loaded index content
+     * @param combineSimilars true if the similar entries must be combined in single lines
      * @return List adapted for rendering : some results may be combined
      */
-    List<PreparedIndexEntry> prepareDiffForRendering(UUID dictionaryEntryUuid, List<PreparedIndexEntry> index, boolean combineSimilars) {
+    List<PreparedIndexEntry> prepareDiffForRendering(List<PreparedIndexEntry> index, boolean combineSimilars) {
 
         // Complete HR payloads
         index.forEach(e -> {
-            if (e.getKeyValue().equals("EEE")) {
-                System.out.println("gotcha");
-            }
             e.setHrPayload(getConverter().convertToHrPayload(e.getPayload(), e.getPrevious()));
         });
 
@@ -320,9 +336,8 @@ public class PrepareIndexService {
      * @param actualContent
      * @param diffTypeBuilder
      * @param knewContent
-     * @param eachLineAccumulator processed on all lines from actual
      * @param entry
-     * @param preparation         for step update
+     * @param preparation     for step update
      * @return
      */
     <T extends PreparedIndexEntry> Collection<T> generateDiffIndexFromContent(
@@ -569,19 +584,19 @@ public class PrepareIndexService {
 
     /**
      * @param dict
-     * @param allActualKeys
      * @param mines
      * @param theirs
-     * @param previousContent
+     * @param diffPreviousContent
      * @param preparation
      * @return
      */
     private Collection<PreparedMergeIndexEntry> completeMergeIndexes(
             DictionaryEntry dict,
-            Set<String> allActualKeys,
+            Map<String, String> actualContent,
             Collection<? extends DiffLine> mines,
             Collection<? extends DiffLine> theirs,
-            Map<String, String> previousContent,
+            Map<String, String> diffPreviousContent,
+            Map<String, String> lastKnewPreviousContent,
             PilotedCommitPreparation<?> preparation) {
 
         LOGGER.debug("Completing merge data from index for parameter table {}", dict.getTableName());
@@ -593,6 +608,7 @@ public class PrepareIndexService {
         allKeys.addAll(minesByKey.keySet());
         allKeys.addAll(theirsByKey.keySet());
 
+        boolean recordWarnings = this.features.isEnabled(Feature.RECORD_IMPORT_WARNINGS);
         AtomicInteger count = new AtomicInteger(0);
         int fireIncrem = allKeys.size() / 2;
 
@@ -600,7 +616,7 @@ public class PrepareIndexService {
         return allKeys.stream().map(key -> {
 
             try {
-                String previous = previousContent.get(key);
+                String previous = diffPreviousContent.get(key);
                 DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key), false);
                 DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key), true);
 
@@ -620,14 +636,27 @@ public class PrepareIndexService {
                     preparation.incrementProcessStep();
                 }
 
-                PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, allActualKeys.contains(key));
+                PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actualContent.get(key), lastKnewPreviousContent.get(key));
 
                 // Dedicated logger output for resolutions
                 if (MERGE_LOGGER.isDebugEnabled()) {
-                    MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
-                            dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
+                    if (resolved.isKept()) {
+                        MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
+                                dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
+                    } else {
+                        MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> droped by rule \"{}\"",
+                                dict.getTableName(), key, mineEntry, theirEntry, resolved.getResolutionRule());
+                    }
                 }
-                return resolved;
+
+                if (recordWarnings && resolved.getResolutionWarning() != null) {
+                    this.anomalyService.addAnomaly(AnomalyContextType.MERGE, preparation.getSourceFilename(),
+                            "Warning from " + resolved.getResolutionRule(),
+                            "On " + resolved.toLogRendering() + " : " + resolved.getResolutionWarning());
+                }
+
+                // Drop immediately unselected line after resolutions (we wanted only to log / trace warnings for them)
+                return resolved.isKept() ? resolved : null;
             } catch (Throwable t) {
                 LOGGER.error("Failed to process merge index entry on " + dict.getTableName() + "." + key + ", get error", t);
                 throw new ApplicationException(ErrorType.MERGE_FAILURE, t);

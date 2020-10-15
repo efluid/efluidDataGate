@@ -89,7 +89,6 @@ public class PreparationStepDefs extends CucumberStepDefs {
         modelDatabase().initVersions(getCurrentUserProject(), Collections.singletonList("vCurrent"), 0);
     }
 
-
     @Given("^a diff analysis can be started$")
     public void a_diff_analysis_can_be_started() {
 
@@ -111,8 +110,6 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
         // Completed
         a_diff_is_completed();
-
-
     }
 
     @Given("^a merge diff analysis has been started and completed with the available source package$")
@@ -122,10 +119,58 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
         // Completed
         a_merge_diff_is_completed();
-
-
     }
 
+    @Given("^the exported package for commit \"(.*)\" has been merged in destination environment$")
+    public void a_merge_has_been_done(String name) throws Throwable {
+
+        // Cancel anything running
+        no_diff_is_running();
+
+        // Start new merge from available package
+        this.prep.startMergeCommitPreparation(getNamedExportOrSingleCurrentOne(name).getResult());
+
+        // And get diff uuid for testing
+        runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
+
+        // Completed
+        a_merge_diff_is_completed();
+
+        // Selected all
+        user_has_selected_all_ready_content_for_merge();
+
+        // Name commit
+        user_has_defined_commit_comment("merged " + name);
+
+        // It's a normal commit
+        user_save_commit();
+    }
+
+    @Given("^a merge diff analysis has been started and completed with the package of commit \"(.*)\"$")
+    public void a_merge_diff_analysis_has_been_started_and_completed_from_package(String name) throws Throwable {
+        // Import started
+
+        // Cancel anything running
+        no_diff_is_running();
+
+        // Start new merge from available package
+        this.prep.startMergeCommitPreparation(getNamedExportOrSingleCurrentOne(name).getResult());
+
+        // And get diff uuid for testing
+        runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
+
+        // Completed
+        a_merge_diff_is_completed();
+    }
+
+    @Given("^a merge diff analysis has been started and completed with the package of commit \"(.*)\" created a moment after$")
+    public void a_merge_diff_analysis_has_been_started_and_completed_from_package_created_after(String name) throws Throwable {
+
+        // Normal merge, but with postponed package
+        postponeImportedPackageTime(getSavedCommit().getCreatedTime().plusMinutes(1));
+        a_merge_diff_analysis_has_been_started_and_completed_from_package(name);
+        postponeImportedPackageTime(null); // Reset
+    }
 
     @Given("^no diff is running$")
     public void no_diff_is_running() {
@@ -152,7 +197,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
         no_diff_is_running();
 
         // Start new merge from available package
-        this.prep.startMergeCommitPreparation(PushPullStepDefs.currentExport.getResult());
+        this.prep.startMergeCommitPreparation(getSingleCurrentExport().getResult());
 
         // And get diff uuid for testing
         runningPrep = this.prep.getCurrentCommitPreparation().getIdentifier();
@@ -280,14 +325,21 @@ public class PreparationStepDefs extends CucumberStepDefs {
     public void new_init_commit_exported(String comment) throws Throwable {
         commit_has_been_added_with_comment(comment);
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushPullStepDefs.currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
+        currentExports.put(comment, processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit));
     }
 
     @Given("^the commit \"(.*)\" has been saved and exported with all the new identified diff content$")
     public void new_update_commit_exported(String comment) throws Throwable {
         new_commit_was_added_with_comment(comment);
         UUID specifiedCommit = backlogDatabase().searchCommitWithName(getCurrentUserProject(), comment);
-        PushPullStepDefs.currentExport = processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit);
+        currentExports.put(comment, processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType.SINGLE_ONE, specifiedCommit));
+    }
+
+    @Given("^the user has saved the merge commit$")
+    public void user_has_saved_merge_commit() throws Exception {
+
+        // It's a normal commit
+        user_save_commit();
     }
 
     /* ########################################### ALL WHENS ################################################ */
@@ -567,6 +619,32 @@ public class PreparationStepDefs extends CucumberStepDefs {
         assertDiffContentIsCompliantOrdered(paginatedContent.getPage(), table);
     }
 
+    @Then("^the merge commit content has these resolution details :$")
+    public void merge_commit_content_details(DataTable data) {
+
+        PilotedCommitPreparation<PreparedMergeIndexEntry> preparation = (PilotedCommitPreparation<PreparedMergeIndexEntry>) this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+
+        data.asMaps().forEach(l -> {
+
+            String table = l.get("Table");
+            String key = l.get("Key");
+            PreparedMergeIndexEntry entry = preparation.getDiffContentForTableName(table).stream()
+                    .filter(d -> d.getKeyValue().equals(key))
+                    .findFirst().orElseThrow(() ->
+                            new AssertionError("Cannot find corresponding diff entry for table " + table + " on key " + key));
+
+            check_resolution_line(entry, "their", l.get("Their Act"), entry.getTheir().getHrPayload());
+            check_resolution_line(entry, "mine", l.get("Mine Act"), entry.getMine().getHrPayload());
+            check_resolution_line(entry, "resolution", l.get("Res. Act"), l.get("Res. Payload"));
+
+            assertThat(entry.getResolutionRule()).describedAs("Resolution rule for table " + table + " on key " + key).isEqualTo(l.get("Rule"));
+            assertThat(entry.isNeedAction()).describedAs("Need action for table " + table + " on key " + key).isEqualTo(Boolean.valueOf(l.get("Need Act")));
+            assertThat(this.valueConverter.convertToHrPayload(entry.getPrevious(), null)).describedAs("Resolved source content for table " + table + " on key " + key).isEqualTo(l.get("Res. Previous"));
+        });
+    }
+
     @Then("^the merge commit content has these resolution details for table \"(.*)\" on key \"(.*)\" :$")
     public void merge_commit_content_details(String table, String key, DataTable data) {
 
@@ -580,38 +658,41 @@ public class PreparationStepDefs extends CucumberStepDefs {
                         new AssertionError("Cannot find corresponding diff entry for table " + table + " on key " + key));
 
         data.asMaps().forEach(l -> {
-            String payload = l.get("Payload");
-            if (StringUtils.isEmpty(payload)) {
-                payload = null;
-            }
-            String type = l.get("Type");
-            String actStr = l.get("Action");
-            IndexAction action = StringUtils.hasText(actStr) ? IndexAction.valueOf(actStr) : null;
-            String desc = " on table \"" + table + "\" on key \"" + key + "\" for type "
-                    + type + ". Resolution was \"" + entry.getResolutionRule() + "\"";
-
-            switch (type) {
-                case "mine":
-                    assertThat(entry.getMine().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
-                    assertThat(entry.getMine().getAction()).as("Action" + desc).isEqualTo(action);
-                    break;
-                case "their":
-                    assertThat(entry.getTheir().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
-                    assertThat(entry.getTheir().getAction()).as("Action" + desc).isEqualTo(action);
-                    break;
-                case "resolution":
-                    if (entry.getAction() == REMOVE){
-                        assertThat(entry.getPayload()).as("Payload" + desc).isNull();
-                    } else {
-                        assertThat(entry.getHrPayload()).as("Payload" + desc).isEqualTo(payload);
-                    }
-                    assertThat(entry.getAction()).as("Action" + desc).isEqualTo(action);
-                    break;
-                default:
-                    throw new AssertionError("Unsupported data type \"" + type + "\" for resolution details");
-            }
+            check_resolution_line(entry, l.get("Type"), l.get("Action"), l.get("Payload"));
         });
 
+    }
+
+    private void check_resolution_line(PreparedMergeIndexEntry entry, String type, String actStr, String payload) {
+
+        if (StringUtils.isEmpty(payload)) {
+            payload = null;
+        }
+
+        IndexAction action = StringUtils.hasText(actStr) ? IndexAction.valueOf(actStr) : null;
+        String desc = " on table \"" + entry.getTableName() + "\" on key \"" + entry.getKeyValue() + "\" for type "
+                + type + ". Resolution was \"" + entry.getResolutionRule() + "\"";
+
+        switch (type) {
+            case "mine":
+                assertThat(entry.getMine().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                assertThat(entry.getMine().getAction()).as("Action" + desc).isEqualTo(action);
+                break;
+            case "their":
+                assertThat(entry.getTheir().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                assertThat(entry.getTheir().getAction()).as("Action" + desc).isEqualTo(action);
+                break;
+            case "resolution":
+                if (entry.getAction() == REMOVE) {
+                    assertThat(entry.getPayload()).as("Payload" + desc).isNull();
+                } else {
+                    assertThat(entry.getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                }
+                assertThat(entry.getAction()).as("Action" + desc).isEqualTo(action);
+                break;
+            default:
+                throw new AssertionError("Unsupported data type \"" + type + "\" for resolution details");
+        }
     }
 
     @Then("^the commit content has these associated lob data :$")
