@@ -2,6 +2,7 @@ package fr.uem.efluid.web;
 
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.CommitService;
+import fr.uem.efluid.services.SecurityService;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,10 @@ public class HomeController extends CommonController {
 
     @Autowired
     private CommitService commitService;
+
+    @Autowired
+    private SecurityService securityService;
+
 
     /**
      * @return
@@ -78,8 +83,9 @@ public class HomeController extends CommonController {
         model.addAttribute("project", this.projectManagementService.getCurrentSelectedProject());
         model.addAttribute("lastVersion", this.dicoManagmentService.getLastVersion().getName());
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
+        model.addAttribute("currentUserLogin", this.securityService.getCurrentUserDetails().getLogin());
 
-
+        System.out.println(this.securityService.getCurrentUserDetails().getLogin());
 
         return "pages/index";
     }

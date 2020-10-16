@@ -2,7 +2,7 @@
         <p id="currentLocation" th:text="${currentLocationTitle}"></p>
         <div class="divider-horizontal"></div>
         <form class="form-inline">
-            <a href="./swagger.html" th:href="@{/swagger}" target="_blank" style="color: white;" type="button">API REST</a>
+            <a th:if="${currentUserLogin} == 'TECH'" href="./swagger.html" th:href="@{/swagger}" target="_blank" style="color: white;" type="button">API REST</a>
             &nbsp;&nbsp;
             <a href="./index.html" th:href="@{/logout?url=/ui}" style="color: white;" type="button">Déconnexion</a>
         </form>
