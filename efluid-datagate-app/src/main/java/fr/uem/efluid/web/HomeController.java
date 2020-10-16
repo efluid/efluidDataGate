@@ -40,7 +40,6 @@ public class HomeController extends CommonController {
     @Autowired
     private SecurityService securityService;
 
-
     /**
      * @return
      */
@@ -51,8 +50,6 @@ public class HomeController extends CommonController {
         if (this.applicationDetailsService.isNeedWizard()) {
             return "forward:/wizard/";
         }
-
-
 
         return "redirect:/ui";
     }
@@ -84,8 +81,6 @@ public class HomeController extends CommonController {
         model.addAttribute("lastVersion", this.dicoManagmentService.getLastVersion().getName());
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
         model.addAttribute("currentUserLogin", this.securityService.getCurrentUserDetails().getLogin());
-
-        System.out.println(this.securityService.getCurrentUserDetails().getLogin());
 
         return "pages/index";
     }
