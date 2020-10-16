@@ -8,6 +8,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -33,7 +34,7 @@ import java.util.List;
  * @version 1
  * @since v0.0.8
  */
-class PossibleValueAnnotation {
+class PossibleValueAnnotation extends PossibleItem {
 
     private final ParameterValue valueAnnot;
     private final ParameterCompositeValue compositeValueAnnot;
@@ -43,43 +44,43 @@ class PossibleValueAnnotation {
     private final ParameterMapping mappingAnnot;
     private final String[] compositeNames;
     private final Collection<String> forTable;
-    private final Class<?> sourceClazz;
 
     // Detected on method
     PossibleValueAnnotation(Method method, ClassLoader contextClassLoader) {
 
+        super(method.getDeclaringClass());
         this.valueAnnot = method.getAnnotation(ParameterValue.class);
         this.compositeValueAnnot = method.getAnnotation(ParameterCompositeValue.class);
         this.linkAnnot = method.getAnnotation(ParameterLink.class);
         // If not set on ParameterValue annotation, uses method name
-        this.validName = prepareValidName(this.valueAnnot, this.linkAnnot ,method.getName());
+        this.validName = prepareValidName(this.valueAnnot, this.linkAnnot, method.getName());
         this.mappingAnnot = method.getAnnotation(ParameterMapping.class);
         this.validType = this.mappingAnnot != null ? getMappingType(method, contextClassLoader) : method.getReturnType();
         this.compositeNames = prepareCompositeNames(this.compositeValueAnnot);
         this.forTable = prepareValidForTable(this.valueAnnot, this.compositeValueAnnot);
-        this.sourceClazz = method.getDeclaringClass();
     }
 
     // Detected on field
     PossibleValueAnnotation(Field field, ClassLoader contextClassLoader) {
 
+        super(field.getDeclaringClass());
         this.valueAnnot = field.getAnnotation(ParameterValue.class);
         this.compositeValueAnnot = field.getAnnotation(ParameterCompositeValue.class);
         this.linkAnnot = field.getAnnotation(ParameterLink.class);
         // If not set on ParameterValue annotation, uses field name
-        this.validName = prepareValidName(this.valueAnnot, this.linkAnnot , field.getName());
+        this.validName = prepareValidName(this.valueAnnot, this.linkAnnot, field.getName());
         this.mappingAnnot = field.getAnnotation(ParameterMapping.class);
         // Type must be found from generic collection
         this.validType = this.mappingAnnot != null ? getMappingType(field, contextClassLoader) : field.getType();
         this.compositeNames = prepareCompositeNames(this.compositeValueAnnot);
         this.forTable = prepareValidForTable(this.valueAnnot, this.compositeValueAnnot);
-        this.sourceClazz = field.getDeclaringClass();
 
     }
 
     // Declared directly into ParameterTable annot
     PossibleValueAnnotation(Class<?> declaringClazz, ParameterValue directValueSpec, String tableName) {
 
+        super(declaringClazz);
         this.valueAnnot = directValueSpec;
         this.compositeValueAnnot = null;
         // If not set on ParameterValue annotation, uses field name
@@ -88,8 +89,7 @@ class PossibleValueAnnotation {
         this.mappingAnnot = null;
         this.validType = null;
         this.compositeNames = null;
-        this.forTable = Arrays.asList(tableName);
-        this.sourceClazz = declaringClazz;
+        this.forTable = Collections.singletonList(tableName);
     }
 
     String getValidName() {
@@ -125,18 +125,6 @@ class PossibleValueAnnotation {
 
     boolean isCompliantTable(String name) {
         return this.forTable == null || this.forTable.contains(name);
-    }
-
-    boolean isExcluded(List<ParameterInheritance> inheritances) {
-
-        if (inheritances.size() > 0) {
-            return inheritances.stream().anyMatch(t ->
-                    t.of() == this.sourceClazz
-                            && (t.fields().length == 0 || Arrays.asList(t.fields()).contains(this.validName))
-            );
-        }
-
-        return false;
     }
 
     private static Class<?> getMappingType(Method method, ClassLoader contextClassLoader) {
@@ -189,7 +177,7 @@ class PossibleValueAnnotation {
             if (!"".equals(annot.value())) {
                 return annot.value();
             }
-        } else if (linkAnnot != null){
+        } else if (linkAnnot != null) {
             return linkAnnot.withValueName();
         }
 
@@ -234,7 +222,7 @@ class PossibleValueAnnotation {
     }
 
     boolean canKeepInType(Class<?> type) {
-        return this.sourceClazz.equals(type)
+        return getSourceClazz().equals(type)
                 || (this.valueAnnot == null || !this.valueAnnot.notInherited());
     }
 }

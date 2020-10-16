@@ -1,8 +1,10 @@
 package fr.uem.efluid;
 
+import fr.uem.efluid.tests.inheritance.exclude.all.SomeLinkedType;
 import org.junit.Test;
 
 import static fr.uem.efluid.GeneratorTester.onClasses;
+import static fr.uem.efluid.GeneratorTester.onPackage;
 
 /**
  * Test on ParameterValue search (by annotation or with other rules)
@@ -220,5 +222,50 @@ public class ParameterValueTest {
                 .hasKey("KEY", ColumnType.STRING)
                 .hasColumns("OTHER", "PROPERTY", "SECOND", "SUB_PROPERTY")
                 .doesntHaveColumns("VALUE");
+    }
+
+
+    @Test
+    public void testValueAreIgnoredWhenSpecifiedForTypeInheritanceAll() {
+
+        var tester = onPackage(
+                fr.uem.efluid.tests.inheritance.exclude.all.RootType.class.getPackageName()
+        ).generate();
+
+        tester.assertThatTable("T_ROOT")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.exclude.all.RootType.class)
+                .hasKey("KEY", ColumnType.STRING)
+                .hasColumns("VALUE", "OTHER");
+
+        tester.assertThatTable("LINKED")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.exclude.all.SomeLinkedType.class);
+
+        tester.assertThatTable("T_SUB_A")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.exclude.all.SubTypeA.class)
+                .hasKey("KEY", ColumnType.STRING)
+                .hasLinkForColumn("LINKEDTYPE_KEY_A").with("LINKED", "KEY")
+                .hasColumns("VALUE", "OTHER", "ALLOWED", "CARD", "LINKEDTYPE_KEY_A");
+
+        tester.assertThatTable("T_SUB_SUB_A")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.exclude.all.SubSubTypeA.class)
+                .hasKey("INNERKEY", ColumnType.ATOMIC)
+                .hasColumns("SUBALLOWED", "SUBCARD")
+                .doesntHaveColumns("VALUE", "OTHER", "ALLOWED", "CARD", "LINKEDTYPE_KEY_A")
+                .doesntHaveLinkForColumn("LINKEDTYPE_KEY_A");
+
+        tester.assertThatTable("T_SUB_B")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.exclude.all.SubTypeB.class)
+                .hasKey("KEYB", ColumnType.ATOMIC)
+                .hasColumns("PROPERTY", "SECOND", "LINKEDTYPE_KEY_B")
+                .hasLinkForColumn("LINKEDTYPE_KEY_B").with("LINKED", "KEY")
+                .doesntHaveColumns("VALUE", "OTHER");
+
+        tester.assertThatTable("T_SUB_SUB_B")
+                .wasFoundOn(fr.uem.efluid.tests.inheritance.exclude.all.SubSubTypeB.class)
+                .hasKey("KEYB", ColumnType.ATOMIC)
+                .hasColumns("PROPERTY", "SECOND", "BPROP", "BSEC", "LINKEDTYPE_KEY_B")
+                .hasLinkForColumn("LINKEDTYPE_KEY_B").with("LINKED", "KEY")
+                .doesntHaveColumns("VALUE", "OTHER");
+
     }
 }
