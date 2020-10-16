@@ -3,7 +3,7 @@
 <head>
 </head>
 <body>
-    <span layout:fragment="content">
+<span layout:fragment="content">
 		<h5>Edition des projets</h5>
         <span class="help">Les projets permettent d'organiser le dictionnaire et les données en sous ensembles indépendants. Ils sont représentés par un nom unique et par une couleur, reprise dans le menu haut quand un projet est actif.</span>
         <table class="table table-sm">
@@ -21,7 +21,10 @@
 					 </td>
 			     </tr>
 			     <tr id="projectListInjectBefore">
-			         <td><input type="text" id="projectName" class="form-control" placeholder="Nom" required="true" size="40"/></td>
+			         <td>
+						 <input type="text" id="projectName" class="form-control" placeholder="Nom" required="true" size="40"/>
+						 <p id="validator-input">Attention votre nom de projet ne doit pas contenir de caractères spéciaux</p>
+					 </td>
 			         <td>
 				         <span class="color-picker" style="margin-top: 10px">
 		    				<label class="project-theme-txt-0"><input class="project-color" type="radio" name="color" value="0" checked="checked"><span>Gris</span></label>
@@ -44,7 +47,7 @@
 		  Ce nom de projet est déjà utilisé.
 		</div>
     </span>
-    <script layout:fragment="script">
+<script layout:fragment="script">
 		$('#modifButton').hide();
 		$('#cancelButton').hide();
 		$('#cross-modif').hide();
@@ -54,6 +57,7 @@
 		$('#li-11').css("font-weight", "bolder");
     	$("#projectAlreadyExists").hide();
     	$(".pencil-update i").css({"display":"flex", "justify-content": "flex-end"});
+    	$("#validator-input").hide();
 
 		const getPickedColor = () => {
 			return $(".project-color:checked").val();
@@ -105,7 +109,7 @@
 		const displayModifNameProject = (id) => {
 			uuid =  id;
 			oldName = $('#' + id).text().trim()
-			$('#projectName').attr('placeholder', oldName.trim());
+			$('#projectName').val(oldName);
 			$('#addButton').hide();
 			$('.color-picker').hide();
 			$('#cancelButton').show();
@@ -116,6 +120,8 @@
 
 		const closeModifNameProject = () => {
 			let shouldCloseModif = false;
+			$("#projectName").val('');
+			$("#validator-input").hide();
 
 			if (!shouldCloseModif) {
 				$('#modifButton').hide();
@@ -134,12 +140,28 @@
 
 		}
 
+		var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
+
+		const checkCharacters = e => {
+		    var inputValue = e.target.value;
+        if(regex.test(inputValue)) {
+          $("#validator-input").show();
+          $("#addButton").hide();
+          $("#modifButton").hide();
+        } else {
+          $("#validator-input").hide();
+          $("#input-empty").hide();
+          $("#addButton").show();
+        }
+      }
+
     	// Init actions
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);
 			$("#modifButton").click(modifButtonAction);
 			$('#cancelButton').click(() => closeModifNameProject());
 			$(".pencil-update").click((e) => displayModifNameProject(e.target.parentElement.id));
+			$("#projectName").keyup(e => checkCharacters(e));
 		});
     </script>
 </body>
