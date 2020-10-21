@@ -979,7 +979,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         // Finally update last version after import
         try {
-            Version last = getLastUpdatedVersion();
+            Version last = importedVersions.get(importedVersions.size() - 1);
             if (last != null) {
                 completeVersionContents(last);
                 this.versions.save(last); // Refresh
@@ -1573,8 +1573,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
      */
     private void completeVersionContents(Version version) {
 
-        this.projectService.assertCurrentUserHasSelectedProject();
-        Project project = this.projectService.getCurrentSelectedProjectEntity();
+        Project project = version.getProject();
 
         // All contents
         Map<String, List<UUID>> contentUuids = this.versions.findLastVersionContents(project, version.getUpdatedTime());
