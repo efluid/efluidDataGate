@@ -979,8 +979,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         // Finally update last version after import
         try {
-            Version last = importedVersions.get(importedVersions.size() - 1);
-            if (last != null) {
+            if (importedVersions.size() > 0) {
+                Version last = importedVersions.get(importedVersions.size() - 1);
                 completeVersionContents(last);
                 this.versions.save(last); // Refresh
             }
