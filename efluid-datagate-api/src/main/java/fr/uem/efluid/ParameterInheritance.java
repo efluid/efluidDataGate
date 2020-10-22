@@ -20,13 +20,15 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Retention(RUNTIME)
 public @interface ParameterInheritance {
 
+    // Use self to specify an exclusion of ALL inherited types
+    Class<?> ALL = ALL.class;
+
     /**
      * Specified type for inheritance. Mandatory
      *
      * @return class of the inheritance source config (can be anywhere in the hierarchy)
      */
     Class<?> of();
-
 
     /**
      * Specify a select of fields for this inheritance specification. If at least one is set, then only this field is selected.
@@ -35,4 +37,8 @@ public @interface ParameterInheritance {
      * @return list of specified fields to select for this inheritance specification. If none defined, then all of them will be selected
      */
     String[] fields() default {};
+
+    class ALL {
+
+    }
 }

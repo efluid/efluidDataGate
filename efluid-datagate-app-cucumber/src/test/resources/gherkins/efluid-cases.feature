@@ -35,7 +35,7 @@ Feature: A complete set of test case are specified for Efluid needs
     And the merge commit content has these resolution details for table "TTEST1" on key "$testa_d" :
       | Type       | Action | Payload             |
       | their      | REMOVE |                     |
-      | mine       | ADD    | COL1:'testa delete' |
+      | mine       |     |  |
       | resolution | REMOVE |                     |
     And the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload                                   |

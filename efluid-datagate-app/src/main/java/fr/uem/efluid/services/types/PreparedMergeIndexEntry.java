@@ -21,6 +21,7 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
 
     private boolean needAction;
 
+    private boolean keep;
     private String resolutionWarning;
 
     private String resolutionRule;
@@ -117,5 +118,13 @@ public class PreparedMergeIndexEntry extends PreparedIndexEntry {
         }
 
         return false;
+    }
+
+    public boolean isKept() {
+        return this.keep;
+    }
+
+    public void setKeep(boolean keep) {
+        this.keep = keep;
     }
 }

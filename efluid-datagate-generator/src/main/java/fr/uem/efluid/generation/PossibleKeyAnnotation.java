@@ -19,13 +19,12 @@ import java.util.Collections;
  * @version 1
  * @since v0.0.8
  */
-class PossibleKeyAnnotation {
+class PossibleKeyAnnotation extends PossibleItem {
 
     private final ParameterKey keyAnnot;
     private final String validName;
     private final ColumnType validType;
     private final Collection<String> forTable;
-    private final Class<?> sourceClazz;
 
     PossibleKeyAnnotation(Method method) {
         this(method, null);
@@ -33,6 +32,7 @@ class PossibleKeyAnnotation {
 
     PossibleKeyAnnotation(Method method, String name) {
 
+        super(method.getDeclaringClass());
         this.keyAnnot = method.getAnnotation(ParameterKey.class);
         // If not set on ParameterValue annotation, uses specified name, and then failback on method name
         this.validName = this.keyAnnot != null && !"".equals(this.keyAnnot.value()) ? this.keyAnnot.value().toUpperCase()
@@ -41,10 +41,10 @@ class PossibleKeyAnnotation {
                 : ColumnType.forClass(method.getReturnType());
         this.forTable = this.keyAnnot != null && this.keyAnnot.forTable().length > 0 ? Arrays.asList(this.keyAnnot.forTable())
                 : null;
-        this.sourceClazz = method.getDeclaringClass();
     }
 
     PossibleKeyAnnotation(Field field) {
+        super(field.getDeclaringClass());
         this.keyAnnot = field.getAnnotation(ParameterKey.class);
         // If not set on ParameterValue annotation, uses field name
         this.validName = this.keyAnnot != null && !"".equals(this.keyAnnot.value()) ? this.keyAnnot.value().toUpperCase()
@@ -54,15 +54,14 @@ class PossibleKeyAnnotation {
                 : ColumnType.forClass(field.getType());
         this.forTable = this.keyAnnot != null && this.keyAnnot.forTable().length > 0 ? Arrays.asList(this.keyAnnot.forTable())
                 : null;
-        this.sourceClazz = field.getDeclaringClass();
     }
 
     PossibleKeyAnnotation(Class<?> declaringClazz, PossibleTableAnnotation possibleTableAnnotation) {
+        super(declaringClazz);
         this.keyAnnot = null;
         this.validName = possibleTableAnnotation.getKeyField().toUpperCase();
         this.validType = possibleTableAnnotation.getKeyType();
-        this.forTable = Collections.singletonList(possibleTableAnnotation.getName());
-        this.sourceClazz = declaringClazz;
+        this.forTable = Collections.singletonList(possibleTableAnnotation.getValidName());
     }
 
     /**
@@ -89,7 +88,7 @@ class PossibleKeyAnnotation {
 
 
     boolean canKeepInType(Class<?> type) {
-        return this.sourceClazz.equals(type)
+        return getSourceClazz().equals(type)
                 || (this.keyAnnot == null || !this.keyAnnot.notInherited());
     }
 }

@@ -271,7 +271,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
     }
 
     public String toLogRendering() {
-        return "[" + getTableName() + "." + getCombinedKey() + "] : " + getAction() + " \"" + getHrPayload() + "\"";
+        return "[" + getTableName() + "." + getCombinedKey() + "] : " + (getAction()  != null ? (getAction() + " \"" + getHrPayload() + "\"") : "no action");
     }
 
     /**

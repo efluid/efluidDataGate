@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -86,6 +87,9 @@ public class PilotableCommitPreparationService {
 
     @Autowired
     private AsyncDriver async;
+
+    @Autowired(required = false)
+    private PreparationUpdater updater;
 
     // One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
     private final Map<UUID, PilotedCommitPreparation<?>> currents = new HashMap<>();
@@ -270,7 +274,7 @@ public class PilotableCommitPreparationService {
         if (this.currents.get(projectUuid) != null) {
 
             // Impossible situation
-            LOGGER.error("Cannot proced to import entry point for processing merge commit will a preparation is still running.");
+            LOGGER.error("Cannot proceed to import entry point for processing merge commit will a preparation is still running.");
             throw new ApplicationException(PREPARATION_CANNOT_START,
                     "Cannot proced to import entry point for processing merge commit will a "
                             + "preparation is still running.");
@@ -281,6 +285,7 @@ public class PilotableCommitPreparationService {
         // For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
         PilotedCommitPreparation<PreparedMergeIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.MERGED);
         preparation.setProjectUuid(projectUuid);
+        preparation.setSourceFilename(file.getFilename());
 
         // Default filtered on needAction onlys
         preparation.setDisplayAll(false);
@@ -288,9 +293,14 @@ public class PilotableCommitPreparationService {
         // Init feature support for attachments
         setAttachmentFeatureSupports(preparation);
 
-        // First step is NOT async : load the package and identify the appliable index
+        // First step is NOT async : load the package and identify the applicable index
         ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> importResult = this.commitService.importCommits(file,
                 preparation);
+
+        // Support for some post processes
+        if (this.updater != null) {
+            this.updater.completeForMerge(preparation, projectUuid);
+        }
 
         // Specify as active one
         this.currents.put(projectUuid, preparation);
@@ -685,10 +695,6 @@ public class PilotableCommitPreparationService {
             throw new ApplicationException(COMMIT_MISS_COMMENT, "Commit preparation cannot be saved without a fixed comment");
         }
 
-        if (current.getCommitData().getComment().equals(":construction: merge commit test with changes")) {
-            System.out.println("Gotcha");
-        }
-
         current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
 
         // Apply rollbacks on local commits only
@@ -800,6 +806,11 @@ public class PilotableCommitPreparationService {
         // Init feature support for attachments
         setAttachmentFeatureSupports(preparation);
 
+        // Support for some post processes
+        if (this.updater != null) {
+            this.updater.completeForDiff(preparation, projectUuid);
+        }
+
         // Specify as active one
         this.currents.put(projectUuid, preparation);
 
@@ -894,8 +905,6 @@ public class PilotableCommitPreparationService {
 
                 Map<UUID, DictionaryEntry> dictByUuid = this.dictionary.findAllByProjectMappedToUuid(new Project(preparation.getProjectUuid()));
 
-                long searchTimestamp = preparation.getCommitData().getRangeStartTime().atZone(ZoneId.systemDefault()).toEpochSecond();
-
                 // Process details
                 List<Callable<?>> callables = preparation.getDiffContent().stream()
                         // Sort index by date for clean merge build
@@ -905,7 +914,7 @@ public class PilotableCommitPreparationService {
                         .filter(Objects::nonNull)
                         // Reset content in preparation for commit build, once completed
                         .peek(p -> preparation.getDiffContent().removeAll(p.getValue()))
-                        .map(p -> callMergeDiff(preparation, p.getValue(), dictByUuid.get(p.getKey()), searchTimestamp))
+                        .map(p -> callMergeDiff(preparation, p.getValue(), dictByUuid.get(p.getKey())))
                         .collect(Collectors.toList());
 
                 preparation.setProcessStarted(callables.size());
@@ -999,22 +1008,20 @@ public class PilotableCommitPreparationService {
      *
      * @param current                  preparing preparation
      * @param dict
-     * @param lastLocalCommitTimestamp
      * @param correspondingDiff
      * @return Void (ignore result, content is updated in PilotedCommitPreparation)
      */
     private Callable<Void> callMergeDiff(
             final PilotedCommitPreparation<PreparedMergeIndexEntry> current,
             List<PreparedMergeIndexEntry> correspondingDiff,
-            DictionaryEntry dict,
-            long lastLocalCommitTimestamp) {
+            DictionaryEntry dict) {
 
         return () -> {
             // Control if table not yet specified
             assertDictionaryEntryIsRealTable(dict, current);
 
             // Then run one merge action for dictionaryEntry
-            this.diffService.completeMergeDiff(current, dict, current.getDiffLobs(), lastLocalCommitTimestamp,
+            this.diffService.completeMergeDiff(current, dict, current.getDiffLobs(),
                     correspondingDiff, new Project(current.getProjectUuid()));
 
             int rem = current.getProcessRemaining().decrementAndGet();
@@ -1064,4 +1071,10 @@ public class PilotableCommitPreparationService {
         }
     }
 
+    public interface PreparationUpdater {
+
+        void completeForDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation, UUID projectUUID);
+
+        void completeForMerge(PilotedCommitPreparation<PreparedMergeIndexEntry> preparation, UUID projectUUID);
+    }
 }

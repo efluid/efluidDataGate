@@ -39,6 +39,9 @@ public class BacklogDatabaseAccess {
     private ApplyHistoryEntryRepository history;
 
     @Autowired
+    private AnomalyRepository anomalies;
+
+    @Autowired
     private EntityManager em;
 
     public List<LobProperty> loadCommitLobs(CommitDetails details) {
@@ -82,5 +85,6 @@ public class BacklogDatabaseAccess {
         this.index.deleteAll();
         this.commits.deleteAll();
         this.history.deleteAll();
+        this.anomalies.deleteAll();
     }
 }

@@ -1,20 +1,25 @@
 package fr.uem.efluid.rest.v1;
 
+import fr.uem.efluid.model.AnomalyContextType;
+import fr.uem.efluid.rest.v1.model.AnomalyView;
 import fr.uem.efluid.rest.v1.model.CommitCreatedResultView;
 import fr.uem.efluid.rest.v1.model.CommitPrepareDetailsView;
 import fr.uem.efluid.rest.v1.model.CommitPrepareDetailsView.CommitPrepareTableView;
 import fr.uem.efluid.rest.v1.model.StartedMergeView;
+import fr.uem.efluid.services.AnomalyAndWarningService;
 import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
+import fr.uem.efluid.utils.FormatUtils;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -27,6 +32,9 @@ public class BacklogApiController implements BacklogApi {
 
     @Autowired
     private PilotableCommitPreparationService pilotableCommitService;
+
+    @Autowired
+    private AnomalyAndWarningService anomalyAndWarningService;
 
     /**
      * @see fr.uem.efluid.rest.v1.BacklogApi#initPreparedCommit()
@@ -60,6 +68,24 @@ public class BacklogApiController implements BacklogApi {
                                 a.getData().length)
                         ).collect(Collectors.toList())
         );
+    }
+
+    @Override
+    public List<String> getMergeAnomaliesNames() {
+        return this.anomalyAndWarningService.getContextNamesForType(AnomalyContextType.MERGE);
+    }
+
+    @Override
+    public List<AnomalyView> getMergeAnomaliesForContext(String name) {
+        return this.anomalyAndWarningService.getAnomaliesForContext(AnomalyContextType.MERGE, name).stream()
+                .map(a -> {
+                    AnomalyView view = new AnomalyView();
+                    view.setCode(a.getCode());
+                    view.setContext(a.getContextType() + ":" + a.getContextName());
+                    view.setMessage(a.getMessage());
+                    view.setTime(FormatUtils.format(a.getDetectTime()));
+                    return view;
+                }).collect(Collectors.toList());
     }
 
     /**

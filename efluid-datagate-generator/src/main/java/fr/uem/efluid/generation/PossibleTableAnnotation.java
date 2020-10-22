@@ -14,13 +14,12 @@ import static fr.uem.efluid.generation.GenerationUtils.failback;
  * @version 1
  * @since v2.0.0
  */
-class PossibleTableAnnotation {
+class PossibleTableAnnotation extends PossibleItem {
 
     private final boolean intermediate;
     private boolean hierarchyTop;
-    private Class<?> sourceType;
 
-    private String name;
+    private String validName;
     private String tableName;
     private String filterClause;
     private String domainName;
@@ -35,15 +34,15 @@ class PossibleTableAnnotation {
      */
     PossibleTableAnnotation(ParameterTable paramTable, Class<?> source, boolean intermediate) {
 
+        super(source);
         this.hierarchyTop = source.getDeclaredAnnotation(ParameterTable.class) == paramTable;
         this.intermediate = intermediate;
-        this.sourceType = source;
         this.domainName = failback(paramTable.domainName(), searchDomainNameInHierarchy(source));
         this.excludeInheritances = paramTable.excludeInherited();
         this.filterClause = paramTable.filterClause();
         this.keyField = paramTable.keyField();
         this.keyType = paramTable.keyType();
-        this.name = paramTable.name();
+        this.validName = paramTable.name();
         this.tableName = GenerationUtils.failback(paramTable.value(), paramTable.tableName());
         this.useAllFields = paramTable.useAllFields();
         this.values = paramTable.values();
@@ -55,8 +54,8 @@ class PossibleTableAnnotation {
      */
     PossibleTableAnnotation(ParameterTable localParamTable, Class<?> source, PossibleTableAnnotation existing, boolean intermediate) {
 
+        super(source);
         this.intermediate = intermediate || Modifier.isAbstract(source.getModifiers());
-        this.sourceType = source;
 
         if (existing == null) {
 
@@ -66,7 +65,7 @@ class PossibleTableAnnotation {
             this.filterClause = localParamTable.filterClause();
             this.keyField = localParamTable.keyField();
             this.keyType = localParamTable.keyType();
-            this.name = localParamTable.name();
+            this.validName = localParamTable.name();
             this.tableName = failback(localParamTable.value(), localParamTable.tableName());
             this.useAllFields = localParamTable.useAllFields();
             this.values = localParamTable.values();
@@ -77,15 +76,15 @@ class PossibleTableAnnotation {
 
             ParameterTable paramTable = localParamTable != null
                     ? localParamTable
-                    : existing.getSourceType().getAnnotation(ParameterTable.class);
+                    : existing.getSourceClazz().getAnnotation(ParameterTable.class);
 
             this.hierarchyTop = false;
-            this.domainName = failback(paramTable.domainName(), existing.getDomainName(), failback(searchDomainNameInHierarchy(source), searchDomainNameInHierarchy(existing.getSourceType())));
+            this.domainName = failback(paramTable.domainName(), existing.getDomainName(), failback(searchDomainNameInHierarchy(source), searchDomainNameInHierarchy(existing.getSourceClazz())));
             this.excludeInheritances = paramTable.excludeInherited().length > 0 ? paramTable.excludeInherited() : existing.getExcludeInheritances();
             this.filterClause = failback(paramTable.filterClause(), existing.getFilterClause());
             this.keyField = failback(paramTable.keyField(), existing.getKeyField());
             this.keyType = paramTable.keyType() != ColumnType.UNKNOWN ? paramTable.keyType() : existing.getKeyType();
-            this.name = failback(paramTable.name(), existing.getName());
+            this.validName = failback(paramTable.name(), existing.getValidName());
             this.tableName = failback(paramTable.value(), paramTable.tableName(), existing.getTableName());
             this.useAllFields = paramTable.useAllFields() || existing.useAllFields;
             this.values = paramTable.values().length > 0 ? paramTable.values() : existing.getValues();
@@ -102,7 +101,7 @@ class PossibleTableAnnotation {
         this.hierarchyTop = source.getDeclaredAnnotation(ParameterTableSet.class) == paramTableSet;
 
         if (existing != null) {
-            String inheritedDomain = searchDomainNameInHierarchy(existing.getSourceType());
+            String inheritedDomain = searchDomainNameInHierarchy(existing.getSourceClazz());
 
             // Double failover
             this.domainName = failback(inheritedDomain, paramTableSet.domainName(), existing.getDomainName()); // 2 failovers
@@ -128,12 +127,9 @@ class PossibleTableAnnotation {
         return found;
     }
 
-    public Class<?> getSourceType() {
-        return sourceType;
-    }
-
-    String getName() {
-        return name;
+    @Override
+    String getValidName() {
+        return this.validName;
     }
 
     String getTableName() {

@@ -52,6 +52,9 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      */
     long countByCommitUuid(UUID commitUuid);
 
+    @Query("select max(i.timestamp) from IndexEntry i where i.commit.importedTime = (select max(c.importedTime) from Commit c)")
+    Long findMaxIndexTimestampOfLastImportedCommit();
+
     /**
      * <p>
      * Load full index detail for one DictionaryEntry (= on managed table)
@@ -59,7 +62,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      */
     List<IndexEntry> findByDictionaryEntry(DictionaryEntry dictionaryEntry);
 
-    List<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqual(DictionaryEntry dictionaryEntry, long timestamp);
+    List<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(DictionaryEntry dictionaryEntry, long timestamp);
 
     /**
      * <b><font color="red">Query for internal use only</font></b>

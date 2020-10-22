@@ -56,6 +56,8 @@ public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extend
 
     private CommitEditData commitData;
 
+    private String sourceFilename;
+
     private AtomicInteger processRemaining;
 
     private int processStarted;
@@ -270,6 +272,14 @@ public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extend
      */
     public void setProjectUuid(UUID projectUuid) {
         this.projectUuid = projectUuid;
+    }
+
+    public String getSourceFilename() {
+        return sourceFilename;
+    }
+
+    public void setSourceFilename(String sourceFilename) {
+        this.sourceFilename = sourceFilename;
     }
 
     /**

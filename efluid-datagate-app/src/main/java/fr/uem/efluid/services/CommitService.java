@@ -451,7 +451,7 @@ public class CommitService extends AbstractApplicationService {
                 .collect(Collectors.groupingBy(PreparedIndexEntry::getDictionaryEntryUuid))
                 .entrySet().stream()
                 // ... Then complete rendering of index entries, for each dict entry
-                .flatMap(e -> this.diffs.prepareDiffForRendering(e.getKey(), e.getValue(), combineSimilars).stream())
+                .flatMap(e -> this.diffs.prepareDiffForRendering(e.getValue(), combineSimilars).stream())
                 .peek(i -> {
                     DictionaryEntrySummary dic = referencedTables.get(i.getDictionaryEntryUuid());
                     if (dic != null) {
@@ -550,10 +550,6 @@ public class CommitService extends AbstractApplicationService {
 
         LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commit.getUuid());
 
-        if (commit.getComment().equals(":construction: merge commit test with changes")) {
-            System.out.println("gotcha");
-        }
-
         List<IndexEntry> entries = prepared.streamDiffContentMappedToDictionaryEntryUuid()
                 .flatMap(l -> this.diffs.splitCombinedSimilar(l.getValue()).stream())
                 .filter(PreparedIndexEntry::isSelected)
@@ -623,6 +619,10 @@ public class CommitService extends AbstractApplicationService {
         LOGGER.info("Commit {} saved with {} items and {} lobs", commit.getUuid(), entries.size(), newLobs.size());
 
         return commit.getUuid();
+    }
+
+    LocalDateTime getLastImportedCommitTime(){
+        return this.commits.findLastImportedCommitTime();
     }
 
     /**
