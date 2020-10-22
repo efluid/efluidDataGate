@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -120,11 +121,13 @@ public class ApplyDiffService extends AbstractApplicationService {
 
         Long timestamp = System.currentTimeMillis();
         User currentUser = new User(getCurrentUser().getLogin());
+        UUID projectId = this.projectService.getCurrentSelectedProject().getUuid();
 
         this.history.saveAll(Stream.of(queries).map(ApplyHistoryEntry::new).peek(h -> {
             h.setRollback(isRollback);
             h.setTimestamp(timestamp);
             h.setUser(currentUser);
+            h.setProjectUuid(projectId);
         }).collect(Collectors.toList()));
     }
 }
