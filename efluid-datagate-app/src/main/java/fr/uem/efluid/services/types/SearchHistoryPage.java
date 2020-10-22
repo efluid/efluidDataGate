@@ -97,6 +97,7 @@ public class SearchHistoryPage {
 		private final boolean rollback;
 		private final UUID attachmentSourceUuid;
 		private final LocalDateTime processedTime;
+		private final UUID projectId;
 
 		/**
 		 * @param query
@@ -104,13 +105,14 @@ public class SearchHistoryPage {
 		 * @param rollback
 		 * @param processedTime
 		 */
-		private HistoryDetails(String query, String user, boolean rollback, UUID attachmentSourceUuid, LocalDateTime processedTime) {
+		private HistoryDetails(String query, String user, boolean rollback, UUID attachmentSourceUuid, LocalDateTime processedTime, UUID projectId) {
 			super();
 			this.query = query;
 			this.user = user;
 			this.rollback = rollback;
 			this.attachmentSourceUuid = attachmentSourceUuid;
 			this.processedTime = processedTime;
+			this.projectId = projectId;
 		}
 
 		/**
@@ -148,11 +150,18 @@ public class SearchHistoryPage {
 			return this.processedTime;
 		}
 
+		/**
+		 * @return the processedTime
+		 */
+		public UUID getProjectId () {
+			return this.projectId;
+		}
+
 		static HistoryDetails fromEntity(ApplyHistoryEntry histo) {
 
 			Timestamp ts = new Timestamp(histo.getTimestamp().longValue());
 			return new HistoryDetails(histo.getQuery(), histo.getUser().getEmail(), histo.isRollback(), histo.getAttachmentSourceUuid(),
-					ts.toLocalDateTime());
+					ts.toLocalDateTime() , histo.getProjectUuid());
 		}
 	}
 }

@@ -33,6 +33,8 @@ public class ApplyHistoryEntry {
 	// Optional - weak link
 	private UUID attachmentSourceUuid;
 
+	private UUID projectUuid;
+
 	/**
 	 * 
 	 */
@@ -136,6 +138,21 @@ public class ApplyHistoryEntry {
 	 */
 	public void setAttachmentSourceUuid(UUID attachmentSourceUuid) {
 		this.attachmentSourceUuid = attachmentSourceUuid;
+	}
+
+	/**
+	 * @return the projectUuid
+	 */
+	public UUID getProjectUuid() {
+		return this.projectUuid;
+	}
+
+	/**
+	 * @param projectId
+	 *  the projectId to set
+	 */
+	public void setProjectUuid(UUID projectId) {
+		this.projectUuid = projectId;
 	}
 
 }
