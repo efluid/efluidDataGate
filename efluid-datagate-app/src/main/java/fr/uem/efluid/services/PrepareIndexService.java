@@ -210,7 +210,7 @@ public class PrepareIndexService extends AbstractApplicationService {
         }
 
         // Index "previous", sorted
-        List<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(entry, searchTimeStamp);
+        Stream<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(entry, searchTimeStamp);
 
         preparation.incrementProcessStep();
 

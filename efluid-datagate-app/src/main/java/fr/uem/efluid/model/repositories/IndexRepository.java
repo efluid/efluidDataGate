@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -60,9 +61,9 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      * Load full index detail for one DictionaryEntry (= on managed table)
      * </p>
      */
-    List<IndexEntry> findByDictionaryEntry(DictionaryEntry dictionaryEntry);
+    Stream<IndexEntry> findByDictionaryEntryOrderByTimestampAsc(DictionaryEntry dictionaryEntry);
 
-    List<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(DictionaryEntry dictionaryEntry, long timestamp);
+    Stream<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(DictionaryEntry dictionaryEntry, long timestamp);
 
     /**
      * <b><font color="red">Query for internal use only</font></b>

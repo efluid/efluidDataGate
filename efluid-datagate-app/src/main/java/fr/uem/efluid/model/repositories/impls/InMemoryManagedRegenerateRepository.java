@@ -1,5 +1,6 @@
 package fr.uem.efluid.model.repositories.impls;
 
+import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
@@ -14,7 +15,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -45,7 +48,7 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
         LOGGER.debug("Regenerating values from local index for managed table {}", parameterEntry.getTableName());
 
         // Will process backlog by its natural order
-        return regenerateKnewContent(this.coreIndex.findByDictionaryEntry(parameterEntry));
+        return regenerateKnewContent(this.coreIndex.findByDictionaryEntryOrderByTimestampAsc(parameterEntry), null);
     }
 
     /**
@@ -53,24 +56,27 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
      * @return
      */
     @Override
-    public Map<String, String> regenerateKnewContent(List<? extends DiffLine> specifiedIndex) {
+    public <D extends DiffLine> Map<String, String> regenerateKnewContent(
+            final Stream<D> specifiedIndex,
+            final Consumer<D> eachLineAccumulator) {
 
-        LOGGER.debug("Regenerating values from specified index with {} items", specifiedIndex.size());
+        LOGGER.debug("Regenerating values from specified index");
 
         // Content for playing back the backlog
         final Map<String, String> lines = new HashMap<>(10000);
 
+        // Cached check on accumulator process
+        boolean acc = eachLineAccumulator != null;
+
         // Sorting must be specified at list level as the order may be non
         // consistent regarding database model for timestamp based sort
-        specifiedIndex.forEach(line -> {
 
-            // Addition : add / update directly
-            if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {
-                lines.put(line.getKeyValue(), line.getPayload());
-            } else {
-                lines.remove(line.getKeyValue());
-            }
-        });
+        // Switch process with minimal check on accumulator content
+        if (eachLineAccumulator != null) {
+            specifiedIndex.forEach(buildKnewContentAndAccumulate(lines, eachLineAccumulator));
+        } else {
+            specifiedIndex.forEach(buildKnewContent(lines));
+        }
 
         return lines;
     }
@@ -81,5 +87,36 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
     @Override
     public void refreshAll() {
         LOGGER.info("Regenerate cache droped. Will extract fresh data on next call");
+    }
+
+    /**
+     * Single process for knewContentBuild
+     */
+    private static <D extends DiffLine> Consumer<D> buildKnewContent(final Map<String, String> lines) {
+        return line -> {
+            // Addition : add / update directly
+            if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {
+                lines.put(line.getKeyValue(), line.getPayload());
+            } else {
+                lines.remove(line.getKeyValue());
+            }
+        };
+    }
+
+    /**
+     * Embed accumulator call for limited stream peek / forEach process
+     */
+    private static <D extends DiffLine> Consumer<D> buildKnewContentAndAccumulate(
+            final Map<String, String> lines,
+            final Consumer<D> eachLineAccumulator) {
+        return line -> {
+            eachLineAccumulator.accept(line);
+            // Addition : add / update directly
+            if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {
+                lines.put(line.getKeyValue(), line.getPayload());
+            } else {
+                lines.remove(line.getKeyValue());
+            }
+        };
     }
 }
