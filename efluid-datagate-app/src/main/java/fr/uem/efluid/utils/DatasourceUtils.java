@@ -27,7 +27,7 @@ public final class DatasourceUtils {
 
 	public static final String MANAGED_TRANSACTION_MANAGER = "managedTransactionManager";
 
-	public static final java.lang.String DEFAULT_TRANSACTION_MANAGER = "transactionManager";
+	public static final String DEFAULT_TRANSACTION_MANAGER = "transactionManager";
 
 	private static final String TRANSACTION_ISOLATION = "TRANSACTION_READ_COMMITTED";
 

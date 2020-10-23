@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
  * @since v0.0.1
  */
 @Repository
+@Transactional
 public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryManagedRegenerateRepository.class);
@@ -64,9 +66,6 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
 
         // Content for playing back the backlog
         final Map<String, String> lines = new HashMap<>(10000);
-
-        // Cached check on accumulator process
-        boolean acc = eachLineAccumulator != null;
 
         // Sorting must be specified at list level as the order may be non
         // consistent regarding database model for timestamp based sort

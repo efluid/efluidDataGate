@@ -215,7 +215,7 @@ public class PrepareIndexService extends AbstractApplicationService {
         preparation.incrementProcessStep();
 
         // Build "previous" content from index
-        Map<String, String> previousContent = this.regeneratedParamaters.regenerateKnewContent(localIndexToTimeStamp);
+        Map<String, String> previousContent = this.regeneratedParamaters.regenerateKnewContent(localIndexToTimeStamp, null);
 
         // Will be populated from extraction
         final Map<String, String> actualContent = new HashMap<>();
