@@ -25,3 +25,4 @@ efluid-datagate-app/*.log
 **/update-errors.out
 efluid-datagate-generator-example/sonar-project.properties
 update-errors.out
+efluid-datagate-app-cucumber/perf-spec-results.csv

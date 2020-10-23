@@ -898,7 +898,7 @@ public abstract class CucumberStepDefs {
         return DataGenerationUtils.project(project);
     }
 
-    protected CommitDetails getSavedCommit() {
+    protected UUID getSavedCommitUuid(){
 
         assertRequestWasOk();
 
@@ -907,7 +907,11 @@ public abstract class CucumberStepDefs {
 
         assertThat(savedCommitUUID).isNotNull();
 
-        return this.commitService.getExistingCommitDetails(savedCommitUUID, true);
+        return savedCommitUUID;
+    }
+
+    protected CommitDetails getSavedCommit() {
+        return this.commitService.getExistingCommitDetails(getSavedCommitUuid(), true);
     }
 
     protected static void assertDiffContentIsCompliant(DiffContentHolder<?> holder, DataTable data) {
