@@ -120,8 +120,6 @@ public class BacklogController extends CommonController {
         // Get updated preparation
         model.addAttribute("history", page);
 
-        model.addAttribute("currentProject", this.projectManagementService.getCurrentSelectedProject().getUuid());
-
         return "pages/history";
     }
 
