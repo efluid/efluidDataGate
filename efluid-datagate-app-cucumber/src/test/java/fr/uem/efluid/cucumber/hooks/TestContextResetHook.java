@@ -21,6 +21,7 @@ public class TestContextResetHook extends CucumberStepDefs {
         currentException = null;
         currentStartPage = null;
         currentExports = new HashMap<>();
+        startupTime = System.currentTimeMillis();
 
         resetAuthentication();
         resetAsyncProcess();

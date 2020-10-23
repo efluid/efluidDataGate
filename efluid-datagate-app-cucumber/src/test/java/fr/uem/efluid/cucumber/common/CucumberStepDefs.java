@@ -32,10 +32,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.xmlunit.diff.Diff;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.Null;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -97,6 +95,10 @@ public abstract class CucumberStepDefs {
     protected static Map<String, ExportImportResult<ExportFile>> currentExports = new HashMap<>();
 
     protected static DiffContentSearch currentSearch = new DiffContentSearch();
+
+    protected static long startupTime;
+
+    protected static BasicProfiler profiler;
 
     @Autowired
     private TweakedPreparationUpdater preparationUpdater;
@@ -1242,6 +1244,20 @@ public abstract class CucumberStepDefs {
 
     }
 
+    protected static void startProfiling(){
+        if(profiler != null){
+            profiler.stop();
+        }
+
+        profiler = new BasicProfiler();
+        profiler.start();
+    }
+
+    protected static List<BasicProfiler.Stats> stopProfilingAndGetStats(){
+        profiler.stop();
+        return profiler.getValues();
+    }
+
     /**
      * @param propertyName
      * @param matchers     for chained checks with assertj error support
@@ -1340,5 +1356,73 @@ public abstract class CucumberStepDefs {
             return method.getName().substring(2, 3).toLowerCase() + method.getName().substring(3);
 
         }
+    }
+
+    /**
+     * Very simple profiling support for some tests
+     */
+    protected static class BasicProfiler implements Runnable {
+
+        private Thread th;
+        private List<Stats> values = new ArrayList<>();
+        boolean run;
+
+        void start() {
+            this.run = true;
+            this.th = new Thread(this, "test-profiler");
+            this.th.start();
+        }
+
+        void stop() {
+            this.run = false;
+        }
+
+        public void run() {
+
+            while (this.run) {
+                this.values.add(
+                        new Stats(
+                                Runtime.getRuntime().freeMemory(),
+                                Runtime.getRuntime().maxMemory(),
+                                Runtime.getRuntime().totalMemory()
+                        ));
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Cannot stat");
+                }
+            }
+        }
+
+        public List<Stats> getValues() {
+            return this.values;
+        }
+
+       public static class Stats {
+
+            private final Long free;
+            private final Long max;
+            private final Long total;
+
+            private Stats(Long free, Long max, Long total) {
+                this.free = free;
+                this.max = max;
+                this.total = total;
+            }
+
+            public Long getFree() {
+                return free;
+            }
+
+            public Long getMax() {
+                return max;
+            }
+
+            public Long getTotal() {
+                return total;
+            }
+        }
+
     }
 }
