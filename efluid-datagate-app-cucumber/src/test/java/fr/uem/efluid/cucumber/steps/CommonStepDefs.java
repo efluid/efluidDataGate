@@ -42,7 +42,6 @@ public class CommonStepDefs extends CucumberStepDefs {
     public void perf_test_case(String variation) {
         specifiedVariation = variation;
         efluidCase = true;
-        startProfiling();
     }
 
     @Given("^the test is an Efluid standard scenario$")
@@ -91,6 +90,12 @@ public class CommonStepDefs extends CucumberStepDefs {
     @Given("^ldap auth is enabled with search at \"(.*)\", with login attr \"(.*)\" and email attr \"(.*)\" and this content :$")
     public void ldap_is_specified(String searchBase, String loginAttribute, String mailAttribute, DocString config) {
         enableLdap(config.getContent(), searchBase, loginAttribute, mailAttribute);
+    }
+
+    @Given("^the profiling is started$")
+    public void profiling(){
+        startupTime = System.currentTimeMillis();
+        startProfiling();
     }
 
     @When("^(.+) access to (.+)$")
@@ -280,11 +285,9 @@ public class CommonStepDefs extends CucumberStepDefs {
 
         // Prepare values
         OptionalLong peakFree = stats.stream().mapToLong(BasicProfiler.Stats::getFree).max();
-        OptionalLong peakMax = stats.stream().mapToLong(BasicProfiler.Stats::getMax).max();
         OptionalLong peakTotal = stats.stream().mapToLong(BasicProfiler.Stats::getTotal).max();
 
         OptionalDouble avgFree = stats.stream().mapToLong(BasicProfiler.Stats::getFree).average();
-        OptionalDouble avgMax = stats.stream().mapToLong(BasicProfiler.Stats::getMax).average();
         OptionalDouble avgTotal = stats.stream().mapToLong(BasicProfiler.Stats::getTotal).average();
 
         String time = FormatUtils.format(LocalDateTime.now());
@@ -295,19 +298,17 @@ public class CommonStepDefs extends CucumberStepDefs {
         if (!Files.exists(dest)) {
             Files.write(
                     dest,
-                    "variation;time;total duration;peak free;peak max;peak total;avg free;avg max;avg total\n".getBytes(),
+                    "variation;time;total duration;peak free;peak total;avg free;avg total\n".getBytes(),
                     StandardOpenOption.CREATE);
         }
 
-        String line = String.format("%s;%s;%d;%s;%s;%s;%s;%s;%s\n",
+        String line = String.format("%s;%s;%d;%s;%s;%s;%s\n",
                 specifiedVariation,
                 time,
                 duration,
                 (peakFree.isPresent() ? Math.round(peakFree.getAsLong() / (1024 * 1024d)) + "Mb" : "n/a"),
-                (peakMax.isPresent() ? Math.round(peakMax.getAsLong() / (1024 * 1024d)) + "Mb" : "n/a"),
                 (peakTotal.isPresent() ? Math.round(peakTotal.getAsLong() / (1024 * 1024d)) + "Mb" : "n/a"),
                 (avgFree.isPresent() ? Math.round(avgFree.getAsDouble() / (1024 * 1024d)) + "Mb" : "n/a"),
-                (avgMax.isPresent() ? Math.round(avgMax.getAsDouble() / (1024 * 1024d)) + "Mb" : "n/a"),
                 (avgTotal.isPresent() ? Math.round(avgTotal.getAsDouble() / (1024 * 1024d)) + "Mb" : "n/a")
         );
 
