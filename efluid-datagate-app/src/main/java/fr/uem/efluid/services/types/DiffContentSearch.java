@@ -112,7 +112,12 @@ public class DiffContentSearch {
                     }
                 })
                 .sorted(this.comparator)
-                .collect(Collectors.toList());
+                .collect(
+                        Collectors
+                                .groupingBy(p -> p.getKeyValue()))
+                .values()
+                .stream()
+                .map(l -> (l.get(0))).collect(Collectors.toList());
     }
 
 
