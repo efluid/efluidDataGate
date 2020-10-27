@@ -78,7 +78,7 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TABLE_ONLY_KEYS, Pair.of(12, SimulatedTableOnlyKeys.class));
         ENTITY_TYPES.put(TTESTNULLLINK_SRC, Pair.of(13, EfluidTestNullableLinkSource.class));
         ENTITY_TYPES.put(TTESTNULLLINK_DEST, Pair.of(14, EfluidTestNullableLinkDestination.class));
-        ENTITY_TYPES.put(EFLUIDTESTAUDIT, Pair.of(15,EfluidTestAudit.class));
+        ENTITY_TYPES.put(EFLUIDTESTAUDIT, Pair.of(15, EfluidTestAudit.class));
     }
 
     @Autowired
@@ -148,7 +148,7 @@ public class ManagedDatabaseAccess {
     }
 
     private <T> void deleteAll(Class<T> type) {
-        findAll(type).forEach(this::deleteOne);
+        this.em.createQuery("delete from " + type.getName()).executeUpdate();
     }
 
     private <T> List<T> findAll(Class<T> type) {
@@ -289,7 +289,7 @@ public class ManagedDatabaseAccess {
     private Object getMappedValue(Class<?> paramType, String v, String name) {
 
         // Forced null
-        if ("-null-".equals(v)){
+        if ("-null-".equals(v)) {
             return null;
         }
 

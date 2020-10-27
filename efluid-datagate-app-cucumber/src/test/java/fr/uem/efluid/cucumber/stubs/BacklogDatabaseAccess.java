@@ -86,7 +86,7 @@ public class BacklogDatabaseAccess {
         this.exports.deleteAll();
         this.lobs.deleteAll();
         this.attachs.deleteAll();
-        this.index.deleteAll();
+        this.index.dropAll();
         this.commits.deleteAll();
         this.history.deleteAll();
         this.anomalies.deleteAll();

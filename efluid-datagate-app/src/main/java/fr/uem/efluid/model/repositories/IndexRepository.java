@@ -1,11 +1,14 @@
 package fr.uem.efluid.model.repositories;
 
 import com.google.common.collect.Lists;
+import com.hazelcast.internal.jmx.ManagedDescription;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
+import org.hibernate.mapping.Index;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,6 +29,13 @@ import java.util.stream.Stream;
  * @since v0.0.1
  */
 public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpecificationExecutor<IndexEntry> {
+
+    /**
+     * For tests env reset only !
+     */
+    @Query(value = "DELETE FROM INDEXES", nativeQuery = true)
+    @Modifying
+    void dropAll();
 
     /**
      * <p>
@@ -53,7 +63,9 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      */
     long countByCommitUuid(UUID commitUuid);
 
-    @Query("select max(i.timestamp) from IndexEntry i where i.commit.importedTime = (select max(c.importedTime) from Commit c)")
+    @Query(value = "SELECT MAX(i.timestamp) FROM INDEXES i " +
+            "INNER JOIN COMMITS c on c.UUID = i.COMMIT_UUID "+
+            "WHERE C.IMPORTED_TIME = (SELECT MAX(IMPORTED_TIME) FROM COMMITS c)", nativeQuery = true)
     Long findMaxIndexTimestampOfLastImportedCommit();
 
     /**

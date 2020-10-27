@@ -545,8 +545,8 @@ public class CommitService extends AbstractApplicationService {
         LOGGER.debug("Process apply and saving of a new commit with state {} into project {}", prepared.getPreparingState(),
                 prepared.getProjectUuid());
 
-        // Init commit
-        final Commit commit = createCommit(prepared);
+        // Init commit and immediately save it for id gen and link validity
+        final Commit commit = this.commits.save(createCommit(prepared));
 
         LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commit.getUuid());
 
@@ -559,25 +559,24 @@ public class CommitService extends AbstractApplicationService {
 
         LOGGER.info("Prepared index with {} items for new commit {}", entries.size(), commit.getUuid());
 
-        LOGGER.debug("New commit {} of state {} with comment {} prepared with {} index lines",
-                commit.getUuid(), prepared.getPreparingState(), commit.getComment(), entries.size());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("New commit {} of state {} with comment {} prepared with {} index lines",
+                    commit.getUuid(), prepared.getPreparingState(), commit.getComment(), entries.size());
+        }
 
         // Prepare used lobs
         List<LobProperty> newLobs = this.diffs.prepareUsedLobsForIndex(entries, prepared.getDiffLobs());
 
         LOGGER.info("Start saving {} index items for new commit {}", entries.size(), commit.getUuid());
 
-        // Save index and set back to commit with bi-directional link
-        commit.setIndex(this.indexes.saveAll(entries));
+        // Save index
+        this.indexes.saveAll(entries);
 
         LOGGER.info("Start saving {} lobs items for new commit {}", newLobs.size(), commit.getUuid());
 
         // Add commit to lobs and save
         newLobs.forEach(l -> l.setCommit(commit));
         this.lobs.saveAll(newLobs);
-
-        // Updated commit link
-        this.commits.save(commit);
 
         // For merge : apply (will rollback previous steps if error found)
         if (prepared.getPreparingState() == CommitState.MERGED) {
@@ -621,7 +620,7 @@ public class CommitService extends AbstractApplicationService {
         return commit.getUuid();
     }
 
-    LocalDateTime getLastImportedCommitTime(){
+    LocalDateTime getLastImportedCommitTime() {
         return this.commits.findLastImportedCommitTime();
     }
 
