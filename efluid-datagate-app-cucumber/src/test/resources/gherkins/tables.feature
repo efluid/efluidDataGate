@@ -84,3 +84,34 @@ Feature: The managed parameters are specified by table in the dictionary
     And the parameter table for managed table "TTAB_ONE" has the filter clause "value = 'something'"
     And the parameter table for managed table "TTAB_TWO" has the filter clause "value = 'something'"
     And the parameter table for managed table "TTAB_THREE" has the filter clause "value = 'something'"
+
+  Scenario: When a forced filter clause is specified for a dictionary, non compatible tables are displayed
+    Given the existing projects "Default"
+    And the parameter table for managed table "TTAB_ONE" already exists
+    And the parameter table for managed table "TTAB_THREE" already exists
+    And the parameter table for managed table "TTAB_TWO" already exists
+    And the parameter table for managed table "TTAB_FOUR" already exists
+    And the parameter table for managed table "TTAB_FIVE" already exists
+    When the user access to list of parameter tables page
+    And the user asks to update the filter clause for current project with "value = 'something'"
+    Then no error is provided
+    And the non compatible tables for filter clause are :
+      | table     |
+      | TTAB_FOUR |
+      | TTAB_FIVE |
+
+  Scenario: When a forced filter clause is specified for a dictionary, only compatible tables clauses are modified
+    Given the existing projects "Default"
+    And the parameter table for managed table "TTAB_ONE" already exists
+    And the parameter table for managed table "TTAB_THREE" already exists
+    And the parameter table for managed table "TTAB_TWO" already exists
+    And the parameter table for managed table "TTAB_FOUR" already exists
+    And the parameter table for managed table "TTAB_FIVE" already exists
+    When the user access to list of parameter tables page
+    And the user asks to update the filter clause for current project with "value = 'something'"
+    Then no error is provided
+    And the parameter table for managed table "TTAB_ONE" has the filter clause "value = 'something'"
+    And the parameter table for managed table "TTAB_TWO" has the filter clause "value = 'something'"
+    And the parameter table for managed table "TTAB_THREE" has the filter clause "value = 'something'"
+    And the parameter table for managed table "TTAB_FOUR" has the filter clause "1=1"
+    And the parameter table for managed table "TTAB_FIVE" has the filter clause "1=1"

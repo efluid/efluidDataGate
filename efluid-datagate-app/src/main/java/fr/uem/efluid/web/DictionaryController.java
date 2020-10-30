@@ -202,7 +202,7 @@ public class DictionaryController extends CommonController {
             return REDIRECT_SELECT;
         }
 
-        this.dictionaryManagementService.applySingleSelectClauseForDictionary(clause);
+        model.addAttribute("notCompatibleTables", this.dictionaryManagementService.checkAndApplySelectClauseForAllDictionary(clause));
 
         // For success apply message
         model.addAttribute("from", "success_clause");

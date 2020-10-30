@@ -1,12 +1,26 @@
 package fr.uem.efluid.cucumber.steps;
 
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
+import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
+import org.springframework.util.FileCopyUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import java.util.OptionalLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -20,6 +34,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class CommonStepDefs extends CucumberStepDefs {
 
     public static boolean efluidCase = false;
+
+    static String specifiedVariation;
+
+
+    @Given("^the test is a performance standard scenario for variation \"(.*)\"$")
+    public void perf_test_case(String variation) {
+        specifiedVariation = variation;
+        efluidCase = true;
+    }
 
     @Given("^the test is an Efluid standard scenario$")
     public void efluid_test_case() {
@@ -67,6 +90,12 @@ public class CommonStepDefs extends CucumberStepDefs {
     @Given("^ldap auth is enabled with search at \"(.*)\", with login attr \"(.*)\" and email attr \"(.*)\" and this content :$")
     public void ldap_is_specified(String searchBase, String loginAttribute, String mailAttribute, DocString config) {
         enableLdap(config.getContent(), searchBase, loginAttribute, mailAttribute);
+    }
+
+    @Given("^the profiling is started$")
+    public void profiling(){
+        startupTime = System.currentTimeMillis();
+        startProfiling();
     }
 
     @When("^(.+) access to (.+)$")
@@ -127,6 +156,12 @@ public class CommonStepDefs extends CucumberStepDefs {
 
     @Given("^the (.*) generated data in managed table \"(.*)\" :$")
     public void existing_data_in_managed_table(int count, String name, DataTable data) {
+
+        // Variation depends on large test size
+        if(specifiedVariation != null){
+            specifiedVariation = specifiedVariation + " - " + count + " items";
+        }
+
         managedDatabase().initHeavyTab(count, name, data);
     }
 
@@ -243,4 +278,47 @@ public class CommonStepDefs extends CucumberStepDefs {
         assertModelHasSpecifiedProperty("error");
     }
 
+    @Then("^the test process reference values are logged in \"(.*)\"$")
+    public void perf_log(String filename) throws IOException {
+
+        List<BasicProfiler.Stats> stats = stopProfilingAndGetStats();
+
+        // Prepare values
+        OptionalLong peakFree = stats.stream().mapToLong(BasicProfiler.Stats::getFree).max();
+        OptionalLong peakTotal = stats.stream().mapToLong(BasicProfiler.Stats::getTotal).max();
+
+        OptionalDouble avgFree = stats.stream().mapToLong(BasicProfiler.Stats::getFree).average();
+        OptionalDouble avgTotal = stats.stream().mapToLong(BasicProfiler.Stats::getTotal).average();
+
+        String time = FormatUtils.format(LocalDateTime.now());
+        long duration = System.currentTimeMillis() - startupTime;
+
+        Path dest = Paths.get(filename);
+
+        if (!Files.exists(dest)) {
+            Files.write(
+                    dest,
+                    "variation;time;total duration;peak free;peak total;avg free;avg total\n".getBytes(),
+                    StandardOpenOption.CREATE);
+        }
+
+        String line = String.format("%s;%s;%d;%s;%s;%s;%s\n",
+                specifiedVariation,
+                time,
+                duration,
+                (peakFree.isPresent() ? Math.round(peakFree.getAsLong() / (1024 * 1024d)) + "Mb" : "n/a"),
+                (peakTotal.isPresent() ? Math.round(peakTotal.getAsLong() / (1024 * 1024d)) + "Mb" : "n/a"),
+                (avgFree.isPresent() ? Math.round(avgFree.getAsDouble() / (1024 * 1024d)) + "Mb" : "n/a"),
+                (avgTotal.isPresent() ? Math.round(avgTotal.getAsDouble() / (1024 * 1024d)) + "Mb" : "n/a")
+        );
+
+        Files.write(
+                Paths.get(filename),
+                line.getBytes(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.APPEND);
+
+        // Reset variation - no more in perf test
+        specifiedVariation = null;
+    }
 }

@@ -52,6 +52,10 @@ public class BacklogDatabaseAccess {
         return this.index.findByCommitUuid(details.getUuid());
     }
 
+    public long countCommitIndex(UUID commit) {
+        return this.index.countByCommitUuid(commit);
+    }
+
     public UUID searchCommitWithName(Project project, String name) {
         Commit commit = this.commits.findByProject(project).stream()
                 .filter(c -> c.getComment().equals(name))

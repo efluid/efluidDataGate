@@ -1,6 +1,7 @@
 package fr.uem.efluid.cucumber.steps;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.uem.efluid.services.types.DictionaryEntrySummary;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -177,6 +178,15 @@ public class TableStepDefs extends CucumberStepDefs {
     public void the_parameter_table_clause_is(String table, String clause) {
         DictionaryEntry dict = modelDatabase().findDictionaryEntryByProjectAndTableName(getCurrentUserProject(), table);
         assertThat(dict.getWhereClause()).isEqualTo(clause);
+    }
+
+    @Then("^the non compatible tables for filter clause are :$")
+    public void non_compatible_table_for_filter(DataTable data) {
+
+        var expected = data.asMaps().stream().map(t -> t.get("table")).collect(Collectors.toList());
+        var displayed = getCurrentSpecifiedPropertyList("notCompatibleTables", DictionaryEntrySummary.class).stream().map(d -> d.getTableName()).collect(Collectors.toList());
+
+        assertThat(displayed).describedAs("Displayed non compatible tables for filter clause").hasSameElementsAs(expected);
     }
 
     @Then("^the existing tables are displayed$")
