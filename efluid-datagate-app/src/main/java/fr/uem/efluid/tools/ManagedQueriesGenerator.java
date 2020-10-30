@@ -57,6 +57,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     private String updateQueryModel;
     private String deleteQueryModel;
     private String unicityQueryModel;
+    private String checkFilterQueryModel;
     private String joinSubQueryModel;
     private String updateOrInsertLinkedSubQueryModel;
     private String missingLinkClauseModel;
@@ -89,6 +90,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
         this.updateQueryModel = generateUpdateQueryTemplate(rules);
         this.deleteQueryModel = generateDeleteQueryTemplate(rules);
         this.unicityQueryModel = generateUnicityQueryTemplate(rules);
+        this.checkFilterQueryModel = generateFilterCheckQueryTemplate(rules);
         this.joinSubQueryModel = generateJoinSubQueryTemplate(rules);
         this.updateOrInsertLinkedSubQueryModel = generateUpdateOrInsertLinkedSubQueryTemplate(rules);
         this.missingLinkClauseModel = generateSelectMissingLinkWhereClausePartTemplate(rules);
@@ -314,6 +316,19 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
         // select 1 from "TTYPEMATERIEL" cur where cur."ID"<50 group by "SERIE" HAVING COUNT("SERIE") > 1 ;
         return String.format(this.unicityQueryModel, tablename, filterClause, prepareSimpleSelectPart(columnNames));
+    }
+
+    /**
+     * To check if the filter is valid for table
+     *
+     * @param tablename
+     * @param filterClause
+     * @return query for the specified parameter table
+     */
+    public String producesCheckFilterQuery(String tablename, String filterClause) {
+
+        // select 1 from "TTYPEMATERIEL" cur where [filter] ;
+        return String.format(this.checkFilterQueryModel, tablename, filterClause);
     }
 
     /**
@@ -777,6 +792,17 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     private static String generateUnicityQueryTemplate(QueryGenerationRules rules) {
         return "SELECT 1 FROM " + (rules.isTableNamesProtected() ? "\"%s\"" : "%s") +
                 " cur WHERE %s GROUP BY %s HAVING COUNT(*) > 1";
+    }
+
+    /**
+     * Generate the template for basic filter run
+     *
+     * @param rules
+     * @return
+     */
+    private static String generateFilterCheckQueryTemplate(QueryGenerationRules rules) {
+        return "SELECT 1 FROM " + (rules.isTableNamesProtected() ? "\"%s\"" : "%s") +
+                " cur WHERE %s";
     }
 
     /**

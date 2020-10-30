@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.BadSqlGrammarException;
 import org.springframework.jdbc.InvalidResultSetAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.Nullable;
@@ -43,13 +44,15 @@ import static fr.uem.efluid.utils.ErrorType.*;
  * <li><b>PostgreSQL 10.1</b> (should be OK on all 9.x + versions)</li>
  * <li><b>Oracle 11g</b> (Express edition) with driver OJDBC14 10.x</li>
  * <li><b>Oracle 12c</b> (Express edition) with driver OJDBC8 12.x</li>
+ * <li><b>Oracle 18c</b></li>
+ * <li><b>Oracle 18.2c</b> XE</li>
  * </ul>
  * Due to over-complicated extraction model used on Oracle JDBC drivers, it is much slower
  * with Oracle databases, but still OK for application needs
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
 public abstract class AbstractDatabaseDescriptionRepository implements DatabaseDescriptionRepository {
@@ -179,6 +182,20 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
         } catch (InvalidResultSetAccessException e) {
             throw new ApplicationException(VALUE_CHECK_FAILED,
                     "Cannot extract resultset for column unicity on table " + tableName + ", columns " + colNames, e);
+        }
+    }
+
+    @Override
+    public boolean isFilterCanApply(String tableName, String filterClause) {
+
+        // Basic exec test - if query fails, filter cannot be applied to table
+        try {
+            this.managedSource.queryForRowSet(this.generator.producesCheckFilterQuery(tableName, filterClause)).next();
+            // If success, even without result, the filter can apply
+            return true;
+        } catch (BadSqlGrammarException e) {
+            // If failed, filter is not valid
+            return false;
         }
     }
 
