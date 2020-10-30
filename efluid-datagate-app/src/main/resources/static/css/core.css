@@ -224,7 +224,7 @@ select.select-column {
     padding-top: 6px;
 }
 
-.dictionary-summary .reducer, .domain-summary .reducer, .diff-remarks .reducer {
+.dictionary-summary .reducer, .domain-summary .reducer, .diff-remarks .reducer, .table-remarks .reducer {
     display: block;
     width: 16px;
     height: 16px;
@@ -537,15 +537,15 @@ select.select-column {
     font-size: 14px;
 }
 
-.diff-remarks {
+.diff-remarks, .table-remarks {
     padding: 3px;
 }
 
-.diff-remarks ul {
+.diff-remarks ul, .table-remarks ul  {
     padding-top: 10px;
 }
 
-.diff-remarks ul li span{
+.diff-remarks ul li span, .table-remarks ul li span{
     color: white;
 }
 
