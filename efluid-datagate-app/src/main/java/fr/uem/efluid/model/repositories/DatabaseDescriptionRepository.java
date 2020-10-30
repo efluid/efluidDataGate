@@ -12,7 +12,7 @@ import java.util.Collection;
  * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 public interface DatabaseDescriptionRepository {
@@ -32,12 +32,23 @@ public interface DatabaseDescriptionRepository {
     boolean isColumnSetHasUniqueValue(String tableName, Collection<String> colNames, String filterClause);
 
     /**
+     * Check if the specified filterClause can apply on specified table. Run a basic select query using the filter, and check if the
+     * qury can run without error
+     *
+     * @param tableName
+     * @param filterClause
+     * @return
+     */
+    boolean isFilterCanApply(String tableName, String filterClause);
+
+    /**
      * Force refresh on cached data if any
      */
     void refreshAll();
 
     /**
      * Force refresh on one specified table only
+     *
      * @param tablename
      */
     void refreshTable(String tablename);

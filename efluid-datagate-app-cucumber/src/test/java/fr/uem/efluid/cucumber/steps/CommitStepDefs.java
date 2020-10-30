@@ -138,6 +138,11 @@ public class CommitStepDefs extends CucumberStepDefs {
         });
     }
 
+    @Then("^the saved commit content has (.*) lines$")
+    public void then_commit_contains_lobs(long size) {
+        assertThat(backlogDatabase().countCommitIndex(getSavedCommitUuid())).isEqualTo(size);
+    }
+
     @Then("^the list of commits is :$")
     public void commit_list(DataTable table) {
 

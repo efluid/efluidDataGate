@@ -446,20 +446,29 @@ public class DictionaryManagementService extends AbstractApplicationService {
      * Overwrite the existing clause
      *
      * @param clause a new select clause to apply
+     * @return tables for which the apply failed
      */
-    public void applySingleSelectClauseForDictionary(String clause) {
+    public List<DictionaryEntrySummary> checkAndApplySelectClauseForAllDictionary(String clause) {
 
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
         Collection<DictionaryEntry> tables = this.dictionary.findAllByProjectMappedToUuid(project).values();
 
+        List<DictionaryEntrySummary> failed = new ArrayList<>();
+
         tables.forEach(t -> {
-            t.setWhereClause(clause);
-            t.setUpdatedTime(LocalDateTime.now());
+            if (this.metadatas.isFilterCanApply(t.getTableName(), clause)) {
+                t.setWhereClause(clause);
+                t.setUpdatedTime(LocalDateTime.now());
+            } else {
+                failed.add(DictionaryEntrySummary.fromEntity(t, ""));
+            }
         });
 
         this.dictionary.saveAll(tables);
+
+        return failed;
     }
 
     /**
