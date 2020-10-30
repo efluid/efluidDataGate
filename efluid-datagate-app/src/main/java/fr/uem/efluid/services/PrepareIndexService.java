@@ -209,20 +209,17 @@ public class PrepareIndexService extends AbstractApplicationService {
             searchTimeStamp = System.currentTimeMillis();
         }
 
-        // Index "previous", sorted
-        Stream<IndexEntry> localIndexToTimeStamp = this.indexes.findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(entry, searchTimeStamp);
-
         preparation.incrementProcessStep();
 
+        final Map<String, String> lastKnewPreviousContent = new HashMap<>();
+
         // Build "previous" content from index
-        Map<String, String> previousContent = this.regeneratedParamaters.regenerateKnewContent(localIndexToTimeStamp, null);
+        Map<String, String> previousContent = this.regeneratedParamaters.regenerateKnewContentBefore(entry, searchTimeStamp, i -> lastKnewPreviousContent.put(i.getKeyValue(), i.getPrevious()));
 
         // Will be populated from extraction
         final Map<String, String> actualContent = new HashMap<>();
 
         // Identify the last knew previous for lines without changes (used for merged item build)
-        final Map<String, String> lastKnewPreviousContent = new HashMap<>();
-        localIndexToTimeStamp.forEach(i -> lastKnewPreviousContent.put(i.getKeyValue(), i.getPrevious()));
 
         preparation.incrementProcessStep();
 

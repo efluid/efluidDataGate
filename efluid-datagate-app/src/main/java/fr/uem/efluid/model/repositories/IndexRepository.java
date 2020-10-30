@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.hazelcast.internal.jmx.ManagedDescription;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import org.hibernate.mapping.Index;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -64,7 +65,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     long countByCommitUuid(UUID commitUuid);
 
     @Query(value = "SELECT MAX(i.timestamp) FROM INDEXES i " +
-            "INNER JOIN COMMITS c on c.UUID = i.COMMIT_UUID "+
+            "INNER JOIN COMMITS c on c.UUID = i.COMMIT_UUID " +
             "WHERE C.IMPORTED_TIME = (SELECT MAX(IMPORTED_TIME) FROM COMMITS c)", nativeQuery = true)
     Long findMaxIndexTimestampOfLastImportedCommit();
 
@@ -76,6 +77,28 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     Stream<IndexEntry> findByDictionaryEntryOrderByTimestampAsc(DictionaryEntry dictionaryEntry);
 
     Stream<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(DictionaryEntry dictionaryEntry, long timestamp);
+
+    @Query(value = "SELECT i.* FROM INDEXES i " +
+            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
+            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
+    Stream<ProjectedIndexEntry> findAccumulableRegeneratedContentForDictionaryEntry(@Param("dictUuid") UUID dictionaryEntryUuid, @Param("pivot") long timestamp);
+
+    @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD FROM INDEXES i " +
+            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
+            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid AND i.ACTION != 'REMOVE'", nativeQuery = true)
+    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntry(@Param("dictUuid") UUID dictionaryEntryUuid);
+
+    /**
+     * For database based regenerate process on diff
+     *
+     * @param dictionaryEntryUuid
+     * @return regenerated content for a dictionary Entry, with minimal steps
+     */
+    default Map<String, String> findRegeneratedContentForDictionaryEntry(UUID dictionaryEntryUuid) {
+        Map<String, String> result = new HashMap<>(10000);
+        _internal_findRegeneratedContentForDictionaryEntry(dictionaryEntryUuid).forEach(t -> result.put((String) t[0], (String) t[1]));
+        return result;
+    }
 
     /**
      * <b><font color="red">Query for internal use only</font></b>
@@ -127,5 +150,57 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
                         .collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v))));
 
         return result;
+    }
+
+    /**
+     * A model compliant with IndexEntry, but for pur projection use
+     */
+    class ProjectedIndexEntry implements DiffLine {
+
+        private final UUID dictionaryEntryUuid;
+        private final IndexAction action;
+        private final long timestamp;
+        private final String previous;
+        private final String keyValue;
+        private final String payload;
+
+        public ProjectedIndexEntry(UUID dictionaryEntryUuid, IndexAction action, long timestamp, String previous, String keyValue, String payload) {
+            this.dictionaryEntryUuid = dictionaryEntryUuid;
+            this.action = action;
+            this.timestamp = timestamp;
+            this.previous = previous;
+            this.keyValue = keyValue;
+            this.payload = payload;
+        }
+
+        @Override
+        public UUID getDictionaryEntryUuid() {
+            return dictionaryEntryUuid;
+        }
+
+        @Override
+        public IndexAction getAction() {
+            return action;
+        }
+
+        @Override
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        @Override
+        public String getPrevious() {
+            return previous;
+        }
+
+        @Override
+        public String getKeyValue() {
+            return keyValue;
+        }
+
+        @Override
+        public String getPayload() {
+            return payload;
+        }
     }
 }

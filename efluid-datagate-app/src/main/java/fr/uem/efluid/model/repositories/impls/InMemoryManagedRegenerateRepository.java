@@ -1,6 +1,5 @@
 package fr.uem.efluid.model.repositories.impls;
 
-import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
@@ -12,13 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -26,10 +21,9 @@ import java.util.stream.Stream;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
-@Repository
 @Transactional
 public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRepository {
 
@@ -49,33 +43,29 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
 
         LOGGER.debug("Regenerating values from local index for managed table {}", parameterEntry.getTableName());
 
+        final Map<String, String> lines = new HashMap<>(10000);
+
         // Will process backlog by its natural order
-        return regenerateKnewContent(this.coreIndex.findByDictionaryEntryOrderByTimestampAsc(parameterEntry), null);
+        this.coreIndex.findByDictionaryEntryOrderByTimestampAsc(parameterEntry)
+                .forEach(buildKnewContent(lines));
+
+        return lines;
     }
 
-    /**
-     * @param specifiedIndex
-     * @return
-     */
     @Override
-    public <D extends DiffLine> Map<String, String> regenerateKnewContent(
-            final Stream<D> specifiedIndex,
-            final Consumer<D> eachLineAccumulator) {
+    public Map<String, String> regenerateKnewContentBefore(
+            DictionaryEntry dictionaryEntry,
+            long before,
+            final Consumer<DiffLine> eachLineAccumulator) {
 
-        LOGGER.debug("Regenerating values from specified index");
+        LOGGER.debug("Regenerating values for table {} before {}", dictionaryEntry.getTableName(), before);
 
         // Content for playing back the backlog
         final Map<String, String> lines = new HashMap<>(10000);
 
-        // Sorting must be specified at list level as the order may be non
-        // consistent regarding database model for timestamp based sort
-
-        // Switch process with minimal check on accumulator content
-        if (eachLineAccumulator != null) {
-            specifiedIndex.forEach(buildKnewContentAndAccumulate(lines, eachLineAccumulator));
-        } else {
-            specifiedIndex.forEach(buildKnewContent(lines));
-        }
+        this.coreIndex.findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(dictionaryEntry, before)
+                .peek(eachLineAccumulator)
+                .forEach(buildKnewContent(lines));
 
         return lines;
     }
@@ -93,23 +83,6 @@ public class InMemoryManagedRegenerateRepository implements ManagedRegenerateRep
      */
     private static <D extends DiffLine> Consumer<D> buildKnewContent(final Map<String, String> lines) {
         return line -> {
-            // Addition : add / update directly
-            if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {
-                lines.put(line.getKeyValue(), line.getPayload());
-            } else {
-                lines.remove(line.getKeyValue());
-            }
-        };
-    }
-
-    /**
-     * Embed accumulator call for limited stream peek / forEach process
-     */
-    private static <D extends DiffLine> Consumer<D> buildKnewContentAndAccumulate(
-            final Map<String, String> lines,
-            final Consumer<D> eachLineAccumulator) {
-        return line -> {
-            eachLineAccumulator.accept(line);
             // Addition : add / update directly
             if (line.getAction() == IndexAction.ADD || line.getAction() == IndexAction.UPDATE) {
                 lines.put(line.getKeyValue(), line.getPayload());

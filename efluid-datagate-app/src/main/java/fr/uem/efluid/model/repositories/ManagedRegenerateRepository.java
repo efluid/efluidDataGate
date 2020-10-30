@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.0.1
  */
 public interface ManagedRegenerateRepository {
@@ -42,12 +42,13 @@ public interface ManagedRegenerateRepository {
      * until specified ldt, then with specified index (adapted for merge process)
      * </p>
      *
-     * @param specifiedIndex      found index stream access. Sorted. The process will keep the index order
-     * @param eachLineAccumulator an optional accumulator processing each line of specified index, to allow to combine some processes in one stream iteration
+     * @param timestamp      time before which index must be loaded
+     * @param eachLineAccumulator an accumulator processing each line of specified found index - before regenerate finalisation -, to allow to combine some processes in one stream iteration
      */
-    <D extends DiffLine> Map<String, String> regenerateKnewContent(
-            /* sorted */final Stream<D> specifiedIndex,
-            /* nullable */ final Consumer<D> eachLineAccumulator);
+    Map<String, String> regenerateKnewContentBefore(
+            DictionaryEntry parameterEntry,
+            long timestamp,
+            final Consumer<DiffLine> eachLineAccumulator);
 
     /**
      * Refresh cached data if any
