@@ -112,12 +112,7 @@ public class DiffContentSearch {
                     }
                 })
                 .sorted(this.comparator)
-                .collect(
-                        Collectors
-                                .groupingBy(p -> p.getKeyValue()))
-                .values()
-                .stream()
-                .map(l -> (l.get(0))).collect(Collectors.toList());
+                .collect(Collectors.toList());
     }
 
 
@@ -133,12 +128,12 @@ public class DiffContentSearch {
         // Use simple sorting on content
         return content.stream()
                 .peek(i -> {
-            if (i.getTableName() == null) {
-                DictionaryEntrySummary dic = referencedTables.get(i.getDictionaryEntryUuid());
-                i.setTableName(dic.getTableName());
-                i.setDomainName(dic.getDomainName());
-            }
-        })
+                    if (i.getTableName() == null) {
+                        DictionaryEntrySummary dic = referencedTables.get(i.getDictionaryEntryUuid());
+                        i.setTableName(dic.getTableName());
+                        i.setDomainName(dic.getDomainName());
+                    }
+                })
                 .sorted(this.comparator)
                 .collect(Collectors.toList());
     }
@@ -276,16 +271,19 @@ public class DiffContentSearch {
                                 extractor = e -> e.getAction().name();
                         }
 
-                        // Support chained comparator
-                        if (this.comparator == null) {
-                            this.comparator = Comparator.comparing(extractor);
-                        } else {
-                            this.comparator = this.comparator.thenComparing(extractor);
-                        }
+                        // Init the corresponding comparator for extracted field
+                        Comparator<PreparedIndexEntry> newComparator = Comparator.comparing(extractor);
 
                         // Apply order
                         if (sort.getTwo() == Sort.DESC) {
-                            this.comparator = this.comparator.reversed();
+                            newComparator = newComparator.reversed();
+                        }
+
+                        // Support chained comparator
+                        if (this.comparator == null) {
+                            this.comparator = newComparator;
+                        } else {
+                            this.comparator = this.comparator.thenComparing(newComparator);
                         }
 
                     });
