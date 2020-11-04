@@ -54,6 +54,7 @@ datagate-efluid:
             username-attribute: uid
             mail-attribute: mail
             use-auth-binding: true
+            technical-user-token: 1ddad6a5a7a046a2ae92b5b9b66fa5fd
 
     details:
         version: @project.version@
