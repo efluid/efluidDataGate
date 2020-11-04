@@ -517,7 +517,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
             return keyRef + parameterEntry.getSelectClause();
         }
 
-        return parameterEntry.getSelectClause() != null ? parameterEntry.getSelectClause() : "";
+        return "DISTINCT " + (parameterEntry.getSelectClause() != null ? parameterEntry.getSelectClause() : "");
     }
 
     /**
