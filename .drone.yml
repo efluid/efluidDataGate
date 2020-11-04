@@ -16,7 +16,7 @@ steps:
       - name: mvncache
         path: /root/.m2
     commands:
-      - mvn verify
+      - mvn verify -Dmaven.javadoc.skip=true -Dcucumber.filter.tags="not @perfCheck" -DargLine="-Xmx1024m"
   - name: publish-coverage
     image: plugins/codecov
     settings:
