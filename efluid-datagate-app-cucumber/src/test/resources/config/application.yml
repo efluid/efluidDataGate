@@ -62,7 +62,9 @@ datagate-efluid:
 ## TECH FEATURES CUSTOM
 spring:
 
-    main.allow-bean-definition-overriding: true
+    main:
+        banner-mode: "off"
+        allow-bean-definition-overriding: true
 
     profiles:
         active: test
@@ -99,3 +101,11 @@ server:
     port: 8099
     servlet:
         context-path:
+
+## TEST LOGGING CONFIG
+logging:
+    level:
+        fr.uem.efluid: ERROR
+        org.flywaydb: ERROR
+        extractor.queries: ERROR
+        identifier.queries: ERROR

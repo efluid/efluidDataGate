@@ -1,5 +1,6 @@
 Feature: Performance for diff generation and merge generation are controlled
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - diff only - small size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - diff only"
     And the 1000 generated data in managed table "TTESTMULTIDATATYPE" :
@@ -10,6 +11,7 @@ Feature: Performance for diff generation and merge generation are controlled
     And the diff is completed
     Then the test process reference values are logged in "./perf-spec-results.csv"
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - diff only - medium size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - diff only"
     And the 10000 generated data in managed table "TTESTMULTIDATATYPE" :
@@ -20,6 +22,7 @@ Feature: Performance for diff generation and merge generation are controlled
     And the diff is completed
     Then the test process reference values are logged in "./perf-spec-results.csv"
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - diff only - large size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - diff only"
     And the 50000 generated data in managed table "TTESTMULTIDATATYPE" :
@@ -30,6 +33,7 @@ Feature: Performance for diff generation and merge generation are controlled
     And the diff is completed
     Then the test process reference values are logged in "./perf-spec-results.csv"
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - save only - small size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - save only"
     And the 1000 generated data in managed table "TTESTMULTIDATATYPE" :
@@ -43,6 +47,7 @@ Feature: Performance for diff generation and merge generation are controlled
     Then the saved commit content has 1000 lines
     Then the test process reference values are logged in "./perf-spec-results.csv"
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - save only - medium size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - save only"
     And the 10000 generated data in managed table "TTESTMULTIDATATYPE" :
@@ -56,6 +61,7 @@ Feature: Performance for diff generation and merge generation are controlled
     Then the saved commit content has 10000 lines
     Then the test process reference values are logged in "./perf-spec-results.csv"
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - save only - large size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - save only"
     And the 50000 generated data in managed table "TTESTMULTIDATATYPE" :
@@ -69,6 +75,7 @@ Feature: Performance for diff generation and merge generation are controlled
     Then the saved commit content has 50000 lines
     Then the test process reference values are logged in "./perf-spec-results.csv"
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - full - small size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - full"
     And the 1000 generated data in managed table "TTESTMULTIDATATYPE" :
@@ -82,6 +89,7 @@ Feature: Performance for diff generation and merge generation are controlled
     Then the saved commit content has 1000 lines
     Then the test process reference values are logged in "./perf-spec-results.csv"
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - full - medium size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - full"
     And the 10000 generated data in managed table "TTESTMULTIDATATYPE" :
@@ -95,6 +103,7 @@ Feature: Performance for diff generation and merge generation are controlled
     Then the saved commit content has 10000 lines
     Then the test process reference values are logged in "./perf-spec-results.csv"
 
+  @perfCheck
   Scenario: A diff process with large data follow specification references - full - large size
     Given the test is a performance standard scenario for variation "perf 051 in db - oracle - full"
     And the 50000 generated data in managed table "TTESTMULTIDATATYPE" :
