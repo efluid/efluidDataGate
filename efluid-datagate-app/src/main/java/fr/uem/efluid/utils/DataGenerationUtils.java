@@ -160,6 +160,7 @@ public class DataGenerationUtils {
         entry.setDictionaryEntry(de);
         entry.setPayload(payload);
         entry.setCommit(com);
+        entry.setTimestamp(System.currentTimeMillis());
 
         return entry;
     }

@@ -1,22 +1,27 @@
 package fr.uem.efluid.model.repositories;
 
 import com.google.common.collect.Lists;
-import com.hazelcast.internal.jmx.ManagedDescription;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
-import org.hibernate.mapping.Index;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.sql.Clob;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -86,7 +91,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD FROM INDEXES i " +
             "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
             "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid AND i.ACTION != 'REMOVE'", nativeQuery = true)
-    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntry(@Param("dictUuid") UUID dictionaryEntryUuid);
+    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntry(@Param("dictUuid") String dictionaryEntryUuid);
 
     /**
      * For database based regenerate process on diff
@@ -96,7 +101,8 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      */
     default Map<String, String> findRegeneratedContentForDictionaryEntry(UUID dictionaryEntryUuid) {
         Map<String, String> result = new HashMap<>(10000);
-        _internal_findRegeneratedContentForDictionaryEntry(dictionaryEntryUuid).forEach(t -> result.put((String) t[0], (String) t[1]));
+        _internal_findRegeneratedContentForDictionaryEntry(dictionaryEntryUuid.toString())
+                .forEach(projectionAsContentMap(result));
         return result;
     }
 
@@ -150,6 +156,32 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
                         .collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v))));
 
         return result;
+    }
+
+    private Consumer<Object[]> projectionAsContentMap(Map<String, String> result) {
+        return (l) -> {
+            if (l[0] != null) {
+                // Internal convert to managed string - would fail if content > 2^32 bits
+                Clob content = (Clob) l[1];
+                result.put(l[0].toString(), clobToString(content, 1024).toString());
+            }
+        };
+    }
+
+    private static String clobToString(Clob clob, int bufferSize) {
+        StringBuilder stringBuilder = new StringBuilder(bufferSize);
+        try (Reader reader = clob.getCharacterStream()) {
+            char[] buffer = new char[bufferSize];
+            while (true) {
+                int amountRead = reader.read(buffer, 0, bufferSize);
+                if (amountRead == -1) {
+                    return stringBuilder.toString();
+                }
+                stringBuilder.append(buffer, 0, amountRead);
+            }
+        } catch (IOException | SQLException e) {
+            throw new ApplicationException(ErrorType.REGENERATE_ERROR, "Couldn't get current content clob as string", e);
+        }
     }
 
     /**

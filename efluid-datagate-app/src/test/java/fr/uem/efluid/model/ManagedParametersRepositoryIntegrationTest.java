@@ -25,10 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
  * @version 1
  * @since v0.0.1
  */
-@Transactional(isolation = Isolation.READ_UNCOMMITTED)
 @RunWith(SpringRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = {IntegrationTestConfig.class})
+@Transactional(isolation = Isolation.READ_UNCOMMITTED)
 public class ManagedParametersRepositoryIntegrationTest {
 
     @Autowired
@@ -49,6 +49,13 @@ public class ManagedParametersRepositoryIntegrationTest {
                     .collect(Collectors.toMap(ContentLine::getKeyValue, ContentLine::getPayload));
             this.tester.assertDbContentIs(raw, "diff7/actual.csv");
         }
+    }
+
+    @Test
+    public void testRegenerateKnewContentUltraLow() {
+        this.tester.setupDatabase("diff10");
+        Map<String, String> raw = this.regenerated.regenerateKnewContent(this.tester.dict());
+        this.tester.assertDbContentIs(raw, "diff10/knew.csv");
     }
 
     @Test

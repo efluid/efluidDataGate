@@ -5,6 +5,7 @@
 <div th:fragment="error-display (code,payload)">
 			<span th:if="${code}">
 				<span th:switch="${code.name()}">
+					<p th:case="'REGENERATE_ERROR'">La regneration des données est impossible. Vérifiez le contenu de l'index Datagate</p>
 					<p th:case="'EXTRACTION_ERROR'">L'extraction est impossible. Vérifiez la configuration de la base de données gérée</p>
 					<p th:case="'PREPARATION_INTERRUPTED'">La préparation du diff a été interrompue</p>
 					<p th:case="'PREPARATION_BIZ_FAILURE'">Le traitement du diff a rencontré une erreur pour la table <span th:text="${payload}">table</span></p>
