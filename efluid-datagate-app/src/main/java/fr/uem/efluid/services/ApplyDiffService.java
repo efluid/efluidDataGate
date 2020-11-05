@@ -107,9 +107,10 @@ public class ApplyDiffService extends AbstractApplicationService {
     public SearchHistoryPage getHistory(int pageIndex, String search) {
 
         String validSearch = search == null || "".equals(search.trim()) || "*".equals(search.trim()) ? DEFAULT_HISTORY_SEARCH : DEFAULT_HISTORY_SEARCH + search + DEFAULT_HISTORY_SEARCH;
+        UUID projectId = this.projectService.getCurrentSelectedProject().getUuid();
 
         return SearchHistoryPage.fromPage(pageIndex, search,
-                this.history.findByQueryLikeOrderByTimestampDesc(validSearch, PageRequest.of(pageIndex, this.historyPageSize)));
+                this.history.findByQueryLikeAndProjectUuidOrderByTimestampDesc(validSearch, projectId, PageRequest.of(pageIndex, this.historyPageSize)));
     }
 
     /**
