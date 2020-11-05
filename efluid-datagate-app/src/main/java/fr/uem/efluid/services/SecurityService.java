@@ -144,6 +144,7 @@ public class SecurityService extends AbstractApplicationService {
 
         return this.accounts.findExistingUserByLogin(login)
                 .map(UserDetails::fromEntity)
+                .filter(user -> !user.getLogin().equals("technical-user")) //hide user technic from list
                 .orElseThrow(() -> new ApplicationException(ErrorType.OTHER, "User not found"));
     }
 
@@ -153,6 +154,7 @@ public class SecurityService extends AbstractApplicationService {
     public List<UserDetails> getAllUserDetails() {
         return this.accounts.findAllExistingUsers().stream()
                 .map(UserDetails::fromEntity)
+                .filter(user -> !user.getLogin().equals("technical-user")) //hide user technic from list
                 .collect(Collectors.toList());
     }
 

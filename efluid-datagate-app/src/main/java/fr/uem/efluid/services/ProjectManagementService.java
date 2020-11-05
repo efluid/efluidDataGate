@@ -51,6 +51,8 @@ public class ProjectManagementService extends AbstractApplicationService {
     @Autowired
     private AccountProvider accountProvider;
 
+    private ProjectManagementService projectService;
+
     /**
      *
      */
@@ -170,6 +172,11 @@ public class ProjectManagementService extends AbstractApplicationService {
         User user = reloadCurrentUser();
         user.getPreferedProjects().add(project);
         this.accountProvider.updateUser(user);
+
+        // Also add it automatically in list projects of technic user
+        User technic = this.accountProvider.findExistingUserByLogin("technical-user").get();
+        technic.getPreferedProjects().add(project);
+        this.accountProvider.updateUser(technic);
 
         return ProjectData.fromEntity(project);
     }
