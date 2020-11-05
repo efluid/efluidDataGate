@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.UUID;
+
 /**
  * @author elecomte
  * @version 1
@@ -21,6 +23,6 @@ public interface ApplyHistoryEntryRepository extends JpaRepository<ApplyHistoryE
      * @param pageable Page detail
      * @return Page of ApplyHistoryEntry
      */
-    Page<ApplyHistoryEntry> findByQueryLikeOrderByTimestampDesc(String query, Pageable pageable);
+    Page<ApplyHistoryEntry> findByQueryLikeAndProjectUuidOrderByTimestampDesc(String query, UUID ProjectId, Pageable pageable);
 
 }
