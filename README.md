@@ -222,6 +222,26 @@ En utilisant les connexions MANAGER et DEMO configurées, installer les données
 * Pour DEMO, utiliser le script `examples/install_init_oracle_demo.sql` : un ensemble de données de test pour une BDD gérée est créé
 * Pour MANAGER, utiliser le script `examples/install_init_oracle_manager.sql` : Le schéma de fonctionnement de l'application est créé (pas besoin d'utiliser le DDL HBM comme cela)
 
+>##### 5/ Connexion à l'application avec un utilisateur technique
+ 
+ L'utilisateur technique a été créée pour permettre l'execution des services REST via l'utilisation de CURL sans avoir besoin 
+ de se connecter à l'interface de l'application.
+ 
+ À chaque lancement de l'application l'utilisateur technique est rajouté dans la base de donnée s'il n'existe pas.
+
+ ```
+login: technical-user
+password: technical-user
+email: datagate@efluid.com
+```
+
+ Le fichier application-dev.yml contient le token de l'utilisateur technique nécessaire pour effectuer des requêtes.
+ 
+ ```
+security:
+    technical-user-token: 8f78b69a9e544db0b298d66ddf9f81b5
+```
+
 ### Création de la configuration spécifique du développeur
 
 Créer un fichier application-dev.yml sur la base de cet exemple (ici pour utiliser des instances oracles locales montées sur `localhost:49121` avec les PWD par défaut): 
@@ -279,25 +299,6 @@ server:
 
 > Les fichiers `*.yml` sont gitignorés dans le dossier resources/config de l'app. Il est possible d'y gérer sa conf personnelle
 >
->##### 5/ Connexion à l'application avec un utilisateur technique
- 
- L'utilisateur technique a été créée pour permettre l'execution des services REST via l'utilisation de CURL sans avoir besoin 
- de se connecter à l'interface de l'application.
- 
- À chaque lancement de l'application l'utilisateur technique est rajouté dans la base de donnée s'il n'existe pas.
-
- ```
-login: technical-user
-password: technical-user
-email: datagate@efluid.com
-```
-
- Le fichier application-dev.yml contient le token de l'utilisateur technique nécessaire pour effectuer des requêtes.
- 
- ```
-security:
-    technical-user-token: 8f78b69a9e544db0b298d66ddf9f81b5
-```
  
  *Pour cela, utiliser comme paramètres* : 
  
