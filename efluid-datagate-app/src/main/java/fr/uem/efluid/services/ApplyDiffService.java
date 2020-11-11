@@ -1,11 +1,9 @@
 package fr.uem.efluid.services;
 
 import fr.uem.efluid.model.DiffLine;
-import fr.uem.efluid.model.entities.ApplyHistoryEntry;
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
-import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.RollbackLine;
 import fr.uem.efluid.services.types.SearchHistoryPage;
 import org.slf4j.Logger;
@@ -16,6 +14,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +55,21 @@ public class ApplyDiffService extends AbstractApplicationService {
     @Autowired
     private ProjectManagementService projectService;
 
+    @Autowired
+    private CommitRepository commits;
+
+    @Autowired
+    private IndexRepository index;
+
+    @Autowired
+    private VersionRepository versions;
+
+    @Autowired
+    private ProjectRepository project;
+
+    @Autowired
+    private PilotableCommitPreparationService pilotableCommitService;
+
     /**
      * <p>
      * Due to specific transactional process required on managed DB updated by this
@@ -93,6 +108,62 @@ public class ApplyDiffService extends AbstractApplicationService {
                         .runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()), lobs,
                                 project),
                 true);
+    }
+
+    /**
+     * <p>
+     * This method is used to revert lot
+     * </p>
+     *
+     * @param uuid id of the commit to revert
+     */
+
+    public void revertLot(String uuid){
+
+        List<IndexEntry> toUpdate = new ArrayList<>();
+        List<IndexEntry> previous = this.index.getIndexEntriesByCommitUuid(uuid); //get current idx entries for lot
+
+        PilotedCommitPreparation<?> prepare = this.pilotableCommitService.startLocalCommitPreparation(false); //started preparing a commit
+
+        //created a new commit
+        Commit commit = new Commit();
+        commit.setCreatedTime(LocalDateTime.now());
+        commit.setUser(new User(this.holder.getCurrentUser().getLogin()));
+        commit.setOriginalUserEmail(this.holder.getCurrentUser().getEmail());
+        commit.setState(prepare.getPreparingState());
+        commit.setProject(this.project.findSelectedProjectForUserLogin(this.holder.getCurrentUser().getLogin()));
+        commit.setVersion(this.versions.getLastVersionForProject(this.project.findSelectedProjectForUserLogin(this.holder.getCurrentUser().getLogin())));
+        commit.setComment("Revert");
+
+        // Prepared commit uuid
+        UUID commitUUID = UUID.randomUUID();
+
+        // UUID generate (not done by HBM / DB)
+        commit.setUuid(commitUUID);
+
+        //revert each entries of idx
+        previous.forEach(
+                i -> {
+                    String tmp = i.getPayload();
+                    i.setPayload(i.getPrevious());
+                    i.setPrevious(tmp);
+
+                    if(i.getAction().equals(IndexAction.ADD)) {
+                        i.setAction(IndexAction.REMOVE);
+                    } else if (i.getAction().equals(IndexAction.REMOVE)){
+                        i.setAction(IndexAction.ADD);
+                    } else {
+                        i.setAction(i.getAction());
+                    }
+
+                    toUpdate.add(i);
+
+                });
+
+        commit.setIndex(toUpdate);
+
+        this.index.saveAll(toUpdate);
+        this.commits.save(commit);
     }
 
     /**

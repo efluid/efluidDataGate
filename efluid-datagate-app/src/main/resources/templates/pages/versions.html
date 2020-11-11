@@ -43,7 +43,7 @@
                      <td id="updatedTime" th:class="${version.name}" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
                          <span class="float-right">
-                            <button th:if="${version.canUpdate}" th:id="${version.name}" class="updateButton btn btn-success btn-sm">Mettre à jour</button>
+                            <button  th:id="${version.name}" class="updateButton btn btn-success btn-sm">Mettre à jour</button>
                             <button th:if="!${ dictionaryManagementService.isVersionLinkedToLot(version.uuid) }" class="deleteButton btn btn-danger btn-sm" style="margin-left:10px;">Supprimer</button>
                             <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm" style="margin-left:10px;">Comparer</a>
                          </span>

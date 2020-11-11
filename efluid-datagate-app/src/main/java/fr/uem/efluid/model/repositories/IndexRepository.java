@@ -34,6 +34,17 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     List<IndexEntry> findByCommitUuid(UUID commitUuid);
 
     /**
+     * Get all index entries
+     *
+     * @param commitUuid selected commit
+     * @return list index
+     */
+    @Query(value = "select i.* "
+            + "from INDEXES i "
+            + "where i.COMMIT_UUID = :commitUuid", nativeQuery = true)
+    List<IndexEntry> getIndexEntriesByCommitUuid(@Param("commitUuid") String commitUuid);
+
+    /**
      * All index lines without "previous" value for a specified commit
      *
      * @param commitUuid selected commit

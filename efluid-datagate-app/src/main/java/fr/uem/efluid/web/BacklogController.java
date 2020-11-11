@@ -1,8 +1,12 @@
 package fr.uem.efluid.web;
 
-import fr.uem.efluid.model.entities.CommitState;
+import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.upgrades.InitPreviousPayloadUpgrade;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -13,7 +17,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import javax.validation.Valid;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -609,6 +615,20 @@ public class BacklogController extends CommonController {
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/details";
+    }
+
+    /**
+     * <p>
+     * Revert a lot
+     * </p>
+     * @param uuid
+     */
+    @RequestMapping(path = "/revertLot/{uuid}", method = POST)
+    public String revertLot(@PathVariable("uuid") String uuid) {
+
+        this.diffService.revertLot(uuid);
+
+        return "pages/revertLot";
     }
 
     /**

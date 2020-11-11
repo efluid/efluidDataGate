@@ -30,6 +30,7 @@
                     <td th:text="${commit.state}">Mergé</td>
 		            <td>
 		            	<a href="./details.html" th:href="@{/ui/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
+						<button th:onclick="revertLot([[${commit.uuid}]])" class="btn btn-sm btn-danger">Revert lot</button>
 		            </td>
 		        </tr>
 		    </tbody>
@@ -45,6 +46,12 @@
 		$('#color-nav-2').css("font-weight", "bold");
 		$('#collapseExample2').css("display", "block");
 		$('#li-5').css("font-weight", "bolder");
+
+		const revertLot = uuid => {
+			$.post("/ui/revertLot/" + uuid, null, (data, status) => {
+				window.location.replace("/ui/commits");
+		    });
+		}
 
 
     	$(document).ready(() => {
