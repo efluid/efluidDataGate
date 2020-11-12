@@ -591,6 +591,7 @@ public class BacklogController extends CommonController {
         model.addAttribute("commits", this.commitService.getAvailableCommits());
         model.addAttribute("currentLocationTitle", "Liste des lots");
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
+        model.addAttribute("canRevertLastCommit", this.commitService.getLastCommitToRevert().getUuid());
 
         return "pages/commits";
     }

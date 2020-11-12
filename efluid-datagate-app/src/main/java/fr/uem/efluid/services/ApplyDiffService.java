@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -110,6 +107,16 @@ public class ApplyDiffService extends AbstractApplicationService {
                 true);
     }
 
+    private IndexAction getActionItem (IndexEntry i) {
+        if(i.getAction().equals(IndexAction.ADD)) {
+            return IndexAction.REMOVE;
+        } else if (i.getAction().equals(IndexAction.REMOVE)){
+            return IndexAction.ADD;
+        } else {
+            return IndexAction.UPDATE;
+        }
+    }
+
     /**
      * <p>
      * This method is used to revert lot
@@ -122,10 +129,11 @@ public class ApplyDiffService extends AbstractApplicationService {
 
         List<IndexEntry> toUpdate = new ArrayList<>();
         List<IndexEntry> previous = this.index.getIndexEntriesByCommitUuid(uuid); //get current idx entries for lot
-
         PilotedCommitPreparation<?> prepare = this.pilotableCommitService.startLocalCommitPreparation(false); //started preparing a commit
 
-        //created a new commit
+        String commitNewName = "Revert " + this.commits.getOne(UUID.fromString(uuid)).getComment();
+        UUID commitUUID = UUID.randomUUID();
+
         Commit commit = new Commit();
         commit.setCreatedTime(LocalDateTime.now());
         commit.setUser(new User(this.holder.getCurrentUser().getLogin()));
@@ -133,36 +141,26 @@ public class ApplyDiffService extends AbstractApplicationService {
         commit.setState(prepare.getPreparingState());
         commit.setProject(this.project.findSelectedProjectForUserLogin(this.holder.getCurrentUser().getLogin()));
         commit.setVersion(this.versions.getLastVersionForProject(this.project.findSelectedProjectForUserLogin(this.holder.getCurrentUser().getLogin())));
-        commit.setComment("Revert");
-
-        // Prepared commit uuid
-        UUID commitUUID = UUID.randomUUID();
-
-        // UUID generate (not done by HBM / DB)
+        commit.setComment(commitNewName);
         commit.setUuid(commitUUID);
 
         //revert each entries of idx
         previous.forEach(
                 i -> {
-                    String tmp = i.getPayload();
-                    i.setPayload(i.getPrevious());
-                    i.setPrevious(tmp);
+                    IndexEntry entry = new IndexEntry();
 
-                    if(i.getAction().equals(IndexAction.ADD)) {
-                        i.setAction(IndexAction.REMOVE);
-                    } else if (i.getAction().equals(IndexAction.REMOVE)){
-                        i.setAction(IndexAction.ADD);
-                    } else {
-                        i.setAction(i.getAction());
-                    }
+                    entry.setAction(this.getActionItem(i));
+                    entry.setDictionaryEntry(new DictionaryEntry(i.getDictionaryEntryUuid()));
+                    entry.setKeyValue(i.getKeyValue());
+                    entry.setPayload(i.getPayload());
+                    entry.setPrevious(i.getPrevious());
+                    entry.setTimestamp(i.getTimestamp());
 
-                    toUpdate.add(i);
-
+                    toUpdate.add(entry);
                 });
 
-        commit.setIndex(toUpdate);
+        commit.setIndex(this.index.saveAll(toUpdate));
 
-        this.index.saveAll(toUpdate);
         this.commits.save(commit);
     }
 

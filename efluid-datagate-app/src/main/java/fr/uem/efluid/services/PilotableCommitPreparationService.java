@@ -1,9 +1,6 @@
 package fr.uem.efluid.services;
 
-import fr.uem.efluid.model.entities.CommitState;
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.entities.Version;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
@@ -1076,5 +1073,15 @@ public class PilotableCommitPreparationService {
         void completeForDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation, UUID projectUUID);
 
         void completeForMerge(PilotedCommitPreparation<PreparedMergeIndexEntry> preparation, UUID projectUUID);
+    }
+
+    public IndexAction getActionItem (IndexEntry i) {
+        if(i.getAction().equals(IndexAction.ADD)) {
+            return IndexAction.REMOVE;
+        } else if (i.getAction().equals(IndexAction.REMOVE)){
+            return IndexAction.ADD;
+        } else {
+            return IndexAction.UPDATE;
+        }
     }
 }

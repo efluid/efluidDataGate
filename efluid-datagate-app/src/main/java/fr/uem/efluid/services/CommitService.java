@@ -103,6 +103,18 @@ public class CommitService extends AbstractApplicationService {
     @Autowired
     private VersionContentChangesGenerator changesGenerator;
 
+    @Autowired
+    private CommitService commitService;
+
+    @Autowired
+    private PilotableCommitPreparationService pilotableCommitService;
+
+    @Autowired
+    private ProjectRepository project;
+
+    @Autowired
+    private IndexRepository index;
+
     public CommitExportEditData initCommitExport(CommitExportEditData.CommitSelectType type, UUID commitUUID) {
 
         this.projectService.assertCurrentUserHasSelectedProject();
@@ -338,6 +350,32 @@ public class CommitService extends AbstractApplicationService {
                 })
                 .sorted(Comparator.comparing(CommitEditData::getCreatedTime).reversed())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * @return existing commits
+     */
+    public CommitEditData getLastCommitToRevert() {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        LOGGER.debug("Request for list of available commits for project ");
+
+        Map<UUID, List<String>> domainNames = this.domains.loadAllDomainNamesByCommitUuids(project);
+
+        return this.commits.findByProject(project).stream()
+                .map(CommitEditData::fromEntity)
+                .peek(c -> {
+                    // Add domain names for each commit (if any)
+                    List<String> dns = domainNames.get(c.getUuid());
+                    if (dns != null && dns.size() > 0) {
+                        c.setDomainNames(String.join(", ", dns));
+                    }
+                })
+                .filter(x -> !x.getComment().contains("Revert"))
+                .sorted(Comparator.comparing(CommitEditData::getCreatedTime).reversed())
+                .collect(Collectors.toList()).get(0);
     }
 
     /**
