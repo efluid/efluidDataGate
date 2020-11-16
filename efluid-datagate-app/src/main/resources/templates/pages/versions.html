@@ -3,7 +3,7 @@
 <head>
 </head>
 <body>
-    <span layout:fragment="content">
+<span layout:fragment="content">
 		<h5>Gestion des versions pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
         <span class="help">
         	Les versions sont specifiées pour le dictionnaire courant. Les lots de modifications sont associés à une version du dictionnaire, et des
@@ -49,19 +49,19 @@
                          </span>
                      </td>
 			     </tr>
-			     <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
-			         <td th:if="!${noVersionName}" colspan="4">
-                         <input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/>
-                         <p id="input-empty">Veuillez saisir un nom de projet</p>
-                     </td>
-                     <td th:if="${noVersionName}" colspan="3"><strong><span th:if="${modelDesc != null}" class="float-right" th:text="|Ajouter une nouvelle version pour le modèle de l'application actuel (${modelDesc.identity})|">Model</span></strong></td>
-			         <td><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
-			     </tr>
+                <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
+                 <td colspan="3">
+                     <input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/>
+                     <p id="input-empty">Veuillez saisir un nom de projet</p>
+                 </td>
+                    <td colspan="4"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
+                <tr><td th:if="${noVersionName}" colspan="2"><strong><span th:if="${modelDesc != null}" class="float-right" th:text="|Ajouter une nouvelle version pour le modèle de l'application actuel (${modelDesc.identity})|">Model</span></strong></td></tr>
+                </tr>
 			</tbody>
 		</table>
         <div id="modal" style="display: none" th:insert="~{components/modal :: modal}"></div>
     </span>
-    <script layout:fragment="script" th:inline="javascript">
+<script layout:fragment="script" th:inline="javascript">
 
 		var noVersionName = /*[[${noVersionName}]]*/ false;
 
@@ -73,14 +73,12 @@
 		// Add row button
 		const addButtonAction = () => {
 			hideDisplays();
-			var name = 'whatever';
-			if(!noVersionName) {
-                name = $("#versionName").val();
-                if(name == null || name === ''){
+			var name = $("#versionName").val();
+
+			if(name == null || name === ''){
                     setInvalid("#versionName","Le nom de la version est obligatoire");
-                }
-			}
-			$.post("/ui/versions/" + name, null, (data, status) => {
+            } else {
+                $.post("/ui/versions/" + name, null, (data, status) => {
 				showSuccess("Version ajoutée avec succès");
 				// Remove other update buttons
 
@@ -96,18 +94,17 @@
                 $(".empty-list-message").remove();
                 $("#versRemark").remove();
 
-                setTimeout(() => {
-                    $("button.updateButton").remove();
-                    $("#successDisplay").remove();
-                    window.location.replace("/ui/versions");
-                }, 1000);
+                window.location.replace("/ui/versions");
 
-		    });
+		        });
+            }
+
 		};
-    
+
 		// Update row button
 		const updateButtonAction = (versionName) => {
 			$.post("/ui/versions/" + versionName, null, (data, status) => {
+			    showSuccess("Version mise à jour avec succès");
 				$('td#updatedTime.' + versionName).load(location.href + " #updatedTime." + versionName);
 		    });
 		};
@@ -133,10 +130,10 @@
             if (e.target.id === "versionName") {
                 if(!inputValue.length) {
                     $("#input-empty").show();
-                    $("#addButton").hide();
+                    $("#addButton").attr("disabled", true);
                 } else {
                     $("#input-empty").hide();
-                    $("#addButton").show();
+                    $("#addButton").attr("disabled", false);
                 }
             }
         }
@@ -148,7 +145,7 @@
 			$("button.updateButton").click((e) => updateButtonAction(e.target.id));
 			$("button.deleteButton").click((e) => deleteButtonAction(e.target.parentElement.parentElement.parentElement.id));
 			$("#versionName").keyup(e => { checkInputEmpty(e) });
-		}); 
+		});
     </script>
 </body>
 </html>
