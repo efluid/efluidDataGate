@@ -52,7 +52,7 @@
                 <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
                  <td colspan="3">
                      <input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/>
-                     <p id="input-empty">Veuillez saisir un nom de projet</p>
+                     <p id="input-empty" style="display: none">Veuillez saisir un nom de projet</p>
                  </td>
                     <td colspan="4"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
                 <tr><td th:if="${noVersionName}" colspan="2"><strong><span th:if="${modelDesc != null}" class="float-right" th:text="|Ajouter une nouvelle version pour le modèle de l'application actuel (${modelDesc.identity})|">Model</span></strong></td></tr>
@@ -68,7 +68,6 @@
 		$('#color-nav-1').css("font-weight", "bold");
 		$('#collapseExample1').css("display", "block");
 		$('#li-1').css("font-weight", "bolder");
-		$("#input-empty").hide();
 
 		// Add row button
 		const addButtonAction = () => {
@@ -129,10 +128,10 @@
             var inputValue = e.target.value;
             if (e.target.id === "versionName") {
                 if(!inputValue.length) {
-                    $("#input-empty").show();
+                    $("#input-empty").css("display", "block");
                     $("#addButton").attr("disabled", true);
                 } else {
-                    $("#input-empty").hide();
+                    $("#input-empty").css("display", "none");
                     $("#addButton").attr("disabled", false);
                 }
             }
