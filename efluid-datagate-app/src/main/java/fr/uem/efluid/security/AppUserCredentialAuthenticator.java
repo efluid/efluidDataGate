@@ -57,6 +57,11 @@ public class AppUserCredentialAuthenticator implements Authenticator<UsernamePas
             throw new CredentialsException("Password cannot be blank");
         }
 
+        //technic user should not be able to connect to app
+        if(username.equals("technical-user") && password.equals("technical-user")) {
+            throw new CredentialsException("This user cannot connect to app");
+        }
+
         User user = this.accounts.authenticate(username, password)
                 .orElseThrow(() -> new CredentialsException("User not found or wrong password!"));
 
