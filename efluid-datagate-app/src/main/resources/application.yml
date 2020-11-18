@@ -49,6 +49,7 @@ datagate-efluid:
     security:
         salt: 12345678901234567890123456789012
         accounting: DATABASE
+        technical-user-token: 1ddad6a5a7a046a2ae92b5b9b66fa5fd
         ldap:
             user-search-base: /
             username-attribute: uid
