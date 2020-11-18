@@ -2,7 +2,6 @@ package fr.uem.efluid.upgrades;
 
 import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
@@ -12,7 +11,6 @@ import fr.uem.efluid.utils.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -66,7 +64,7 @@ public class InitPreviousPayloadUpgrade implements UpgradeProcess {
         AtomicInteger current = new AtomicInteger(1);
         allCommits.forEach(c -> {
 
-            Map<UUID, List<IndexEntry>> entriesByTables = this.index.findWithUpgradablePreviosByCommitUuid(c.getUuid().toString()).stream()
+            Map<UUID, List<IndexEntry>> entriesByTables = this.index.findWithUpgradablePreviousByCommitUuid(c.getUuid().toString()).stream()
                     .collect(Collectors.groupingBy(IndexEntry::getDictionaryEntryUuid));
             List<IndexEntry> toUpdate = new ArrayList<>();
             entriesByTables.forEach((t, i) -> {

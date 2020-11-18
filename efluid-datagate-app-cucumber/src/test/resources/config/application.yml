@@ -3,12 +3,17 @@
 datagate-efluid:
 
     managed-datasource:
+        #url: jdbc:oracle:thin:@localhost:49121:xe
+        #username: TEST
+        #password: TEST
+        #driver-class-name: oracle.jdbc.OracleDriver
         url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
         username: sa
         password:
         driver-class-name: org.h2.Driver
         meta:
             filter-schema:
+            #filter-schema: TEST
             search-fk-type: standard
             preload: false
             fixed-cached: false
@@ -67,6 +72,10 @@ spring:
         cache: false
 
     datasource:
+        #url: jdbc:oracle:thin:@localhost:49121:xe
+        #username: TEST
+        #password: TEST
+        #driver-class-name: oracle.jdbc.OracleDriver
         url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
         username: sa
         password:

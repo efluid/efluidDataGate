@@ -23,7 +23,10 @@ import static javax.persistence.GenerationType.SEQUENCE;
  * @since v0.0.1
  */
 @Entity
-@Table(name = "indexes")
+@Table(name = "indexes", indexes = {
+        @Index(columnList = "keyValue"),
+        @Index(columnList = "timestamp")
+})
 public class IndexEntry implements DiffLine {
 
     @Id
@@ -228,5 +231,6 @@ public class IndexEntry implements DiffLine {
         return "IdxEntry [<" + this.id + ">, dict:" + getDictionaryEntryUuid() + ", time:" + this.timestamp + ", chg:" + this.action + "@"
                 + this.keyValue + "|" + this.payload + "]";
     }
+
 
 }

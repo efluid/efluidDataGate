@@ -656,9 +656,6 @@ public class PilotableCommitPreparationService {
                     // Save update
                     UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current);
 
-                    // Reset cached diff values, if any, for further uses
-                    this.diffService.resetDiffCaches();
-
                     // For any ref holder : mark completed
                     current.setStatus(PilotedCommitStatus.COMPLETED);
 
@@ -706,9 +703,6 @@ public class PilotableCommitPreparationService {
 
         // Save update
         UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current);
-
-        // Reset cached diff values, if any, for further uses
-        this.diffService.resetDiffCaches();
 
         // Drop preparation (if not done yet)
         completeCommitPreparation();

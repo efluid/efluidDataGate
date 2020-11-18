@@ -3,7 +3,7 @@
 datagate-efluid:
 
     managed-datasource:
-        url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
+        url: jdbc:h2:mem:datagtest
         username: sa
         password:
         driver-class-name: org.h2.Driver
@@ -50,13 +50,13 @@ spring:
         cache: false
 
     datasource:
-        url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
+        url: jdbc:h2:mem:datagtest
         username: sa
         password:
         driver-class-name: org.h2.Driver
 
     jpa:
-        show-sql: false
+        show-sql: true
         hibernate:
             ddl-auto: create
 

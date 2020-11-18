@@ -34,6 +34,10 @@ public class TesterWithIndependentTransaction {
         this.projectUuid = res.getProjectUuid();
     }
 
+    public void resetDatabase(){
+        this.loader.resetAll();
+    }
+
     public DictionaryEntry dict() {
         DictionaryEntry dic = this.dictionary.getOne(this.dictionaryEntryUuid);
         dic.getSelectClause();

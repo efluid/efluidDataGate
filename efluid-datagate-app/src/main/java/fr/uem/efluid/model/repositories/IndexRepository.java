@@ -2,6 +2,7 @@ package fr.uem.efluid.model.repositories;
 
 import com.google.common.collect.Lists;
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.DiffPayloads;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
@@ -17,10 +18,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.sql.Clob;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,9 +27,12 @@ import java.util.stream.Stream;
  * <p>
  * Core index data provider, using JPA
  * </p>
+ * <p>
+ * Provides some advanced extraction processes for content regenerate
+ * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpecificationExecutor<IndexEntry> {
@@ -51,6 +52,15 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     List<IndexEntry> findByCommitUuid(UUID commitUuid);
 
     /**
+     * Access on knew key values
+     *
+     * @param dictionaryEntryUuid
+     * @return
+     */
+    @Query(value = "SELECT DISTINCT i.KEY_VALUE FROM INDEXES i WHERE DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
+    Set<String> getKeyValuesForDictionaryEntry(@Param("dictUuid") String dictionaryEntryUuid);
+
+    /**
      * All index lines without "previous" value for a specified commit
      *
      * @param commitUuid selected commit
@@ -60,7 +70,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
             + "from INDEXES i "
             + "where i.COMMIT_UUID = :commitUuid "
             + "AND i.ACTION != 'ADD' AND i.PREVIOUS is null", nativeQuery = true)
-    List<IndexEntry> findWithUpgradablePreviosByCommitUuid(@Param("commitUuid") String commitUuid);
+    List<IndexEntry> findWithUpgradablePreviousByCommitUuid(@Param("commitUuid") String commitUuid);
 
     /**
      * <p>
@@ -81,27 +91,35 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      */
     Stream<IndexEntry> findByDictionaryEntryOrderByTimestampAsc(DictionaryEntry dictionaryEntry);
 
-    Stream<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(DictionaryEntry dictionaryEntry, long timestamp);
-
-    @Query(value = "SELECT i.* FROM INDEXES i " +
-            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
-            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
-    Stream<ProjectedIndexEntry> findAccumulableRegeneratedContentForDictionaryEntry(@Param("dictUuid") UUID dictionaryEntryUuid, @Param("pivot") long timestamp);
-
-    @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD FROM INDEXES i " +
-            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
-            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid AND i.ACTION != 'REMOVE'", nativeQuery = true)
-    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntry(@Param("dictUuid") String dictionaryEntryUuid);
-
     /**
-     * For database based regenerate process on diff
+     * Access on knew key values
      *
      * @param dictionaryEntryUuid
-     * @return regenerated content for a dictionary Entry, with minimal steps
+     * @return
      */
-    default Map<String, String> findRegeneratedContentForDictionaryEntry(UUID dictionaryEntryUuid) {
-        Map<String, String> result = new HashMap<>(10000);
-        _internal_findRegeneratedContentForDictionaryEntry(dictionaryEntryUuid.toString())
+    @Query(value = "SELECT DISTINCT i.KEY_VALUE FROM INDEXES i WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot", nativeQuery = true)
+    Set<String> getKeyValuesForDictionaryEntryBefore(@Param("dictUuid") String dictionaryEntryUuid, @Param("pivot") long timestamp);
+
+    @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD FROM INDEXES i " +
+            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
+            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid AND i.ACTION != 'REMOVE'", nativeQuery = true)
+    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntryAndBuffer(@Param("dictUuid") String dictionaryEntryUuid, @Param("keys") Collection<String> keys);
+
+    @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD, i.PREVIOUS FROM INDEXES i " +
+            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
+            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
+    Stream<ProjectedDiffPayloads> findDiffPayloadsForDictionaryEntryAndBuffer(@Param("dictUuid") String dictionaryEntryUuid, @Param("keys") Collection<String> keys);
+
+    /**
+     * For new Knew content regenerate on buffered diff generation
+     *
+     * @param dictionaryEntryUuid
+     * @param keys
+     * @return knew content mapped to their keys
+     */
+    default Map<String, String> findRegeneratedContentForDictionaryEntryAndBuffer(UUID dictionaryEntryUuid, Collection<String> keys) {
+        Map<String, String> result = new HashMap<>(keys.size());
+        _internal_findRegeneratedContentForDictionaryEntryAndBuffer(dictionaryEntryUuid.toString(), keys)
                 .forEach(projectionAsContentMap(result));
         return result;
     }
@@ -185,44 +203,23 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     }
 
     /**
-     * A model compliant with IndexEntry, but for pur projection use
+     * Specific static projection compliant implementation of DiffPayloads for the
+     * simplest access to the index entries payloads
+     *
+     * @author elecomte
+     * @version 1
+     * @since v2.1.7
      */
-    class ProjectedIndexEntry implements DiffLine {
+    class ProjectedDiffPayloads implements DiffPayloads {
 
-        private final UUID dictionaryEntryUuid;
-        private final IndexAction action;
-        private final long timestamp;
-        private final String previous;
         private final String keyValue;
         private final String payload;
+        private final String previous;
 
-        public ProjectedIndexEntry(UUID dictionaryEntryUuid, IndexAction action, long timestamp, String previous, String keyValue, String payload) {
-            this.dictionaryEntryUuid = dictionaryEntryUuid;
-            this.action = action;
-            this.timestamp = timestamp;
-            this.previous = previous;
+        public ProjectedDiffPayloads(String keyValue, String payload, String previous) {
             this.keyValue = keyValue;
             this.payload = payload;
-        }
-
-        @Override
-        public UUID getDictionaryEntryUuid() {
-            return dictionaryEntryUuid;
-        }
-
-        @Override
-        public IndexAction getAction() {
-            return action;
-        }
-
-        @Override
-        public long getTimestamp() {
-            return timestamp;
-        }
-
-        @Override
-        public String getPrevious() {
-            return previous;
+            this.previous = previous;
         }
 
         @Override
@@ -233,6 +230,11 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
         @Override
         public String getPayload() {
             return payload;
+        }
+
+        @Override
+        public String getPrevious() {
+            return previous;
         }
     }
 }

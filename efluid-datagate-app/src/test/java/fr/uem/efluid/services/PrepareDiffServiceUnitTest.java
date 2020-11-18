@@ -3,6 +3,7 @@ package fr.uem.efluid.services;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -171,8 +172,9 @@ public class PrepareDiffServiceUnitTest {
                             public String getPayload() {
                                 return e.getValue();
                             }
-                        }), PreparedIndexEntry::new,
-                diff1Knew,
+                        }),
+                PreparedIndexEntry::new,
+                diff1Knew.keySet(),
                 l -> {},
                 DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock", proj), "s*", "table", "1=1", "key", ColumnType.STRING),
                 new PilotedCommitPreparation<PreparedIndexEntry>(CommitState.LOCAL));

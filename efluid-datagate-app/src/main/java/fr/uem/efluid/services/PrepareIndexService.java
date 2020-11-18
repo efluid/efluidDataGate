@@ -3,9 +3,13 @@ package fr.uem.efluid.services;
 import fr.uem.efluid.model.AnomalyContextType;
 import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.DiffPayloads;
 import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.model.repositories.IndexRepository;
+import fr.uem.efluid.model.repositories.KnewContentRepository;
+import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository.Extraction;
+import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
@@ -23,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -70,7 +73,7 @@ public class PrepareIndexService extends AbstractApplicationService {
     private ManagedExtractRepository rawParameters;
 
     @Autowired
-    private ManagedRegenerateRepository regeneratedParamaters;
+    private KnewContentRepository knewContents;
 
     @Autowired
     private ManagedValueConverter valueConverter;
@@ -126,7 +129,7 @@ public class PrepareIndexService extends AbstractApplicationService {
         // construction + restoration then diff.
 
         LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
-        Map<String, String> knewContent = this.regeneratedParamaters.regenerateKnewContent(entry);
+        Set<String> knewKeys = this.knewContents.knewContentKeys(entry);
 
         // Intermediate step for better percent process
         preparation.incrementProcessStep();
@@ -140,7 +143,7 @@ public class PrepareIndexService extends AbstractApplicationService {
             Collection<PreparedIndexEntry> index = generateDiffIndexFromContent(
                     extraction.stream(),
                     PreparedIndexEntry::new,
-                    knewContent,
+                    knewKeys,
                     c -> totalProcessed.incrementAndGet(),
                     entry,
                     preparation);
@@ -211,10 +214,8 @@ public class PrepareIndexService extends AbstractApplicationService {
 
         preparation.incrementProcessStep();
 
-        final Map<String, String> lastKnewPreviousContent = new HashMap<>();
-
-        // Build "previous" content from index
-        Map<String, String> previousContent = this.regeneratedParamaters.regenerateKnewContentBefore(entry, searchTimeStamp, i -> lastKnewPreviousContent.put(i.getKeyValue(), i.getPrevious()));
+        // Get knew keys before pivot time for merge
+        Set<String> knewKeys = this.knewContents.knewContentKeysBefore(entry, searchTimeStamp);
 
         // Will be populated from extraction
         final Map<String, String> actualContent = new HashMap<>();
@@ -233,7 +234,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                     generateDiffIndexFromContent(
                             extraction.stream(),
                             PreparedIndexEntry::new,
-                            previousContent,
+                            knewKeys,
                             l -> actualContent.put(l.getKeyValue(), l.getPayload()),
                             entry,
                             preparation);
@@ -251,8 +252,6 @@ public class PrepareIndexService extends AbstractApplicationService {
                             actualContent,
                             mineDiff,
                             transformedMergeDiff,
-                            previousContent,
-                            lastKnewPreviousContent,
                             preparation);
 
             preparation.incrementProcessStep();
@@ -269,13 +268,6 @@ public class PrepareIndexService extends AbstractApplicationService {
 
             preparation.incrementProcessStep();
         }
-    }
-
-    /**
-     *
-     */
-    public void resetDiffCaches() {
-        this.regeneratedParamaters.refreshAll();
     }
 
     /**
@@ -332,37 +324,51 @@ public class PrepareIndexService extends AbstractApplicationService {
      *
      * @param actualContent
      * @param diffTypeBuilder
-     * @param knewContent
-     * @param entry
+     * @param knewKeys        the keys of the knew content from the index
      * @param preparation     for step update
      * @return
      */
     <T extends PreparedIndexEntry> Collection<T> generateDiffIndexFromContent(
             final Stream<ContentLine> actualContent,
             final Supplier<T> diffTypeBuilder,
-            final Map<String, String> knewContent,
+            final Set<String> knewKeys,
             final Consumer<ContentLine> eachLineAccumulator,
-            final DictionaryEntry entry,
+            final DictionaryEntry dic,
             final PilotedCommitPreparation<?> preparation) {
 
-        LOGGER.info("Start diff index Generate for table \"{}\"", entry.getTableName());
+        LOGGER.info("Start diff index Generate for table \"{}\"", dic.getTableName());
 
         preparation.incrementProcessStep();
 
-        Collection<T> diff = actualContent
+        DiffProcessingBuffer buffer = new DiffProcessingBuffer(1000);
+
+        List<T> diff = new ArrayList<>();
+
+        actualContent
                 .peek(eachLineAccumulator)
-                .map(l -> toDiff(diffTypeBuilder, l, knewContent, entry))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toCollection(ConcurrentHashMap::newKeySet));
+                .forEach(line -> {
+
+                    // We don't know it at all : it's an ADD
+                    if (!knewKeys.remove(line.getKeyValue())) {
+                        diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, line.getKeyValue(), line.getPayload(), null, dic));
+                    } else {
+                        buffer.keep(line);
+                    }
+
+                    // Process diff everytime the buffer is full
+                    if (buffer.isBufferFull()) {
+                        generateUpdateDiffOnBuffer(buffer, diffTypeBuilder, dic, diff);
+                    }
+                });
+
+        // One run on remaining update content in buffer
+        generateUpdateDiffOnBuffer(buffer, diffTypeBuilder, dic, diff);
 
         // Intermediate step for better percent process
         preparation.incrementProcessStep();
 
-        // Remaining in knewContent are deleted ones
-        knewContent.forEach((k, v) -> {
-            LOGGER.debug("New index entry for {} : REMOVE from \"{}\"", k, v);
-            diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.REMOVE, k, null, v, entry));
-        });
+        // Then init "not found" knew keys as DELETE
+        generateDeleteDiffOnRemainingKnewKeys(knewKeys, diffTypeBuilder, dic, diff);
 
         preparation.incrementProcessStep();
 
@@ -497,7 +503,8 @@ public class PrepareIndexService extends AbstractApplicationService {
      *
      * @param diffTypeBuilder
      * @param actualOne
-     * @param knewContent
+     * @param knewKeys        all the keys we know for the current dictionary entry
+     * @param buffer          for stepped diff processing
      * @param dic
      * @param <T>
      * @return null if not to keep in diff
@@ -505,9 +512,12 @@ public class PrepareIndexService extends AbstractApplicationService {
     private <T extends PreparedIndexEntry> T toDiff(
             final Supplier<T> diffTypeBuilder,
             final ContentLine actualOne,
-            final Map<String, String> knewContent,
+            final Set<String> knewKeys,
+            final DiffProcessingBuffer buffer,
             final DictionaryEntry dic) {
 
+
+        /*
         boolean wasKnew = knewContent.containsKey(actualOne.getKeyValue());
 
         // Found : for delete identification immediately remove from found ones
@@ -537,6 +547,97 @@ public class PrepareIndexService extends AbstractApplicationService {
 
         // Nullify lines to ignore (already in knew content)
         return null;
+         */
+
+        // Nullify lines to ignore (already in knew content)
+        return null;
+    }
+
+    /**
+     * Identify all updates and (rare) "re-addition"
+     */
+    private <T extends PreparedIndexEntry> void generateUpdateDiffOnBuffer(final DiffProcessingBuffer buff, final Supplier<T> diffTypeBuilder, DictionaryEntry dic, List<T> diff) {
+
+        // Process only if we have some content to process !
+        if (buff.getIndex() > 0) {
+
+            /*
+             * Here we process only contents for which the key was present in local index.
+             * If items is here, then it's because it's key was knew.
+             *
+             * Three possibilities here :
+             *   * The knew content for this key is different from the actual one => It's a MODIFY in diff
+             *   * The knew content for this key is equal to the actual one => No change, nothing added in diff
+             *   * No knew content (while the key was knew) => It's a knew deleted item which is "recreated" => Rare "ADD" case in diff
+             */
+
+            // Generate the knew content for the current lines from index to get the exact "knew" content
+            Map<String, String> knewContent = this.knewContents.knewContentForKeys(dic, buff.extractKeys());
+
+            boolean debug = LOGGER.isDebugEnabled();
+
+            for (int i = 0; i < buff.getIndex(); i++) {
+
+                ContentLine actualOne = buff.getContent()[i];
+
+                // Found : for delete identification immediately remove from found ones
+                String knewPayload = knewContent.get(actualOne.getKeyValue());
+
+                // Nothing in knew payload : it's a (rare) "re-add"
+                if (knewPayload == null) {
+
+                    // Except if new is also empty will content is knew : it's a managed empty line
+                    if (!(StringUtils.isEmpty(actualOne.getPayload()))) {
+
+                        if (debug) {
+                            LOGGER.debug("New endex entry for {} : ADD with \"{}\"",
+                                    actualOne.getKeyValue(), actualOne.getPayload());
+                        }
+
+                        diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKeyValue(),
+                                actualOne.getPayload(), null, dic));
+                    }
+                }
+
+                // Content is different : it's an Update
+                else if (!actualOne.getPayload().equals(knewPayload)) {
+
+                    if (debug) {
+                        LOGGER.debug("New index entry for {} : UPDATED from \"{}\" to \"{}\"",
+                                actualOne.getKeyValue(), knewPayload, actualOne.getPayload());
+                    }
+
+                    diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.UPDATE, actualOne.getKeyValue(),
+                            actualOne.getPayload(), knewPayload, dic));
+                }
+
+                // Else it's not modified
+            }
+
+            buff.reset();
+        }
+    }
+
+    /**
+     * Identify all updates and (rare) "re-addition"
+     */
+    private <T extends PreparedIndexEntry> void generateDeleteDiffOnRemainingKnewKeys(final Set<String> remainingKeys, final Supplier<T> diffTypeBuilder, DictionaryEntry dic, List<T> diff) {
+
+        // Process only if we have some content to process !
+        if (!remainingKeys.isEmpty()) {
+
+            boolean debug = LOGGER.isDebugEnabled();
+
+            Map<String, String> remainingKnewContents = this.knewContents.knewContentForKeys(dic, remainingKeys);
+
+            // Remaining in knewContent are deleted ones
+            remainingKnewContents.forEach((k, v) -> {
+                if (debug) {
+                    LOGGER.debug("New index entry for {} : REMOVE from \"{}\"", k, v);
+                }
+                diff.add(preparedIndexEntry(diffTypeBuilder, IndexAction.REMOVE, k, null, v, dic));
+            });
+        }
     }
 
     /**
@@ -583,7 +684,6 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param dict
      * @param mines
      * @param theirs
-     * @param diffPreviousContent
      * @param preparation
      * @return
      */
@@ -592,11 +692,11 @@ public class PrepareIndexService extends AbstractApplicationService {
             Map<String, String> actualContent,
             Collection<? extends DiffLine> mines,
             Collection<? extends DiffLine> theirs,
-            Map<String, String> diffPreviousContent,
-            Map<String, String> lastKnewPreviousContent,
             PilotedCommitPreparation<?> preparation) {
 
         LOGGER.debug("Completing merge data from index for parameter table {}", dict.getTableName());
+
+        Collection<PreparedMergeIndexEntry> merge = new ArrayList<>();
 
         Map<String, List<DiffLine>> minesByKey = mines.stream().collect(Collectors.groupingBy(DiffLine::getKeyValue));
         Map<String, List<DiffLine>> theirsByKey = theirs.stream().collect(Collectors.groupingBy(DiffLine::getKeyValue));
@@ -609,56 +709,92 @@ public class PrepareIndexService extends AbstractApplicationService {
         AtomicInteger count = new AtomicInteger(0);
         int fireIncrem = allKeys.size() / 2;
 
-        // One combined key for each keys
-        return allKeys.stream().map(key -> {
+        MergeProcessingBuffer buffer = new MergeProcessingBuffer(1000);
+
+        for (String key : allKeys) {
+
+            buffer.keep(key,
+                    /* mine */DiffLine.combinedOnSameTableAndKey(minesByKey.get(key), false),
+                    /* their */DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key), true));
+
+            // Process one page of buffer if ready
+            if (buffer.isBufferFull()) {
+                generateMergeDiffOnBuffer(buffer, actualContent, dict, merge, recordWarnings, preparation);
+            }
+
+            // One increment only (when half are processed)
+            if (count.incrementAndGet() == fireIncrem) {
+                preparation.incrementProcessStep();
+            }
+        }
+
+        // One final run for remaining buffer content
+        generateMergeDiffOnBuffer(buffer, actualContent, dict, merge, recordWarnings, preparation);
+
+        return merge;
+    }
+
+    private void generateMergeDiffOnBuffer(
+            final MergeProcessingBuffer buff,
+            Map<String, String> actualContent,
+            DictionaryEntry dict,
+            Collection<PreparedMergeIndexEntry> merge,
+            boolean recordWarnings,
+            PilotedCommitPreparation<?> preparation) {
+
+        // Load knew payloads only for current buffer
+        Map<String, DiffPayloads> buffKnewPayloads = this.knewContents.knewContentPayloadsForKeys(dict, buff.extractKeys());
+
+        // For the buffer content
+        for (Map.Entry<String, ProcessingMergeLine> entry : buff.getContent().entrySet()) {
 
             try {
-                String previous = diffPreviousContent.get(key);
-                DiffLine mine = DiffLine.combinedOnSameTableAndKey(minesByKey.get(key), false);
-                DiffLine their = DiffLine.combinedOnSameTableAndKey(theirsByKey.get(key), true);
+                // We will use both knew payload and previous payload
+                DiffPayloads knewPayloads = buffKnewPayloads.get(entry.getKey());
+
+                // Prepared mine / their pair
+                DiffLine mine = entry.getValue().getMine();
+                DiffLine their = entry.getValue().getTheir();
 
                 // Ignore dead entries (ADDED then DELETED in regenerated content)
-                if (mine == null && their == null) {
-                    return null;
-                }
+                if (mine != null || their != null) {
 
-                String mineHr = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null, previous);
-                String theirHr = getConverter().convertToHrPayload(their != null ? their.getPayload() : null, previous);
+                    // Build HR
+                    String mineHr = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null, knewPayloads.getPayload());
+                    String theirHr = getConverter().convertToHrPayload(their != null ? their.getPayload() : null, knewPayloads.getPayload());
 
-                PreparedIndexEntry mineEntry = mine != null ? PreparedIndexEntry.fromCombined(mine, dict.getTableName(), mineHr) : null;
-                PreparedIndexEntry theirEntry = their != null ? PreparedIndexEntry.fromCombined(their, dict.getTableName(), theirHr) : null;
+                    PreparedIndexEntry mineEntry = mine != null ? PreparedIndexEntry.fromCombined(mine, dict.getTableName(), mineHr) : null;
+                    PreparedIndexEntry theirEntry = their != null ? PreparedIndexEntry.fromCombined(their, dict.getTableName(), theirHr) : null;
 
-                // One increment only (when half are processed)
-                if (count.incrementAndGet() == fireIncrem) {
-                    preparation.incrementProcessStep();
-                }
+                    PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actualContent.get(entry.getKey()), knewPayloads.getPrevious());
 
-                PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actualContent.get(key), lastKnewPreviousContent.get(key));
+                    // Dedicated logger output for resolutions
+                    if (MERGE_LOGGER.isDebugEnabled()) {
+                        if (resolved.isKept()) {
+                            MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
+                                    dict.getTableName(), entry.getKey(), mineEntry, theirEntry, resolved, resolved.getResolutionRule());
+                        } else {
+                            MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> droped by rule \"{}\"",
+                                    dict.getTableName(), entry.getKey(), mineEntry, theirEntry, resolved.getResolutionRule());
+                        }
+                    }
 
-                // Dedicated logger output for resolutions
-                if (MERGE_LOGGER.isDebugEnabled()) {
+                    if (recordWarnings && resolved.getResolutionWarning() != null) {
+                        this.anomalyService.addAnomaly(AnomalyContextType.MERGE, preparation.getSourceFilename(),
+                                "Warning from " + resolved.getResolutionRule(),
+                                "On " + resolved.toLogRendering() + " : " + resolved.getResolutionWarning());
+                    }
+
+                    // Drop immediately unselected line after resolutions (we wanted only to log / trace warnings for them)
                     if (resolved.isKept()) {
-                        MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> Get \"{}\" with rule \"{}\"",
-                                dict.getTableName(), key, mineEntry, theirEntry, resolved, resolved.getResolutionRule());
-                    } else {
-                        MERGE_LOGGER.debug("Resolved : Table \"{}\" - Key\"{}\" - mine = \"{}\", their = \"{}\", -> droped by rule \"{}\"",
-                                dict.getTableName(), key, mineEntry, theirEntry, resolved.getResolutionRule());
+                        merge.add(resolved);
                     }
                 }
-
-                if (recordWarnings && resolved.getResolutionWarning() != null) {
-                    this.anomalyService.addAnomaly(AnomalyContextType.MERGE, preparation.getSourceFilename(),
-                            "Warning from " + resolved.getResolutionRule(),
-                            "On " + resolved.toLogRendering() + " : " + resolved.getResolutionWarning());
-                }
-
-                // Drop immediately unselected line after resolutions (we wanted only to log / trace warnings for them)
-                return resolved.isKept() ? resolved : null;
             } catch (Throwable t) {
-                LOGGER.error("Failed to process merge index entry on " + dict.getTableName() + "." + key + ", get error", t);
+                LOGGER.error("Failed to process merge index entry on " + dict.getTableName() + "." + entry.getKey() + ", get error", t);
                 throw new ApplicationException(ErrorType.MERGE_FAILURE, t);
             }
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        }
     }
 
     /**
@@ -708,5 +844,112 @@ public class PrepareIndexService extends AbstractApplicationService {
         }
 
         return listToRender;
+    }
+
+    /**
+     * A simplified buffer of the content processed for diff generation.
+     * Holds each <tt>ContentLine</tt> and process them each time the "buffer" is completed
+     */
+    private static class DiffProcessingBuffer {
+
+        private final ContentLine[] content;
+        private final int last;
+        private int index = 0;
+
+        DiffProcessingBuffer(int size) {
+            this.last = size - 1;
+            this.content = new ContentLine[size];
+        }
+
+        void keep(ContentLine line) {
+            this.content[index] = line;
+            index++;
+        }
+
+        boolean isBufferFull() {
+            return this.index == this.last;
+        }
+
+        int getIndex() {
+            return this.index;
+        }
+
+        ContentLine[] getContent() {
+            return this.content;
+        }
+
+        void reset() {
+            this.index = 0;
+        }
+
+        Collection<String> extractKeys() {
+
+            // Extract keys from buffer
+            List<String> keys = new ArrayList<>(this.index);
+
+            // Simplest key extraction
+            for (int i = 0; i < this.index; i++) {
+                keys.add(this.content[i].getKeyValue());
+            }
+
+            return keys;
+        }
+    }
+
+
+    /**
+     * A simplified buffer of the content processed for merge generation.
+     * Holds each <tt>ContentLine</tt> and process them each time the "buffer" is completed
+     */
+    private static class MergeProcessingBuffer {
+
+        private final Map<String, ProcessingMergeLine> content;
+        private final int size;
+
+        MergeProcessingBuffer(int size) {
+            this.size = size;
+            this.content = new HashMap<>(size);
+        }
+
+        void keep(String key, DiffLine mine, DiffLine their) {
+            this.content.put(key, new ProcessingMergeLine(mine, their));
+        }
+
+        boolean isBufferFull() {
+            return this.content.size() == this.size;
+        }
+
+        Map<String, ProcessingMergeLine> getContent() {
+            return this.content;
+        }
+
+        void reset() {
+            this.content.clear();
+        }
+
+        Collection<String> extractKeys() {
+            return this.content.keySet();
+        }
+
+
+    }
+
+    private static class ProcessingMergeLine {
+
+        private final DiffLine mine;
+        private final DiffLine their;
+
+        public ProcessingMergeLine(DiffLine mine, DiffLine their) {
+            this.mine = mine;
+            this.their = their;
+        }
+
+        public DiffLine getMine() {
+            return mine;
+        }
+
+        public DiffLine getTheir() {
+            return their;
+        }
     }
 }
