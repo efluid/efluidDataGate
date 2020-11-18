@@ -118,39 +118,6 @@ public class SecurityConfig {
         return config;
     }
 
-    @Autowired
-    private AccountProvider accountProv;
-
-    @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
-    private SecurityService secu;
-
-    @Autowired
-    private ProjectManagementService projectService;
-
-    @Value("${datagate-efluid.security.technical-user-token}")
-    private String tokenTechnic;
-
-    @PostConstruct
-    public void checkUserTechnicExists() {
-        List<UUID> projects = this.projectService.getAllProjects().stream().map(ProjectData::getUuid).collect(Collectors.toList());
-
-        System.out.println("======>" + userRepo.findByToken(tokenTechnic).isPresent());
-
-        if (userRepo.findByToken(tokenTechnic).isEmpty()) { //check if user exists
-            System.out.println("2======>" + userRepo.findByToken(tokenTechnic).isPresent());
-
-            User user = this.accountProv.createUser("technical-user", "datagate@efluid.com", "technical-user"); //create user if user doesnt exist
-            this.projectService.setPreferedProjectsForUser(user, projects); //add manually all projects as prefered projects
-            user.setToken(tokenTechnic); //set Token stored in application property
-            userRepo.save(user);
-            LOGGER.info("[SECURITY] created technical user: {}", user.getLogin());
-
-        }
-    }
-
     @Bean
     public FilterRegistrationBean<SecurityFilter> webSecurityFilter() {
 
