@@ -388,7 +388,6 @@
 
 		const updateSelectItem = (index, selected, rollbacked) => {
 
-			console.log('should update');
 			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
 
 				// Reset 3 buttons
@@ -478,7 +477,6 @@
 		};
 
 		const getPageContent = (page) => {
-
 			$.ajax({
 				type: "POST",
 				url: "/ui/prepare/page/" + page,
@@ -486,6 +484,8 @@
 				contentType: "application/json; charset=utf-8",
 				dataType: "json",
 				success: (data, status) => {
+
+				console.log("*****" + data)
 
 					// Remove current page
 					$(".added-item").remove();
@@ -504,6 +504,8 @@
 						var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
 
 						var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
+
+						console.log("===",e);
 
 						var itemRow =
 							'<div title="cell" id="' + e.indexForDiff + '_item" class="action-line ' + e.action.toLowerCase() + ' added-item">' +

@@ -712,4 +712,5 @@ public class PrepareIndexService extends AbstractApplicationService {
 
         return listToRender;
     }
+
 }

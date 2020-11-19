@@ -2,12 +2,12 @@ package fr.uem.efluid.services;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.ApplyHistoryEntry;
+import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
-import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
-import fr.uem.efluid.services.types.RollbackLine;
-import fr.uem.efluid.services.types.SearchHistoryPage;
+import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -55,6 +56,19 @@ public class ApplyDiffService extends AbstractApplicationService {
     @Autowired
     private ProjectManagementService projectService;
 
+    @Autowired
+    private IndexRepository index;
+
+    @Autowired
+    private DictionaryRepository dico;
+
+    @Autowired
+    private FunctionalDomainRepository domains;
+
+    private PreparedIndexEntry prepareIndex;
+
+    private PrepareIndexService prepareIndexService;
+
     /**
      * <p>
      * Due to specific transactional process required on managed DB updated by this
@@ -93,6 +107,33 @@ public class ApplyDiffService extends AbstractApplicationService {
                         .runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()), lobs,
                                 project),
                 true);
+    }
+
+    public List<PreparedIndexEntry> updatePreparedIndexEntryToRevert (String uuid) {
+        List<IndexEntry> previous = this.index.findByCommitUuid(UUID.fromString(uuid)); //get current idx entries for lot
+        List<PreparedIndexEntry> update = new ArrayList<>();
+
+        previous.forEach(
+          y -> {
+              update.add(this.prepareIndex.fromExistingEntity(y));
+          });
+
+        update.forEach(x -> {
+            x.setSelected(false);
+            x.setRollbacked(true);
+            x.setTableName(this.dico.getOne(x.getDictionaryEntryUuid()).getTableName());
+            x.setDomainName(this.dico.getOne(x.getDictionaryEntryUuid()).getDomain().getName());
+        });
+
+        /*
+        * entry.setPayload(currentPayload);
+        entry.setPrevious(previousPayload);
+
+        // But for human readability, need a custom display payload (not saved)
+        entry.setHrPayload(getConverter().convertToHrPayload(currentPayload, previousPayload));
+
+        * */
+        return update;
     }
 
     /**

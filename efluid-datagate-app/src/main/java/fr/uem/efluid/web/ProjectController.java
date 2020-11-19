@@ -5,10 +5,7 @@ import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -41,7 +38,6 @@ public class ProjectController extends CommonController {
         model.addAttribute("projects", this.projectManagementService.getAllProjects());
         model.addAttribute("currentLocationTitle", "Gestion des projets");
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
-
         return "pages/projects_all";
     }
 

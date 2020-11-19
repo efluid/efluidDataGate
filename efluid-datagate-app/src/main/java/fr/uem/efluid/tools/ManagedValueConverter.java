@@ -383,6 +383,8 @@ public class ManagedValueConverter {
      */
     public String convertToHrPayload(String activePayload, String existingPayload) {
 
+        System.out.println("=====" + activePayload + " " + existingPayload);
+
         if (StringUtils.isEmpty(activePayload)) {
             if (StringUtils.isEmpty(existingPayload)) {
                 return null;

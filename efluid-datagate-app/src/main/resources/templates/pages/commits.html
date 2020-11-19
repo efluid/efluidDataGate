@@ -30,7 +30,8 @@
                     <td th:text="${commit.state}">Mergé</td>
 		            <td>
 		            	<a href="./details.html" th:href="@{/ui/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
-		            </td>
+						<button type="button" class="btn btn-warning" th:onclick="revert([[${commit.uuid}]])">Revert</button>
+					</td>
 		        </tr>
 		    </tbody>
 		</table>
@@ -46,10 +47,38 @@
 		$('#collapseExample2').css("display", "block");
 		$('#li-5').css("font-weight", "bolder");
 
+		var activeSearch = {
+			filters: {
+				domain:"",
+				table:"",
+				key:"",
+				type:""
+			},
+			sorts: {
+				domain:"",
+				table:"",
+				key:"",
+				type:""
+			}
+		};
 
+		const revert = (uuid) => {
+			console.log(uuid);
+		    $.ajax({
+			type: "POST",
+			url: "/ui/revert/" + uuid,
+			data: JSON.stringify(activeSearch),
+			contentType: "application/json; charset=utf-8",
+			dataType: "json",
+			success: (data, status) => { console.log("////" + data) }
+
+		})
+
+		}
     	$(document).ready(() => {
     		supportGitmojis();
 		});
+
 	</script>
 </body>
 </html>

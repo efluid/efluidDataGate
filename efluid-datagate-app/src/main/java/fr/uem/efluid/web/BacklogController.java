@@ -11,8 +11,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.view.RedirectView;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -53,6 +56,11 @@ public class BacklogController extends CommonController {
 
     @Autowired
     private ApplyDiffService diffService;
+
+    @Autowired
+    PrepareIndexService prepIndex;
+
+
 
     /**
      * <p>
@@ -167,11 +175,26 @@ public class BacklogController extends CommonController {
      */
     @RequestMapping(path = {"/prepare/page/{page}", "/merge/page/{page}"}, method = {GET, POST})
     @ResponseBody
-    public DiffContentPage preparationGetDiffContentPage(
+    public String preparationGetDiffContentPage(
             @PathVariable("page") int page,
-            @RequestBody(required = false) DiffContentSearch search) {
+            @RequestBody(required = false) DiffContentSearch search, String uuid) {
 
-        return this.pilotableCommitService.getPaginatedDiffContent(page, search);
+        this.pilotableCommitService.generateNewDiffPage(0, "30359588-df34-4aea-942e-1ebf1e5ffdc6");
+
+        return "redirect:ui/prepare";
+
+
+        //return this.pilotableCommitService.getPaginatedDiffContent(page, search);
+    }
+
+    /**
+     * @param uuid
+     * @return
+     */
+    @RequestMapping(path = "/revert/{uuid}", method = {POST})
+    @ResponseBody
+    public void revert( @PathVariable("uuid") String uuid, @RequestBody(required = false) DiffContentSearch search) {
+        this.preparationGetDiffContentPage(0, search, uuid);
     }
 
     /**

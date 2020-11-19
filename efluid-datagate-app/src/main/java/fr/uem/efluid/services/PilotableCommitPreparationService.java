@@ -86,6 +86,9 @@ public class PilotableCommitPreparationService {
     private AttachmentProcessor.Provider attachProcs;
 
     @Autowired
+    private ApplyDiffService appDiffService;
+
+    @Autowired
     private AsyncDriver async;
 
     @Autowired(required = false)
@@ -343,6 +346,12 @@ public class PilotableCommitPreparationService {
         return new DiffContentPage(pageIndex, getFilteredDiffContent(currentSearch), this.diffDisplayPageSize);
     }
 
+    public DiffContentPage generateNewDiffPage(int pageIndex, String uuid) {
+
+        // Apply pagination on filtered content directly
+        List <PreparedIndexEntry> list = this.appDiffService.updatePreparedIndexEntryToRevert(uuid);
+        return new DiffContentPage(pageIndex, list, this.diffDisplayPageSize);
+    }
 
     /**
      * <p>

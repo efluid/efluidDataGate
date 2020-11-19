@@ -1,5 +1,6 @@
 package fr.uem.efluid.model.repositories;
 
+import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -18,7 +19,7 @@ import org.springframework.data.repository.query.Param;
  * @since v0.0.1
  * @version 1
  */
-public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUID> {
+public interface DictionaryRepository extends JpaRepository<DictionaryEntry,  UUID> {
 
 	@Query("SELECT DISTINCT dic.uuid FROM IndexEntry ind INNER JOIN ind.dictionaryEntry dic GROUP BY dic.uuid")
 	List<UUID> findUsedIds();
