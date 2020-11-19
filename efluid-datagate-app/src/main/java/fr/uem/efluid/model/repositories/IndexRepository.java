@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.DiffPayloads;
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
@@ -100,29 +99,29 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     @Query(value = "SELECT DISTINCT i.KEY_VALUE FROM INDEXES i WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot", nativeQuery = true)
     Set<String> getKeyValuesForDictionaryEntryBefore(@Param("dictUuid") String dictionaryEntryUuid, @Param("pivot") long timestamp);
 
-    @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD FROM INDEXES i " +
-            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
-            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid AND i.ACTION != 'REMOVE'", nativeQuery = true)
-    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntryAndBuffer(@Param("dictUuid") String dictionaryEntryUuid, @Param("keys") Collection<String> keys);
-
-    @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD, i.PREVIOUS FROM INDEXES i " +
-            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
-            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
-    Stream<ProjectedDiffPayloads> findDiffPayloadsForDictionaryEntryAndBuffer(@Param("dictUuid") String dictionaryEntryUuid, @Param("keys") Collection<String> keys);
+    /* ####################################### Queries for manual projection ####################################### */
 
     /**
-     * For new Knew content regenerate on buffered diff generation
-     *
-     * @param dictionaryEntryUuid
-     * @param keys
-     * @return knew content mapped to their keys
+     * <b><font color="red">Query for internal use only</font></b>
      */
-    default Map<String, String> findRegeneratedContentForDictionaryEntryAndBuffer(UUID dictionaryEntryUuid, Collection<String> keys) {
-        Map<String, String> result = new HashMap<>(keys.size());
-        _internal_findRegeneratedContentForDictionaryEntryAndBuffer(dictionaryEntryUuid.toString(), keys)
-                .forEach(projectionAsContentMap(result));
-        return result;
-    }
+    @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD FROM INDEXES i " +
+            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
+            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid AND i.ACTION != 'REMOVE'", nativeQuery = true)
+    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(
+            @Param("dictUuid") String dictionaryEntryUuid,
+            @Param("keys") Collection<String> keys,
+            @Param("pivot") long pivot);
+
+    /**
+     * <b><font color="red">Query for internal use only</font></b>
+     */
+    @Query(value = "SELECT i.KEY_VALUE as keyValue, i.PAYLOAD as payload, i.PREVIOUS as previous FROM INDEXES i " +
+            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
+            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
+    Stream<Object[]> _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(
+            @Param("dictUuid") String dictionaryEntryUuid,
+            @Param("keys") Collection<String> keys,
+            @Param("pivot") long pivot);
 
     /**
      * <b><font color="red">Query for internal use only</font></b>
@@ -133,10 +132,48 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
             + "	select max(ii.id) as max_id, ii.key_value from indexes ii where ii.dictionary_entry_uuid = :uuid and ii.id not in (:excludeIds) group by ii.key_value"
             + ") mi on i.id = mi.max_id "
             + "where i.key_value in (:keys)", nativeQuery = true)
-    List<IndexEntry> _internal_findAllPreviousIndexEntries(
-            @Param("uuid") String dictionaryEntryUuid,
-            @Param("keys") List<String> keyValues,
-            @Param("excludeIds") List<Long> excludeIds);
+    List<IndexEntry> _internal_findAllPreviousIndexEntries(@Param("uuid") String dictionaryEntryUuid, @Param("keys") List<String> keyValues, @Param("excludeIds") List<Long> excludeIds);
+
+    /* ############################ Internal projection processes (performance related) ########################### */
+
+    /**
+     * Get projected payload mapped to key for specified keys
+     *
+     * @param dictionaryEntryUuid corresponding dictEntry uuid
+     * @param keys
+     * @return
+     */
+    default Map<String, DiffPayloads> findDiffPayloadsForDictionaryEntryAndBufferBefore(String dictionaryEntryUuid, Collection<String> keys, long pivot) {
+        Map<String, DiffPayloads> result = new HashMap<>();
+
+        _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(dictionaryEntryUuid, keys, pivot).forEach(
+                l -> {
+                    if (l[0] != null) {
+                        String key = l[0].toString();
+                        // Internal convert of both payloads to managed string - would fail if content > 2^32 bits
+                        Clob payload = (Clob) l[1];
+                        Clob previous = (Clob) l[2];
+                        result.put(key, new ProjectedDiffPayloads(key, clobToString(payload, 1024), clobToString(previous, 512)));
+                    }
+                }
+        );
+
+        return result;
+    }
+
+    /**
+     * For new Knew content regenerate on buffered diff generation
+     *
+     * @param dictionaryEntryUuid
+     * @param keys
+     * @return knew content mapped to their keys
+     */
+    default Map<String, String> findRegeneratedContentForDictionaryEntryAndBufferBefore(UUID dictionaryEntryUuid, Collection<String> keys, long pivotTime) {
+        Map<String, String> result = new HashMap<>(keys.size());
+        _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(dictionaryEntryUuid.toString(), keys, pivotTime)
+                .forEach(projectionAsContentMap(result));
+        return result;
+    }
 
     /**
      * Search previous entries, with support for large data volumes, ignoring existing entries
@@ -187,6 +224,9 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     }
 
     private static String clobToString(Clob clob, int bufferSize) {
+        if (clob == null) {
+            return null;
+        }
         StringBuilder stringBuilder = new StringBuilder(bufferSize);
         try (Reader reader = clob.getCharacterStream()) {
             char[] buffer = new char[bufferSize];

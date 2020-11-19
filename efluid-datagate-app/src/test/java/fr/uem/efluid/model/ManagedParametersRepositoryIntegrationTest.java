@@ -5,17 +5,13 @@ import fr.uem.efluid.model.repositories.KnewContentRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository.Extraction;
 import fr.uem.efluid.stubs.TesterWithIndependentTransaction;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
@@ -59,7 +55,7 @@ public class ManagedParametersRepositoryIntegrationTest {
     public void testRegenerateKnewContentUltraLow() {
         this.tester.setupDatabase("diff10");
         Collection<String> keys = this.knewContents.knewContentKeys(this.tester.dict());
-        Map<String, String> raw = this.knewContents.knewContentForKeys(this.tester.dict(), keys);
+        Map<String, String> raw = this.knewContents.knewContentForKeysBefore(this.tester.dict(), keys, System.currentTimeMillis());
         this.tester.assertDbContentIs(raw, "diff10/knew.csv");
     }
 
@@ -67,7 +63,7 @@ public class ManagedParametersRepositoryIntegrationTest {
     public void testRegenerateKnewContentLow() {
         this.tester.setupDatabase("diff7");
         Collection<String> keys = this.knewContents.knewContentKeys(this.tester.dict());
-        Map<String, String> raw = this.knewContents.knewContentForKeys(this.tester.dict(), keys);
+        Map<String, String> raw = this.knewContents.knewContentForKeysBefore(this.tester.dict(), keys, System.currentTimeMillis());
         this.tester.assertDbContentIs(raw, "diff7/knew.csv");
     }
 
@@ -96,7 +92,7 @@ public class ManagedParametersRepositoryIntegrationTest {
                 return true;
             }
             return false;
-        })).values().forEach(i -> raw.putAll(this.knewContents.knewContentForKeys(this.tester.dict(), i)));
+        })).values().forEach(i -> raw.putAll(this.knewContents.knewContentForKeysBefore(this.tester.dict(), i, System.currentTimeMillis())));
 
         this.tester.assertDbContentIs(raw, "diff8/knew.csv");
     }

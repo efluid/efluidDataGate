@@ -152,12 +152,14 @@ public class TestDataLoader {
         this.dictionary.deleteAll();
         this.domains.deleteAll();
         this.versions.deleteAll();
+        this.users.deleteAll();
         this.projects.deleteAll();
 
         this.links.flush();
         this.dictionary.flush();
         this.domains.flush();
         this.versions.flush();
+        this.users.flush();
         this.projects.flush();
 
         Project proj = this.projects.save(project("Default"));

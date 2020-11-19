@@ -385,7 +385,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
                     .append("Fatal error on update at ").append(FormatUtils.format(LocalDateTime.now())).append("\n")
                     .append("######################################################################################################\n")
                     .append(errorDetails)
-                    .append("######################################################################################################\n")
+                    .append("\n######################################################################################################\n")
                     .append("All ordered queries for this update : \n");
 
             for (String query : queries) {

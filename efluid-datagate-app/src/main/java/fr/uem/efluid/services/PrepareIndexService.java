@@ -128,8 +128,11 @@ public class PrepareIndexService extends AbstractApplicationService {
         // Here one of the app complexity : diff check using JDBC, for one table. Backlog
         // construction + restoration then diff.
 
+        // We search index just before now
+        long pivotTimestamp = System.currentTimeMillis();
+
         LOGGER.info("Start regenerate knew content for table \"{}\"", entry.getTableName());
-        Set<String> knewKeys = this.knewContents.knewContentKeys(entry);
+        Set<String> knewKeys = getKnewContents().knewContentKeys(entry);
 
         // Intermediate step for better percent process
         preparation.incrementProcessStep();
@@ -146,7 +149,8 @@ public class PrepareIndexService extends AbstractApplicationService {
                     knewKeys,
                     c -> totalProcessed.incrementAndGet(),
                     entry,
-                    preparation);
+                    preparation,
+                    pivotTimestamp);
 
             // Some diffs may add remarks
             LOGGER.debug("Check if some remarks can be added to diff for table \"{}\"", entry.getTableName());
@@ -215,7 +219,7 @@ public class PrepareIndexService extends AbstractApplicationService {
         preparation.incrementProcessStep();
 
         // Get knew keys before pivot time for merge
-        Set<String> knewKeys = this.knewContents.knewContentKeysBefore(entry, searchTimeStamp);
+        Set<String> knewKeys = getKnewContents().knewContentKeysBefore(entry, searchTimeStamp);
 
         // Will be populated from extraction
         final Map<String, String> actualContent = new HashMap<>();
@@ -237,7 +241,8 @@ public class PrepareIndexService extends AbstractApplicationService {
                             knewKeys,
                             l -> actualContent.put(l.getKeyValue(), l.getPayload()),
                             entry,
-                            preparation);
+                            preparation,
+                            searchTimeStamp);
 
             // Apply transformer on merge content
             List<? extends PreparedIndexEntry> transformedMergeDiff = preparation.getTransformerProcessor() != null
@@ -252,7 +257,8 @@ public class PrepareIndexService extends AbstractApplicationService {
                             actualContent,
                             mineDiff,
                             transformedMergeDiff,
-                            preparation);
+                            preparation,
+                            searchTimeStamp);
 
             preparation.incrementProcessStep();
 
@@ -334,7 +340,8 @@ public class PrepareIndexService extends AbstractApplicationService {
             final Set<String> knewKeys,
             final Consumer<ContentLine> eachLineAccumulator,
             final DictionaryEntry dic,
-            final PilotedCommitPreparation<?> preparation) {
+            final PilotedCommitPreparation<?> preparation,
+            final long pivotTimestamp) {
 
         LOGGER.info("Start diff index Generate for table \"{}\"", dic.getTableName());
 
@@ -357,18 +364,18 @@ public class PrepareIndexService extends AbstractApplicationService {
 
                     // Process diff everytime the buffer is full
                     if (buffer.isBufferFull()) {
-                        generateUpdateDiffOnBuffer(buffer, diffTypeBuilder, dic, diff);
+                        generateUpdateDiffOnBuffer(buffer, diffTypeBuilder, dic, diff, pivotTimestamp);
                     }
                 });
 
         // One run on remaining update content in buffer
-        generateUpdateDiffOnBuffer(buffer, diffTypeBuilder, dic, diff);
+        generateUpdateDiffOnBuffer(buffer, diffTypeBuilder, dic, diff, pivotTimestamp);
 
         // Intermediate step for better percent process
         preparation.incrementProcessStep();
 
         // Then init "not found" knew keys as DELETE
-        generateDeleteDiffOnRemainingKnewKeys(knewKeys, diffTypeBuilder, dic, diff);
+        generateDeleteDiffOnRemainingKnewKeys(knewKeys, diffTypeBuilder, dic, diff, pivotTimestamp);
 
         preparation.incrementProcessStep();
 
@@ -497,66 +504,23 @@ public class PrepareIndexService extends AbstractApplicationService {
     }
 
     /**
-     * <p>
-     * Atomic search for update / addition on one actual item
-     * </p>
+     * Accessor to knew Content for testability
      *
-     * @param diffTypeBuilder
-     * @param actualOne
-     * @param knewKeys        all the keys we know for the current dictionary entry
-     * @param buffer          for stepped diff processing
-     * @param dic
-     * @param <T>
-     * @return null if not to keep in diff
+     * @return
      */
-    private <T extends PreparedIndexEntry> T toDiff(
-            final Supplier<T> diffTypeBuilder,
-            final ContentLine actualOne,
-            final Set<String> knewKeys,
-            final DiffProcessingBuffer buffer,
-            final DictionaryEntry dic) {
-
-
-        /*
-        boolean wasKnew = knewContent.containsKey(actualOne.getKeyValue());
-
-        // Found : for delete identification immediately remove from found ones
-        String knewPayload = knewContent.remove(actualOne.getKeyValue());
-
-        // Exist already
-        if (!StringUtils.isEmpty(knewPayload)) {
-
-            // Content is different : it's an Update
-            if (!actualOne.getPayload().equals(knewPayload)) {
-                LOGGER.debug("New endex entry for {} : UPDATED from \"{}\" to \"{}\"", actualOne.getKeyValue(), knewPayload,
-                        actualOne.getPayload());
-                return preparedIndexEntry(diffTypeBuilder, IndexAction.UPDATE, actualOne.getKeyValue(), actualOne.getPayload(), knewPayload,
-                        dic);
-            }
-        }
-
-        // Doesn't exist already : it's an addition
-        else {
-
-            // Except if new is also empty will content is knew : it's a managed empty line
-            if (!(wasKnew && StringUtils.isEmpty(actualOne.getPayload()))) {
-                LOGGER.debug("New endex entry for {} : ADD with \"{}\"", actualOne.getKeyValue(), actualOne.getPayload());
-                return preparedIndexEntry(diffTypeBuilder, IndexAction.ADD, actualOne.getKeyValue(), actualOne.getPayload(), null, dic);
-            }
-        }
-
-        // Nullify lines to ignore (already in knew content)
-        return null;
-         */
-
-        // Nullify lines to ignore (already in knew content)
-        return null;
+    protected KnewContentRepository getKnewContents() {
+        return this.knewContents;
     }
 
     /**
      * Identify all updates and (rare) "re-addition"
      */
-    private <T extends PreparedIndexEntry> void generateUpdateDiffOnBuffer(final DiffProcessingBuffer buff, final Supplier<T> diffTypeBuilder, DictionaryEntry dic, List<T> diff) {
+    private <T extends PreparedIndexEntry> void generateUpdateDiffOnBuffer(
+            final DiffProcessingBuffer buff,
+            final Supplier<T> diffTypeBuilder,
+            DictionaryEntry dic,
+            List<T> diff,
+            long pivotTimestamp) {
 
         // Process only if we have some content to process !
         if (buff.getIndex() > 0) {
@@ -572,7 +536,7 @@ public class PrepareIndexService extends AbstractApplicationService {
              */
 
             // Generate the knew content for the current lines from index to get the exact "knew" content
-            Map<String, String> knewContent = this.knewContents.knewContentForKeys(dic, buff.extractKeys());
+            Map<String, String> knewContent = getKnewContents().knewContentForKeysBefore(dic, buff.extractKeys(), pivotTimestamp);
 
             boolean debug = LOGGER.isDebugEnabled();
 
@@ -621,14 +585,14 @@ public class PrepareIndexService extends AbstractApplicationService {
     /**
      * Identify all updates and (rare) "re-addition"
      */
-    private <T extends PreparedIndexEntry> void generateDeleteDiffOnRemainingKnewKeys(final Set<String> remainingKeys, final Supplier<T> diffTypeBuilder, DictionaryEntry dic, List<T> diff) {
+    private <T extends PreparedIndexEntry> void generateDeleteDiffOnRemainingKnewKeys(final Set<String> remainingKeys, final Supplier<T> diffTypeBuilder, DictionaryEntry dic, List<T> diff, long pivotTimestamp) {
 
         // Process only if we have some content to process !
         if (!remainingKeys.isEmpty()) {
 
             boolean debug = LOGGER.isDebugEnabled();
 
-            Map<String, String> remainingKnewContents = this.knewContents.knewContentForKeys(dic, remainingKeys);
+            Map<String, String> remainingKnewContents = getKnewContents().knewContentForKeysBefore(dic, remainingKeys, pivotTimestamp);
 
             // Remaining in knewContent are deleted ones
             remainingKnewContents.forEach((k, v) -> {
@@ -692,7 +656,8 @@ public class PrepareIndexService extends AbstractApplicationService {
             Map<String, String> actualContent,
             Collection<? extends DiffLine> mines,
             Collection<? extends DiffLine> theirs,
-            PilotedCommitPreparation<?> preparation) {
+            PilotedCommitPreparation<?> preparation,
+            long pivotTimestamp) {
 
         LOGGER.debug("Completing merge data from index for parameter table {}", dict.getTableName());
 
@@ -719,7 +684,7 @@ public class PrepareIndexService extends AbstractApplicationService {
 
             // Process one page of buffer if ready
             if (buffer.isBufferFull()) {
-                generateMergeDiffOnBuffer(buffer, actualContent, dict, merge, recordWarnings, preparation);
+                generateMergeDiffOnBuffer(buffer, actualContent, dict, merge, recordWarnings, preparation, pivotTimestamp);
             }
 
             // One increment only (when half are processed)
@@ -729,21 +694,23 @@ public class PrepareIndexService extends AbstractApplicationService {
         }
 
         // One final run for remaining buffer content
-        generateMergeDiffOnBuffer(buffer, actualContent, dict, merge, recordWarnings, preparation);
+        generateMergeDiffOnBuffer(buffer, actualContent, dict, merge, recordWarnings, preparation, pivotTimestamp);
 
         return merge;
     }
 
+    // For merge processing, process the merge result for one buffer
     private void generateMergeDiffOnBuffer(
             final MergeProcessingBuffer buff,
             Map<String, String> actualContent,
             DictionaryEntry dict,
             Collection<PreparedMergeIndexEntry> merge,
             boolean recordWarnings,
-            PilotedCommitPreparation<?> preparation) {
+            PilotedCommitPreparation<?> preparation,
+            long pivotTimestamp) {
 
         // Load knew payloads only for current buffer
-        Map<String, DiffPayloads> buffKnewPayloads = this.knewContents.knewContentPayloadsForKeys(dict, buff.extractKeys());
+        Map<String, DiffPayloads> buffKnewPayloads = getKnewContents().knewContentPayloadsForKeysBefore(dict, buff.extractKeys(), pivotTimestamp);
 
         // For the buffer content
         for (Map.Entry<String, ProcessingMergeLine> entry : buff.getContent().entrySet()) {
@@ -759,14 +726,21 @@ public class PrepareIndexService extends AbstractApplicationService {
                 // Ignore dead entries (ADDED then DELETED in regenerated content)
                 if (mine != null || their != null) {
 
+                    String knewPayload = null, knewPrevious = null;
+
+                    if (knewPayloads != null) {
+                        knewPayload = knewPayloads.getPayload();
+                        knewPrevious = knewPayloads.getPrevious();
+                    }
+
                     // Build HR
-                    String mineHr = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null, knewPayloads.getPayload());
-                    String theirHr = getConverter().convertToHrPayload(their != null ? their.getPayload() : null, knewPayloads.getPayload());
+                    String mineHr = getConverter().convertToHrPayload(mine != null ? mine.getPayload() : null, knewPayload);
+                    String theirHr = getConverter().convertToHrPayload(their != null ? their.getPayload() : null, knewPayload);
 
                     PreparedIndexEntry mineEntry = mine != null ? PreparedIndexEntry.fromCombined(mine, dict.getTableName(), mineHr) : null;
                     PreparedIndexEntry theirEntry = their != null ? PreparedIndexEntry.fromCombined(their, dict.getTableName(), theirHr) : null;
 
-                    PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actualContent.get(entry.getKey()), knewPayloads.getPrevious());
+                    PreparedMergeIndexEntry resolved = this.mergeResolutionProcessor.resolveMerge(mineEntry, theirEntry, actualContent.get(entry.getKey()), knewPrevious);
 
                     // Dedicated logger output for resolutions
                     if (MERGE_LOGGER.isDebugEnabled()) {
@@ -811,6 +785,8 @@ public class PrepareIndexService extends AbstractApplicationService {
             Collection<T> readyToRender,
             Function<Collection<T>, ? extends T> similarConvert) {
 
+        // TODO : Add too much complexity, should be dropped
+
         List<T> listToRender = new ArrayList<>();
 
         // Combine by HR payload
@@ -818,7 +794,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 .collect(Collectors.groupingBy(p -> p.getHrPayload() != null ? p.getHrPayload() : ""));
 
         // Rendering display is based on combined
-        combineds.values().stream().forEach(e -> {
+        combineds.values().forEach(e -> {
 
             // Only one : not combined
             if (e.size() < this.maxSimilarBeforeCombined) {

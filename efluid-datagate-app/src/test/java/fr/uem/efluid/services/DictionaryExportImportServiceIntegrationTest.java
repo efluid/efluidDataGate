@@ -26,7 +26,7 @@ import fr.uem.efluid.stubs.TestUtils;
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @RunWith(SpringRunner.class)
-@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
 public class DictionaryExportImportServiceIntegrationTest {
 

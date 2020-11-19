@@ -32,7 +32,7 @@ import fr.uem.efluid.utils.FormatUtils;
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @RunWith(SpringRunner.class)
-@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
 public class TestSqlAttachmentProcessor {
 
