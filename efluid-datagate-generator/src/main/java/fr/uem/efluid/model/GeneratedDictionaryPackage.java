@@ -21,7 +21,7 @@ public class GeneratedDictionaryPackage extends DictionaryExportPackage<Paramete
      */
     public GeneratedDictionaryPackage(Collection<ParameterTableDefinition> allTables) {
         super(DictionaryExportPackage.DICT_EXPORT, LocalDateTime.now());
-        initWithContent(allTables.stream().sorted(Comparator.comparing(ParameterTableDefinition::getParameterName))
+        from(allTables.stream().sorted(Comparator.comparing(ParameterTableDefinition::getParameterName))
                 .collect(Collectors.toList()));
     }
 

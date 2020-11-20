@@ -276,26 +276,20 @@ public class CommitService extends AbstractApplicationService {
                 .filter(c -> c.getCreatedTime().isBefore(rangeBegin))
                 .forEach(Commit::setAsRefOnly);
 
-        // Get associated lobs
-        List<LobProperty> lobsToExport = loadLobsForCommits(commitsToExport);
-
-        // Get associated versions
-        List<Version> versionsToExport = loadVersionsForCommits(commitsToExport);
-
         // Then export :
         ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
                 // Add customized transformers
                 new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
-                        .initWithContent(this.transformerService.getCustomizedTransformerDef(project, preparedExport.getTransformers())),
+                        .from(this.transformerService.getCustomizedTransformerDef(project, preparedExport.getTransformers())),
                 // Add referenced versions (for dict content compatibility check at import)
-                new VersionPackage(PCKG_VERSIONS, LocalDateTime.now()).initWithContent(versionsToExport),
+                new VersionPackage(PCKG_VERSIONS, LocalDateTime.now()).from(loadVersionsForCommits(commitsToExport)),
                 // Add selected commit(s)
-                new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
+                new CommitPackage(pckgName, LocalDateTime.now()).from(commitsToExport),
                 // Add lobs associated to commits
-                new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport),
+                new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).from(loadLobsForCommits(commitsToExport)),
                 // Add all commit attachments
                 new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now())
-                        .initWithContent(this.attachments.findByCommitIn(commitsToExport))));
+                        .from(this.attachments.findByCommitIn(commitsToExport))));
 
         ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
@@ -876,7 +870,7 @@ public class CommitService extends AbstractApplicationService {
      * @param commitsToExport
      * @return
      */
-    private List<LobProperty> loadLobsForCommits(List<Commit> commitsToExport) {
+    private Stream<LobProperty> loadLobsForCommits(List<Commit> commitsToExport) {
         return this.lobs
                 .findByCommitUuidIn(commitsToExport.stream().filter(c -> !c.isRefOnly()).map(Commit::getUuid).collect(Collectors.toList()));
     }
@@ -885,11 +879,10 @@ public class CommitService extends AbstractApplicationService {
      * @param commitsToExport
      * @return
      */
-    private List<Version> loadVersionsForCommits(List<Commit> commitsToExport) {
+    private Stream<Version> loadVersionsForCommits(List<Commit> commitsToExport) {
         return commitsToExport.stream()
                 .filter(c -> !c.isRefOnly()).map(Commit::getVersion)
-                .peek(v -> v.setSerializeDictionaryContents(true))
-                .collect(Collectors.toList());
+                .peek(v -> v.setSerializeDictionaryContents(true));
     }
 
     /**

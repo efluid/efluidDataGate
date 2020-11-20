@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -239,7 +240,7 @@ public class TransformerService extends AbstractApplicationService {
      */
     TransformerProcessor importTransformerDefsAndPrepareProcessor(TransformerDefPackage pckg) {
 
-        if (pckg.getContentSize() == 0) {
+        if (pckg.getProcessedSize() == 0) {
             return null;
         }
 
@@ -265,7 +266,7 @@ public class TransformerService extends AbstractApplicationService {
      * @param customizations specified customizations for export
      * @return transformer def ready to be exported, with applied customizations
      */
-    List<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
+    Stream<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
 
         Map<UUID, String> confs = customizations.stream().collect(Collectors.toMap(c -> c.getTransformerDef().getUuid(), ExportTransformer::getConfiguration));
         Set<UUID> disabled = customizations.stream().filter(ExportTransformer::isDisabled).map(t -> t.getTransformerDef().getUuid()).collect(Collectors.toSet());
@@ -279,7 +280,7 @@ public class TransformerService extends AbstractApplicationService {
                     if (customization != null && !customization.equals(t.getConfiguration())) {
                         t.setCustomizedConfiguration(customization);
                     }
-                }).collect(Collectors.toList());
+                });
     }
 
     private TransformerDef importTransformerDef(TransformerDef imported) {

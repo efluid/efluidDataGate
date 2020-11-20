@@ -21,7 +21,7 @@ public class GeneratedTableLinkPackage extends TableLinkExportPackage<ParameterL
      */
     public GeneratedTableLinkPackage(Collection<ParameterLinkDefinition> allLinks) {
         super(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now());
-        initWithContent(allLinks.stream().sorted(Comparator.comparing(ParameterLinkDefinition::getTableTo))
+        from(allLinks.stream().sorted(Comparator.comparing(ParameterLinkDefinition::getTableTo))
                 .collect(Collectors.toList()));
     }
 

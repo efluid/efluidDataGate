@@ -788,26 +788,26 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         // Packages on limited data sets
         ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, LocalDateTime.now())
-                .initWithContent(Collections.singletonList(domain.getProject()));
+                .from(Collections.singletonList(domain.getProject()));
         DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.PARTIAL_DICT_EXPORT, LocalDateTime.now())
-                .initWithContent(this.dictionary.findByDomain(domain));
+                .from(this.dictionary.findByDomain(domain));
         FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT,
-                LocalDateTime.now()).initWithContent(Collections.singletonList(domain));
+                LocalDateTime.now()).from(Collections.singletonList(domain));
         TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.links.findByDictionaryEntryDomain(domain));
+                .from(this.links.findByDictionaryEntryDomain(domain));
         TableMappingPackage tm = new TableMappingPackage(TableMappingExportPackage.MAPPINGS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.mappings.findByDictionaryEntryDomain(domain));
+                .from(this.mappings.findByDictionaryEntryDomain(domain));
 
         // Easy : just take all
         ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, dict, doms, tl, tm));
 
         ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
-        result.addCount(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, proj.getContentSize(), 0, 0);
-        result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
-        result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
-        result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
-        result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getContentSize(), 0, 0);
+        result.addCount(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, proj.getProcessedSize(), 0, 0);
+        result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getProcessedSize(), 0, 0);
+        result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getProcessedSize(), 0, 0);
+        result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getProcessedSize(), 0, 0);
+        result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getProcessedSize(), 0, 0);
 
         return result;
     }
@@ -824,36 +824,36 @@ public class DictionaryManagementService extends AbstractApplicationService {
         LOGGER.info("Process export of complete dictionary related entities for current project {}", project.getName());
 
         ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, LocalDateTime.now())
-                .initWithContent(Arrays.asList(project));
+                .from(Arrays.asList(project));
 
         // Versions for project
         VersionPackage vers = new VersionPackage(VersionExportPackage.PARTIAL_VERSIONS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.versions.findByProject(project));
+                .from(this.versions.findByProject(project));
 
         // Will filter by domains from package
         List<FunctionalDomain> fdoms = this.domains.findByProject(project);
 
         FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT,
                 LocalDateTime.now())
-                .initWithContent(fdoms);
+                .from(fdoms);
         DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.PARTIAL_DICT_EXPORT, LocalDateTime.now())
-                .initWithContent(this.dictionary.findByDomainIn(fdoms));
+                .from(this.dictionary.findByDomainIn(fdoms));
         TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.links.findByDictionaryEntryDomainIn(fdoms));
+                .from(this.links.findByDictionaryEntryDomainIn(fdoms));
         TableMappingPackage tm = new TableMappingPackage(TableMappingExportPackage.MAPPINGS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.mappings.findByDictionaryEntryDomainIn(fdoms));
+                .from(this.mappings.findByDictionaryEntryDomainIn(fdoms));
 
         // Easy : just take all
         ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, vers, dict, doms, tl, tm));
 
         ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
-        result.addCount(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, proj.getContentSize(), 0, 0);
-        result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getContentSize(), 0, 0);
-        result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
-        result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getContentSize(), 0, 0);
-        result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getContentSize(), 0, 0);
-        result.addCount(VersionExportPackage.VERSIONS_EXPORT, vers.getContentSize(), 0, 0);
+        result.addCount(ProjectExportPackage.PARTIAL_PROJECTS_EXPORT, proj.getProcessedSize(), 0, 0);
+        result.addCount(DictionaryExportPackage.PARTIAL_DICT_EXPORT, dict.getProcessedSize(), 0, 0);
+        result.addCount(FunctionalDomainExportPackage.PARTIAL_DOMAINS_EXPORT, doms.getProcessedSize(), 0, 0);
+        result.addCount(TableLinkExportPackage.PARTIAL_LINKS_EXPORT, tl.getProcessedSize(), 0, 0);
+        result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getProcessedSize(), 0, 0);
+        result.addCount(VersionExportPackage.VERSIONS_EXPORT, vers.getProcessedSize(), 0, 0);
 
         return result;
     }
@@ -866,29 +866,29 @@ public class DictionaryManagementService extends AbstractApplicationService {
         LOGGER.info("Process export of complete dictionary related entities");
 
         ProjectPackage proj = new ProjectPackage(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.projects.findAll());
+                .from(this.projects.findAll());
         VersionPackage vers = new VersionPackage(VersionExportPackage.VERSIONS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.versions.findAll());
+                .from(this.versions.findAll());
         DictionaryPackage dict = new DictionaryPackage(DictionaryExportPackage.DICT_EXPORT, LocalDateTime.now())
-                .initWithContent(this.dictionary.findAll());
+                .from(this.dictionary.findAll());
         FunctionalDomainPackage doms = new FunctionalDomainPackage(FunctionalDomainExportPackage.DOMAINS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.domains.findAll());
+                .from(this.domains.findAll());
         TableLinkPackage tl = new TableLinkPackage(TableLinkExportPackage.LINKS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.links.findAll());
+                .from(this.links.findAll());
         TableMappingPackage tm = new TableMappingPackage(TableMappingExportPackage.MAPPINGS_EXPORT, LocalDateTime.now())
-                .initWithContent(this.mappings.findAll());
+                .from(this.mappings.findAll());
 
         // Easy : just take all
         ExportFile file = this.ioService.exportPackages(Arrays.asList(proj, vers, dict, doms, tl, tm));
 
         ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
-        result.addCount(ProjectExportPackage.PROJECTS_EXPORT, proj.getContentSize(), 0, 0);
-        result.addCount(DictionaryExportPackage.DICT_EXPORT, dict.getContentSize(), 0, 0);
-        result.addCount(FunctionalDomainExportPackage.DOMAINS_EXPORT, doms.getContentSize(), 0, 0);
-        result.addCount(TableLinkExportPackage.LINKS_EXPORT, tl.getContentSize(), 0, 0);
-        result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getContentSize(), 0, 0);
-        result.addCount(VersionExportPackage.VERSIONS_EXPORT, vers.getContentSize(), 0, 0);
+        result.addCount(ProjectExportPackage.PROJECTS_EXPORT, proj.getProcessedSize(), 0, 0);
+        result.addCount(DictionaryExportPackage.DICT_EXPORT, dict.getProcessedSize(), 0, 0);
+        result.addCount(FunctionalDomainExportPackage.DOMAINS_EXPORT, doms.getProcessedSize(), 0, 0);
+        result.addCount(TableLinkExportPackage.LINKS_EXPORT, tl.getProcessedSize(), 0, 0);
+        result.addCount(TableMappingExportPackage.MAPPINGS_EXPORT, tm.getProcessedSize(), 0, 0);
+        result.addCount(VersionExportPackage.VERSIONS_EXPORT, vers.getProcessedSize(), 0, 0);
 
         return result;
     }

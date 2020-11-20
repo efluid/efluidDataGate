@@ -2,6 +2,7 @@ package fr.uem.efluid.model.repositories;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,7 +16,7 @@ import fr.uem.efluid.model.entities.LobProperty;
  */
 public interface LobPropertyRepository extends JpaRepository<LobProperty, Long> {
 
-	List<LobProperty> findByCommitUuidIn(List<UUID> commitUuids);
+	Stream<LobProperty> findByCommitUuidIn(List<UUID> commitUuids);
 
 	List<LobProperty> findByCommit(Commit commit);
 
