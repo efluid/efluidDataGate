@@ -98,7 +98,6 @@ public class SecurityConfig {
             user.setEmail(UserHolder.TECHNICAL_USER_EMAIL);
             user.setToken(this.tokenTechnic); //set Token stored in application property
             user.setCreatedTime(LocalDateTime.now());
-
             user = this.users.save(user);
 
             this.projectService.setPreferedProjectsForUser(user, projects); //add manually all projects as prefered projects
