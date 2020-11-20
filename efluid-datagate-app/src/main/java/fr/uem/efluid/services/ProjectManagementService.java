@@ -3,6 +3,7 @@ package fr.uem.efluid.services;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.ProjectRepository;
+import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.security.providers.AccountProvider;
 import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.utils.ApplicationException;
@@ -159,14 +160,14 @@ public class ProjectManagementService extends AbstractApplicationService {
 
         assertProjectNameIsAvailable(name);
 
-        Project project = new Project();
+        final Project project = new Project();
 
         project.setUuid(UUID.randomUUID());
         project.setName(name);
         project.setCreatedTime(LocalDateTime.now());
         project.setColor(color);
 
-        project = this.projects.save(project);
+        this.projects.save(project);
 
         // Also add it as prefered to current user
         User user = reloadCurrentUser();
@@ -174,9 +175,11 @@ public class ProjectManagementService extends AbstractApplicationService {
         this.accountProvider.updateUser(user);
 
         // Also add it automatically in list projects of technic user
-        User technic = this.accountProvider.findExistingUserByLogin("technical-user").get();
-        technic.getPreferedProjects().add(project);
-        this.accountProvider.updateUser(technic);
+        this.accountProvider.findExistingUserByLogin(UserHolder.TECHNICAL_USER)
+                .ifPresent(technic -> {
+                    technic.getPreferedProjects().add(project);
+                    this.accountProvider.updateUser(technic);
+                });
 
         return ProjectData.fromEntity(project);
     }
@@ -190,11 +193,11 @@ public class ProjectManagementService extends AbstractApplicationService {
      * @param newNameProject new name project needed to update
      * @throws ApplicationException if id on project is not known in DB do not update project return error
      */
-    public Project updateNameProject(String newNameProject, String oldNameProject,  UUID uuidProject) {
+    public Project updateNameProject(String newNameProject, String oldNameProject, UUID uuidProject) {
 
         Project project = this.projects.findByName(oldNameProject);
 
-        if(uuidProject.compareTo(project.getUuid()) == 0) { //verify that id are the same and we're not trying to change the project project's name
+        if (uuidProject.compareTo(project.getUuid()) == 0) { //verify that id are the same and we're not trying to change the project project's name
             assertProjectNameIsAvailable(newNameProject);
 
             project.setName(newNameProject);

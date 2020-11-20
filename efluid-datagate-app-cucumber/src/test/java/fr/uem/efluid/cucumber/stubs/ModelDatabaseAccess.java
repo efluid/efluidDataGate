@@ -3,6 +3,7 @@ package fr.uem.efluid.cucumber.stubs;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.security.UserHolder;
+import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.tools.Transformer;
 import org.pac4j.core.credentials.password.PasswordEncoder;
@@ -104,7 +105,20 @@ public class ModelDatabaseAccess {
         this.links.deleteAll();
         this.entries.deleteAll();
         this.domains.deleteAll();
-        this.users.deleteAll();
+
+        // Do not drop technical user
+        this.users.findAll().stream()
+                .filter(u -> !u.getLogin().equals(UserHolder.TECHNICAL_USER))
+                .forEach(this.users::delete);
+
+        // And reset technical user projects
+        this.users.findByLogin(UserHolder.TECHNICAL_USER).ifPresent(
+               user -> {
+                   user.setPreferedProjects(new HashSet<>());
+                   this.users.save(user);
+               }
+        );
+
         this.projects.deleteAll();
 
         this.transformerDefs.flush();
