@@ -58,7 +58,7 @@ public class AppUserCredentialAuthenticator implements Authenticator<UsernamePas
         }
 
         //technic user should not be able to connect to app
-        if(username.equals("technical-user") && password.equals("technical-user")) {
+        if(username.equals(UserHolder.TECHNICAL_USER)) {
             throw new CredentialsException("This user cannot connect to app");
         }
 

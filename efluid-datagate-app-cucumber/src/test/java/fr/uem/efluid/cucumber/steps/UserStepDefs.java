@@ -3,11 +3,17 @@ package fr.uem.efluid.cucumber.steps;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.model.repositories.UserRepository;
+import fr.uem.efluid.security.UserHolder;
+import fr.uem.efluid.services.types.UserDetails;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thymeleaf.util.StringUtils;
 
 import java.util.Optional;
@@ -67,7 +73,41 @@ public class UserStepDefs extends CucumberStepDefs {
     }
 
     @Then("^it is (.*)possible to create a new user$")
-    public void a_user_can_be_created(String type){
+    public void a_user_can_be_created(String type) {
         assertModelIsSpecifiedProperty("canCreate", Boolean.class, v -> v == StringUtils.isEmpty(type));
+    }
+
+    @Then("^the user \"(.*)\" exists in database$")
+    public void user_in_dbt(String user) {
+        assertThat(this.users.findByLogin(user)).isPresent();
+    }
+
+    @Then("^the list of users doesn't include \"(.*)\"$")
+    public void not_in_user_list(String user) {
+        assertThat(getCurrentSpecifiedPropertyList("users", UserDetails.class))
+                .describedAs("List of users")
+                .noneMatch(u -> u.getLogin().equals(user));
+    }
+
+    @When("^the technical user with token \"(.*)\" connect to an authenticated rest service$")
+    public void connect_rest_tech(String token) throws Exception {
+
+
+        String url = getCorrespondingLinkForPageName("the feature listing rest service");
+
+
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.get(url);
+
+        if (currentStartPage != null) {
+            builder.header("Referer", currentStartPage);
+        }
+        builder.param("token", token);
+
+
+        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+
+        currentAction = this.mockMvc.perform(builder);
+
+        assertRequestWasOk();
     }
 }

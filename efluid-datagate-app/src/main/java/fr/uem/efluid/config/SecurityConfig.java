@@ -6,6 +6,7 @@ import fr.uem.efluid.rest.RestApi;
 import fr.uem.efluid.security.AllAuthorizer;
 import fr.uem.efluid.security.AppUserCredentialAuthenticator;
 import fr.uem.efluid.security.RestTokenAuthenticator;
+import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.security.providers.AccountProvider;
 import fr.uem.efluid.security.providers.DatabaseOnlyAccountProvider;
 import fr.uem.efluid.security.providers.LdapAuthAccountProvider;
@@ -16,6 +17,7 @@ import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import org.pac4j.core.client.Clients;
 import org.pac4j.core.config.Config;
+import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.pac4j.http.client.direct.ParameterClient;
 import org.pac4j.http.client.indirect.FormClient;
 import org.pac4j.j2e.filter.CallbackFilter;
@@ -31,7 +33,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
 import javax.annotation.PostConstruct;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -70,13 +74,10 @@ public class SecurityConfig {
     private RestTokenAuthenticator restAuthent;
 
     @Autowired
-    private AccountProvider accountProv;
+    private UserRepository users;
 
     @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
-    private SecurityService secu;
+    private PasswordEncoder encoder;
 
     @Autowired
     private ProjectManagementService projectService;
@@ -86,16 +87,23 @@ public class SecurityConfig {
 
     @PostConstruct
     public void checkUserTechnicExists() {
-        List<UUID> projects = this.projectService.getAllProjects().stream().map(ProjectData::getUuid).collect(Collectors.toList());
 
-       if (userRepo.findByToken(tokenTechnic).isEmpty()) { //check if user exists
-            User user = this.accountProv.createUser("technical-user", "datagate@efluid.com", "technical-user"); //create user if user doesnt exist
+        if (this.users.findByToken(tokenTechnic).isEmpty()) { //check if user exists
+
+            List<UUID> projects = this.projectService.getAllProjects().stream().map(ProjectData::getUuid).collect(Collectors.toList());
+
+            User user = new User();
+            user.setLogin(UserHolder.TECHNICAL_USER);
+            user.setPassword(this.encoder.encode(UserHolder.TECHNICAL_USER));
+            user.setEmail(UserHolder.TECHNICAL_USER_EMAIL);
+            user.setToken(this.tokenTechnic); //set Token stored in application property
+            user.setCreatedTime(LocalDateTime.now());
+            user = this.users.save(user);
+
             this.projectService.setPreferedProjectsForUser(user, projects); //add manually all projects as prefered projects
-            user.setToken(tokenTechnic); //set Token stored in application property
-            userRepo.save(user);
-            LOGGER.info("[SECURITY] created technical user: {}", user.getLogin());
 
-       }
+            LOGGER.info("[SECURITY] created technical user: {}", user.getLogin());
+        }
     }
 
     @Bean
