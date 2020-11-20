@@ -273,6 +273,11 @@ public class CommonStepDefs extends CucumberStepDefs {
         }
     }
 
+    @Then("^the request is a success$")
+    public void success_request(){
+        assertRequestWasOk();
+    }
+
     @Then("^an auth error is displayed$")
     public void login_auth_error() {
         assertModelHasSpecifiedProperty("error");

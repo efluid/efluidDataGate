@@ -84,6 +84,7 @@ public class LdapAuthAccountProvider implements AccountProvider {
 
     @Override
     public User createUser(String login, String email, String password) {
+
         throw new UnsupportedOperationException("Cannot create directly users : users must exist on LDAP database");
     }
 
