@@ -4,8 +4,7 @@ import static fr.uem.efluid.utils.DataGenerationUtils.user;
 
 import java.util.UUID;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,16 +12,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.*;
 
 import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.model.entities.AttachmentType;
-import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
 import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.tools.AttachmentProcessor;
-import fr.uem.efluid.tools.SqlAttachmentProcessor;
+import fr.uem.efluid.tools.*;
 import fr.uem.efluid.utils.FormatUtils;
 
 /**
@@ -61,6 +57,7 @@ public class TestSqlAttachmentProcessor {
 
 	@Test
 	public void testExecute() {
+		Commit commit = new Commit(UUID.randomUUID());
 
 		User user = user("testeur");
 
@@ -69,7 +66,7 @@ public class TestSqlAttachmentProcessor {
 
 		Assert.assertEquals(0, this.history.findAll().size());
 
-		proc.execute(user, comp);
+		proc.execute(user, comp, commit);
 
 		Assert.assertEquals(1, this.history.findAll().size());
 	}

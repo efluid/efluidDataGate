@@ -1,11 +1,8 @@
 package fr.uem.efluid.tools;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-import fr.uem.efluid.model.entities.AttachmentType;
-import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.utils.FormatUtils;
 
 /**
@@ -13,7 +10,7 @@ import fr.uem.efluid.utils.FormatUtils;
  * For processing of attachment files : tools for edit display, execute display and
  * execute process. Depends on associated type
  * </p>
- * 
+ *
  * @author elecomte
  * @since v2.0.0
  * @version 1
@@ -21,7 +18,7 @@ import fr.uem.efluid.utils.FormatUtils;
 public abstract class AttachmentProcessor {
 
 	/**
-	 * 
+	 *
 	 */
 	protected AttachmentProcessor() {
 		super();
@@ -47,7 +44,7 @@ public abstract class AttachmentProcessor {
 	 * @param att
 	 */
 	@SuppressWarnings("unused")
-	public void execute(User user, Compliant att) {
+	public void execute(User user, Compliant att, Commit commit) {
 		// Default does nothing
 	}
 
@@ -55,7 +52,7 @@ public abstract class AttachmentProcessor {
 	 * <p>
 	 * Entry point for easy access to supported AttachmentProcessors
 	 * </p>
-	 * 
+	 *
 	 * @author elecomte
 	 * @since v2.0.0
 	 * @version 1
@@ -85,7 +82,7 @@ public abstract class AttachmentProcessor {
 		 * <p>
 		 * Provides a default one if none found
 		 * </p>
-		 * 
+		 *
 		 * @param compliant
 		 * @return
 		 */
@@ -97,7 +94,7 @@ public abstract class AttachmentProcessor {
 		 * <p>
 		 * Provides a default one if none found
 		 * </p>
-		 * 
+		 *
 		 * @param compliant
 		 * @return
 		 */
@@ -133,7 +130,7 @@ public abstract class AttachmentProcessor {
 	 * <p>
 	 * Common model for attachment processing input
 	 * </p>
-	 * 
+	 *
 	 * @author elecomte
 	 * @since v2.0.0
 	 * @version 1

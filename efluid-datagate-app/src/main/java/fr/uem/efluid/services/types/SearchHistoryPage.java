@@ -2,8 +2,7 @@ package fr.uem.efluid.services.types;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -98,6 +97,7 @@ public class SearchHistoryPage {
 		private final UUID attachmentSourceUuid;
 		private final LocalDateTime processedTime;
 		private final UUID projectId;
+		private final String commitComment;
 
 		/**
 		 * @param query
@@ -105,7 +105,7 @@ public class SearchHistoryPage {
 		 * @param rollback
 		 * @param processedTime
 		 */
-		private HistoryDetails(String query, String user, boolean rollback, UUID attachmentSourceUuid, LocalDateTime processedTime, UUID projectId) {
+		private HistoryDetails(String query, String user, boolean rollback, UUID attachmentSourceUuid, LocalDateTime processedTime, UUID projectId, String commitComment) {
 			super();
 			this.query = query;
 			this.user = user;
@@ -113,6 +113,7 @@ public class SearchHistoryPage {
 			this.attachmentSourceUuid = attachmentSourceUuid;
 			this.processedTime = processedTime;
 			this.projectId = projectId;
+			this.commitComment = commitComment;
 		}
 
 		/**
@@ -151,18 +152,24 @@ public class SearchHistoryPage {
 		}
 
 		/**
-		 * @return the processedTime
+		 * @return the projectId
 		 */
 		public UUID getProjectId () {
 			return this.projectId;
 		}
 
+		/**
+		 * @return the commitComment
+		 */
+		public String getCommitComment() {
+			return this.commitComment;
+		}
 
 		static HistoryDetails fromEntity(ApplyHistoryEntry histo) {
 
 			Timestamp ts = new Timestamp(histo.getTimestamp().longValue());
 			return new HistoryDetails(histo.getQuery(), histo.getUser().getEmail(), histo.isRollback(), histo.getAttachmentSourceUuid(),
-					ts.toLocalDateTime(), histo.getProjectUuid());
+					ts.toLocalDateTime(), histo.getProjectUuid(), histo.getCommit() != null ? histo.getCommit().getComment() : "");
 		}
 	}
 }
