@@ -1,5 +1,6 @@
 package fr.uem.efluid.services.types;
 
+import java.lang.ref.Cleaner;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import fr.uem.efluid.model.Shared;
  * @version 2
  * @since v0.0.1
  */
-public abstract class SharedPackage<T extends Shared> {
+public abstract class SharedPackage<T extends Shared> implements Cleaner.Cleanable {
 
     private final String name;
 
@@ -104,6 +105,17 @@ public abstract class SharedPackage<T extends Shared> {
     }
 
     /**
+     * For compatibility validation on version. Default validate that imported version
+     * equals package version, but it can be overriden for some packages
+     *
+     * @param importVersion
+     * @return
+     */
+    public boolean isCompatible(String importVersion) {
+        return getVersion().equals(importVersion);
+    }
+
+    /**
      * @param contentRaw
      */
     public void deserialize(Stream<String> contentRaw) {
@@ -151,7 +163,7 @@ public abstract class SharedPackage<T extends Shared> {
      * @param rawContent
      * @return
      */
-    protected T deserializeOne(String rawContent) {
+    public T deserializeOne(String rawContent) {
         T content = initContent();
         content.deserialize(rawContent);
         return content;
@@ -181,4 +193,9 @@ public abstract class SharedPackage<T extends Shared> {
      */
     protected abstract T initContent();
 
+    public void clean() {
+        if (this.contents != null) {
+            this.contents.close();
+        }
+    }
 }

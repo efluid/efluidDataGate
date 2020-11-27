@@ -21,8 +21,7 @@ public class GeneratedFunctionalDomainPackage extends FunctionalDomainExportPack
      */
     public GeneratedFunctionalDomainPackage(Collection<ParameterDomainDefinition> allDomains) {
         super(FunctionalDomainExportPackage.DOMAINS_EXPORT, LocalDateTime.now());
-        from(allDomains.stream().sorted(Comparator.comparing(ParameterDomainDefinition::getName))
-                .collect(Collectors.toList()));
+        from(allDomains.stream().sorted(Comparator.comparing(ParameterDomainDefinition::getName)));
     }
 
     /**

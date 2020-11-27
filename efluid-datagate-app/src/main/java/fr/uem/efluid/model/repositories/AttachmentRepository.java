@@ -2,6 +2,7 @@ package fr.uem.efluid.model.repositories;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -17,5 +18,5 @@ public interface AttachmentRepository extends JpaRepository<Attachment, UUID> {
 
 	List<Attachment> findByCommit(Commit commit);
 
-	List<Attachment> findByCommitIn(List<Commit> commit);
+	Stream<Attachment> findByCommitIn(List<Commit> commit);
 }

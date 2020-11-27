@@ -1,8 +1,14 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.EXPORT_FAIL_FILE;
-import static fr.uem.efluid.utils.ErrorType.EXPORT_WRONG_APPEND;
-import static fr.uem.efluid.utils.ErrorType.EXPORT_ZIP_FAILED;
+import fr.uem.efluid.services.types.ExportFile;
+import fr.uem.efluid.services.types.SharedPackage;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
+import net.lingala.zip4j.ZipFile;
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.model.ZipParameters;
+import net.lingala.zip4j.model.enums.CompressionLevel;
+import net.lingala.zip4j.model.enums.CompressionMethod;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -13,14 +19,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
-import fr.uem.efluid.services.types.ExportFile;
-import fr.uem.efluid.services.types.SharedPackage;
-import fr.uem.efluid.utils.ApplicationException;
-import fr.uem.efluid.utils.SharedOutputInputUtils;
-import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.exception.ZipException;
-import net.lingala.zip4j.model.ZipParameters;
-import net.lingala.zip4j.util.Zip4jConstants;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * <p>
@@ -55,8 +54,8 @@ public class ExportService {
     protected final static ZipParameters ZIP_PARAMS = new ZipParameters();
 
     static {
-        ZIP_PARAMS.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
-        ZIP_PARAMS.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_NORMAL);
+        ZIP_PARAMS.setCompressionMethod(CompressionMethod.DEFLATE);
+        ZIP_PARAMS.setCompressionLevel(CompressionLevel.NORMAL);
     }
 
     /**
@@ -114,20 +113,16 @@ public class ExportService {
      */
     private static Path compress(List<Path> unzipped) {
 
-        try {
-            Path zip = SharedOutputInputUtils.initTmpFile(FILE_ID, FILE_ZIP_EXT, false);
-            ZipFile zipFile = new ZipFile(zip.toString());
-            unzipped.forEach(p -> {
-                try {
-                    zipFile.addFile(p.toFile(), ZIP_PARAMS);
-                } catch (ZipException e) {
-                    throw new ApplicationException(EXPORT_ZIP_FAILED, "Cannot zip " + p, e);
-                }
-            });
-            return zip;
-        } catch (ZipException e) {
-            throw new ApplicationException(EXPORT_ZIP_FAILED, "Cannot zip files " + unzipped);
-        }
+        Path zip = SharedOutputInputUtils.initTmpFile(FILE_ID, FILE_ZIP_EXT, false);
+        ZipFile zipFile = new ZipFile(zip.toString());
+        unzipped.forEach(p -> {
+            try {
+                zipFile.addFile(p.toFile(), ZIP_PARAMS);
+            } catch (ZipException e) {
+                throw new ApplicationException(EXPORT_ZIP_FAILED, "Cannot zip " + p, e);
+            }
+        });
+        return zip;
     }
 
     /**

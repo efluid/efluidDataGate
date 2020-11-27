@@ -21,8 +21,7 @@ public class GeneratedProjectPackage extends ProjectExportPackage<ParameterProje
      */
     public GeneratedProjectPackage(Collection<ParameterProjectDefinition> allProjects) {
         super(ProjectExportPackage.PROJECTS_EXPORT, LocalDateTime.now());
-        from(allProjects.stream().sorted(Comparator.comparing(ParameterProjectDefinition::getName))
-                .collect(Collectors.toList()));
+        from(allProjects.stream().sorted(Comparator.comparing(ParameterProjectDefinition::getName)));
     }
 
     /**

@@ -1,10 +1,13 @@
 package fr.uem.efluid.model.entities;
 
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -27,7 +30,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
         @Index(columnList = "keyValue"),
         @Index(columnList = "timestamp")
 })
-public class IndexEntry implements DiffLine {
+public class IndexEntry implements DiffLine, Shared {
 
     @Id
     @GeneratedValue(strategy = SEQUENCE, generator = "CUST_SEQ")
@@ -180,10 +183,23 @@ public class IndexEntry implements DiffLine {
         return this.dictionaryEntry.getUuid();
     }
 
+    @Override
+    public UUID getUuid() {
+        // Not managed for simplified Index import
+        return null;
+    }
+
+    @Override
+    public LocalDateTime getImportedTime() {
+        // Not managed for simplified Index import
+        return null;
+    }
+
     /**
      * For commit serialize
      */
-    String serialize() {
+    @Override
+    public String serialize() {
 
         return SharedOutputInputUtils.newJson()
                 .with("dic", getDictionaryEntryUuid())
@@ -198,7 +214,8 @@ public class IndexEntry implements DiffLine {
     /**
      * For commit deserialize
      */
-    void deserialize(String raw) {
+    @Override
+    public void deserialize(String raw) {
         SharedOutputInputUtils.fromJson(raw)
                 .applyUUID("dic", u -> setDictionaryEntry(new DictionaryEntry(u)))
                 .applyString("act", a -> setAction(IndexAction.valueOf(a)))
