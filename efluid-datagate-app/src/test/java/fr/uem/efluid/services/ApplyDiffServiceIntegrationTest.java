@@ -1,35 +1,25 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.model.entities.IndexAction.ADD;
-import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
-import static fr.uem.efluid.model.entities.IndexAction.UPDATE;
+import static fr.uem.efluid.model.entities.IndexAction.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.*;
+import org.springframework.transaction.annotation.*;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.DiffLine;
-import fr.uem.efluid.stubs.TestDataLoader;
-import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.utils.ApplicationException;
-import fr.uem.efluid.utils.DatasourceUtils;
+import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.stubs.*;
+import fr.uem.efluid.utils.*;
 
 /**
  * @author elecomte
@@ -62,12 +52,13 @@ public class ApplyDiffServiceIntegrationTest {
 
 	@Test
 	public void testApplyDiffSimpleAddSuccess() {
-
 		setupDatabase("update1");
 
 		// 4 items each
 		this.loader.assertSourceSize(4);
 		this.loader.assertSourceChildSize(4);
+
+		Commit commit = this.loader.initCommit();
 
 		List<DiffLine> diff = Arrays.asList(
 				this.loader.initIndexEntry(C, "5", ADD, "VALUE=\"child-test\",PARENT=\"7\""),
@@ -77,8 +68,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(P, "7", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"777\""),
 				this.loader.initIndexEntry(P, "8", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""));
 
-		this.service.applyDiff(diff, new HashMap<>());
-
+		this.service.applyDiff(diff, new HashMap<>(), commit);
 		// Added items
 		this.loader.assertSourceSize(8);
 		this.loader.assertSourceChildSize(6);
@@ -87,12 +77,13 @@ public class ApplyDiffServiceIntegrationTest {
 	@Test
 	@Ignore("Disabled to allow build - TODO : must investigate why rollback is not fired here !!!")
 	public void testApplyDiffSimpleAddFailOnConstraintAndRollback() {
-
 		setupDatabase("update1");
 
 		// 4 items each
 		this.loader.assertSourceSize(4);
 		this.loader.assertSourceChildSize(4);
+
+		Commit commit = this.loader.initCommit();
 
 		List<DiffLine> diff = Arrays.asList(
 				/* WRONG PARENT */ this.loader.initIndexEntry(C, "5", ADD, "VALUE=\"child-test\",PARENT=\"700\""),
@@ -103,7 +94,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(P, "8", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"888\""));
 
 		try {
-			this.service.applyDiff(diff, new HashMap<>());
+			this.service.applyDiff(diff, new HashMap<>(), commit);
 			Assert.fail();
 		}
 
@@ -116,12 +107,13 @@ public class ApplyDiffServiceIntegrationTest {
 
 	@Test
 	public void testApplyDiffSimpleRemoveSuccess() {
-
 		setupDatabase("update2");
 
 		// Combined items
 		this.loader.assertSourceSize(4);
 		this.loader.assertSourceChildSize(8);
+
+		Commit commit = this.loader.initCommit();
 
 		List<DiffLine> diff = Arrays.asList(
 				this.loader.initIndexEntry(C, "5", REMOVE, null),
@@ -130,7 +122,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(C, "7", REMOVE, null),
 				this.loader.initIndexEntry(C, "8", REMOVE, null));
 
-		this.service.applyDiff(diff, new HashMap<>());
+		this.service.applyDiff(diff, new HashMap<>(), commit);
 
 		// Removed items
 		this.loader.assertSourceSize(3);
@@ -140,12 +132,13 @@ public class ApplyDiffServiceIntegrationTest {
 	@Test
 	@Ignore("Disabled to allow build - TODO : must investigate why rollback is not fired here !!!")
 	public void testApplyDiffSimpleRemoveFailOnConstraintAndRollback() {
-
 		setupDatabase("update2");
 
 		// Combined items
 		this.loader.assertSourceSize(4);
 		this.loader.assertSourceChildSize(8);
+
+		Commit commit = this.loader.initCommit();
 
 		List<DiffLine> diff = Arrays.asList(
 				this.loader.initIndexEntry(C, "5", REMOVE, null),
@@ -155,7 +148,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(C, "8", REMOVE, null));
 
 		try {
-			this.service.applyDiff(diff, new HashMap<>());
+			this.service.applyDiff(diff, new HashMap<>(), commit);
 			Assert.fail();
 		}
 
@@ -168,12 +161,13 @@ public class ApplyDiffServiceIntegrationTest {
 
 	@Test
 	public void testApplyDiffSimpleRemoveFailOnUnknownRefAndRollback() {
-
 		setupDatabase("update2");
 
 		// Combined items
 		this.loader.assertSourceSize(4);
 		this.loader.assertSourceChildSize(8);
+
+		Commit commit = this.loader.initCommit();
 
 		List<DiffLine> diff = Arrays.asList(
 				this.loader.initIndexEntry(C, "5", REMOVE, null),
@@ -183,7 +177,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(C, "8", REMOVE, null));
 
 		try {
-			this.service.applyDiff(diff, new HashMap<>());
+			this.service.applyDiff(diff, new HashMap<>(), commit);
 			Assert.fail();
 		}
 
@@ -197,7 +191,6 @@ public class ApplyDiffServiceIntegrationTest {
 
 	@Test
 	public void testApplyDiffSimpleUpdateSuccess() {
-
 		setupDatabase("update2");
 
 		// Combined items
@@ -208,13 +201,15 @@ public class ApplyDiffServiceIntegrationTest {
 		this.loader.assertSourceContentValidate(1, c -> c.getSomething().equals("1234"));
 		this.loader.assertSourceContentValidate(4, c -> c.getSomething().equals("1234"));
 
+		Commit commit = this.loader.initCommit();
+
 		List<DiffLine> diff = Arrays.asList(
 				this.loader.initIndexEntry(C, "5", UPDATE, "VALUE=\"child-test\",PARENT=\"1\""),
 				this.loader.initIndexEntry(P, "1", UPDATE, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"111changed\""),
 				this.loader.initIndexEntry(P, "4", UPDATE, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"444changed\""),
 				this.loader.initIndexEntry(C, "4", UPDATE, "VALUE=\"child-test\",PARENT=\"1\""));
 
-		this.service.applyDiff(diff, new HashMap<>());
+		this.service.applyDiff(diff, new HashMap<>(), commit);
 
 		// Modified items
 		this.loader.assertSourceSize(4);
@@ -223,7 +218,6 @@ public class ApplyDiffServiceIntegrationTest {
 
 	@Test
 	public void testApplyDiffSimpleUpdateFailOnUnknownRefAndRollback() {
-
 		setupDatabase("update2");
 
 		// Combined items
@@ -234,6 +228,8 @@ public class ApplyDiffServiceIntegrationTest {
 		this.loader.assertSourceContentValidate(1, c -> c.getSomething().equals("1234"));
 		this.loader.assertSourceContentValidate(4, c -> c.getSomething().equals("1234"));
 
+		Commit commit = this.loader.initCommit();
+
 		List<DiffLine> diff = Arrays.asList(
 				this.loader.initIndexEntry(C, "5", UPDATE, "VALUE=\"child-test\",PARENT=\"1\""),
 				this.loader.initIndexEntry(P, "1", UPDATE, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"111changed\""),
@@ -241,7 +237,7 @@ public class ApplyDiffServiceIntegrationTest {
 				/* ID NOT EXIST */this.loader.initIndexEntry(C, "12", UPDATE, "VALUE=\"child-test\",PARENT=\"1\""));
 
 		try {
-			this.service.applyDiff(diff, new HashMap<>());
+			this.service.applyDiff(diff, new HashMap<>(), commit);
 			Assert.fail();
 		}
 
@@ -259,7 +255,6 @@ public class ApplyDiffServiceIntegrationTest {
 
 	@Test
 	public void testApplyDiffCombinedSuccess() {
-
 		setupDatabase("update3");
 
 		// Combined items
@@ -269,6 +264,8 @@ public class ApplyDiffServiceIntegrationTest {
 		this.loader.assertSourceChildContentValidate(4, c -> c.getParent().getKey().longValue() == 3);
 		this.loader.assertSourceContentValidate(1, c -> c.getSomething().equals("1234"));
 		this.loader.assertSourceContentValidate(4, c -> c.getSomething().equals("1234"));
+
+		Commit commit = this.loader.initCommit();
 
 		List<DiffLine> diff = Arrays.asList(
 				this.loader.initIndexEntry(C, "5", UPDATE, "VALUE=\"child-test\",PARENT=\"1\""),
@@ -284,7 +281,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(C, "14", ADD, "VALUE=\"child-test\",PARENT=\"8\""),
 				this.loader.initIndexEntry(P, "9", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"999\""));
 
-		this.service.applyDiff(diff, new HashMap<>());
+		this.service.applyDiff(diff, new HashMap<>(), commit);
 
 		this.loader.flushSources();
 
@@ -295,7 +292,6 @@ public class ApplyDiffServiceIntegrationTest {
 
 	@Test
 	public void testApplyDiffCombinedFailOnUnknownRefAndRollback() {
-
 		setupDatabase("update3");
 
 		// Combined items
@@ -305,6 +301,8 @@ public class ApplyDiffServiceIntegrationTest {
 		this.loader.assertSourceChildContentValidate(4, c -> c.getParent().getKey().longValue() == 3);
 		this.loader.assertSourceContentValidate(1, c -> c.getSomething().equals("1234"));
 		this.loader.assertSourceContentValidate(4, c -> c.getSomething().equals("1234"));
+
+		Commit commit = this.loader.initCommit();
 
 		List<DiffLine> diff = Arrays.asList(
 				this.loader.initIndexEntry(C, "5", UPDATE, "VALUE=\"child-test\",PARENT=\"1\""),
@@ -321,7 +319,7 @@ public class ApplyDiffServiceIntegrationTest {
 				this.loader.initIndexEntry(P, "9", ADD, "VALUE=\"test\",PRESET=\"loaded\",SOMETHING=\"999\""));
 
 		try {
-			this.service.applyDiff(diff, new HashMap<>());
+			this.service.applyDiff(diff, new HashMap<>(), commit);
 			Assert.fail();
 		}
 

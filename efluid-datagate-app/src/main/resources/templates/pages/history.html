@@ -50,6 +50,7 @@
 		        <tr>
 		            <th scope="col" colspan="2">Requête exécutée</th>
 		            <th scope="col" width="13%">Utilisateur</th>
+					<th scope="col" width="13%">Lot</th>
 		            <th scope="col" width="15%">Date</th>
 		        </tr>
 		    </thead>
@@ -58,6 +59,7 @@
 		            <td class="history-state"><span th:class="${line.rollback}?'history-rollback':(${line.attachmentSourceUuid!=null}?'history-attachment':'history-update')" class="history-update">&nbsp;</span></td>
 		            <td><span class="query-display" th:text="${line.query}">select * ...</span></td>
 		            <td th:text="${line.user}">Fonct domains</td>
+					<td th:utext="${custom.processGitmoji(line.commitComment)}">Lot ajoutant des choses</td>
 		            <td th:text="${custom.format(line.processedTime)}">01/11/2017</td>
 		        </tr>
 		    </tbody>
@@ -68,6 +70,10 @@
 		$('#color-nav-2').css("font-weight", "bold");
 		$('#collapseExample2').css("display", "block");
 		$('#li-9').css("font-weight", "bolder");
+
+		$(document).ready(() => {
+			supportGitmojis();
+		});
 	</script>
 </body>
 </html>

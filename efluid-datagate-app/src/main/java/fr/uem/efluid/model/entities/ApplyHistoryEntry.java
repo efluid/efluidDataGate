@@ -28,6 +28,9 @@ public class ApplyHistoryEntry {
 	@ManyToOne(optional = false)
 	private User user;
 
+	@ManyToOne
+	private Commit commit;
+
 	private Long timestamp;
 
 	// Optional - weak link
@@ -111,6 +114,21 @@ public class ApplyHistoryEntry {
 	}
 
 	/**
+	 * @return the commit
+	 */
+	public Commit getCommit() {
+		return this.commit;
+	}
+
+	/**
+	 * @param commit
+	 *            the commit to set
+	 */
+	public void setCommit(Commit commit) {
+		this.commit = commit;
+	}
+
+	/**
 	 * @return the timestamp
 	 */
 	public Long getTimestamp() {
@@ -154,5 +172,4 @@ public class ApplyHistoryEntry {
 	public void setProjectUuid(UUID projectId) {
 		this.projectUuid = projectId;
 	}
-
 }
