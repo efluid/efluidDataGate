@@ -115,20 +115,26 @@ public class ExportImportService extends ExportService {
                         + " is not supported for \"" + name + "\" (current version is " + instance.getVersion() + ")");
             }
 
-            // Get items
+            // Get items, ignoring package ending
             sc.useDelimiter(ITEM_SEARCH);
 
             // Apply uncompressPath if ref to files is used
             instance.setUncompressPath(uncompressPath);
 
             // Prepare deserialized stream process from scanner
-            instance.deserialize(sc.tokens().onClose(() -> {
-                try {
-                    pack.close();
-                } catch (IOException e) {
-                    throw new ApplicationException(IMPORT_WRONG_READ, "Cannot close package file stream", e);
-                }
-            }));
+            instance.deserialize(
+                    sc.tokens()
+                            .onClose(() -> {
+                                try {
+                                    pack.close();
+                                } catch (IOException e) {
+                                    throw new ApplicationException(IMPORT_WRONG_READ, "Cannot close package file stream", e);
+                                }
+                            })
+                            .map(String::trim)
+                            .filter(l -> !l.isEmpty())
+                            .filter(l -> l.charAt(0) != '[') // Exclude pack closing
+            );
 
             // Package ready, with imported content
             return instance;

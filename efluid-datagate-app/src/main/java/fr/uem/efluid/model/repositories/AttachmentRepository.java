@@ -19,4 +19,6 @@ public interface AttachmentRepository extends JpaRepository<Attachment, UUID> {
 	List<Attachment> findByCommit(Commit commit);
 
 	Stream<Attachment> findByCommitIn(List<Commit> commit);
+
+	Stream<Attachment> findByCommitUuidIn(List<UUID> uuids);
 }

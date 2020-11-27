@@ -203,6 +203,7 @@ public class IndexEntry implements DiffLine, Shared {
 
         return SharedOutputInputUtils.newJson()
                 .with("dic", getDictionaryEntryUuid())
+                .with("com", getCommit().getUuid())
                 .with("act", getAction())
                 .with("key", getKeyValue())
                 .with("pay", getPayload())
@@ -214,9 +215,8 @@ public class IndexEntry implements DiffLine, Shared {
     /**
      * For commit deserialize
      */
-    @Override
-    public void deserialize(String raw) {
-        SharedOutputInputUtils.fromJson(raw)
+    public SharedOutputInputUtils.OutputJsonPropertiesReader deserializeOnCompatibility(String raw) {
+        return SharedOutputInputUtils.fromJson(raw)
                 .applyUUID("dic", u -> setDictionaryEntry(new DictionaryEntry(u)))
                 .applyString("act", a -> setAction(IndexAction.valueOf(a)))
                 .applyString("key", this::setKeyValue)
@@ -224,6 +224,15 @@ public class IndexEntry implements DiffLine, Shared {
                 .applyString("pre", this::setPrevious)
                 .applyString("tim", t -> setTimestamp(Long.parseLong(t)));
     }
+    /**
+     * For commit deserialize
+     */
+    @Override
+    public void deserialize(String raw) {
+        deserializeOnCompatibility(raw)
+                .applyUUID("com", i -> setCommit(new Commit(i)));
+    }
+
 
     @Override
     public boolean equals(Object o) {

@@ -13,6 +13,7 @@ import javax.persistence.EntityManager;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 @Transactional
@@ -45,7 +46,7 @@ public class BacklogDatabaseAccess {
     private EntityManager em;
 
     public List<LobProperty> loadCommitLobs(CommitDetails details) {
-        return this.lobs.findByCommitUuidIn(Collections.singletonList(details.getUuid()));
+        return this.lobs.findByCommitUuidIn(Collections.singletonList(details.getUuid())).collect(Collectors.toList());
     }
 
     public List<IndexEntry> loadCommitIndex(CommitDetails details) {

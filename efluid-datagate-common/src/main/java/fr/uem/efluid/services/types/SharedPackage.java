@@ -35,7 +35,7 @@ public abstract class SharedPackage<T extends Shared> implements Cleaner.Cleanab
      * @param name
      * @param exportDate
      */
-    protected SharedPackage(String name, LocalDateTime exportDate) {
+    protected SharedPackage(String name, LocalDateTime exportDate, boolean repeatableContent) {
         super();
         this.name = name;
         this.exportDate = exportDate;
@@ -120,8 +120,8 @@ public abstract class SharedPackage<T extends Shared> implements Cleaner.Cleanab
      */
     public void deserialize(Stream<String> contentRaw) {
         this.contents = contentRaw
-                .peek(i -> this.processed.incrementAndGet())
-                .map(this::deserializeOne);
+                .map(this::deserializeOne)
+                .peek(i -> this.processed.incrementAndGet());
     }
 
     /**
@@ -129,8 +129,8 @@ public abstract class SharedPackage<T extends Shared> implements Cleaner.Cleanab
      */
     public Stream<String> serialize() {
         return this.contents
-                .peek(i -> this.processed.incrementAndGet())
-                .map(this::serializeOne);
+                .map(this::serializeOne)
+                .peek(i -> this.processed.incrementAndGet());
     }
 
     /**
@@ -163,7 +163,7 @@ public abstract class SharedPackage<T extends Shared> implements Cleaner.Cleanab
      * @param rawContent
      * @return
      */
-    public T deserializeOne(String rawContent) {
+    protected T deserializeOne(String rawContent) {
         T content = initContent();
         content.deserialize(rawContent);
         return content;

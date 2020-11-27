@@ -320,7 +320,7 @@ public class Commit implements Shared {
                         else {
                             setIndex(Stream.of(i.split("\n")).map(s -> {
                                 IndexEntry ent = new IndexEntry();
-                                ent.deserialize(s);
+                                ent.deserializeOnCompatibility(s);
                                 return ent;
                             }).collect(Collectors.toList()));
                         }
