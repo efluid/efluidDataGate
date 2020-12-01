@@ -30,7 +30,7 @@
                     <td th:text="${commit.state}">Mergé</td>
 		            <td>
 		            	<a href="./details.html" th:href="@{/ui/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
-						<button type="button" class="btn btn-warning" th:onclick="revert([[${commit.uuid}]])">Revert</button>
+						<a href="./prepare.html" th:href="@{/ui/prepare}" th:if="${commit.uuid == lastCommit && commit.isRevert == 0}" type="button" class="btn btn-sm btn-warning" th:onclick="revert([[${commit.uuid}]])">Revert</a>
 					</td>
 		        </tr>
 		    </tbody>
@@ -67,10 +67,9 @@
 		    $.ajax({
 			type: "POST",
 			url: "/ui/revert/" + uuid,
-			data: JSON.stringify(activeSearch),
 			contentType: "application/json; charset=utf-8",
 			dataType: "json",
-			success: (data, status) => { console.log("////" + data) }
+			success: (data, status) => { console.log(status,data) }
 
 		})
 

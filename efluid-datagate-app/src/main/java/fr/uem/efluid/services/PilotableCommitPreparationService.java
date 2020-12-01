@@ -1,9 +1,7 @@
 package fr.uem.efluid.services;
 
-import fr.uem.efluid.model.entities.CommitState;
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.entities.Version;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
@@ -77,6 +75,9 @@ public class PilotableCommitPreparationService {
     private CommitService commitService;
 
     @Autowired
+    private CommitRepository commitRepository;
+
+    @Autowired
     private DatabaseDescriptionRepository managedDesc;
 
     @Autowired
@@ -87,6 +88,9 @@ public class PilotableCommitPreparationService {
 
     @Autowired
     private ApplyDiffService appDiffService;
+
+    @Autowired
+    private PilotableCommitPreparationService pilotableCommitPreparationService;
 
     @Autowired
     private AsyncDriver async;
@@ -346,11 +350,30 @@ public class PilotableCommitPreparationService {
         return new DiffContentPage(pageIndex, getFilteredDiffContent(currentSearch), this.diffDisplayPageSize);
     }
 
-    public DiffContentPage generateNewDiffPage(int pageIndex, String uuid) {
+    public Collection<PreparedIndexEntry> updateDataRevert (Collection<PreparedIndexEntry> listIndex) {
+        listIndex.forEach(
+                y -> {
+                    String tmp = y.getPayload();
+                    y.setPayload(y.getPrevious());
+                    y.setPrevious(tmp);
 
-        // Apply pagination on filtered content directly
-        List <PreparedIndexEntry> list = this.appDiffService.updatePreparedIndexEntryToRevert(uuid);
-        return new DiffContentPage(pageIndex, list, this.diffDisplayPageSize);
+                    y.setRollbacked(false);
+                    y.setSelected(true);
+                    y.setDomainName(y.getDomainName());
+                    y.setTableName(y.getTableName());
+
+                    if (y.getAction() == IndexAction.ADD) {
+                        y.setAction(IndexAction.REMOVE);
+                    } else if (y.getAction() == IndexAction.REMOVE) {
+                        y.setAction(IndexAction.ADD);
+                    } else {
+                        y.setAction(IndexAction.UPDATE);
+                    }
+
+                }
+        );
+
+        return listIndex;
     }
 
     /**
@@ -608,6 +631,7 @@ public class PilotableCommitPreparationService {
      */
     public void copyCommitPreparationCommitData(
             PilotedCommitPreparation<? extends PreparedIndexEntry> changedPreparation) {
+        System.out.println("=========> " + changedPreparation.getCommitData());
 
         setCommitPreparationCommitData(changedPreparation.getCommitData());
     }
@@ -663,7 +687,7 @@ public class PilotableCommitPreparationService {
                     }
 
                     // Save update
-                    UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current);
+                    UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current, false);
 
                     // Reset cached diff values, if any, for further uses
                     this.diffService.resetDiffCaches();
@@ -681,6 +705,59 @@ public class PilotableCommitPreparationService {
 
         return result;
     }
+
+    public UUID createCommitForRevertLot(String uuid, Boolean isRevert){
+
+        PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
+        CommitDetails commitDet = this.commitService.getExistingCommitDetails(UUID.fromString(uuid), false);
+        Commit oldCommit = this.commitRepository.findByCommitUuid(UUID.fromString(uuid));
+
+        /* If commits [is used to revert] or if commit is reverted set to true
+            used in list commits page to display or not revert button
+            No Boolean type in oracle need to use 0 = false / 1 = true
+        */
+        oldCommit.setIsRevert(1);
+
+        String nameCommit = commitDet.getComment();
+
+        if (current.getCommitData() == null) {
+
+            current.setCommitData(new CommitEditData());
+
+        }
+
+        current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
+
+        current.getCommitData().setComment("Revert of " + nameCommit);
+
+        // Apply rollbacks on local commits only
+        if (current.getPreparingState() == CommitState.LOCAL) {
+            this.commitService.applyExclusionsFromLocalCommit(current);
+        }
+
+        current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
+
+        //set diff for current project
+
+        current.setDiffContent(this.updateDataRevert(this.commitService.loadCommitIndex(UUID.fromString(uuid))));
+
+
+
+        // Save update
+        UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current, true);
+
+        // Reset cached diff values, if any, for further uses
+        this.diffService.resetDiffCaches();
+
+        // Drop preparation (if not done yet)
+        completeCommitPreparation();
+
+        //LOGGER.info("Saving completed for commit preparation. New commit is {}", commitUUID);
+
+        return commitUUID;
+
+    }
+
 
     /**
      * <p>
@@ -714,7 +791,7 @@ public class PilotableCommitPreparationService {
         current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
 
         // Save update
-        UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current);
+        UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current, false);
 
         // Reset cached diff values, if any, for further uses
         this.diffService.resetDiffCaches();

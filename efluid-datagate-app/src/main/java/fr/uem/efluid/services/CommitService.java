@@ -101,6 +101,9 @@ public class CommitService extends AbstractApplicationService {
     private ApplicationDetailsService appDetailsService;
 
     @Autowired
+    private PilotableCommitPreparationService pilotableCommitPreparationService;
+
+    @Autowired
     private VersionContentChangesGenerator changesGenerator;
 
     public CommitExportEditData initCommitExport(CommitExportEditData.CommitSelectType type, UUID commitUUID) {
@@ -327,7 +330,7 @@ public class CommitService extends AbstractApplicationService {
 
         Map<UUID, List<String>> domainNames = this.domains.loadAllDomainNamesByCommitUuids(project);
 
-        return this.commits.findByProject(project).stream()
+        List<CommitEditData> list = this.commits.findByProject(project).stream()
                 .map(CommitEditData::fromEntity)
                 .peek(c -> {
                     // Add domain names for each commit (if any)
@@ -335,9 +338,30 @@ public class CommitService extends AbstractApplicationService {
                     if (dns != null && dns.size() > 0) {
                         c.setDomainNames(String.join(", ", dns));
                     }
+
                 })
                 .sorted(Comparator.comparing(CommitEditData::getCreatedTime).reversed())
                 .collect(Collectors.toList());
+
+        //NEED TO ADD IS REVERT OR NOT TO COMMIT EDIT DATA
+        list.forEach(comEd -> {
+            if(this.commits.getOne(comEd.getUuid()).getIsRevert() == 1) {
+                comEd.setIsRevert(1);
+            } else {
+                comEd.setIsRevert(0);
+            }
+        });
+
+        return list;
+    }
+
+    /**
+    * Only last commit can be reverted if not reverted yet and
+    * if it is not a reverted commit, check if can revert
+    */
+
+    public UUID getLastCommit() {
+        return this.getAvailableCommits().get(0).getUuid();
     }
 
     /**
@@ -540,7 +564,10 @@ public class CommitService extends AbstractApplicationService {
      * @return created commit uuid
      */
     UUID saveAndApplyPreparedCommit(
-            PilotedCommitPreparation<?> prepared) {
+            PilotedCommitPreparation<?> prepared, Boolean isRevert) {
+
+        PilotedCommitPreparation<?> current = this.pilotableCommitPreparationService.getCurrentCommitPreparation();
+
 
         LOGGER.debug("Process apply and saving of a new commit with state {} into project {}", prepared.getPreparingState(),
                 prepared.getProjectUuid());
@@ -570,6 +597,9 @@ public class CommitService extends AbstractApplicationService {
         // Save index and set back to commit with bi-directional link
         commit.setIndex(this.indexes.saveAll(entries));
 
+        current.setDiffContent(this.pilotableCommitPreparationService.updateDataRevert(this.loadCommitIndex(prepared.getCommitData().getUuid())));
+
+
         LOGGER.info("Start saving {} lobs items for new commit {}", newLobs.size(), commit.getUuid());
 
         // Add commit to lobs and save
@@ -578,6 +608,16 @@ public class CommitService extends AbstractApplicationService {
 
         // Updated commit link
         this.commits.save(commit);
+
+        if (isRevert) {
+         /* If commits is used to revert or if [commit is reverted] set to true
+            used in list commits page to display or not revert button
+            No Boolean type in oracle need to use 0 = false / 1 = true
+        */
+            commit.setIsRevert(1);
+            commit.setIndex(this.indexes.saveAll(entries));
+             this.applyDiffService.applyDiff(entries, prepared.getDiffLobs());
+        }
 
         // For merge : apply (will rollback previous steps if error found)
         if (prepared.getPreparingState() == CommitState.MERGED) {

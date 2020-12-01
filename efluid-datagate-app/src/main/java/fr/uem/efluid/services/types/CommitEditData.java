@@ -42,7 +42,9 @@ public class CommitEditData {
 	private String versionModelId;
 
 	private List<AttachmentLine> attachments;
-	
+
+	private int isRevert;
+
 	/**
 	 * 
 	 */
@@ -63,6 +65,21 @@ public class CommitEditData {
 	 */
 	public void setUuid(UUID uuid) {
 		this.uuid = uuid;
+	}
+
+	/**
+	 * @return the uuid
+	 */
+	public int getIsRevert() {
+		return this.isRevert;
+	}
+
+	/**
+	 * @param isRevert
+	 *            the uuid to set
+	 */
+	public void setIsRevert(int isRevert) {
+		this.isRevert = isRevert;
 	}
 
 	/**

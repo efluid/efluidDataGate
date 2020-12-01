@@ -109,33 +109,6 @@ public class ApplyDiffService extends AbstractApplicationService {
                 true);
     }
 
-    public List<PreparedIndexEntry> updatePreparedIndexEntryToRevert (String uuid) {
-        List<IndexEntry> previous = this.index.findByCommitUuid(UUID.fromString(uuid)); //get current idx entries for lot
-        List<PreparedIndexEntry> update = new ArrayList<>();
-
-        previous.forEach(
-          y -> {
-              update.add(this.prepareIndex.fromExistingEntity(y));
-          });
-
-        update.forEach(x -> {
-            x.setSelected(false);
-            x.setRollbacked(true);
-            x.setTableName(this.dico.getOne(x.getDictionaryEntryUuid()).getTableName());
-            x.setDomainName(this.dico.getOne(x.getDictionaryEntryUuid()).getDomain().getName());
-        });
-
-        /*
-        * entry.setPayload(currentPayload);
-        entry.setPrevious(previousPayload);
-
-        // But for human readability, need a custom display payload (not saved)
-        entry.setHrPayload(getConverter().convertToHrPayload(currentPayload, previousPayload));
-
-        * */
-        return update;
-    }
-
     /**
      * <p>
      * For requested page, search for given content in hisotyr queries

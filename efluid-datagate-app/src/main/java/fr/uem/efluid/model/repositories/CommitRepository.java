@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexEntry;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,5 +30,8 @@ public interface CommitRepository extends JpaRepository<Commit, UUID> {
 
 	@Query("select max(c.importedTime) from Commit c")
 	LocalDateTime findLastImportedCommitTime();
+
+	@Query("SELECT uuid FROM Commit c WHERE c.uuid = :uuid")
+	Commit findByCommitUuid(@Param("uuid") UUID uuid);
 
 }

@@ -64,6 +64,8 @@ public class Commit implements Shared {
     @Transient
     private transient boolean refOnly = false;
 
+    private int isRevert = 0;
+
     /**
      * @param uuid forced uuid
      */
@@ -92,6 +94,14 @@ public class Commit implements Shared {
      */
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
+    }
+
+    public int getIsRevert() {
+        return this.isRevert;
+    }
+
+    public void setIsRevert(int isRevert) {
+        this.isRevert = isRevert;
     }
 
     /**
