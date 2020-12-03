@@ -18,18 +18,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static fr.uem.efluid.utils.ErrorType.*;
+import org.slf4j.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.tools.*;
+import fr.uem.efluid.utils.*;
 
 /**
  * <p>
@@ -781,11 +789,12 @@ public class PilotableCommitPreparationService {
             throw new ApplicationException(COMMIT_MISS_COMMENT, "Commit preparation cannot be saved without a fixed comment");
         }
 
-        current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
+        // Save update
+        UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current);
 
         // Apply rollbacks on local commits only
         if (current.getPreparingState() == CommitState.LOCAL) {
-            this.commitService.applyExclusionsFromLocalCommit(current);
+            this.commitService.applyExclusionsFromLocalCommit(current, new Commit(commitUUID));
         }
 
         current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);

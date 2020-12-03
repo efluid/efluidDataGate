@@ -1,29 +1,24 @@
 package fr.uem.efluid.services;
 
+import static fr.uem.efluid.utils.ErrorType.*;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.*;
+
+import org.slf4j.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.data.domain.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
-import fr.uem.efluid.tools.AttachmentProcessor;
-import fr.uem.efluid.tools.VersionContentChangesGenerator;
-import fr.uem.efluid.utils.ApplicationException;
-import fr.uem.efluid.utils.Associate;
-import fr.uem.efluid.utils.FormatUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static fr.uem.efluid.utils.ErrorType.*;
+import fr.uem.efluid.tools.*;
+import fr.uem.efluid.utils.*;
 
 /**
  * <p>
@@ -307,7 +302,7 @@ public class CommitService extends AbstractApplicationService {
         result.addCount(pckgName, commitsToExport.size() - refOnly, refOnly, 0);
 
         LOGGER.info("Export package for commit is ready. {} total commits exported for project \"{}\", "
-                        + "uncluding {} exported as ref only. File size is {}b",
+                        + "including {} exported as ref only. File size is {}b",
                 commitsToExport.size(), project.getName(), refOnly, file.getSize());
 
         // Mark as completed
@@ -535,7 +530,7 @@ public class CommitService extends AbstractApplicationService {
      * </p>
      */
     void applyExclusionsFromLocalCommit(
-            PilotedCommitPreparation<?> prepared) {
+        PilotedCommitPreparation<?> prepared, Commit commit) {
 
         LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
@@ -549,7 +544,7 @@ public class CommitService extends AbstractApplicationService {
             LOGGER.info("In current commit preparation, a total of {} rollback entries were identified and are going to be applied",
                     rollbacked.size());
 
-            this.applyDiffService.rollbackDiff(rollbacked, prepared.getDiffLobs());
+            this.applyDiffService.rollbackDiff(rollbacked, prepared.getDiffLobs(), commit);
         }
     }
 
@@ -623,7 +618,7 @@ public class CommitService extends AbstractApplicationService {
         if (prepared.getPreparingState() == CommitState.MERGED) {
             LOGGER.info("Processing merge commit {} : now apply all {} modifications prepared from imported values",
                     commit.getUuid(), entries.size());
-            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs());
+            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit);
             LOGGER.debug("Processing merge commit {} : diff applied with success", commit.getUuid());
 
             // And execute attachments if needed
@@ -643,7 +638,7 @@ public class CommitService extends AbstractApplicationService {
                     // needed
                     runnableAtts.forEach(a -> {
                         AttachmentProcessor proc = this.attachProcs.getFor(a);
-                        proc.execute(user, a);
+                        proc.execute(user, a, commit);
                         LOGGER.debug("Processing merge commit {} : attachements {} executed with success",
                                 commit.getUuid(), a.getName());
                     });

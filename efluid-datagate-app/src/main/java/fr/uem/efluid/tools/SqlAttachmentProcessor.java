@@ -1,24 +1,16 @@
 package fr.uem.efluid.tools;
 
-import java.io.BufferedReader;
-import java.io.LineNumberReader;
-import java.io.StringReader;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.io.*;
+import java.sql.*;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 
-import fr.uem.efluid.model.entities.ApplyHistoryEntry;
-import fr.uem.efluid.model.entities.User;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
-import fr.uem.efluid.utils.ApplicationException;
-import fr.uem.efluid.utils.ErrorType;
-import fr.uem.efluid.utils.FormatUtils;
+import fr.uem.efluid.utils.*;
 
 /**
  * @author elecomte
@@ -30,6 +22,9 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 	public static final String COMMENT_PREFIX = "--";
 	public static final String SEPARATOR = ";";
 	public static final String PLSQL_DETECT = "begin";
+
+	public static final String LOG_STORE_HISTORY_ENTRY_FROM_ATTACHMENT = "[ATTACH-SQL] Store an history entry for SQL update \"{}\" from attachment {}";
+
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(SqlAttachmentProcessor.class);
 
@@ -51,7 +46,7 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 	 * @param att
 	 */
 	@Override
-	public void execute(User user, Compliant att) {
+	public void execute(User user, Compliant att, Commit commit) {
 
 		LOGGER.debug("[ATTACH-SQL] Will execute a new SQL update from attachment with user {}, from attachment {}."
 				+ " Search for operating type", user.getLogin(), att.getUuid());
@@ -66,12 +61,12 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 
 			// Detect type of script -> PLSQL
 			if (query.contains(PLSQL_DETECT) || query.contains(PLSQL_DETECT.toUpperCase())) {
-				executeScriptAsStatement(user, query, att.getUuid());
+				executeScriptAsStatement(user, query, att.getUuid(), commit);
 			}
 
 			// -> Script is standard set of SQL commands
 			else {
-				executeScriptAsInlineQueries(user, query, att.getUuid());
+				executeScriptAsInlineQueries(user, query, att.getUuid(), commit);
 			}
 
 			LOGGER.info("[ATTACH-SQL] Completed execute by user {} of attachment SQL {} with name \"{}\" and content \"{}\"",
@@ -90,12 +85,12 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 	 * <p>
 	 * For flat script with various commands
 	 * </p>
-	 * 
+	 *
 	 * @param user
 	 * @param script
 	 * @param attUuid
 	 */
-	private void executeScriptAsInlineQueries(User user, String script, UUID attUuid) {
+	private void executeScriptAsInlineQueries(User user, String script, UUID attUuid, Commit commit) {
 
 		LOGGER.debug("[ATTACH-SQL] Will execute a new SQL update from attachment as SQL SCRIPT with user {}, from attachment {}",
 				user.getLogin(), attUuid);
@@ -112,15 +107,9 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 				// Run query "as this"
 				this.managedSource.execute(cleaned);
 
-				LOGGER.debug("[ATTACH-SQL] Store an history entry for SQL update \"{}\" from attachment {}", cleaned, attUuid);
+				LOGGER.debug(LOG_STORE_HISTORY_ENTRY_FROM_ATTACHMENT, cleaned, attUuid);
 
-				// Will store as a specific attachment exec in history
-				ApplyHistoryEntry entry = new ApplyHistoryEntry();
-				entry.setRollback(false);
-				entry.setTimestamp(Long.valueOf(System.currentTimeMillis()));
-				entry.setUser(user);
-				entry.setQuery(cleaned);
-				entry.setAttachmentSourceUuid(attUuid);
+				ApplyHistoryEntry entry = initApplyHistoryEntry(user, attUuid, commit, cleaned);
 
 				this.history.save(entry);
 			}
@@ -128,16 +117,30 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 	}
 
 	/**
+	 * Will store as a specific attachment exec in history
+	 */
+	private ApplyHistoryEntry initApplyHistoryEntry(User user, UUID attUuid, Commit commit, String query) {
+		ApplyHistoryEntry entry = new ApplyHistoryEntry();
+		entry.setRollback(false);
+		entry.setTimestamp(System.currentTimeMillis());
+		entry.setUser(user);
+		entry.setQuery(query);
+		entry.setCommit(commit);
+		entry.setAttachmentSourceUuid(attUuid);
+		return entry;
+	}
+
+	/**
 	 * <p>
 	 * For PLSQL Scripts
 	 * </p>
-	 * 
+	 *
 	 * @param user
 	 * @param script
 	 * @param attUuid
 	 * @throws SQLException
 	 */
-	private void executeScriptAsStatement(User user, String script, UUID attUuid) throws SQLException {
+	private void executeScriptAsStatement(User user, String script, UUID attUuid, Commit commit) throws SQLException {
 
 		LOGGER.debug("[ATTACH-SQL] Will execute a new SQL update from attachment as PLSQL with user {}, from attachment {}",
 				user.getLogin(), attUuid);
@@ -147,15 +150,9 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 
 			cs.execute();
 
-			LOGGER.debug("[ATTACH-SQL] Store an history entry for SQL update \"{}\" from attachment {}", script, attUuid);
+			LOGGER.debug(LOG_STORE_HISTORY_ENTRY_FROM_ATTACHMENT, script, attUuid);
 
-			// Will store as a specific attachment exec in history
-			ApplyHistoryEntry entry = new ApplyHistoryEntry();
-			entry.setRollback(false);
-			entry.setTimestamp(Long.valueOf(System.currentTimeMillis()));
-			entry.setUser(user);
-			entry.setQuery(script);
-			entry.setAttachmentSourceUuid(attUuid);
+			ApplyHistoryEntry entry = initApplyHistoryEntry(user, attUuid, commit, script);
 
 			this.history.save(entry);
 		}
@@ -174,5 +171,4 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 				.replaceAll("--(.*)", "<span class=\"sql-comment\">--$1</span>")
 				.replaceAll("\n", "<br/>");
 	}
-
 }

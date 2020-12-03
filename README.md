@@ -222,6 +222,25 @@ En utilisant les connexions MANAGER et DEMO configurées, installer les données
 * Pour DEMO, utiliser le script `examples/install_init_oracle_demo.sql` : un ensemble de données de test pour une BDD gérée est créé
 * Pour MANAGER, utiliser le script `examples/install_init_oracle_manager.sql` : Le schéma de fonctionnement de l'application est créé (pas besoin d'utiliser le DDL HBM comme cela)
 
+##### 5/ Connexion à l'application avec un utilisateur technique
+ 
+ L'utilisateur technique a été créée pour permettre l'execution des services REST via l'utilisation de CURL sans avoir besoin 
+ de se connecter à l'interface de l'application.
+ 
+ À chaque lancement de l'application l'utilisateur technique est rajouté dans la base de donnée s'il n'existe pas.
+
+ ```
+login: technical-user
+password: technical-user
+email: datagate@efluid.com
+```
+
+ Le fichier application-dev.yml contient le token de l'utilisateur technique nécessaire pour effectuer des requêtes.
+ 
+```
+datagate-efluid.security.technical-user-token: TOKEN_FROM_CONFIG_FILE
+```
+
 ### Création de la configuration spécifique du développeur
 
 Créer un fichier application-dev.yml sur la base de cet exemple (ici pour utiliser des instances oracles locales montées sur `localhost:49121` avec les PWD par défaut): 
@@ -278,6 +297,25 @@ server:
 ```
 
 > Les fichiers `*.yml` sont gitignorés dans le dossier resources/config de l'app. Il est possible d'y gérer sa conf personnelle
+>
+ 
+ *Pour cela, utiliser comme paramètres* : 
+ 
+ * port `49121`
+ * compte `sys` / `dba`
+ * Rôle `SYSDBA`
+ 
+ *Puis avant de démarrer la création de compte, lancer* :
+ ```
+ alter session set "_oracle_script"=true;
+ ```
+ 
+ *Enfin, créer les comptes utilisateurs suivants* :
+ 
+ * MANAGER (BDD de management), pwd MANAGER, Tablespace USERS, accorder tous les droits
+ * DEMO (utilisé pour avoir une instance DEMO "simulée" locale), pwd DEMO, Tablespace USERS, accorder tous les droits
+ 
+ > Tester les connexions locales avec `MANAGER` et `DEMO`
 
 ### Démarrage depuis un IDE
 Pour démarrer depuis un IDE, lancer la classe exécutable `fr.uem.efluid.Application`

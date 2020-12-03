@@ -20,6 +20,9 @@ import fr.uem.efluid.model.entities.User;
 @Component
 public class UserHolder {
 
+	public static final String TECHNICAL_USER = "technical-user";
+	public static final String TECHNICAL_USER_EMAIL = "datagate@efluid.com";
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(UserHolder.class);
 
 	private ThreadLocal<User> currentUser = new ThreadLocal<>();
