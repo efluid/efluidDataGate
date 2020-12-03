@@ -237,9 +237,8 @@ email: datagate@efluid.com
 
  Le fichier application-dev.yml contient le token de l'utilisateur technique nécessaire pour effectuer des requêtes.
  
- ```
-security:
-    technical-user-token: TOKEN_FROM_CONFIG_FILE
+```
+datagate-efluid.security.technical-user-token: TOKEN_FROM_CONFIG_FILE
 ```
 
 ### Création de la configuration spécifique du développeur
