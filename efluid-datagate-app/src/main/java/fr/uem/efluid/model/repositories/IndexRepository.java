@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -32,6 +33,13 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      * </p>
      */
     List<IndexEntry> findByCommitUuid(UUID commitUuid);
+
+    /**
+     * <p>
+     * Search for existing commit indexes
+     * </p>
+     */
+    Stream<IndexEntry> findByCommitUuidAndDictionaryEntry(UUID commitUuid, DictionaryEntry dictionaryEntry);
 
     /**
      * All index lines without "previous" value for a specified commit

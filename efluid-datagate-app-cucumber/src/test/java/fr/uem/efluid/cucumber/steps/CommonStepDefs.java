@@ -93,7 +93,7 @@ public class CommonStepDefs extends CucumberStepDefs {
     }
 
     @Given("^the profiling is started$")
-    public void profiling(){
+    public void profiling() {
         startupTime = System.currentTimeMillis();
         startProfiling();
     }
@@ -158,7 +158,7 @@ public class CommonStepDefs extends CucumberStepDefs {
     public void existing_data_in_managed_table(int count, String name, DataTable data) {
 
         // Variation depends on large test size
-        if(specifiedVariation != null){
+        if (specifiedVariation != null) {
             specifiedVariation = specifiedVariation + " - " + count + " items";
         }
 
@@ -274,7 +274,7 @@ public class CommonStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the request is a success$")
-    public void success_request(){
+    public void success_request() {
         assertRequestWasOk();
     }
 

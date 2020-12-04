@@ -1,15 +1,11 @@
 package fr.uem.efluid.services;
 
 import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.CommitRepository;
-import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
-import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.model.repositories.VersionRepository;
+import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.utils.ApplicationException;
-import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.slf4j.Logger;
@@ -18,26 +14,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import static fr.uem.efluid.utils.ErrorType.*;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.slf4j.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.*;
-import fr.uem.efluid.services.types.*;
-import fr.uem.efluid.tools.*;
-import fr.uem.efluid.utils.*;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * <p>
@@ -83,7 +71,7 @@ public class PilotableCommitPreparationService {
     private CommitService commitService;
 
     @Autowired
-    private CommitRepository commitRepository;
+    private LobPropertyRepository lobs;
 
     @Autowired
     private DatabaseDescriptionRepository managedDesc;
@@ -93,12 +81,6 @@ public class PilotableCommitPreparationService {
 
     @Autowired
     private AttachmentProcessor.Provider attachProcs;
-
-    @Autowired
-    private ApplyDiffService appDiffService;
-
-    @Autowired
-    private PilotableCommitPreparationService pilotableCommitPreparationService;
 
     @Autowired
     private AsyncDriver async;
@@ -188,6 +170,53 @@ public class PilotableCommitPreparationService {
         LOGGER.info("Request for a new commit preparation - start a new one");
 
         return startLocalPreparation(projectUuid);
+    }
+
+    /**
+     * Init a revert commit - Start async diff analysis before commit
+     */
+    public PilotedCommitPreparation<?> startRevertCommitPreparation(UUID sourceCommit) {
+
+        UUID projectUuid = getActiveProjectUuid();
+
+        // On existing preparation, restart it
+        if (this.currents.get(projectUuid) != null) {
+
+            // Cancel for any existing reference ...
+            this.currents.get(projectUuid).setStatus(PilotedCommitStatus.CANCEL);
+
+            // ... but droping should be enough
+            this.currents.remove(projectUuid);
+        }
+
+        LOGGER.info("Request for a new revert commit preparation from source {}", sourceCommit);
+
+        // For CommitState REVERT => Use PreparedRevertIndexEntry (completed in != steps)
+        PilotedCommitPreparation<PreparedRevertIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.REVERT);
+        preparation.setProjectUuid(projectUuid);
+
+        // Identify revert source
+        preparation.setCommitData(new CommitEditData());
+        preparation.getCommitData().setRevertSourceCommitUuid(sourceCommit);
+
+        // Apply all existing lobs in one step
+        this.lobs.findByCommit(new Commit(sourceCommit))
+                .forEach(l -> preparation.getDiffLobs().put(l.getHash(), l.getData()));
+
+        // Init feature support for attachments
+        setAttachmentFeatureSupports(preparation);
+
+        // Support for some post processes
+        if (this.updater != null) {
+            this.updater.completeForRevert(preparation, projectUuid);
+        }
+
+        // Specify as active one
+        this.currents.put(projectUuid, preparation);
+
+        this.async.start(preparation, (x) -> this.processOnAll(preparation, this::callRevert));
+
+        return preparation;
     }
 
     /**
@@ -358,7 +387,7 @@ public class PilotableCommitPreparationService {
         return new DiffContentPage(pageIndex, getFilteredDiffContent(currentSearch), this.diffDisplayPageSize);
     }
 
-    public Collection<PreparedIndexEntry> updateDataRevert (Collection<PreparedIndexEntry> listIndex) {
+    public Collection<PreparedIndexEntry> updateDataRevert(Collection<PreparedIndexEntry> listIndex) {
         listIndex.forEach(
                 y -> {
                     String tmp = y.getPayload();
@@ -695,7 +724,7 @@ public class PilotableCommitPreparationService {
                     }
 
                     // Save update
-                    UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current, false);
+                    UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current);
 
                     // Reset cached diff values, if any, for further uses
                     this.diffService.resetDiffCaches();
@@ -712,58 +741,6 @@ public class PilotableCommitPreparationService {
         this.currents.clear();
 
         return result;
-    }
-
-    public UUID createCommitForRevertLot(String uuid, Boolean isRevert){
-
-        PilotedCommitPreparation<?> current = getCurrentCommitPreparation();
-        CommitDetails commitDet = this.commitService.getExistingCommitDetails(UUID.fromString(uuid), false);
-        Commit oldCommit = this.commitRepository.findByCommitUuid(UUID.fromString(uuid));
-
-        /* If commits [is used to revert] or if commit is reverted set to true
-            used in list commits page to display or not revert button
-            No Boolean type in oracle need to use 0 = false / 1 = true
-        */
-        oldCommit.setIsRevert(1);
-
-        String nameCommit = commitDet.getComment();
-
-        if (current.getCommitData() == null) {
-
-            current.setCommitData(new CommitEditData());
-
-        }
-
-        current.setStatus(PilotedCommitStatus.COMMIT_PREPARED);
-
-        current.getCommitData().setComment("Revert of " + nameCommit);
-
-        // Apply rollbacks on local commits only
-        if (current.getPreparingState() == CommitState.LOCAL) {
-            this.commitService.applyExclusionsFromLocalCommit(current);
-        }
-
-        current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
-
-        //set diff for current project
-
-        current.setDiffContent(this.updateDataRevert(this.commitService.loadCommitIndex(UUID.fromString(uuid))));
-
-
-
-        // Save update
-        UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current, true);
-
-        // Reset cached diff values, if any, for further uses
-        this.diffService.resetDiffCaches();
-
-        // Drop preparation (if not done yet)
-        completeCommitPreparation();
-
-        //LOGGER.info("Saving completed for commit preparation. New commit is {}", commitUUID);
-
-        return commitUUID;
-
     }
 
 
@@ -798,9 +775,6 @@ public class PilotableCommitPreparationService {
         }
 
         current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
-
-        // Save update
-        UUID commitUUID = this.commitService.saveAndApplyPreparedCommit(current, false);
 
         // Reset cached diff values, if any, for further uses
         this.diffService.resetDiffCaches();
@@ -909,7 +883,7 @@ public class PilotableCommitPreparationService {
         // Specify as active one
         this.currents.put(projectUuid, preparation);
 
-        this.async.start(preparation, this::processAllDiff);
+        this.async.start(preparation, (x) -> this.processOnAll(preparation, this::callDiff));
 
         return preparation;
     }
@@ -930,14 +904,14 @@ public class PilotableCommitPreparationService {
     /**
      * <p>
      * Asynchronous task which is itself a process of asynchronous execution of managed
-     * table diffs (one task for each managed table). Similar to a "git status"
+     * table diffs - or revert - (one task for each managed table). Similar to a "git status"
      * </p>
      * <p>
      * Use parallele processes, but not asyncronous by itself : can be launched as a
      * CompletableFuture in call processes
      * </p>
      */
-    private void processAllDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation) {
+    private <T extends PreparedIndexEntry> void processOnAll(PilotedCommitPreparation<T> preparation, BiFunction<PilotedCommitPreparation<T>, DictionaryEntry, Callable<Void>> callableBuilder) {
 
         LOGGER.info("Begin diff process on commit preparation {}", preparation.getIdentifier());
 
@@ -949,7 +923,7 @@ public class PilotableCommitPreparationService {
             // Process details
             List<Callable<?>> callables = dictEntries
                     .stream()
-                    .map(d -> callDiff(preparation, d))
+                    .map(d -> callableBuilder.apply(preparation, d))
                     .collect(Collectors.toList());
 
             preparation.setProcessStarted(callables.size());
@@ -1097,11 +1071,40 @@ public class PilotableCommitPreparationService {
 
     /**
      * <p>
+     * Execution for one table, as a <tt>Callable</tt>, for a basic local diff.
+     * </p>
+     *
+     * @param dict
+     * @return
+     */
+    private Callable<Void> callRevert(final PilotedCommitPreparation<PreparedRevertIndexEntry> current, DictionaryEntry
+            dict) {
+
+        return () -> {
+            // Controle if table not yet specified
+            assertDictionaryEntryIsRealTable(dict, current);
+
+            // Init directly commit revert content
+            try {
+                this.diffService.completeRevertDiff(current, dict);
+            } catch (Throwable ex) {
+                LOGGER.error("Error on local diff process for table {}", dict.getTableName(), ex);
+                throw new ApplicationException(PREPARATION_BIZ_FAILURE, "Error on local diff process for dict entry " + dict.getUuid(), ex, dict.getTableName());
+            }
+            int rem = current.getProcessRemaining().decrementAndGet();
+            LOGGER.info("Completed 1 local Diff. Remaining : {} / {}", rem, current.getProcessStarted());
+
+            return null;
+        };
+    }
+
+    /**
+     * <p>
      * Execution for one table, as a <tt>Callable</tt>, for a merge process diff. The list
      * of diff in <tt>MergePreparedDiff</tt> is regenerated, and DictionaryEntry data are
      * completed.
      *
-     * @param current                  preparing preparation
+     * @param current           preparing preparation
      * @param dict
      * @param correspondingDiff
      * @return Void (ignore result, content is updated in PilotedCommitPreparation)
@@ -1132,8 +1135,10 @@ public class PilotableCommitPreparationService {
     private void assertDictionaryEntryIsRealTable(DictionaryEntry entry, final PilotedCommitPreparation<?> current) {
 
         if (entry == null) {
+            LOGGER.error("No corresponding table found");
             current.fail(new ApplicationException(TABLE_WRONG_REF, "Specified table entry is missing in managed DB"));
         } else if (!this.managedDesc.isTableExists(entry.getTableName())) {
+            LOGGER.error("No corresponding table found in DB for {}", entry.getTableName());
             current.fail(new ApplicationException(TABLE_NAME_INVALID, "For dict entry " + entry.getUuid() + " the table name \""
                     + entry.getTableName() + "\" is not a valid one in managed DB", entry.getTableName()));
         }
@@ -1169,6 +1174,8 @@ public class PilotableCommitPreparationService {
     public interface PreparationUpdater {
 
         void completeForDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation, UUID projectUUID);
+
+        void completeForRevert(PilotedCommitPreparation<PreparedRevertIndexEntry> preparation, UUID projectUUID);
 
         void completeForMerge(PilotedCommitPreparation<PreparedMergeIndexEntry> preparation, UUID projectUUID);
     }

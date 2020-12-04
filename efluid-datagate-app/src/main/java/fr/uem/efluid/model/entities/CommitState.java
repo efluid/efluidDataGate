@@ -27,7 +27,12 @@ public enum CommitState {
     /**
      * Commit was fully created locally
      */
-    LOCAL(6);
+    LOCAL(6),
+
+    /**
+     * Commit was a revert from another commit
+     */
+    REVERT(2);
 
     private final int processingSteps;
 

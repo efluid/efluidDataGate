@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 /**
  * @author elecomte
- * @version 1
+ * @version 5
  * @since v0.0.1
  */
 @Entity
@@ -61,10 +61,11 @@ public class Commit implements Shared {
     @ManyToOne(optional = false)
     private Version version;
 
+    @ManyToOne
+    private Commit revertSource;
+
     @Transient
     private transient boolean refOnly = false;
-
-    private int isRevert = 0;
 
     /**
      * @param uuid forced uuid
@@ -94,14 +95,6 @@ public class Commit implements Shared {
      */
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
-    }
-
-    public int getIsRevert() {
-        return this.isRevert;
-    }
-
-    public void setIsRevert(int isRevert) {
-        this.isRevert = isRevert;
     }
 
     /**
@@ -267,6 +260,14 @@ public class Commit implements Shared {
         this.refOnly = true;
     }
 
+    public Commit getRevertSource() {
+        return this.revertSource;
+    }
+
+    public void setRevertSource(Commit revertSource) {
+        this.revertSource = revertSource;
+    }
+
     /**
      * @see fr.uem.efluid.model.Shared#serialize()
      */
@@ -280,6 +281,7 @@ public class Commit implements Shared {
                     .with("cre", getCreatedTime())
                     .with("has", getHash())
                     .with("ema", getOriginalUserEmail())
+                    .with("rvt", getRevertSource() != null ? getRevertSource().getUuid() : null)
                     .with("pro", getProject().getUuid())
                     .with("ver", getVersion().getUuid())
                     .toString();
@@ -292,6 +294,7 @@ public class Commit implements Shared {
                 .with("cre", getCreatedTime())
                 .with("has", getHash())
                 .with("ema", getOriginalUserEmail())
+                .with("rvt", getRevertSource() != null ? getRevertSource().getUuid() : null)
                 .with("pro", getProject().getUuid())
                 .with("ver", getVersion().getUuid())
                 .with("idx", getIndex().stream().map(IndexEntry::serialize).collect(Collectors.joining("\n")))
@@ -330,6 +333,7 @@ public class Commit implements Shared {
                         }).collect(Collectors.toList()));
                     }
                 })
+                .applyUUID("rvt", v -> setRevertSource(new Commit(v)))
                 .applyUUID("pro", v -> setProject(new Project(v)))
                 .applyUUID("ver", v -> setVersion(new Version(v)));
     }
@@ -372,7 +376,9 @@ public class Commit implements Shared {
     public String toString() {
         return "Commit [<" + this.uuid + ">\"" + this.comment + "\", by:" + this.originalUserEmail + ", create:" + this.createdTime
                 + ", imported:" + this.importedTime + ", " + "version:" + (this.version != null && this.version.getUuid() != null ? this.version.getUuid() : "?")
-                + (this.refOnly ? "refOnly:true" : "") + "]";
+                + (this.refOnly ? "refOnly:true" : "")
+                + (this.revertSource != null ? ", revert from " + this.revertSource.getUuid() : "")
+                + "]";
     }
 
 }

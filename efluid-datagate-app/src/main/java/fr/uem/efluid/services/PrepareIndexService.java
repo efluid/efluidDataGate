@@ -93,7 +93,6 @@ public class PrepareIndexService extends AbstractApplicationService {
     @Autowired
     private TableLinkRepository links;
 
-
     /**
      * <p>
      * Prepare the diff content, by extracting current local content and building value to value
@@ -166,6 +165,24 @@ public class PrepareIndexService extends AbstractApplicationService {
         }
     }
 
+    public void completeRevertDiff(
+            PilotedCommitPreparation<PreparedRevertIndexEntry> preparation,
+            DictionaryEntry entry) {
+
+        LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
+
+
+        this.indexes.findByCommitUuidAndDictionaryEntry(preparation.getCommitData().getRevertSourceCommitUuid(), entry)
+                .map(PreparedRevertIndexEntry::fromEntityToRevert)
+                .peek(e -> e.setHrPayload(getConverter().convertToHrPayload(e.getPayload(), e.getPrevious())))
+                .forEach(preparation.getDiffContent()::add);
+
+        preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
+    }
+
     /**
      * <p>
      * Prepare the diff content, by extracting current content and building value to value
@@ -188,7 +205,7 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param entry       dictionaryEntry
      * @param lobs        for any extracted lobs
      * @param mergeDiff   imported merge diff
-     * @param project
+     * @param project     current corresponding project
      */
     @Transactional(
             isolation = Isolation.READ_UNCOMMITTED,
@@ -685,7 +702,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 .collect(Collectors.groupingBy(p -> p.getHrPayload() != null ? p.getHrPayload() : ""));
 
         // Rendering display is based on combined
-        combineds.values().stream().forEach(e -> {
+        combineds.values().forEach(e -> {
 
             // Only one : not combined
             if (e.size() < this.maxSimilarBeforeCombined) {

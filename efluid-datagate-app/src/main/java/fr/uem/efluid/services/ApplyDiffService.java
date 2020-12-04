@@ -2,35 +2,26 @@ package fr.uem.efluid.services;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.ApplyHistoryEntry;
-import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.model.entities.Commit;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.repositories.*;
-import fr.uem.efluid.services.types.*;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
+import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
+import fr.uem.efluid.services.types.RollbackLine;
+import fr.uem.efluid.services.types.SearchHistoryPage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import java.util.*;
-import java.util.stream.*;
-
-import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import fr.uem.efluid.model.DiffLine;
-import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.*;
-import fr.uem.efluid.services.types.*;
 
 /**
  * <p>
@@ -64,19 +55,6 @@ public class ApplyDiffService extends AbstractApplicationService {
 
     @Autowired
     private ProjectManagementService projectService;
-
-    @Autowired
-    private IndexRepository index;
-
-    @Autowired
-    private DictionaryRepository dico;
-
-    @Autowired
-    private FunctionalDomainRepository domains;
-
-    private PreparedIndexEntry prepareIndex;
-
-    private PrepareIndexService prepareIndexService;
 
     /**
      * <p>
@@ -114,7 +92,7 @@ public class ApplyDiffService extends AbstractApplicationService {
         LOGGER.info("Will apply a rollback of {} items for project {}", rollBackLines.size(), project.getName());
         keepHistory(this.updates
                         .runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()), lobs, project),
-            true, commit);
+                true, commit);
     }
 
     /**

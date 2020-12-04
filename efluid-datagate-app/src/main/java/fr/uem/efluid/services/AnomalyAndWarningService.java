@@ -36,8 +36,7 @@ public class AnomalyAndWarningService {
     private final AnomalyRepository anomalies;
     private final ScheduledExecutorService executor;
 
-    private Queue<Anomaly> toWrite = new ConcurrentLinkedQueue<>();
-
+    private final Queue<Anomaly> toWrite = new ConcurrentLinkedQueue<>();
 
     public AnomalyAndWarningService(@Autowired AnomalyRepository anomalies) {
         this.anomalies = anomalies;

@@ -11,12 +11,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.springframework.web.servlet.view.RedirectView;
 
 import javax.validation.Valid;
-import java.util.List;
- import java.util.UUID;
+import java.util.UUID;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -59,7 +56,6 @@ public class BacklogController extends CommonController {
 
     @Autowired
     PrepareIndexService prepIndex;
-
 
 
     /**
@@ -149,6 +145,21 @@ public class BacklogController extends CommonController {
 
     /**
      * <p>
+     * For default prepare page
+     * </p>
+     *
+     * @param model
+     * @return
+     */
+    @RequestMapping("/revert/restart")
+    public String revertRestart(Model model) {
+        PilotedCommitPreparation<?> prepare = this.pilotableCommitService.getCurrentCommitPreparation();
+
+        return revert(model, prepare.getCommitData().getRevertSourceCommitUuid());
+    }
+
+    /**
+     * <p>
      * Force restart in a new preparation
      * </p>
      *
@@ -165,7 +176,7 @@ public class BacklogController extends CommonController {
     /**
      * @return status as a value
      */
-    @RequestMapping(path = {"/prepare/progress", "/merge/progress"}, method = GET)
+    @RequestMapping(path = {"/prepare/progress", "/merge/progress", "/revert/progress"}, method = GET)
     @ResponseBody
     public PreparationState preparationGetState() {
         return this.pilotableCommitService.getCurrentCommitPreparationState();
@@ -174,7 +185,7 @@ public class BacklogController extends CommonController {
     /**
      * @return content for paginated diff content rendering
      */
-    @RequestMapping(path = {"/prepare/page/{page}", "/merge/page/{page}"}, method = {GET, POST})
+    @RequestMapping(path = {"/prepare/page/{page}", "/merge/page/{page}", "/revert/page/{page}"}, method = {GET, POST})
     @ResponseBody
     public DiffContentPage preparationGetDiffContentPage(
             @PathVariable("page") int page,
@@ -182,17 +193,6 @@ public class BacklogController extends CommonController {
 
         return this.pilotableCommitService.getPaginatedDiffContent(page, search);
     }
-
-    /**
-     * @param uuid
-     * @return
-     */
-    @RequestMapping(path = "/revert/{uuid}", method = {POST})
-    @ResponseBody
-    public void revert( @PathVariable("uuid") String uuid) {
-        this.pilotableCommitService.startLocalCommitPreparation(true);
-        this.pilotableCommitService.createCommitForRevertLot(uuid, true);
-}
 
     /**
      * @return content for paginated commit index rendering
@@ -215,7 +215,7 @@ public class BacklogController extends CommonController {
      * @param selected   state "selected", arg param
      * @param rollbacked state "rollbacked", arg param
      */
-    @RequestMapping(path = {"/prepare/selection/all", "/merge/selection/all"}, method = POST)
+    @RequestMapping(path = {"/prepare/selection/all", "/merge/selection/all", "/revert/selection/all"}, method = POST)
     @ResponseBody
     public void preparationSelectionUpdateAll(@RequestParam boolean selected, @RequestParam boolean rollbacked) {
 
@@ -231,7 +231,7 @@ public class BacklogController extends CommonController {
      * @param rollbacked state "rollbacked", arg param
      * @param search     body content search
      */
-    @RequestMapping(path = {"/prepare/selection/filtered", "/merge/selection/filtered"}, method = POST)
+    @RequestMapping(path = {"/prepare/selection/filtered", "/merge/selection/filtered", "/revert/selection/filtered"}, method = POST)
     @ResponseBody
     public void preparationSelectionUpdateFiltered(
             @RequestParam boolean selected,
@@ -250,7 +250,7 @@ public class BacklogController extends CommonController {
      * @param selected   state "selected", arg param
      * @param rollbacked state "rollbacked", arg param
      */
-    @RequestMapping(path = {"/prepare/selection/line/{index}", "/merge/selection/line/{index}"}, method = POST)
+    @RequestMapping(path = {"/prepare/selection/line/{index}", "/merge/selection/line/{index}", "/revert/selection/line/{index}"}, method = POST)
     @ResponseBody
     public void preparationSelectionUpdateItem(@PathVariable("index") String itemIndex, @RequestParam boolean selected,
                                                @RequestParam boolean rollbacked) {
@@ -263,7 +263,7 @@ public class BacklogController extends CommonController {
      * @param preparation
      * @return
      */
-    @RequestMapping(path = {"/prepare/commit", "/merge/commit"}, method = POST)
+    @RequestMapping(path = {"/prepare/commit", "/merge/commit", "/revert/commit"}, method = POST)
     public String preparationCommitPage(Model model, @ModelAttribute PilotedCommitPreparation<?> preparation, @RequestAttribute(required = false) PilotedCommitPreparation<?> preparationPush) {
 
         if (!controlSelectedProject(model)) {
@@ -287,7 +287,7 @@ public class BacklogController extends CommonController {
      * @param preparation
      * @return
      */
-    @RequestMapping(path = {"/prepare/save", "/merge/save"}, method = POST)
+    @RequestMapping(path = {"/prepare/save", "/merge/save", "/revert/save"}, method = POST)
     public String preparationSave(Model model, @ModelAttribute PilotedCommitPreparation<?> preparation, @RequestAttribute(required = false) PilotedCommitPreparation<?> preparationPush) {
 
         if (!controlSelectedProject(model)) {
@@ -315,7 +315,7 @@ public class BacklogController extends CommonController {
      * @param model
      * @return
      */
-    @RequestMapping(path = {"/prepare/cancel", "/merge/cancel"}, method = GET)
+    @RequestMapping(path = {"/prepare/cancel", "/merge/cancel", "/revert/cancel"}, method = GET)
     public String preparationCancel(Model model) {
 
         if (!controlSelectedProject(model)) {
@@ -605,8 +605,7 @@ public class BacklogController extends CommonController {
         model.addAttribute("commits", this.commitService.getAvailableCommits());
         model.addAttribute("currentLocationTitle", "Liste des lots");
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
-        model.addAttribute("lastCommit", this.commitService.getLastCommit());
-
+        model.addAttribute("revertableCommit", this.commitService.getRevertCompliantCommit());
 
         return "pages/commits";
     }
@@ -632,6 +631,61 @@ public class BacklogController extends CommonController {
 
         return "pages/details";
     }
+
+
+    /**
+     * @param uuid
+     * @return
+     */
+    @GetMapping("/revert/{uuid}")
+    public String revert(Model model, @PathVariable("uuid") UUID uuid) {
+
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
+        PilotedCommitPreparation<?> prepare = this.pilotableCommitService.startRevertCommitPreparation(uuid);
+
+        // Diff already in progress - use common diff page
+        if (prepare.getStatus() == PilotedCommitStatus.DIFF_RUNNING) {
+            return "pages/reverting";
+        }
+
+        // Completed / available, basic prepare page
+        model.addAttribute("preparation", prepare);
+
+        // For formatting
+        WebUtils.addTools(model);
+
+        return "pages/revert";
+    }
+
+    /**
+     * @return
+     */
+    @GetMapping("/revert")
+    public String revert(Model model) {
+
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
+        PilotedCommitPreparation<?> prepare = this.pilotableCommitService.getCurrentCommitPreparation();
+
+        // Diff already in progress - use common diff page
+        if (prepare.getStatus() == PilotedCommitStatus.DIFF_RUNNING) {
+            return "pages/reverting";
+        }
+
+        // Completed / available, basic prepare page
+        model.addAttribute("preparation", prepare);
+
+        // For formatting
+        WebUtils.addTools(model);
+
+        return "pages/revert";
+    }
+
 
     /**
      * <p>

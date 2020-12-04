@@ -30,7 +30,7 @@
                     <td th:text="${commit.state}">Mergé</td>
 		            <td>
 		            	<a href="./details.html" th:href="@{/ui/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
-						<a href="./prepare.html" th:href="@{/ui/prepare}" th:if="${commit.uuid == lastCommit && commit.isRevert == 0}" type="button" class="btn btn-sm btn-warning" th:onclick="revert([[${commit.uuid}]])">Revert</a>
+						<a href="./revert.html" th:if="${commit.uuid.equals(revertableCommit)}" th:href="@{/ui/revert/{id}(id=${commit.uuid})}" type="button" class="btn btn-sm btn-warning">Revert</a>
 					</td>
 		        </tr>
 		    </tbody>
@@ -47,33 +47,6 @@
 		$('#collapseExample2').css("display", "block");
 		$('#li-5').css("font-weight", "bolder");
 
-		var activeSearch = {
-			filters: {
-				domain:"",
-				table:"",
-				key:"",
-				type:""
-			},
-			sorts: {
-				domain:"",
-				table:"",
-				key:"",
-				type:""
-			}
-		};
-
-		const revert = (uuid) => {
-			console.log(uuid);
-		    $.ajax({
-			type: "POST",
-			url: "/ui/revert/" + uuid,
-			contentType: "application/json; charset=utf-8",
-			dataType: "json",
-			success: (data, status) => { console.log(status,data) }
-
-		})
-
-		}
     	$(document).ready(() => {
     		supportGitmojis();
 		});
