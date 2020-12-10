@@ -893,6 +893,92 @@ public class DictionaryManagementService extends AbstractApplicationService {
         return result;
     }
 
+
+    public ExportImportResult<Void> importAllInCurrentProject(ExportFile file) {
+
+        LOGGER.info("Process import of complete dictionary related entities");
+
+        // Less easy : need to complete and identify if value is new or not
+        List<SharedPackage<?>> packages = this.ioService.importPackages(file);
+
+        assertImportSingleProject(packages);
+
+        AtomicInteger newDomainsCount = new AtomicInteger(0);
+        AtomicInteger newDictCount = new AtomicInteger(0);
+        AtomicInteger newLinksCount = new AtomicInteger(0);
+        AtomicInteger newMappingsCount = new AtomicInteger(0);
+        AtomicInteger deduplicatedDomainsCount = new AtomicInteger(0);
+
+        // Can substitute domains by name : need refer update
+        Map<UUID, FunctionalDomain> substituteDomains = new HashMap<>();
+        Map<UUID, DictionaryEntry> substituteTables = new HashMap<>();
+
+        // Will work in current project
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        // Process on each, with right order :
+
+        // #1st The functional domains (used by other)
+        List<FunctionalDomain> importedDomains = packages.stream()
+                .filter(p -> p.getClass() == FunctionalDomainPackage.class)
+                .flatMap(p -> ((FunctionalDomainPackage) p).streamContent())
+                .map(d -> importDomainInProject(d, project, newDomainsCount, substituteDomains))
+                .collect(Collectors.toList());
+
+        // #2rd The dictionary (referencing domains)
+        List<DictionaryEntry> importedDicts = packages.stream()
+                .filter(p -> p.getClass() == DictionaryPackage.class)
+                .flatMap(p -> ((DictionaryPackage) p).streamContent())
+                .map(d -> importDictionaryEntryInDomains(d, newDictCount, substituteDomains, substituteTables))
+                .collect(Collectors.toList());
+
+        // #4th The links (referencing dictionary entries)
+        List<TableLink> importedLinks = packages.stream()
+                .filter(p -> p.getClass() == TableLinkPackage.class)
+                .flatMap(p -> ((TableLinkPackage) p).streamContent())
+                .map(d -> importTableLinkInTable(d, newLinksCount, substituteTables))
+                .collect(Collectors.toList());
+
+        // #5th The mappings (referencing dictionary entries)
+        List<TableMapping> importedMappings = packages.stream()
+                .filter(p -> p.getClass() == TableMappingPackage.class)
+                .flatMap(p -> ((TableMappingPackage) p).streamContent())
+                .map(d -> importTableMappingInTable(d, newMappingsCount, substituteTables))
+                .collect(Collectors.toList());
+
+        // Batched save on all imported
+        this.domains.saveAll(importedDomains);
+        this.dictionary.saveAll(importedDicts);
+        this.links.saveAll(importedLinks);
+        this.mappings.saveAll(importedMappings);
+
+        LOGGER.info("Import completed of {} domains, {} dictionary entry, {} table links and {} table mappings",
+                importedDomains.size(), importedDicts.size(), importedLinks.size(), importedMappings.size());
+        ExportImportResult<Void> result = ExportImportResult.newVoid();
+
+        // Now check for duplicate domain names and fix
+        if (this.domains.findAll().stream().anyMatch(d -> importedDomains.stream().anyMatch(similareDomain(d)))) {
+
+            LOGGER.info("Some domains need to be deduplicated from existing");
+
+            deduplicateDomains(importedDomains, deduplicatedDomainsCount);
+        }
+
+        completeCoreImportResult(
+                result,
+                newDomainsCount,
+                newDictCount,
+                newLinksCount,
+                newMappingsCount,
+                deduplicatedDomainsCount,
+                importedDomains,
+                importedDicts,
+                importedLinks,
+                importedMappings);
+
+        return result;
+    }
+
     /**
      * @param file
      */
@@ -1000,11 +1086,46 @@ public class DictionaryManagementService extends AbstractApplicationService {
             LOGGER.warn("Cannot process version update on import - ignore \"{}\"", e.getMessage());
         }
 
-        // Details on imported counts (add vs updated items)
+        // Common core values
+        completeCoreImportResult(
+                result,
+                newDomainsCount,
+                newDictCount,
+                newLinksCount,
+                newMappingsCount,
+                deduplicatedDomainsCount,
+                importedDomains,
+                importedDicts,
+                importedLinks,
+                importedMappings);
+
+        // Project + versions
+
         if (importedProjects.size() > 0) {
             result.addCount(ProjectExportPackage.PROJECTS_EXPORT, newProjsCount.get(),
                     importedProjects.size() - newProjsCount.get(), 0);
         }
+
+        if (importedVersions.size() > 0) {
+            result.addCount(VersionExportPackage.VERSIONS_EXPORT, newVersCount.get(),
+                    importedVersions.size() - newVersCount.get(), 0);
+        }
+
+        return result;
+    }
+
+    private void completeCoreImportResult(
+            ExportImportResult<?> result,
+            AtomicInteger newDomainsCount,
+            AtomicInteger newDictCount,
+            AtomicInteger newLinksCount,
+            AtomicInteger newMappingsCount,
+            AtomicInteger deduplicatedDomainsCount,
+            List<FunctionalDomain> importedDomains,
+            List<DictionaryEntry> importedDicts,
+            List<TableLink> importedLinks,
+            List<TableMapping> importedMappings
+    ) {
 
         if (importedDomains.size() > 0) {
             result.addCount(FunctionalDomainExportPackage.DOMAINS_EXPORT, newDomainsCount.get(),
@@ -1026,17 +1147,10 @@ public class DictionaryManagementService extends AbstractApplicationService {
                     importedMappings.size() - newMappingsCount.get(), 0);
         }
 
-        if (importedVersions.size() > 0) {
-            result.addCount(VersionExportPackage.VERSIONS_EXPORT, newVersCount.get(),
-                    importedVersions.size() - newVersCount.get(), 0);
-        }
-
         if (deduplicatedDomainsCount.get() > 0) {
             result.addCount(DEDUPLICATED_DOMAINS, deduplicatedDomainsCount.get(),
                     0, deduplicatedDomainsCount.get());
         }
-
-        return result;
     }
 
     private static Predicate<FunctionalDomain> similareDomain(FunctionalDomain existing) {
@@ -1250,6 +1364,43 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
     /**
      * <p>
+     * Process one FunctionalDomain. If the associated project was substituted by another
+     * by name, the substitute will be gathered from given map and applied to domain
+     * </p>
+     *
+     * @param imported
+     * @param newCounts
+     * @param substituteDomains
+     * @return
+     */
+    private FunctionalDomain importDomainInProject(FunctionalDomain imported, Project destination, AtomicInteger newCounts, Map<UUID, FunctionalDomain> substituteDomains) {
+
+        FunctionalDomain local = this.domains.findByProjectAndName(destination, imported.getName());
+
+        // Exists already
+        if (local != null) {
+            LOGGER.debug("Import existing domain {} : will update currently owned", local.getName());
+        } else {
+            LOGGER.debug("Import new domain {} : will create currently owned", imported.getUuid());
+            local = new FunctionalDomain(UUID.randomUUID());
+            local.setCreatedTime(imported.getCreatedTime());
+            newCounts.incrementAndGet();
+        }
+
+        // Common attrs
+        local.setUpdatedTime(imported.getUpdatedTime());
+        local.setName(imported.getName());
+
+        local.setProject(destination);
+
+        local.setImportedTime(LocalDateTime.now());
+        substituteDomains.put(imported.getUuid(), local);
+
+        return local;
+    }
+
+    /**
+     * <p>
      * Process one Project
      * </p>
      * <p>
@@ -1319,7 +1470,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         Optional<DictionaryEntry> localOpt = this.dictionary.findById(imported.getUuid());
 
-        // Exists already
+        // Exists already on id
         localOpt.ifPresent(d -> LOGGER.debug("Import existing dictionary entry {} : will update currently owned", imported.getUuid()));
 
         // Or is a new one
@@ -1331,9 +1482,52 @@ public class DictionaryManagementService extends AbstractApplicationService {
             return loc;
         });
 
-        // Common attrs
-        local.setUpdatedTime(imported.getUpdatedTime());
         local.setDomain(new FunctionalDomain(imported.getDomain().getUuid()));
+
+        // Common attrs
+        copyImportedDictionaryEntry(imported, local);
+
+        return local;
+    }
+
+    /**
+     * Process one DictionaryEntry
+     *
+     * @param imported
+     * @return
+     */
+    private DictionaryEntry importDictionaryEntryInDomains(DictionaryEntry imported, AtomicInteger newCounts, Map<UUID, FunctionalDomain> substituteDomains, Map<UUID, DictionaryEntry> substituteTables) {
+
+        FunctionalDomain associatedDomain = substituteDomains.get(imported.getDomain().getUuid());
+
+        Optional<DictionaryEntry> localOpt = this.dictionary.findByTableNameAndDomain(imported.getTableName(), associatedDomain);
+
+        // Exists already on name
+        localOpt.ifPresent(d -> LOGGER.debug("Import existing dictionary entry for table \"{}\" : will update currently owned", imported.getTableName()));
+
+        // Or is a new one
+        DictionaryEntry local = localOpt.orElseGet(() -> {
+            LOGGER.debug("Import new dictionary entry for table \"{}\" : will create currently owned", imported.getTableName());
+            DictionaryEntry loc = new DictionaryEntry(UUID.randomUUID());
+            loc.setCreatedTime(imported.getCreatedTime());
+            newCounts.incrementAndGet();
+            return loc;
+        });
+
+        // Common attrs
+        local.setDomain(associatedDomain);
+
+        // Common attrs
+        copyImportedDictionaryEntry(imported, local);
+
+        substituteTables.put(imported.getUuid(), local);
+
+        return local;
+    }
+
+    private void copyImportedDictionaryEntry(DictionaryEntry imported, DictionaryEntry local) {
+
+        local.setUpdatedTime(imported.getUpdatedTime());
         local.setKeyName(imported.getKeyName());
         local.setKeyType(imported.getKeyType());
         local.setExt1KeyName(imported.getExt1KeyName());
@@ -1351,7 +1545,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         local.setImportedTime(LocalDateTime.now());
 
-        return local;
     }
 
     /**
@@ -1376,9 +1569,50 @@ public class DictionaryManagementService extends AbstractApplicationService {
             return loc;
         });
 
+        local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
+
+        // Common attrs
+        copyImportedTableLink(imported, local);
+
+        return local;
+    }
+
+    /**
+     * Process one TableLink
+     *
+     * @param imported
+     * @return
+     */
+    private TableLink importTableLinkInTable(TableLink imported, AtomicInteger newCounts, Map<UUID, DictionaryEntry> substituteTables) {
+
+        DictionaryEntry associatedTable = substituteTables.get(imported.getDictionaryEntry().getUuid());
+
+        Optional<TableLink> localOpt = this.links.findByDictionaryEntryAndColumnFromAndTableToAndColumnTo(associatedTable, imported.getColumnFrom(), imported.getTableTo(), imported.getColumnTo());
+
+        // Exists already
+        localOpt.ifPresent(d -> LOGGER.debug("Import existing TableLink {} : will update currently owned", imported.getUuid()));
+
+        // Or is a new one
+        TableLink local = localOpt.orElseGet(() -> {
+            LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
+            TableLink loc = new TableLink(UUID.randomUUID());
+            loc.setCreatedTime(imported.getCreatedTime());
+            newCounts.incrementAndGet();
+            return loc;
+        });
+
+        local.setDictionaryEntry(associatedTable);
+
+        // Common attrs
+        copyImportedTableLink(imported, local);
+
+        return local;
+    }
+
+    public void copyImportedTableLink(TableLink imported, TableLink local) {
+
         // Common attrs
         local.setUpdatedTime(imported.getUpdatedTime());
-        local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
         local.setColumnFrom(imported.getColumnFrom());
         local.setColumnTo(imported.getColumnTo());
         local.setTableTo(imported.getTableTo());
@@ -1391,8 +1625,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
         local.setExt4ColumnTo(imported.getExt4ColumnTo());
         local.setExt4ColumnFrom(imported.getExt4ColumnFrom());
         local.setImportedTime(LocalDateTime.now());
-
-        return local;
     }
 
     /**
@@ -1417,9 +1649,50 @@ public class DictionaryManagementService extends AbstractApplicationService {
             return loc;
         });
 
+        local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
+
+        // Common attrs
+        copyImportedTableMapping(imported, local);
+
+        return local;
+    }
+
+    /**
+     * Process one TableMapping
+     *
+     * @param imported
+     * @return
+     */
+    private TableMapping importTableMappingInTable(TableMapping imported, AtomicInteger newCounts, Map<UUID, DictionaryEntry> substituteTables) {
+
+        DictionaryEntry associatedTable = substituteTables.get(imported.getDictionaryEntry().getUuid());
+
+        Optional<TableMapping> localOpt = this.mappings.findByDictionaryEntryAndColumnFromAndTableToAndColumnToAndMapTable(associatedTable, imported.getColumnFrom(), imported.getTableTo(), imported.getColumnTo(), imported.getMapTable());
+
+        // Exists already
+        localOpt.ifPresent(d -> LOGGER.debug("Import existing TableMapping {} : will update currently owned", imported.getUuid()));
+
+        // Or is a new one
+        TableMapping local = localOpt.orElseGet(() -> {
+            LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
+            TableMapping loc = new TableMapping(UUID.randomUUID());
+            loc.setCreatedTime(imported.getCreatedTime());
+            newCounts.incrementAndGet();
+            return loc;
+        });
+
+        local.setDictionaryEntry(associatedTable);
+
+        // Common attrs
+        copyImportedTableMapping(imported, local);
+
+        return local;
+    }
+
+    public void copyImportedTableMapping(TableMapping imported, TableMapping local) {
+
         // Common attrs
         local.setUpdatedTime(imported.getUpdatedTime());
-        local.setDictionaryEntry(new DictionaryEntry(imported.getDictionaryEntry().getUuid()));
         local.setName(imported.getName());
         local.setColumnFrom(imported.getColumnFrom());
         local.setColumnTo(imported.getColumnTo());
@@ -1427,10 +1700,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         local.setMapTable(imported.getMapTable());
         local.setMapTableColumnFrom(imported.getMapTableColumnFrom());
         local.setMapTableColumnTo(imported.getMapTableColumnTo());
-
         local.setImportedTime(LocalDateTime.now());
-
-        return local;
     }
 
     /**
@@ -1739,6 +2009,19 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         if (useModelIdAsVersionName && currentModelId == null) {
             throw new ApplicationException(VERSION_NOT_MODEL_ID, "Cannot use the model ID as version name if no model ID can be found");
+        }
+    }
+
+    private static void assertImportSingleProject(List<SharedPackage<?>> imported) {
+
+        // #1st The projects (used by other)
+        List<Project> importedProjects = imported.stream()
+                .filter(p -> p.getClass() == ProjectPackage.class)
+                .flatMap(p -> ((ProjectPackage) p).streamContent())
+                .collect(Collectors.toList());
+
+        if (importedProjects.size() > 1) {
+            throw new ApplicationException(IMPORT_MULTIPLE_PROJECT, "Cannot import multiple projects when it is required to update current project");
         }
     }
 
