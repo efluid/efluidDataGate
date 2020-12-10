@@ -392,6 +392,19 @@ public class DictionaryController extends CommonController {
     }
 
     /**
+     * Update of existing version
+     *
+     * @param name
+     * @return
+     */
+    @RequestMapping(value = "/versions", method = POST)
+    public String updateVersion(Model model, @RequestParam("name") String name) {
+        this.dictionaryManagementService.setCurrentVersion(name);
+        model.addAttribute("updateDone", Boolean.TRUE);
+        return versionsPage(model);
+    }
+
+    /**
      * @param model
      * @param name
      * @return
