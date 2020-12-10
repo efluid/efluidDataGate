@@ -2,6 +2,7 @@ package fr.uem.efluid.services.types;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.tools.RollbackConverter;
 
 /**
  * <p>
@@ -32,11 +33,11 @@ public class PreparedRevertIndexEntry extends PreparedIndexEntry {
      * @param existing entry from import
      * @return for merge
      */
-    public static PreparedRevertIndexEntry fromEntityToRevert(IndexEntry existing) {
+    public static PreparedRevertIndexEntry fromEntityToRevert(IndexEntry existing, RollbackConverter converter) {
 
         PreparedRevertIndexEntry data = new PreparedRevertIndexEntry();
 
-        completeFromExistingEntityAsRevert(data, existing);
+        completeRevert(data, converter.toRollbackLine(existing));
         data.source = PreparedIndexEntry.fromExistingEntity(existing);
 
         return data;
@@ -45,13 +46,10 @@ public class PreparedRevertIndexEntry extends PreparedIndexEntry {
     /**
      * Used when reading an index content
      *
-     * @param data
-     * @param existing
+     * @param data preparing IndexEntry def
+     * @param roll definition of revert line
      */
-    protected static void completeFromExistingEntityAsRevert(PreparedRevertIndexEntry data, IndexEntry existing) {
-
-        // Use intermediate RollbackLine definition for revert
-        DiffLine roll = new RollbackLine(existing).toCombinedDiff();
+    protected static void completeRevert(PreparedRevertIndexEntry data, DiffLine roll) {
 
         data.setAction(roll.getAction());
         data.setDictionaryEntryUuid(roll.getDictionaryEntryUuid());

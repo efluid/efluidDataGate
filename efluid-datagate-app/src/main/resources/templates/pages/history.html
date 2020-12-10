@@ -11,7 +11,8 @@
 					 <span class="help">
 					 	Toutes les requêtes exécutées sur les tables de paramètrage sont stockées dans un historique. Vous pouvez consulter ici les informations enregistrées.<br/>
 					 	Le symbole <span class="history-update inline-block">&nbsp;</span> indique que la modification est une mise à jour lors d'un import de lot, le symbole 
-					 	<span class="history-rollback inline-block">&nbsp;</span> précise les opérations d'annulation (rollback) lors de la préparation d'un lot.<br/>
+					 	<span class="history-rollback inline-block">&nbsp;</span> précise les opérations d'annulation (rollback) lors de la préparation d'un lot, et le symbole
+					 	<span class="history-revert inline-block">&nbsp;</span> correspond aux opérations de revert d'un lot.<br/>
 					 	Vous pouvez filtrer les requêtes par leur contenu.
 					 </span>
 			    </div>
@@ -56,7 +57,7 @@
 		    </thead>
 		    <tbody>
 		        <tr th:each="line, cstat : ${history.page}">
-		            <td class="history-state"><span th:class="${line.rollback}?'history-rollback':(${line.attachmentSourceUuid!=null}?'history-attachment':'history-update')" class="history-update">&nbsp;</span></td>
+		            <td class="history-state"><span th:class="${line.type == 'ROLLBACK'}?'history-rollback':((${line.type == 'REVERT'}?'history-revert':(${line.attachmentSourceUuid!=null}?'history-attachment':'history-update'))" class="history-update">&nbsp;</span></td>
 		            <td><span class="query-display" th:text="${line.query}">select * ...</span></td>
 		            <td th:text="${line.user}">Fonct domains</td>
 					<td th:utext="${custom.processGitmoji(line.commitComment)}">Lot ajoutant des choses</td>

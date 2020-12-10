@@ -9,6 +9,7 @@ import fr.uem.efluid.model.repositories.ManagedExtractRepository.Extraction;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
+import fr.uem.efluid.tools.RollbackConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.ErrorType;
@@ -93,6 +94,9 @@ public class PrepareIndexService extends AbstractApplicationService {
     @Autowired
     private TableLinkRepository links;
 
+    @Autowired
+    private RollbackConverter rollbackConverter;
+
     /**
      * <p>
      * Prepare the diff content, by extracting current local content and building value to value
@@ -173,7 +177,7 @@ public class PrepareIndexService extends AbstractApplicationService {
 
 
         this.indexes.findByCommitUuidAndDictionaryEntry(preparation.getCommitData().getRevertSourceCommitUuid(), entry)
-                .map(PreparedRevertIndexEntry::fromEntityToRevert)
+                .map(e -> PreparedRevertIndexEntry.fromEntityToRevert(e, this.rollbackConverter))
                 .peek(e -> e.setHrPayload(getConverter().convertToHrPayload(e.getPayload(), e.getPrevious())))
                 .forEach(preparation.getDiffContent()::add);
 

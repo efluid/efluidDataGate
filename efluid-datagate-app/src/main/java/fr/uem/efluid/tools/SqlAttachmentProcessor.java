@@ -121,7 +121,7 @@ public class SqlAttachmentProcessor extends AttachmentProcessor {
 	 */
 	private ApplyHistoryEntry initApplyHistoryEntry(User user, UUID attUuid, Commit commit, String query) {
 		ApplyHistoryEntry entry = new ApplyHistoryEntry();
-		entry.setRollback(false);
+		entry.setType(ApplyType.IMPORT);
 		entry.setTimestamp(System.currentTimeMillis());
 		entry.setUser(user);
 		entry.setQuery(query);

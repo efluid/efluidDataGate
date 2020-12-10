@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.*;
 
+import fr.uem.efluid.model.DiffLine;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.*;
@@ -96,6 +97,9 @@ public class CommitService extends AbstractApplicationService {
 
     @Autowired
     private VersionContentChangesGenerator changesGenerator;
+
+    @Autowired
+    private RollbackConverter rollbackConverter;
 
     /**
      *
@@ -524,7 +528,7 @@ public class CommitService extends AbstractApplicationService {
 
         LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
-        List<RollbackLine> rollbacked = prepared
+        List<DiffLine> rollbacked = prepared
                 .streamDiffContentMappedToDictionaryEntryUuid()
                 .flatMap(e -> toDiffRollbacks(e.getValue()))
                 .collect(Collectors.toList());
@@ -534,7 +538,7 @@ public class CommitService extends AbstractApplicationService {
             LOGGER.info("In current commit preparation, a total of {} rollback entries were identified and are going to be applied",
                     rollbacked.size());
 
-            this.applyDiffService.rollbackDiff(rollbacked, prepared.getDiffLobs(), commit);
+            this.applyDiffService.applyDiff(rollbacked, prepared.getDiffLobs(), commit, ApplyType.ROLLBACK);
         }
     }
 
@@ -592,7 +596,7 @@ public class CommitService extends AbstractApplicationService {
             LOGGER.info("Processing revert commit {} : now apply all {} modifications prepared from source commit",
                     commit.getUuid(), entries.size());
 
-            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit);
+            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit, ApplyType.REVERT);
             LOGGER.debug("Processing revert commit {} : diff applied with success", commit.getUuid());
         }
 
@@ -601,7 +605,7 @@ public class CommitService extends AbstractApplicationService {
 
             LOGGER.info("Processing merge commit {} : now apply all {} modifications prepared from imported values",
                     commit.getUuid(), entries.size());
-            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit);
+            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit, ApplyType.IMPORT);
             LOGGER.debug("Processing merge commit {} : diff applied with success", commit.getUuid());
 
             // And execute attachments if needed
@@ -870,7 +874,7 @@ public class CommitService extends AbstractApplicationService {
      * @param diffContent
      * @return
      */
-    private Stream<RollbackLine> toDiffRollbacks(Collection<? extends PreparedIndexEntry> diffContent) {
+    private Stream<DiffLine> toDiffRollbacks(Collection<? extends PreparedIndexEntry> diffContent) {
 
         // Split combined lines and convert to rollbacks
         return diffContent.stream()
@@ -883,7 +887,7 @@ public class CommitService extends AbstractApplicationService {
                         return Stream.of(l);
                     }
                 })
-                .map(RollbackLine::new)
+                .map(this.rollbackConverter::toRollbackLine)
                 ;
     }
 
