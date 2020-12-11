@@ -126,9 +126,11 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
     /**
      * @param name
+     * @return true if new version created, or false for update
      */
-    public void setCurrentVersion(final String name) {
+    public boolean setCurrentVersion(final String name) {
 
+        boolean created = false;
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
@@ -154,6 +156,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
             version.setName(fixedName);
             version.setCreatedTime(LocalDateTime.now());
             version.setProject(project);
+            created = true;
         } else {
             LOGGER.info("Update version {} in current project", fixedName);
         }
@@ -170,6 +173,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
         completeVersionContents(version);
 
         this.versions.save(version);
+
+        return created;
     }
 
     /**
