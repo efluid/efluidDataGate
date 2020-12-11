@@ -131,11 +131,8 @@ public class VersionStepDefs extends CucumberStepDefs {
         // Get actual update date
         initUpdatedTime = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUpdatedTime();
 
-        // Update
-        post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
-
-        // Update is REST only, update page
-        get(getCorrespondingLinkForPageName("list of versions"));
+        // Update - it's a navigation also
+        post("/ui/versions", p("name", name));
     }
 
     @Then("^the (\\d+) \\w+ versions are displayed$")
@@ -147,6 +144,11 @@ public class VersionStepDefs extends CucumberStepDefs {
                 VersionData::getName,
                 specifiedVersions);
 
+    }
+
+    @Then("^a confirmation message on update is displayed$")
+    public void then_update_version_msg() {
+        assertModelIsSpecifiedProperty("updateDone", Boolean.class, v -> v != null && v);
     }
 
     @Then("^the current version name is \"(.*)\"$")

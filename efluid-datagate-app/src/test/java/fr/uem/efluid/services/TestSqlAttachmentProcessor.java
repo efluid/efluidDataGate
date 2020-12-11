@@ -1,10 +1,15 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.DataGenerationUtils.user;
-
-import java.util.UUID;
-
-import org.junit.*;
+import fr.uem.efluid.IntegrationTestConfig;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.stubs.TestUtils;
+import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.SqlAttachmentProcessor;
+import fr.uem.efluid.utils.DataGenerationUtils;
+import fr.uem.efluid.utils.FormatUtils;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,28 +17,36 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.*;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
-import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
-import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.tools.*;
-import fr.uem.efluid.utils.FormatUtils;
+import java.util.UUID;
 
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @RunWith(SpringRunner.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
-@SpringBootTest(classes = { IntegrationTestConfig.class })
+@SpringBootTest(classes = {IntegrationTestConfig.class})
 public class TestSqlAttachmentProcessor {
 
 	@Autowired
 	private JdbcTemplate managedSource;
+
+	@Autowired
+	private CommitRepository commits;
+
+	@Autowired
+	private ProjectRepository projects;
+
+	@Autowired
+	private VersionRepository versions;
+
+	@Autowired
+	private UserRepository users;
 
 	@Autowired
 	private ApplyHistoryEntryRepository history;
@@ -57,9 +70,12 @@ public class TestSqlAttachmentProcessor {
 
 	@Test
 	public void testExecute() {
-		Commit commit = new Commit(UUID.randomUUID());
 
-		User user = user("testeur");
+		User user = this.users.save(DataGenerationUtils.user("test"));
+		Project pro = this.projects.save(DataGenerationUtils.project("demo"));
+		Version ver = this.versions.save(DataGenerationUtils.version("V1", pro));
+
+		Commit commit = this.commits.save(DataGenerationUtils.commit("commit1", user, 0, pro, ver));
 
 		SqlAttachmentProcessor proc = new SqlAttachmentProcessor(this.managedSource, this.history);
 		AttachmentProcessor.Compliant comp = initComp();

@@ -34,7 +34,13 @@
 					Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
 				</label>
 				<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
-				<input type="submit" class="btn btn-success-outline btn-sm float-right" id="importSubmit" disabled="disabled" value="Importer les données dans le dictionnaire"/>
+				<input type="submit" class="btn btn-outline-success btn-sm float-right" id="importSubmit" disabled="disabled" value="Importer le dictionnaire"/>
+				<div class="help" id="projectMessage">
+					<br/>
+					<b>Importer dans le projet courant uniquement :</b>&nbsp;
+					<input type="checkbox" id="importProject" value="current" name="project"/>&nbsp;&nbsp;Pour importer dans le projet courant <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span>
+					, le fichier selectionné ne doit comporter qu'un seul projet. Toutes les données seront ajoutées et / ou modifiées dans le projet courant
+				</div>
 		    </form>
 		    <div th:if="${result}" id="resultMessage" hidden="true">
 		    	<b>Import dans le dictionnaire réalisé avec succès.</b><br/><br/>
@@ -70,15 +76,18 @@
 				$("#displayFile").text(file);
 				$("#importSubmit").prop('disabled', false);
 				$("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
+				$("#projectMessage").show();
 			} else {
 				showError("Le fichier fourni n'est pas dans un format valide. Seules les archives PAR sont supportées."); 
 				$("#importSubmit").prop('disabled', true);
 				$("#importSubmit").removeClass("btn-success").addClass("btn-outline-success");
+				$("#projectMessage").hide();
 			}
 		};
         
     	// Init actions
     	$(document).ready(() => {
+			$("#projectMessage").hide();
 			$("#importInput").change(displayFile);
 			var fromType = /*[[${result}?'success_import':'']]*/ 'success_import';
 			if(fromType === 'success_import'){

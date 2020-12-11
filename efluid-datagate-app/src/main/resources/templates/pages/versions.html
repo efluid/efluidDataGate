@@ -20,6 +20,7 @@
         <div th:if="!${canCreateVersion}" class="alert alert-danger" role="alert">
             <strong>Aucune nouvelle version ne peut être ajoutée actuellement.</strong> La version du modèle de l'application doit être auparavant mise à jour.
         </div>
+		<form action="#" th:action="@{/ui/versions}" method="post">
         <table class="table table-sm">
             <thead>
                 <tr>
@@ -43,7 +44,8 @@
                      <td id="updatedTime" th:class="${version.name}" th:text="${custom.format(version.updatedTime)}">Mardi</td>
                      <td>
                          <span class="float-right">
-                            <button th:if="${version.canUpdate}" th:id="${version.name}" class="updateButton btn btn-success btn-sm">Mettre à jour</button>
+                            <input type="hidden" th:if="${version.canUpdate}" name="name" th:value="${version.name}"/>
+                            <input type="submit" th:if="${version.canUpdate}" class="updateButton btn btn-success btn-sm" value="Mettre à jour"/>
                             <button th:if="!${ dictionaryManagementService.isVersionLinkedToLot(version.uuid) }" class="deleteButton btn btn-danger btn-sm" style="margin-left:10px;">Supprimer</button>
                             <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm" style="margin-left:10px;">Comparer</a>
                          </span>
@@ -59,11 +61,13 @@
                 </tr>
 			</tbody>
 		</table>
+        </form>
         <div id="modal" style="display: none" th:insert="~{components/modal :: modal}"></div>
     </span>
 <script layout:fragment="script" th:inline="javascript">
 
 		var noVersionName = /*[[${noVersionName}]]*/ false;
+		var updateDone = /*[[${updateDone}]]*/ false;
 
 		$('#color-nav-1').css("font-weight", "bold");
 		$('#collapseExample1').css("display", "block");
@@ -100,14 +104,6 @@
 
 		};
 
-		// Update row button
-		const updateButtonAction = (versionName) => {
-			$.post("/ui/versions/" + versionName, null, (data, status) => {
-			    showSuccess("Version mise à jour avec succès");
-				$('td#updatedTime.' + versionName).load(location.href + " #updatedTime." + versionName);
-		    });
-		};
-
 		// Delete a  version if it has no lots
 		const deleteButtonAction = (versionId) => {
 		    $('#modal').css("display","block");
@@ -119,7 +115,7 @@
 		    });
 		}
 
-		//Hide modal
+		// Hide modal
 		const cancelButton = () => {
 		    $('#modal').css("display","none");
 		}
@@ -141,9 +137,12 @@
     	$(document).ready(() => {
 			$("#addButton").click(addButtonAction);
 			$("#cancelDelete").click(cancelButton);
-			$("button.updateButton").click((e) => updateButtonAction(e.target.id));
 			$("button.deleteButton").click((e) => deleteButtonAction(e.target.parentElement.parentElement.parentElement.id));
 			$("#versionName").keyup(e => { checkInputEmpty(e) });
+
+			if(updateDone){
+                showSuccess("Version mise à jour avec succès");
+            }
 		});
     </script>
 </body>

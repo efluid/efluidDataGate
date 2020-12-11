@@ -65,7 +65,7 @@ public abstract class CucumberStepDefs {
 
     private static final String DEFAULT_PROJECT = "Default";
 
-    private static final String DEFAULT_DOMAIN = "Test domain";
+    protected static final String DEFAULT_DOMAIN = "Test domain";
 
     private static final String DEFAULT_VERSION = "vDefault";
 
@@ -166,6 +166,9 @@ public abstract class CucumberStepDefs {
     @Autowired
     protected ManagedValueConverter valueConverter;
 
+    @Autowired
+    protected DictionaryManagementService dictService;
+
     /**
      * <p>
      * Entry point for backlog database (preloaded queries ...)
@@ -208,6 +211,28 @@ public abstract class CucumberStepDefs {
         FunctionalDomain newDomain = initDefaultDomain(newProject);
 
         modelDatabase().initWizardData(user, newProject, Collections.singletonList(newDomain));
+
+        this.dets.completeWizard();
+    }
+
+    /**
+     *
+     */
+    protected void initMinimalWizzardData(List<String> projects) {
+
+        resetAsyncProcess();
+        resetDatabaseIdentifier();
+
+        User user = initDefaultUser();
+        Project newProject = project(projects.get(0));
+        FunctionalDomain newDomain = initDefaultDomain(newProject);
+
+        modelDatabase().initWizardData(user, newProject, Collections.singletonList(newDomain));
+
+        for (int i = 1; i < projects.size(); i++) {
+            newDomain = initDefaultDomain(newProject);
+            modelDatabase().addProject(project(projects.get(i)), Collections.singletonList(newDomain));
+        }
 
         this.dets.completeWizard();
     }
@@ -898,7 +923,7 @@ public abstract class CucumberStepDefs {
         return DataGenerationUtils.project(project);
     }
 
-    protected UUID getSavedCommitUuid(){
+    protected UUID getSavedCommitUuid() {
 
         assertRequestWasOk();
 
@@ -1248,8 +1273,8 @@ public abstract class CucumberStepDefs {
 
     }
 
-    protected static void startProfiling(){
-        if(profiler != null){
+    protected static void startProfiling() {
+        if (profiler != null) {
             profiler.stop();
         }
 
@@ -1257,7 +1282,7 @@ public abstract class CucumberStepDefs {
         profiler.start();
     }
 
-    protected static List<BasicProfiler.Stats> stopProfilingAndGetStats(){
+    protected static List<BasicProfiler.Stats> stopProfilingAndGetStats() {
         profiler.stop();
         return profiler.getValues();
     }
@@ -1403,7 +1428,7 @@ public abstract class CucumberStepDefs {
             return this.values;
         }
 
-       public static class Stats {
+        public static class Stats {
 
             private final Long free;
             private final Long max;

@@ -36,6 +36,7 @@
 					<p th:case="'IMPORT_WRONG_TYPE'">Le fichier importé référence un type de package non supporté</p>
 					<p th:case="'IMPORT_WRONG_VERSION'">La version du traitement d'import est différente de celle indiquée dans le fichier importé</p>
 					<p th:case="'IMPORT_WRONG_INSTANCE'">Le composant de package indiqué ne peut pas être initialisé</p>
+					<p th:case="'IMPORT_MULTIPLE_PROJECT'">Le fichier importé comporte plusieurs projets, il n'est pas possible de déterminer quelles données sont à importer dans le projet courant</p>
 					<p th:case="'EXPORT_WRONG_APPEND'">Impossible de préparer le fichier d'export en raison d'un problème d'accès système</p>
 					<p th:case="'EXPORT_ZIP_FAILED'">La compression du fichier d'export est impossible</p>
 					<p th:case="'IMPORT_ZIP_FAILED'">La décompression du fichier importé est impossible</p>

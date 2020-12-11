@@ -367,16 +367,21 @@ public class DictionaryController extends CommonController {
      * @return
      */
     @RequestMapping(value = "/share/upload", method = POST)
-    public String uploadImport(Model model, MultipartHttpServletRequest request) {
+    public String uploadImport(Model model, MultipartHttpServletRequest request, @RequestParam(name = "project",required = false) String project) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
         }
 
-        model.addAttribute("result", this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request)));
+        if (project != null && "current".equals(project)) {
+            model.addAttribute("result", this.dictionaryManagementService.importAllInCurrentProject(WebUtils.inputExportImportFile(request)));
+        } else {
+            model.addAttribute("result", this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request)));
+        }
 
         return exportPage(model);
     }
+
 
     /**
      * Rest Method for AJAX push
@@ -389,6 +394,19 @@ public class DictionaryController extends CommonController {
     public VersionData setVersion(@PathVariable("name") String name) {
         this.dictionaryManagementService.setCurrentVersion(name);
         return this.dictionaryManagementService.getLastVersion();
+    }
+
+    /**
+     * Update of existing version
+     *
+     * @param name
+     * @return
+     */
+    @RequestMapping(value = "/versions", method = POST)
+    public String updateVersion(Model model, @RequestParam("name") String name) {
+        this.dictionaryManagementService.setCurrentVersion(name);
+        model.addAttribute("updateDone", Boolean.TRUE);
+        return versionsPage(model);
     }
 
     /**

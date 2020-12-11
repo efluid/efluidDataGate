@@ -145,6 +145,7 @@ Feature: A dictionary is associated to versions
     When the user update version "v3"
     Then the 3 updated versions are displayed
     And the update date of version "v3" is updated
+    And a confirmation message on update is displayed
 
   Scenario: The version is created with the model identifier as name if this feature is enabled
     Given the existing versions "v1"
