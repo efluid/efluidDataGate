@@ -19,8 +19,8 @@ Feature: A dictionary is associated to versions
     Given the existing versions "v1, v2, v3"
     And the version v1 has no lots
     When the user delete version "v1"
-    And the user access to list of versions
     Then the 2 existing versions are displayed
+    And a confirmation message on delete is displayed
 
   Scenario: When a version is added, the content of the dictionary is available for version compare
     Given the existing versions "v1"
@@ -153,6 +153,7 @@ Feature: A dictionary is associated to versions
     And the feature "USE_MODEL_ID_AS_VERSION_NAME" is enabled
     When the user add new version "whatever"
     Then the current version name is "MOD1.1.0"
+    And a confirmation message on create is displayed
 
   Scenario: The version is not created with the model identifier as name if this feature is disabled
     Given the existing versions "v1"

@@ -74,7 +74,7 @@ public class VersionStepDefs extends CucumberStepDefs {
     @When("^the user add new version \"(.*)\".*$")
     public void the_user_add_new_version(String name) throws Throwable {
         // Add new
-        post("/ui/versions/" + URLEncoder.encode(name, "UTF-8"));
+        post("/ui/versions/", p("name", URLEncoder.encode(name, "UTF-8")));
 
         // List can be unmodifiable, reset it
         List<String> updatedVersions = new ArrayList<>();
@@ -83,12 +83,7 @@ public class VersionStepDefs extends CucumberStepDefs {
 
         updatedVersions.add(name);
 
-        specifiedVersions = updatedVersions;
-
-        // Update is REST only, update page
-        get(getCorrespondingLinkForPageName("list of versions"));
-
-    }
+        specifiedVersions = updatedVersions;    }
 
     @When("^the user request to compare the version \"(.*)\" with last version$")
     public void the_user_compare_versions(String version) throws Exception {
@@ -99,7 +94,7 @@ public class VersionStepDefs extends CucumberStepDefs {
     public void the_user_delete_version(String name) throws Throwable {
         UUID versionUuid = modelDatabase().findVersionByProjectAndName(getCurrentUserProject(), name).getUuid();
 
-        post("/ui/versions/remove/" + versionUuid);
+        get("/ui/versions/remove/" + versionUuid);
 
         // List can be unmodifiable, reset it
         List<String> updatedVersion = new ArrayList<>();
@@ -108,9 +103,6 @@ public class VersionStepDefs extends CucumberStepDefs {
         updatedVersion.remove(name);
 
         specifiedVersions = updatedVersion;
-
-        // Update is REST only, update page
-        get(getCorrespondingLinkForPageName("list of versions"));
     }
 
     @Given("^the version (.*) has no lots")
@@ -146,9 +138,9 @@ public class VersionStepDefs extends CucumberStepDefs {
 
     }
 
-    @Then("^a confirmation message on update is displayed$")
-    public void then_update_version_msg() {
-        assertModelIsSpecifiedProperty("updateDone", Boolean.class, v -> v != null && v);
+    @Then("^a confirmation message on (.*) is displayed$")
+    public void then_update_version_msg(String type) {
+        assertModelIsSpecifiedProperty("updateType", String.class, v -> v != null && v.equals(type));
     }
 
     @Then("^the current version name is \"(.*)\"$")
