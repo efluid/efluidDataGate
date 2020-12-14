@@ -3,6 +3,7 @@ package fr.uem.efluid.tools;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
 import org.springframework.util.StringUtils;
@@ -10,7 +11,6 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Transformer model for process at column level
@@ -79,7 +79,7 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
         }
 
         @Override
-        public void accept(List<Value> values) {
+        public void accept(IndexAction action, List<Value> values) {
             // Process on indexed list for replacement support
             for (int i = 0; i < values.size(); i++) {
                 Value val = values.get(i);
