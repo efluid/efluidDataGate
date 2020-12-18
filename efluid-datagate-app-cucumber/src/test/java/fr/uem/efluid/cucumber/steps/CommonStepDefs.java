@@ -125,7 +125,7 @@ public class CommonStepDefs extends CucumberStepDefs {
     }
 
     @Given("^the profiling is started$")
-    public void profiling(){
+    public void profiling() {
         startupTime = System.currentTimeMillis();
         startProfiling();
     }
@@ -190,7 +190,7 @@ public class CommonStepDefs extends CucumberStepDefs {
     public void existing_data_in_managed_table(int count, String name, DataTable data) {
 
         // Variation depends on large test size
-        if(specifiedVariation != null){
+        if (specifiedVariation != null) {
             specifiedVariation = specifiedVariation + " - " + count + " items";
         }
 
@@ -267,13 +267,16 @@ public class CommonStepDefs extends CucumberStepDefs {
         implicitlyAuthenticatedAndOnPage(page);
     }
 
-    @SuppressWarnings("ThrowableNotThrown")
     @Then("^an error is provided with this message :$")
     public void error_message(DocString message) {
         assertErrorMessageContent(message.getContent().trim());
     }
 
-    @SuppressWarnings("ThrowableNotThrown")
+    @Then("^log the error$")
+    public void log_error_message() {
+        outputErrorMessageContent();
+    }
+
     @Then("^an error of type (.*) is provided with this message :$")
     public void error_message(String type, DocString message) {
         assertErrorMessageType(type);
@@ -306,7 +309,7 @@ public class CommonStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the request is a success$")
-    public void success_request(){
+    public void success_request() {
         assertRequestWasOk();
     }
 
