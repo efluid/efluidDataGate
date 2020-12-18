@@ -26,7 +26,7 @@ public class EfluidAuditDataTransformerTest {
     private static final String CURRENT_DATE = FormatUtils.format(LocalDateTime.of(2020, 06, 12, 22, 14));
 
     private ManagedValueConverter converter = new ManagedValueConverter();
-    private TransformerValueProvider provider =   new TransformerValueProvider() {
+    private TransformerValueProvider provider = new TransformerValueProvider() {
         @Override
         public String getFormatedCurrentTime() {
             return CURRENT_DATE;
@@ -98,8 +98,8 @@ public class EfluidAuditDataTransformerTest {
                                 + "  \"tablePattern\":\"TOTHER\","
                                 + "  \"appliedKeyPatterns\":[\"ID1\"],"
                                 + "  \"appliedValueFilterPatterns\":{\"COL1\":\".*\"},"
-                                + "  \"dateUpdates\":{\"DATE1\":\"2022-12-25\", \"DATE2\":\"2025-12-25\"},"
-                                + "  \"actorUpdates\":{\"ACT1\":\"bob\", \"ACT2\":\"toto\"}"
+                                + "  \"dateUpdates\":{\"DATE1\":{\"value\":\"2022-12-25\",\"onActions\": [\"ADD\"]}, \"DATE2\":{\"value\":\"2025-12-25\",\"onActions\": [\"ADD\"]}},"
+                                + "  \"actorUpdates\":{\"ACT1\":{\"value\":\"bob\",\"onActions\": [\"ADD\"]}, \"ACT2\":{\"value\":\"toto\",\"onActions\": [\"ADD\"]}}"
                                 + "}"
                 ), diff
         );
@@ -128,8 +128,8 @@ public class EfluidAuditDataTransformerTest {
                                 + "  \"tablePattern\":\"TOTHER\","
                                 + "  \"appliedKeyPatterns\":[\"ID.*\"],"
                                 + "  \"appliedValueFilterPatterns\":{\"COL1\":\".*st3\"},"
-                                + "  \"dateUpdates\":{\"DATE1\":\"2022-12-25\", \"DATE2\":\"2025-12-25\"},"
-                                + "  \"actorUpdates\":{\"ACT1\":\"bob\", \"ACT2\":\"toto\"}"
+                                + "  \"dateUpdates\":{\"DATE1\":{\"value\":\"2022-12-25\",\"onActions\": [\"ADD\"]}, \"DATE2\":{\"value\":\"2025-12-25\",\"onActions\": [\"ADD\"]}},"
+                                + "  \"actorUpdates\":{\"ACT1\":{\"value\":\"bob\",\"onActions\": [\"ADD\"]}, \"ACT2\":{\"value\":\"toto\",\"onActions\": [\"ADD\"]}}"
                                 + "}"
                 ), diff
         );
@@ -158,8 +158,8 @@ public class EfluidAuditDataTransformerTest {
                                 + "  \"tablePattern\":\"TOTHER\","
                                 + "  \"appliedKeyPatterns\":[\"ID.*\"],"
                                 + "  \"appliedValueFilterPatterns\":{},"
-                                + "  \"dateUpdates\":{\"DATE1\":\"2022-12-25\", \"DATE2\":\"2025-12-25\"},"
-                                + "  \"actorUpdates\":{\"ACT1\":\"bob\", \"ACT2\":\"toto\"}"
+                                + "  \"dateUpdates\":{\"DATE1\":{\"value\":\"2022-12-25\",\"onActions\": [\"ADD\",\"REMOVE\",\"UPDATE\"]}, \"DATE2\":{\"value\":\"2025-12-25\",\"onActions\": [\"ADD\",\"REMOVE\",\"UPDATE\"]}},"
+                                + "  \"actorUpdates\":{\"ACT1\":{\"value\":\"bob\",\"onActions\": [\"ADD\",\"REMOVE\",\"UPDATE\"]}, \"ACT2\":{\"value\":\"toto\",\"onActions\": [\"ADD\",\"REMOVE\",\"UPDATE\"]}}"
                                 + "}"
                 ), diff
         );
@@ -186,8 +186,8 @@ public class EfluidAuditDataTransformerTest {
                                 "  \"tablePattern\":\"T_EFLUID_TEST_AUDIT\"," +
                                 "  \"appliedKeyPatterns\":[\".*\"]," +
                                 "  \"appliedValueFilterPatterns\":{\"ETAT_OBJET\":\"TODO.*\"}," +
-                                "  \"dateUpdates\":{\"DATE_.*\":\"2020-05-11\"}," +
-                                "  \"actorUpdates\":{\"ACTEUR_.*\":\"evt 154654\"}" +
+                                "  \"dateUpdates\":{\"DATE_.*\":{\"value\":\"2020-05-11\",\"onActions\": [\"ADD\"]}}," +
+                                "  \"actorUpdates\":{\"ACTEUR_.*\":{\"value\":\"evt 154654\",\"onActions\": [\"ADD\"]}}" +
                                 "}"
                 ), diff
         );
@@ -211,8 +211,8 @@ public class EfluidAuditDataTransformerTest {
                         "  {" +
                                 "  \"tablePattern\":\"T_EFLUID_TEST_AUDIT\"," +
                                 "  \"appliedKeyPatterns\":[\".*\"]," +
-                                "  \"dateUpdates\":{\"DATE_.*\":\"current_date\"}," +
-                                "  \"actorUpdates\":{\"ACTEUR_.*\":\"evt 154654\"}" +
+                                "  \"dateUpdates\":{\"DATE_.*\":{\"value\":\"current_date\",\"onActions\": [\"ADD\"]}}," +
+                                "  \"actorUpdates\":{\"ACTEUR_.*\":{\"value\":\"evt 154654\",\"onActions\": [\"ADD\"]}}" +
                                 "}"
                 ), diff
         );

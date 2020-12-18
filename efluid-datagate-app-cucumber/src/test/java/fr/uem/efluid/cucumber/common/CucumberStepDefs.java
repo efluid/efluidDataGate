@@ -25,6 +25,8 @@ import junit.framework.AssertionFailedError;
 import org.assertj.core.api.ObjectAssert;
 import org.junit.runner.RunWith;
 import org.pac4j.core.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -60,6 +62,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SuppressWarnings("unused")
 @RunWith(SpringRunner.class)
 public abstract class CucumberStepDefs {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CucumberStepDefs.class);
 
     private static final String DEFAULT_USER = "any";
 
@@ -433,6 +437,21 @@ public abstract class CucumberStepDefs {
             }
         } else {
             assertThat(ex.getMessage()).contains(expected);
+        }
+    }
+
+    /**
+     * Output for a specified error (from exception message / payload)
+     */
+    protected static void outputErrorMessageContent() {
+        Exception ex = currentException != null ? currentException : currentAction.andReturn().getResolvedException();
+        assertThat(ex).describedAs("An error message was not returned by the application").isNotNull();
+
+        if (ex instanceof ApplicationException) {
+            ApplicationException apx = (ApplicationException) ex;
+            LOGGER.warn("Get ApplicationException : " + apx.getMessage() + "\" / payload=\"" + (apx.getPayload() != null ? apx.getPayload() : "N/A") + "\"", apx);
+        } else {
+            LOGGER.warn("Get standard exception " + ex.getMessage(), ex);
         }
     }
 
