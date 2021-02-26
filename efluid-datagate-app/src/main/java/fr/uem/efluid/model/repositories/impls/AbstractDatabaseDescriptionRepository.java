@@ -15,12 +15,14 @@ import org.springframework.jdbc.InvalidResultSetAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.Nullable;
 
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import static fr.uem.efluid.utils.ErrorType.*;
 
@@ -157,8 +159,8 @@ public abstract class AbstractDatabaseDescriptionRepository implements DatabaseD
             return this.localCache.containsKey(tableName);
         }
 
-        try {
-            DatabaseMetaData md = this.managedSource.getDataSource().getConnection().getMetaData();
+        try (Connection con = Objects.requireNonNull(this.managedSource.getDataSource()).getConnection()) {
+            DatabaseMetaData md = con.getMetaData();
             LOGGER.debug("Checking existance on table {}", tableName);
             try (ResultSet rs = md.getTables(null, null, tableName, TABLES_TYPES)) {
                 return rs.next();
