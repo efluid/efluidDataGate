@@ -77,8 +77,10 @@ datagate-efluid:
         record-merge-warnings: true
 
     async-preparation:
-        thread-pool-size: 40
-        timeout-seconds: 10000
+        #thread-pool-size: 40
+        #strategy: THREAD_POOL
+        strategy: DB_POOL
+        timeout-seconds: 30000
 
     model-identifier:
         enabled: true

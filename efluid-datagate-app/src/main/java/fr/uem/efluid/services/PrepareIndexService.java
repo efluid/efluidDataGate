@@ -110,9 +110,7 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param project
      */
     @Transactional(
-            isolation = Isolation.READ_UNCOMMITTED,
-            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER,
-            propagation = Propagation.NOT_SUPPORTED
+            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER
     )
     public void completeLocalDiff(
             PilotedCommitPreparation<PreparedIndexEntry> preparation,
