@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.*;
 
+import fr.uem.efluid.model.DiffLine;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.*;
@@ -48,7 +49,6 @@ public class CommitService extends AbstractApplicationService {
 
     @Value("${datagate-efluid.display.details-page-size}")
     private int detailsDisplayPageSize;
-
 
     @Autowired
     private CommitRepository commits;
@@ -98,6 +98,12 @@ public class CommitService extends AbstractApplicationService {
     @Autowired
     private VersionContentChangesGenerator changesGenerator;
 
+    @Autowired
+    private RollbackConverter rollbackConverter;
+
+    /**
+     *
+     */
     public CommitExportEditData initCommitExport(CommitExportEditData.CommitSelectType type, UUID commitUUID) {
 
         this.projectService.assertCurrentUserHasSelectedProject();
@@ -471,6 +477,18 @@ public class CommitService extends AbstractApplicationService {
         return completeCommitIndexForProjectDict(this.indexes.findByCommitUuid(commitUuid), referencedTables, true);
     }
 
+    /**
+     * Only last commit can be reverted if not reverted yet and
+     * if it is not a reverted commit, check if can revert
+     */
+    public UUID getRevertCompliantCommit() {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        // "Revertable" is last one if not a revert
+        return this.commits.findRevertableCommitUuid(project.getUuid());
+    }
 
     /**
      * @param encodedLobHash
@@ -506,11 +524,11 @@ public class CommitService extends AbstractApplicationService {
      * </p>
      */
     void applyExclusionsFromLocalCommit(
-        PilotedCommitPreparation<?> prepared, Commit commit) {
+            PilotedCommitPreparation<?> prepared, Commit commit) {
 
         LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
-        List<RollbackLine> rollbacked = prepared
+        List<DiffLine> rollbacked = prepared
                 .streamDiffContentMappedToDictionaryEntryUuid()
                 .flatMap(e -> toDiffRollbacks(e.getValue()))
                 .collect(Collectors.toList());
@@ -520,7 +538,7 @@ public class CommitService extends AbstractApplicationService {
             LOGGER.info("In current commit preparation, a total of {} rollback entries were identified and are going to be applied",
                     rollbacked.size());
 
-            this.applyDiffService.rollbackDiff(rollbacked, prepared.getDiffLobs(), commit);
+            this.applyDiffService.applyDiff(rollbacked, prepared.getDiffLobs(), commit, ApplyType.ROLLBACK);
         }
     }
 
@@ -539,8 +557,8 @@ public class CommitService extends AbstractApplicationService {
         LOGGER.debug("Process apply and saving of a new commit with state {} into project {}", prepared.getPreparingState(),
                 prepared.getProjectUuid());
 
-        // Init commit
-        final Commit commit = createCommit(prepared);
+        // Init commit and immediately save it for id gen and link validity
+        final Commit commit = this.commits.save(createCommit(prepared));
 
         LOGGER.debug("Processing commit {} : commit initialized, preparing index content", commit.getUuid());
 
@@ -553,16 +571,18 @@ public class CommitService extends AbstractApplicationService {
 
         LOGGER.info("Prepared index with {} items for new commit {}", entries.size(), commit.getUuid());
 
-        LOGGER.debug("New commit {} of state {} with comment {} prepared with {} index lines",
-                commit.getUuid(), prepared.getPreparingState(), commit.getComment(), entries.size());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("New commit {} of state {} with comment {} prepared with {} index lines",
+                    commit.getUuid(), prepared.getPreparingState(), commit.getComment(), entries.size());
+        }
 
         // Prepare used lobs
         List<LobProperty> newLobs = this.diffs.prepareUsedLobsForIndex(entries, prepared.getDiffLobs());
 
         LOGGER.info("Start saving {} index items for new commit {}", entries.size(), commit.getUuid());
 
-        // Save index and set back to commit with bi-directional link
-        commit.setIndex(this.indexes.saveAll(entries));
+        // Save index
+        this.indexes.saveAll(entries);
 
         LOGGER.info("Start saving {} lobs items for new commit {}", newLobs.size(), commit.getUuid());
 
@@ -570,14 +590,24 @@ public class CommitService extends AbstractApplicationService {
         newLobs.forEach(l -> l.setCommit(commit));
         this.lobs.saveAll(newLobs);
 
-        // Updated commit link
+        // Immediately store commit
         this.commits.save(commit);
 
+        // For revert : keep revert source and
+        if (prepared.getPreparingState() == CommitState.REVERT) {
+            LOGGER.info("Processing revert commit {} : now apply all {} modifications prepared from source commit",
+                    commit.getUuid(), entries.size());
+
+            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit, ApplyType.REVERT);
+            LOGGER.debug("Processing revert commit {} : diff applied with success", commit.getUuid());
+        }
+
         // For merge : apply (will rollback previous steps if error found)
-        if (prepared.getPreparingState() == CommitState.MERGED) {
+        else if (prepared.getPreparingState() == CommitState.MERGED) {
+
             LOGGER.info("Processing merge commit {} : now apply all {} modifications prepared from imported values",
                     commit.getUuid(), entries.size());
-            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit);
+            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit, ApplyType.IMPORT);
             LOGGER.debug("Processing merge commit {} : diff applied with success", commit.getUuid());
 
             // And execute attachments if needed
@@ -613,10 +643,6 @@ public class CommitService extends AbstractApplicationService {
         LOGGER.info("Commit {} saved with {} items and {} lobs", commit.getUuid(), entries.size(), newLobs.size());
 
         return commit.getUuid();
-    }
-
-    LocalDateTime getLastImportedCommitTime(){
-        return this.commits.findLastImportedCommitTime();
     }
 
     /**
@@ -850,7 +876,7 @@ public class CommitService extends AbstractApplicationService {
      * @param diffContent
      * @return
      */
-    private Stream<RollbackLine> toDiffRollbacks(Collection<? extends PreparedIndexEntry> diffContent) {
+    private Stream<DiffLine> toDiffRollbacks(Collection<? extends PreparedIndexEntry> diffContent) {
 
         // Split combined lines and convert to rollbacks
         return diffContent.stream()
@@ -863,7 +889,7 @@ public class CommitService extends AbstractApplicationService {
                         return Stream.of(l);
                     }
                 })
-                .map(RollbackLine::new)
+                .map(this.rollbackConverter::toRollbackLine)
                 ;
     }
 

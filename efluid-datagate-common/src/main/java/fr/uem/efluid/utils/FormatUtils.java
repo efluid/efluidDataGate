@@ -1,6 +1,7 @@
 package fr.uem.efluid.utils;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -22,7 +23,7 @@ public final class FormatUtils {
      * Fixed format
      */
     // TODO : can depends on database encoding ???
-    public final static Charset CONTENT_ENCODING = Charset.forName("utf-8");
+    public final static Charset CONTENT_ENCODING = StandardCharsets.UTF_8;
 
     public static final String DATE_FORMAT = "yyyy-MM-dd";
 

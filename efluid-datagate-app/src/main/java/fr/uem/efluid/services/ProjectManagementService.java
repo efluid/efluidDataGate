@@ -21,9 +21,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import static fr.uem.efluid.utils.ErrorType.PROJECT_MANDATORY;
-import static fr.uem.efluid.utils.ErrorType.PROJECT_NAME_EXIST;
-import static fr.uem.efluid.utils.ErrorType.PROJECT_WRONG_ID;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * <p>
@@ -51,8 +49,6 @@ public class ProjectManagementService extends AbstractApplicationService {
 
     @Autowired
     private AccountProvider accountProvider;
-
-    private ProjectManagementService projectService;
 
     /**
      *

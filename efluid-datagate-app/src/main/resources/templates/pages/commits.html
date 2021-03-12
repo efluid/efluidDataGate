@@ -30,7 +30,8 @@
                     <td th:text="${commit.state}">Mergé</td>
 		            <td>
 		            	<a href="./details.html" th:href="@{/ui/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Details</a>
-		            </td>
+						<a href="./revert.html" th:if="${commit.uuid.equals(revertableCommit)}" th:href="@{/ui/revert/{id}(id=${commit.uuid})}" type="button" class="btn btn-sm btn-warning">Revert</a>
+					</td>
 		        </tr>
 		    </tbody>
 		</table>
@@ -46,10 +47,10 @@
 		$('#collapseExample2').css("display", "block");
 		$('#li-5').css("font-weight", "bolder");
 
-
     	$(document).ready(() => {
     		supportGitmojis();
 		});
+
 	</script>
 </body>
 </html>

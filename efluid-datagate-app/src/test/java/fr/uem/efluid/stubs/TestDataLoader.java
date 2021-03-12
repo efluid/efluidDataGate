@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
+import javax.transaction.*;
 
 import org.junit.Assert;
 import org.slf4j.*;
@@ -78,7 +79,8 @@ public class TestDataLoader {
      * @param diffName
      */
     public void setupSourceDatabaseForDiff(String diffName) {
-        this.sources.deleteAll();
+        this.sources.cleanAll();
+        this.sources.flush();
         this.sources.initFromDataset(readDataset(diffName + "/actual.csv"), this.converter);
         this.sources.flush();
     }
@@ -96,8 +98,10 @@ public class TestDataLoader {
      * @param updateName
      */
     public void setupSourceDatabaseForUpdate(String updateName) {
-        this.sourceChilds.deleteAll();
-        this.sources.deleteAll();
+        this.sourceChilds.cleanAll();
+        this.sourceChilds.flush();
+        this.sources.cleanAll();
+        this.sources.flush();
 
         this.sources.initFromDataset(readDataset(updateName + "/actual-parent.csv"), this.converter);
         this.sourceChilds.initFromDataset(readDataset(updateName + "/actual-child.csv"), this.converter);
@@ -108,6 +112,7 @@ public class TestDataLoader {
 
     public Project setupProject() {
         this.projects.deleteAll();
+        this.projects.flush();
         Project proj = this.projects.save(project("Default"));
         setActiveProject(proj);
         return proj;
@@ -122,7 +127,15 @@ public class TestDataLoader {
         this.dictionary.deleteAll();
         this.domains.deleteAll();
         this.versions.deleteAll();
+        this.users.deleteAll();
         this.projects.deleteAll();
+
+        this.links.flush();
+        this.dictionary.flush();
+        this.domains.flush();
+        this.versions.flush();
+        this.users.flush();
+        this.projects.flush();
 
         Project proj = this.projects.save(project("Default"));
         setActiveProject(proj);
@@ -144,6 +157,22 @@ public class TestDataLoader {
         this.links.flush();
 
         return proj;
+    }
+
+    /**
+     */
+    @Transactional
+    public void resetAll() {
+        this.sourceChilds.cleanAll();
+        this.sourceChilds.flush();
+        this.sources.cleanAll();
+        this.sources.flush();
+        this.index.deleteAll();
+        this.commits.deleteAll();
+        this.index.flush();
+        this.commits.flush();
+
+        dropAllDictionary();
     }
 
     /**
@@ -256,6 +285,9 @@ public class TestDataLoader {
                 .map(d -> DataGenerationUtils.update(d.getKey(), IndexAction.ADD, d.getValue(), new DictionaryEntry(res.getDicUuid()),
                         com1))
                 .collect(Collectors.toList());
+
+        // Force timestamp as older on 1st commit
+        indexesCom1.forEach(i -> i.setTimestamp(i.getTimestamp() - 10000));
 
         List<IndexEntry> indexesCom2 = readDataset(diffName + "/knew-remove.csv")
                 .entrySet().stream()

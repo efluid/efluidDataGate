@@ -2,29 +2,46 @@ package fr.uem.efluid.model.repositories;
 
 import com.google.common.collect.Lists;
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.DiffPayloads;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexEntry;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.ErrorType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.Reader;
+import java.sql.Clob;
+import java.sql.SQLException;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
  * Core index data provider, using JPA
  * </p>
+ * <p>
+ * Provides some advanced extraction processes for content regenerate
+ * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpecificationExecutor<IndexEntry> {
+
+    /**
+     * For tests env reset only !
+     */
+    @Query(value = "DELETE FROM INDEXES", nativeQuery = true)
+    @Modifying
+    void dropAll();
 
     /**
      * <p>
@@ -32,6 +49,22 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      * </p>
      */
     List<IndexEntry> findByCommitUuid(UUID commitUuid);
+
+    /**
+     * Access on knew key values
+     *
+     * @param dictionaryEntryUuid
+     * @return
+     */
+    @Query(value = "SELECT DISTINCT i.KEY_VALUE FROM INDEXES i WHERE DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
+    Set<String> getKeyValuesForDictionaryEntry(@Param("dictUuid") String dictionaryEntryUuid);
+
+    /**
+     * <p>
+     * Search for existing commit indexes
+     * </p>
+     */
+    Stream<IndexEntry> findByCommitUuidAndDictionaryEntry(UUID commitUuid, DictionaryEntry dictionaryEntry);
 
     /**
      * All index lines without "previous" value for a specified commit
@@ -43,7 +76,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
             + "from INDEXES i "
             + "where i.COMMIT_UUID = :commitUuid "
             + "AND i.ACTION != 'ADD' AND i.PREVIOUS is null", nativeQuery = true)
-    List<IndexEntry> findWithUpgradablePreviosByCommitUuid(@Param("commitUuid") String commitUuid);
+    List<IndexEntry> findWithUpgradablePreviousByCommitUuid(@Param("commitUuid") String commitUuid);
 
     /**
      * <p>
@@ -52,7 +85,9 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      */
     long countByCommitUuid(UUID commitUuid);
 
-    @Query("select max(i.timestamp) from IndexEntry i where i.commit.importedTime = (select max(c.importedTime) from Commit c)")
+    @Query(value = "SELECT MAX(i.timestamp) FROM INDEXES i " +
+            "INNER JOIN COMMITS c on c.UUID = i.COMMIT_UUID " +
+            "WHERE C.IMPORTED_TIME = (SELECT MAX(IMPORTED_TIME) FROM COMMITS c)", nativeQuery = true)
     Long findMaxIndexTimestampOfLastImportedCommit();
 
     /**
@@ -60,9 +95,40 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      * Load full index detail for one DictionaryEntry (= on managed table)
      * </p>
      */
-    List<IndexEntry> findByDictionaryEntry(DictionaryEntry dictionaryEntry);
+    Stream<IndexEntry> findByDictionaryEntryOrderByTimestampAsc(DictionaryEntry dictionaryEntry);
 
-    List<IndexEntry> findByDictionaryEntryAndTimestampLessThanEqualOrderByTimestampAsc(DictionaryEntry dictionaryEntry, long timestamp);
+    /**
+     * Access on knew key values
+     *
+     * @param dictionaryEntryUuid
+     * @return
+     */
+    @Query(value = "SELECT DISTINCT i.KEY_VALUE FROM INDEXES i WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot", nativeQuery = true)
+    Set<String> getKeyValuesForDictionaryEntryBefore(@Param("dictUuid") String dictionaryEntryUuid, @Param("pivot") long timestamp);
+
+    /* ####################################### Queries for manual projection ####################################### */
+
+    /**
+     * <b><font color="red">Query for internal use only</font></b>
+     */
+    @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD FROM INDEXES i " +
+            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
+            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid AND i.ACTION != 'REMOVE'", nativeQuery = true)
+    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(
+            @Param("dictUuid") String dictionaryEntryUuid,
+            @Param("keys") Collection<String> keys,
+            @Param("pivot") long pivot);
+
+    /**
+     * <b><font color="red">Query for internal use only</font></b>
+     */
+    @Query(value = "SELECT i.KEY_VALUE as keyValue, i.PAYLOAD as payload, i.PREVIOUS as previous FROM INDEXES i " +
+            "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
+            "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
+    Stream<Object[]> _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(
+            @Param("dictUuid") String dictionaryEntryUuid,
+            @Param("keys") Collection<String> keys,
+            @Param("pivot") long pivot);
 
     /**
      * <b><font color="red">Query for internal use only</font></b>
@@ -73,10 +139,48 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
             + "	select max(ii.id) as max_id, ii.key_value from indexes ii where ii.dictionary_entry_uuid = :uuid and ii.id not in (:excludeIds) group by ii.key_value"
             + ") mi on i.id = mi.max_id "
             + "where i.key_value in (:keys)", nativeQuery = true)
-    List<IndexEntry> _internal_findAllPreviousIndexEntries(
-            @Param("uuid") String dictionaryEntryUuid,
-            @Param("keys") List<String> keyValues,
-            @Param("excludeIds") List<Long> excludeIds);
+    List<IndexEntry> _internal_findAllPreviousIndexEntries(@Param("uuid") String dictionaryEntryUuid, @Param("keys") List<String> keyValues, @Param("excludeIds") List<Long> excludeIds);
+
+    /* ############################ Internal projection processes (performance related) ########################### */
+
+    /**
+     * Get projected payload mapped to key for specified keys
+     *
+     * @param dictionaryEntryUuid corresponding dictEntry uuid
+     * @param keys
+     * @return
+     */
+    default Map<String, DiffPayloads> findDiffPayloadsForDictionaryEntryAndBufferBefore(String dictionaryEntryUuid, Collection<String> keys, long pivot) {
+        Map<String, DiffPayloads> result = new HashMap<>();
+
+        _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(dictionaryEntryUuid, keys, pivot).forEach(
+                l -> {
+                    if (l[0] != null) {
+                        String key = l[0].toString();
+                        // Internal convert of both payloads to managed string - would fail if content > 2^32 bits
+                        Clob payload = (Clob) l[1];
+                        Clob previous = (Clob) l[2];
+                        result.put(key, new ProjectedDiffPayloads(key, clobToString(payload, 1024), clobToString(previous, 512)));
+                    }
+                }
+        );
+
+        return result;
+    }
+
+    /**
+     * For new Knew content regenerate on buffered diff generation
+     *
+     * @param dictionaryEntryUuid
+     * @param keys
+     * @return knew content mapped to their keys
+     */
+    default Map<String, String> findRegeneratedContentForDictionaryEntryAndBufferBefore(UUID dictionaryEntryUuid, Collection<String> keys, long pivotTime) {
+        Map<String, String> result = new HashMap<>(keys.size());
+        _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(dictionaryEntryUuid.toString(), keys, pivotTime)
+                .forEach(projectionAsContentMap(result));
+        return result;
+    }
 
     /**
      * Search previous entries, with support for large data volumes, ignoring existing entries
@@ -114,5 +218,70 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
                         .collect(Collectors.toMap(IndexEntry::getKeyValue, v -> v))));
 
         return result;
+    }
+
+    private Consumer<Object[]> projectionAsContentMap(Map<String, String> result) {
+        return (l) -> {
+            if (l[0] != null) {
+                // Internal convert to managed string - would fail if content > 2^32 bits
+                Clob content = (Clob) l[1];
+                result.put(l[0].toString(), clobToString(content, 1024).toString());
+            }
+        };
+    }
+
+    private static String clobToString(Clob clob, int bufferSize) {
+        if (clob == null) {
+            return null;
+        }
+        StringBuilder stringBuilder = new StringBuilder(bufferSize);
+        try (Reader reader = clob.getCharacterStream()) {
+            char[] buffer = new char[bufferSize];
+            while (true) {
+                int amountRead = reader.read(buffer, 0, bufferSize);
+                if (amountRead == -1) {
+                    return stringBuilder.toString();
+                }
+                stringBuilder.append(buffer, 0, amountRead);
+            }
+        } catch (IOException | SQLException e) {
+            throw new ApplicationException(ErrorType.REGENERATE_ERROR, "Couldn't get current content clob as string", e);
+        }
+    }
+
+    /**
+     * Specific static projection compliant implementation of DiffPayloads for the
+     * simplest access to the index entries payloads
+     *
+     * @author elecomte
+     * @version 1
+     * @since v2.1.7
+     */
+    class ProjectedDiffPayloads implements DiffPayloads {
+
+        private final String keyValue;
+        private final String payload;
+        private final String previous;
+
+        public ProjectedDiffPayloads(String keyValue, String payload, String previous) {
+            this.keyValue = keyValue;
+            this.payload = payload;
+            this.previous = previous;
+        }
+
+        @Override
+        public String getKeyValue() {
+            return keyValue;
+        }
+
+        @Override
+        public String getPayload() {
+            return payload;
+        }
+
+        @Override
+        public String getPrevious() {
+            return previous;
+        }
     }
 }

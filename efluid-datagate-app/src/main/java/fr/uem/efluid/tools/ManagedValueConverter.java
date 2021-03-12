@@ -425,7 +425,12 @@ public class ManagedValueConverter {
             result.add(changedValue(oldOne, null));
         }
 
-        return result.stream().collect(Collectors.joining(RENDERING_SEPARATOR));
+        // Nullify empty HR
+        if(result.isEmpty()){
+            return null;
+        }
+
+        return String.join(RENDERING_SEPARATOR, result);
     }
 
     /**

@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  */
 @Transactional
 @RunWith(SpringRunner.class)
-@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @SpringBootTest(classes = {IntegrationTestConfig.class})
 public class PrepareDiffServiceIntegrationTest {
 

@@ -1,19 +1,23 @@
 package fr.uem.efluid.services;
 
-import java.util.*;
-import java.util.stream.*;
-
-import org.slf4j.*;
+import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
+import fr.uem.efluid.model.repositories.ManagedUpdateRepository;
+import fr.uem.efluid.services.types.SearchHistoryPage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import fr.uem.efluid.model.DiffLine;
-import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.*;
-import fr.uem.efluid.services.types.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -56,35 +60,17 @@ public class ApplyDiffService extends AbstractApplicationService {
      *
      * @param diffLines lines
      * @param lobs      associated lob for content extract
+     * @param commit    associated commit
+     * @param type      change source type
      */
     @Transactional(rollbackFor = Throwable.class)
-    void applyDiff(List<? extends DiffLine> diffLines, Map<String, byte[]> lobs, Commit commit) {
+    void applyDiff(List<? extends DiffLine> diffLines, Map<String, byte[]> lobs, Commit commit, ApplyType type) {
 
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
         LOGGER.info("Will apply a diff of {} items for project {}", diffLines.size(), project.getName());
-        keepHistory(this.updates.runAllChangesAndCommit(diffLines, lobs, project), false, commit);
-    }
-
-    /**
-     * <p>
-     * Due to specific transactional process required on managed DB updated by this
-     * method, always call it with ALL COMBINED DiffLines.
-     * </p>
-     *
-     * @param rollBackLines lines to rollback
-     * @param lobs          associated lob for content extract
-     */
-    void rollbackDiff(List<RollbackLine> rollBackLines, Map<String, byte[]> lobs, Commit commit) {
-
-        this.projectService.assertCurrentUserHasSelectedProject();
-        Project project = this.projectService.getCurrentSelectedProjectEntity();
-
-        LOGGER.info("Will apply a rollback of {} items for project {}", rollBackLines.size(), project.getName());
-        keepHistory(this.updates
-                        .runAllChangesAndCommit(rollBackLines.stream().map(RollbackLine::toCombinedDiff).collect(Collectors.toList()), lobs, project),
-            true, commit);
+        keepHistory(this.updates.runAllChangesAndCommit(diffLines, lobs, project), type, commit);
     }
 
     /**
@@ -110,14 +96,14 @@ public class ApplyDiffService extends AbstractApplicationService {
      * Track every applied modifs in an history
      * </p>
      */
-    private void keepHistory(String[] queries, boolean isRollback, Commit commit) {
+    private void keepHistory(String[] queries, ApplyType type, Commit commit) {
 
         Long timestamp = System.currentTimeMillis();
         User currentUser = new User(getCurrentUser().getLogin());
         UUID projectId = this.projectService.getCurrentSelectedProject().getUuid();
 
         this.history.saveAll(Stream.of(queries).map(ApplyHistoryEntry::new).peek(h -> {
-            h.setRollback(isRollback);
+            h.setType(type);
             h.setTimestamp(timestamp);
             h.setUser(currentUser);
             h.setProjectUuid(projectId);

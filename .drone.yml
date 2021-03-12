@@ -30,6 +30,7 @@ steps:
     when:
       branch:
         - develop
+        - preview
   - name: docker-build
     image: plugins/docker
     volumes:
@@ -55,6 +56,7 @@ steps:
     when:
       branch:
         - develop
+        - preview
   - name: notification
     image: plugins/slack
     settings:

@@ -675,11 +675,15 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
         switch (type) {
             case "mine":
-                assertThat(entry.getMine().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                if (entry.getMine().getAction() != REMOVE) {
+                    assertThat(entry.getMine().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                }
                 assertThat(entry.getMine().getAction()).as("Action" + desc).isEqualTo(action);
                 break;
             case "their":
-                assertThat(entry.getTheir().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                if (entry.getTheir().getAction() != REMOVE) {
+                    assertThat(entry.getTheir().getHrPayload()).as("Payload" + desc).isEqualTo(payload);
+                }
                 assertThat(entry.getTheir().getAction()).as("Action" + desc).isEqualTo(action);
                 break;
             case "resolution":

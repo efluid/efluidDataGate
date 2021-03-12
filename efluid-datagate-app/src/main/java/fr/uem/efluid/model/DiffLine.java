@@ -2,7 +2,6 @@ package fr.uem.efluid.model;
 
 import fr.uem.efluid.model.entities.IndexAction;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,15 +14,13 @@ import java.util.UUID;
  * @version 2
  * @since v0.0.1
  */
-public interface DiffLine extends ContentLine, Comparable<DiffLine> {
+public interface DiffLine extends DiffPayloads, Comparable<DiffLine> {
 
     UUID getDictionaryEntryUuid();
 
     IndexAction getAction();
 
     long getTimestamp();
-
-    String getPrevious();
 
     static DiffLine combined(UUID dictionaryEntryUuid, String keyValue, String payload, String previous, IndexAction action, long timestamp) {
         return new CombinedDiffLine(dictionaryEntryUuid, keyValue, payload, previous, action, timestamp);
@@ -212,11 +209,8 @@ public interface DiffLine extends ContentLine, Comparable<DiffLine> {
             } else if (!this.keyValue.equals(other.keyValue))
                 return false;
             if (this.payload == null) {
-                if (other.payload != null)
-                    return false;
-            } else if (!this.payload.equals(other.payload))
-                return false;
-            return true;
+                return other.payload == null;
+            } else return this.payload.equals(other.payload);
         }
     }
 

@@ -2,7 +2,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - diff only - small size
-    Given the test is a performance standard scenario for variation "reference - diff only"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - diff only"
     And the 1000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
@@ -13,7 +13,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - diff only - medium size
-    Given the test is a performance standard scenario for variation "reference - diff only"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - diff only"
     And the 10000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
@@ -24,7 +24,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - diff only - large size
-    Given the test is a performance standard scenario for variation "reference - diff only"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - diff only"
     And the 50000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
@@ -35,7 +35,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - save only - small size
-    Given the test is a performance standard scenario for variation "reference - save only"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - save only"
     And the 1000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
@@ -49,7 +49,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - save only - medium size
-    Given the test is a performance standard scenario for variation "reference - save only"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - save only"
     And the 10000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
@@ -63,7 +63,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - save only - large size
-    Given the test is a performance standard scenario for variation "reference - save only"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - save only"
     And the 50000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
@@ -77,7 +77,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - full - small size
-    Given the test is a performance standard scenario for variation "reference - full"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - full"
     And the 1000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
@@ -91,7 +91,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - full - medium size
-    Given the test is a performance standard scenario for variation "reference - full"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - full"
     And the 10000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |
@@ -105,7 +105,7 @@ Feature: Performance for diff generation and merge generation are controlled
 
   @perfCheck
   Scenario: A diff process with large data follow specification references - full - large size
-    Given the test is a performance standard scenario for variation "reference - full"
+    Given the test is a performance standard scenario for variation "perf 051 in db - oracle - full"
     And the 50000 generated data in managed table "TTESTMULTIDATATYPE" :
       | id         | col1     | col2     | col3 | col4       | col5                | col6 | col7    |
       | $testj_d%% | testj %% | testj %% | 12%% | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob %% |

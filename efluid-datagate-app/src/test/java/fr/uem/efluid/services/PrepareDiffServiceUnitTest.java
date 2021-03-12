@@ -1,15 +1,16 @@
 package fr.uem.efluid.services;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import fr.uem.efluid.model.ContentLine;
+import fr.uem.efluid.model.DiffPayloads;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.repositories.KnewContentRepository;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,6 +36,8 @@ public class PrepareDiffServiceUnitTest {
     // No spring here neither
     final ManagedValueConverter converter = new ManagedValueConverter();
 
+    final KnewContentRepositoryMock knewContentHolder = new KnewContentRepositoryMock();
+
     // No spring load here, for simple diff needs
     private PrepareIndexService service = new PrepareIndexService() {
 
@@ -47,6 +50,10 @@ public class PrepareDiffServiceUnitTest {
             return PrepareDiffServiceUnitTest.this.converter;
         }
 
+        @Override
+        protected KnewContentRepository getKnewContents() {
+            return PrepareDiffServiceUnitTest.this.knewContentHolder;
+        }
     };
 
     @Test
@@ -153,9 +160,10 @@ public class PrepareDiffServiceUnitTest {
      */
     private Collection<PreparedIndexEntry> getDiff(String diffName) {
         Map<String, String> diff1Actual = TestUtils.readDataset(diffName + "/actual.csv", this.converter);
-        Map<String, String> diff1Knew = TestUtils.readDataset(diffName + "/knew.csv", this.converter);
+        this.knewContentHolder.setCurrentKnew(TestUtils.readDataset(diffName + "/knew.csv", this.converter));
 
         Project proj = DataGenerationUtils.project("mock");
+        DictionaryEntry entry = DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock", proj), "s*", "table", "1=1", "key", ColumnType.STRING);
 
         // Static internal
         return this.service.generateDiffIndexFromContent(
@@ -171,11 +179,45 @@ public class PrepareDiffServiceUnitTest {
                             public String getPayload() {
                                 return e.getValue();
                             }
-                        }), PreparedIndexEntry::new,
-                diff1Knew,
-                l -> {},
-                DataGenerationUtils.entry("mock", DataGenerationUtils.domain("mock", proj), "s*", "table", "1=1", "key", ColumnType.STRING),
-                new PilotedCommitPreparation<PreparedIndexEntry>(CommitState.LOCAL));
+                        }),
+                PreparedIndexEntry::new,
+                this.knewContentHolder.knewContentKeys(entry),
+                l -> {
+                },
+                entry,
+                new PilotedCommitPreparation<>(CommitState.LOCAL),
+                System.currentTimeMillis());
 
+    }
+
+    private static class KnewContentRepositoryMock implements KnewContentRepository {
+
+        Map<String, String> currentKnew;
+
+        public void setCurrentKnew(Map<String, String> currentKnew) {
+            this.currentKnew = currentKnew;
+        }
+
+        @Override
+        public Set<String> knewContentKeys(DictionaryEntry dictionaryEntry) {
+            return new HashSet<>(this.currentKnew.keySet());
+        }
+
+        @Override
+        public Map<String, String> knewContentForKeysBefore(DictionaryEntry dictionaryEntry, Collection<String> keys, long timestamp) {
+            return this.currentKnew.entrySet().stream()
+                    .filter(e -> keys.contains(e.getKey()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
+
+        @Override
+        public Set<String> knewContentKeysBefore(DictionaryEntry dictionaryEntry, long timestamp) {
+            return this.currentKnew.keySet();
+        }
+
+        @Override
+        public Map<String, DiffPayloads> knewContentPayloadsForKeysBefore(DictionaryEntry dictionaryEntry, Collection<String> keys, long timestamp) {
+            return null; // Not used
+        }
     }
 }

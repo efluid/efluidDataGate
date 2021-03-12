@@ -275,7 +275,7 @@ public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extend
     }
 
     public String getSourceFilename() {
-        return sourceFilename;
+        return this.sourceFilename;
     }
 
     public void setSourceFilename(String sourceFilename) {

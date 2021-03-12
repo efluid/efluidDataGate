@@ -126,7 +126,10 @@ spring:
         show-sql: false
         hibernate:
             ddl-auto: validate
-
+        properties:
+            hibernate.jdbc.batch_size: 30
+            hibernate.order_inserts: true
+            hibernate.order_updates: true
     ldap:
         base:
         password:

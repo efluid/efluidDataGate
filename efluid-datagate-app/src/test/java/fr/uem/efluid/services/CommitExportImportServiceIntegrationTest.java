@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @RunWith(SpringRunner.class)
-@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
 public class CommitExportImportServiceIntegrationTest {
 

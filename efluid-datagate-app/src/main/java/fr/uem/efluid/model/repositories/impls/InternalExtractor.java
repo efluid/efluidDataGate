@@ -100,7 +100,7 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Stream<
                             if (!rs.next()) return false;
 
                             T payload = initLineHolder();
-                            StringBuilder keyValue = new StringBuilder();
+                            StringBuilder keyValue = new StringBuilder(8);
                             for (int i = 0; i < count; i++) {
                                 try {
                                     if (!keyPos.contains(i)) {

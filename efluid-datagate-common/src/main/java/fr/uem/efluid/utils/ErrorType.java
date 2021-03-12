@@ -18,6 +18,8 @@ public enum ErrorType {
     /** Cannot process SQL extraction of current content */
     EXTRACTION_ERROR,
 
+    REGENERATE_ERROR,
+
     PREPARATION_INTERRUPTED,
     PREPARATION_BIZ_FAILURE,
     PREPARATION_CANNOT_START,
