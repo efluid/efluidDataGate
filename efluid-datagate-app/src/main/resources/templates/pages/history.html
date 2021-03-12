@@ -57,7 +57,7 @@
 		    </thead>
 		    <tbody>
 		        <tr th:each="line, cstat : ${history.page}">
-		            <td class="history-state"><span th:class="${line.type == 'ROLLBACK'}?'history-rollback':((${line.type == 'REVERT'}?'history-revert':(${line.attachmentSourceUuid!=null}?'history-attachment':'history-update'))" class="history-update">&nbsp;</span></td>
+		            <td class="history-state"><span th:class="${line.type.name() == 'ROLLBACK'?'history-rollback':(line.type.name() == 'REVERT'?'history-revert':(line.attachmentSourceUuid!=null?'history-attachment':'history-update'))}" class="history-update">&nbsp;</span></td>
 		            <td><span class="query-display" th:text="${line.query}">select * ...</span></td>
 		            <td th:text="${line.user}">Fonct domains</td>
 					<td th:utext="${custom.processGitmoji(line.commitComment)}">Lot ajoutant des choses</td>
