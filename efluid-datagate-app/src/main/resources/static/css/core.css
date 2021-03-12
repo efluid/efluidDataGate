@@ -259,6 +259,13 @@ select.select-column {
     display: block;
 }
 
+.history-revert {
+    background-image: url("/revert.png");
+    width: 24px;
+    height: 18px;
+    display: block;
+}
+
 .history-attachment {
     background-image: url("/attachment.png");
     width: 24px;
@@ -927,4 +934,8 @@ li {
 #email-validator, #login-validator, #warning-empty, #warning-empty,
 #validator-input, #input-empty {
     color: red;
+}
+
+.disabled-message {
+    color: #DDD;
 }

@@ -23,7 +23,4 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
 	Project findSelectedProjectForUserLogin(String login);
 
 	Project findByName(String name);
-
-	@Query("SELECT uuid FROM Project")
-	Project getAllProjects();
 }

@@ -31,5 +31,8 @@
   "/rest/v1/backlog/merge/anomalies/types" : ["merge anomaly names rest service"],
   "/ui/transformers" : ["list of transformers"],
   "/ui/transformers/new" : ["new transformer page"],
-  "/ui/projects" : ["projects page"]
+  "/ui/projects" : ["projects page"],
+  "/ui/revert" : ["revert launch page", "revert commit page"],
+  "/ui/revert/commit" : ["revert saving page"],
+  "/ui/revert/save" : ["revert save"]
 }

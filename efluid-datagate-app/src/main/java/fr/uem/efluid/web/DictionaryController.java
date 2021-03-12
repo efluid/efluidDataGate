@@ -32,7 +32,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
  * </p>
  *
  * @author elecomte
- * @version 1
+ * @version 3
  * @since v0.0.1
  */
 @Controller
@@ -88,12 +88,12 @@ public class DictionaryController extends CommonController {
      * @return
      */
 
-    @RequestMapping(value = "/versions/remove/{uuid}", method = POST)
-    @ResponseBody
-    public void deleteVersion(@PathVariable("uuid") UUID uuid) {
+    @GetMapping("/versions/remove/{uuid}")
+    public String deleteVersion(Model model, @PathVariable("uuid") UUID uuid) {
         this.dictionaryManagementService.deleteVersionById(uuid);
+        model.addAttribute("updateType", "delete");
+        return versionsPage(model);
     }
-
 
     @RequestMapping("/domains")
     public String domainsPage(Model model) {
@@ -367,28 +367,36 @@ public class DictionaryController extends CommonController {
      * @return
      */
     @RequestMapping(value = "/share/upload", method = POST)
-    public String uploadImport(Model model, MultipartHttpServletRequest request) {
+    public String uploadImport(Model model, MultipartHttpServletRequest request, @RequestParam(name = "project", required = false) String project) {
 
         if (!controlSelectedProject(model)) {
             return REDIRECT_SELECT;
         }
 
-        model.addAttribute("result", this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request)));
+        if (project != null && "current".equals(project)) {
+            model.addAttribute("result", this.dictionaryManagementService.importAllInCurrentProject(WebUtils.inputExportImportFile(request)));
+        } else {
+            model.addAttribute("result", this.dictionaryManagementService.importAll(WebUtils.inputExportImportFile(request)));
+        }
 
         return exportPage(model);
     }
 
+
     /**
-     * Rest Method for AJAX push
+     * Basic create / update for version
      *
      * @param name
      * @return
      */
-    @RequestMapping(value = "/versions/{name}", method = POST)
-    @ResponseBody
-    public VersionData setVersion(@PathVariable("name") String name) {
-        this.dictionaryManagementService.setCurrentVersion(name);
-        return this.dictionaryManagementService.getLastVersion();
+    @RequestMapping(value = "/versions", method = POST)
+    public String createOrUpdateVersion(Model model, @RequestParam("name") String name) {
+        if (this.dictionaryManagementService.setCurrentVersion(name)) {
+            model.addAttribute("updateType", "create");
+        } else {
+            model.addAttribute("updateType", "update");
+        }
+        return versionsPage(model);
     }
 
     /**

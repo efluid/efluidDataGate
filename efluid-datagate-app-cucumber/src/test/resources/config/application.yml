@@ -96,6 +96,7 @@ server:
 ## TEST LOGGING CONFIG
 logging:
     level:
+        default: WARN
         fr.uem.efluid: INFO
         org.flywaydb: ERROR
         extractor.queries: ERROR

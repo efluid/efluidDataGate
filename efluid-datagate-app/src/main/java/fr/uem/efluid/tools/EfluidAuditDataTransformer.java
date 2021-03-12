@@ -2,6 +2,7 @@ package fr.uem.efluid.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.utils.FormatUtils;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,7 +28,7 @@ import static java.util.stream.Collectors.*;
  * </pre>
  *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v1.2.0
  */
 @Component
@@ -54,27 +56,24 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
         return new Runner(getValueProvider(), config, dict);
     }
 
+    /**
+     * Specification of configuration
+     */
     public static class Config extends Transformer.TransformerConfig {
 
         private List<String> appliedKeyPatterns;
 
         private Map<String, String> appliedValueFilterPatterns;
 
-        private Map<String, String> dateUpdates;
+        private Map<String, ApplicationSpec> dateUpdates;
 
-        private Map<String, String> actorUpdates;
+        private Map<String, ApplicationSpec> actorUpdates;
 
         @JsonIgnore
         private List<Pattern> appliedKeyMatchers;
 
         @JsonIgnore
-        private List<Pattern> appliedValueColumnMatchers;
-
-        @JsonIgnore
-        private List<Pattern> appliedUpdateColumnMatchers;
-
-        @JsonIgnore
-        private Map<String, List<Pattern>> appliedValueFilterMatchers;
+        private final Map<IndexAction, MatchersForAction> matchersByAction = new HashMap<>();
 
         public Config() {
             super();
@@ -96,19 +95,19 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
             this.appliedValueFilterPatterns = appliedValueFilterPatterns;
         }
 
-        public Map<String, String> getDateUpdates() {
+        public Map<String, ApplicationSpec> getDateUpdates() {
             return this.dateUpdates;
         }
 
-        public void setDateUpdates(Map<String, String> dateUpdates) {
+        public void setDateUpdates(Map<String, ApplicationSpec> dateUpdates) {
             this.dateUpdates = dateUpdates;
         }
 
-        public Map<String, String> getActorUpdates() {
+        public Map<String, ApplicationSpec> getActorUpdates() {
             return this.actorUpdates;
         }
 
-        public void setActorUpdates(Map<String, String> actorUpdates) {
+        public void setActorUpdates(Map<String, ApplicationSpec> actorUpdates) {
             this.actorUpdates = actorUpdates;
         }
 
@@ -120,13 +119,13 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
             this.appliedValueFilterPatterns = new HashMap<>();
             this.appliedValueFilterPatterns.put("ETATOBJET", "0");
             this.dateUpdates = new HashMap<>();
-            this.dateUpdates.put("DATECREATION", "current_date");
-            this.dateUpdates.put("DATEMODIFICATION", "current_date");
-            this.dateUpdates.put("DATESUPPRESSION", "current_date");
+            this.dateUpdates.put("DATECREATION", new ApplicationSpec("current_date", IndexAction.values()));
+            this.dateUpdates.put("DATEMODIFICATION", new ApplicationSpec("current_date", IndexAction.values()));
+            this.dateUpdates.put("DATESUPPRESSION", new ApplicationSpec("current_date", "DELETED", "1"));
             this.actorUpdates = new HashMap<>();
-            this.actorUpdates.put("ACTEURCREATION", "evt 156444");
-            this.actorUpdates.put("ACTEURMODIFICATION", "evt 154654");
-            this.actorUpdates.put("ACTEURSUPPRESSION", "evt 189445");
+            this.actorUpdates.put("ACTEURCREATION", new ApplicationSpec("evt 156444", IndexAction.values()));
+            this.actorUpdates.put("ACTEURMODIFICATION", new ApplicationSpec("evt 154654", IndexAction.values()));
+            this.actorUpdates.put("ACTEURSUPPRESSION", new ApplicationSpec("evt 189445", "DELETED", "1"));
         }
 
         @Override
@@ -135,6 +134,11 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
             if (this.appliedKeyPatterns == null || this.appliedKeyPatterns.size() == 0) {
                 errors.add("At least one key value pattern must be specified. Use \".*\" as default to match all");
             }
+            if (this.appliedValueFilterPatterns != null) {
+                if (this.appliedValueFilterPatterns.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                    errors.add("Value filter column name cannot be empty. Use \".*\" as default to match all, or remove all filter patterns");
+                }
+            }
             if ((this.dateUpdates == null || this.dateUpdates.size() == 0) && (this.actorUpdates == null || this.actorUpdates.size() == 0)) {
                 errors.add("At least one update on date or actor must be specified.");
             }
@@ -142,23 +146,30 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 if (this.dateUpdates.keySet().stream().anyMatch(StringUtils::isEmpty)) {
                     errors.add("A date update column name cannot be empty. Use \".*\" as default to match all");
                 }
-                if (this.dateUpdates.values().stream().anyMatch(StringUtils::isEmpty)) {
+                if (this.dateUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(StringUtils::isEmpty)) {
                     errors.add("A date update value cannot be empty. Use \"" + CURRENT_DATE_EXPR + "\" for current date or a fixed date using format \"" + FormatUtils.DATE_FORMAT + "\"");
-                } else if (this.dateUpdates.values().stream().anyMatch(v -> !CURRENT_DATE_EXPR.equals(v) && !FormatUtils.canParseLd(v))) {
+                } else if (this.dateUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(v -> !CURRENT_DATE_EXPR.equals(v) && !FormatUtils.canParseLd(v))) {
                     errors.add("A date update value must be \"current_date\" or a fixed date value using format \"" + FormatUtils.DATE_FORMAT + "\"");
                 }
-            }
-            if (this.appliedValueFilterPatterns != null) {
-                if (this.appliedValueFilterPatterns.keySet().stream().anyMatch(StringUtils::isEmpty)) {
-                    errors.add("Value filter column name cannot be empty. Use \".*\" as default to match all, or remove all filter patterns");
+                if (this.dateUpdates.values().stream().anyMatch(s -> (s.getOnValues() == null || s.getOnValues().isEmpty()) && (s.getOnActions() == null || s.getOnActions().isEmpty()))) {
+                    errors.add("An date update must be specified with onValues or onActions. Specify at least one action (ADD/REMOVE/UPDATE) or one value spec or remove the date update spec");
+                }
+                if (this.dateUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> StringUtils.isEmpty(v.getColumnPattern()) || StringUtils.isEmpty(v.getValuePattern()))) {
+                    errors.add("The onValues properties columnPattern and valuePattern cannot be empty. Check dateUpdates");
                 }
             }
             if (this.actorUpdates != null) {
                 if (this.actorUpdates.keySet().stream().anyMatch(StringUtils::isEmpty)) {
                     errors.add("An actor update column name cannot be empty. Use \".*\" as default to match all");
                 }
-                if (this.actorUpdates.values().stream().anyMatch(StringUtils::isEmpty)) {
+                if (this.actorUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(StringUtils::isEmpty)) {
                     errors.add("An actor update value cannot be empty. Specify a valid actor name value");
+                }
+                if (this.actorUpdates.values().stream().anyMatch(s -> (s.getOnValues() == null || s.getOnValues().isEmpty()) && (s.getOnActions() == null || s.getOnActions().isEmpty()))) {
+                    errors.add("An actor update must be specified with onValues or onActions. Specify at least one action (ADD/REMOVE/UPDATE) or one value spec or remove the actor update spec");
+                }
+                if (this.actorUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> StringUtils.isEmpty(v.getColumnPattern()) || StringUtils.isEmpty(v.getValuePattern()))) {
+                    errors.add("The onValues properties columnPattern and valuePattern cannot be empty. Check actorUpdates");
                 }
             }
         }
@@ -177,65 +188,204 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 return false;
             }
 
+            MatchersForAction matchers = matchersFor(entry.getAction());
+
             // Preload patterns for filter values (get columns and compile)
-            if (this.appliedValueColumnMatchers == null) {
-                this.appliedValueColumnMatchers = this.appliedValueFilterPatterns != null
-                        ? generatePayloadMatchersFromColumnPatterns(this.appliedValueFilterPatterns.keySet().stream())
+            if (matchers.appliedValueColumnMatchers == null) {
+                matchers.appliedValueColumnMatchers = this.appliedValueFilterPatterns != null
+                        ? generatePayloadMatchersFromColumnPatterns(
+                        Stream.concat(
+                                this.appliedValueFilterPatterns.keySet().stream(),
+                                Stream.concat(
+                                        this.dateUpdates.values().stream()
+                                                .filter(s -> s.getOnValues() != null)
+                                                .flatMap(s -> s.getOnValues().stream())
+                                                .map(o -> o.columnPattern),
+                                        this.actorUpdates.values().stream()
+                                                .filter(s -> s.getOnValues() != null)
+                                                .flatMap(s -> s.getOnValues().stream())
+                                                .map(o -> o.columnPattern)
+                                )
+                        ))
                         : Collections.emptyList();
             }
 
             // Continue only if value pattern may match (check that column at least exists)
-            if (this.appliedValueColumnMatchers.size() > 0 && this.appliedValueColumnMatchers.stream().noneMatch(c -> c.matcher(entry.getPayload()).matches())) {
+            if (matchers.appliedValueColumnMatchers.size() > 0 && matchers.appliedValueColumnMatchers.stream().noneMatch(c -> c.matcher(entry.getPayload()).matches())) {
                 return false;
             }
 
 
             // Preload patterns for date and actor updates (get columns and compile)
-            if (this.appliedUpdateColumnMatchers == null) {
-                this.appliedUpdateColumnMatchers = generatePayloadMatchersFromColumnPatterns(
+            if (matchers.appliedUpdateColumnMatchers == null) {
+                matchers.appliedUpdateColumnMatchers = generatePayloadMatchersFromColumnPatterns(
                         Stream.concat(
-                                this.dateUpdates != null ? this.dateUpdates.keySet().stream() : Stream.empty(),
-                                this.actorUpdates != null ? this.actorUpdates.keySet().stream() : Stream.empty()
+                                this.dateUpdates != null ? this.dateUpdates.entrySet().stream()
+                                        .filter(v -> v.getValue().getOnActions() == null || v.getValue().getOnActions().isEmpty() || v.getValue().getOnActions().contains(entry.getAction()))
+                                        .map(Map.Entry::getKey) : Stream.empty(),
+                                this.actorUpdates != null ? this.actorUpdates.entrySet().stream()
+                                        .filter(v -> v.getValue().getOnActions() == null || v.getValue().getOnActions().isEmpty() || v.getValue().getOnActions().contains(entry.getAction()))
+                                        .map(Map.Entry::getKey) : Stream.empty()
                         ));
             }
 
-            return this.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
+            return matchers.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
         }
 
-        boolean isValueFilterMatches(List<Value> values) {
-            if (this.appliedValueFilterMatchers == null) {
-                this.appliedValueFilterMatchers =
+        boolean isValueFilterMatches(IndexAction action, List<Value> values) {
+
+            MatchersForAction matchers = matchersFor(action);
+
+            if (matchers.appliedValueFilterMatchers == null) {
+                matchers.appliedValueFilterMatchers =
                         this.appliedValueFilterPatterns != null
                                 ? this.appliedValueFilterPatterns.entrySet().stream()
                                 .collect(groupingBy(
-                                        Map.Entry::getKey,
+                                        e -> Pattern.compile(e.getKey()),
                                         mapping(e -> Pattern.compile(e.getValue()), toList())))
                                 : new HashMap<>();
+
+
             }
 
             // Match all if no filter
-            if (this.appliedValueFilterMatchers.size() == 0) {
+            if (matchers.appliedValueFilterMatchers.size() == 0) {
                 return true;
             }
 
-            return values.stream()
-                    .filter(v -> this.appliedValueFilterMatchers.containsKey(v.getName()))
-                    .anyMatch(v -> {
-                        String val = v.getValueAsString();
-                        return this.appliedValueFilterMatchers.get(v.getName()).stream().anyMatch(c -> c.matcher(val).matches());
-                    });
+            for (Value value : values) {
+                String val = value.getValueAsString();
+
+                if (matchers.appliedValueFilterMatchers.entrySet().stream()
+                        .filter(e -> e.getKey().matcher(value.getName()).matches())
+                        .flatMap(e -> e.getValue().stream())
+                        .anyMatch(m -> m.matcher(val).matches())) {
+                    return true;
+                }
+            }
+
+            return false;
         }
+
+        private MatchersForAction matchersFor(IndexAction action) {
+
+            MatchersForAction matchers = this.matchersByAction.get(action);
+
+            // Preload patterns for filter values (get columns and compile)
+            if (matchers == null) {
+                matchers = new MatchersForAction();
+                this.matchersByAction.put(action, matchers);
+            }
+
+            return matchers;
+        }
+
+        /**
+         * Definition of an application of value change for a column. Specify the update value and the IndexAction
+         * when the update must be applied
+         */
+        public static class ApplicationSpec {
+            private String value;
+            private List<IndexAction> onActions;
+            private List<OnValueMatch> onValues;
+
+            public ApplicationSpec() {
+                super();
+            }
+
+            public ApplicationSpec(String value, IndexAction... actions) {
+                super();
+                this.value = value;
+                this.onActions = Arrays.asList(actions);
+            }
+
+            public ApplicationSpec(String value, String onValueName, String onValueValue) {
+                super();
+                this.value = value;
+                this.onValues = Collections.singletonList(new OnValueMatch(onValueName, onValueValue));
+            }
+
+            public String getValue() {
+                return value;
+            }
+
+            public void setValue(String value) {
+                this.value = value;
+            }
+
+            public List<IndexAction> getOnActions() {
+                return onActions;
+            }
+
+            public void setOnActions(List<IndexAction> onActions) {
+                this.onActions = onActions;
+            }
+
+            public List<OnValueMatch> getOnValues() {
+                return onValues;
+            }
+
+            public void setOnValues(List<OnValueMatch> onValues) {
+                this.onValues = onValues;
+            }
+        }
+
+        public static class OnValueMatch {
+
+            private String columnPattern;
+            private String valuePattern;
+
+            public OnValueMatch() {
+            }
+
+            public OnValueMatch(String columnPattern, String valuePattern) {
+                this.columnPattern = columnPattern;
+                this.valuePattern = valuePattern;
+            }
+
+            public String getColumnPattern() {
+                return columnPattern;
+            }
+
+            public void setColumnPattern(String columnPattern) {
+                this.columnPattern = columnPattern;
+            }
+
+            public String getValuePattern() {
+                return valuePattern;
+            }
+
+            public void setValuePattern(String valuePattern) {
+                this.valuePattern = valuePattern;
+            }
+        }
+
+        private static class MatchersForAction {
+
+            @JsonIgnore
+            private List<Pattern> appliedValueColumnMatchers;
+
+            @JsonIgnore
+            private List<Pattern> appliedUpdateColumnMatchers;
+
+            @JsonIgnore
+            private Map<Pattern, List<Pattern>> appliedValueFilterMatchers;
+
+        }
+
     }
 
     /**
-     * Transformation model for
+     * Transformation model for Efluid actor model. Can process values on many rules
      */
     public static class Runner extends Transformer.TransformerRunner<EfluidAuditDataTransformer.Config> {
 
-        private final Map<Pattern, String> mappedReplacedValues;
+        private final String currentTime;
+        private final Map<IndexAction, SubstituteDefinition> mappedReplacedValues;
 
         private Runner(TransformerValueProvider provider, Config config, DictionaryEntry dict) {
             super(provider, config, dict);
+            this.currentTime = provider.getFormatedCurrentTime();
             this.mappedReplacedValues = prepareMappedReplacedValues(config);
         }
 
@@ -245,15 +395,19 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
         }
 
         @Override
-        public void accept(List<Value> values) {
-            if (this.config.isValueFilterMatches(values)) {
+        public void accept(IndexAction action, List<Value> values) {
+            if (this.config.isValueFilterMatches(action, values)) {
+
+                var matchings = this.mappedReplacedValues.get(action).matchingSubstitutes(values);
+
                 // Process on indexed list for replacement support
                 for (int i = 0; i < values.size(); i++) {
                     Value val = values.get(i);
                     // Apply only 1 matching rule
                     final int finalI = i;
-                    this.mappedReplacedValues.entrySet().stream()
-                            .filter(e -> e.getKey().matcher(val.getName()).matches())
+                    // Process change only for current action - all are init in mappedReplacedValues
+                    matchings.stream()
+                            .filter(e -> e.getKey().test(val))
                             .findFirst()
                             .ifPresent(e -> values.set(finalI, transformedValue(val, e.getValue())));
                 }
@@ -266,26 +420,111 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
          * @param config
          * @return
          */
-        private Map<Pattern, String> prepareMappedReplacedValues(Config config) {
+        private Map<IndexAction, SubstituteDefinition> prepareMappedReplacedValues(Config config) {
 
-            String currentTime = this.provider.getFormatedCurrentTime();
+            Map<IndexAction, SubstituteDefinition> byActions = new HashMap<>();
 
-            Map<Pattern, String> replacements = config.getActorUpdates() != null
-                    ? new HashMap<>(config.getActorUpdates().entrySet().stream().collect(
-                    Collectors.toMap(e -> Pattern.compile(e.getKey()), Map.Entry::getValue)))
-                    : new HashMap<>();
+            for (IndexAction action : IndexAction.values()) {
 
-            if (config.getDateUpdates() != null) {
-                config.getDateUpdates().forEach((k, v) -> {
-                    if (CURRENT_DATE_EXPR.equals(v)) {
-                        replacements.put(Pattern.compile(k), currentTime);
-                    } else {
-                        replacements.put(Pattern.compile(k), FormatUtils.format(FormatUtils.parseLd(v).atStartOfDay()));
-                    }
-                });
+                SubstituteDefinition allForAction = new SubstituteDefinition();
+
+                if (config.getActorUpdates() != null) {
+                    // Default value matcher => On action only
+                    config.getActorUpdates().entrySet().stream()
+                            .filter(s -> s.getValue().getOnActions() != null && !s.getValue().getOnActions().isEmpty() && s.getValue().getOnActions().contains(action))
+                            .forEach(e -> allForAction.computeDefaultSpec(valueNamePredicate(e.getKey()), e.getValue().getValue()));
+
+                    // Specified values matcher
+                    config.getActorUpdates().entrySet().stream()
+                            .filter(s -> s.getValue().getOnValues() != null && !s.getValue().getOnValues().isEmpty())
+                            .forEach(e -> {
+                                var predicate = valueNamePredicate(e.getKey());
+                                var replacement = e.getValue().getValue();
+                                allForAction.computeEachValuesSpec(e.getValue(), predicate, replacement);
+                            });
+                }
+
+                if (config.getDateUpdates() != null) {
+                    // Default value matcher => On action only
+                    config.getDateUpdates().entrySet().stream()
+                            .filter(s -> s.getValue().getOnActions() != null && !s.getValue().getOnActions().isEmpty() && s.getValue().getOnActions().contains(action))
+                            .forEach(e -> allForAction.computeDefaultSpec(valueNamePredicate(e.getKey()), dateReplacement(e.getValue())));
+
+                    // Specified values matcher
+                    config.getDateUpdates().entrySet().stream()
+                            .filter(s -> s.getValue().getOnValues() != null && !s.getValue().getOnValues().isEmpty())
+                            .forEach(e -> {
+                                var predicate = valueNamePredicate(e.getKey());
+                                var replacement = dateReplacement(e.getValue());
+                                allForAction.computeEachValuesSpec(e.getValue(), predicate, replacement);
+                            });
+                }
+
+                byActions.put(action, allForAction);
             }
 
-            return replacements;
+            return byActions;
+        }
+
+        private String dateReplacement(Config.ApplicationSpec spec) {
+            return CURRENT_DATE_EXPR.equals(spec.getValue()) ?
+                    this.currentTime : FormatUtils.format(FormatUtils.parseLd(spec.getValue()).atStartOfDay());
+        }
+
+        private static Predicate<Value> valueNamePredicate(String pattern) {
+            final Pattern matcher = Pattern.compile(pattern);
+            return v -> matcher.matcher(v.getName()).matches();
+        }
+
+    }
+
+    /**
+     * Prepared (complex) substitutes on value list / values
+     */
+    private static class SubstituteDefinition {
+
+        private final Predicate<List<Value>> DEFAULT = l -> true;
+
+        private final Map<Predicate<List<Value>>, Map<Predicate<Value>, String>> allForAction;
+
+        private SubstituteDefinition() {
+            allForAction = new HashMap<>();
+        }
+
+        void computeEachValuesSpec(Config.ApplicationSpec spec, Predicate<Value> valuePredicate, String replacement) {
+            spec.getOnValues().forEach(m -> {
+                var listPredicate = valueContentPredicate(m.getColumnPattern(), m.getValuePattern());
+                Map<Predicate<Value>, String> subs = this.allForAction.computeIfAbsent(listPredicate, k -> new HashMap<>());
+                subs.put(valuePredicate, replacement);
+            });
+        }
+
+        void computeDefaultSpec(Predicate<Value> valuePredicate, String replacement) {
+            Map<Predicate<Value>, String> subs = this.allForAction.computeIfAbsent(DEFAULT, k -> new HashMap<>());
+            subs.put(valuePredicate, replacement);
+        }
+
+        Collection<Map.Entry<Predicate<Value>, String>> matchingSubstitutes(List<Value> values) {
+            return this.allForAction.entrySet().stream()
+                    .filter(e -> e.getKey().test(values))
+                    .flatMap(e -> e.getValue().entrySet().stream())
+                    .collect(Collectors.toList());
+        }
+
+        private static Predicate<List<Value>> valueContentPredicate(String namePattern, String valuePattern) {
+            final Pattern nameMatcher = Pattern.compile(namePattern);
+            final Pattern valueMatcher = Pattern.compile(valuePattern);
+            return values -> {
+                // Basic matching for debug
+                for (Value value : values) {
+                    if (nameMatcher.matcher(value.getName()).matches()) {
+                        if (valueMatcher.matcher(value.getValueAsString()).matches()) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            };
         }
     }
 }

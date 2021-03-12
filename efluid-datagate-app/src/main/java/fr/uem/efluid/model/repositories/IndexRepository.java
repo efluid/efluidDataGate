@@ -60,6 +60,13 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     Set<String> getKeyValuesForDictionaryEntry(@Param("dictUuid") String dictionaryEntryUuid);
 
     /**
+     * <p>
+     * Search for existing commit indexes
+     * </p>
+     */
+    Stream<IndexEntry> findByCommitUuidAndDictionaryEntry(UUID commitUuid, DictionaryEntry dictionaryEntry);
+
+    /**
      * All index lines without "previous" value for a specified commit
      *
      * @param commitUuid selected commit

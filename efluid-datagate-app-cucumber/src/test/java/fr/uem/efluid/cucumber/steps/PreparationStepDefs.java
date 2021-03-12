@@ -604,7 +604,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
                     }
 
                     if (dataLine.get("Need Resolve") != null) {
-                        assertThat(diffLine.isNeedAction()).isEqualTo("true".equals(dataLine.get("Need Resolve")));
+                        assertThat(diffLine.isNeedAction()).describedAs("Need resolve" + desc).isEqualTo("true".equals(dataLine.get("Need Resolve")));
                     }
                 }
             }

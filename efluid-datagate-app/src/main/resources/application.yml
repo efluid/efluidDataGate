@@ -2,14 +2,18 @@
 ## PARAMETER MANAGER CONFIG
 datagate-efluid:
 
+    pool.connections:
+        max: 50
+        min: 5
+
     managed-datasource:
         driver-class-name: oracle.jdbc.OracleDriver
         url: jdbc:oracle:thin:@CHANGE_ME:49161:xe
         username: CHANGE_ME
         password: CHANGE_ME
         connection-test-query: SELECT 1 from DUAL
-        minimum-idle: 5
-        max-pool-size: 50
+        max-pool-size: ${datagate-efluid.pool.connections.max}
+        minimum-idle: ${datagate-efluid.pool.connections.min}
         timeout: 60000
         meta:
             filter-schema: CHANGE_ME
@@ -49,7 +53,6 @@ datagate-efluid:
     security:
         salt: 12345678901234567890123456789012
         accounting: DATABASE
-        technical-user-token: 1ddad6a5a7a046a2ae92b5b9b66fa5fd
         ldap:
             user-search-base: /
             username-attribute: uid
@@ -74,8 +77,10 @@ datagate-efluid:
         record-merge-warnings: true
 
     async-preparation:
-        thread-pool-size: 8
-        timeout-seconds: 1200
+        #thread-pool-size: 40
+        #strategy: THREAD_POOL
+        strategy: DB_POOL
+        timeout-seconds: 30000
 
     model-identifier:
         enabled: true
@@ -107,6 +112,9 @@ spring:
         driver-class-name: org.postgresql.Driver
         username: CHANGE_ME
         password: CHANGE_ME
+        hikari:
+            maximum-pool-size: ${datagate-efluid.pool.connections.max}
+            minimum-idle: ${datagate-efluid.pool.connections.min}
 
     servlet:
         multipart:

@@ -7,10 +7,10 @@ Feature: Some transformers can be set for a project to adapt commits at import r
 
   Scenario: The existing transformers from project are listed
     Given the configured transformers for project "Default" :
-      | name                  | type                  | priority | configuration                                                   |
-      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
-      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern" : "T_TWO","columnNames" : [ "COL_.*" ]}         |
+      | name                  | type                  | priority | configuration                                                                                                                        |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}                                                                                 |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]}                                                                      |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     When the user access to list of transformers
     Then the 3 configured transformers from project "Default" are displayed
 
@@ -81,27 +81,35 @@ Feature: Some transformers can be set for a project to adapt commits at import r
     When the user save the transformer
     Then the result "<result>" is provided
     Examples:
-      | name    | configuration                                                                                                                          | result                                                           |
-      | audit1  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}                                      | SUCCESS                                                          |
-      | audit2  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{"DATE_C":"current_date"},"actorUpdates":{"ACT_C":"bob"}}               | SUCCESS                                                          |
-      | audit3  | {"tablePattern":".*","appliedKeyPatterns":["12.*"],"dateUpdates":{"DATE_C":"2019-12-01"},"actorUpdates":{".*":"bob"}}                  | SUCCESS                                                          |
-      | audit4  | {"tablePattern":".*","appliedValueFilterPatterns":{"ETAT":"0"},"appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{".*":"T"}} | SUCCESS                                                          |
-      | audit5  | {"tablePattern":".*","dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}                                                                  | At least one key value pattern must be specified.                |
-      | audit6  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{}}                                                   | At least one update on date or actor must be specified.          |
-      | audit7  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{"":"current_date"},"actorUpdates":{}}                                  | A date update column name cannot be empty.                       |
-      | audit8  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"":"bob"}}                                           | An actor update column name cannot be empty.                     |
-      | audit9  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{"DATE_C":""},"actorUpdates":{}}                                        | A date update value cannot be empty.                             |
-      | audit10 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{"DATE_C":"something"},"actorUpdates":{}}                               | A date update value must be "current_date" or a fixed date value |
-      | audit11 | {"dateUpdates":{"DATE_C":"current_date"},"appliedKeyPatterns":[".*"],"actorUpdates":{}}                                                | tablePattern cannot be empty or missing.                         |
-      | audit12 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{},}                                                  | JSON Parsing error                                               |
-      | audit13 | {"tablePattern":".*","appliedValueFilterPatterns":{"":"0"},"appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{".*":""}}      | Value filter column name cannot be empty.                        |
+      | name    | configuration                                                                                                                                                                                                      | result                                                                                    |
+      | audit1  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":{"value":"bob","onActions": ["ADD"]}}}                                                                                   | SUCCESS                                                                                   |
+      | audit2  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{"DATE_C":{"value":"current_date","onActions": ["ADD"]}},"actorUpdates":{"ACT_C":{"value":"bob","onActions": ["ADD"]}}}                             | SUCCESS                                                                                   |
+      | audit3  | {"tablePattern":".*","appliedKeyPatterns":["12.*"],"dateUpdates":{"DATE_C":{"value":"2019-12-01","onActions": ["ADD"]}},"actorUpdates":{".*":{"value":"bob","onActions": ["ADD"]}}}                                | SUCCESS                                                                                   |
+      | audit4  | {"tablePattern":".*","appliedValueFilterPatterns":{"ETAT":"0"},"appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{".*":{"value":"T","onActions":["REMOVE", "UPDATE"]}}}                                  | SUCCESS                                                                                   |
+      | audit5  | {"tablePattern":".*","appliedValueFilterPatterns":{"ET.*":"0"},"appliedKeyPatterns":["^$key.*"],"dateUpdates":{},"actorUpdates":{".*":{"value":"T","onActions":["ADD"]}}}                                          | SUCCESS                                                                                   |
+      | audit6  | {"tablePattern":".*","appliedValueFilterPatterns":{"ETAT":"0"},"appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{".*":{"value":"T","onValues":[{"columnPattern":"ETAT.*","valuePattern":"^TEST.*$"}]}}} | SUCCESS                                                                                   |
+      | audit7  | {"tablePattern":".*","dateUpdates":{},"actorUpdates":{"ACT_C":{"value":"bob","onActions": ["ADD"]}}}                                                                                                               | At least one key value pattern must be specified.                                         |
+      | audit8  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{}}                                                                                                                               | At least one update on date or actor must be specified.                                   |
+      | audit9  | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{"":{"value":"current_date","onActions": ["ADD"]}},"actorUpdates":{}}                                                                               | A date update column name cannot be empty.                                                |
+      | audit10 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"":{"value":"bob","onActions": ["ADD"]}}}                                                                                        | An actor update column name cannot be empty.                                              |
+      | audit11 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{"DATE_C":{}},"actorUpdates":{}}                                                                                                                    | A date update value cannot be empty.                                                      |
+      | audit12 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{"DATE_C":{"value":"something","onActions": ["ADD"]}},"actorUpdates":{}}                                                                            | A date update value must be "current_date" or a fixed date value                          |
+      | audit13 | {"dateUpdates":{"DATE_C":{"value":"current_date","onActions": ["ADD"]}},"appliedKeyPatterns":[".*"],"actorUpdates":{}}                                                                                             | tablePattern cannot be empty or missing.                                                  |
+      | audit14 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{},}                                                                                                                              | JSON Parsing error                                                                        |
+      | audit15 | {"tablePattern":".*","appliedValueFilterPatterns":{"":"0"},"appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{".*":{"value":"","onActions": ["ADD"]}}}                                                   | Value filter column name cannot be empty.                                                 |
+      | audit16 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"COL.*":{"value":"value","onActions": []}}}                                                                                      | An actor update must be specified with onValues or onActions                              |
+      | audit17 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"COL.*":{"value":"value","onActions": ["TEST"]}}}                                                                                | value not one of declared Enum instance names: [ADD, REMOVE, UPDATE]                      |
+      | audit18 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val"}}}}                                                                                                        | An actor update must be specified with onValues or onActions. Specify at least one action |
+      | audit19 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val","onValues": [{"columnPattern":"ETAT.*"}]}}}}                                                               | The onValues properties columnPattern and valuePattern cannot be empty.                   |
+      | audit20 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val","onValues": [{"valuePattern":"^TEST.*$"}]}}}}                                                              | The onValues properties columnPattern and valuePattern cannot be empty.                   |
+
 
   Scenario: The transformer configuration for a project is exported with commits
     Given the configured transformers for project "Default" :
-      | name                  | type                  | priority | configuration                                                   |
-      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
-      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}         |
+      | name                  | type                  | priority | configuration                                                                                                                        |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}                                                                                 |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]}                                                                      |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "TTAB_ONE" :
       | key | value | preset   | something |
       | 1   | AAA   | Preset 1 | AAA       |
@@ -116,17 +124,17 @@ Feature: Some transformers can be set for a project to adapt commits at import r
     When the user request an export of all the commits
     Then the export package contains 2 commit contents
     And the export package content has these transformer definitions :
-      | name                  | type                  | priority | configuration                                                   |
-      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
-      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}         |
+      | name                  | type                  | priority | configuration                                                                                                                        |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}                                                                                 |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]}                                                                      |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
 
   Scenario: The transformer configuration for a project can be customized at export
     Given the configured transformers for project "Default" :
-      | name                  | type                  | priority | configuration                                                   |
-      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
-      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}         |
+      | name                  | type                  | priority | configuration                                                                                                                        |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}                                                                                 |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]}                                                                      |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "TTAB_ONE" :
       | key | value | preset   | something |
       | 1   | AAA   | Preset 1 | AAA       |
@@ -149,17 +157,17 @@ Feature: Some transformers can be set for a project to adapt commits at import r
     And the user validate the prepared export
     Then the export download start automatically
     And the export package content has these transformer definitions :
-      | name                  | type                  | priority | configuration                                                  |
-      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}           |
-      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_D","COL_C" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}        |
+      | name                  | type                  | priority | configuration                                                                                                                        |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}                                                                                 |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_D","COL_C" ]}                                                                       |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
 
   Scenario: The transformer configuration for a project can be disabled at export
     Given the configured transformers for project "Default" :
-      | name                  | type                  | priority | configuration                                                   |
-      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}            |
-      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]} |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}         |
+      | name                  | type                  | priority | configuration                                                                                                                        |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}                                                                                 |
+      | My Test Transformer 2 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "T_ONE","columnNames" : [ "COL_A", "COL_B" ]}                                                                      |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "TTAB_ONE" :
       | key | value | preset   | something |
       | 1   | AAA   | Preset 1 | AAA       |
@@ -176,9 +184,9 @@ Feature: Some transformers can be set for a project to adapt commits at import r
     And the user validate the prepared export
     Then the export download start automatically
     And the export package content has these transformer definitions :
-      | name                  | type                  | priority | configuration                                                  |
-      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}           |
-      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACT_C":"bob"}}        |
+      | name                  | type                  | priority | configuration                                                                                                                        |
+      | My Test Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "T_UP.*","columnNames" : [ ".*" ]}                                                                                 |
+      | My Test Transformer 3 | EFLUID_AUDIT          | 5        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
 
   Scenario: The data processed on merge in destination environment is transformed regarding the transformer configuration
     Given the configured transformers for project "Default" :

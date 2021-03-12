@@ -4,16 +4,21 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.metas.ManagedModelDescription;
+import fr.uem.efluid.services.types.ExportFile;
+import fr.uem.efluid.services.types.ExportImportResult;
 import fr.uem.efluid.services.types.VersionData;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
 public class DictionaryStepDefs extends CucumberStepDefs {
@@ -87,6 +92,55 @@ public class DictionaryStepDefs extends CucumberStepDefs {
         Version currentVersion = modelDatabase().findLastVersionForProject(project);
 
         modelDatabase().initDictionary(tables, new ArrayList<>(), currentVersion);
+    }
+
+    @When("^the current full dictionary is exported$")
+    public void full_dict_export() {
+
+        // We edit the export
+        ExportImportResult<ExportFile> export = this.dictService.exportAll();
+        currentExports.put("dict-full", export);
+    }
+
+    @When("^the project \"(.*)\" is exported$")
+    public void project_dict_export(String name) {
+
+        var project = modelDatabase().getAllProjects().stream().filter(p -> p.getName().equals(name)).findFirst();
+
+        assertThat(project).isPresent();
+
+        this.projectMgmt.selectProject(project.get().getUuid());
+
+        // We edit the export
+        ExportImportResult<ExportFile> export = this.dictService.exportCurrentProject();
+        currentExports.put("dict-proj-" + name, export);
+    }
+
+    @When("^the user import the available dictionary package as this$")
+    public void when_import_dict_package() {
+
+        ExportImportResult<ExportFile> currentExport = getSingleCurrentExport();
+
+        this.dictService.importAll(currentExport.getResult());
+    }
+
+    @When("^the user import the available dictionary package in current project")
+    public void when_import_dict_package_current_project() {
+
+        ExportImportResult<ExportFile> currentExport = getSingleCurrentExport();
+
+        this.dictService.importAllInCurrentProject(currentExport.getResult());
+    }
+
+    @Then("^a dictionary archive is produced$")
+    public void full_dict_available() {
+        assertThat(currentExports.get("dict-full")).describedAs("Full dictionary export").isNotNull();
+    }
+
+    @Then("^a dictionary archive is produced for project \"(.*)\"$")
+    public void proj_dict_available(String name) {
+        assertThat(currentExports.get("dict-proj-" + name))
+                .describedAs("Dictionary export for project " + name).isNotNull();
     }
 
     @Then("^the active version \"(.*)\" is displayed$")

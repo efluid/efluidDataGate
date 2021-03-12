@@ -388,7 +388,6 @@
 
 		const updateSelectItem = (index, selected, rollbacked) => {
 
-			console.log('should update');
 			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
 
 				// Reset 3 buttons
@@ -478,7 +477,6 @@
 		};
 
 		const getPageContent = (page) => {
-
 			$.ajax({
 				type: "POST",
 				url: "/ui/prepare/page/" + page,

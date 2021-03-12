@@ -13,6 +13,7 @@ import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
+import fr.uem.efluid.tools.RollbackConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.ErrorType;
@@ -96,6 +97,8 @@ public class PrepareIndexService extends AbstractApplicationService {
     @Autowired
     private TableLinkRepository links;
 
+    @Autowired
+    private RollbackConverter rollbackConverter;
 
     /**
      * <p>
@@ -113,9 +116,7 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param project
      */
     @Transactional(
-            isolation = Isolation.READ_UNCOMMITTED,
-            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER,
-            propagation = Propagation.NOT_SUPPORTED
+            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER
     )
     public void completeLocalDiff(
             PilotedCommitPreparation<PreparedIndexEntry> preparation,
@@ -173,6 +174,24 @@ public class PrepareIndexService extends AbstractApplicationService {
         }
     }
 
+    public void completeRevertDiff(
+            PilotedCommitPreparation<PreparedRevertIndexEntry> preparation,
+            DictionaryEntry entry) {
+
+        LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
+
+
+        this.indexes.findByCommitUuidAndDictionaryEntry(preparation.getCommitData().getRevertSourceCommitUuid(), entry)
+                .map(e -> PreparedRevertIndexEntry.fromEntityToRevert(e, this.rollbackConverter))
+                .peek(e -> e.setHrPayload(getConverter().convertToHrPayload(e.getPayload(), e.getPrevious())))
+                .forEach(preparation.getDiffContent()::add);
+
+        preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
+    }
+
     /**
      * <p>
      * Prepare the diff content, by extracting current content and building value to value
@@ -195,7 +214,7 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param entry       dictionaryEntry
      * @param lobs        for any extracted lobs
      * @param mergeDiff   imported merge diff
-     * @param project
+     * @param project     current corresponding project
      */
     @Transactional(
             isolation = Isolation.READ_UNCOMMITTED,
@@ -273,6 +292,9 @@ public class PrepareIndexService extends AbstractApplicationService {
             }
 
             preparation.incrementProcessStep();
+        } catch (Throwable e) {
+            LOGGER.warn("Unprocessed error on merge diff on table " + entry.getTableName() + " : " + e.getMessage(), e);
+            throw new ApplicationException(ErrorType.MERGE_FAILURE, "Unprocessed error on merge diff", e);
         }
     }
 

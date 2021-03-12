@@ -73,8 +73,7 @@ public class ModelDatabaseAccess {
 
         LOGGER.info("[MODEL-INIT] Setup wizard resulting data");
 
-        Project project = this.projects.save(initProject);
-        this.projects.flush();
+        Project project = addProject(initProject, addDomains);
 
         Set<Project> prefered = new HashSet<>();
         prefered.add(project);
@@ -89,11 +88,20 @@ public class ModelDatabaseAccess {
         this.holder.setWizzardUser(this.users.save(user));
         this.users.flush();
 
+    }
+
+    public Project addProject(Project proj, final List<FunctionalDomain> addDomains){
+
+        Project project = this.projects.save(proj);
+        this.projects.flush();
+
         addDomains.forEach(d -> {
             d.setProject(project);
             this.domains.save(d);
         });
         this.domains.flush();
+
+        return project;
     }
 
     /**
@@ -243,8 +251,8 @@ public class ModelDatabaseAccess {
         return this.projects.findByName(name);
     }
 
-    public Project getAllProjects() {
-        return this.projects.getAllProjects();
+    public List<Project> getAllProjects() {
+        return this.projects.findAll();
     }
 
     public Optional<TransformerDef> findTransformerDefByProjectAndNameAndType(Project pro, String name, Transformer<?, ?> tran) {

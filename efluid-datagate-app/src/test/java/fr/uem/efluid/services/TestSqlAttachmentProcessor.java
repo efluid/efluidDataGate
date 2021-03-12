@@ -1,9 +1,13 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.DataGenerationUtils.user;
-
-import java.util.UUID;
-
+import fr.uem.efluid.IntegrationTestConfig;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.stubs.TestUtils;
+import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.SqlAttachmentProcessor;
+import fr.uem.efluid.utils.DataGenerationUtils;
+import fr.uem.efluid.utils.FormatUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,87 +21,102 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.model.entities.AttachmentType;
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
+import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.tools.AttachmentProcessor;
-import fr.uem.efluid.tools.SqlAttachmentProcessor;
+import fr.uem.efluid.tools.*;
 import fr.uem.efluid.utils.FormatUtils;
+
+import java.util.UUID;
 
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @RunWith(SpringRunner.class)
-@DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
-@SpringBootTest(classes = { IntegrationTestConfig.class })
+@DirtiesContext(classMode = ClassMode.AFTER_CLASS)
+@SpringBootTest(classes = {IntegrationTestConfig.class})
 public class TestSqlAttachmentProcessor {
 
-	@Autowired
-	private JdbcTemplate managedSource;
+    @Autowired
+    private JdbcTemplate managedSource;
 
-	@Autowired
-	private ApplyHistoryEntryRepository history;
+    @Autowired
+    private CommitRepository commits;
 
-	private static final String SCRIPT = "-- Une requête quelconque\r\n" +
-			"SELECT * FROM " + TestUtils.SOURCE_TABLE_NAME + ";\r\n";
+    @Autowired
+    private ProjectRepository projects;
 
-	private static final String FORMATED = "<span class=\"sql-comment\">-- Une requête quelconque</span>\r<br/>" +
-			"SELECT * FROM " + TestUtils.SOURCE_TABLE_NAME + ";\r<br/>";
+    @Autowired
+    private VersionRepository versions;
 
-	@Test
-	public void testDisplay() {
+    @Autowired
+    private UserRepository users;
 
-		SqlAttachmentProcessor proc = new SqlAttachmentProcessor(this.managedSource, this.history);
-		AttachmentProcessor.Compliant comp = initComp();
+    @Autowired
+    private ApplyHistoryEntryRepository history;
 
-		String display = FormatUtils.toString(proc.display(comp));
+    private static final String SCRIPT = "-- Une requête quelconque\r\n" +
+            "SELECT * FROM " + TestUtils.SOURCE_TABLE_NAME + ";\r\n";
 
-		Assert.assertEquals(FORMATED, display);
-	}
+    private static final String FORMATED = "<span class=\"sql-comment\">-- Une requête quelconque</span>\r<br/>" +
+            "SELECT * FROM " + TestUtils.SOURCE_TABLE_NAME + ";\r<br/>";
 
-	@Test
-	public void testExecute() {
+    @Test
+    public void testDisplay() {
 
-		User user = user("testeur");
+        SqlAttachmentProcessor proc = new SqlAttachmentProcessor(this.managedSource, this.history);
+        AttachmentProcessor.Compliant comp = initComp();
 
-		SqlAttachmentProcessor proc = new SqlAttachmentProcessor(this.managedSource, this.history);
-		AttachmentProcessor.Compliant comp = initComp();
+        String display = FormatUtils.toString(proc.display(comp));
 
-		Assert.assertEquals(0, this.history.findAll().size());
+        Assert.assertEquals(FORMATED, display);
+    }
 
-		proc.execute(user, comp);
+    @Test
+    public void testExecute() {
 
-		Assert.assertEquals(1, this.history.findAll().size());
-	}
+        User user = this.users.save(DataGenerationUtils.user("test"));
+        Project pro = this.projects.save(DataGenerationUtils.project("demo"));
+        Version ver = this.versions.save(DataGenerationUtils.version("V1", pro));
 
-	private static AttachmentProcessor.Compliant initComp() {
+        Commit commit = this.commits.save(DataGenerationUtils.commit("commit1", user, 0, pro, ver));
 
-		return new AttachmentProcessor.Compliant() {
+        SqlAttachmentProcessor proc = new SqlAttachmentProcessor(this.managedSource, this.history);
+        AttachmentProcessor.Compliant comp = initComp();
 
-			@Override
-			public UUID getUuid() {
-				return null;
-			}
+        Assert.assertEquals(0, this.history.findAll().size());
 
-			@Override
-			public String getName() {
-				return "script.sql";
-			}
+        proc.execute(user, comp, commit);
 
-			@Override
-			public byte[] getData() {
-				return FormatUtils.toBytes(SCRIPT);
-			}
+        Assert.assertEquals(1, this.history.findAll().size());
+    }
 
-			@Override
-			public AttachmentType getType() {
-				return AttachmentType.SQL_FILE;
-			}
+    private static AttachmentProcessor.Compliant initComp() {
 
-		};
-	}
+        return new AttachmentProcessor.Compliant() {
+
+            @Override
+            public UUID getUuid() {
+                return null;
+            }
+
+            @Override
+            public String getName() {
+                return "script.sql";
+            }
+
+            @Override
+            public byte[] getData() {
+                return FormatUtils.toBytes(SCRIPT);
+            }
+
+            @Override
+            public AttachmentType getType() {
+                return AttachmentType.SQL_FILE;
+            }
+
+        };
+    }
 }

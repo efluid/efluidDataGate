@@ -52,7 +52,11 @@ public final class DatasourceUtils {
 
 			// Prepare pool configuration and other params
 			kc.setTransactionIsolation(TRANSACTION_ISOLATION);
-			kc.setAutoCommit(true);
+			kc.setAutoCommit(false);
+			
+			// In case of active connection not recycled, enable this to check where they are used
+			// kc.setLeakDetectionThreshold(5000);
+			
 			kc.setConnectionInitSql(params.getConnectionTestQuery());
 			kc.setConnectionTestQuery(params.getConnectionTestQuery());
 			kc.setConnectionTimeout(1000 * params.getTimeout());
