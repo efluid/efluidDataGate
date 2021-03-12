@@ -3,6 +3,7 @@ package fr.uem.efluid.tools;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.utils.ApplicationException;
@@ -13,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -23,8 +24,15 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * Model for transformation of imported data : allows to update at merge some value to complete
+ * them regarding some source-specified business rules.
+ * <p>
+ * THIS BREAK THE GIT PARADIGM : data processed at destination can be DIFFERENT from data on source.
+ * The transformation allows for example to complete some missing properties, or to add some configuration
+ * values which are related to destination environment
+ *
  * @author elecomte
- * @version 1
+ * @version 2
  * @since v0.3.0
  */
 public abstract class Transformer<C extends Transformer.TransformerConfig, R extends Transformer.TransformerRunner<C>> {
@@ -135,7 +143,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
                     List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
 
                     // Apply transform
-                    runner.accept(extracted);
+                    runner.accept(l.getAction(), extracted);
 
                     if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
                         LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on DictionaryEntry table \"{}\" :\n{}",
@@ -233,7 +241,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      * <p>Runner filter "lines" to process and apply to values</p>
      */
     public static abstract class TransformerRunner<C extends Transformer.TransformerConfig>
-            implements Predicate<PreparedIndexEntry>, Consumer<List<Value>> {
+            implements Predicate<PreparedIndexEntry>, BiConsumer<IndexAction, List<Value>> {
 
         protected final C config;
 

@@ -113,9 +113,7 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param project
      */
     @Transactional(
-            isolation = Isolation.READ_UNCOMMITTED,
-            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER,
-            propagation = Propagation.NOT_SUPPORTED
+            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER
     )
     public void completeLocalDiff(
             PilotedCommitPreparation<PreparedIndexEntry> preparation,
@@ -292,6 +290,9 @@ public class PrepareIndexService extends AbstractApplicationService {
             }
 
             preparation.incrementProcessStep();
+        } catch (Throwable e) {
+            LOGGER.warn("Unprocessed error on merge diff on table " + entry.getTableName() + " : " + e.getMessage(), e);
+            throw new ApplicationException(ErrorType.MERGE_FAILURE, "Unprocessed error on merge diff", e);
         }
     }
 

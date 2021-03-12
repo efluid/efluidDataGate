@@ -2,12 +2,10 @@ package fr.uem.efluid.model.repositories;
 
 import static fr.uem.efluid.utils.RuntimeValuesUtils.dbRawToUuid;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import fr.uem.efluid.model.entities.TableLink;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -36,6 +34,8 @@ public interface TableMappingRepository extends JpaRepository<TableMapping, UUID
 	List<TableMapping> findByDictionaryEntryDomain(FunctionalDomain domain);
 
 	List<TableMapping> findByDictionaryEntryDomainIn(List<FunctionalDomain> domains);
+
+	Optional<TableMapping> findByDictionaryEntryAndColumnFromAndTableToAndColumnToAndMapTable(DictionaryEntry dictionaryEntry, String columnFrom, String tableTo, String columnTo, String mapTable);
 
 	/**
 	 * <b><font color="red">Query for internal use only</font></b>

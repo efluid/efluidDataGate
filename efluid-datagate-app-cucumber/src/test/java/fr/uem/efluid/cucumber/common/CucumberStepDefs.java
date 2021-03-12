@@ -25,6 +25,8 @@ import junit.framework.AssertionFailedError;
 import org.assertj.core.api.ObjectAssert;
 import org.junit.runner.RunWith;
 import org.pac4j.core.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -61,11 +63,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 public abstract class CucumberStepDefs {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(CucumberStepDefs.class);
+
     private static final String DEFAULT_USER = "any";
 
     private static final String DEFAULT_PROJECT = "Default";
 
-    private static final String DEFAULT_DOMAIN = "Test domain";
+    protected static final String DEFAULT_DOMAIN = "Test domain";
 
     private static final String DEFAULT_VERSION = "vDefault";
 
@@ -166,6 +170,9 @@ public abstract class CucumberStepDefs {
     @Autowired
     protected ManagedValueConverter valueConverter;
 
+    @Autowired
+    protected DictionaryManagementService dictService;
+
     /**
      * <p>
      * Entry point for backlog database (preloaded queries ...)
@@ -208,6 +215,28 @@ public abstract class CucumberStepDefs {
         FunctionalDomain newDomain = initDefaultDomain(newProject);
 
         modelDatabase().initWizardData(user, newProject, Collections.singletonList(newDomain));
+
+        this.dets.completeWizard();
+    }
+
+    /**
+     *
+     */
+    protected void initMinimalWizzardData(List<String> projects) {
+
+        resetAsyncProcess();
+        resetDatabaseIdentifier();
+
+        User user = initDefaultUser();
+        Project newProject = project(projects.get(0));
+        FunctionalDomain newDomain = initDefaultDomain(newProject);
+
+        modelDatabase().initWizardData(user, newProject, Collections.singletonList(newDomain));
+
+        for (int i = 1; i < projects.size(); i++) {
+            newDomain = initDefaultDomain(newProject);
+            modelDatabase().addProject(project(projects.get(i)), Collections.singletonList(newDomain));
+        }
 
         this.dets.completeWizard();
     }
@@ -408,6 +437,21 @@ public abstract class CucumberStepDefs {
             }
         } else {
             assertThat(ex.getMessage()).contains(expected);
+        }
+    }
+
+    /**
+     * Output for a specified error (from exception message / payload)
+     */
+    protected static void outputErrorMessageContent() {
+        Exception ex = currentException != null ? currentException : currentAction.andReturn().getResolvedException();
+        assertThat(ex).describedAs("An error message was not returned by the application").isNotNull();
+
+        if (ex instanceof ApplicationException) {
+            ApplicationException apx = (ApplicationException) ex;
+            LOGGER.warn("Get ApplicationException : " + apx.getMessage() + "\" / payload=\"" + (apx.getPayload() != null ? apx.getPayload() : "N/A") + "\"", apx);
+        } else {
+            LOGGER.warn("Get standard exception " + ex.getMessage(), ex);
         }
     }
 
@@ -898,7 +942,7 @@ public abstract class CucumberStepDefs {
         return DataGenerationUtils.project(project);
     }
 
-    protected UUID getSavedCommitUuid(){
+    protected UUID getSavedCommitUuid() {
 
         assertRequestWasOk();
 
@@ -1248,8 +1292,8 @@ public abstract class CucumberStepDefs {
 
     }
 
-    protected static void startProfiling(){
-        if(profiler != null){
+    protected static void startProfiling() {
+        if (profiler != null) {
             profiler.stop();
         }
 
@@ -1257,7 +1301,7 @@ public abstract class CucumberStepDefs {
         profiler.start();
     }
 
-    protected static List<BasicProfiler.Stats> stopProfilingAndGetStats(){
+    protected static List<BasicProfiler.Stats> stopProfilingAndGetStats() {
         profiler.stop();
         return profiler.getValues();
     }
@@ -1403,7 +1447,7 @@ public abstract class CucumberStepDefs {
             return this.values;
         }
 
-       public static class Stats {
+        public static class Stats {
 
             private final Long free;
             private final Long max;

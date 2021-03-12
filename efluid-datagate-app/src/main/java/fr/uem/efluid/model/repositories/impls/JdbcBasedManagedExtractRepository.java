@@ -208,10 +208,14 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         try {
             DataSource ds = Objects.requireNonNull(this.managedSource.getDataSource());
             Connection con = ds.getConnection();
-            con.beginRequest();
-            Statement stmt = con.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            return new JdbcExtraction(ds, con, stmt, rs, extractor.extractData(rs));
+            try {
+                con.beginRequest();
+                Statement stmt = con.createStatement();
+                ResultSet rs = stmt.executeQuery(sql);
+                return new JdbcExtraction(ds, con, stmt, rs, extractor.extractData(rs));
+            } finally {
+                con.endRequest();
+            }
         } catch (SQLException ex) {
             throw new ApplicationException(ErrorType.EXTRACTION_ERROR, ex);
         }
@@ -607,7 +611,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
         private final Stream<ContentLine> stream;
         private final ResultSet rs;
         private final Statement stmt;
-        private final Connection con;
+        private Connection con;
         private final DataSource ds;
 
         /**

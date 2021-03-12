@@ -33,7 +33,7 @@ datagate-efluid:
    security:
        salt: 12345678901234567890123456789012
        accounting: DATABASE
-       technical-user-token: TEST_TOKEN_TEST
+       technical-user-token: technical-token
 
    details:
        version: TEST

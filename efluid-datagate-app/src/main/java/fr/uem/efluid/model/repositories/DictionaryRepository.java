@@ -3,6 +3,7 @@ package fr.uem.efluid.model.repositories;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,8 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry,  UU
 	List<UUID> findUsedIds();
 
 	DictionaryEntry findByTableName(String tableName);
+
+	Optional<DictionaryEntry> findByTableNameAndDomain(String tableName, FunctionalDomain domain);
 
 	List<DictionaryEntry> findByDomain(FunctionalDomain domain);
 

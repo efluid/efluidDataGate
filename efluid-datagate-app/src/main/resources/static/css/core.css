@@ -935,3 +935,7 @@ li {
 #validator-input, #input-empty {
     color: red;
 }
+
+.disabled-message {
+    color: #DDD;
+}

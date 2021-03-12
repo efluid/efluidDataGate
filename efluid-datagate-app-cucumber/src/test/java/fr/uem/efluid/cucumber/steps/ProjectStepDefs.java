@@ -8,12 +8,12 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static org.junit.Assert.*;
-
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 public class ProjectStepDefs extends CucumberStepDefs {
     private static List<String> specifiedProjects;
@@ -24,14 +24,11 @@ public class ProjectStepDefs extends CucumberStepDefs {
     public void the_existing_projects(String projectRaw) throws Throwable {
         List<String> projects = Stream.of(projectRaw.split(", ")).collect(Collectors.toList());
 
-        initMinimalWizzardData();
+        initMinimalWizzardData(projects);
 
         implicitlyAuthenticatedAndOnPage("projects page");
 
-        modelDatabase().getAllProjects();
-
         specifiedProjects = projects;
-
     }
 
     @When("^the user change the name of project \"(.*)\" to \"(.*)\"")
@@ -50,6 +47,11 @@ public class ProjectStepDefs extends CucumberStepDefs {
         assertEquals(name, this.projects.findByName(name).getName());
     }
 
+    @Then("^the projects \"(.*)\" exist$")
+    public void exist_projects(String projectRaw) {
+        List<String> projects = Stream.of(projectRaw.split(", ")).collect(Collectors.toList());
+        projects.forEach(p -> assertThat(this.projects.findByName(p)).isNotNull());
+    }
 
 
 }

@@ -1,7 +1,10 @@
 package fr.uem.efluid.cucumber.steps;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.uem.efluid.model.entities.Project;
+import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
+import fr.uem.efluid.services.types.ProjectData;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
@@ -14,11 +17,9 @@ import fr.uem.efluid.cucumber.stubs.ManagedDatabaseAccess;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +34,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Ignore // Means it will be ignored by junit start, but will be used by cucumber
 @SuppressWarnings("unchecked")
 public class TableStepDefs extends CucumberStepDefs {
+
+    @Autowired
+    private DictionaryRepository dicts;
 
     private static List<String> specifiedTables;
 
@@ -70,6 +74,19 @@ public class TableStepDefs extends CucumberStepDefs {
     public void existing_parameter_table(String table) throws Throwable {
         // Init one table in dict
         initDictionaryForDefaultVersionWithTables(getDefaultDomainFromCurrentProject(), getCurrentUserProject(), table);
+    }
+
+    @Given("^the parameter table for managed tables \"(.*)\" already exists in project \"(.*)\"$")
+    public void existing_parameter_table_in_project(String tableRaw, String projectName) throws Throwable {
+
+        Optional<ProjectData> found = this.projectMgmt.getAllProjects().stream().filter(p -> p.getName().equals(projectName)).findFirst();
+
+        assertThat(found).isPresent();
+
+        Project project = new Project(found.get().getUuid());
+
+        // Init one table in dict
+        initDictionaryForDefaultVersionWithTables(modelDatabase().findDomainByProjectAndName(project, DEFAULT_DOMAIN), project, tableRaw.split(", "));
     }
 
     @Given("^the parameter table for managed table \"(.*)\" is specified with filter clause \"(.*)\"$")
@@ -289,5 +306,25 @@ public class TableStepDefs extends CucumberStepDefs {
                 linePos++;
             }
         }
+    }
+
+    @Then("^these parameter tables are specified :$")
+    public void table_exist(DataTable data) {
+
+        var expected = data.asMaps();
+
+        var existings = this.dicts.findAll();
+
+        assertThat(expected).hasSize(existings.size());
+
+        expected.forEach(t -> {
+            var found = existings.stream().filter(d -> d.getTableName().equals(t.get("table name"))).findFirst();
+
+            assertThat(found).describedAs("Existing table with name " + t.get("table name")).isPresent();
+            assertThat(found.get().getSelectClause()).describedAs("Select clause for table with name " + t.get("table name")).isEqualTo(t.get("select clause"));
+            assertThat(found.get().getDomain().getProject().getName()).describedAs("Project for table with name " + t.get("table name")).isEqualTo(t.get("project"));
+        });
+
+
     }
 }
