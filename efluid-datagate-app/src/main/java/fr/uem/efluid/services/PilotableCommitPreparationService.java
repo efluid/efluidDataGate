@@ -773,9 +773,6 @@ public class PilotableCommitPreparationService {
 
         current.setStatus(PilotedCommitStatus.ROLLBACK_APPLIED);
 
-        // Reset cached diff values, if any, for further uses
-        this.diffService.resetDiffCaches();
-
         // Drop preparation (if not done yet)
         completeCommitPreparation();
 

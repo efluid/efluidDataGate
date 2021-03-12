@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
  * @version 1
  * @since v2.0.17
  */
-@Transactional
 @Repository
 public class IndexBasedKnewContentRepository implements KnewContentRepository {
 

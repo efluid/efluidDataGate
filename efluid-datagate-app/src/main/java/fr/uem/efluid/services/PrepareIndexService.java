@@ -216,11 +216,6 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param mergeDiff   imported merge diff
      * @param project     current corresponding project
      */
-    @Transactional(
-            isolation = Isolation.READ_UNCOMMITTED,
-            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER,
-            propagation = Propagation.NOT_SUPPORTED
-    )
     public void completeMergeDiff(
             PilotedCommitPreparation<PreparedMergeIndexEntry> preparation,
             DictionaryEntry entry,
