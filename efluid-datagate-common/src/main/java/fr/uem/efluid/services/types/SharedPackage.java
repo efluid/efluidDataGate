@@ -1,15 +1,14 @@
 package fr.uem.efluid.services.types;
 
+import fr.uem.efluid.model.Shared;
+
 import java.lang.ref.Cleaner;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import fr.uem.efluid.model.Shared;
 
 /**
  * Stream compliant package definition for export or import of every <tt>Shared</tt> content

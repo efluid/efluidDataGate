@@ -4,6 +4,7 @@ import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
+import fr.uem.efluid.services.types.PreparedRevertIndexEntry;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,7 +16,12 @@ public class TweakedPreparationUpdater implements PilotableCommitPreparationServ
 
     @Override
     public void completeForDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation, UUID projectUUID) {
+        // Nothing
+    }
 
+    @Override
+    public void completeForRevert(PilotedCommitPreparation<PreparedRevertIndexEntry> preparation, UUID projectUUID) {
+        // Nothing
     }
 
     @Override

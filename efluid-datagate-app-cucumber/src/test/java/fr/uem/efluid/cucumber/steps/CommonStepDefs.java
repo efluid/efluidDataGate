@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -87,13 +89,43 @@ public class CommonStepDefs extends CucumberStepDefs {
         modelDatabase().dropVersionsAfter(getCurrentUserProject(), version);
     }
 
+    @Given("^the user accesses to the destination environment without dictionary$")
+    public void user_witch_environment_empty_dic() {
+
+        // Drop all indexes + Test tables datas
+        backlogDatabase().dropBacklog();
+        managedDatabase().dropManaged();
+        this.prep.cancelCommitPreparation();
+
+        // But reset versions after a specified one
+        modelDatabase().dropModel();
+    }
+
+    @Given("^the user accesses to the destination environment with only \"(.*)\" empty project$")
+    public void user_witch_environment_project_dic(String projectName) {
+
+        // Drop all indexes + Test tables datas
+        backlogDatabase().dropBacklog();
+        managedDatabase().dropManaged();
+        this.prep.cancelCommitPreparation();
+
+        // But reset versions after a specified one
+        modelDatabase().dropModel();
+
+        // Create project(s)
+        List<String> projects = Stream.of(projectName).collect(Collectors.toList());
+
+        initMinimalWizzardData(projects);
+    }
+
+
     @Given("^ldap auth is enabled with search at \"(.*)\", with login attr \"(.*)\" and email attr \"(.*)\" and this content :$")
     public void ldap_is_specified(String searchBase, String loginAttribute, String mailAttribute, DocString config) {
         enableLdap(config.getContent(), searchBase, loginAttribute, mailAttribute);
     }
 
     @Given("^the profiling is started$")
-    public void profiling(){
+    public void profiling() {
         startupTime = System.currentTimeMillis();
         startProfiling();
     }
@@ -158,7 +190,7 @@ public class CommonStepDefs extends CucumberStepDefs {
     public void existing_data_in_managed_table(int count, String name, DataTable data) {
 
         // Variation depends on large test size
-        if(specifiedVariation != null){
+        if (specifiedVariation != null) {
             specifiedVariation = specifiedVariation + " - " + count + " items";
         }
 
@@ -235,13 +267,16 @@ public class CommonStepDefs extends CucumberStepDefs {
         implicitlyAuthenticatedAndOnPage(page);
     }
 
-    @SuppressWarnings("ThrowableNotThrown")
     @Then("^an error is provided with this message :$")
     public void error_message(DocString message) {
         assertErrorMessageContent(message.getContent().trim());
     }
 
-    @SuppressWarnings("ThrowableNotThrown")
+    @Then("^log the error$")
+    public void log_error_message() {
+        outputErrorMessageContent();
+    }
+
     @Then("^an error of type (.*) is provided with this message :$")
     public void error_message(String type, DocString message) {
         assertErrorMessageType(type);
@@ -274,7 +309,7 @@ public class CommonStepDefs extends CucumberStepDefs {
     }
 
     @Then("^the request is a success$")
-    public void success_request(){
+    public void success_request() {
         assertRequestWasOk();
     }
 

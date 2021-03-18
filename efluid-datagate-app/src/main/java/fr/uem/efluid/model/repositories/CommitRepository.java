@@ -1,33 +1,29 @@
 package fr.uem.efluid.model.repositories;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import fr.uem.efluid.model.entities.Commit;
-import fr.uem.efluid.model.entities.Project;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public interface CommitRepository extends JpaRepository<Commit, UUID> {
 
-	@Query("select c from Commit c, Commit a where a.uuid = :uuid and c.createdTime >= a.uuid and c.project.uuid = :projectUuid")
-	List<Commit> findAllAfterSpecifiedCommitUUID(@Param("uuid") UUID uuid, UUID projectUuid);
+    List<Commit> findByProject(Project project);
 
-	List<Commit> findByProject(Project project);
+    @Query("select count(c) from Commit c where c.version.uuid = :versionUuid")
+    long countCommitsForVersion(@Param("versionUuid") UUID versionUuid);
 
-	@Query("select count(c) from Commit c where c.version.uuid = :versionUuid")
-	long countCommitsForVersion(@Param("versionUuid") UUID versionUuid);
-
-	@Query("select max(c.importedTime) from Commit c")
-	LocalDateTime findLastImportedCommitTime();
-
+    @Query(value = "select c.uuid from Commit c " +
+            "where c.createdTime = " +
+            "   (select max(cc.createdTime) from Commit cc where cc.project.uuid = :projectUuid) " +
+            "and c.state <> fr.uem.efluid.model.entities.CommitState.REVERT and c.project.uuid = :projectUuid")
+    UUID findRevertableCommitUuid(@Param("projectUuid") UUID projectUuid);
 }

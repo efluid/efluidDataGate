@@ -106,7 +106,8 @@ public class ApplicationException extends RuntimeException {
      */
     @Override
     public String getMessage() {
-        return "[" + this.getError().name() + "-" + this.getTimestamp() + "]" + (super.getMessage() != null ? " " + super.getMessage() : "");
+        return "[" + this.getError().name() + "-" + this.getTimestamp() + "]" + (super.getMessage() != null ? " " + super.getMessage() : "")
+                + (this.payload != null ? " - Payload = " + this.payload : "");
     }
 
 }

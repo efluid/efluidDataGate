@@ -13,6 +13,7 @@ import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.MergeResolutionProcessor;
+import fr.uem.efluid.tools.RollbackConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.ErrorType;
@@ -21,8 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -58,7 +57,7 @@ import static fr.uem.efluid.services.types.DiffRemark.RemarkType.MISSING_ON_UNCH
  * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 @Service
@@ -96,6 +95,8 @@ public class PrepareIndexService extends AbstractApplicationService {
     @Autowired
     private TableLinkRepository links;
 
+    @Autowired
+    private RollbackConverter rollbackConverter;
 
     /**
      * <p>
@@ -113,9 +114,7 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param project
      */
     @Transactional(
-            isolation = Isolation.READ_UNCOMMITTED,
-            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER,
-            propagation = Propagation.NOT_SUPPORTED
+            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER
     )
     public void completeLocalDiff(
             PilotedCommitPreparation<PreparedIndexEntry> preparation,
@@ -174,6 +173,29 @@ public class PrepareIndexService extends AbstractApplicationService {
     }
 
     /**
+     * Prepare data for a revert preparation on one table
+     *
+     * @param preparation current preparation
+     * @param entry       processing table
+     */
+    public void completeRevertDiff(
+            PilotedCommitPreparation<PreparedRevertIndexEntry> preparation,
+            DictionaryEntry entry) {
+
+        LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
+
+        this.indexes.findByCommitUuidAndDictionaryEntry(preparation.getCommitData().getRevertSourceCommitUuid(), entry)
+                .map(e -> PreparedRevertIndexEntry.fromEntityToRevert(e, this.rollbackConverter))
+                .peek(e -> e.setHrPayload(getConverter().convertToHrPayload(e.getPayload(), e.getPrevious())))
+                .forEach(preparation.getDiffContent()::add);
+
+        preparation.getReferencedTables().put(entry.getUuid(), DictionaryEntrySummary.fromEntity(entry, "?"));
+
+        // Intermediate step for better percent process
+        preparation.incrementProcessStep();
+    }
+
+    /**
      * <p>
      * Prepare the diff content, by extracting current content and building value to value
      * diff regarding the actual index content
@@ -195,13 +217,8 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param entry       dictionaryEntry
      * @param lobs        for any extracted lobs
      * @param mergeDiff   imported merge diff
-     * @param project
+     * @param project     current corresponding project
      */
-    @Transactional(
-            isolation = Isolation.READ_UNCOMMITTED,
-            transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER,
-            propagation = Propagation.NOT_SUPPORTED
-    )
     public void completeMergeDiff(
             PilotedCommitPreparation<PreparedMergeIndexEntry> preparation,
             DictionaryEntry entry,
@@ -224,13 +241,12 @@ public class PrepareIndexService extends AbstractApplicationService {
         // Will be populated from extraction
         final Map<String, String> actualContent = new HashMap<>();
 
-        // Identify the last knew previous for lines without changes (used for merged item build)
-
         preparation.incrementProcessStep();
 
         // Get actual content
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 
+        // Identify the last knew previous for lines without changes (used for merged item build)
         try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
             // Process actual content in stream
@@ -273,6 +289,9 @@ public class PrepareIndexService extends AbstractApplicationService {
             }
 
             preparation.incrementProcessStep();
+        } catch (Throwable e) {
+            LOGGER.warn("Unprocessed error on merge diff on table " + entry.getTableName() + " : " + e.getMessage(), e);
+            throw new ApplicationException(ErrorType.MERGE_FAILURE, "Unprocessed error on merge diff", e);
         }
     }
 
@@ -296,7 +315,7 @@ public class PrepareIndexService extends AbstractApplicationService {
 
     /**
      * <p>
-     * Utilitary fonction to complete given index entries with their respective HR Payload
+     * Utils function to complete given index entries with their respective HR Payload
      * for user friendly rendering. Provides the completed rendering list in return, as
      * some display process may require to combine contents when they are similar. In this
      * case they are provided as SimilarPreparedIndexEntry
@@ -403,7 +422,6 @@ public class PrepareIndexService extends AbstractApplicationService {
                     lob.setData(lobs.get(h));
                     return lob;
                 }).collect(Collectors.toList());
-
     }
 
     /**
@@ -643,7 +661,6 @@ public class PrepareIndexService extends AbstractApplicationService {
         return entry;
     }
 
-
     /**
      * @param dict
      * @param mines
@@ -769,6 +786,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 throw new ApplicationException(ErrorType.MERGE_FAILURE, t);
             }
         }
+        buff.reset();
     }
 
     /**
@@ -872,7 +890,6 @@ public class PrepareIndexService extends AbstractApplicationService {
         }
     }
 
-
     /**
      * A simplified buffer of the content processed for merge generation.
      * Holds each <tt>ContentLine</tt> and process them each time the "buffer" is completed
@@ -906,7 +923,6 @@ public class PrepareIndexService extends AbstractApplicationService {
         Collection<String> extractKeys() {
             return this.content.keySet();
         }
-
 
     }
 

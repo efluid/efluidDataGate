@@ -1,47 +1,21 @@
 package fr.uem.efluid.stubs;
 
-import static fr.uem.efluid.utils.DataGenerationUtils.commit;
-import static fr.uem.efluid.utils.DataGenerationUtils.domain;
-import static fr.uem.efluid.utils.DataGenerationUtils.entry;
-import static fr.uem.efluid.utils.DataGenerationUtils.link;
-import static fr.uem.efluid.utils.DataGenerationUtils.project;
-import static fr.uem.efluid.utils.DataGenerationUtils.user;
-import static fr.uem.efluid.utils.DataGenerationUtils.version;
+import static fr.uem.efluid.utils.DataGenerationUtils.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
 import javax.annotation.PostConstruct;
 import javax.transaction.*;
 
 import org.junit.Assert;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.model.entities.Commit;
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.FunctionalDomain;
-import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.IndexEntry;
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.entities.Version;
-import fr.uem.efluid.model.repositories.CommitRepository;
-import fr.uem.efluid.model.repositories.DictionaryRepository;
-import fr.uem.efluid.model.repositories.FunctionalDomainRepository;
-import fr.uem.efluid.model.repositories.IndexRepository;
-import fr.uem.efluid.model.repositories.ProjectRepository;
-import fr.uem.efluid.model.repositories.TableLinkRepository;
-import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.model.repositories.VersionRepository;
+import fr.uem.efluid.*;
+import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -115,6 +89,7 @@ public class TestDataLoader {
      * @param updateName
      */
     public void setupDatabaseForUpdate(String updateName) {
+        commits.deleteAll();
         setupSourceDatabaseForUpdate(updateName);
         setupDictionaryForUpdate();
     }
@@ -461,5 +436,15 @@ public class TestDataLoader {
         user.setSelectedProject(pro);
         this.users.save(user);
         this.users.flush();
+    }
+
+    public Commit initCommit() {
+        commits.deleteAll();
+
+        Project project = projects.findByName("Default");
+        Version version = versions.getLastVersionForProject(project);
+        Commit commit = commits.save(commit("Lot de test", users.getOne("testeur"), 15, project, version));
+        commits.flush();
+        return commit;
     }
 }

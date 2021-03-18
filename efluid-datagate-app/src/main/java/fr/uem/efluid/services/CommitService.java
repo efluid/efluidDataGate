@@ -6,6 +6,7 @@ import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.RollbackConverter;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
@@ -107,6 +108,12 @@ public class CommitService extends AbstractApplicationService {
     @Autowired
     private VersionContentChangesGenerator changesGenerator;
 
+    @Autowired
+    private RollbackConverter rollbackConverter;
+
+    /**
+     *
+     */
     public CommitExportEditData initCommitExport(CommitExportEditData.CommitSelectType type, UUID commitUUID) {
 
         this.projectService.assertCurrentUserHasSelectedProject();
@@ -519,6 +526,18 @@ public class CommitService extends AbstractApplicationService {
         return completeCommitIndexForProjectDict(this.indexes.findByCommitUuid(commitUuid), referencedTables, true);
     }
 
+    /**
+     * Only last commit can be reverted if not reverted yet and
+     * if it is not a reverted commit, check if can revert
+     */
+    public UUID getRevertCompliantCommit() {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        // "Revertable" is last one if not a revert
+        return this.commits.findRevertableCommitUuid(project.getUuid());
+    }
 
     /**
      * @param encodedLobHash
@@ -554,11 +573,11 @@ public class CommitService extends AbstractApplicationService {
      * </p>
      */
     void applyExclusionsFromLocalCommit(
-            PilotedCommitPreparation<?> prepared) {
+            PilotedCommitPreparation<?> prepared, Commit commit) {
 
         LOGGER.debug("Process preparation of rollback from prepared commit, if any");
 
-        List<RollbackLine> rollbacked = prepared
+        List<DiffLine> rollbacked = prepared
                 .streamDiffContentMappedToDictionaryEntryUuid()
                 .flatMap(e -> toDiffRollbacks(e.getValue()))
                 .collect(Collectors.toList());
@@ -568,7 +587,7 @@ public class CommitService extends AbstractApplicationService {
             LOGGER.info("In current commit preparation, a total of {} rollback entries were identified and are going to be applied",
                     rollbacked.size());
 
-            this.applyDiffService.rollbackDiff(rollbacked, prepared.getDiffLobs());
+            this.applyDiffService.applyDiff(rollbacked, prepared.getDiffLobs(), commit, ApplyType.ROLLBACK);
         }
     }
 
@@ -582,8 +601,7 @@ public class CommitService extends AbstractApplicationService {
      *                 preparation
      * @return created commit uuid
      */
-    UUID saveAndApplyPreparedCommit(
-            PilotedCommitPreparation<?> prepared) {
+    UUID saveAndApplyPreparedCommit(PilotedCommitPreparation<?> prepared) {
 
         LOGGER.debug("Process apply and saving of a new commit with state {} into project {}", prepared.getPreparingState(),
                 prepared.getProjectUuid());
@@ -621,11 +639,24 @@ public class CommitService extends AbstractApplicationService {
         newLobs.forEach(l -> l.setCommit(commit));
         this.lobs.saveAll(newLobs);
 
+        // Immediately store commit
+        this.commits.save(commit);
+
+        // For revert : keep revert source and
+        if (prepared.getPreparingState() == CommitState.REVERT) {
+            LOGGER.info("Processing revert commit {} : now apply all {} modifications prepared from source commit",
+                    commit.getUuid(), entries.size());
+
+            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit, ApplyType.REVERT);
+            LOGGER.debug("Processing revert commit {} : diff applied with success", commit.getUuid());
+        }
+
         // For merge : apply (will rollback previous steps if error found)
-        if (prepared.getPreparingState() == CommitState.MERGED) {
+        else if (prepared.getPreparingState() == CommitState.MERGED) {
+
             LOGGER.info("Processing merge commit {} : now apply all {} modifications prepared from imported values",
                     commit.getUuid(), entries.size());
-            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs());
+            this.applyDiffService.applyDiff(entries, prepared.getDiffLobs(), commit, ApplyType.IMPORT);
             LOGGER.debug("Processing merge commit {} : diff applied with success", commit.getUuid());
 
             // And execute attachments if needed
@@ -645,7 +676,7 @@ public class CommitService extends AbstractApplicationService {
                     // needed
                     runnableAtts.forEach(a -> {
                         AttachmentProcessor proc = this.attachProcs.getFor(a);
-                        proc.execute(user, a);
+                        proc.execute(user, a, commit);
                         LOGGER.debug("Processing merge commit {} : attachements {} executed with success",
                                 commit.getUuid(), a.getName());
                     });
@@ -661,10 +692,6 @@ public class CommitService extends AbstractApplicationService {
         LOGGER.info("Commit {} saved with {} items and {} lobs", commit.getUuid(), entries.size(), newLobs.size());
 
         return commit.getUuid();
-    }
-
-    LocalDateTime getLastImportedCommitTime() {
-        return this.commits.findLastImportedCommitTime();
     }
 
     /**
@@ -847,8 +874,7 @@ public class CommitService extends AbstractApplicationService {
 
         // #5 Abort if any check error exist
         if (errorMessages.size() > 0) {
-            throw new ApplicationException(
-                    MERGE_DICT_NOT_COMPATIBLE,
+            throw new ApplicationException(MERGE_DICT_NOT_COMPATIBLE,
                     "Import cannot be processed as some compatibility issues have been identified",
                     String.join(",\n", errorMessages));
         }
@@ -933,7 +959,7 @@ public class CommitService extends AbstractApplicationService {
      * @param diffContent
      * @return
      */
-    private Stream<RollbackLine> toDiffRollbacks(Collection<? extends PreparedIndexEntry> diffContent) {
+    private Stream<DiffLine> toDiffRollbacks(Collection<? extends PreparedIndexEntry> diffContent) {
 
         // Split combined lines and convert to rollbacks
         return diffContent.stream()
@@ -946,7 +972,7 @@ public class CommitService extends AbstractApplicationService {
                         return Stream.of(l);
                     }
                 })
-                .map(RollbackLine::new)
+                .map(this.rollbackConverter::toRollbackLine)
                 ;
     }
 

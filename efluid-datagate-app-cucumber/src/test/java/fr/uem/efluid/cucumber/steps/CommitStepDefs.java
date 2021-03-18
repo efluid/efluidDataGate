@@ -53,6 +53,21 @@ public class CommitStepDefs extends CucumberStepDefs {
         currentSearch.getSorts().put(criteria, value);
     }
 
+    @When("^the user ask for a revert of commit \"(.*)\"$")
+    public void when_revert(String name) throws Exception {
+
+        UUID revertable = getCurrentSpecifiedProperty("revertableCommit", UUID.class);
+
+        Optional<CommitEditData> found = getCurrentSpecifiedPropertyList("commits", CommitEditData.class).stream()
+                .filter(c -> c.getComment().equals(name)).findFirst();
+
+        assertThat(revertable).isNotNull();
+        assertThat(found).isPresent();
+        assertThat(found.get().getUuid()).isEqualTo(revertable);
+
+        get(getCorrespondingLinkForPageName("revert commit page") + "/{uuid}", revertable);
+    }
+
     @Then("^the commit \"(.*)\" is added to commit list for current project$")
     public void then_commit_is_added_with_comment(String comment) {
         CommitDetails commit = getSavedCommit();
@@ -214,5 +229,18 @@ public class CommitStepDefs extends CucumberStepDefs {
     public void commit_detail_size(int size) {
         CommitDetails details = getCurrentSpecifiedProperty("details", CommitDetails.class);
         assertThat(details.getIndexSize()).isEqualTo(size);
+    }
+
+    @Then("^a revert commit can be created only for commit \"(.*)\"$")
+    public void can_revert(String name) {
+
+        UUID revertable = getCurrentSpecifiedProperty("revertableCommit", UUID.class);
+
+        Optional<CommitEditData> found = getCurrentSpecifiedPropertyList("commits", CommitEditData.class).stream()
+                .filter(c -> c.getComment().equals(name)).findFirst();
+
+        assertThat(revertable).isNotNull();
+        assertThat(found).isPresent();
+        assertThat(found.get().getUuid()).isEqualTo(revertable);
     }
 }

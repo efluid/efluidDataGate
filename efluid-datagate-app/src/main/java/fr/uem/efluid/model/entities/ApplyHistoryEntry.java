@@ -1,6 +1,7 @@
 package fr.uem.efluid.model.entities;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
 /**
@@ -20,13 +21,18 @@ public class ApplyHistoryEntry {
 	@GeneratedValue
 	private Long id;
 
-	private boolean rollback;
+	@NotNull
+	@Enumerated(EnumType.STRING)
+	private ApplyType type;
 
 	@Lob
 	private String query;
 
 	@ManyToOne(optional = false)
 	private User user;
+
+	@ManyToOne
+	private Commit commit;
 
 	private Long timestamp;
 
@@ -65,19 +71,12 @@ public class ApplyHistoryEntry {
 		this.id = id;
 	}
 
-	/**
-	 * @return the rollback
-	 */
-	public boolean isRollback() {
-		return this.rollback;
+	public ApplyType getType() {
+		return type;
 	}
 
-	/**
-	 * @param rollback
-	 *            the rollback to set
-	 */
-	public void setRollback(boolean rollback) {
-		this.rollback = rollback;
+	public void setType(ApplyType type) {
+		this.type = type;
 	}
 
 	/**
@@ -108,6 +107,21 @@ public class ApplyHistoryEntry {
 	 */
 	public void setUser(User user) {
 		this.user = user;
+	}
+
+	/**
+	 * @return the commit
+	 */
+	public Commit getCommit() {
+		return this.commit;
+	}
+
+	/**
+	 * @param commit
+	 *            the commit to set
+	 */
+	public void setCommit(Commit commit) {
+		this.commit = commit;
 	}
 
 	/**
@@ -154,5 +168,4 @@ public class ApplyHistoryEntry {
 	public void setProjectUuid(UUID projectId) {
 		this.projectUuid = projectId;
 	}
-
 }

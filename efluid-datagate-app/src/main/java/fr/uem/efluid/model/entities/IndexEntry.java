@@ -11,8 +11,6 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
-import static javax.persistence.GenerationType.SEQUENCE;
-
 /**
  * <p>
  * Define one line in the index/backlog. Associated to one dictionaryEntry (defining the
@@ -33,8 +31,7 @@ import static javax.persistence.GenerationType.SEQUENCE;
 public class IndexEntry implements DiffLine, Shared {
 
     @Id
-    @GeneratedValue(strategy = SEQUENCE, generator = "CUST_SEQ")
-    @SequenceGenerator(name = "CUST_SEQ", sequenceName = "idx_seq", initialValue = 1, allocationSize = 100)
+    @GeneratedValue
     private Long id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)

@@ -1,287 +1,292 @@
 package fr.uem.efluid.services.types;
 
+import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.model.entities.CommitState;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
-import fr.uem.efluid.model.entities.*;
 
 /**
  * <p>
  * To identify the commit currently processing in a merge process
  * </p>
- * 
+ *
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public class CommitEditData {
 
-	private UUID uuid;
+    private UUID uuid;
 
-	private String hash;
+    private String hash;
 
-	private String originalUserEmail;
+    private String originalUserEmail;
 
-	private String comment;
+    private String comment;
 
-	private CommitState state;
-	
-	private LocalDateTime createdTime;
+    private CommitState state;
 
-	private LocalDateTime importedTime;
+    private LocalDateTime createdTime;
 
-	private List<UUID> mergeSources;
+    private LocalDateTime importedTime;
 
-	private String domainNames;
+    private List<UUID> mergeSources;
 
-	private LocalDateTime rangeStartTime;
+    private String domainNames;
 
-	private String versionName;
+    private LocalDateTime rangeStartTime;
 
-	private String versionModelId;
+    private String versionName;
 
-	private List<AttachmentLine> attachments;
-	
-	/**
-	 * 
-	 */
-	public CommitEditData() {
-		super();
-	}
+    private String versionModelId;
 
-	/**
-	 * @return the uuid
-	 */
-	public UUID getUuid() {
-		return this.uuid;
-	}
+    private List<AttachmentLine> attachments;
 
-	/**
-	 * @param uuid
-	 *            the uuid to set
-	 */
-	public void setUuid(UUID uuid) {
-		this.uuid = uuid;
-	}
+    private UUID revertSourceCommitUuid;
 
-	/**
-	 * @return the domainNames
-	 */
-	public String getDomainNames() {
-		return this.domainNames;
-	}
+    /**
+     *
+     */
+    public CommitEditData() {
+        super();
+    }
 
-	/**
-	 * @param domainNames
-	 *            the domainNames to set
-	 */
-	public void setDomainNames(String domainNames) {
-		this.domainNames = domainNames;
-	}
+    /**
+     * @return the uuid
+     */
+    public UUID getUuid() {
+        return this.uuid;
+    }
 
-	/**
-	 * @return the hash
-	 */
-	public String getHash() {
-		return this.hash;
-	}
+    /**
+     * @param uuid the uuid to set
+     */
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
 
-	/**
-	 * @param hash
-	 *            the hash to set
-	 */
-	public void setHash(String hash) {
-		this.hash = hash;
-	}
+    /**
+     * @return the domainNames
+     */
+    public String getDomainNames() {
+        return this.domainNames;
+    }
 
-	/**
-	 * @return the originalUserEmail
-	 */
-	public String getOriginalUserEmail() {
-		return this.originalUserEmail;
-	}
+    public UUID getRevertSourceCommitUuid() {
+        return revertSourceCommitUuid;
+    }
 
-	/**
-	 * @param originalUserEmail
-	 *            the originalUserEmail to set
-	 */
-	public void setOriginalUserEmail(String originalUserEmail) {
-		this.originalUserEmail = originalUserEmail;
-	}
+    public void setRevertSourceCommitUuid(UUID revertSourceCommitUuid) {
+        this.revertSourceCommitUuid = revertSourceCommitUuid;
+    }
 
-	/**
-	 * @return the state
-	 */
-	public CommitState getState() {
-		return this.state;
-	}
+    /**
+     * @param domainNames the domainNames to set
+     */
+    public void setDomainNames(String domainNames) {
+        this.domainNames = domainNames;
+    }
 
-	/**
-	 * @param state
-	 *            the state to set
-	 */
-	public void setState(CommitState state) {
-		this.state = state;
-	}
+    /**
+     * @return the hash
+     */
+    public String getHash() {
+        return this.hash;
+    }
 
-	/**
-	 * @return the comment
-	 */
-	public String getComment() {
-		return this.comment;
-	}
+    /**
+     * @param hash the hash to set
+     */
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
 
-	/**
-	 * @param comment
-	 *            the comment to set
-	 */
-	public void setComment(String comment) {
-		this.comment = comment;
-	}
+    /**
+     * @return the originalUserEmail
+     */
+    public String getOriginalUserEmail() {
+        return this.originalUserEmail;
+    }
 
-	/**
-	 * @return the createdTime
-	 */
-	public LocalDateTime getCreatedTime() {
-		return this.createdTime;
-	}
+    /**
+     * @param originalUserEmail the originalUserEmail to set
+     */
+    public void setOriginalUserEmail(String originalUserEmail) {
+        this.originalUserEmail = originalUserEmail;
+    }
 
-	/**
-	 * @param createdTime
-	 *            the createdTime to set
-	 */
-	public void setCreatedTime(LocalDateTime createdTime) {
-		this.createdTime = createdTime;
-	}
+    /**
+     * @return the state
+     */
+    public CommitState getState() {
+        return this.state;
+    }
 
-	/**
-	 * @return the importedTime
-	 */
-	public LocalDateTime getImportedTime() {
-		return this.importedTime;
-	}
+    /**
+     * @param state the state to set
+     */
+    public void setState(CommitState state) {
+        this.state = state;
+    }
 
-	/**
-	 * @param importedTime
-	 *            the importedTime to set
-	 */
-	public void setImportedTime(LocalDateTime importedTime) {
-		this.importedTime = importedTime;
-	}
+    /**
+     * @return the comment
+     */
+    public String getComment() {
+        return this.comment;
+    }
 
-	/**
-	 * @return
-	 */
-	public String getVersionName() {
-		return this.versionName;
-	}
+    /**
+     * @param comment the comment to set
+     */
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
 
-	/**
-	 * @param versionName
-	 */
-	public void setVersionName(String versionName) {
-		this.versionName = versionName;
-	}
+    /**
+     * @return the createdTime
+     */
+    public LocalDateTime getCreatedTime() {
+        return this.createdTime;
+    }
 
-	/**
-	 * @return the mergeSources
-	 */
-	public List<UUID> getMergeSources() {
-		return this.mergeSources;
-	}
+    /**
+     * @param createdTime the createdTime to set
+     */
+    public void setCreatedTime(LocalDateTime createdTime) {
+        this.createdTime = createdTime;
+    }
 
-	/**
-	 * @param mergeSources
-	 *            the mergeSources to set
-	 */
-	public void setMergeSources(List<UUID> mergeSources) {
-		this.mergeSources = mergeSources;
-	}
+    /**
+     * @return the importedTime
+     */
+    public LocalDateTime getImportedTime() {
+        return this.importedTime;
+    }
 
-	/**
-	 * @return the rangeStartTime
-	 */
-	public LocalDateTime getRangeStartTime() {
-		return this.rangeStartTime;
-	}
+    /**
+     * @param importedTime the importedTime to set
+     */
+    public void setImportedTime(LocalDateTime importedTime) {
+        this.importedTime = importedTime;
+    }
 
-	/**
-	 * @param rangeStartTime
-	 *            the rangeStartTime to set
-	 */
-	public void setRangeStartTime(LocalDateTime rangeStartTime) {
-		this.rangeStartTime = rangeStartTime;
-	}
+    /**
+     * @return
+     */
+    public String getVersionName() {
+        return this.versionName;
+    }
 
-	/**
-	 * @return the versionModelId
-	 */
-	public String getVersionModelId() {
-		return this.versionModelId;
-	}
+    /**
+     * @param versionName
+     */
+    public void setVersionName(String versionName) {
+        this.versionName = versionName;
+    }
 
-	/**
-	 * @param versionModelId
-	 *            the versionModelId to set
-	 */
-	public void setVersionModelId(String versionModelId) {
-		this.versionModelId = versionModelId;
-	}
+    /**
+     * @return the mergeSources
+     */
+    public List<UUID> getMergeSources() {
+        return this.mergeSources;
+    }
 
-	/**
-	 * @return the attachments
-	 */
-	public List<AttachmentLine> getAttachments() {
-		return this.attachments;
-	}
+    /**
+     * @param mergeSources the mergeSources to set
+     */
+    public void setMergeSources(List<UUID> mergeSources) {
+        this.mergeSources = mergeSources;
+    }
 
-	/**
-	 * @param attachments
-	 *            the attachments to set
-	 */
-	public void setAttachments(List<AttachmentLine> attachments) {
-		this.attachments = attachments;
-	}
+    /**
+     * @return the rangeStartTime
+     */
+    public LocalDateTime getRangeStartTime() {
+        return this.rangeStartTime;
+    }
 
-	/**
-	 * @param commit
-	 * @return
-	 */
-	public static CommitEditData fromEntity(Commit commit) {
+    /**
+     * @param rangeStartTime the rangeStartTime to set
+     */
+    public void setRangeStartTime(LocalDateTime rangeStartTime) {
+        this.rangeStartTime = rangeStartTime;
+    }
 
-		CommitEditData edit = new CommitEditData();
+    /**
+     * @return the versionModelId
+     */
+    public String getVersionModelId() {
+        return this.versionModelId;
+    }
 
-		edit.setComment(commit.getComment());
-		edit.setCreatedTime(commit.getCreatedTime());
-		edit.setImportedTime(commit.getImportedTime());
-		edit.setState(commit.getState());
-		edit.setMergeSources(commit.getMergeSources());
-		edit.setOriginalUserEmail(commit.getOriginalUserEmail());
-		edit.setUuid(commit.getUuid());
-		edit.setVersionName(commit.getVersion().getName());
-		edit.setVersionModelId(commit.getVersion().getModelIdentity());
+    /**
+     * @param versionModelId the versionModelId to set
+     */
+    public void setVersionModelId(String versionModelId) {
+        this.versionModelId = versionModelId;
+    }
 
-		return edit;
-	}
+    /**
+     * @return the attachments
+     */
+    public List<AttachmentLine> getAttachments() {
+        return this.attachments;
+    }
 
-	/**
-	 * @param edit
-	 * @return
-	 */
-	public static Commit toEntity(CommitEditData edit) {
+    /**
+     * @param attachments the attachments to set
+     */
+    public void setAttachments(List<AttachmentLine> attachments) {
+        this.attachments = attachments;
+    }
 
-		Commit commit = new Commit();
+    /**
+     * @param commit
+     * @return
+     */
+    public static CommitEditData fromEntity(Commit commit) {
 
-		commit.setComment(edit.getComment());
-		commit.setCreatedTime(edit.getCreatedTime());
-		commit.setImportedTime(edit.getImportedTime());
-		if (edit.getMergeSources() != null && edit.getMergeSources().size() > 0) {
-			commit.setMergeSources(edit.getMergeSources());
-		}
-		commit.setOriginalUserEmail(edit.getOriginalUserEmail());
-		commit.setUuid(edit.getUuid());
+        CommitEditData edit = new CommitEditData();
 
-		return commit;
-	}
+        edit.setComment(commit.getComment());
+        edit.setCreatedTime(commit.getCreatedTime());
+        edit.setImportedTime(commit.getImportedTime());
+        edit.setState(commit.getState());
+        edit.setMergeSources(commit.getMergeSources());
+        edit.setOriginalUserEmail(commit.getOriginalUserEmail());
+        edit.setUuid(commit.getUuid());
+        edit.setVersionName(commit.getVersion().getName());
+        edit.setVersionModelId(commit.getVersion().getModelIdentity());
+
+        if (commit.getRevertSource() != null) {
+            edit.setRevertSourceCommitUuid(commit.getRevertSource().getUuid());
+        }
+
+        return edit;
+    }
+
+    /**
+     * @param edit
+     * @return
+     */
+    public static Commit toEntity(CommitEditData edit) {
+
+        Commit commit = new Commit();
+
+        commit.setComment(edit.getComment());
+        commit.setCreatedTime(edit.getCreatedTime());
+        commit.setImportedTime(edit.getImportedTime());
+        if (edit.getMergeSources() != null && edit.getMergeSources().size() > 0) {
+            commit.setMergeSources(edit.getMergeSources());
+        }
+        commit.setOriginalUserEmail(edit.getOriginalUserEmail());
+        commit.setUuid(edit.getUuid());
+        if (edit.getRevertSourceCommitUuid() != null) {
+            commit.setRevertSource(new Commit(edit.getRevertSourceCommitUuid()));
+        }
+        return commit;
+    }
 }

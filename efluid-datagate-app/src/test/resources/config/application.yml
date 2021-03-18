@@ -29,6 +29,7 @@ datagate-efluid:
 
     security:
         salt: 12345678901234567890123456789012
+        technical-user-token: technical-token
 
     details:
         version: TEST
@@ -59,6 +60,8 @@ spring:
         show-sql: false
         hibernate:
             ddl-auto: create
+        properties:
+            hibernate.session_factory.interceptor: fr.uem.efluid.utils.jpa.HbmInStatementInterceptor
 
     flyway:
         enabled: false

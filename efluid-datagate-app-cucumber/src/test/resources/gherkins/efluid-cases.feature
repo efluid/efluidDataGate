@@ -33,10 +33,10 @@ Feature: A complete set of test case are specified for Efluid needs
       | mine       |        |                       |
       | resolution | ADD    | COL1:'testa insert 2' |
     And the merge commit content has these resolution details for table "TTEST1" on key "$testa_d" :
-      | Type       | Action | Payload             |
-      | their      | REMOVE |                     |
-      | mine       |     |  |
-      | resolution | REMOVE |                     |
+      | Type       | Action | Payload |
+      | their      | REMOVE |         |
+      | mine       |        |         |
+      | resolution | REMOVE |         |
     And the merge commit content is rendered with these identified changes :
       | Table  | Key       | Action | Payload                                   |
       | TTEST1 | $testa_d  | REMOVE |                                           |
@@ -733,8 +733,8 @@ Feature: A complete set of test case are specified for Efluid needs
   Scenario: The audit transformer apply generated audit data on specified values - simple
     Given the test is an Efluid standard scenario
     And the configured transformers for project "Default" :
-      | name  | type         | priority | configuration                                                                                        |
-      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":"bob"}} |
+      | name  | type         | priority | configuration                                                                                                                                           |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":{"value":"bob","onActions": ["ADD", "REMOVE", "UPDATE"]}}} |
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
       | id | value  | etatObjet    | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
       | 1  | INIT_1 | TODO_DELETED | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src     | admin_src          | admin_src      |
@@ -746,9 +746,9 @@ Feature: A complete set of test case are specified for Efluid needs
           "tablePattern":"T_EFLUID_TEST_AUDIT",
           "appliedKeyPatterns":[".*"],
           "appliedValueFilterPatterns":{"ETAT_OBJET":".*"},
-          "dateUpdates":{"DATE_.*":"2020-05-11"},
+          "dateUpdates":{"DATE_.*":{"value":"2020-05-11","onActions": ["ADD", "REMOVE", "UPDATE"]}},
           "actorUpdates":{
-            "ACTEUR_.*":"evt 154654"
+            "ACTEUR_.*":{"value":"evt 154654","onActions": ["ADD", "REMOVE", "UPDATE"]}
            }
       }
       """
@@ -768,8 +768,8 @@ Feature: A complete set of test case are specified for Efluid needs
   Scenario: The audit transformer apply generated audit data on specified values - complexe
     Given the test is an Efluid standard scenario
     And the configured transformers for project "Default" :
-      | name  | type         | priority | configuration                                                                                        |
-      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":"bob"}} |
+      | name  | type         | priority | configuration                                                                                                                                           |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":{"value":"bob","onActions": ["ADD", "REMOVE", "UPDATE"]}}} |
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
       | id       | value | etatObjet       | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
       | CHG_1    | 11    | TODO_DELETED    | 2018-02-17      | 2018-02-16       | 2018-02-15   | admin_del_src     | admin_src          | admin_src      |
@@ -787,11 +787,11 @@ Feature: A complete set of test case are specified for Efluid needs
           "tablePattern":"T_EFLUID_TEST_AUDIT",
           "appliedKeyPatterns":["CHG.*"],
           "appliedValueFilterPatterns":{"ETAT_OBJET":"TODO_.*"},
-          "dateUpdates":{"DATE_.*TION":"2020-05-11"},
+          "dateUpdates":{"DATE_.*TION":{"value":"2020-05-11","onActions": ["ADD", "REMOVE", "UPDATE"]}},
           "actorUpdates":{
-            "ACTEUR_SUPPRESSION":"evt SUPPR",
-            "ACTEUR_MODIFICATION":"evt MOD",
-            "ACTEUR_CREATION":"evt CRE"
+            "ACTEUR_SUPPRESSION":{"value":"evt SUPPR","onActions": ["ADD", "REMOVE", "UPDATE"]},
+            "ACTEUR_MODIFICATION":{"value":"evt MOD","onActions": ["ADD", "REMOVE", "UPDATE"]},
+            "ACTEUR_CREATION":{"value":"evt CRE","onActions": ["ADD", "REMOVE", "UPDATE"]}
            }
       }
       """
@@ -819,11 +819,194 @@ Feature: A complete set of test case are specified for Efluid needs
       | T_EFLUID_TEST_AUDIT | NO_CHG_3 | ADD    | true         | VALUE:'88', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:2018-02-17 00:00:00, DATE_MODIFICATION:2018-02-16 00:00:00, DATE_CREATION:2018-02-15 00:00:00, ACTEUR_SUPPRESSION:'admin_del_src2', ACTEUR_MODIFICATION:'admin_src2', ACTEUR_CREATION:'admin_src2'                       |
 
   @TestEfluidAuditTransformerRules
+  Scenario: The audit transformer apply generated audit data on specified values and actions - 1
+    Given the test is an Efluid standard scenario
+    And the configured transformers for project "Default" :
+      | name  | type         | priority | configuration                                                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
+      | id    | value | etatObjet   | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | CHG_1 | 11    | TODO_UPDATE |                 |                  |              |                   |                    |                |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "T_EFLUID_TEST_AUDIT" :
+      | change | id    | value | etatObjet   | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | update | CHG_1 | 11*   | TODO_UPDATE |                 |                  |              |                   |                    |                |
+      | add    | CHG_2 | 22    | TODO_ADD    |                 |                  |              |                   |                    |                |
+    And a new commit ":construction: Update 2" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 2" and this customization for transformer "Audit" :
+      """json
+      {
+          "tablePattern":"T_EFLUID_TEST_AUDIT",
+          "appliedKeyPatterns":[".*"],
+          "dateUpdates":{
+            "DATE_MODIFICATION":{"value":"2020-05-11","onActions": ["UPDATE"]},
+            "DATE_CREATION":{"value":"2020-05-22","onActions": ["ADD"]}
+          },
+          "actorUpdates":{
+            "ACTEUR_MODIFICATION":{"value":"evt MOD","onActions": ["UPDATE"]},
+            "ACTEUR_CREATION":{"value":"evt CRE","onActions": ["ADD"]}
+           }
+      }
+      """
+    And the user accesses to the destination environment with the same dictionary
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment :
+      | id    | value | etatObjet       | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | CHG_1 | 11    | TODO_UPDATE_CHG |                 |                  |              |                   |                    |                |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                               |
+      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | VALUE:'11'=>'11*', ETAT_OBJET:'TODO_UPDATE_CHG'=>'TODO_UPDATE', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                            |
+      | T_EFLUID_TEST_AUDIT | CHG_2 | ADD    | true         | VALUE:'22', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:2020-05-22 00:00:00, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'evt CRE' |
+
+  @TestEfluidAuditTransformerRules
+  Scenario: The audit transformer apply generated audit data on specified values and actions - 2
+    Given the test is an Efluid standard scenario
+    And the configured transformers for project "Default" :
+      | name  | type         | priority | configuration                                                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
+      | id    | value | etatObjet   | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | CHG_1 | 11    | TODO_UPDATE |                 |                  |              |                   |                    |                |
+      | CHG_2 | 22    | TODO_DELETE |                 |                  |              |                   |                    |                |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "T_EFLUID_TEST_AUDIT" :
+      | change | id    | value | etatObjet   | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | update | CHG_1 | 11*   | TODO_UPDATE |                 |                  |              |                   |                    |                |
+      | update | CHG_2 | 22    | DELETED     |                 |                  |              |                   |                    |                |
+      | add    | CHG_3 | 33    | TODO_ADD    |                 |                  |              |                   |                    |                |
+    And a new commit ":construction: Update 2" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 2" and this customization for transformer "Audit" :
+      """json
+      {
+          "tablePattern":"T_EFLUID_TEST_AUDIT",
+          "appliedKeyPatterns":[".*"],
+          "dateUpdates":{
+            "DATE_MODIFICATION":{"value":"2020-05-11","onActions": ["UPDATE"]},
+            "DATE_CREATION":{"value":"2020-05-22","onActions": ["ADD"]},
+            "DATE_SUPPRESSION":{"value":"2020-05-25", "onValues" : [
+              {
+                "columnPattern" : "ETAT_OBJET",
+                "valuePattern" : "DELETED"
+              }
+            ]}
+          },
+          "actorUpdates":{
+            "ACTEUR_MODIFICATION":{"value":"evt MOD","onActions": ["UPDATE"]},
+            "ACTEUR_CREATION":{"value":"evt CRE","onActions": ["ADD"]},
+            "ACTEUR_SUPPRESSION":{"value":"evt DEL", "onValues" : [
+              {
+                "columnPattern" : "ETAT_.*",
+                "valuePattern" : "DELETED"
+              }
+            ]}
+           }
+      }
+      """
+    And the user accesses to the destination environment with the same dictionary
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment :
+      | id    | value | etatObjet       | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | CHG_1 | 11    | TODO_UPDATE_CHG |                 |                  |              |                   |                    |                |
+      | CHG_2 | 22    | TODO_DELETE     |                 |                  |              |                   |                    |                |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                                   |
+      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | VALUE:'11'=>'11*', ETAT_OBJET:'TODO_UPDATE_CHG'=>'TODO_UPDATE', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                |
+      | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'TODO_DELETE'=>'DELETED', DATE_SUPPRESSION:=>2020-05-25 00:00:00, DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_SUPPRESSION:''=>'evt DEL', ACTEUR_MODIFICATION:''=>'evt MOD' |
+      | T_EFLUID_TEST_AUDIT | CHG_3 | ADD    | true         | VALUE:'33', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:2020-05-22 00:00:00, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'evt CRE'     |
+
+  @TestEfluidAuditTransformerRules
+  Scenario: The audit transformer apply generated audit data on specified values and actions - 3
+    Given the test is an Efluid standard scenario
+    And the configured transformers for project "Default" :
+      | name  | type         | priority | configuration                                                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
+      | id    | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | CHG_1 | 11    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_2 | 22    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_3 | 33    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_4 | 44    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_5 | 55    | INIT      |                 |                  |              |                   |                    |                |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "T_EFLUID_TEST_AUDIT" :
+      | change | id    | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | update | CHG_1 | 11    | STALE     |                 |                  |              |                   |                    |                |
+      | update | CHG_2 | 22    | MODIFIED  |                 |                  |              |                   |                    |                |
+      | update | CHG_3 | 33    | TESTED    |                 |                  |              |                   |                    |                |
+      | update | CHG_4 | 44    | DELETED   |                 |                  |              |                   |                    |                |
+      | update | CHG_5 | 55    | NOT_TEST  |                 |                  |              |                   |                    |                |
+      | add    | CHG_6 | 66    | INIT      |                 |                  |              |                   |                    |                |
+    And a new commit ":construction: Update 2" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 2" and this customization for transformer "Audit" :
+      """json
+      {
+          "tablePattern":"T_EFLUID_TEST_AUDIT",
+          "appliedKeyPatterns":[".*"],
+          "dateUpdates":{
+            "DATE_MODIFICATION":{"value":"2020-05-11", "onValues" : [
+              {
+                "columnPattern" : "ETAT.*",
+                "valuePattern" : "STALE"
+              },
+              {
+                "columnPattern" : "ETAT.*",
+                "valuePattern" : "MODIFIED"
+              },
+              {
+                "columnPattern" : "ETAT.*",
+                "valuePattern" : "^TEST.*$"
+              }
+            ]},
+            "DATE_CREATION":{"value":"2020-05-22", "onActions": ["ADD"]},
+            "DATE_SUPPRESSION":{"value":"2020-05-25", "onValues" : [
+              {
+                "columnPattern" : "ETAT_OBJET",
+                "valuePattern" : "DELETED"
+              }
+            ]}
+          },
+          "actorUpdates":{
+            "ACTEUR_MODIFICATION":{"value":"evt MOD", "onActions": ["UPDATE"]},
+            "ACTEUR_CREATION":{"value":"evt CRE", "onActions": ["ADD"]},
+            "ACTEUR_SUPPRESSION":{"value":"evt DEL", "onValues" : [
+              {
+                "columnPattern" : "ETAT_.*",
+                "valuePattern" : "^DEL.*"
+              }
+            ]}
+           }
+      }
+      """
+    And the user accesses to the destination environment with the same dictionary
+    And the existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment :
+      | id    | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
+      | CHG_1 | 11    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_2 | 22    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_3 | 33    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_4 | 44    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_5 | 55    | INIT      |                 |                  |              |                   |                    |                |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                               |
+      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | ETAT_OBJET:'INIT'=>'STALE', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                                |
+      | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'INIT'=>'MODIFIED', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                             |
+      | T_EFLUID_TEST_AUDIT | CHG_3 | UPDATE | true         | ETAT_OBJET:'INIT'=>'TESTED', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                               |
+      | T_EFLUID_TEST_AUDIT | CHG_4 | UPDATE | true         | ETAT_OBJET:'INIT'=>'DELETED', DATE_SUPPRESSION:=>2020-05-25 00:00:00, ACTEUR_SUPPRESSION:''=>'evt DEL', ACTEUR_MODIFICATION:''=>'evt MOD'                                             |
+      | T_EFLUID_TEST_AUDIT | CHG_5 | UPDATE | true         | ETAT_OBJET:'INIT'=>'NOT_TEST', ACTEUR_MODIFICATION:''=>'evt MOD'                                                                                                                      |
+      | T_EFLUID_TEST_AUDIT | CHG_6 | ADD    | true         | VALUE:'66', ETAT_OBJET:'INIT', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:2020-05-22 00:00:00, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'evt CRE' |
+
+  @TestEfluidAuditTransformerRules
   Scenario: The audit transformer apply generated audit data on specified values even when null - matcher out of scope
     Given the test is an Efluid standard scenario
     And the configured transformers for project "Default" :
-      | name  | type         | priority | configuration                                                                                        |
-      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":"bob"}} |
+      | name  | type         | priority | configuration                                                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
       | id | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
       | 1  | 1     |           |                 |                  |              |                   |                    |                |
@@ -838,14 +1021,14 @@ Feature: A complete set of test case are specified for Efluid needs
               "ETAT_OBJET" : "0"
           },
           "dateUpdates" : {
-              "DATE_SUPPRESSION" : "current_date",
-              "DATE_MODIFICATION" : "current_date",
-              "DATE_CREATION" : "current_date"
+              "DATE_SUPPRESSION" : {"value":"current_date","onActions": ["ADD", "REMOVE", "UPDATE"]},
+              "DATE_MODIFICATION" : {"value":"current_date","onActions": ["ADD", "REMOVE", "UPDATE"]},
+              "DATE_CREATION" : {"value":"current_date","onActions": ["ADD", "REMOVE", "UPDATE"]}
           },
           "actorUpdates" : {
-              "ACTEUR_MODIFICATION" : "evt 12345",
-              "ACTEUR_CREATION" : "evt 67890",
-              "ACTEUR_SUPPRESSION" : "evt 295556"
+              "ACTEUR_MODIFICATION" : {"value":"evt 12345","onActions": ["ADD", "REMOVE", "UPDATE"]},
+              "ACTEUR_CREATION" : {"value":"evt 67890","onActions": ["ADD", "REMOVE", "UPDATE"]},
+              "ACTEUR_SUPPRESSION" : {"value":"evt 295556","onActions": ["ADD", "REMOVE", "UPDATE"]}
           }
       }
       """
@@ -862,8 +1045,8 @@ Feature: A complete set of test case are specified for Efluid needs
   Scenario: The audit transformer apply generated audit data on specified values even when null - correct matcher
     Given the test is an Efluid standard scenario
     And the configured transformers for project "Default" :
-      | name  | type         | priority | configuration                                                                                        |
-      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR.*":"bob"}} |
+      | name  | type         | priority | configuration                                                                                                                        |
+      | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
       | id | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
       | 1  | 1     |           |                 |                  |              |                   |                    |                |
@@ -875,14 +1058,14 @@ Feature: A complete set of test case are specified for Efluid needs
           "tablePattern" : ".*",
           "appliedKeyPatterns" : [ ".*" ],
           "dateUpdates" : {
-              "DATE_SUPPRESSION" : "current_date",
-              "DATE_MODIFICATION" : "current_date",
-              "DATE_CREATION" : "current_date"
+              "DATE_SUPPRESSION" : {"value":"current_date","onActions": ["ADD", "REMOVE", "UPDATE"]},
+              "DATE_MODIFICATION" : {"value":"current_date","onActions": ["ADD", "REMOVE", "UPDATE"]},
+              "DATE_CREATION" : {"value":"current_date","onActions": ["ADD", "REMOVE", "UPDATE"]}
           },
           "actorUpdates" : {
-              "ACTEUR_MODIFICATION" : "evt 12345",
-              "ACTEUR_CREATION" : "evt 67890",
-              "ACTEUR_SUPPRESSION" : "evt 295556"
+              "ACTEUR_MODIFICATION" : {"value":"evt 12345","onActions": ["ADD", "REMOVE", "UPDATE"]},
+              "ACTEUR_CREATION" : {"value":"evt 67890","onActions": ["ADD", "REMOVE", "UPDATE"]},
+              "ACTEUR_SUPPRESSION" : {"value":"evt 295556","onActions": ["ADD", "REMOVE", "UPDATE"]}
           }
       }
       """

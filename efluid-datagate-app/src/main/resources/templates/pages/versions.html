@@ -20,106 +20,86 @@
         <div th:if="!${canCreateVersion}" class="alert alert-danger" role="alert">
             <strong>Aucune nouvelle version ne peut être ajoutée actuellement.</strong> La version du modèle de l'application doit être auparavant mise à jour.
         </div>
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th scope="col" width="35%">Versions</th>
-                    <th scope="col" th:if="!${noVersionName}">App. Modèle</th>
-                    <th scope="col">Création</th>
-                    <th scope="col">Dernière maj</th>
-                    <th scope="col" width="25%">&nbsp;</th>
-                </tr>
-            </thead>
-            <tbody>
-				<tr th:if="${versions.empty}">
-					<td colspan="100%" class="empty-list-message">Aucune version</td>
-				</tr>
-                <tr th:each="version : ${versions}" th:id="${version.uuid}">
-                     <td class="version-name" th:text="${version.name}" name="${version.name}">
-                     	1.2.5-SNAPSHOT
-                     </td>
-                     <td th:if="!${noVersionName}" th:text="${version.modelId}">1.2.3</td>
-                     <td th:text="${custom.format(version.createdTime)}">Lundi</td>
-                     <td id="updatedTime" th:class="${version.name}" th:text="${custom.format(version.updatedTime)}">Mardi</td>
-                     <td>
-                         <span class="float-right">
-                            <button th:if="${version.canUpdate}" th:id="${version.name}" class="updateButton btn btn-success btn-sm">Mettre à jour</button>
-                            <button th:if="!${ dictionaryManagementService.isVersionLinkedToLot(version.uuid) }" class="deleteButton btn btn-danger btn-sm" style="margin-left:10px;">Supprimer</button>
-                            <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm" style="margin-left:10px;">Comparer</a>
-                         </span>
-                     </td>
-			     </tr>
-                <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
-                 <td colspan="3">
-                     <input type="text" id="versionName" class="form-control" placeholder="Nom" required="true"/>
-                     <p id="input-empty" style="display: none">Veuillez saisir un nom de projet</p>
-                 </td>
-                    <td colspan="4"><button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button></td>
-                <tr><td th:if="${noVersionName}" colspan="2"><strong><span th:if="${modelDesc != null}" class="float-right" th:text="|Ajouter une nouvelle version pour le modèle de l'application actuel (${modelDesc.identity})|">Model</span></strong></td></tr>
-                </tr>
-			</tbody>
-		</table>
+		<form action="#" th:action="@{/ui/versions}" id="setForm" method="post">
+            <input type="hidden" name="name" id="targetName"/>
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th scope="col" width="35%">Versions</th>
+                        <th scope="col" th:if="!${noVersionName}">App. Modèle</th>
+                        <th scope="col">Création</th>
+                        <th scope="col">Dernière maj</th>
+                        <th scope="col" width="25%">&nbsp;</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${versions.empty}">
+                        <td colspan="100%" class="empty-list-message">Aucune version</td>
+                    </tr>
+                    <tr th:each="version : ${versions}" th:id="${version.uuid}">
+                        <td class="version-name" th:text="${version.name}" name="${version.name}">
+                            1.2.5-SNAPSHOT
+                        </td>
+                        <td th:if="!${noVersionName}" th:text="${version.modelId}">1.2.3</td>
+                        <td th:text="${custom.format(version.createdTime)}">Lundi</td>
+                        <td id="updatedTime" th:class="${version.name}" th:text="${custom.format(version.updatedTime)}">Mardi</td>
+                        <td>
+                            <span class="float-right">
+                                <input th:if="${version.canUpdate}" type="hidden" id="updateName" th:value="${version.name}"/>
+                                <button id="updateButton" th:if="${version.canUpdate}" class="updateButton btn btn-success btn-sm">Mettre à jour</button>
+                                <a th:if="!${ dictionaryManagementService.isVersionLinkedToLot(version.uuid) }" th:href="@{/ui/versions/remove/{id}(id=${version.uuid})}" class="deleteButton btn btn-danger btn-sm" style="margin-left:10px;">Supprimer</a>
+                                <a th:if="${!version.currentVersion && version.canCompare}" href="#" th:href="@{/ui/versions/compare/{name}(name=${version.name})}" class="btn btn-primary btn-sm" style="margin-left:10px;">Comparer</a>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
+                        <td colspan="4" th:if="${!noVersionName}">
+                            <input type="text" id="versionName" class="form-control" placeholder="Nom"/>
+                            <p id="input-empty" style="display: none">Veuillez saisir un nom de projet</p>
+                        </td>
+                        <td colspan="3" th:if="${noVersionName}">
+                            <strong><span th:if="${modelDesc != null}" class="float-right" th:text="|Ajouter une nouvelle version pour le modèle de l'application actuel (${modelDesc.identity})|">Model</span></strong>
+                        </td>
+                        <td>
+                            <button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button>
+                        </td>
+                    </tr>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
         <div id="modal" style="display: none" th:insert="~{components/modal :: modal}"></div>
     </span>
 <script layout:fragment="script" th:inline="javascript">
 
 		var noVersionName = /*[[${noVersionName}]]*/ false;
+		var updateType = /*[[${updateType}]]*/ "none";
 
 		$('#color-nav-1').css("font-weight", "bold");
 		$('#collapseExample1').css("display", "block");
 		$('#li-1').css("font-weight", "bolder");
 
-		// Add row button
 		const addButtonAction = () => {
 			hideDisplays();
 			var name = $("#versionName").val();
 
-			if(name == null || name === ''){
-                    setInvalid("#versionName","Le nom de la version est obligatoire");
+			if(!noVersionName && (name == null || name === '')){
+                setInvalid("#versionName","Le nom de la version est obligatoire");
             } else {
-                $.post("/ui/versions/" + name, null, (data, status) => {
-				showSuccess("Version ajoutée avec succès");
-				// Remove other update buttons
-
-				if(noVersionName) {
-                    var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
-                    $("#versionListInjectBefore").before(newVersionRow);
-                    $("#versionListInjectBefore").remove(); // Cannot add more
-				} else {
-                    var newVersionRow = '<tr id="' + data.name + '"><td class="version-name">' + data.name + '</td><td>' + data.modelId + '</td><td>A l\'instant</td><td>A l\'instant</td><td><button class="updateButton btn btn-success btn-sm float-right">Mettre à jour</button></td></tr>';
-                    $("#versionListInjectBefore").before(newVersionRow);
-				}
-
-                $(".empty-list-message").remove();
-                $("#versRemark").remove();
-
-                window.location.replace("/ui/versions");
-
-		        });
+			    $("#targetName").val(name);
+			    $("#setForm").submit();
             }
-
 		};
 
-		// Update row button
-		const updateButtonAction = (versionName) => {
-			$.post("/ui/versions/" + versionName, null, (data, status) => {
-			    showSuccess("Version mise à jour avec succès");
-				$('td#updatedTime.' + versionName).load(location.href + " #updatedTime." + versionName);
-		    });
-		};
+        const updateButtonAction = () => {
+            hideDisplays();
+            var name = $("#updateName").val();
+            console.log("update " + name);
+            $("#targetName").val(name);
+            $("#setForm").submit();
+        };
 
-		// Delete a  version if it has no lots
-		const deleteButtonAction = (versionId) => {
-		    $('#modal').css("display","block");
-		    $("#submitDelete").on("click",() => {
-		        $.post("/ui/versions/remove/" + versionId, null, (data, status) => {
-		            $('#modal').css("display","none");
-		            window.location.replace("/ui/versions");
-		        });
-		    });
-		}
-
-		//Hide modal
+		// Hide modal
 		const cancelButton = () => {
 		    $('#modal').css("display","none");
 		}
@@ -139,11 +119,19 @@
 
     	// Init actions
     	$(document).ready(() => {
-			$("#addButton").click(addButtonAction);
+			$("#addButton").click(addButtonAction).attr("disabled", true);
+			$("#updateButton").click(updateButtonAction);
 			$("#cancelDelete").click(cancelButton);
-			$("button.updateButton").click((e) => updateButtonAction(e.target.id));
 			$("button.deleteButton").click((e) => deleteButtonAction(e.target.parentElement.parentElement.parentElement.id));
 			$("#versionName").keyup(e => { checkInputEmpty(e) });
+
+			if(updateType === "update"){
+                showSuccess("Version mise à jour avec succès");
+            } else if(updateType === "create"){
+                showSuccess("Nouvelle version créée avec succès");
+            } else if(updateType === "delete"){
+                showSuccess("Version supprimée avec succès");
+            }
 		});
     </script>
 </body>
