@@ -153,17 +153,18 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     default Map<String, DiffPayloads> findDiffPayloadsForDictionaryEntryAndBufferBefore(String dictionaryEntryUuid, Collection<String> keys, long pivot) {
         Map<String, DiffPayloads> result = new HashMap<>();
 
-        _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(dictionaryEntryUuid, keys, pivot).forEach(
-                l -> {
-                    if (l[0] != null) {
-                        String key = l[0].toString();
-                        // Internal convert of both payloads to managed string - would fail if content > 2^32 bits
-                        Clob payload = (Clob) l[1];
-                        Clob previous = (Clob) l[2];
-                        result.put(key, new ProjectedDiffPayloads(key, clobToString(payload, 1024), clobToString(previous, 512)));
-                    }
-                }
-        );
+        Lists.partition(new ArrayList<>(keys), 999).forEach(
+                i -> _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(dictionaryEntryUuid, i, pivot).forEach(
+                        l -> {
+                            if (l[0] != null) {
+                                String key = l[0].toString();
+                                // Internal convert of both payloads to managed string - would fail if content > 2^32 bits
+                                Clob payload = (Clob) l[1];
+                                Clob previous = (Clob) l[2];
+                                result.put(key, new ProjectedDiffPayloads(key, clobToString(payload, 1024), clobToString(previous, 512)));
+                            }
+                        }
+                ));
 
         return result;
     }
@@ -177,8 +178,11 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      */
     default Map<String, String> findRegeneratedContentForDictionaryEntryAndBufferBefore(UUID dictionaryEntryUuid, Collection<String> keys, long pivotTime) {
         Map<String, String> result = new HashMap<>(keys.size());
-        _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(dictionaryEntryUuid.toString(), keys, pivotTime)
-                .forEach(projectionAsContentMap(result));
+
+        Lists.partition(new ArrayList<>(keys), 999).forEach(
+                i -> _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(dictionaryEntryUuid.toString(), i, pivotTime)
+                        .forEach(projectionAsContentMap(result)));
+
         return result;
     }
 
