@@ -925,28 +925,28 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // #1st The functional domains (used by other)
         List<FunctionalDomain> importedDomains = packages.stream()
                 .filter(p -> p.getClass() == FunctionalDomainPackage.class)
-                .flatMap(p -> ((FunctionalDomainPackage) p).streamContent())
+                .flatMap(p -> ((FunctionalDomainPackage) p).content())
                 .map(d -> importDomainInProject(d, project, newDomainsCount, substituteDomains))
                 .collect(Collectors.toList());
 
         // #2rd The dictionary (referencing domains)
         List<DictionaryEntry> importedDicts = packages.stream()
                 .filter(p -> p.getClass() == DictionaryPackage.class)
-                .flatMap(p -> ((DictionaryPackage) p).streamContent())
+                .flatMap(p -> ((DictionaryPackage) p).content())
                 .map(d -> importDictionaryEntryInDomains(d, newDictCount, substituteDomains, substituteTables))
                 .collect(Collectors.toList());
 
         // #4th The links (referencing dictionary entries)
         List<TableLink> importedLinks = packages.stream()
                 .filter(p -> p.getClass() == TableLinkPackage.class)
-                .flatMap(p -> ((TableLinkPackage) p).streamContent())
+                .flatMap(p -> ((TableLinkPackage) p).content())
                 .map(d -> importTableLinkInTable(d, newLinksCount, substituteTables))
                 .collect(Collectors.toList());
 
         // #5th The mappings (referencing dictionary entries)
         List<TableMapping> importedMappings = packages.stream()
                 .filter(p -> p.getClass() == TableMappingPackage.class)
-                .flatMap(p -> ((TableMappingPackage) p).streamContent())
+                .flatMap(p -> ((TableMappingPackage) p).content())
                 .map(d -> importTableMappingInTable(d, newMappingsCount, substituteTables))
                 .collect(Collectors.toList());
 
