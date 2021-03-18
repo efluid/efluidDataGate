@@ -6,6 +6,7 @@ import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.RollbackConverter;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
@@ -27,20 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import fr.uem.efluid.model.DiffLine;
-import org.slf4j.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.data.domain.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.metas.ManagedModelDescription;
-import fr.uem.efluid.model.repositories.*;
-import fr.uem.efluid.services.types.*;
-import fr.uem.efluid.tools.*;
-import fr.uem.efluid.utils.*;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * <p>
@@ -886,8 +874,7 @@ public class CommitService extends AbstractApplicationService {
 
         // #5 Abort if any check error exist
         if (errorMessages.size() > 0) {
-            throw new ApplicationException(
-                    MERGE_DICT_NOT_COMPATIBLE,
+            throw new ApplicationException(MERGE_DICT_NOT_COMPATIBLE,
                     "Import cannot be processed as some compatibility issues have been identified",
                     String.join(",\n", errorMessages));
         }
