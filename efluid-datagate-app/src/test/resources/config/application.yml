@@ -60,6 +60,8 @@ spring:
         show-sql: false
         hibernate:
             ddl-auto: create
+        properties:
+            hibernate.session_factory.interceptor: fr.uem.efluid.utils.jpa.HbmInStatementInterceptor
 
     flyway:
         enabled: false
