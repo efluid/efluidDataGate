@@ -35,7 +35,7 @@ public abstract class SharedPackage<T extends Shared> implements Cleaner.Cleanab
      * @param name
      * @param exportDate
      */
-    protected SharedPackage(String name, LocalDateTime exportDate, boolean repeatableContent) {
+    protected SharedPackage(String name, LocalDateTime exportDate) {
         super();
         this.name = name;
         this.exportDate = exportDate;
