@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1042,8 +1041,9 @@ public class PilotableCommitPreparationService {
      * @param dict
      * @return
      */
-    private Callable<Void> callDiff(final PilotedCommitPreparation<PreparedIndexEntry> current, DictionaryEntry
-            dict) {
+    private Callable<Void> callDiff(
+            final PilotedCommitPreparation<PreparedIndexEntry> current,
+            DictionaryEntry dict) {
 
         return () -> {
             // Controle if table not yet specified
@@ -1071,8 +1071,9 @@ public class PilotableCommitPreparationService {
      * @param dict
      * @return
      */
-    private Callable<Void> callRevert(final PilotedCommitPreparation<PreparedRevertIndexEntry> current, DictionaryEntry
-            dict) {
+    private Callable<Void> callRevert(
+            final PilotedCommitPreparation<PreparedRevertIndexEntry> current,
+            DictionaryEntry dict) {
 
         return () -> {
             // Controle if table not yet specified

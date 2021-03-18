@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public class ExportImportService extends ExportService {
 					.filter(p -> p.getFileName().toString().endsWith(FILE_PCKG_EXT))
 					.map(ExportImportService::readFile)
 					.map(s -> readPackage(uncompressPath, s))
-					.filter(i -> i != null)
+					.filter(Objects::nonNull)
 					.collect(Collectors.toList());
 
 		} catch (IOException e) {
@@ -160,7 +161,7 @@ public class ExportImportService extends ExportService {
 	 */
 	private static String readFile(Path path) {
 		try {
-			return new String(Files.readAllBytes(path), CHARSET);
+			return Files.readString(path, CHARSET);
 		} catch (IOException e) {
 			throw new ApplicationException(IMPORT_WRONG_READ, "Cannot read file " + path, e);
 		}
