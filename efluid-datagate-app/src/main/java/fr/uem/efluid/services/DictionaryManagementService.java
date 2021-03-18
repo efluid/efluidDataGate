@@ -1151,11 +1151,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
                     importedMappings.size() - newMappingsCount.get(), 0);
         }
 
-        if (importedVersions.size() > 0) {
-            result.addCount(VERSIONS_EXPORT, newVersCount.get(),
-                    importedVersions.size() - newVersCount.get(), 0);
-        }
-
         if (deduplicatedDomainsCount.get() > 0) {
             result.addCount(DEDUPLICATED_DOMAINS, deduplicatedDomainsCount.get(),
                     0, deduplicatedDomainsCount.get());
@@ -1280,7 +1275,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("Update keys for entry {} for table \"{}\". Had {} existing keys, Now will have {} keys. Was \"{}\", now will be \"{}\"",
                     entry.getUuid(), entry.getTableName(), existingKeys.size(), keys.size(),
-                    existingKeys.stream().collect(Collectors.joining("\", \"")),
+                    String.join("\", \"", existingKeys),
                     keys.stream().map(ColumnEditData::getName).collect(Collectors.joining("\", \"")));
         }
 
@@ -1653,8 +1648,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
         local.setExt4ColumnTo(imported.getExt4ColumnTo());
         local.setExt4ColumnFrom(imported.getExt4ColumnFrom());
         local.setImportedTime(now());
-
-        return local;
     }
 
     /**
@@ -1731,8 +1724,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
         local.setMapTableColumnFrom(imported.getMapTableColumnFrom());
         local.setMapTableColumnTo(imported.getMapTableColumnTo());
         local.setImportedTime(now());
-
-        return local;
     }
 
     /**
@@ -2049,7 +2040,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // #1st The projects (used by other)
         List<Project> importedProjects = imported.stream()
                 .filter(p -> p.getClass() == ProjectPackage.class)
-                .flatMap(p -> ((ProjectPackage) p).streamContent())
+                .flatMap(p -> ((ProjectPackage) p).content())
                 .collect(Collectors.toList());
 
         if (importedProjects.size() > 1) {
