@@ -395,8 +395,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         return readPackages(currentExport).stream()
                 .filter(s -> s.getClass() == CommitPackage.class)
                 .map(p -> (CommitPackage) p)
-                .map(SharedPackage::getContent)
-                .flatMap(List::stream)
+                .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
     }
 
@@ -404,8 +403,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         return readPackages(currentExport).stream()
                 .filter(s -> s.getClass() == LobPropertyPackage.class)
                 .map(p -> (LobPropertyPackage) p)
-                .map(SharedPackage::getContent)
-                .flatMap(List::stream)
+                .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
     }
 
@@ -413,8 +411,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         return readPackages(currentExport).stream()
                 .filter(s -> s.getClass() == TransformerDefPackage.class)
                 .map(p -> (TransformerDefPackage) p)
-                .map(SharedPackage::getContent)
-                .flatMap(List::stream)
+                .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
     }
 
@@ -422,8 +419,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         return readPackages(currentExport).stream()
                 .filter(s -> s.getClass() == VersionPackage.class)
                 .map(p -> (VersionPackage) p)
-                .map(SharedPackage::getContent)
-                .flatMap(List::stream)
+                .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
     }
 

@@ -430,8 +430,8 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param entries index
      * @return name of columns referenced in payload
      */
-    Set<String> extractIndexEntryValueNames(Collection<IndexEntry> entries) {
-        return entries.stream().map(IndexEntry::getPayload)
+    Set<String> extractIndexEntryValueNames(Collection<? extends DiffLine> entries) {
+        return entries.stream().map(DiffLine::getPayload)
                 .flatMap(p -> this.valueConverter.expandInternalValueNames(p))
                 .collect(Collectors.toSet());
     }
