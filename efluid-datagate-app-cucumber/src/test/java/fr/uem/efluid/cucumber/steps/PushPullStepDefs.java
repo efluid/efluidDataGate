@@ -171,7 +171,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         List<Commit> commits = readPackageCommits(getSingleCurrentExport());
 
         // Test only commit with index content (not reference commits)
-        assertThat(commits.stream().filter(c -> c.getIndex() != null && c.getIndex().size() > 0)).hasSize(size);
+        assertThat(commits.stream().filter(c -> !c.isRefOnly())).hasSize(size);
     }
 
     @Then("^the export package contains (.*) version contents$")
@@ -392,11 +392,29 @@ public class PushPullStepDefs extends CucumberStepDefs {
     }
 
     private List<Commit> readPackageCommits(ExportImportResult<ExportFile> currentExport) {
-        return readPackages(currentExport).stream()
+
+        List<SharedPackage<?>> packages = readPackages(currentExport);
+
+        List<Commit> commits = packages.stream()
                 .filter(s -> s.getClass() == CommitPackage.class)
                 .map(p -> (CommitPackage) p)
                 .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
+
+        Map<UUID, Commit> mappedCommits = commits.stream().collect(Collectors.toMap(Commit::getUuid, c -> c));
+
+        // Rebuild link between index and commits
+        packages.stream()
+                .filter(s -> s.getClass() == IndexEntryPackage.class)
+                .map(p -> (IndexEntryPackage) p)
+                .flatMap(SharedPackage::content)
+                .forEach(i -> {
+                    Commit commit = mappedCommits.get(i.getCommit().getUuid());
+                    commit.getIndex().add(i);
+                    i.setCommit(commit);
+                });
+
+        return commits;
     }
 
     private List<LobProperty> readPackageLobs(ExportImportResult<ExportFile> currentExport) {

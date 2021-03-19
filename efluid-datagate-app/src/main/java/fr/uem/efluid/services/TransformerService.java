@@ -240,23 +240,19 @@ public class TransformerService extends AbstractApplicationService {
      */
     TransformerProcessor importTransformerDefsAndPrepareProcessor(TransformerDefPackage pckg) {
 
-        if (pckg.getProcessedSize() == 0) {
-            return null;
-        }
+        // Load the package-specified transformers
+        List<TransformerProcessor.TransformerApply> transformerDefs = pckg.content()
+                // ... Store them locally ...
+                .map(this::importTransformerDef)
+                // ... And init them as "transformer Apply" used in TranformerProcessor
+                .map(d -> {
+                    Transformer<?, ?> transformer = loadTransformerByType(d.getType());
+                    Transformer.TransformerConfig config = parseConfiguration(d.getConfiguration(), transformer);
+                    return new TransformerProcessor.TransformerApply(d.getName(), transformer, config, d.getPriority());
+                }).collect(Collectors.toList());
 
-        // Prepare processor from defs ...
-        return new TransformerProcessor(
-                // On imported defs ...
-                pckg.content()
-                        // ... Store them locally ...
-                        .map(this::importTransformerDef)
-                        // ... And init them as "transformer Apply" used in TranformerProcessor
-                        .map(d -> {
-                            Transformer<?, ?> transformer = loadTransformerByType(d.getType());
-                            Transformer.TransformerConfig config = parseConfiguration(d.getConfiguration(), transformer);
-                            return new TransformerProcessor.TransformerApply(d.getName(), transformer, config, d.getPriority());
-                        }).collect(Collectors.toList())
-        );
+        // Prepare processor from defs only if some found ...
+        return transformerDefs.isEmpty() ? null : new TransformerProcessor(transformerDefs);
     }
 
     /**

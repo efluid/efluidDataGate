@@ -76,7 +76,7 @@ public abstract class SharedPackage<T extends Shared> implements Cleaner.Cleanab
 
     /**
      * <p>
-     * Available only once content is initialized (directly or with deserialize)
+     * <strong><font color="red">Warning !</font></strong> The value is available only <strong>once content is initialized (directly or with deserialize)</strong>
      * </p>
      *
      * @return

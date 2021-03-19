@@ -41,7 +41,7 @@ public class ExportImportService extends ExportService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportService.class);
 
     private static final String HEADER_SEARCH = "\\[pack\\|[^]]*]";
-    private static final String ITEM_SEARCH = "\\[/?item]";
+    private static final String ITEM_SEARCH = "\\[/?item\\]";
 
     /**
      * From an uploaded .par file, get all the identifiable SharedPackage. The file is written in temp location, unziped,
@@ -79,7 +79,7 @@ public class ExportImportService extends ExportService {
      * @param pack           InputStream of the corresponding (.pack) file
      * @return prepared package with content stream initialized for deserialization
      */
-    private static SharedPackage<?> readPackage(Path uncompressPath, InputStream pack) {
+    public static SharedPackage<?> readPackage(Path uncompressPath, InputStream pack) {
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Reading package content : \n{}", pack);
