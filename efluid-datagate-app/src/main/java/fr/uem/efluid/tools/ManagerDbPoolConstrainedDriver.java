@@ -115,7 +115,7 @@ public class ManagerDbPoolConstrainedDriver implements AsyncDriver {
         LOGGER.info("Async steps for process {} started", current.getDescription());
 
         // Run until completion of all
-        while (calls.stream().anyMatch(c -> !c.isCalled())) {
+        while (calls.stream().anyMatch(c -> !c.isCompleted())) {
 
             // Must still be on survey and available Con in pool
             if (this.survey.containsKey(current)
@@ -127,7 +127,7 @@ public class ManagerDbPoolConstrainedDriver implements AsyncDriver {
                         .ifPresent(c -> this.steps.getOrDefault(current, this.steps.putIfAbsent(current, new ArrayList<>())).add(c));
             }
 
-            Thread.sleep(20);
+            Thread.sleep(200);
         }
 
         LOGGER.info("Async steps for process {} are completed", current.getDescription());
@@ -178,6 +178,10 @@ public class ManagerDbPoolConstrainedDriver implements AsyncDriver {
 
         public boolean isCalled() {
             return this.future != null;
+        }
+
+        public boolean isCompleted() {
+            return this.future!=null &&this.future.isDone();
         }
 
         @Override

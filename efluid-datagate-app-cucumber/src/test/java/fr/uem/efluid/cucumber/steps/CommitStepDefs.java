@@ -6,6 +6,7 @@ import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.junit.Before;
@@ -26,6 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
 public class CommitStepDefs extends CucumberStepDefs {
+
+    @Given("^the user have asked for a revert of commit \"(.*)\"$")
+    public void given_revert(String name) throws Exception {
+        when_revert(name);
+    }
 
     @When("^the user select the details of commit \"(.*)\"$")
     public void select_commit_details(String comment) throws Exception {

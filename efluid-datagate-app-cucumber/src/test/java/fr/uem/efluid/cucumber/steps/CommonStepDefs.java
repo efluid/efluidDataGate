@@ -236,6 +236,11 @@ public class CommonStepDefs extends CucumberStepDefs {
         managedDatabase().updateTab(name, data);
     }
 
+    @Given("^no changes are applied in current environment$")
+    public void no_changes() {
+        // Nothing
+    }
+
     @Given("^these changes are applied to table \"(.*)\" in destination environment :$")
     public void updated_data_in_managed_table_in_dest(String name, DataTable data) {
         // Switched env use same database
