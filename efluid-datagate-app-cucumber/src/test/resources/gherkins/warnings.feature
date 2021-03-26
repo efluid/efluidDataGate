@@ -77,3 +77,5 @@ Feature: Some warnings are recorded from various entry points and are available 
       | TTAB_TWO | B   | Warning from ADD - different value                         | ADD "VALUE:'2', OTHER:'Same b add'" : La ligne est déjà ajoutée avec une valeur différente                                                         |
       | TTAB_TWO | C   | Warning from UPDATE - only their - not exists              | no action : La ligne mise à jour n'existe pas localement                                                                                           |
       | TTAB_TWO | D   | Warning from REMOVE - only their - not exists              | no action : La ligne supprimée n'existait pas                                                                                                      |
+
+

@@ -153,6 +153,36 @@ Feature: The update on parameter tables can be followed checked and stored as co
       | TTAB_TWO | JJJ | UPDATE | OTHER:'Other JJJ'=>'Other JJJ updated' |
       | TTAB_TWO | IJK | ADD    | VALUE:'Le new', OTHER:'newnew'         |
 
+  Scenario: After a commit, if no changes are applied to environment, no diff content will be provided - from initial commit
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+    And the commit ":construction: Test commit init" has been saved with all the identified initial diff content
+    And no changes are applied in current environment
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then no commit content has been identified
+
+  Scenario: After a commit, if no changes are applied to environment, no diff content will be provided - from intermediate commit
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+    And the commit ":construction: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset   | something   |
+      | add    | 33  | LL33   | Preset 2 | BBB         |
+      | add    | 34  | VVV4   | Preset 3 | CCC         |
+      | add    | 35  | VVV5   | Preset 4 | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5 | EEE         |
+      | update | 14  | AAA    | Preset 1 | AAA updated |
+    And a new commit ":construction: Commit changes" has been saved with all the new identified diff content
+    And no changes are applied in current environment
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then no commit content has been identified
+
   Scenario: The diff content for table using links on native FK displays references to other table data
     Given the existing data in managed table "TTAB_ONE" :
       | key | value | preset   | something |

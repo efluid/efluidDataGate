@@ -114,7 +114,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     @Query(value = "SELECT i.KEY_VALUE, i.PAYLOAD FROM INDEXES i " +
             "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
             "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid AND i.ACTION != 'REMOVE'", nativeQuery = true)
-    Stream<Object[]> _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(
+    List<Object[]> _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(
             @Param("dictUuid") String dictionaryEntryUuid,
             @Param("keys") Collection<String> keys,
             @Param("pivot") long pivot);
@@ -125,7 +125,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     @Query(value = "SELECT i.KEY_VALUE as keyValue, i.PAYLOAD as payload, i.PREVIOUS as previous FROM INDEXES i " +
             "INNER JOIN (SELECT MAX(TIMESTAMP) AS TS, KEY_VALUE FROM INDEXES WHERE DICTIONARY_ENTRY_UUID = :dictUuid AND TIMESTAMP <= :pivot AND KEY_VALUE IN :keys GROUP BY KEY_VALUE) ii ON i.TIMESTAMP = ii.TS AND i.KEY_VALUE = ii.KEY_VALUE " +
             "WHERE i.DICTIONARY_ENTRY_UUID = :dictUuid", nativeQuery = true)
-    Stream<Object[]> _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(
+    List<Object[]> _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(
             @Param("dictUuid") String dictionaryEntryUuid,
             @Param("keys") Collection<String> keys,
             @Param("pivot") long pivot);

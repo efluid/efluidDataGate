@@ -8,9 +8,7 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
-import org.springframework.util.FileCopyUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,7 +16,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalLong;
 import java.util.stream.Collectors;
@@ -234,6 +231,11 @@ public class CommonStepDefs extends CucumberStepDefs {
     @Given("^these changes are applied to table \"(.*)\" :$")
     public void updated_data_in_managed_table(String name, DataTable data) {
         managedDatabase().updateTab(name, data);
+    }
+
+    @Given("^no changes are applied in current environment$")
+    public void no_changes() {
+        // Nothing
     }
 
     @Given("^these changes are applied to table \"(.*)\" in destination environment :$")

@@ -257,6 +257,23 @@ public class PreparationStepDefs extends CucumberStepDefs {
         currentCommit.setComment(comment);
     }
 
+
+    @Given("^the proposed diff has been saved as commit \"(.*)\"$")
+    public void user_has_validated_diff_as_commit(String name) throws Throwable {
+
+        // Current diff is ready
+        a_diff_is_completed();
+
+        // Select all
+        user_has_selected_all_ready_content();
+
+        // New commit
+        user_has_defined_commit_comment(name);
+
+        // Saved commit
+        user_save_commit();
+    }
+
     @Given("^the user has attached these documents to the commit:$")
     public void user_had_specified_attachments(DataTable table) {
 
@@ -415,6 +432,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
         postObject(getCorrespondingLinkForPageName("commit save"), p("preparationPush", preparation));
     }
 
+
     @When("^the user save the merge commit$")
     public void user_save_merge_commit() throws Exception {
 
@@ -463,6 +481,16 @@ public class PreparationStepDefs extends CucumberStepDefs {
         assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
         assertDiffContentIsCompliant(preparation, data);
+    }
+
+    @Then("^no commit content has been identified$")
+    public void commit_content_empty() {
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+
+        assertThat(preparation.getDiffContent().size()).isEqualTo(0);
     }
 
     @Then("^the commit content is selected as this :$")

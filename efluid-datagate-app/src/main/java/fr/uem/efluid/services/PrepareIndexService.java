@@ -115,9 +115,9 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param lobs
      * @param project
      */
-    @Transactional(
+/*    @Transactional(
             transactionManager = DatasourceUtils.MANAGED_TRANSACTION_MANAGER
-    )
+    )*/
     public void completeLocalDiff(
             PilotedCommitPreparation<PreparedIndexEntry> preparation,
             DictionaryEntry entry,

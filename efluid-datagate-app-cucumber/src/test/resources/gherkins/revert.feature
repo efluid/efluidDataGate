@@ -56,3 +56,14 @@ Feature: Revert commits can be created from existing commits
       | key | value            | other   |
       | BBB | Preset 2 changed | bbb chg |
       | CCC | Preset 3         | ccc     |
+
+  Scenario: New commits coming after a revert has been created are processed as standard commits
+    Given the user access to list of commits
+    And the user have asked for a revert of commit ":construction: Update 2"
+    And the proposed diff has been saved as commit ":rewind: Revert to update 1"
+    And no changes are applied in current environment
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then no commit content has been identified
+

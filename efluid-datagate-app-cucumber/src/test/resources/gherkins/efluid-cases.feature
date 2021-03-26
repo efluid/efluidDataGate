@@ -993,12 +993,12 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                               |
-      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | ETAT_OBJET:'INIT'=>'STALE', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                                |
-      | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'INIT'=>'MODIFIED', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                             |
-      | T_EFLUID_TEST_AUDIT | CHG_3 | UPDATE | true         | ETAT_OBJET:'INIT'=>'TESTED', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                               |
-      | T_EFLUID_TEST_AUDIT | CHG_4 | UPDATE | true         | ETAT_OBJET:'INIT'=>'DELETED', DATE_SUPPRESSION:=>2020-05-25 00:00:00, ACTEUR_SUPPRESSION:''=>'evt DEL', ACTEUR_MODIFICATION:''=>'evt MOD'                                             |
-      | T_EFLUID_TEST_AUDIT | CHG_5 | UPDATE | true         | ETAT_OBJET:'INIT'=>'NOT_TEST', ACTEUR_MODIFICATION:''=>'evt MOD'                                                                                                                      |
+      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                           |
+      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | ETAT_OBJET:'INIT'=>'STALE', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                            |
+      | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'INIT'=>'MODIFIED', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                         |
+      | T_EFLUID_TEST_AUDIT | CHG_3 | UPDATE | true         | ETAT_OBJET:'INIT'=>'TESTED', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                           |
+      | T_EFLUID_TEST_AUDIT | CHG_4 | UPDATE | true         | ETAT_OBJET:'INIT'=>'DELETED', DATE_SUPPRESSION:=>2020-05-25 00:00:00, ACTEUR_SUPPRESSION:''=>'evt DEL', ACTEUR_MODIFICATION:''=>'evt MOD'                                         |
+      | T_EFLUID_TEST_AUDIT | CHG_5 | UPDATE | true         | ETAT_OBJET:'INIT'=>'NOT_TEST', ACTEUR_MODIFICATION:''=>'evt MOD'                                                                                                                  |
       | T_EFLUID_TEST_AUDIT | CHG_6 | ADD    | true         | VALUE:'66', ETAT_OBJET:'INIT', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:2020-05-22 00:00:00, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'evt CRE' |
 
   @TestEfluidAuditTransformerRules
@@ -1077,3 +1077,46 @@ Feature: A complete set of test case are specified for Efluid needs
       | Table               | Key | Action | Need Resolve | Payload                                                                                                                                                                                                                                 |
       | T_EFLUID_TEST_AUDIT | 1   | ADD    | true         | VALUE:'1', ETAT_OBJET:'', DATE_SUPPRESSION:2020-06-12 22:14:00, DATE_MODIFICATION:2020-06-12 22:14:00, DATE_CREATION:2020-06-12 22:14:00, ACTEUR_SUPPRESSION:'evt 295556', ACTEUR_MODIFICATION:'evt 12345', ACTEUR_CREATION:'evt 67890' |
       | T_EFLUID_TEST_AUDIT | 2   | ADD    | true         | VALUE:'2', ETAT_OBJET:'', DATE_SUPPRESSION:2020-06-12 22:14:00, DATE_MODIFICATION:2020-06-12 22:14:00, DATE_CREATION:2020-06-12 22:14:00, ACTEUR_SUPPRESSION:'evt 295556', ACTEUR_MODIFICATION:'evt 12345', ACTEUR_CREATION:'evt 67890' |
+
+  @TestEfluidMergeAnomalies
+  Scenario: During a merge, some validation rules, based on identified changes, can define cases where a "compatibility anomaly" can be detected
+    Given the test is an Efluid standard scenario
+    And the existing data in managed table "TTEST1" :
+      | id | col1             |
+      | 1  | titi             |
+      | 3  | to delete source |
+      | 4  | to update source |
+    And the commit "source init" has been saved with all the identified initial diff content
+    And the user has requested an export starting by the commit with name "source init"
+    And these changes are applied to table "TTEST1" :
+      | change | id | col1                       |
+      | update | 1  | tata                       |
+      | add    | 2  | new source                 |
+      | delete | 3  |                            |
+      | update | 4  | to update source - updated |
+    And a new commit "source update" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name "source update"
+    And the user accesses to the destination environment with the same dictionary
+    And the feature "RECORD_IMPORT_WARNINGS" is enabled
+    And the existing data in managed table "TTEST1" in destination environment :
+      | id | col1                  |
+      | 1  | toto                  |
+      | 3  | to delete destination |
+    And a commit "destination init" has been saved with all the new identified diff content in destination environment
+    And these changes are applied to table "TTEST1" in destination environment :
+      | change | id | col1            |
+      | update | 1  | tata            |
+      | add    | 2  | new destination |
+      | delete | 3  |                 |
+    And a commit "destination update" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the package of commit "source update" created a moment after
+    And the user has selected all content for merge commit
+    And the user has specified a commit comment ":construction: merged with warnings"
+    And the user has saved the merge commit
+    When the user asks for the merge anomalies rest service for the exported commit "source update"
+    Then there are the listed merge anomalies:
+      | Table  | Key | Code                                                          | Message                                                                                                                         |
+      | TTEST1 | 1   | Warning from UPDATE - only their - exists different previous  | UPDATE "COL1:'toto'=>'tata'" : La valeur de la ligne modifiée est différente entre les données locales et les données importées |
+      | TTEST1 | 2   | Warning from ADD - only their, line exists, different content | UPDATE "COL1:'new destination'=>'new source'" : La ligne existait déjà avec un contenu différent                                |
+      | TTEST1 | 3   | Warning from REMOVE - only their - not exists                 | no action : La ligne supprimée n'existait pas                                                                                   |
+      | TTEST1 | 4   | Warning from UPDATE - only their - not exists                 | no action : La ligne mise à jour n'existe pas localement                                                                        |

@@ -115,6 +115,7 @@ spring:
         hikari:
             maximum-pool-size: ${datagate-efluid.pool.connections.max}
             minimum-idle: ${datagate-efluid.pool.connections.min}
+        #    leak-detection-threshold: 3000
 
     servlet:
         multipart:
