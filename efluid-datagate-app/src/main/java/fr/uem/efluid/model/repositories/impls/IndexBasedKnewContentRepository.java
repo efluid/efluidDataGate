@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
  * @since v2.0.17
  */
 @Repository
+@Transactional
 public class IndexBasedKnewContentRepository implements KnewContentRepository {
 
     protected static final Logger LOGGER = LoggerFactory.getLogger(IndexBasedKnewContentRepository.class);

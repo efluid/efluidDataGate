@@ -39,6 +39,7 @@ public class PreparedRevertIndexEntry extends PreparedIndexEntry {
 
         completeRevert(data, converter.toRollbackLine(existing));
         data.source = PreparedIndexEntry.fromExistingEntity(existing);
+        data.setTimestamp(System.currentTimeMillis());
 
         return data;
     }
