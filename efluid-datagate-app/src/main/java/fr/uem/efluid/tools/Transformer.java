@@ -1,5 +1,6 @@
 package fr.uem.efluid.tools;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
@@ -11,6 +12,7 @@ import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -179,12 +181,25 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
         private String tablePattern;
 
+        @JsonIgnore
+        private transient byte[] attachmentPackageData;
+
         protected TransformerConfig() {
             super();
         }
 
         void populateDefault() {
             this.tablePattern = ".*";
+        }
+
+        /**
+         * Called before export to initialize the attachment package data from the managed source.
+         * Then the data is gathered from {@link #getAttachmentPackageData()}
+         *
+         * @param managedSource for managed database attachment loading
+         */
+        public void loadAttachmentPackageData(JdbcTemplate managedSource) {
+            // Default does nothing
         }
 
         /**
@@ -230,6 +245,16 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
                 }
                 return "^.*" + v + ".*$";
             }).map(Pattern::compile).collect(toList());
+        }
+
+        // For optional attachment, if any, on current RUNNING config
+
+        public byte[] getAttachmentPackageData() {
+            return attachmentPackageData;
+        }
+
+        public void setAttachmentPackageData(byte[] attachmentPackageData) {
+            this.attachmentPackageData = attachmentPackageData;
         }
     }
 

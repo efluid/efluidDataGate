@@ -17,6 +17,7 @@ import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +56,9 @@ public class TransformerService extends AbstractApplicationService {
 
     @Autowired
     private ProjectManagementService projectService;
+
+    @Autowired
+    private JdbcTemplate managedSource;
 
     /**
      * Get all available transformer types to list on edit page or for transformer use
@@ -259,13 +263,16 @@ public class TransformerService extends AbstractApplicationService {
     }
 
     /**
-     * Prepare TransformerDefs for export with applied customization (if any). Keep only customization which are different than existing content
+     * Prepare TransformerDefs for export with applied customization (if any).
+     * Keep only customization which are different than existing content.
+     * <p>
+     * Load also any associated attachment package
      *
      * @param project        associated project
      * @param customizations specified customizations for export
      * @return transformer def ready to be exported, with applied customizations
      */
-    List<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
+    List<TransformerDef> getCustomizedTransformerDefForExport(Project project, Collection<ExportTransformer> customizations) {
 
         Map<UUID, String> confs = customizations.stream().collect(Collectors.toMap(c -> c.getTransformerDef().getUuid(), ExportTransformer::getConfiguration));
         Set<UUID> disabled = customizations.stream().filter(ExportTransformer::isDisabled).map(t -> t.getTransformerDef().getUuid()).collect(Collectors.toSet());
@@ -279,6 +286,7 @@ public class TransformerService extends AbstractApplicationService {
                     if (customization != null && !customization.equals(t.getConfiguration())) {
                         t.setCustomizedConfiguration(customization);
                     }
+                    loadTransformerAttachmentPackage(t);
                 }).collect(Collectors.toList());
     }
 
@@ -307,6 +315,31 @@ public class TransformerService extends AbstractApplicationService {
         local.setImportedTime(LocalDateTime.now());
 
         return local;
+    }
+
+    /**
+     * Load any optional attachment packages from the transformer def, if any specified in
+     * transformer configuration
+     *
+     * @param transformerDef transformer def where the data load will be processed
+     */
+    private void loadTransformerAttachmentPackage(TransformerDef transformerDef) {
+
+        // We need to instantiate transformer components including config
+        Transformer<?, ?> transformer = loadTransformerByType(transformerDef.getType());
+
+        // Apply immediately customization if any is specified
+        Transformer.TransformerConfig config = parseConfiguration(
+                transformerDef.getCustomizedConfiguration() != null
+                        ? transformerDef.getCustomizedConfiguration()
+                        : transformerDef.getConfiguration(), transformer);
+
+        // Call for data load, if specified in config impl
+        config.loadAttachmentPackageData(this.managedSource);
+
+        // Then apply loaded data, if any (can be null)
+        transformerDef.setAttachmentPackage(config.getAttachmentPackageData());
+
     }
 
     private String prettyConfig(Transformer.TransformerConfig config) {

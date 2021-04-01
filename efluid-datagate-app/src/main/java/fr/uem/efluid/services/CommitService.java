@@ -287,7 +287,7 @@ public class CommitService extends AbstractApplicationService {
         ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
                 // Add customized transformers
                 new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
-                        .initWithContent(this.transformerService.getCustomizedTransformerDef(project, preparedExport.getTransformers())),
+                        .initWithContent(this.transformerService.getCustomizedTransformerDefForExport(project, preparedExport.getTransformers())),
                 // Add referenced versions (for dict content compatibility check at import)
                 new VersionPackage(PCKG_VERSIONS, LocalDateTime.now()).initWithContent(versionsToExport),
                 // Add selected commit(s)

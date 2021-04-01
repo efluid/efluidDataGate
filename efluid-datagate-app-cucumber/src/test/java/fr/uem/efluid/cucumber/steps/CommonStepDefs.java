@@ -183,6 +183,16 @@ public class CommonStepDefs extends CucumberStepDefs {
         managedDatabase().initTab(name, data);
     }
 
+    @Given("^the existing data in secondary parameter table \"(.*)\" :$")
+    public void existing_data_in_secondary_table(String name, DataTable data) {
+        managedDatabase().initTab(name, data);
+    }
+
+    @Given("^the existing data in secondary parameter table \"(.*)\" in destination environment :$")
+    public void existing_data_in_secondary_table_in_dest(String name, DataTable data) {
+        managedDatabase().initTab(name, data);
+    }
+
     @Given("^the (.*) generated data in managed table \"(.*)\" :$")
     public void existing_data_in_managed_table(int count, String name, DataTable data) {
 

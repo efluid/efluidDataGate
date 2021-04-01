@@ -57,6 +57,8 @@ public class ManagedDatabaseAccess {
     public static final String EFLUIDTESTPKCOMPOSITE = "EFLUIDTESTPKCOMPOSITE";
     public static final String EFLUIDTESTNUMBER = "EFLUIDTESTNUMBER";
     public static final String EFLUIDTESTAUDIT = "T_EFLUID_TEST_AUDIT";
+    public static final String TRECOPIEPARAMREFERENTIELDIR = "TRECOPIEPARAMREFERENTIELDIR";
+    public static final String TAPPLICATIONINFO = "TAPPLICATIONINFO";
 
     public static final String TTESTNULLLINK_SRC = "T_NULL_LINK_DEMO_SRC";
     public static final String TTESTNULLLINK_DEST = "T_NULL_LINK_DEMO_DEST";
@@ -81,6 +83,8 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TTESTNULLLINK_DEST, Pair.of(14, EfluidTestNullableLinkDestination.class));
         ENTITY_TYPES.put(EFLUIDTESTAUDIT, Pair.of(15, EfluidTestAudit.class));
         ENTITY_TYPES.put(TABLE_THREE_KEYS, Pair.of(16, SimulatedTableThreeKeys.class));
+        ENTITY_TYPES.put(TRECOPIEPARAMREFERENTIELDIR, Pair.of(17, EfluidParamForRegion.class));
+        ENTITY_TYPES.put(TAPPLICATIONINFO, Pair.of(18, EfluidTApplicationInfo.class));
     }
 
     @Autowired
