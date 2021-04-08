@@ -395,7 +395,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
         }
 
         @Override
-        public void accept(IndexAction action, List<Value> values) {
+        public void transform(IndexAction action, String key, List<Value> values) {
             if (this.config.isValueFilterMatches(action, values)) {
 
                 var matchings = this.mappedReplacedValues.get(action).matchingSubstitutes(values);

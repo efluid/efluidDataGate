@@ -79,7 +79,7 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
         }
 
         @Override
-        public void accept(IndexAction action, List<Value> values) {
+        public void transform(IndexAction action, String key,  List<Value> values) {
             // Process on indexed list for replacement support
             for (int i = 0; i < values.size(); i++) {
                 Value val = values.get(i);

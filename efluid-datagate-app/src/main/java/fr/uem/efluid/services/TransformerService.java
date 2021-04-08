@@ -10,6 +10,7 @@ import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
 import fr.uem.efluid.services.types.TransformerDefPackage;
 import fr.uem.efluid.services.types.TransformerType;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.tools.Transformer;
 import fr.uem.efluid.tools.TransformerProcessor;
 import fr.uem.efluid.utils.ApplicationException;
@@ -59,6 +60,9 @@ public class TransformerService extends AbstractApplicationService {
 
     @Autowired
     private JdbcTemplate managedSource;
+
+    @Autowired
+    private ManagedValueConverter valueConverter;
 
     /**
      * Get all available transformer types to list on edit page or for transformer use
@@ -251,13 +255,16 @@ public class TransformerService extends AbstractApplicationService {
         return new TransformerProcessor(
                 // On imported defs ...
                 pckg.getContent().stream()
-                        // ... Store them locally ...
-                        .map(this::importTransformerDef)
-                        // ... And init them as "transformer Apply" used in TranformerProcessor
-                        .map(d -> {
-                            Transformer<?, ?> transformer = loadTransformerByType(d.getType());
-                            Transformer.TransformerConfig config = parseConfiguration(d.getConfiguration(), transformer);
-                            return new TransformerProcessor.TransformerApply(d.getName(), transformer, config, d.getPriority());
+                        .map(p -> {
+                            // ... Store them locally ...
+                            TransformerDef tDef = importTransformerDef(p);
+                            // ... And init them as "transformer Apply" used in TranformerProcessor
+                            Transformer<?, ?> transformer = loadTransformerByType(tDef.getType());
+                            Transformer.TransformerConfig config = parseConfiguration(tDef.getConfiguration(), transformer);
+                            // ... If an attachment package exist, load it
+                            config.importAttachmentPackageData(p.getAttachmentPackage(), this.managedSource, this.valueConverter);
+                            // ... Finalize processor for transformer use
+                            return new TransformerProcessor.TransformerApply(tDef.getName(), transformer, config, tDef.getPriority());
                         }).collect(Collectors.toList())
         );
     }
@@ -335,10 +342,10 @@ public class TransformerService extends AbstractApplicationService {
                         : transformerDef.getConfiguration(), transformer);
 
         // Call for data load, if specified in config impl
-        config.loadAttachmentPackageData(this.managedSource);
+        byte[] attachementData = config.exportAttachmentPackageData(this.managedSource);
 
         // Then apply loaded data, if any (can be null)
-        transformerDef.setAttachmentPackage(config.getAttachmentPackageData());
+        transformerDef.setAttachmentPackage(attachementData);
 
     }
 

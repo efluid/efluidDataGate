@@ -145,19 +145,31 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
                     List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
 
                     // Apply transform
-                    runner.accept(l.getAction(), extracted);
+                    runner.transform(l.getAction(), l.getKeyValue(), extracted);
 
                     if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
-                        LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on DictionaryEntry table \"{}\" :\n{}",
-                                this.getName(), dict.getTableName(), buildTransformationResultForDebug(extracted));
+                        LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on entry {}[{}] :\n{}",
+                                this.getName(), dict.getTableName(), l.getKeyValue(), buildTransformationResultForDebug(extracted));
                     }
 
-                    // Rebuild payload
-                    l.setPayload(this.converter.convertToExtractedValue(extracted));
+                    // Drop erased values
+                    if (extracted.isEmpty()) {
+                        mergeDiff.remove(l);
+                    }
+
+                    // Or apply updated one
+                    else {
+                        // Rebuild payload
+                        l.setPayload(this.converter.convertToExtractedValue(extracted));
+                    }
                 });
     }
 
     private static String buildTransformationResultForDebug(List<Value> content) {
+
+        if (content.isEmpty()) {
+            return "erased line";
+        }
 
         List<String> results = content.stream()
                 .filter(v -> v instanceof TransformerRunner.TransformedValue)
@@ -181,25 +193,12 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
         private String tablePattern;
 
-        @JsonIgnore
-        private transient byte[] attachmentPackageData;
-
         protected TransformerConfig() {
             super();
         }
 
         void populateDefault() {
             this.tablePattern = ".*";
-        }
-
-        /**
-         * Called before export to initialize the attachment package data from the managed source.
-         * Then the data is gathered from {@link #getAttachmentPackageData()}
-         *
-         * @param managedSource for managed database attachment loading
-         */
-        public void loadAttachmentPackageData(JdbcTemplate managedSource) {
-            // Default does nothing
         }
 
         /**
@@ -249,12 +248,32 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
         // For optional attachment, if any, on current RUNNING config
 
-        public byte[] getAttachmentPackageData() {
-            return attachmentPackageData;
+        /**
+         * Called before export to initialize the attachment package data from the managed source.
+         * Default will provide null value
+         *
+         * @param managedSource for managed database attachment loading
+         * @return data or null if no need to process attachment package
+         */
+        public byte[] exportAttachmentPackageData(JdbcTemplate managedSource) {
+
+            return null;
         }
 
-        public void setAttachmentPackageData(byte[] attachmentPackageData) {
-            this.attachmentPackageData = attachmentPackageData;
+        /**
+         * For transformer with package data support, apply imported one if any.
+         *
+         * @param attachmentPackageData null, empty string, or prepared attachment package data
+         *                              from imported transformer. Any format can be used for
+         *                              the transformer support
+         * @param managedSource         access to local managed DB for any post loading action
+         * @param valueConverter        for any loaded value process with standard converter
+         */
+        public void importAttachmentPackageData(
+                byte[] attachmentPackageData,
+                JdbcTemplate managedSource,
+                ManagedValueConverter valueConverter) {
+            // Default does nothing
         }
     }
 
@@ -266,7 +285,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      * <p>Runner filter "lines" to process and apply to values</p>
      */
     public static abstract class TransformerRunner<C extends Transformer.TransformerConfig>
-            implements Predicate<PreparedIndexEntry>, BiConsumer<IndexAction, List<Value>> {
+            implements Predicate<PreparedIndexEntry> {
 
         protected final C config;
 
@@ -283,6 +302,8 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
         protected Value transformedValue(Value existing, String newValue) {
             return new TransformedValue(existing, FormatUtils.toBytes(newValue));
         }
+
+        public abstract void transform(IndexAction action, String key, List<Value> values);
 
         public static final class TransformedValue implements Value {
 
