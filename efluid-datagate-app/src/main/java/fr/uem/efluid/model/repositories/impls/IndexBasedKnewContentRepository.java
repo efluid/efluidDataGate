@@ -13,9 +13,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Access to knew content : based on index database only, all the extraction are processed
@@ -59,6 +59,11 @@ public class IndexBasedKnewContentRepository implements KnewContentRepository {
 
     @Override
     public Map<String, String> knewContentForKeysBefore(DictionaryEntry dictionaryEntry, Collection<String> keys, long timestamp) {
+
+        if (keys == null || keys.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
         try {
             // Regenerate at DB level the corresponding content for these keys
             return this.indexes.findRegeneratedContentForDictionaryEntryAndBufferBefore(dictionaryEntry.getUuid(), keys, timestamp);
@@ -70,6 +75,11 @@ public class IndexBasedKnewContentRepository implements KnewContentRepository {
 
     @Override
     public Map<String, DiffPayloads> knewContentPayloadsForKeysBefore(DictionaryEntry dictionaryEntry, Collection<String> keys, long timestamp) {
+
+        if (keys == null || keys.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
         try {
             return this.indexes.findDiffPayloadsForDictionaryEntryAndBufferBefore(dictionaryEntry.getUuid().toString(), keys, timestamp);
         } catch (Throwable t) {

@@ -1,19 +1,19 @@
 package fr.uem.efluid.cucumber.steps;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.uem.efluid.cucumber.common.CucumberStepDefs;
+import fr.uem.efluid.cucumber.stubs.ManagedDatabaseAccess;
+import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
 import fr.uem.efluid.services.types.ProjectData;
+import fr.uem.efluid.services.types.TestQueryData;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import fr.uem.efluid.cucumber.common.CucumberStepDefs;
-import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.services.types.DictionaryEntryEditData;
-import fr.uem.efluid.services.types.TestQueryData;
-import fr.uem.efluid.cucumber.stubs.ManagedDatabaseAccess;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -123,46 +123,40 @@ public class TableStepDefs extends CucumberStepDefs {
                 .with("columns", data.getColumns());
     }
 
-
     @Given("^a prepared parameter table data with name \"(.*)\" for managed table \"(.*)\" and columns selected as this :$")
     public void a_prepared_parameter_table_data_with_select_col(String name, String table, DataTable select) throws Throwable {
 
-        // Implicit init with tables
+        // Implicit init with tables and data
         a_managed_database_with_two_tables();
 
-        // Implicit select
-        get(getCorrespondingLinkForPageName("new parameter table page") + "/" + table);
+        // Prepared
+        init_dictionary_table(name, table, null, select);
+    }
 
-        // Get provided data to post them updated
-        DictionaryEntryEditData data = (DictionaryEntryEditData) currentAction.andReturn()
-                .getModelAndView().getModel().get("entry");
+    @Given("^a created parameter table with name \"(.*)\" for managed table \"([^\"]*)\" and columns selected as this :$")
+    public void a_created_parameter_table_with_select_col(String name, String table, DataTable select) throws Throwable {
 
-        // Apply selection
-        select.asMaps()
-                .forEach(s -> data.getColumns().stream()
-                        .filter(c -> c.getName().equalsIgnoreCase(s.get("name")))
-                        .forEach(c -> {
-                            switch (s.get("selection")) {
-                                case "ignored":
-                                    c.setKey(false);
-                                    c.setSelected(false);
-                                    break;
-                                case "key":
-                                    c.setKey(true);
-                                    c.setSelected(false);
-                                    break;
-                                case "selected":
-                                    c.setKey(false);
-                                    c.setSelected(true);
-                                    break;
-                            }
-                        }));
+        // Implicit authentication and on page
+        implicitlyAuthenticatedAndOnPage("parameter table main page");
 
-        params = postParams().with("name", name)
-                .with("domainUuid", data.getDomainUuid())
-                .with("table", data.getTable())
-                .with("where", data.getWhere())
-                .with("columns", data.getColumns());
+        // Prepared
+        init_dictionary_table(name, table, null, select);
+
+        // And saved
+        the_parameter_table_is_saved_by_user("saved");
+    }
+
+    @Given("^a created parameter table with name \"(.*)\" for managed table \"(.*)\" with filter \"(.*)\" and columns selected as this :$")
+    public void a_created_parameter_table_with_select_col_and_filter(String name, String table, String filter, DataTable select) throws Throwable {
+
+        // Implicit authentication and on page
+        implicitlyAuthenticatedAndOnPage("parameter table main page");
+
+        // Prepared
+        init_dictionary_table(name, table, filter, select);
+
+        // And saved
+        the_parameter_table_is_saved_by_user("saved");
     }
 
     @When("^the user asks to update the filter clause for current project with \"(.*)\"$")
@@ -325,6 +319,47 @@ public class TableStepDefs extends CucumberStepDefs {
             assertThat(found.get().getDomain().getProject().getName()).describedAs("Project for table with name " + t.get("table name")).isEqualTo(t.get("project"));
         });
 
-
     }
+
+    private void init_dictionary_table(String name, String table, String filter, DataTable select) throws Throwable {
+
+        // Implicit select
+        get(getCorrespondingLinkForPageName("new parameter table page") + "/" + table);
+
+        // Get provided data to post them updated
+        DictionaryEntryEditData data = (DictionaryEntryEditData) currentAction.andReturn()
+                .getModelAndView().getModel().get("entry");
+
+        if (filter != null) {
+            data.setWhere(filter);
+        }
+
+        // Apply selection
+        select.asMaps()
+                .forEach(s -> data.getColumns().stream()
+                        .filter(c -> c.getName().equalsIgnoreCase(s.get("name")))
+                        .forEach(c -> {
+                            switch (s.get("selection")) {
+                                case "ignored":
+                                    c.setKey(false);
+                                    c.setSelected(false);
+                                    break;
+                                case "key":
+                                    c.setKey(true);
+                                    c.setSelected(false);
+                                    break;
+                                case "selected":
+                                    c.setKey(false);
+                                    c.setSelected(true);
+                                    break;
+                            }
+                        }));
+
+        params = postParams().with("name", name)
+                .with("domainUuid", data.getDomainUuid())
+                .with("table", data.getTable())
+                .with("where", data.getWhere())
+                .with("columns", data.getColumns());
+    }
+
 }

@@ -91,13 +91,6 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     Long findMaxIndexTimestampOfLastImportedCommit();
 
     /**
-     * <p>
-     * Load full index detail for one DictionaryEntry (= on managed table)
-     * </p>
-     */
-    Stream<IndexEntry> findByDictionaryEntryOrderByTimestampAsc(DictionaryEntry dictionaryEntry);
-
-    /**
      * Access on knew key values
      *
      * @param dictionaryEntryUuid
