@@ -79,11 +79,14 @@ public class VersionStepDefs extends CucumberStepDefs {
         // List can be unmodifiable, reset it
         List<String> updatedVersions = new ArrayList<>();
 
-        updatedVersions.addAll(specifiedVersions);
+        if (specifiedVersions != null) {
+            updatedVersions.addAll(specifiedVersions);
+        }
 
         updatedVersions.add(name);
 
-        specifiedVersions = updatedVersions;    }
+        specifiedVersions = updatedVersions;
+    }
 
     @When("^the user request to compare the version \"(.*)\" with last version$")
     public void the_user_compare_versions(String version) throws Exception {

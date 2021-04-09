@@ -485,3 +485,195 @@ Feature: The update on parameter tables can be followed checked and stored as co
       | TTAB_THREE | C      | REMOVE | selected  |
       | TTAB_THREE | B      | UPDATE | selected  |
       | TTAB_THREE | VVVD   | ADD    | selected  |
+
+  Scenario: Init diff for tables without values is processed without error
+    Given the application is fully initialized with the wizard
+    And a created parameter table with name "Table with 2 keys" for managed table "TTAB_ONLY_KEYS" and columns selected as this :
+      | name      | selection |
+      | ONE_KEY   | key       |
+      | OTHER_KEY | key       |
+    And a created parameter table with name "Table with 3 keys" for managed table "TTAB_THREE_KEYS" with filter "cur.SECOND_KEY is not null or cur.THIRD_KEY is not null" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | key       |
+    And the parameter table for managed table "TTAB_ONE" already exists
+    And the parameter table for managed table "TTAB_TWO" already exists
+    And the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | VVV | Two   | Other VVV |
+    And the existing data in managed table "TTAB_ONLY_KEYS" :
+      | oneKey | otherKey |
+      | 1      | 1        |
+      | 2      | 1        |
+      | 3      | 1        |
+      | 4      | 2        |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | one      |           | something |
+      | two      | a         | a         |
+      | three    |           |           |
+      | 4        | aaa       |           |
+      | 5        | 5         | 5         |
+    And the user add new version "v2"
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table           | Key                    | Action | Payload                            |
+      | TTAB_ONE        | AAA                    | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
+      | TTAB_ONE        | BBB                    | ADD    | PRESET:'Preset 2', SOMETHING:'BBB' |
+      | TTAB_TWO        | JJJ                    | ADD    | VALUE:'One', OTHER:'Other JJJ'     |
+      | TTAB_TWO        | VVV                    | ADD    | VALUE:'Two', OTHER:'Other VVV'     |
+      | TTAB_ONLY_KEYS  | 1 / 1                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 2 / 1                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 1                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 4 / 2                  | ADD    |                                    |
+      | TTAB_THREE_KEYS | 4 / aaa / null         | ADD    |                                    |
+      | TTAB_THREE_KEYS | 5 / 5 / 5              | ADD    |                                    |
+      | TTAB_THREE_KEYS | one / null / something | ADD    |                                    |
+      | TTAB_THREE_KEYS | two / a / a            | ADD    |                                    |
+
+  Scenario: Update diff for tables without values is processed without error
+    Given the application is fully initialized with the wizard
+    And a created parameter table with name "Table with 2 keys" for managed table "TTAB_ONLY_KEYS" and columns selected as this :
+      | name      | selection |
+      | ONE_KEY   | key       |
+      | OTHER_KEY | key       |
+    And a created parameter table with name "Table with 3 keys" for managed table "TTAB_THREE_KEYS" with filter "cur.SECOND_KEY is not null or cur.THIRD_KEY is not null" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | key       |
+    And the parameter table for managed table "TTAB_ONE" already exists
+    And the parameter table for managed table "TTAB_TWO" already exists
+    And the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | VVV | Two   | Other VVV |
+    And the existing data in managed table "TTAB_ONLY_KEYS" :
+      | oneKey | otherKey |
+      | 1      | 1        |
+      | 2      | 1        |
+      | 3      | 1        |
+      | 4      | 2        |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | one      |           | something |
+      | two      | a         | a         |
+      | three    |           |           |
+      | 4        | aaa       |           |
+      | 5        | 5         | 5         |
+    And the user add new version "v2"
+    And a new commit "init 1" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset   | something |
+      | add    | 27  | LL32  | Preset 1 | AAA       |
+      | update | 25  | BBB   | Preset 2 | updated   |
+    And these changes are applied to table "TTAB_ONLY_KEYS" :
+      | change | oneKey | otherKey |
+      | add    | 5      | 1        |
+      | add    | 6      | 3        |
+      | update | 3      | 3        |
+      | delete | 4      | 2        |
+    And these changes are applied to table "TTAB_THREE_KEYS" :
+      | change | firstKey | secondKey | thirdKey |
+      | add    | 6        | 6         | 6        |
+      | add    | 7        |           |          |
+      | add    | other    | other     |          |
+      | add    | tttt     |           | tttttttt |
+      | update | 5        | 5         | 6        |
+      | update | three    | three     | three    |
+      | delete | 4        | aaa       |          |
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table           | Key                    | Action | Payload                            |
+      | TTAB_ONE        | LL32                   | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
+      | TTAB_ONE        | BBB                    | UPDATE | SOMETHING:'BBB'=>'updated'         |
+      | TTAB_ONLY_KEYS  | 5 / 1                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 6 / 3                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 1                  | REMOVE |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 3                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 4 / 2                  | REMOVE |                                    |
+      | TTAB_THREE_KEYS | 6 / 6 / 6              | ADD    |                                    |
+      | TTAB_THREE_KEYS | tttt / null / tttttttt | ADD    |                                    |
+      | TTAB_THREE_KEYS | 5 / 5 / 5              | REMOVE |                                    |
+      | TTAB_THREE_KEYS | 5 / 5 / 6              | ADD    |                                    |
+      | TTAB_THREE_KEYS | other / other / null   | ADD    |                                    |
+      | TTAB_THREE_KEYS | three / three / three  | ADD    |                                    |
+      | TTAB_THREE_KEYS | 4 / aaa / null         | REMOVE |                                    |
+
+  Scenario: Update diff for newly managed tables without values is processed without error
+    Given the application is fully initialized with the wizard
+    And a created parameter table with name "Table with 2 keys" for managed table "TTAB_ONLY_KEYS" and columns selected as this :
+      | name      | selection |
+      | ONE_KEY   | key       |
+      | OTHER_KEY | key       |
+    And the parameter table for managed table "TTAB_ONE" already exists
+    And the parameter table for managed table "TTAB_TWO" already exists
+    And the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | VVV | Two   | Other VVV |
+    And the existing data in managed table "TTAB_ONLY_KEYS" :
+      | oneKey | otherKey |
+      | 1      | 1        |
+      | 2      | 1        |
+      | 3      | 1        |
+      | 4      | 2        |
+    And the user add new version "v2"
+    And a new commit "init 1" has been saved with all the new identified diff content
+    And a created parameter table with name "Table with 3 keys" for managed table "TTAB_THREE_KEYS" with filter "cur.SECOND_KEY is not null or cur.THIRD_KEY is not null" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | key       |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | one      |           | something |
+      | two      | a         | a         |
+      | three    |           |           |
+      | 4        | aaa       |           |
+      | 5        | 5         | 5         |
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset   | something |
+      | add    | 27  | LL32  | Preset 1 | AAA       |
+      | update | 25  | BBB   | Preset 2 | updated   |
+    And these changes are applied to table "TTAB_ONLY_KEYS" :
+      | change | oneKey | otherKey |
+      | add    | 5      | 1        |
+      | add    | 6      | 3        |
+      | update | 3      | 3        |
+      | delete | 4      | 2        |
+    And the user add new version "v3"
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table           | Key                    | Action | Payload                            |
+      | TTAB_ONE        | LL32                   | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
+      | TTAB_ONE        | BBB                    | UPDATE | SOMETHING:'BBB'=>'updated'         |
+      | TTAB_ONLY_KEYS  | 5 / 1                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 6 / 3                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 1                  | REMOVE |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 3                  | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 4 / 2                  | REMOVE |                                    |
+      | TTAB_THREE_KEYS | 4 / aaa / null         | ADD    |                                    |
+      | TTAB_THREE_KEYS | 5 / 5 / 5              | ADD    |                                    |
+      | TTAB_THREE_KEYS | one / null / something | ADD    |                                    |
+      | TTAB_THREE_KEYS | two / a / a            | ADD    |                                    |

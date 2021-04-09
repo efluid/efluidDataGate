@@ -1082,7 +1082,7 @@ public class PilotableCommitPreparationService {
             try {
                 this.diffService.completeRevertDiff(current, dict);
             } catch (Throwable ex) {
-                LOGGER.error("Error on local diff process for table {}", dict.getTableName(), ex);
+                LOGGER.error("Error on local revert process for table {}", dict.getTableName(), ex);
                 throw new ApplicationException(PREPARATION_BIZ_FAILURE, "Error on local diff process for dict entry " + dict.getUuid(), ex, dict.getTableName());
             }
             int rem = current.getProcessRemaining().decrementAndGet();
