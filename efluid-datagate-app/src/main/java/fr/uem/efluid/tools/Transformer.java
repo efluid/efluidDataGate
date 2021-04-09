@@ -144,23 +144,30 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
                     // Expand payload (modifiable list)
                     List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
 
-                    // Apply transform
-                    runner.transform(l.getAction(), l.getKeyValue(), extracted);
+                    // Apply transform and update line only if changes where detected
+                    if (runner.transform(l.getAction(), l.getKeyValue(), extracted)) {
 
-                    if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
-                        LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on entry {}[{}] :\n{}",
-                                this.getName(), dict.getTableName(), l.getKeyValue(), buildTransformationResultForDebug(extracted));
+                        if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
+                            LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on entry {}[{}] :\n{}",
+                                    this.getName(), dict.getTableName(), l.getKeyValue(), buildTransformationResultForDebug(extracted));
+                        }
+
+                        // Drop erased values
+                        if (extracted.isEmpty()) {
+                            mergeDiff.remove(l);
+                        }
+
+                        // Or apply updated one
+                        else {
+                            // Rebuild payload
+                            l.setPayload(this.converter.convertToExtractedValue(extracted));
+                        }
                     }
 
-                    // Drop erased values
-                    if (extracted.isEmpty()) {
-                        mergeDiff.remove(l);
-                    }
-
-                    // Or apply updated one
-                    else {
-                        // Rebuild payload
-                        l.setPayload(this.converter.convertToExtractedValue(extracted));
+                    // Nothing has changed for line even if compliant
+                    else if(LOGGER_TRANSFORMATIONS.isDebugEnabled()){
+                        LOGGER_TRANSFORMATIONS.debug("No changes from transformer {} on entry {}[{}]",
+                                this.getName(), dict.getTableName(), l.getKeyValue());
                     }
                 });
     }
@@ -303,7 +310,15 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
             return new TransformedValue(existing, FormatUtils.toBytes(newValue));
         }
 
-        public abstract void transform(IndexAction action, String key, List<Value> values);
+        /**
+         * Process transform on provided list of values
+         *
+         * @param action current action
+         * @param key    line key (can be a composite key in the form "a / b / c"
+         * @param values the payload extracted to a list of values, ready to be transformed. The list can be erased to drop a line
+         * @return true if an update was done on values
+         */
+        public abstract boolean transform(IndexAction action, String key, List<Value> values);
 
         public static final class TransformedValue implements Value {
 

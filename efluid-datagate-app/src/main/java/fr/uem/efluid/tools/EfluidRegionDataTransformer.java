@@ -117,14 +117,14 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
 
         @Override
         public void importAttachmentPackageData(byte[] attachmentPackageData, JdbcTemplate managedSource, ManagedValueConverter valueConverter) {
-            String site = managedSource.query(GET_REGION_QUERY, new Object[]{this.project}, (rs) -> {
+            String region = managedSource.query(GET_REGION_QUERY, new Object[]{this.project}, (rs) -> {
                 if (rs.next()) {
                     return rs.getString(1);
                 }
                 return null;
             });
 
-            if (site == null) {
+            if (region == null) {
                 throw new ApplicationException(TRANSFORMER_EFUID_NO_SITE, "no site found with query "
                         + GET_REGION_QUERY + "on specified project " + this.project);
             }
@@ -137,7 +137,7 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
                     while (s.hasNextLine()) {
                         if (!header) {
                             RegionParameter param = new RegionParameter(valueConverter, s.nextLine().split(CSV_SEPARATOR));
-                            if (site.equals(param.getSite())) {
+                            if (region.equals(param.getRegion())) {
                                 this.parameters
                                         .computeIfAbsent(param.getTable(), k -> new ArrayList<>())
                                         .add(param);
@@ -167,43 +167,44 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
 
     public static class Runner extends Transformer.TransformerRunner<EfluidRegionDataTransformer.Config> {
 
-        private final Map<IndexAction, Set<String>> matchingKeys;
+        private final Set<String> matchingKeys;
 
         public Runner(TransformerValueProvider provider, Config config, DictionaryEntry dict) {
             super(provider, config, dict);
             List<RegionParameter> params = config.getParameters().get(dict.getTableName());
             this.matchingKeys = params != null
-                    ? params.stream().collect(Collectors.groupingBy(RegionParameter::getOp, Collectors.mapping(RegionParameter::getKey, Collectors.toSet())))
+                    ? params.stream()
+                    .map(RegionParameter::getKey)
+                    .collect(Collectors.toSet())
                     : null;
         }
 
         @Override
-        public void transform(IndexAction action, String key, List<Value> values) {
+        public boolean transform(IndexAction action, String key, List<Value> values) {
 
-            // Keep only matching lines, other are dropped
-            if (!this.matchingKeys.get(action).contains(key)) {
-                values.clear();
-            }
+            // Already filtered from key, apply change immediately
+            values.clear();
+
+            return true;
         }
 
         @Override
         public boolean test(PreparedIndexEntry preparedIndexEntry) {
-            return this.matchingKeys != null;
+            return this.matchingKeys != null && !this.matchingKeys.contains(preparedIndexEntry.getKeyValue());
         }
     }
 
     private static class RegionParameter {
 
-        private final String site;
+        private final String region;
         private final String table;
-        private final IndexAction op;
         private final String key;
         // "DIR", "TABNAME", "OP", "COLS_PK", "SRC_ID1", "SRC_ID2", "SRC_ID3", "SRC_ID4", "SRC_ID5"
 
         RegionParameter(ManagedValueConverter valueConverter, String[] row) {
-            this.site = row[0].trim();
+            this.region = row[0].trim();
             this.table = row[1].trim();
-            this.op = EfluidActionToDatagateAction(row[2].trim());
+            // OP is not used for now
             //  + SOURCE + DEST
             long pkCount = Stream.of(row[3].trim().split("\\+ "))
                     .map(String::trim)
@@ -216,28 +217,16 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
             this.key = keyBuild.toString();
         }
 
-        public String getSite() {
-            return this.site;
+        public String getRegion() {
+            return this.region;
         }
 
         public String getTable() {
             return this.table;
         }
 
-        public IndexAction getOp() {
-            return this.op;
-        }
-
         public String getKey() {
             return this.key;
         }
-
-        private static IndexAction EfluidActionToDatagateAction(String action) {
-            if ("INS".equals(action)) {
-                return IndexAction.ADD;
-            }
-            return IndexAction.UPDATE;
-        }
-
     }
 }

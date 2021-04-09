@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -395,10 +396,11 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
         }
 
         @Override
-        public void transform(IndexAction action, String key, List<Value> values) {
+        public boolean transform(IndexAction action, String key, List<Value> values) {
             if (this.config.isValueFilterMatches(action, values)) {
 
                 var matchings = this.mappedReplacedValues.get(action).matchingSubstitutes(values);
+                final AtomicBoolean updated = new AtomicBoolean(false);
 
                 // Process on indexed list for replacement support
                 for (int i = 0; i < values.size(); i++) {
@@ -409,9 +411,16 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                     matchings.stream()
                             .filter(e -> e.getKey().test(val))
                             .findFirst()
-                            .ifPresent(e -> values.set(finalI, transformedValue(val, e.getValue())));
+                            .ifPresent(e -> {
+                                values.set(finalI, transformedValue(val, e.getValue()));
+                                updated.set(true);
+                            });
                 }
+
+                return updated.get();
             }
+
+            return false;
         }
 
         /**

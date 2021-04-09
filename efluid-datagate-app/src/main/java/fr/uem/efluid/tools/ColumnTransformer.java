@@ -79,14 +79,21 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
         }
 
         @Override
-        public void transform(IndexAction action, String key,  List<Value> values) {
+        public boolean transform(IndexAction action, String key,  List<Value> values) {
+
+            // Detect if any change was processed
+            boolean updated = false;
+
             // Process on indexed list for replacement support
             for (int i = 0; i < values.size(); i++) {
                 Value val = values.get(i);
                 if (this.config.isColumnNameMatches(val)) {
                     values.set(i, transformedValue(val, transformValue(val.getValueAsString(), val.getType())));
+                    updated = true;
                 }
             }
+
+            return updated;
         }
 
         @Override
