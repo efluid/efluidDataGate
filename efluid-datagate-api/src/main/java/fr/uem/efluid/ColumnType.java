@@ -53,7 +53,8 @@ public enum ColumnType {
     TEMPORAL('T', "Temporal", false),
     UNKNOWN('U', "Inconnu", false),
     PK_ATOMIC('!', "Identifiant Num", true),
-    PK_STRING('§', "Identifiant Char", true);
+    PK_STRING('§', "Identifiant Char", true),
+    NULL('N', "null", false);
 
     private final char represent;
     private final String displayName;
@@ -130,6 +131,10 @@ public enum ColumnType {
      */
     public static ColumnType forObject(Object obj) {
 
+        if(obj == null){
+            return ColumnType.NULL;
+        }
+
         if (obj instanceof String) {
             return ColumnType.STRING;
         }
@@ -175,6 +180,10 @@ public enum ColumnType {
 
         if (represent == TEMPORAL.represent) {
             return ColumnType.TEMPORAL;
+        }
+
+        if (represent == NULL.represent){
+            return ColumnType.NULL;
         }
 
         return BINARY;

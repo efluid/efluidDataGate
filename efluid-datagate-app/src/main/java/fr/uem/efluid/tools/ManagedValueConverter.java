@@ -8,10 +8,16 @@ import org.springframework.util.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static fr.uem.efluid.ColumnType.NULL;
+import static fr.uem.efluid.ColumnType.TEMPORAL;
 
 /**
  * <p>
@@ -109,6 +115,14 @@ public class ManagedValueConverter {
 
             builder.append(SEPARATOR);
         }
+
+        // Nullable value
+        else if (type == NULL) {
+            builder.append(colName).append(AFFECT).append(type.getRepresent())
+                    .append(TYPE_IDENT).append(SEPARATOR);
+        }
+
+        // Other are dropped (empty type for example)
     }
 
     /**
@@ -229,18 +243,29 @@ public class ManagedValueConverter {
      * </p>
      *
      * @param lineContent content in a LinkedHashMap (to keep insertion order)
-     * @return
+     * @return extracted value from provided objects
      */
     public String convertToExtractedValue(final LinkedHashMap<String, Object> lineContent) {
 
         StringBuilder oneLine = new StringBuilder();
 
         for (Map.Entry<String, Object> value : lineContent.entrySet()) {
-            appendExtractedValue(
-                    oneLine,
-                    value.getKey(),
-                    value.getValue().toString(),
-                    ColumnType.forObject(value.getValue()));
+            ColumnType type = ColumnType.forObject(value.getValue());
+            // Clean support for any temporal
+            if (type == TEMPORAL) {
+                appendTemporalValue(
+                        oneLine,
+                        value.getKey(),
+                        // Manage any kind of temporal (date, datetime ...)
+                        Date.from(LocalDateTime.parse(value.getValue().toString())
+                                .atZone(ZoneId.systemDefault()).toInstant()));
+            } else {
+                appendExtractedValue(
+                        oneLine,
+                        value.getKey(),
+                        value.getValue().toString(),
+                        ColumnType.forObject(value.getValue()));
+            }
         }
 
         return finalizePayload(oneLine.toString());
@@ -426,7 +451,7 @@ public class ManagedValueConverter {
         }
 
         // Nullify empty HR
-        if(result.isEmpty()){
+        if (result.isEmpty()) {
             return null;
         }
 
@@ -529,8 +554,17 @@ public class ManagedValueConverter {
             this.name = raw.substring(0, pos).intern();
             this.type = ColumnType.forRepresent(raw.charAt(pos + 1));
             // Binary stay always rendered as B64 hash
-            this.value = (this.type == ColumnType.BINARY || this.type == ColumnType.TEXT) ? raw.substring(pos + 3).getBytes(FormatUtils.CONTENT_ENCODING)
-                    : FormatUtils.decode(raw.substring(pos + 3));
+            switch (this.type) {
+                case NULL:
+                    this.value = null;
+                    break;
+                case BINARY:
+                case TEXT:
+                    this.value = raw.substring(pos + 3).getBytes(FormatUtils.CONTENT_ENCODING);
+                    break;
+                default:
+                    this.value = FormatUtils.decode(raw.substring(pos + 3));
+            }
         }
 
         /**

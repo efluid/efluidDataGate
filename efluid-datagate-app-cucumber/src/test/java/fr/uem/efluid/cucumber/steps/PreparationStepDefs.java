@@ -112,6 +112,16 @@ public class PreparationStepDefs extends CucumberStepDefs {
         a_diff_is_completed();
     }
 
+    @Given("^a new diff analysis has been started and completed$")
+    public void a_new_diff_analysis_has_been_started_and_completed() throws Throwable {
+
+        // Started
+        a_diff_has_already_been_launched();
+
+        // Completed
+        a_diff_is_completed();
+    }
+
     @Given("^a merge diff analysis has been started and completed with the available source package$")
     public void a_merge_diff_analysis_has_been_started_and_completed_from_package() throws Throwable {
         // Import started
@@ -233,9 +243,20 @@ public class PreparationStepDefs extends CucumberStepDefs {
     public void user_has_selected_all_ready_content() throws Throwable {
 
         // Call select all uri
-        post("/prepare/selection/all", p("selected", "true"), p("rollbacked", "false"));
+        post("/ui/prepare/selection/all", p("selected", "true"), p("rollbacked", "false"));
 
         select = "ALL";
+
+        user_access_preparation_saving_page();
+    }
+
+    @Given("^the user has asked rollback on all content for commit$")
+    public void user_has_rollback_all_ready_content() throws Throwable {
+
+        // Call select all uri
+        post("/ui/prepare/selection/all", p("selected", "false"), p("rollbacked", "true"));
+
+        select = "NONE";
 
         user_access_preparation_saving_page();
     }
