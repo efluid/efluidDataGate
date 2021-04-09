@@ -75,18 +75,16 @@ public class RollbackConverter {
                 payload.stream()
                         .map(v -> Objects.requireNonNullElseGet(
                                 previous.get(v.getName()),
-                                () -> new NullValue(v.getName(), v.getType())))
+                                () -> new NullValue(v.getName())))
                         .collect(Collectors.toList()));
     }
 
     private static class NullValue implements Value {
 
         private final String name;
-        private final ColumnType type;
 
-        private NullValue(String name, ColumnType type) {
+        private NullValue(String name) {
             this.name = name;
-            this.type = type;
         }
 
         @Override
@@ -101,7 +99,7 @@ public class RollbackConverter {
 
         @Override
         public ColumnType getType() {
-            return this.type;
+            return ColumnType.NULL;
         }
     }
 }

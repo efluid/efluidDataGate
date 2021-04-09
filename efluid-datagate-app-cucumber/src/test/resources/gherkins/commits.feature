@@ -472,8 +472,31 @@ Feature: The commit can be saved and are historised
       | TTAB_ONE | DDD | ADD    | PRESET:'Recreate line', SOMETHING:'DDD Recreate line'          |                                                    |
       | TTAB_ONE | NEW | ADD    | PRESET:'New line', SOMETHING:'New line'                        |                                                    |
     And the index for commit ":construction: Update 3" has these managed technical payloads :
-      | Table    | Key   | Action   | Current payload                                                     | Previous payload                                               |
-      | TTAB_ONE | EEE   | REMOVE   |                                                                     | PRESET:'Preset 5 updated again', SOMETHING:'EEE updated again' |
-      | TTAB_ONE | DDD   | UPDATE   | PRESET:'Recreate line update', SOMETHING:'DDD Recreate line update' | PRESET:'Recreate line', SOMETHING:'DDD Recreate line'          |
-      | TTAB_ONE | NEW   | REMOVE   |                                                                     | PRESET:'New line', SOMETHING:'New line'                        |
-      | TTAB_ONE | AAA   | ADD      | PRESET:'Recreate aaa', SOMETHING:'DDD Recreate aaa'                 |                                                                |
+      | Table    | Key | Action | Current payload                                                     | Previous payload                                               |
+      | TTAB_ONE | EEE | REMOVE |                                                                     | PRESET:'Preset 5 updated again', SOMETHING:'EEE updated again' |
+      | TTAB_ONE | DDD | UPDATE | PRESET:'Recreate line update', SOMETHING:'DDD Recreate line update' | PRESET:'Recreate line', SOMETHING:'DDD Recreate line'          |
+      | TTAB_ONE | NEW | REMOVE |                                                                     | PRESET:'New line', SOMETHING:'New line'                        |
+      | TTAB_ONE | AAA | ADD    | PRESET:'Recreate aaa', SOMETHING:'DDD Recreate aaa'                 |                                                                |
+
+  Scenario: The changes can be selected to be rollbacked during a commit - apply on null value updates
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset | something |
+      | add    | 32  | LL32  |        | with null |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset | something |
+      | update | 32  | LL32  | value  | with null |
+    And a new diff analysis has been started and completed
+    And the user has asked rollback on all content for commit
+    And the user has specified a commit comment ":construction: All rollback"
+    When the user save the commit
+    Then the request is a success
+    And the data in managed table "TTAB_ONE" is now :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+      | 32  | LL32  |          | with null |

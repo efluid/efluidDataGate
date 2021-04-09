@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static fr.uem.efluid.ColumnType.NULL;
+
 /**
  * <p>
  * Tools for query build used in Managed database access. For backlog identification.
@@ -109,6 +111,14 @@ public class ManagedValueConverter {
 
             builder.append(SEPARATOR);
         }
+
+        // Nullable value
+        else if (type == NULL) {
+            builder.append(colName).append(AFFECT).append(type.getRepresent())
+                    .append(TYPE_IDENT).append(SEPARATOR);
+        }
+
+        // Other are dropped (empty type for example)
     }
 
     /**
@@ -426,7 +436,7 @@ public class ManagedValueConverter {
         }
 
         // Nullify empty HR
-        if(result.isEmpty()){
+        if (result.isEmpty()) {
             return null;
         }
 
@@ -529,8 +539,17 @@ public class ManagedValueConverter {
             this.name = raw.substring(0, pos).intern();
             this.type = ColumnType.forRepresent(raw.charAt(pos + 1));
             // Binary stay always rendered as B64 hash
-            this.value = (this.type == ColumnType.BINARY || this.type == ColumnType.TEXT) ? raw.substring(pos + 3).getBytes(FormatUtils.CONTENT_ENCODING)
-                    : FormatUtils.decode(raw.substring(pos + 3));
+            switch (this.type) {
+                case NULL:
+                    this.value = null;
+                    break;
+                case BINARY:
+                case TEXT:
+                    this.value = raw.substring(pos + 3).getBytes(FormatUtils.CONTENT_ENCODING);
+                    break;
+                default:
+                    this.value = FormatUtils.decode(raw.substring(pos + 3));
+            }
         }
 
         /**

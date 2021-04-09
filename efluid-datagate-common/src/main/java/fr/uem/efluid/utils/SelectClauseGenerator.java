@@ -78,8 +78,10 @@ public class SelectClauseGenerator {
      * @param selectClause
      * @return
      */
-    public Collection<String> splitSelectClause(String selectClause, List<? extends ExportAwareTableLink<?>> links,
-                                                Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
+    public List<String> splitSelectClause(
+            String selectClause,
+            List<? extends ExportAwareTableLink<?>> links,
+            Map<String, ? extends ExportAwareDictionaryEntry<?>> allEntries) {
 
         // When links are mapped, use a custom process
         if (hasMappedLinks(links, allEntries)) {
