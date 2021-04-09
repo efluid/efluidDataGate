@@ -3,8 +3,8 @@ package fr.uem.efluid.cucumber.common;
 import fr.uem.efluid.cucumber.stubs.TweakedAsyncDriver;
 import fr.uem.efluid.cucumber.stubs.TweakedPreparationUpdater;
 import fr.uem.efluid.security.providers.DatabaseOnlyAccountProvider;
-import fr.uem.efluid.services.PilotableCommitPreparationService;
 import fr.uem.efluid.tools.AsyncDriver;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.tools.TransformerValueProvider;
 import fr.uem.efluid.utils.DatasourceUtils;
@@ -66,6 +66,9 @@ public class SystemTestConfig {
 
     @Autowired
     private EntityManagerFactory defaultEntityManagerFactory;
+
+    @Autowired
+    private ManagedQueriesGenerator queryGenerator;
 
     @Bean
     public JdbcTemplate managedDatabaseJdbcTemplate() {
@@ -176,7 +179,7 @@ public class SystemTestConfig {
     @Bean
     @Primary
     public TransformerValueProvider fixedTransformerValueProvider() {
-        return new TransformerValueProvider() {
+        return new TransformerValueProvider(this.queryGenerator) {
             @Override
             public String getFormatedCurrentTime() {
                 return FormatUtils.format(LocalDateTime.of(2020, 06, 12, 22, 14));

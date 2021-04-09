@@ -8,12 +8,16 @@ import org.springframework.util.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.Normalizer;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static fr.uem.efluid.ColumnType.NULL;
+import static fr.uem.efluid.ColumnType.TEMPORAL;
 
 /**
  * <p>
@@ -239,18 +243,29 @@ public class ManagedValueConverter {
      * </p>
      *
      * @param lineContent content in a LinkedHashMap (to keep insertion order)
-     * @return
+     * @return extracted value from provided objects
      */
     public String convertToExtractedValue(final LinkedHashMap<String, Object> lineContent) {
 
         StringBuilder oneLine = new StringBuilder();
 
         for (Map.Entry<String, Object> value : lineContent.entrySet()) {
-            appendExtractedValue(
-                    oneLine,
-                    value.getKey(),
-                    value.getValue().toString(),
-                    ColumnType.forObject(value.getValue()));
+            ColumnType type = ColumnType.forObject(value.getValue());
+            // Clean support for any temporal
+            if (type == TEMPORAL) {
+                appendTemporalValue(
+                        oneLine,
+                        value.getKey(),
+                        // Manage any kind of temporal (date, datetime ...)
+                        Date.from(LocalDateTime.parse(value.getValue().toString())
+                                .atZone(ZoneId.systemDefault()).toInstant()));
+            } else {
+                appendExtractedValue(
+                        oneLine,
+                        value.getKey(),
+                        value.getValue().toString(),
+                        ColumnType.forObject(value.getValue()));
+            }
         }
 
         return finalizePayload(oneLine.toString());

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -22,8 +21,11 @@ import java.util.List;
 @Component
 public class TransformerValueProvider {
 
-    @Autowired
-    private ManagedQueriesGenerator queryGenerator;
+    private final ManagedQueriesGenerator queryGenerator;
+
+    public TransformerValueProvider(@Autowired ManagedQueriesGenerator queryGenerator) {
+        this.queryGenerator = queryGenerator;
+    }
 
     public String getFormatedCurrentTime() {
         return FormatUtils.format(LocalDateTime.now());
