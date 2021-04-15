@@ -29,6 +29,8 @@ public interface Value {
 
     String INJECT_OF_LOB = "?";
 
+    String NULL_VALUE = "null";
+
     /**
      * @return parameter name
      */
@@ -53,7 +55,11 @@ public interface Value {
      * @return
      */
     default String getValueAsString() {
-        return new String(getValue(), FormatUtils.CONTENT_ENCODING);
+        byte[] value = getValue();
+        if(value == null){
+            return null;
+        }
+        return new String(value, FormatUtils.CONTENT_ENCODING);
     }
 
     /**
@@ -63,22 +69,24 @@ public interface Value {
      */
     default String getTyped(List<String> lobKeys, DateTimeFormatter dbTemporalFormater) {
 
-        if (getType() == ColumnType.STRING || getType() == ColumnType.PK_STRING) {
-            return TYPED_STRING_PROTECT + getValueAsString().replace("'", "''") + TYPED_STRING_PROTECT;
+        switch (getType()){
+            case NULL:
+                return NULL_VALUE;
+            case STRING:
+            case PK_STRING:
+                return TYPED_STRING_PROTECT + getValueAsString().replace("'", "''") + TYPED_STRING_PROTECT;
+            case TEMPORAL:
+                LocalDateTime internal = LocalDateTime.parse(getValueAsString(), INTERNAL_LDT_FORMATTER);
+                return TO_DATE_CONVERT_BEGIN + TYPED_STRING_PROTECT + dbTemporalFormater.format(internal) + TYPED_STRING_PROTECT + TO_DATE_CONVERT_END;
+            case BINARY:
+            case TEXT:
+                if (lobKeys != null){
+                    lobKeys.add(getValueAsString());
+                    return INJECT_OF_LOB;
+                }
+            default:
+                return getValueAsString();
         }
-
-        // No choice, need to reformat for DB
-        if (getType() == ColumnType.TEMPORAL) {
-            LocalDateTime internal = LocalDateTime.parse(getValueAsString(), INTERNAL_LDT_FORMATTER);
-            return TO_DATE_CONVERT_BEGIN + TYPED_STRING_PROTECT + dbTemporalFormater.format(internal) + TYPED_STRING_PROTECT + TO_DATE_CONVERT_END;
-        }
-
-        if (lobKeys != null && getType() == ColumnType.BINARY || getType() == ColumnType.TEXT) {
-            lobKeys.add(getValueAsString());
-            return INJECT_OF_LOB;
-        }
-
-        return getValueAsString();
     }
 
     /**

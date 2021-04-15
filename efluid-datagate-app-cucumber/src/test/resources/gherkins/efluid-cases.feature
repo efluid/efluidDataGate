@@ -102,10 +102,10 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table              | Key       | Action | Payload                                                               |
-      | TTESTMULTIDATATYPE | $testj_d  | REMOVE |                                                                       |
-      | TTESTMULTIDATATYPE | $testj_u  | UPDATE | COL1:'testj update 1'=>'testj update 1 2'                             |
-      | TTESTMULTIDATATYPE | $testj_i2 | ADD    | COL1:'testj insert 2', COL2:'', COL3:, COL4:, COL5:, COL6:'', COL7:'' |
+      | Table              | Key       | Action | Payload                                   |
+      | TTESTMULTIDATATYPE | $testj_d  | REMOVE |                                           |
+      | TTESTMULTIDATATYPE | $testj_u  | UPDATE | COL1:'testj update 1'=>'testj update 1 2' |
+      | TTESTMULTIDATATYPE | $testj_i2 | ADD    | COL1:'testj insert 2'                     |
 
   @TestFusionLot1et2Insert
   Scenario: Efluid test fusion lot 1 insert + lot 2 insert
@@ -559,19 +559,19 @@ Feature: A complete set of test case are specified for Efluid needs
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
       | Table  | Key | Action | Payload |
-      | TTEST1 | 1   | ADD    | COL1:'' |
-      | TTEST1 | 2   | ADD    | COL1:'' |
-      | TTEST1 | 3   | ADD    | COL1:'' |
-      | TTEST1 | 4   | ADD    | COL1:'' |
-      | TTEST1 | 5   | ADD    | COL1:'' |
-      | TTEST1 | 6   | ADD    | COL1:'' |
-      | TTEST1 | 7   | ADD    | COL1:'' |
-      | TTEST1 | 8   | ADD    | COL1:'' |
-      | TTEST1 | 9   | ADD    | COL1:'' |
-      | TTEST1 | 10  | ADD    | COL1:'' |
-      | TTEST1 | 11  | ADD    | COL1:'' |
-      | TTEST1 | 12  | ADD    | COL1:'' |
-      | TTEST1 | 13  | ADD    | COL1:'' |
+      | TTEST1 | 1   | ADD    |         |
+      | TTEST1 | 2   | ADD    |         |
+      | TTEST1 | 3   | ADD    |         |
+      | TTEST1 | 4   | ADD    |         |
+      | TTEST1 | 5   | ADD    |         |
+      | TTEST1 | 6   | ADD    |         |
+      | TTEST1 | 7   | ADD    |         |
+      | TTEST1 | 8   | ADD    |         |
+      | TTEST1 | 9   | ADD    |         |
+      | TTEST1 | 10  | ADD    |         |
+      | TTEST1 | 11  | ADD    |         |
+      | TTEST1 | 12  | ADD    |         |
+      | TTEST1 | 13  | ADD    |         |
 
   @TestDiffTableDataVideNonRedite
   Scenario: Efluid diff table vide 2 - non redite
@@ -660,7 +660,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | T_NULL_LINK_DEMO_DEST | DEST2 | ADD    | BIZ_KEY:'DEST2_BIZ', CODE:'DEST_CODE_2'    |
       | T_NULL_LINK_DEMO_DEST | DEST3 | ADD    | BIZ_KEY:'DEST3_BIZ', CODE:'DEST_CODE_3'    |
       | T_NULL_LINK_DEMO_DEST | DEST4 | ADD    | BIZ_KEY:'DEST4_BIZ', CODE:'DEST_CODE_4'    |
-      | T_NULL_LINK_DEMO_DEST | DEST5 | ADD    | BIZ_KEY:'', CODE:'DEST_CODE_5'             |
+      | T_NULL_LINK_DEMO_DEST | DEST5 | ADD    | CODE:'DEST_CODE_5'                         |
 
   @TestEfluidDatabaseRules
   Scenario: On Efluid tables, linked table lines can use a null biz link key. With a specific rule the nullable linked entries should be valid - rule enabled
@@ -694,7 +694,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | T_NULL_LINK_DEMO_DEST | DEST2 | ADD    | BIZ_KEY:'DEST2_BIZ', CODE:'DEST_CODE_2'    |
       | T_NULL_LINK_DEMO_DEST | DEST3 | ADD    | BIZ_KEY:'DEST3_BIZ', CODE:'DEST_CODE_3'    |
       | T_NULL_LINK_DEMO_DEST | DEST4 | ADD    | BIZ_KEY:'DEST4_BIZ', CODE:'DEST_CODE_4'    |
-      | T_NULL_LINK_DEMO_DEST | DEST5 | ADD    | BIZ_KEY:'', CODE:'DEST_CODE_5'             |
+      | T_NULL_LINK_DEMO_DEST | DEST5 | ADD    | CODE:'DEST_CODE_5'                         |
 
   @TestEfluidDatabaseRules
   Scenario: On Efluid tables, linked table lines can use a null biz link key. Even if rule to allow it is enabled, the missing lines are seen in remarks
@@ -856,9 +856,9 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                               |
-      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | VALUE:'11'=>'11*', ETAT_OBJET:'TODO_UPDATE_CHG'=>'TODO_UPDATE', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                            |
-      | T_EFLUID_TEST_AUDIT | CHG_2 | ADD    | true         | VALUE:'22', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:2020-05-22 00:00:00, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'evt CRE' |
+      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                        |
+      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | VALUE:'11'=>'11*', ETAT_OBJET:'TODO_UPDATE_CHG'=>'TODO_UPDATE', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:n/a=>'evt MOD' |
+      | T_EFLUID_TEST_AUDIT | CHG_2 | ADD    | true         | VALUE:'22', ETAT_OBJET:'TODO_ADD', DATE_CREATION:2020-05-22 00:00:00, ACTEUR_CREATION:'evt CRE'                                                |
 
   @TestEfluidAuditTransformerRules
   Scenario: The audit transformer apply generated audit data on specified values and actions - 2
@@ -913,10 +913,10 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                                   |
-      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | VALUE:'11'=>'11*', ETAT_OBJET:'TODO_UPDATE_CHG'=>'TODO_UPDATE', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                |
-      | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'TODO_DELETE'=>'DELETED', DATE_SUPPRESSION:=>2020-05-25 00:00:00, DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_SUPPRESSION:''=>'evt DEL', ACTEUR_MODIFICATION:''=>'evt MOD' |
-      | T_EFLUID_TEST_AUDIT | CHG_3 | ADD    | true         | VALUE:'33', ETAT_OBJET:'TODO_ADD', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:2020-05-22 00:00:00, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'evt CRE'     |
+      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                                           |
+      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | VALUE:'11'=>'11*', ETAT_OBJET:'TODO_UPDATE_CHG'=>'TODO_UPDATE', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:n/a=>'evt MOD'                                                    |
+      | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'TODO_DELETE'=>'DELETED', DATE_SUPPRESSION:n/a=>2020-05-25 00:00:00, DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_SUPPRESSION:n/a=>'evt DEL', ACTEUR_MODIFICATION:n/a=>'evt MOD' |
+      | T_EFLUID_TEST_AUDIT | CHG_3 | ADD    | true         | VALUE:'33', ETAT_OBJET:'TODO_ADD', DATE_CREATION:2020-05-22 00:00:00, ACTEUR_CREATION:'evt CRE'                                                                                                   |
 
   @TestEfluidAuditTransformerRules
   Scenario: The audit transformer apply generated audit data on specified values and actions - 3
@@ -993,13 +993,13 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                                                           |
-      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | ETAT_OBJET:'INIT'=>'STALE', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                            |
-      | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'INIT'=>'MODIFIED', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                         |
-      | T_EFLUID_TEST_AUDIT | CHG_3 | UPDATE | true         | ETAT_OBJET:'INIT'=>'TESTED', DATE_MODIFICATION:=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:''=>'evt MOD'                                                                           |
-      | T_EFLUID_TEST_AUDIT | CHG_4 | UPDATE | true         | ETAT_OBJET:'INIT'=>'DELETED', DATE_SUPPRESSION:=>2020-05-25 00:00:00, ACTEUR_SUPPRESSION:''=>'evt DEL', ACTEUR_MODIFICATION:''=>'evt MOD'                                         |
-      | T_EFLUID_TEST_AUDIT | CHG_5 | UPDATE | true         | ETAT_OBJET:'INIT'=>'NOT_TEST', ACTEUR_MODIFICATION:''=>'evt MOD'                                                                                                                  |
-      | T_EFLUID_TEST_AUDIT | CHG_6 | ADD    | true         | VALUE:'66', ETAT_OBJET:'INIT', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:2020-05-22 00:00:00, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'evt CRE' |
+      | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                        |
+      | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | ETAT_OBJET:'INIT'=>'STALE', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:n/a=>'evt MOD'                                     |
+      | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'INIT'=>'MODIFIED', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:n/a=>'evt MOD'                                  |
+      | T_EFLUID_TEST_AUDIT | CHG_3 | UPDATE | true         | ETAT_OBJET:'INIT'=>'TESTED', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:n/a=>'evt MOD'                                    |
+      | T_EFLUID_TEST_AUDIT | CHG_4 | UPDATE | true         | ETAT_OBJET:'INIT'=>'DELETED', DATE_SUPPRESSION:n/a=>2020-05-25 00:00:00, ACTEUR_SUPPRESSION:n/a=>'evt DEL', ACTEUR_MODIFICATION:n/a=>'evt MOD' |
+      | T_EFLUID_TEST_AUDIT | CHG_5 | UPDATE | true         | ETAT_OBJET:'INIT'=>'NOT_TEST', ACTEUR_MODIFICATION:n/a=>'evt MOD'                                                                              |
+      | T_EFLUID_TEST_AUDIT | CHG_6 | ADD    | true         | VALUE:'66', ETAT_OBJET:'INIT', DATE_CREATION:2020-05-22 00:00:00, ACTEUR_CREATION:'evt CRE'                                                    |
 
   @TestEfluidAuditTransformerRules
   Scenario: The audit transformer apply generated audit data on specified values even when null - matcher out of scope
@@ -1037,9 +1037,9 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table               | Key | Action | Need Resolve | Payload                                                                                                                                            |
-      | T_EFLUID_TEST_AUDIT | 1   | ADD    | true         | VALUE:'1', ETAT_OBJET:'', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'' |
-      | T_EFLUID_TEST_AUDIT | 2   | ADD    | true         | VALUE:'2', ETAT_OBJET:'', DATE_SUPPRESSION:, DATE_MODIFICATION:, DATE_CREATION:, ACTEUR_SUPPRESSION:'', ACTEUR_MODIFICATION:'', ACTEUR_CREATION:'' |
+      | Table               | Key | Action | Need Resolve | Payload   |
+      | T_EFLUID_TEST_AUDIT | 1   | ADD    | true         | VALUE:'1' |
+      | T_EFLUID_TEST_AUDIT | 2   | ADD    | true         | VALUE:'2' |
 
   @TestEfluidAuditTransformerRules
   Scenario: The audit transformer apply generated audit data on specified values even when null - correct matcher
@@ -1074,9 +1074,9 @@ Feature: A complete set of test case are specified for Efluid needs
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table               | Key | Action | Need Resolve | Payload                                                                                                                                                                                                                                 |
-      | T_EFLUID_TEST_AUDIT | 1   | ADD    | true         | VALUE:'1', ETAT_OBJET:'', DATE_SUPPRESSION:2020-06-12 22:14:00, DATE_MODIFICATION:2020-06-12 22:14:00, DATE_CREATION:2020-06-12 22:14:00, ACTEUR_SUPPRESSION:'evt 295556', ACTEUR_MODIFICATION:'evt 12345', ACTEUR_CREATION:'evt 67890' |
-      | T_EFLUID_TEST_AUDIT | 2   | ADD    | true         | VALUE:'2', ETAT_OBJET:'', DATE_SUPPRESSION:2020-06-12 22:14:00, DATE_MODIFICATION:2020-06-12 22:14:00, DATE_CREATION:2020-06-12 22:14:00, ACTEUR_SUPPRESSION:'evt 295556', ACTEUR_MODIFICATION:'evt 12345', ACTEUR_CREATION:'evt 67890' |
+      | Table               | Key | Action | Need Resolve | Payload                                                                                                                                                                                                                  |
+      | T_EFLUID_TEST_AUDIT | 1   | ADD    | true         | VALUE:'1', DATE_SUPPRESSION:2020-06-12 22:14:00, DATE_MODIFICATION:2020-06-12 22:14:00, DATE_CREATION:2020-06-12 22:14:00, ACTEUR_SUPPRESSION:'evt 295556', ACTEUR_MODIFICATION:'evt 12345', ACTEUR_CREATION:'evt 67890' |
+      | T_EFLUID_TEST_AUDIT | 2   | ADD    | true         | VALUE:'2', DATE_SUPPRESSION:2020-06-12 22:14:00, DATE_MODIFICATION:2020-06-12 22:14:00, DATE_CREATION:2020-06-12 22:14:00, ACTEUR_SUPPRESSION:'evt 295556', ACTEUR_MODIFICATION:'evt 12345', ACTEUR_CREATION:'evt 67890' |
 
   @TestEfluidMergeAnomalies
   Scenario: During a merge, some validation rules, based on identified changes, can define cases where a "compatibility anomaly" can be detected

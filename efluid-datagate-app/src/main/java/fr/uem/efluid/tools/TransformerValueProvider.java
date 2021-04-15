@@ -1,22 +1,39 @@
 package fr.uem.efluid.tools;
 
+import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.utils.FormatUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A basic extensible component providing some standard values for Transformer needs.
  * Can be extended for test purpose
- * @since v2.0.4
- * @version 1
+ *
  * @author elecomte
+ * @version 1
+ * @since v2.0.4
  */
 @Component
 public class TransformerValueProvider {
 
-    public String getFormatedCurrentTime(){
+    private final ManagedQueriesGenerator queryGenerator;
+
+    public TransformerValueProvider(@Autowired ManagedQueriesGenerator queryGenerator) {
+        this.queryGenerator = queryGenerator;
+    }
+
+    public String getFormatedCurrentTime() {
         return FormatUtils.format(LocalDateTime.now());
     }
 
+    public List<String> getDictionaryEntryColumns(DictionaryEntry dict) {
+        return StringUtils.hasText(dict.getSelectClause())
+                ? this.queryGenerator.splitSelectClause(dict.getSelectClause(), null, null)
+                : Collections.emptyList();
+    }
 }

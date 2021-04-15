@@ -306,10 +306,6 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
             this.dict = dict;
         }
 
-        protected Value transformedValue(Value existing, String newValue) {
-            return new TransformedValue(existing, FormatUtils.toBytes(newValue));
-        }
-
         /**
          * Process transform on provided list of values
          *
@@ -320,20 +316,44 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
          */
         public abstract boolean transform(IndexAction action, String key, List<Value> values);
 
+        /**
+         * Init a transformed value of the same type
+         */
+        protected static Value transformedValue(Value existing, String newValue) {
+            return new TransformedValue(existing, FormatUtils.toBytes(newValue));
+        }
+
+        /**
+         * Init a transformed value of a specified type
+         */
+        protected static Value transformedValue(Value existing, String newValue, ColumnType newType) {
+            return new TransformedValue(existing, FormatUtils.toBytes(newValue), newType);
+        }
+
         public static final class TransformedValue implements Value {
 
             private static final String TRANSFORMATION_DISPLAY = " -> ";
 
-            private Value target;
-
+            private final Value target;
             private final byte[] modifiedContent;
+            private final ColumnType modifiedType;
 
             private TransformedValue(Value target, byte[] modifiedContent) {
                 this.target = target;
                 this.modifiedContent = modifiedContent;
+                this.modifiedType = target.getType();
 
                 LOGGER.debug("Processed transformation on value from {} to {}", target.getValue(), modifiedContent);
             }
+
+            private TransformedValue(Value target, byte[] modifiedContent, ColumnType type) {
+                this.target = target;
+                this.modifiedContent = modifiedContent;
+                this.modifiedType = type;
+
+                LOGGER.debug("Processed transformation on value from {} to {}", target.getValue(), modifiedContent);
+            }
+
 
             @Override
             public String getName() {
@@ -347,7 +367,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
 
             @Override
             public ColumnType getType() {
-                return this.target.getType();
+                return this.modifiedType;
             }
 
             public String getTransformation() {

@@ -1,6 +1,7 @@
 package fr.uem.efluid.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
@@ -212,25 +213,8 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
             }
 
             // Continue only if value pattern may match (check that column at least exists)
-            if (matchers.appliedValueColumnMatchers.size() > 0 && matchers.appliedValueColumnMatchers.stream().noneMatch(c -> c.matcher(entry.getPayload()).matches())) {
-                return false;
-            }
-
-
-            // Preload patterns for date and actor updates (get columns and compile)
-            if (matchers.appliedUpdateColumnMatchers == null) {
-                matchers.appliedUpdateColumnMatchers = generatePayloadMatchersFromColumnPatterns(
-                        Stream.concat(
-                                this.dateUpdates != null ? this.dateUpdates.entrySet().stream()
-                                        .filter(v -> v.getValue().getOnActions() == null || v.getValue().getOnActions().isEmpty() || v.getValue().getOnActions().contains(entry.getAction()))
-                                        .map(Map.Entry::getKey) : Stream.empty(),
-                                this.actorUpdates != null ? this.actorUpdates.entrySet().stream()
-                                        .filter(v -> v.getValue().getOnActions() == null || v.getValue().getOnActions().isEmpty() || v.getValue().getOnActions().contains(entry.getAction()))
-                                        .map(Map.Entry::getKey) : Stream.empty()
-                        ));
-            }
-
-            return matchers.appliedUpdateColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
+            return matchers.appliedValueColumnMatchers.size() == 0
+                    || matchers.appliedValueColumnMatchers.stream().anyMatch(c -> c.matcher(entry.getPayload()).matches());
         }
 
         boolean isValueFilterMatches(IndexAction action, List<Value> values) {
@@ -367,9 +351,6 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
             private List<Pattern> appliedValueColumnMatchers;
 
             @JsonIgnore
-            private List<Pattern> appliedUpdateColumnMatchers;
-
-            @JsonIgnore
             private Map<Pattern, List<Pattern>> appliedValueFilterMatchers;
 
         }
@@ -383,11 +364,13 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
 
         private final String currentTime;
         private final Map<IndexAction, SubstituteDefinition> mappedReplacedValues;
+        private final List<String> selectedColumns;
 
         private Runner(TransformerValueProvider provider, Config config, DictionaryEntry dict) {
             super(provider, config, dict);
             this.currentTime = provider.getFormatedCurrentTime();
             this.mappedReplacedValues = prepareMappedReplacedValues(config);
+            this.selectedColumns = provider.getDictionaryEntryColumns(dict);
         }
 
         @Override
@@ -399,6 +382,13 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
         public boolean transform(IndexAction action, String key, List<Value> values) {
             if (this.config.isValueFilterMatches(action, values)) {
 
+                Set<String> specifiedColumns = values.stream().map(Value::getName).collect(toSet());
+
+                // Complete values for missing columns
+                this.selectedColumns.stream()
+                        .filter(c -> !specifiedColumns.contains(c))
+                        .forEach(c -> values.add(new MissingValue(c)));
+
                 var matchings = this.mappedReplacedValues.get(action).matchingSubstitutes(values);
                 final AtomicBoolean updated = new AtomicBoolean(false);
 
@@ -409,10 +399,10 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                     final int finalI = i;
                     // Process change only for current action - all are init in mappedReplacedValues
                     matchings.stream()
-                            .filter(e -> e.getKey().test(val))
+                            .filter(e -> e.matches(val))
                             .findFirst()
                             .ifPresent(e -> {
-                                values.set(finalI, transformedValue(val, e.getValue()));
+                                values.set(finalI, e.transform(val));
                                 updated.set(true);
                             });
                 }
@@ -441,7 +431,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                     // Default value matcher => On action only
                     config.getActorUpdates().entrySet().stream()
                             .filter(s -> s.getValue().getOnActions() != null && !s.getValue().getOnActions().isEmpty() && s.getValue().getOnActions().contains(action))
-                            .forEach(e -> allForAction.computeDefaultSpec(valueNamePredicate(e.getKey()), e.getValue().getValue()));
+                            .forEach(e -> allForAction.computeDefaultSpec(valueNamePredicate(e.getKey()), e.getValue().getValue(), ColumnType.STRING));
 
                     // Specified values matcher
                     config.getActorUpdates().entrySet().stream()
@@ -449,7 +439,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                             .forEach(e -> {
                                 var predicate = valueNamePredicate(e.getKey());
                                 var replacement = e.getValue().getValue();
-                                allForAction.computeEachValuesSpec(e.getValue(), predicate, replacement);
+                                allForAction.computeEachValuesSpec(e.getValue(), predicate, replacement, ColumnType.STRING);
                             });
                 }
 
@@ -457,7 +447,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                     // Default value matcher => On action only
                     config.getDateUpdates().entrySet().stream()
                             .filter(s -> s.getValue().getOnActions() != null && !s.getValue().getOnActions().isEmpty() && s.getValue().getOnActions().contains(action))
-                            .forEach(e -> allForAction.computeDefaultSpec(valueNamePredicate(e.getKey()), dateReplacement(e.getValue())));
+                            .forEach(e -> allForAction.computeDefaultSpec(valueNamePredicate(e.getKey()), dateReplacement(e.getValue()), ColumnType.TEMPORAL));
 
                     // Specified values matcher
                     config.getDateUpdates().entrySet().stream()
@@ -465,7 +455,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                             .forEach(e -> {
                                 var predicate = valueNamePredicate(e.getKey());
                                 var replacement = dateReplacement(e.getValue());
-                                allForAction.computeEachValuesSpec(e.getValue(), predicate, replacement);
+                                allForAction.computeEachValuesSpec(e.getValue(), predicate, replacement, ColumnType.TEMPORAL);
                             });
                 }
 
@@ -488,36 +478,84 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
     }
 
     /**
+     * For columns identified in transformer rules but which could be missing in line we are transforming :
+     * specify a "missing" referenced value which could also be transformer with current transformer.
+     */
+    private static class MissingValue implements Value {
+
+        private final String name;
+
+        private MissingValue(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getName() {
+            return this.name;
+        }
+
+        @Override
+        public byte[] getValue() {
+            return null;
+        }
+
+        @Override
+        public ColumnType getType() {
+            return null;
+        }
+    }
+
+    /**
      * Prepared (complex) substitutes on value list / values
      */
     private static class SubstituteDefinition {
 
         private final Predicate<List<Value>> DEFAULT = l -> true;
 
-        private final Map<Predicate<List<Value>>, Map<Predicate<Value>, String>> allForAction;
+        private final Map<Predicate<List<Value>>, Collection<Substitute>> allForAction;
 
         private SubstituteDefinition() {
             allForAction = new HashMap<>();
         }
 
-        void computeEachValuesSpec(Config.ApplicationSpec spec, Predicate<Value> valuePredicate, String replacement) {
+        void computeEachValuesSpec(Config.ApplicationSpec spec, Predicate<Value> valuePredicate, String replacement, ColumnType type) {
             spec.getOnValues().forEach(m -> {
                 var listPredicate = valueContentPredicate(m.getColumnPattern(), m.getValuePattern());
-                Map<Predicate<Value>, String> subs = this.allForAction.computeIfAbsent(listPredicate, k -> new HashMap<>());
-                subs.put(valuePredicate, replacement);
+                Collection<Substitute> subs = this.allForAction.computeIfAbsent(listPredicate, k -> new HashSet<>());
+                subs.add(new Substitute(valuePredicate, replacement, type));
             });
         }
 
-        void computeDefaultSpec(Predicate<Value> valuePredicate, String replacement) {
-            Map<Predicate<Value>, String> subs = this.allForAction.computeIfAbsent(DEFAULT, k -> new HashMap<>());
-            subs.put(valuePredicate, replacement);
+        void computeDefaultSpec(Predicate<Value> valuePredicate, String replacement, ColumnType type) {
+            Collection<Substitute> subs = this.allForAction.computeIfAbsent(DEFAULT, k -> new HashSet<>());
+            subs.add(new Substitute(valuePredicate, replacement, type));
         }
 
-        Collection<Map.Entry<Predicate<Value>, String>> matchingSubstitutes(List<Value> values) {
+        Collection<Substitute> matchingSubstitutes(List<Value> values) {
             return this.allForAction.entrySet().stream()
                     .filter(e -> e.getKey().test(values))
-                    .flatMap(e -> e.getValue().entrySet().stream())
+                    .flatMap(e -> e.getValue().stream())
                     .collect(Collectors.toList());
+        }
+
+        private static class Substitute {
+            private final Predicate<Value> predicate;
+            private final String value;
+            private final ColumnType type;
+
+            private Substitute(Predicate<Value> predicate, String value, ColumnType type) {
+                this.predicate = predicate;
+                this.value = value;
+                this.type = type;
+            }
+
+            boolean matches(Value value) {
+                return this.predicate.test(value);
+            }
+
+            Value transform(Value source) {
+                return Transformer.TransformerRunner.transformedValue(source, this.value, this.type);
+            }
         }
 
         private static Predicate<List<Value>> valueContentPredicate(String namePattern, String valuePattern) {
