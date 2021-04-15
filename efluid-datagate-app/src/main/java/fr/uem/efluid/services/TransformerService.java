@@ -76,9 +76,10 @@ public class TransformerService extends AbstractApplicationService {
     /**
      * For edit page, list all specified transformer defs
      *
+     * @param loadPackageComment true if the optional load package comment has to be included
      * @return all transformer defs from current project
      */
-    public List<TransformerDefDisplay> getAllTransformerDefs() {
+    public List<TransformerDefDisplay> getAllTransformerDefs(boolean loadPackageComment) {
         this.projectService.assertCurrentUserHasSelectedProject();
 
         // For display of user friendly name of transformer type
@@ -86,7 +87,18 @@ public class TransformerService extends AbstractApplicationService {
                 .collect(Collectors.toMap(t -> t.getClass().getSimpleName(), Transformer::getName));
 
         return this.transformerDefs.findByProject(this.projectService.getCurrentSelectedProjectEntity()).stream()
-                .map(d -> new TransformerDefDisplay(d, transformerNameByType.get(d.getType())))
+                .map(def -> {
+                    String packageComment = null;
+
+                    // If package comment has to be loaded, the transformer must be fully initialized
+                    if (loadPackageComment) {
+                        Transformer<?, ?> transformer = loadTransformerByType(def.getType());
+                        Transformer.TransformerConfig config = parseConfiguration(def.getConfiguration(), transformer);
+                        packageComment = config.isAttachmentPackageSupport()
+                                ? config.getAttachmentPackageComment(this.managedSource, this.valueConverter) : null;
+                    }
+                    return new TransformerDefDisplay(def, transformerNameByType.get(def.getType()), packageComment);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -115,10 +127,12 @@ public class TransformerService extends AbstractApplicationService {
         Transformer<?, ?> transformer = loadTransformerByType(type);
 
         TransformerDefEditData editData = new TransformerDefEditData();
-
+        Transformer.TransformerConfig config = transformer.getDefaultConfig();
         editData.setName(transformer.getName());
-        editData.setConfiguration(prettyConfig(transformer.getDefaultConfig()));
+        editData.setConfiguration(prettyConfig(config));
         editData.setPriority(1);
+        editData.setPackageComment(config.isAttachmentPackageSupport()
+                ? config.getAttachmentPackageComment(this.managedSource, this.valueConverter) : null);
 
         editData.setTransformer(transformer);
 
@@ -167,11 +181,15 @@ public class TransformerService extends AbstractApplicationService {
      */
     public TransformerDefEditData editTransformerDef(UUID uuid) {
 
-        TransformerDef def = this.transformerDefs.findById(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
+        TransformerDef def = this.transformerDefs.findById(uuid)
+                .orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
         Transformer<?, ?> transformer = loadTransformerByType(def.getType());
-        String prettyCfg = prettyConfig(parseConfiguration(def.getConfiguration(), transformer));
+        Transformer.TransformerConfig config = parseConfiguration(def.getConfiguration(), transformer);
+        String prettyCfg = prettyConfig(config);
+        String packageComment = config.isAttachmentPackageSupport()
+                ? config.getAttachmentPackageComment(this.managedSource, this.valueConverter) : null;
 
-        return TransformerDefEditData.fromEntity(def, transformer, prettyCfg);
+        return TransformerDefEditData.fromEntity(def, transformer, prettyCfg, packageComment);
     }
 
     /**
@@ -183,7 +201,6 @@ public class TransformerService extends AbstractApplicationService {
         TransformerDef def = this.transformerDefs.findById(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
         this.transformerDefs.delete(def);
     }
-
 
     /**
      * Save edited def
@@ -341,11 +358,15 @@ public class TransformerService extends AbstractApplicationService {
                         ? transformerDef.getCustomizedConfiguration()
                         : transformerDef.getConfiguration(), transformer);
 
-        // Call for data load, if specified in config impl
-        byte[] attachementData = config.exportAttachmentPackageData(this.managedSource);
+        // If attachment package support
+        if (config.isAttachmentPackageSupport()) {
 
-        // Then apply loaded data, if any (can be null)
-        transformerDef.setAttachmentPackage(attachementData);
+            // Call for data load, if specified in config impl
+            byte[] attachementData = config.exportAttachmentPackageData(this.managedSource);
+
+            // Then apply loaded data, if any (can be null)
+            transformerDef.setAttachmentPackage(attachementData);
+        }
 
     }
 

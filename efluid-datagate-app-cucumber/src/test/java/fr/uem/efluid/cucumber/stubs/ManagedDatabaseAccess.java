@@ -53,6 +53,7 @@ public class ManagedDatabaseAccess {
     public static final String TABLE_THREE_KEYS = "TTAB_THREE_KEYS"; // Table with only 3 keys
 
     public static final String TTEST1 = "TTEST1";
+    public static final String TTEST2 = "TTEST2";
     public static final String TTESTMULTIDATATYPE = "TTESTMULTIDATATYPE";
     public static final String EFLUIDTESTPKCOMPOSITE = "EFLUIDTESTPKCOMPOSITE";
     public static final String EFLUIDTESTNUMBER = "EFLUIDTESTNUMBER";
@@ -85,6 +86,7 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TABLE_THREE_KEYS, Pair.of(16, SimulatedTableThreeKeys.class));
         ENTITY_TYPES.put(TRECOPIEPARAMREFERENTIELDIR, Pair.of(17, EfluidParamForRegion.class));
         ENTITY_TYPES.put(TAPPLICATIONINFO, Pair.of(18, EfluidTApplicationInfo.class));
+        ENTITY_TYPES.put(TTEST2, Pair.of(19, EfluidTest2.class));
     }
 
     @Autowired

@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -135,41 +135,48 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
             TransformerConfig rawConfig,
             List<? extends PreparedIndexEntry> mergeDiff) {
 
+
         R runner = runner((C) rawConfig, dict);
-        mergeDiff.stream()
-                // Process only when runner can apply
-                .filter(runner)
-                .forEach(l -> {
 
-                    // Expand payload (modifiable list)
-                    List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
+        // Use iterator for process and update of the last in one operation
+        Iterator<? extends PreparedIndexEntry> entries = mergeDiff.iterator();
+        while (entries.hasNext()) {
+            PreparedIndexEntry entry = entries.next();
 
-                    // Apply transform and update line only if changes where detected
-                    if (runner.transform(l.getAction(), l.getKeyValue(), extracted)) {
+            // Process only when runner can apply
+            if (runner.test(entry)) {
 
-                        if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
-                            LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on entry {}[{}] :\n{}",
-                                    this.getName(), dict.getTableName(), l.getKeyValue(), buildTransformationResultForDebug(extracted));
-                        }
+                // Expand payload (modifiable list)
+                List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(entry.getPayload()));
 
-                        // Drop erased values
-                        if (extracted.isEmpty()) {
-                            mergeDiff.remove(l);
-                        }
+                // Apply transform and update line only if changes where detected
+                if (runner.transform(entry.getAction(), entry.getKeyValue(), extracted)) {
 
-                        // Or apply updated one
-                        else {
-                            // Rebuild payload
-                            l.setPayload(this.converter.convertToExtractedValue(extracted));
-                        }
+                    if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
+                        LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on entry {}[{}] :\n{}",
+                                this.getName(), dict.getTableName(), entry.getKeyValue(), buildTransformationResultForDebug(extracted));
                     }
 
-                    // Nothing has changed for line even if compliant
-                    else if(LOGGER_TRANSFORMATIONS.isDebugEnabled()){
-                        LOGGER_TRANSFORMATIONS.debug("No changes from transformer {} on entry {}[{}]",
-                                this.getName(), dict.getTableName(), l.getKeyValue());
+                    // Drop erased values
+                    if (extracted.isEmpty()) {
+                        entries.remove();
                     }
-                });
+
+                    // Or apply updated one
+                    else {
+                        // Rebuild payload
+                        entry.setPayload(this.converter.convertToExtractedValue(extracted));
+                    }
+                }
+
+                // Nothing has changed for line even if compliant
+                else if (LOGGER_TRANSFORMATIONS.isDebugEnabled()) {
+                    LOGGER_TRANSFORMATIONS.debug("No changes from transformer {} on entry {}[{}]",
+                            this.getName(), dict.getTableName(), entry.getKeyValue());
+                }
+
+            }
+        }
     }
 
     private static String buildTransformationResultForDebug(List<Value> content) {
@@ -256,6 +263,16 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
         // For optional attachment, if any, on current RUNNING config
 
         /**
+         * If true, an attachment package is supported by transformer
+         *
+         * @return status on Attachment package which can be specified for config
+         */
+        @JsonIgnore
+        public boolean isAttachmentPackageSupport() {
+            return false;
+        }
+
+        /**
          * Called before export to initialize the attachment package data from the managed source.
          * Default will provide null value
          *
@@ -281,6 +298,20 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
                 JdbcTemplate managedSource,
                 ManagedValueConverter valueConverter) {
             // Default does nothing
+        }
+
+        /**
+         * If null, no attachment package is supported by transformer
+         *
+         * @param managedSource  access to local managed DB for any post loading action
+         * @param valueConverter for any loaded value process with standard converter
+         * @return comment on Attachment package which can be specified for config
+         */
+        @JsonIgnore
+        public String getAttachmentPackageComment(
+                JdbcTemplate managedSource,
+                ManagedValueConverter valueConverter) {
+            return null;
         }
     }
 

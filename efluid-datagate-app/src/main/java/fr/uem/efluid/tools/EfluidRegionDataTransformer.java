@@ -61,8 +61,12 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
         private static final String[] SOURCE_COLS = {"DIR", "TABNAME", "OP", "COLS_PK"
                 , "SRC_ID1", "SRC_ID2", "SRC_ID3", "SRC_ID4", "SRC_ID5"};
 
+        private static final String SOURCE_TABLE = "TRECOPIEPARAMREFERENTIELDIR";
+
         private static final String SOURCE_QUERY =
-                "SELECT " + String.join(", ", SOURCE_COLS) + " FROM TRECOPIEPARAMREFERENTIELDIR";
+                "SELECT " + String.join(", ", SOURCE_COLS) + " FROM " + SOURCE_TABLE;
+
+        private static final String COUNT_QUERY = "SELECT COUNT(1) FROM " + SOURCE_TABLE;
 
         private static final String GET_REGION_QUERY =
                 "SELECT SITE FROM TAPPLICATIONINFO WHERE PROJET = ?";
@@ -88,6 +92,19 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
         void populateDefault() {
             super.populateDefault();
             this.project = "project";
+        }
+
+        @Override
+        void checkContentIsValid(List<String> errors) {
+            super.checkContentIsValid(errors);
+            if (StringUtils.isEmpty(this.project)) {
+                errors.add("project cannot be empty or missing");
+            }
+        }
+
+        @Override
+        public boolean isAttachmentPackageSupport() {
+            return true;
         }
 
         /**
@@ -151,6 +168,19 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
                 throw new ApplicationException(TRANSFORMER_EFUID_WRONG_REGION_DATA, "cannot read attachment CSV" +
                         " with region config on specified project " + this.project, e);
             }
+        }
+
+        @Override
+        public String getAttachmentPackageComment(JdbcTemplate managedSource, ManagedValueConverter valueConverter) {
+            Long count = managedSource.query(COUNT_QUERY, (rs) -> {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+                return null;
+            });
+
+            return count + " lignes de " + SOURCE_TABLE + " seront prises en compte dans le " +
+                    "lot pour la regionalisation";
         }
 
         private static void appendRowToCsv(ResultSet row, StringBuilder builder) throws SQLException {

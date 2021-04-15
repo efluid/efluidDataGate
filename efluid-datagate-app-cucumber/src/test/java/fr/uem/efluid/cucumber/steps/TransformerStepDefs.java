@@ -193,6 +193,15 @@ public class TransformerStepDefs extends CucumberStepDefs {
                 t -> jsonEquals(t.getConfiguration(), config.getContent()));
     }
 
+    @Then("^the transformer attachment comment is \"(.*)\"$")
+    public void the_transformer_attachment_comment_is(String comment) {
+
+        assertModelIsSpecifiedProperty(
+                "def",
+                TransformerDefEditData.class,
+                t -> comment.equals(t.getPackageComment()));
+    }
+
     @Then("^the transformer with name \"(.*)\" of type \"(.*)\" exists$")
     public void expected_transformer(String name, String typeName) {
         Optional<TransformerDef> def = modelDatabase()
