@@ -77,7 +77,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
         if (CommonStepDefs.efluidCase) {
             initCompleteDictionaryWithEfluidTestTables();
         } else {
-            initCompleteDictionaryWith7Tables();
+            initCompleteDictionaryWith8Tables();
         }
 
         CommonStepDefs.efluidCase = false;

@@ -593,12 +593,15 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
                 String val = rs.getString(colPosition);
 
                 // Limit value size if too long for preview
-                if (val.length() > LIMIT_STR_VAL) {
-                    holder.add(val.substring(0, LIMIT_STR_VAL - 2) + "...");
+                if(val != null) {
+                    if (val.length() > LIMIT_STR_VAL) {
+                        holder.add(val.substring(0, LIMIT_STR_VAL - 2) + "...");
+                    } else {
+                        holder.add(val);
+                    }
                 } else {
-                    holder.add(val);
+                    holder.add(""); // Empty string to display "something" anyway
                 }
-
             }
         }
     }

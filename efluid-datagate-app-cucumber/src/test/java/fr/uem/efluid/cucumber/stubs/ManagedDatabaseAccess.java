@@ -51,6 +51,7 @@ public class ManagedDatabaseAccess {
     public static final String TABLE_SEVEN = "TTAB_SEVEN"; // Table with business join on tab THREE
     public static final String TABLE_ONLY_KEYS = "TTAB_ONLY_KEYS"; // Table with only keys
     public static final String TABLE_THREE_KEYS = "TTAB_THREE_KEYS"; // Table with only 3 keys
+    public static final String TABLE_ALL_NULLABLE = "TTAB_ALL_NULLABLE"; // Table with all biz field nullable, including key
 
     public static final String TTEST1 = "TTEST1";
     public static final String TTESTMULTIDATATYPE = "TTESTMULTIDATATYPE";
@@ -81,6 +82,7 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TTESTNULLLINK_DEST, Pair.of(14, EfluidTestNullableLinkDestination.class));
         ENTITY_TYPES.put(EFLUIDTESTAUDIT, Pair.of(15, EfluidTestAudit.class));
         ENTITY_TYPES.put(TABLE_THREE_KEYS, Pair.of(16, SimulatedTableThreeKeys.class));
+        ENTITY_TYPES.put(TABLE_ALL_NULLABLE, Pair.of(17, SimulatedTableAllNullable.class));
     }
 
     @Autowired
@@ -220,7 +222,7 @@ public class ManagedDatabaseAccess {
                         setter.invoke(entity, val);
                     } catch (Exception e) {
                         throw new UnsupportedOperationException("Cannot call setter "
-                                + setter.getName() + " on entity of type " + type, e);
+                                + setter.getName() + " on entity of type " + type + " with val " + val, e);
                     }
                 }
             });

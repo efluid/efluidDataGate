@@ -219,10 +219,10 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
 
     private Consumer<Object[]> projectionAsContentMap(Map<String, String> result) {
         return (l) -> {
-            if (l[0] != null) {
+            if (l != null) {
                 // Internal convert to managed string - would fail if content > 2^32 bits
                 Clob content = (Clob) l[1];
-                result.put(l[0].toString(), clobToString(content, 1024).toString());
+                result.put(l[0] != null ? l[0].toString() : null, clobToString(content, 1024));
             }
         };
     }

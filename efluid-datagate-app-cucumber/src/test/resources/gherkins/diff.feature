@@ -677,3 +677,43 @@ Feature: The update on parameter tables can be followed checked and stored as co
       | TTAB_THREE_KEYS | 5 / 5 / 5              | ADD    |                                    |
       | TTAB_THREE_KEYS | one / null / something | ADD    |                                    |
       | TTAB_THREE_KEYS | two / a / a            | ADD    |                                    |
+
+  Scenario: A diff can process null payloads - add only
+    Given the existing data in managed table "TTAB_ALL_NULLABLE" :
+      | id   | businessKey | something | value |
+      | 1005 | AAA         |           |       |
+      | 1006 | BBB         | fff       |       |
+      | 1007 | CCC         |           | 3     |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table             | Key | Action | Payload         |
+      | TTAB_ALL_NULLABLE | AAA | ADD    |                 |
+      | TTAB_ALL_NULLABLE | BBB | ADD    | SOMETHING:'fff' |
+      | TTAB_ALL_NULLABLE | CCC | ADD    | VALUE:3         |
+
+  Scenario: A diff can process null payloads - changes
+    Given the existing data in managed table "TTAB_ALL_NULLABLE" :
+      | id   | businessKey | something | value |
+      | 1005 | AAA         |           |       |
+      | 1006 | BBB         | fff       |       |
+      | 1007 | CCC         |           | 3     |
+    And the commit "Initial commit" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ALL_NULLABLE" :
+      | change | id   | businessKey | something | value |
+      | add    | 1008 | DDD         |           |       |
+      | update | 1006 | BBB         |           | 2     |
+      | delete | 1005 | AAA         |           |       |
+      | update | 1007 | CCC         |           |       |
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table             | Key | Action | Payload                        |
+      | TTAB_ALL_NULLABLE | DDD | ADD    |                                |
+      | TTAB_ALL_NULLABLE | BBB | UPDATE | SOMETHING:'fff'=>n/a,VALUE:=>2 |
+      | TTAB_ALL_NULLABLE | AAA | DELETE |                                |
+      | TTAB_ALL_NULLABLE | CCC | UPDATE | VALUE:3=>                      |

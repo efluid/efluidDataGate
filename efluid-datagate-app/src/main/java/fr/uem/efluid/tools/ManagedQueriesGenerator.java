@@ -46,6 +46,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagedQueriesGenerator.class);
 
     private static final String AFFECT = "=";
+    private static final String NULL_AFFECT = " is ";
 
     private static final String WHERE_CLAUSE_SEP = " AND ";
     private static final String WHERE_CLAUSE_SUB_START = " ( ";
@@ -337,10 +338,14 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      * @return
      */
     private String valueAffect(Value value, List<String> lobsKey) {
+
+        String affect = value.isNull() ? NULL_AFFECT : AFFECT;
+
         if (this.protectColumns) {
-            return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped(lobsKey, this.dbDateFormater);
+            return ITEM_PROTECT + value.getName() + ITEM_PROTECT + affect + value.getTyped(lobsKey, this.dbDateFormater);
         }
-        return value.getName() + AFFECT + value.getTyped(lobsKey, this.dbDateFormater);
+
+        return value.getName() + affect + value.getTyped(lobsKey, this.dbDateFormater);
     }
 
     /**

@@ -59,7 +59,7 @@ public class CommonStepDefs extends CucumberStepDefs {
         if (efluidCase) {
             initCompleteDictionaryWithEfluidTestTables();
         } else {
-            initCompleteDictionaryWith7Tables();
+            initCompleteDictionaryWith8Tables();
         }
 
         efluidCase = false;

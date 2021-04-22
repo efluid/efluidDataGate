@@ -82,7 +82,9 @@ public class ManagedValueConverter {
             builder.append(KEY_JOIN);
         }
 
-        builder.append(keyValue);
+        if(keyValue != null) {
+            builder.append(keyValue);
+        }
     }
 
     /**
@@ -281,7 +283,10 @@ public class ManagedValueConverter {
      */
     public String finalizePayload(String rawPayload) {
         int last = rawPayload.length() - 1;
-        if (last > -1 && rawPayload.charAt(last) == SEPARATOR) {
+        if (last == -1) {
+            return null;
+        }
+        if (rawPayload.charAt(last) == SEPARATOR) {
             return rawPayload.substring(0, last);
         }
         return rawPayload;

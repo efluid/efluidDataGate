@@ -565,7 +565,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 String knewPayload = knewContent.get(actualOne.getKeyValue());
 
                 // Nothing in knew payload : it's a (rare) "re-add"
-                if (knewPayload == null) {
+                if (knewPayload == null && !knewContent.containsKey(actualOne.getKeyValue())) {
 
                     // Except if new is also empty will content is knew : it's a managed empty line
                     if (!(StringUtils.isEmpty(actualOne.getPayload()))) {
@@ -581,7 +581,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 }
 
                 // Content is different : it's an Update
-                else if (!actualOne.getPayload().equals(knewPayload)) {
+                else if (!Objects.equals(actualOne.getPayload(), knewPayload)) {
 
                     if (debug) {
                         LOGGER.debug("New index entry for {} : UPDATED from \"{}\" to \"{}\"",

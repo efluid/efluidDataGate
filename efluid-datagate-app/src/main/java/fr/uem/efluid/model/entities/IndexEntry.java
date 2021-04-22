@@ -41,12 +41,13 @@ public class IndexEntry implements DiffLine {
     @ManyToOne
     private Commit commit;
 
-    @Lob
+    @Lob // Can be null when all columns are null
     private String payload;
 
-    @Lob
+    @Lob // Can be null when all columns are null
     private String previous;
 
+    // Can be null ! (null values are valid keys)
     private String keyValue;
 
     private long timestamp;
