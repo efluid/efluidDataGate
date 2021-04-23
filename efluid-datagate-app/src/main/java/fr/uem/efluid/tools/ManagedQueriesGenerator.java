@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static fr.uem.efluid.tools.ManagedValueConverter.NULL_KEY;
+
 /**
  * <p>
  * Tools for query build used in Managed database access. Contains query building
@@ -45,8 +47,10 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ManagedQueriesGenerator.class);
 
+    public static final String NULL_KEY_VALUE = new String(new char[]{NULL_KEY});
+
     private static final String AFFECT = "=";
-    private static final String NULL_AFFECT = " is ";
+    private static final String NULL_SELECT = " IS ";
 
     private static final String WHERE_CLAUSE_SEP = " AND ";
     private static final String WHERE_CLAUSE_SUB_START = " ( ";
@@ -238,7 +242,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
         // Standard process for single (common) key
         else {
-            keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+            keyWhere = keyCondition(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue));
         }
 
         return String.format(this.deleteQueryModel, parameterEntry.getTableName(), keyWhere);
@@ -271,11 +275,11 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
         // Standard process for single (common) key
         else {
-            keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+            keyWhere = keyCondition(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue));
         }
 
         return String.format(this.updateQueryModel, parameterEntry.getTableName(),
-                allValuesAffect(values, referedLobs, links, allEntries), keyWhere);
+                allValuesAffect(values, referedLobs, links, allEntries, true), keyWhere);
     }
 
     /**
@@ -298,7 +302,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
         // Standard process for single (common) key
         else {
-            keyWhere = valueAffect(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue), null);
+            keyWhere = keyCondition(new KeyValue(parameterEntry.getKeyName(), parameterEntry.getKeyType(), keyValue));
         }
 
         // Ordering by 1st key only
@@ -339,13 +343,26 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      */
     private String valueAffect(Value value, List<String> lobsKey) {
 
-        String affect = value.isNull() ? NULL_AFFECT : AFFECT;
-
         if (this.protectColumns) {
-            return ITEM_PROTECT + value.getName() + ITEM_PROTECT + affect + value.getTyped(lobsKey, this.dbDateFormater);
+            return ITEM_PROTECT + value.getName() + ITEM_PROTECT + AFFECT + value.getTyped(lobsKey, this.dbDateFormater);
         }
 
-        return value.getName() + affect + value.getTyped(lobsKey, this.dbDateFormater);
+        return value.getName() + AFFECT + value.getTyped(lobsKey, this.dbDateFormater);
+    }
+
+    /**
+     * @param key
+     * @return
+     */
+    private String keyCondition(KeyValue key) {
+
+        String affect = key.isNull() ? NULL_SELECT : AFFECT;
+
+        if (this.protectColumns) {
+            return ITEM_PROTECT + key.getName() + ITEM_PROTECT + affect + key.getTyped(null, this.dbDateFormater);
+        }
+
+        return key.getName() + affect + key.getTyped(null, this.dbDateFormater);
     }
 
     /**
@@ -398,7 +415,8 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
             List<Value> values,
             List<String> lobKeys,
             List<TableLink> links,
-            Map<String, DictionaryEntry> allEntries) {
+            Map<String, DictionaryEntry> allEntries,
+            boolean update) {
 
         // col = val
 
@@ -429,7 +447,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      */
     private String combinedKeyWhere(List<KeyValue> keys) {
         return WHERE_CLAUSE_SUB_START
-                + keys.stream().map(v -> valueAffect(v, null)).collect(Collectors.joining(WHERE_CLAUSE_SEP))
+                + keys.stream().map(this::keyCondition).collect(Collectors.joining(WHERE_CLAUSE_SEP))
                 + WHERE_CLAUSE_SUB_END;
     }
 
@@ -490,7 +508,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
 
         // Standard process for single (common) key
         else {
-            keyWhere = valueAffect(new KeyValue(dic.getKeyName(), dic.getKeyType(), value), null);
+            keyWhere = keyCondition(new KeyValue(dic.getKeyName(), dic.getKeyType(), value));
         }
 
         // (SELECT "%s" FROM "%s" WHERE %s)
@@ -690,7 +708,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
      */
     private static List<String> revertCombinedKeyValue(String combinedKeyValue) {
 
-        return Stream.of(combinedKeyValue.split(KEY_JOIN_SPLITER)).collect(Collectors.toList());
+        return Stream.of(combinedKeyValue.split(KEY_JOIN_SPLITER, -1)).collect(Collectors.toList());
     }
 
     /**
@@ -905,7 +923,7 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
          */
         @Override
         public ColumnType getType() {
-            return this.keyType;
+            return isNull() ? ColumnType.NULL : this.keyType;
         }
 
         /**
@@ -917,6 +935,10 @@ public class ManagedQueriesGenerator extends SelectClauseGenerator {
             return this.keyValue;
         }
 
+        @Override
+        public boolean isNull() {
+            return NULL_KEY_VALUE.equals(this.keyValue);
+        }
     }
 
     /**

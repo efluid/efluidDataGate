@@ -8,7 +8,6 @@ import org.springframework.util.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -39,6 +38,8 @@ public class ManagedValueConverter {
     private final static char AFFECT = '=';
     private final static char SEPARATOR = ',';
     private final static char TYPE_IDENT = '/';
+
+    static final char NULL_KEY = 255; // NBSP
 
     // For composite key support
     final static String KEY_JOIN = " / ";
@@ -82,8 +83,10 @@ public class ManagedValueConverter {
             builder.append(KEY_JOIN);
         }
 
-        if(keyValue != null) {
+        if (keyValue != null) {
             builder.append(keyValue);
+        } else {
+            builder.append(NULL_KEY);
         }
     }
 
