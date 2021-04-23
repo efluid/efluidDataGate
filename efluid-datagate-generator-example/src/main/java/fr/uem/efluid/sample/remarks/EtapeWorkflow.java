@@ -1,10 +1,12 @@
 package fr.uem.efluid.sample.remarks;
 
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
 
 import java.time.LocalDateTime;
 
-@ParameterTable(tableName = "T_ETAPE_WFL", keyField = "key")
+@ParameterTable(tableName = "T_ETAPE_WFL", keys = @ParameterKey(value = "KEY", type = ColumnType.ATOMIC))
 public class EtapeWorkflow {
 
     private int key;

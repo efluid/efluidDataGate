@@ -23,8 +23,7 @@ class PossibleTableAnnotation extends PossibleItem {
     private String tableName;
     private String filterClause;
     private String domainName;
-    private String keyField;
-    private ColumnType keyType;
+    private ParameterKey[] keys;
     private boolean useAllFields;
     private ParameterInheritance[] excludeInheritances;
     private ParameterValue[] values;
@@ -40,8 +39,7 @@ class PossibleTableAnnotation extends PossibleItem {
         this.domainName = failback(paramTable.domainName(), searchDomainNameInHierarchy(source));
         this.excludeInheritances = paramTable.excludeInherited();
         this.filterClause = paramTable.filterClause();
-        this.keyField = paramTable.keyField();
-        this.keyType = paramTable.keyType();
+        this.keys = paramTable.keys();
         this.validName = paramTable.name();
         this.tableName = GenerationUtils.failback(paramTable.value(), paramTable.tableName());
         this.useAllFields = paramTable.useAllFields();
@@ -63,8 +61,7 @@ class PossibleTableAnnotation extends PossibleItem {
             this.domainName = failback(localParamTable.domainName(), searchDomainNameInHierarchy(source));
             this.excludeInheritances = localParamTable.excludeInherited();
             this.filterClause = localParamTable.filterClause();
-            this.keyField = localParamTable.keyField();
-            this.keyType = localParamTable.keyType();
+            this.keys = localParamTable.keys();
             this.validName = localParamTable.name();
             this.tableName = failback(localParamTable.value(), localParamTable.tableName());
             this.useAllFields = localParamTable.useAllFields();
@@ -82,8 +79,7 @@ class PossibleTableAnnotation extends PossibleItem {
             this.domainName = failback(paramTable.domainName(), existing.getDomainName(), failback(searchDomainNameInHierarchy(source), searchDomainNameInHierarchy(existing.getSourceClazz())));
             this.excludeInheritances = paramTable.excludeInherited().length > 0 ? paramTable.excludeInherited() : existing.getExcludeInheritances();
             this.filterClause = failback(paramTable.filterClause(), existing.getFilterClause());
-            this.keyField = failback(paramTable.keyField(), existing.getKeyField());
-            this.keyType = paramTable.keyType() != ColumnType.UNKNOWN ? paramTable.keyType() : existing.getKeyType();
+            this.keys = paramTable.keys().length > 0 ? paramTable.keys() : existing.getKeys();
             this.validName = failback(paramTable.name(), existing.getValidName());
             this.tableName = failback(paramTable.value(), paramTable.tableName(), existing.getTableName());
             this.useAllFields = paramTable.useAllFields() || existing.useAllFields;
@@ -144,12 +140,8 @@ class PossibleTableAnnotation extends PossibleItem {
         return domainName;
     }
 
-    String getKeyField() {
-        return keyField;
-    }
-
-    ColumnType getKeyType() {
-        return keyType;
+    ParameterKey[] getKeys() {
+        return keys;
     }
 
     boolean isUseAllFields() {

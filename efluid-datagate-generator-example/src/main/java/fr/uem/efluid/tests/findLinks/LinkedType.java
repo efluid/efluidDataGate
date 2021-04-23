@@ -1,11 +1,12 @@
 package fr.uem.efluid.tests.findLinks;
 
 import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
 
 import java.time.LocalDate;
 
-@ParameterTable(domainName = "demo", tableName = "LINKED", keyField = "KEY", keyType = ColumnType.STRING)
+@ParameterTable(domainName = "demo", tableName = "LINKED", keys = @ParameterKey(value = "KEY", type = ColumnType.STRING))
 public class LinkedType {
 
     private String key;

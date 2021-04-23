@@ -1,5 +1,7 @@
 package fr.uem.efluid.sample.updates;
 
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
 import fr.uem.efluid.ParameterValue;
 
@@ -8,7 +10,7 @@ import fr.uem.efluid.ParameterValue;
  * @since v0.0.8
  * @version 1
  */
-@ParameterTable(keyField = "identifier", tableName = "TANOTHER", filterClause = "cur.\"ENABLED\"=1", useAllFields = false)
+@ParameterTable(keys = @ParameterKey(value = "IDENTIFIER", type = ColumnType.STRING), tableName = "TANOTHER", filterClause = "cur.\"ENABLED\"=1", useAllFields = false)
 public class AnotherLinkedType {
 
 	private String identifier;

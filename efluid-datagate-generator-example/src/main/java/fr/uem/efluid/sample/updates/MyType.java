@@ -7,7 +7,7 @@ import fr.uem.efluid.*;
  * @since v0.0.8
  * @version 1
  */
-@ParameterTable(tableName = "MY_TYPE" , keyField = "key")
+@ParameterTable(tableName = "MY_TYPE" , keys =@ParameterKey(value = "KEY", type = ColumnType.STRING))
 public class MyType {
 
 	@ParameterIgnored

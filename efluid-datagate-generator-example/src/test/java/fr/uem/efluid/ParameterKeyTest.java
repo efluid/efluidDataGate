@@ -1,5 +1,6 @@
 package fr.uem.efluid;
 
+import fr.uem.efluid.tests.inheritance.compositeKeyInTable.TestCompositeInTable;
 import org.junit.Test;
 
 import static fr.uem.efluid.GeneratorTester.onClasses;
@@ -9,6 +10,7 @@ import static fr.uem.efluid.GeneratorTester.onClasses;
  */
 public class ParameterKeyTest {
 
+    /*
     @Test
     public void testKeyAreIgnoredWhenSpecifiedAsNotInheritedOnSimpleChild() {
 
@@ -55,6 +57,31 @@ public class ParameterKeyTest {
                 .hasKey("KEYONE", ColumnType.STRING)
                 .doesntHaveKey("KEYTWO")
                 .hasColumns("VALUE", "OTHER", "PROPERTY");
+    }
+
+
+     */
+
+
+    @Test
+    public void testKeyAreIgnoredWhenSpecifiedAsNotInheritedOnSimpleChild() {
+
+        var tester = onClasses(
+                TestCompositeInTable.class
+        ).generate();
+
+        tester.assertThatTable("MY_TABLE_1")
+                .wasFoundOn(TestCompositeInTable.class)
+                .hasKey("ID", ColumnType.STRING)
+                .hasColumns("VALUE");
+
+        tester.assertThatTable("MY_JOIN_TABLE_WITH_OTHER_PROPS")
+                .wasFoundOn(TestCompositeInTable.class)
+                .hasKey("SOURCE", ColumnType.STRING)
+                .hasKey("DEST", ColumnType.ATOMIC)
+                .doesntHaveKey("ID")
+                .doesntHaveColumns("VALUE")
+                .hasColumns("EXT_ONE", "EXT_TWO");
     }
 
 }

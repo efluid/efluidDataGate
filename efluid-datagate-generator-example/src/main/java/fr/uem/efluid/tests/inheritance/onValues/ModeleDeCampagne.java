@@ -1,10 +1,7 @@
 package fr.uem.efluid.tests.inheritance.onValues;
 
 
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.ParameterIgnored;
-import fr.uem.efluid.ParameterTable;
-import fr.uem.efluid.ParameterValue;
+import fr.uem.efluid.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +10,8 @@ import java.util.Set;
  * Based on efluid models
  */
 @EfluidWorkflowDomain
-@ParameterTable(name = "ModeleDeCampagne", tableName = "TMODELEDECAMPAGNE", keyField = "ID", keyType = ColumnType.STRING)
+@ParameterTable(name = "ModeleDeCampagne", tableName = "TMODELEDECAMPAGNE",
+        keys = @ParameterKey(value = "ID", type = ColumnType.STRING))
 public class ModeleDeCampagne extends EfluidSubRoot {
 
     private int delaiExecutionPrevu;

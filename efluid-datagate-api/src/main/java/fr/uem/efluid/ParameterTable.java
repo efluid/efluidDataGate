@@ -101,7 +101,7 @@ public @interface ParameterTable {
      * by definition of <tt>ParameterKey</tt>
      * </p>
      */
-    String keyField() default "";
+//    String keyField() default "";
 
     /**
      * <p>
@@ -110,7 +110,9 @@ public @interface ParameterTable {
      * set, will define it using rules specified in {@link ColumnType#forClass(Class)}
      * </p>
      */
-    ColumnType keyType() default ColumnType.UNKNOWN;
+//    ColumnType keyType() default ColumnType.UNKNOWN;
+
+    ParameterKey[] keys() default {};
 
     /**
      * <p>

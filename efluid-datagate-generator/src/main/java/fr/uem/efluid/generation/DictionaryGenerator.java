@@ -328,33 +328,27 @@ public class DictionaryGenerator extends AbstractProcessor {
         searchAllCombinedExcludeInheritedFrom(tableType, excludeInheriteds);
 
         // As a list of identified PossibleKeyAnnotation (ordered by name for consistency)
-        List<PossibleKeyAnnotation> keys = Stream.concat(
+        List<PossibleKeyAnnotation> keys = paramTable.isUseAllFields()
+                ? Stream.concat(
                 foundFields.stream().map(PossibleKeyAnnotation::new),
                 foundMethods.stream().map(PossibleKeyAnnotation::new))
                 .filter(k -> k.canKeepInType(tableType))
                 .sorted(Comparator.comparing(PossibleKeyAnnotation::getValidName))
                 .filter(v -> !v.isExcluded(tableType, excludeInheriteds))
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())
+                : Collections.emptyList();
 
         // No keys found on fields / methods, search other / auto-select
         if (keys.size() == 0) {
 
-            if (!paramTable.getKeyField().equals("")) {
+            if (paramTable.getKeys().length > 0) {
 
-                PossibleKeyAnnotation foundKeySpec;
-
-                // Not specified : search on field def
-                if (ColumnType.UNKNOWN.equals(paramTable.getKeyType())) {
-                    foundKeySpec = searchKey(tableType, paramTable);
-
-                } else {
-                    foundKeySpec = new PossibleKeyAnnotation(tableType, paramTable);
-                    getLog().debug("Specified keytype " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
+                // Init key defs
+                for (int i = 0; i < paramTable.getKeys().length; i++) {
+                    def.setKeyName(i, paramTable.getKeys()[i].value());
+                    def.setKeyType(i, paramTable.getKeys()[i].type());
                 }
 
-                // Init key def
-                def.setKeyName(foundKeySpec.getValidName());
-                def.setKeyType(foundKeySpec.getValidType());
             } else {
                 throw new IllegalArgumentException(
                         "No key found for type " + tableType.getName()
@@ -383,48 +377,6 @@ public class DictionaryGenerator extends AbstractProcessor {
                 }
             }
         }
-    }
-
-    private PossibleKeyAnnotation searchKey(Class<?> tableType, PossibleTableAnnotation paramTable) {
-
-        String getterName = "get" + paramTable.getKeyField().substring(0, 1).toUpperCase()
-                + paramTable.getKeyField().substring(1);
-
-        // Still not found : failure
-        if (tableType == Object.class) {
-            throw new IllegalArgumentException("Specified key in ParameterTable " + tableType + " doesn't match with the"
-                    + " class getters. Check if the field is specified correctly or that a method exists with the name \""
-                    + getterName + "\"");
-        }
-
-        PossibleKeyAnnotation foundKeySpec = null;
-
-        try {
-            foundKeySpec = new PossibleKeyAnnotation(tableType.getDeclaredField(paramTable.getKeyField()));
-            getLog().debug("Found key type from specified field " + foundKeySpec.getValidName() + " of type "
-                    + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
-        }
-
-        // Field not found, search getter method
-        catch (NoSuchFieldException n) {
-
-            try {
-                foundKeySpec = new PossibleKeyAnnotation(tableType.getMethod(getterName), paramTable.getKeyField());
-                getLog().debug("Found key type from specified method " + foundKeySpec.getValidName() + " (getter \""
-                        + getterName
-                        + "\") of type " + foundKeySpec.getValidType() + " for ParameterTable " + tableType.getSimpleName());
-            } catch (NoSuchMethodException e) {
-
-                // Search on parent type (inherited ParameterTable)
-                return searchKey(tableType.getSuperclass(), paramTable);
-            }
-
-        } catch (SecurityException e) {
-            throw new IllegalArgumentException("Specified key in ParameterTable " + tableType
-                    + " doesn't match with the class fields. Check if the field is specified correctly", e);
-        }
-
-        return foundKeySpec;
     }
 
 

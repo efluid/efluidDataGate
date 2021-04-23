@@ -5,7 +5,8 @@ import fr.uem.efluid.tests.inheritance.exclude.onChildType.RootType;
 
 import static fr.uem.efluid.ParameterInheritance.ALL;
 
-@ParameterTable(tableName = "T_SUB_B", excludeInherited = @ParameterInheritance(of = ALL.class), keyField = "keyb")
+@ParameterTable(tableName = "T_SUB_B", excludeInherited = @ParameterInheritance(of = ALL.class),
+        keys = @ParameterKey(value = "KEYB", type = ColumnType.ATOMIC))
 public class SubTypeB extends RootType {
 
     private int keyb;

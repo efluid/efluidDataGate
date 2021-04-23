@@ -1,11 +1,12 @@
 package fr.uem.efluid.tests.inheritance.exclude.all;
 
 import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
 
 import java.time.LocalDate;
 
-@ParameterTable(domainName = "domain", tableName = "LINKED", keyField = "KEY", keyType = ColumnType.STRING)
+@ParameterTable(domainName = "domain", tableName = "LINKED", keys = @ParameterKey(value = "KEY", type = ColumnType.STRING))
 public class SomeLinkedType {
 
     private String key;

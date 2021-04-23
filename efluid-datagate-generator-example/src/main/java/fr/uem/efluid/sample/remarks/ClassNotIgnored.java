@@ -1,11 +1,13 @@
 package fr.uem.efluid.sample.remarks;
 
+import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.ParameterIgnored;
+import fr.uem.efluid.ParameterKey;
 import fr.uem.efluid.ParameterTable;
 
 import java.time.LocalDateTime;
 
-@ParameterTable(tableName = "CLASS_NOT_IGNORED", keyField = "key")
+@ParameterTable(tableName = "CLASS_NOT_IGNORED", keys = @ParameterKey(value = "key", type = ColumnType.ATOMIC))
 public class ClassNotIgnored {
 
     private int key;

@@ -9,7 +9,7 @@ import fr.uem.efluid.*;
                 @ParameterValue("ASSOCIATED_ID"),
                 @ParameterValue("OTHER")
         },
-        keyType = ColumnType.ATOMIC, keyField = "id")
+        keys = @ParameterKey(value = "ID", type = ColumnType.ATOMIC))
 public class LinkSpecifiedOnSpecifiedValue {
 
     private int id;

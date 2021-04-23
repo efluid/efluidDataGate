@@ -10,14 +10,13 @@ import fr.uem.efluid.*;
         tables = @ParameterTable(
                 name = "ModeleDeCampagneWorkflowSecond",
                 tableName = "TMODELEDECAMPAGNEWKFSECOND",
-                keyField = "ID",
-                keyType = ColumnType.STRING,
+                keys = @ParameterKey(value = "ID", type = ColumnType.STRING),
                 values = @ParameterValue(name = "COMBINAISON_ID", forTable = "TMODELEDECAMPAGNEWKFSECOND")
         )
 )
 public class ModeleDeCampagneWorkflowSecond extends ModeleDeCampagne {
 
-    @ParameterLink(withValueName = "COMBINAISON_ID",toTableName = "TCOMBINAISONCOMPLEXE", toColumn = "ID")
+    @ParameterLink(withValueName = "COMBINAISON_ID", toTableName = "TCOMBINAISONCOMPLEXE", toColumn = "ID")
     private EfluidCombination combinaison = null;
 
     public EfluidCombination getCombinaison() {

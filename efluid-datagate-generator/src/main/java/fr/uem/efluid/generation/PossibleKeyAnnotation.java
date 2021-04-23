@@ -56,11 +56,11 @@ class PossibleKeyAnnotation extends PossibleItem {
                 : null;
     }
 
-    PossibleKeyAnnotation(Class<?> declaringClazz, PossibleTableAnnotation possibleTableAnnotation) {
+    PossibleKeyAnnotation(Class<?> declaringClazz, PossibleTableAnnotation possibleTableAnnotation, ParameterKey initKey) {
         super(declaringClazz);
         this.keyAnnot = null;
-        this.validName = possibleTableAnnotation.getKeyField().toUpperCase();
-        this.validType = possibleTableAnnotation.getKeyType();
+        this.validName = initKey.value();
+        this.validType = initKey.type();
         this.forTable = Collections.singletonList(possibleTableAnnotation.getValidName());
     }
 

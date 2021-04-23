@@ -1,19 +1,22 @@
 package fr.uem.efluid.sample.remarks;
 
-import fr.uem.efluid.ParameterTable;
-import fr.uem.efluid.ParameterTableSet;
-import fr.uem.efluid.ParameterValue;
+import fr.uem.efluid.*;
 
 @ParameterTableSet(tables = {
-        @ParameterTable(name = "EtapeWorkflowObjetGeneriqueSubOne", tableName = "T_ETAPE_WFL_SUB", keyField = "key",
+        @ParameterTable(
+                name = "EtapeWorkflowObjetGeneriqueSubOne",
+                tableName = "T_ETAPE_WFL_SUB",
+                keys = @ParameterKey(value = "KEY", type = ColumnType.ATOMIC),
                 values = {
-                        @ParameterValue("value"),
-                        @ParameterValue("extended")
+                        @ParameterValue("VALUE"),
+                        @ParameterValue("EXTENDED")
                 }),
-        @ParameterTable(name = "EtapeWorkflowObjetGeneriqueSubTwo", tableName = "T_ETAPE_WFL_GEN", keyField = "key",
-                values = {
-                        @ParameterValue("extended")
-                })
+        @ParameterTable(
+                name = "EtapeWorkflowObjetGeneriqueSubTwo",
+                tableName = "T_ETAPE_WFL_GEN",
+                keys = @ParameterKey(value = "KEY", type = ColumnType.ATOMIC),
+                values = @ParameterValue("EXTENDED")
+        )
 }, useAllFields = false)
 public class EtapeWorkflowObjetGenerique extends EtapeWorkflow {
 

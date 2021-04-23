@@ -1,201 +1,188 @@
 package fr.uem.efluid.sample.advanced;
 
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.ParameterTable;
-import fr.uem.efluid.ParameterTableSet;
-import fr.uem.efluid.ParameterValue;
+import fr.uem.efluid.*;
 
 /**
  * @author elecomte
- * @since v0.0.8
  * @version 1
+ * @since v0.0.8
  */
 @ParameterTableSet(tables = {
-		@ParameterTable(tableName = "T_TABLE_MUTSECOND_ONE", keyField = "keyOne", values = {
-				@ParameterValue("valueOnAll"),
-				@ParameterValue("valueA"),
-				@ParameterValue("valueB")
-		}),
-		@ParameterTable(tableName = "T_TABLE_MUTSECOND_TWO", keyField = "keyTwo", keyType = ColumnType.ATOMIC, values = {
-				@ParameterValue("valueOnAll"),
-				@ParameterValue("valueC"),
-				@ParameterValue("valueD")
-		}),
-		@ParameterTable(tableName = "T_TABLE_MUTSECOND_THREE", keyField = "keyThree", values = {
-				@ParameterValue("valueOnAll"),
-				@ParameterValue("valueE"),
-				@ParameterValue("valueF")
-		})
+        @ParameterTable(tableName = "T_TABLE_MUTSECOND_ONE", keys = @ParameterKey(value = "KEYONE", type = ColumnType.ATOMIC), values = {
+                @ParameterValue("valueOnAll"),
+                @ParameterValue("valueA"),
+                @ParameterValue("valueB")
+        }),
+        @ParameterTable(tableName = "T_TABLE_MUTSECOND_TWO", keys = @ParameterKey(value = "keyTwo", type = ColumnType.ATOMIC), values = {
+                @ParameterValue("valueOnAll"),
+                @ParameterValue("valueC"),
+                @ParameterValue("valueD")
+        }),
+        @ParameterTable(tableName = "T_TABLE_MUTSECOND_THREE", keys = @ParameterKey(value = "keyThree", type = ColumnType.ATOMIC), values = {
+                @ParameterValue("valueOnAll"),
+                @ParameterValue("valueE"),
+                @ParameterValue("valueF")
+        })
 }, useAllFields = false, domainName = "Advanced")
 public class TypeOnMultipleTablesSecond {
 
-	private Long keyOne;
+    private Long keyOne;
 
-	private Long keyTwo;
+    private Long keyTwo;
 
-	private Long keyThree;
+    private Long keyThree;
 
-	private String valueOnAll;
+    private String valueOnAll;
 
-	private String valueA;
+    private String valueA;
 
-	private String valueB;
+    private String valueB;
 
-	private String valueC;
+    private String valueC;
 
-	private String valueD;
+    private String valueD;
 
-	private String valueE;
+    private String valueE;
 
-	private String valueF;
+    private String valueF;
 
-	/**
-	 * @return the keyOne
-	 */
-	public Long getKeyOne() {
-		return this.keyOne;
-	}
+    /**
+     * @return the keyOne
+     */
+    public Long getKeyOne() {
+        return this.keyOne;
+    }
 
-	/**
-	 * @param keyOne
-	 *            the keyOne to set
-	 */
-	public void setKeyOne(Long keyOne) {
-		this.keyOne = keyOne;
-	}
+    /**
+     * @param keyOne the keyOne to set
+     */
+    public void setKeyOne(Long keyOne) {
+        this.keyOne = keyOne;
+    }
 
-	/**
-	 * @return the keyTwo
-	 */
-	public Long getKeyTwo() {
-		return this.keyTwo;
-	}
+    /**
+     * @return the keyTwo
+     */
+    public Long getKeyTwo() {
+        return this.keyTwo;
+    }
 
-	/**
-	 * @param keyTwo
-	 *            the keyTwo to set
-	 */
-	public void setKeyTwo(Long keyTwo) {
-		this.keyTwo = keyTwo;
-	}
+    /**
+     * @param keyTwo the keyTwo to set
+     */
+    public void setKeyTwo(Long keyTwo) {
+        this.keyTwo = keyTwo;
+    }
 
-	/**
-	 * @return the keyThree
-	 */
-	public Long getKeyThree() {
-		return this.keyThree;
-	}
+    /**
+     * @return the keyThree
+     */
+    public Long getKeyThree() {
+        return this.keyThree;
+    }
 
-	/**
-	 * @param keyThree
-	 *            the keyThree to set
-	 */
-	public void setKeyThree(Long keyThree) {
-		this.keyThree = keyThree;
-	}
+    /**
+     * @param keyThree the keyThree to set
+     */
+    public void setKeyThree(Long keyThree) {
+        this.keyThree = keyThree;
+    }
 
-	/**
-	 * @return the valueOnAll
-	 */
-	public String getValueOnAll() {
-		return this.valueOnAll;
-	}
+    /**
+     * @return the valueOnAll
+     */
+    public String getValueOnAll() {
+        return this.valueOnAll;
+    }
 
-	/**
-	 * @param valueOnAll
-	 *            the valueOnAll to set
-	 */
-	public void setValueOnAll(String valueOnAll) {
-		this.valueOnAll = valueOnAll;
-	}
+    /**
+     * @param valueOnAll the valueOnAll to set
+     */
+    public void setValueOnAll(String valueOnAll) {
+        this.valueOnAll = valueOnAll;
+    }
 
-	/**
-	 * @return the valueA
-	 */
-	public String getValueA() {
-		return this.valueA;
-	}
+    /**
+     * @return the valueA
+     */
+    public String getValueA() {
+        return this.valueA;
+    }
 
-	/**
-	 * @param valueA
-	 *            the valueA to set
-	 */
-	public void setValueA(String valueA) {
-		this.valueA = valueA;
-	}
+    /**
+     * @param valueA the valueA to set
+     */
+    public void setValueA(String valueA) {
+        this.valueA = valueA;
+    }
 
-	/**
-	 * @return the valueB
-	 */
-	public String getValueB() {
-		return this.valueB;
-	}
+    /**
+     * @return the valueB
+     */
+    public String getValueB() {
+        return this.valueB;
+    }
 
-	/**
-	 * @param valueB
-	 *            the valueB to set
-	 */
-	public void setValueB(String valueB) {
-		this.valueB = valueB;
-	}
+    /**
+     * @param valueB the valueB to set
+     */
+    public void setValueB(String valueB) {
+        this.valueB = valueB;
+    }
 
-	/**
-	 * @return the valueC
-	 */
-	public String getValueC() {
-		return this.valueC;
-	}
+    /**
+     * @return the valueC
+     */
+    public String getValueC() {
+        return this.valueC;
+    }
 
-	/**
-	 * @param valueC
-	 *            the valueC to set
-	 */
-	public void setValueC(String valueC) {
-		this.valueC = valueC;
-	}
+    /**
+     * @param valueC the valueC to set
+     */
+    public void setValueC(String valueC) {
+        this.valueC = valueC;
+    }
 
-	/**
-	 * @return the valueD
-	 */
-	public String getValueD() {
-		return this.valueD;
-	}
+    /**
+     * @return the valueD
+     */
+    public String getValueD() {
+        return this.valueD;
+    }
 
-	/**
-	 * @param valueD
-	 *            the valueD to set
-	 */
-	public void setValueD(String valueD) {
-		this.valueD = valueD;
-	}
+    /**
+     * @param valueD the valueD to set
+     */
+    public void setValueD(String valueD) {
+        this.valueD = valueD;
+    }
 
-	/**
-	 * @return the valueE
-	 */
-	public String getValueE() {
-		return this.valueE;
-	}
+    /**
+     * @return the valueE
+     */
+    public String getValueE() {
+        return this.valueE;
+    }
 
-	/**
-	 * @param valueE
-	 *            the valueE to set
-	 */
-	public void setValueE(String valueE) {
-		this.valueE = valueE;
-	}
+    /**
+     * @param valueE the valueE to set
+     */
+    public void setValueE(String valueE) {
+        this.valueE = valueE;
+    }
 
-	/**
-	 * @return the valueF
-	 */
-	public String getValueF() {
-		return this.valueF;
-	}
+    /**
+     * @return the valueF
+     */
+    public String getValueF() {
+        return this.valueF;
+    }
 
-	/**
-	 * @param valueF
-	 *            the valueF to set
-	 */
-	public void setValueF(String valueF) {
-		this.valueF = valueF;
-	}
+    /**
+     * @param valueF the valueF to set
+     */
+    public void setValueF(String valueF) {
+        this.valueF = valueF;
+    }
 }
