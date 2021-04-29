@@ -238,7 +238,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
                         assertThat(content).hasSize(v.size());
 
-                        v.sort(Comparator.comparing(m -> m.get("Key")));
+                        v.sort(Comparator.comparing(CucumberStepDefs::dataKey));
 
                         // Keep order
                         for (int i = 0; i < content.size(); i++) {
@@ -247,7 +247,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
 
                             IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
                             assertThat(diffLine.getAction()).isEqualTo(action);
-                            assertThat(diffLine.getKeyValue()).isEqualTo(dataLine.get("Key"));
+                            assertThat(diffLine.getKeyValue()).isEqualTo(dataKey(dataLine));
 
                             // No need to check payload in delete
                             if (action != REMOVE) {

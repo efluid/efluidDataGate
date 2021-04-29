@@ -39,7 +39,7 @@ public class ManagedValueConverter {
     private final static char SEPARATOR = ',';
     private final static char TYPE_IDENT = '/';
 
-    static final char NULL_KEY = 255; // NBSP
+    static final char NULL_KEY = ' '; // NBSP
 
     // For composite key support
     final static String KEY_JOIN = " / ";
@@ -74,12 +74,14 @@ public class ManagedValueConverter {
      *
      * @param builder
      * @param keyValue
+     * @param addition true if it's an addition on an already processed key (for composite keys)
      */
     public void appendExtractedKeyValue(
             final StringBuilder builder,
-            final String keyValue) {
+            final String keyValue,
+            final boolean addition) {
 
-        if (builder.length() > 0) {
+        if (addition || builder.length() > 0) {
             builder.append(KEY_JOIN);
         }
 

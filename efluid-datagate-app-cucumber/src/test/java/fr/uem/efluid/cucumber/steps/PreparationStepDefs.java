@@ -628,7 +628,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
             assertThat(indexEntries.size()).isEqualTo(v.size());
 
             List<? extends PreparedIndexEntry> sortedIndexEntries = indexEntries.stream().sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList());
-            v.sort(Comparator.comparing(m -> m.get("Key")));
+            v.sort(Comparator.comparing(CucumberStepDefs::dataKey));
 
             // Keep order
             for (int i = 0; i < sortedIndexEntries.size(); i++) {
@@ -645,7 +645,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
                             + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
 
                     assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
-                    assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataLine.get("Key"));
+                    assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataKey(dataLine));
 
                     // No need to check payload in delete
                     if (action != REMOVE) {

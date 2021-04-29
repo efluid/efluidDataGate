@@ -55,7 +55,7 @@ public class WebFeaturesConfig {
 
     @Bean
     ObjectMapper defaultMapper(){
-        return SharedOutputInputUtils.preparedObjectMapper();
+        return SharedOutputInputUtils.preparedObjectMapper(false);
     }
 
     @Bean

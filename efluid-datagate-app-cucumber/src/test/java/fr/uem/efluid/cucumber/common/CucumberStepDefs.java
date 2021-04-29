@@ -962,18 +962,40 @@ public abstract class CucumberStepDefs {
         return this.commitService.getExistingCommitDetails(getSavedCommitUuid(), true);
     }
 
+    protected static String dataKey(Map<String, String> line) {
+
+        String rawKey = line.get("Key").trim();
+
+        if (rawKey.charAt(0) == '"') {
+            rawKey = rawKey.substring(1, rawKey.length() - 1);
+        }
+
+        switch (rawKey) {
+            case "-empty char-":
+                return "";
+            case "-space-":
+                return " ";
+
+            case "-null-":
+                return " ";
+            default:
+                return rawKey;
+        }
+    }
+
     protected static void assertDiffContentIsCompliant(DiffContentHolder<?> holder, DataTable data) {
 
         assertThat(holder.getDiffContent().size()).isEqualTo(data.asMaps().size());
 
         data.asMaps().forEach(l -> {
 
+            String dataKey = dataKey(l);
             DictionaryEntrySummary table = holder.getReferencedTables().values().stream()
                     .filter(t -> t.getTableName().equals(l.get("Table")))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
 
-            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(dataKey))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
 
@@ -1000,12 +1022,13 @@ public abstract class CucumberStepDefs {
 
         data.asMaps().forEach(l -> {
 
+            String dataKey = dataKey(l);
             DictionaryEntrySummary table = referencedTables.values().stream()
                     .filter(t -> t.getTableName().equals(l.get("Table")))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
 
-            DiffLine index = content.stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+            DiffLine index = content.stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(dataKey))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
 
@@ -1026,12 +1049,14 @@ public abstract class CucumberStepDefs {
 
         data.asMaps().forEach(l -> {
 
+            String dataKey = dataKey(l);
+
             DictionaryEntrySummary table = holder.getReferencedTables().values().stream()
                     .filter(t -> t.getTableName().equals(l.get("Table")))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
 
-            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(dataKey))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
 
@@ -1064,7 +1089,7 @@ public abstract class CucumberStepDefs {
         for (Map<String, String> dataline : data.asMaps()) {
             PreparedIndexEntry diff = diffLines.get(i);
             assertThat(diff.getTableName()).isEqualTo(dataline.get("Table"));
-            assertThat(diff.getKeyValue()).isEqualTo(dataline.get("Key"));
+            assertThat(diff.getKeyValue()).isEqualTo(dataKey(dataline));
             assertThat(diff.getAction().name()).isEqualTo(dataline.get("Action"));
             if (diff.getAction() != REMOVE) {
                 assertThat(diff.getHrPayload()).isEqualTo(dataline.get("Payload"));

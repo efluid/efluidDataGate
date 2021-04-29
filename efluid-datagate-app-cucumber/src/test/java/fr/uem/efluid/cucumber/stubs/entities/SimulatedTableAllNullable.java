@@ -2,10 +2,7 @@ package fr.uem.efluid.cucumber.stubs.entities;
 
 import fr.uem.efluid.cucumber.stubs.ManagedDatabaseAccess;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Objects;
 
 @Entity
@@ -13,6 +10,7 @@ import java.util.Objects;
 public class SimulatedTableAllNullable {
 
     @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 
     private String businessKey;
@@ -62,11 +60,11 @@ public class SimulatedTableAllNullable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SimulatedTableAllNullable that = (SimulatedTableAllNullable) o;
-        return value == that.value && Objects.equals(id, that.id) && Objects.equals(businessKey, that.businessKey) && Objects.equals(something, that.something);
+        return value == that.value && Objects.equals(businessKey, that.businessKey) && Objects.equals(something, that.something);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, businessKey, something, value);
+        return Objects.hash( businessKey, something, value);
     }
 }
