@@ -740,10 +740,10 @@ Feature: The update on parameter tables can be followed checked and stored as co
 
   Scenario: A diff can process null payloads - add only
     Given the existing data in managed table "TTAB_ALL_NULLABLE" :
-      | id   | businessKey | something | value  |
-      | 1005 | AAA         | -null-    | -null- |
-      | 1006 | BBB         | fff       | -null- |
-      | 1007 | CCC         | -null-    | 3      |
+      | businessKey | something | value  |
+      | AAA         | -null-    | -null- |
+      | BBB         | fff       | -null- |
+      | CCC         | -null-    | 3      |
     And a diff analysis can be started and completed
     And a diff has already been launched
     And the diff is completed
@@ -756,17 +756,17 @@ Feature: The update on parameter tables can be followed checked and stored as co
 
   Scenario: A diff can process null payloads - changes
     Given the existing data in managed table "TTAB_ALL_NULLABLE" :
-      | id   | businessKey | something | value  |
-      | 1005 | AAA         | -null-    | -null- |
-      | 1006 | BBB         | fff       | -null- |
-      | 1007 | CCC         | -null-    | 3      |
+      | businessKey | something | value  |
+      | AAA         | -null-    | -null- |
+      | BBB         | fff       | -null- |
+      | CCC         | -null-    | 3      |
     And the commit "Initial commit" has been saved with all the identified initial diff content
     And these changes are applied to table "TTAB_ALL_NULLABLE" :
-      | change | id   | businessKey | something | value  |
-      | add    | 1008 | DDD         | -null-    | -null- |
-      | update | 1006 | BBB         | -null-    | 2      |
-      | delete | 1005 | AAA         | -null-    | -null- |
-      | update | 1007 | CCC         | -null-    | -null- |
+      | change | businessKey | something | value  |
+      | add    | DDD         | -null-    | -null- |
+      | update | BBB         | -null-    | 2      |
+      | delete | AAA         | -null-    | -null- |
+      | update | CCC         | -null-    | -null- |
     And a diff has already been launched
     And the diff is completed
     When the user access to diff commit page
