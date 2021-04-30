@@ -171,7 +171,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         List<Commit> commits = readPackageCommits(getSingleCurrentExport());
 
         // Test only commit with index content (not reference commits)
-        assertThat(commits.stream().filter(c -> c.getIndex() != null && c.getIndex().size() > 0)).hasSize(size);
+        assertThat(commits.stream().filter(c -> !c.isRefOnly())).hasSize(size);
     }
 
     @Then("^the export package contains (.*) version contents$")
@@ -392,20 +392,36 @@ public class PushPullStepDefs extends CucumberStepDefs {
     }
 
     private List<Commit> readPackageCommits(ExportImportResult<ExportFile> currentExport) {
-        return readPackages(currentExport).stream()
+
+        List<SharedPackage<?>> packages = readPackages(currentExport);
+
+        List<Commit> commits = packages.stream()
                 .filter(s -> s.getClass() == CommitPackage.class)
                 .map(p -> (CommitPackage) p)
-                .map(SharedPackage::getContent)
-                .flatMap(List::stream)
+                .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
+
+        Map<UUID, Commit> mappedCommits = commits.stream().collect(Collectors.toMap(Commit::getUuid, c -> c));
+
+        // Rebuild link between index and commits
+        packages.stream()
+                .filter(s -> s.getClass() == IndexEntryPackage.class)
+                .map(p -> (IndexEntryPackage) p)
+                .flatMap(SharedPackage::content)
+                .forEach(i -> {
+                    Commit commit = mappedCommits.get(i.getCommit().getUuid());
+                    commit.getIndex().add(i);
+                    i.setCommit(commit);
+                });
+
+        return commits;
     }
 
     private List<LobProperty> readPackageLobs(ExportImportResult<ExportFile> currentExport) {
         return readPackages(currentExport).stream()
                 .filter(s -> s.getClass() == LobPropertyPackage.class)
                 .map(p -> (LobPropertyPackage) p)
-                .map(SharedPackage::getContent)
-                .flatMap(List::stream)
+                .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
     }
 
@@ -413,8 +429,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         return readPackages(currentExport).stream()
                 .filter(s -> s.getClass() == TransformerDefPackage.class)
                 .map(p -> (TransformerDefPackage) p)
-                .map(SharedPackage::getContent)
-                .flatMap(List::stream)
+                .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
     }
 
@@ -422,8 +437,7 @@ public class PushPullStepDefs extends CucumberStepDefs {
         return readPackages(currentExport).stream()
                 .filter(s -> s.getClass() == VersionPackage.class)
                 .map(p -> (VersionPackage) p)
-                .map(SharedPackage::getContent)
-                .flatMap(List::stream)
+                .flatMap(SharedPackage::content)
                 .collect(Collectors.toList());
     }
 

@@ -21,8 +21,7 @@ public class GeneratedVersionPackage extends VersionExportPackage<ParameterVersi
      */
     public GeneratedVersionPackage(Collection<ParameterVersionDefinition> allVersion) {
         super(VersionExportPackage.VERSIONS_EXPORT, LocalDateTime.now());
-        initWithContent(allVersion.stream().sorted(Comparator.comparing(ParameterVersionDefinition::getCreatedTime))
-                .collect(Collectors.toList()));
+        from(allVersion.stream().sorted(Comparator.comparing(ParameterVersionDefinition::getCreatedTime)));
     }
 
     /**

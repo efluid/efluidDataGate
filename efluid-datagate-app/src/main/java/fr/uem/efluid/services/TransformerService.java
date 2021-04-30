@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -239,23 +240,19 @@ public class TransformerService extends AbstractApplicationService {
      */
     TransformerProcessor importTransformerDefsAndPrepareProcessor(TransformerDefPackage pckg) {
 
-        if (pckg.getContentSize() == 0) {
-            return null;
-        }
+        // Load the package-specified transformers
+        List<TransformerProcessor.TransformerApply> transformerDefs = pckg.content()
+                // ... Store them locally ...
+                .map(this::importTransformerDef)
+                // ... And init them as "transformer Apply" used in TranformerProcessor
+                .map(d -> {
+                    Transformer<?, ?> transformer = loadTransformerByType(d.getType());
+                    Transformer.TransformerConfig config = parseConfiguration(d.getConfiguration(), transformer);
+                    return new TransformerProcessor.TransformerApply(d.getName(), transformer, config, d.getPriority());
+                }).collect(Collectors.toList());
 
-        // Prepare processor from defs ...
-        return new TransformerProcessor(
-                // On imported defs ...
-                pckg.getContent().stream()
-                        // ... Store them locally ...
-                        .map(this::importTransformerDef)
-                        // ... And init them as "transformer Apply" used in TranformerProcessor
-                        .map(d -> {
-                            Transformer<?, ?> transformer = loadTransformerByType(d.getType());
-                            Transformer.TransformerConfig config = parseConfiguration(d.getConfiguration(), transformer);
-                            return new TransformerProcessor.TransformerApply(d.getName(), transformer, config, d.getPriority());
-                        }).collect(Collectors.toList())
-        );
+        // Prepare processor from defs only if some found ...
+        return transformerDefs.isEmpty() ? null : new TransformerProcessor(transformerDefs);
     }
 
     /**
@@ -265,7 +262,7 @@ public class TransformerService extends AbstractApplicationService {
      * @param customizations specified customizations for export
      * @return transformer def ready to be exported, with applied customizations
      */
-    List<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
+    Stream<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
 
         Map<UUID, String> confs = customizations.stream().collect(Collectors.toMap(c -> c.getTransformerDef().getUuid(), ExportTransformer::getConfiguration));
         Set<UUID> disabled = customizations.stream().filter(ExportTransformer::isDisabled).map(t -> t.getTransformerDef().getUuid()).collect(Collectors.toSet());
@@ -279,7 +276,7 @@ public class TransformerService extends AbstractApplicationService {
                     if (customization != null && !customization.equals(t.getConfiguration())) {
                         t.setCustomizedConfiguration(customization);
                     }
-                }).collect(Collectors.toList());
+                });
     }
 
     private TransformerDef importTransformerDef(TransformerDef imported) {

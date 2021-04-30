@@ -51,6 +51,13 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     List<IndexEntry> findByCommitUuid(UUID commitUuid);
 
     /**
+     * For export process, get specified index in stream
+     * @param commitUuids
+     * @return
+     */
+    Stream<IndexEntry> findByCommitUuidInOrderByTimestamp(Collection<UUID> commitUuids);
+
+    /**
      * Access on knew key values
      *
      * @param dictionaryEntryUuid
