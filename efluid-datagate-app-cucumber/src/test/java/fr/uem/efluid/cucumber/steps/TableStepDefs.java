@@ -317,6 +317,16 @@ public class TableStepDefs extends CucumberStepDefs {
             assertThat(found).describedAs("Existing table with name " + t.get("table name")).isPresent();
             assertThat(found.get().getSelectClause()).describedAs("Select clause for table with name " + t.get("table name")).isEqualTo(t.get("select clause"));
             assertThat(found.get().getDomain().getProject().getName()).describedAs("Project for table with name " + t.get("table name")).isEqualTo(t.get("project"));
+
+            if(t.get("key 1") != null){
+                assertThat(found.get().getKeyName()).describedAs("Key 1 for table with name " + t.get("table name")).isEqualTo(t.get("key 1"));
+            }
+            if(t.get("key 2") != null){
+                assertThat(found.get().getExt1KeyName()).describedAs("Key 2 for table with name " + t.get("table name")).isEqualTo(t.get("key 2"));
+            }
+            if(t.get("key 3") != null){
+                assertThat(found.get().getExt2KeyName()).describedAs("Key 3 for table with name " + t.get("table name")).isEqualTo(t.get("key 3"));
+            }
         });
 
     }

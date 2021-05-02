@@ -1,6 +1,7 @@
 package fr.uem.efluid.services.types;
 
 import java.time.LocalDateTime;
+import java.util.stream.Stream;
 
 import fr.uem.efluid.model.entities.FunctionalDomain;
 
@@ -27,4 +28,7 @@ public class FunctionalDomainPackage extends FunctionalDomainExportPackage<Funct
 		return new FunctionalDomain();
 	}
 
+	public Stream<FunctionalDomain> content() {
+		return super.content();
+	}
 }
