@@ -1,5 +1,6 @@
 package fr.uem.efluid.services;
 
+import fr.uem.efluid.model.SharedDictionary;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.TableDescription;
@@ -20,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -129,6 +133,9 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
     @Autowired
     private PrepareIndexService indexService;
+
+    @Autowired
+    private IndexRepository index;
 
     @Autowired
     private FeatureManager features;
@@ -999,68 +1006,55 @@ public class DictionaryManagementService extends AbstractApplicationService {
         LOGGER.info("Process import of one specified dictionary project \"{}\" to destination project \"{}\" using mode {}",
                 importing.getProjectUuid(), destinationProject.getUuid(), copyMode ? "copy" : "standard");
 
+        // Counters for processed items
         AtomicInteger newDomainsCount = new AtomicInteger(0);
         AtomicInteger newDictCount = new AtomicInteger(0);
         AtomicInteger newLinksCount = new AtomicInteger(0);
         AtomicInteger newMappingsCount = new AtomicInteger(0);
-        AtomicInteger deduplicatedDomainsCount = new AtomicInteger(0);
         AtomicInteger newVersCount = new AtomicInteger(0);
 
-        // Can substitute domains by name : need refer update
-        Map<UUID, FunctionalDomain> substituteDomains = new HashMap<>();
-        Map<UUID, DictionaryEntry> substituteTables = new HashMap<>();
+        // For domain deduplicate
+        Set<UUID> deduplicatedDomains = new HashSet<>();
+
+        // All import processes as "importers"
+        DictionaryImportAction<FunctionalDomain> domainImporter = domainImporter(copyMode, destinationProject, deduplicatedDomains);
+        DictionaryImportAction<Version> versionImporter = versionImporter(destinationProject);
+        DictionaryImportAction<DictionaryEntry> tableImporter = dictionaryEntryImporter(copyMode, destinationProject);
+        DictionaryImportAction<TableLink> linkImporter = linkImporter(copyMode);
+        DictionaryImportAction<TableMapping> mappingImporter = mappingImporter(copyMode);
 
         // #1st The functional domains (used by other)
-        List<FunctionalDomain> importedDomains = importing.domains()
-                .map(d -> importDomainInProject(d, destinationProject, newDomainsCount, substituteDomains, copyMode))
-                .collect(Collectors.toList());
+        importing.domains().forEach(d -> domainImporter.importEntity(d, newDomainsCount));
 
         // #2rd The dictionary (referencing domains)
-        List<DictionaryEntry> importedDicts = importing.tables()
-                .map(d -> importDictionaryEntryInDomains(d, newDictCount, substituteDomains, substituteTables, copyMode))
-                .collect(Collectors.toList());
+        importing.tables().forEach(d -> tableImporter.importEntity(d, newDictCount));
 
         // #4th The links (referencing dictionary entries)
-        List<TableLink> importedLinks = importing.links()
-                .map(d -> importTableLinkInTable(d, newLinksCount, substituteTables, copyMode))
-                .collect(Collectors.toList());
+        importing.links().forEach(d -> linkImporter.importEntity(d, newLinksCount));
 
         // #5th The mappings (referencing dictionary entries)
-        List<TableMapping> importedMappings = importing.mappings()
-                .map(d -> importTableMappingInTable(d, newMappingsCount, substituteTables, copyMode))
-                .collect(Collectors.toList());
-
-
-        // Batched save on all imported
-        this.domains.saveAll(importedDomains);
-        this.dictionary.saveAll(importedDicts);
-        this.links.saveAll(importedLinks);
-        this.mappings.saveAll(importedMappings);
+        importing.mappings().forEach(d -> mappingImporter.importEntity(d, newMappingsCount));
 
         LOGGER.info("Import completed of {} domains, {} dictionary entry, {} table links and {} table mappings on destination project {}",
-                importedDomains.size(), importedDicts.size(), importedLinks.size(), importedMappings.size(), destinationProject.getName());
+                importing.domains().size(), importing.tables().size(), importing.links().size(), importing.mappings().size(), destinationProject.getName());
         ExportImportResult<Void> result = ExportImportResult.newVoid();
 
-        // Now check for duplicate domain names and fix
-        if (this.domains.findAll().stream().anyMatch(d -> importedDomains.stream().anyMatch(similareDomain(d)))) {
-
+        // Now clean duplicated domains
+        if (deduplicatedDomains.size() > 0) {
             LOGGER.info("Some domains need to be deduplicated from existing");
-
-            deduplicateDomains(importedDomains, deduplicatedDomainsCount);
+            this.domains.deleteAll(this.domains.findAllById(deduplicatedDomains));
         }
 
         // Process version only when not copying project data
         if (!copyMode) {
             // #6th The versions (referencing projects)
             List<Version> importedVersions = importing.versions()
-                    .map(d -> importVersionInProject(d, newVersCount, destinationProject))
+                    .stream().peek(d -> versionImporter.importEntity(d, newVersCount))
                     .sorted(Comparator.comparing(Version::getUpdatedTime))
                     .collect(Collectors.toList());
 
             // Check all versions
             assertVersionModelsAreValid(importedVersions);
-
-            this.versions.saveAll(importedVersions);
 
             // Complete version details
             importedVersions.forEach(this::completeVersionContents);
@@ -1071,29 +1065,30 @@ public class DictionaryManagementService extends AbstractApplicationService {
             }
         }
 
-        if (importedDomains.size() > 0) {
+        if (importing.domains().size() > 0) {
             result.addCount(DOMAINS_EXPORT, newDomainsCount.get(),
-                    importedDomains.size() - newDomainsCount.get(), 0);
+                    importing.domains().size() - newDomainsCount.get(), 0);
         }
 
-        if (importedDicts.size() > 0) {
+        if (importing.tables().size() > 0) {
             result.addCount(DICT_EXPORT, newDictCount.get(),
-                    importedDicts.size() - newDictCount.get(), 0);
+                    importing.tables().size() - newDictCount.get(), 0);
         }
 
-        if (importedLinks.size() > 0) {
+        if (importing.links().size() > 0) {
             result.addCount(LINKS_EXPORT, newLinksCount.get(),
-                    importedLinks.size() - newLinksCount.get(), 0);
+                    importing.links().size() - newLinksCount.get(), 0);
         }
 
-        if (importedMappings.size() > 0) {
+        if (importing.mappings().size() > 0) {
             result.addCount(MAPPINGS_EXPORT, newMappingsCount.get(),
-                    importedMappings.size() - newMappingsCount.get(), 0);
+                    importing.mappings().size() - newMappingsCount.get(), 0);
+
         }
 
-        if (deduplicatedDomainsCount.get() > 0) {
-            result.addCount(DEDUPLICATED_DOMAINS, deduplicatedDomainsCount.get(),
-                    0, deduplicatedDomainsCount.get());
+        if (deduplicatedDomains.size() > 0) {
+            result.addCount(DEDUPLICATED_DOMAINS, deduplicatedDomains.size(),
+                    0, deduplicatedDomains.size());
         }
 
         return result;
@@ -1124,33 +1119,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 // But similar in project
                 && i.getProject().equals(existing.getProject())
                 && i.getName().equals(existing.getName());
-    }
-
-    /**
-     * Search for existing domain on similar name,
-     *
-     * @param importedDomains
-     */
-    private void deduplicateDomains(List<FunctionalDomain> importedDomains, AtomicInteger deduplicatedDomainsCount) {
-        this.domains.findAll().forEach(existing ->
-                // If a duplicate exists in imported domains
-                importedDomains.stream().filter(similareDomain(existing)).findFirst().ifPresent(
-
-                        // Then process it to switch existing to new imported one
-                        imported -> {
-
-                            // Update dic entries with imported domain
-                            this.dictionary.findByDomain(existing).forEach(d -> {
-                                d.setDomain(imported);
-                                this.dictionary.save(d);
-                            });
-
-                            // And drop existing one
-                            this.domains.delete(existing);
-
-                            deduplicatedDomainsCount.incrementAndGet();
-                        })
-        );
     }
 
     /**
@@ -1279,269 +1247,116 @@ public class DictionaryManagementService extends AbstractApplicationService {
     }
 
     /**
-     * <p>
-     * Process one FunctionalDomain. If the associated project was substituted by another
-     * by name, the substitute will be gathered from given map and applied to domain
-     * </p>
+     * Init import Process for a FunctionalDomain.
      *
-     * @param imported
-     * @param newCounts
-     * @param substituteDomains
-     * @return
+     * @param copyMode           true if destination is processed for copy
+     * @param destinationProject destination project to apply
+     * @return import process
      */
-    private FunctionalDomain importDomainInProject(
-            FunctionalDomain imported,
-            Project destination,
-            AtomicInteger newCounts,
-            Map<UUID, FunctionalDomain> substituteDomains,
-            boolean resetUuids) {
+    private DictionaryImportAction<FunctionalDomain> domainImporter(boolean copyMode, Project destinationProject, Set<UUID> deduplicatedDomains) {
 
-        // Deduplicate AFTER import
-        Optional<FunctionalDomain> localOpt = this.domains.findById(imported.getUuid());
-
-        // Exists already
-        localOpt.ifPresent(d -> LOGGER.debug("Import existing domain {} : will update currently owned", imported.getUuid()));
-
-        // Or is a new one
-        FunctionalDomain local = localOpt.orElseGet(() -> {
-            LOGGER.debug("Import new domain {} : will create currently owned", imported.getUuid());
-            FunctionalDomain loc = new FunctionalDomain(imported.getUuid());
-            loc.setCreatedTime(imported.getCreatedTime());
-            newCounts.incrementAndGet();
-            return loc;
-        });
-
-        // Common attrs
-        local.setUpdatedTime(imported.getUpdatedTime());
-        local.setName(imported.getName());
-
-        local.setProject(destination);
-
-        local.setImportedTime(LocalDateTime.now());
-        substituteDomains.put(imported.getUuid(), local);
-
-        return local;
+        return new DictionaryImportAction<FunctionalDomain>(copyMode)
+                .searchingByNameWith(d -> this.domains.findByProjectAndName(destinationProject, d.getName()))
+                .savingWith(d -> {
+                    d.setProject(destinationProject);
+                    this.domains.saveAndFlush(d);
+                })
+                .replacingSubstituteWith((existing, imported) -> {
+                    // Update dic entries with imported domain
+                    this.dictionary.findByDomain(existing).forEach(d -> {
+                        d.setDomain(imported);
+                        this.dictionary.save(d);
+                    });
+                    deduplicatedDomains.add(existing.getUuid());
+                });
     }
 
     /**
      * <p>
-     * Process one Project
+     * Process one version
      * </p>
-     * <p>
-     * Project can be identified by uuid or by name during import
-     * <p>
      *
-     * @param imported
-     * @param newCounts
      * @param destinationProject target project for imported version
-     * @return
+     * @return import process
      */
-    private Version importVersionInProject(Version imported, AtomicInteger newCounts, Project destinationProject) {
+    private DictionaryImportAction<Version> versionImporter(Project destinationProject) {
 
-        Optional<Version> localOpt = this.versions.findById(imported.getUuid());
-
-        // Exists already
-        localOpt.ifPresent(d -> LOGGER.debug("Import existing project by uuid {} : will update currently owned", imported.getUuid()));
-
-        // Will try also by name
-        Version byName = this.versions.findByNameAndProject(imported.getName(), destinationProject);
-
-        // Search on existing Or is a new one
-        Version local = localOpt.orElseGet(() -> {
-            Version loc;
-            if (byName == null) {
-                LOGGER.debug("Import new version {} : will create currently owned", imported.getUuid());
-                loc = new Version(imported.getUuid());
-                loc.setCreatedTime(imported.getCreatedTime());
-                newCounts.incrementAndGet();
-            } else {
-                LOGGER.debug("Import exsting version by name \"{}\"", imported.getName());
-                loc = byName;
-            }
-            return loc;
-        });
-
-        // Use specified destination project
-        local.setProject(destinationProject);
-
-        // Common attrs
-        local.setUpdatedTime(imported.getUpdatedTime());
-        local.setName(imported.getName());
-        local.setModelIdentity(imported.getModelIdentity());
-
-        local.setImportedTime(now());
-
-        return local;
+        return new DictionaryImportAction<Version>(false)
+                .searchingByNameWith(v -> Optional.ofNullable(this.versions.findByNameAndProject(v.getName(), destinationProject)))
+                .savingWith(v -> {
+                    v.setProject(destinationProject);
+                    this.versions.save(v);
+                })
+                .replacingSubstituteWith((existing, imported) -> {
+                    this.versions.delete(existing);
+                });
     }
 
     /**
      * Process one DictionaryEntry
      *
-     * @param imported          from package
-     * @param newCounts         result count
-     * @param substituteDomains
-     * @param substituteTables
-     * @param resetUuids        true for init of new dictEntry at import
-     * @return imported dict Entry
+     * @param copyMode           true if destination is processed for copy
+     * @param destinationProject destination project to apply
+     * @return import process
      */
-    private DictionaryEntry importDictionaryEntryInDomains(
-            DictionaryEntry imported,
-            AtomicInteger newCounts,
-            Map<UUID, FunctionalDomain> substituteDomains,
-            Map<UUID, DictionaryEntry> substituteTables,
-            boolean resetUuids) {
+    private DictionaryImportAction<DictionaryEntry> dictionaryEntryImporter(boolean copyMode, Project destinationProject) {
 
-        FunctionalDomain associatedDomain = substituteDomains.get(imported.getDomain().getUuid());
-
-        Optional<DictionaryEntry> localOpt = this.dictionary.findByTableNameAndDomain(imported.getTableName(), associatedDomain);
-
-        // Exists already on name
-        localOpt.ifPresent(d -> LOGGER.debug("Import existing dictionary entry for table \"{}\" : will update currently owned", imported.getTableName()));
-
-        // Or is a new one
-        DictionaryEntry local = localOpt.orElseGet(() -> {
-            LOGGER.debug("Import new dictionary entry for table \"{}\" : will create currently owned", imported.getTableName());
-            DictionaryEntry loc = new DictionaryEntry(resetUuids ? UUID.randomUUID() : imported.getUuid());
-            loc.setCreatedTime(imported.getCreatedTime());
-            newCounts.incrementAndGet();
-            return loc;
-        });
-
-        // Common attrs
-        local.setDomain(associatedDomain);
-
-        // Common attrs
-        copyImportedDictionaryEntry(imported, local);
-
-        substituteTables.put(imported.getUuid(), local);
-
-        return local;
-    }
-
-    private void copyImportedDictionaryEntry(DictionaryEntry imported, DictionaryEntry local) {
-
-        local.setUpdatedTime(imported.getUpdatedTime());
-        local.setKeyName(imported.getKeyName());
-        local.setKeyType(imported.getKeyType());
-        local.setExt1KeyName(imported.getExt1KeyName());
-        local.setExt1KeyType(imported.getExt1KeyType());
-        local.setExt2KeyName(imported.getExt2KeyName());
-        local.setExt2KeyType(imported.getExt2KeyType());
-        local.setExt3KeyName(imported.getExt3KeyName());
-        local.setExt3KeyType(imported.getExt3KeyType());
-        local.setExt4KeyName(imported.getExt4KeyName());
-        local.setExt4KeyType(imported.getExt4KeyType());
-        local.setParameterName(imported.getParameterName());
-        local.setTableName(imported.getTableName());
-        local.setSelectClause(imported.getSelectClause());
-        local.setWhereClause(imported.getWhereClause());
-
-        local.setImportedTime(now());
-
+        return new DictionaryImportAction<DictionaryEntry>(copyMode)
+                .searchingByNameWith(d -> this.dictionary.findByTableNameAndDomainProject(d.getTableName(), destinationProject))
+                .savingWith(d -> {
+                    // Clean referenced substitutes domains
+                    d.setDomain(this.domains.getOne(d.getDomain().getUuid()));
+                    this.dictionary.save(d);
+                })
+                .replacingSubstituteWith((existing, imported) -> {
+                    this.index.updateDictionaryEntryReference(existing.getUuid(), imported.getUuid());
+                    this.mappings.deleteAll(this.mappings.findByDictionaryEntry(existing));
+                    this.links.deleteAll(this.links.findByDictionaryEntry(existing));
+                    this.dictionary.delete(existing);
+                });
     }
 
     /**
      * Process one TableLink
      *
-     * @param imported
-     * @return
+     * @param copyMode true if destination is processed for copy
+     * @return import process
      */
-    private TableLink importTableLinkInTable(
-            TableLink imported,
-            AtomicInteger newCounts,
-            Map<UUID, DictionaryEntry> substituteTables,
-            boolean resetUuids) {
+    private DictionaryImportAction<TableLink> linkImporter(boolean copyMode) {
 
-        DictionaryEntry associatedTable = substituteTables.get(imported.getDictionaryEntry().getUuid());
-
-        Optional<TableLink> localOpt = this.links.findByDictionaryEntryAndColumnFromAndTableToAndColumnTo(associatedTable, imported.getColumnFrom(), imported.getTableTo(), imported.getColumnTo());
-
-        // Exists already
-        localOpt.ifPresent(d -> LOGGER.debug("Import existing TableLink {} : will update currently owned", imported.getUuid()));
-
-        // Or is a new one
-        TableLink local = localOpt.orElseGet(() -> {
-            LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
-            TableLink loc = new TableLink(resetUuids ? UUID.randomUUID() : imported.getUuid());
-            loc.setCreatedTime(imported.getCreatedTime());
-            newCounts.incrementAndGet();
-            return loc;
-        });
-
-        local.setDictionaryEntry(associatedTable);
-
-        // Common attrs
-        copyImportedTableLink(imported, local);
-
-        return local;
-    }
-
-    public void copyImportedTableLink(TableLink imported, TableLink local) {
-
-        // Common attrs
-        local.setUpdatedTime(imported.getUpdatedTime());
-        local.setColumnFrom(imported.getColumnFrom());
-        local.setColumnTo(imported.getColumnTo());
-        local.setTableTo(imported.getTableTo());
-        local.setExt1ColumnTo(imported.getExt1ColumnTo());
-        local.setExt1ColumnFrom(imported.getExt1ColumnFrom());
-        local.setExt2ColumnTo(imported.getExt2ColumnTo());
-        local.setExt2ColumnFrom(imported.getExt2ColumnFrom());
-        local.setExt3ColumnTo(imported.getExt3ColumnTo());
-        local.setExt3ColumnFrom(imported.getExt3ColumnFrom());
-        local.setExt4ColumnTo(imported.getExt4ColumnTo());
-        local.setExt4ColumnFrom(imported.getExt4ColumnFrom());
-        local.setImportedTime(now());
+        return new DictionaryImportAction<TableLink>(copyMode)
+                .searchingByNameWith(imported ->
+                        this.links.findByDictionaryEntryAndColumnFromAndTableToAndColumnTo(
+                                imported.getDictionaryEntry(),
+                                imported.getColumnFrom(),
+                                imported.getTableTo(),
+                                imported.getColumnTo()))
+                .savingWith(this.links::save)
+                .replacingSubstituteWith((existing, imported) -> {
+                    // Nothing
+                });
     }
 
     /**
      * Process one TableMapping
      *
-     * @param imported
-     * @return
+     * @param copyMode true if destination is processed for copy
+     * @return import process
      */
-    private TableMapping importTableMappingInTable(
-            TableMapping imported,
-            AtomicInteger newCounts,
-            Map<UUID, DictionaryEntry> substituteTables,
-            boolean resetUuids) {
+    private DictionaryImportAction<TableMapping> mappingImporter(boolean copyMode) {
 
-        DictionaryEntry associatedTable = substituteTables.get(imported.getDictionaryEntry().getUuid());
-
-        Optional<TableMapping> localOpt = this.mappings.findByDictionaryEntryAndColumnFromAndTableToAndColumnToAndMapTable(associatedTable, imported.getColumnFrom(), imported.getTableTo(), imported.getColumnTo(), imported.getMapTable());
-
-        // Exists already
-        localOpt.ifPresent(d -> LOGGER.debug("Import existing TableMapping {} : will update currently owned", imported.getUuid()));
-
-        // Or is a new one
-        TableMapping local = localOpt.orElseGet(() -> {
-            LOGGER.debug("Import new TableLink {} : will create currently owned", imported.getUuid());
-            TableMapping loc = new TableMapping(resetUuids ? UUID.randomUUID() : imported.getUuid());
-            loc.setCreatedTime(imported.getCreatedTime());
-            newCounts.incrementAndGet();
-            return loc;
-        });
-
-        local.setDictionaryEntry(associatedTable);
-
-        // Common attrs
-        copyImportedTableMapping(imported, local);
-
-        return local;
-    }
-
-    public void copyImportedTableMapping(TableMapping imported, TableMapping local) {
-
-        // Common attrs
-        local.setUpdatedTime(imported.getUpdatedTime());
-        local.setName(imported.getName());
-        local.setColumnFrom(imported.getColumnFrom());
-        local.setColumnTo(imported.getColumnTo());
-        local.setTableTo(imported.getTableTo());
-        local.setMapTable(imported.getMapTable());
-        local.setMapTableColumnFrom(imported.getMapTableColumnFrom());
-        local.setMapTableColumnTo(imported.getMapTableColumnTo());
-        local.setImportedTime(now());
+        return new DictionaryImportAction<TableMapping>(copyMode)
+                .searchingByNameWith(imported ->
+                        this.mappings.findByDictionaryEntryAndColumnFromAndTableToAndColumnToAndMapTable(
+                                imported.getDictionaryEntry(),
+                                imported.getColumnFrom(),
+                                imported.getTableTo(),
+                                imported.getColumnTo(),
+                                imported.getMapTable()))
+                .savingWith(this.mappings::save)
+                .replacingSubstituteWith((existing, imported) -> {
+                    // Nothing
+                });
     }
 
     /**
@@ -1889,6 +1704,12 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         private final List<Version> versions;
 
+        /**
+         * Read the package content, using streamed extraction process, then restore full references
+         * between the imported elements (domains linked to their tables, tables linked to their links and mappings)
+         *
+         * @param packages
+         */
         ImportingDictionary(List<SharedPackage<?>> packages) {
 
             this.domains = packages.stream()
@@ -1916,6 +1737,36 @@ public class DictionaryManagementService extends AbstractApplicationService {
                     .flatMap(p -> ((VersionPackage) p).content())
                     .sorted(Comparator.comparing(Version::getUpdatedTime))
                     .collect(Collectors.toList());
+
+            // Prepare strong references between entities for easier substitute process
+            restoreReferences();
+        }
+
+        /**
+         * The imported items all have weak references : the associated objects are associated together using "link entities"
+         * (entities initialized only with their id).
+         * To make it easier to apply substitutes in each elements when resolving conflicts or copying new version,
+         * this method restore strong references between each entities for the current importing dictionary.
+         */
+        private void restoreReferences() {
+
+            // References to domains in tables
+            this.tables.forEach(t ->
+                    this.domains.stream().filter(d -> d.getUuid().equals(t.getDomain().getUuid())).findFirst()
+                            .ifPresent(t::setDomain)
+            );
+
+            // References to tables in links
+            this.links.forEach(l ->
+                    this.tables.stream().filter(d -> d.getUuid().equals(l.getDictionaryEntry().getUuid())).findFirst()
+                            .ifPresent(l::setDictionaryEntry)
+            );
+
+            // References to tables in mappings
+            this.mappings.forEach(l ->
+                    this.tables.stream().filter(d -> d.getUuid().equals(l.getDictionaryEntry().getUuid())).findFirst()
+                            .ifPresent(l::setDictionaryEntry)
+            );
         }
 
         ImportingDictionaryProject onProject(UUID projectUuid) {
@@ -1965,27 +1816,98 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 return projectUuid;
             }
 
-            public Stream<FunctionalDomain> domains() {
-                return domains.stream();
+            public List<FunctionalDomain> domains() {
+                return domains;
             }
 
-            public Stream<DictionaryEntry> tables() {
-                return tables.stream();
+            public List<DictionaryEntry> tables() {
+                return tables;
             }
 
-            public Stream<TableLink> links() {
-                return links.stream();
+            public List<TableLink> links() {
+                return links;
             }
 
-            public Stream<TableMapping> mappings() {
-                return mappings.stream();
+            public List<TableMapping> mappings() {
+                return mappings;
             }
 
-            public Stream<Version> versions() {
-                return versions.stream();
+            public List<Version> versions() {
+                return versions;
             }
         }
     }
 
+    /**
+     * A chained action definition for a dictionary item import : they are all specified with the same "general model"
+     * but we must define some details on each steps. This action builder / runner allows to define these steps
+     * while a good readability is kept
+     *
+     * @author elecomte
+     * @version 1
+     * @since v2.1.18
+     */
+    private static class DictionaryImportAction<T extends SharedDictionary> {
+
+        private final boolean copyMode;
+
+        private Function<T, Optional<T>> searchByName;
+        private BiConsumer<T, T> replaceEntity;
+        private Consumer<T> saver;
+
+        private DictionaryImportAction(boolean copyMode) {
+            this.copyMode = copyMode;
+        }
+
+        public DictionaryImportAction<T> searchingByNameWith(Function<T, Optional<T>> searchByName) {
+            this.searchByName = searchByName;
+            return this;
+        }
+
+        public DictionaryImportAction<T> replacingSubstituteWith(BiConsumer<T, T> replaceEntity) {
+            this.replaceEntity = replaceEntity;
+            return this;
+        }
+
+        public DictionaryImportAction<T> savingWith(Consumer<T> saver) {
+            this.saver = saver;
+            return this;
+        }
+
+        public void importEntity(T imported, AtomicInteger newCounts) {
+
+            Optional<T> localEntity = this.searchByName.apply(imported);
+            imported.setImportedTime(LocalDateTime.now());
+
+            // Exists already on name
+            if (localEntity.isPresent()) {
+                T existing = localEntity.get();
+                if (existing.getUuid().equals(imported.getUuid()) || this.copyMode) {
+                    LOGGER.debug("Import existing entity \"{}\" : will update currently owned", imported);
+                    imported.setUuid(existing.getUuid());
+                    this.saver.accept(imported);
+                } else {
+                    LOGGER.info("Conflict identified on dictionary Import. Existing entity " +
+                            "\"{}\" will be replaced by imported one \"{}\" ", existing, imported);
+                    this.saver.accept(imported);
+                    // Then Replace all required references for substitued entity
+                    this.replaceEntity.accept(existing, imported);
+                }
+            } else {
+                LOGGER.debug("Import new entity \"{}\" : will create currently owned", imported);
+
+                // Create a new entity
+                if (this.copyMode) {
+                    imported.setUuid(UUID.randomUUID());
+                    imported.setCreatedTime(LocalDateTime.now());
+                    imported.setUpdatedTime(LocalDateTime.now());
+                }
+
+                // Import new one
+                this.saver.accept(imported);
+                newCounts.incrementAndGet();
+            }
+        }
+    }
 
 }

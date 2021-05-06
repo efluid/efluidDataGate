@@ -90,6 +90,7 @@ public class Version extends ExportAwareVersion<Project> {
     /**
      * @param uuid the uuid to set
      */
+    @Override
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }

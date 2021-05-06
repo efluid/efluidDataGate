@@ -118,6 +118,7 @@ public class TableMapping extends ExportAwareTableMapping<DictionaryEntry> {
 	 * @param uuid
 	 *            the uuid to set
 	 */
+	@Override
 	public void setUuid(UUID uuid) {
 		this.uuid = uuid;
 	}

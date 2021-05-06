@@ -309,7 +309,7 @@ public class TableStepDefs extends CucumberStepDefs {
 
         var existings = this.dicts.findAll();
 
-        assertThat(expected).hasSize(existings.size());
+        assertThat(existings).hasSize(expected.size());
 
         expected.forEach(t -> {
             var found = existings.stream().filter(d -> d.getTableName().equals(t.get("table name"))).findFirst();

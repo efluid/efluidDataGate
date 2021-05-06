@@ -36,6 +36,10 @@ import java.util.stream.Stream;
  */
 public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpecificationExecutor<IndexEntry> {
 
+    @Query(value = "UPDATE INDEXES SET DICTIONARY_ENTRY_UUID = :newEntry WHERE DICTIONARY_ENTRY_UUID = :existing", nativeQuery = true)
+    @Modifying
+    void updateDictionaryEntryReference(UUID existing, UUID newEntry);
+
     /**
      * For tests env reset only !
      */
@@ -52,6 +56,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
 
     /**
      * For export process, get specified index in stream
+     *
      * @param commitUuids
      * @return
      */

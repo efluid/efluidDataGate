@@ -64,6 +64,7 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
     /**
      * @param uuid the uuid to set
      */
+    @Override
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
@@ -259,6 +260,7 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
     /**
      * @param createdTime the createdTime to set
      */
+    @Override
     public void setCreatedTime(LocalDateTime createdTime) {
         this.createdTime = createdTime;
     }
@@ -269,6 +271,11 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
     @Override
     public LocalDateTime getImportedTime() {
         return null;
+    }
+
+    @Override
+    public void setImportedTime(LocalDateTime time) {
+        // Nothing
     }
 
     /**
@@ -290,6 +297,7 @@ public class ParameterLinkDefinition extends ExportAwareTableLink<ParameterTable
     /**
      * @param updatedTime the updatedTime to set
      */
+    @Override
     public void setUpdatedTime(LocalDateTime updatedTime) {
         this.updatedTime = updatedTime;
     }
