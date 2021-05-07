@@ -1,6 +1,6 @@
 package fr.uem.efluid.model.shared;
 
-import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.model.SharedDictionary;
 import fr.uem.efluid.model.UpdateChecked;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
@@ -13,7 +13,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @version 2
  * @since v0.2.0
  */
-public abstract class ExportAwareVersion<D extends ExportAwareProject> implements Shared, UpdateChecked {
+public abstract class ExportAwareVersion<D extends ExportAwareProject> implements SharedDictionary {
 
     /**
      * @return

@@ -80,6 +80,7 @@ public abstract class CucumberStepDefs {
     private static final String DEFAULT_TABLE_FIVE = "Table Five";
     private static final String DEFAULT_TABLE_SIX = "Table Six";
     private static final String DEFAULT_TABLE_SEVEN = "Table Seven";
+    private static final String DEFAULT_TABLE_NULLABLE = "Table Nullable";
     private static final String DEFAULT_TTEST1 = "Table EfluidTest1";
     private static final String DEFAULT_TTEST2 = "Table EfluidTest2";
     private static final String DEFAULT_EFLUIDTESTNUMBER = "Table EfluidTestNumber";
@@ -262,7 +263,7 @@ public abstract class CucumberStepDefs {
     /**
      *
      */
-    protected void initCompleteDictionaryWith7Tables() {
+    protected void initCompleteDictionaryWith8Tables() {
 
         resetAsyncProcess();
         resetDatabaseIdentifier();
@@ -278,7 +279,7 @@ public abstract class CucumberStepDefs {
 
         this.dets.completeWizard();
 
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TABLE_ONE, TABLE_TWO, TABLE_THREE, TABLE_FOUR, TABLE_FIVE, TABLE_SIX, TABLE_SEVEN);
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TABLE_ONE, TABLE_TWO, TABLE_THREE, TABLE_FOUR, TABLE_FIVE, TABLE_SIX, TABLE_SEVEN, TABLE_ALL_NULLABLE);
     }
 
     /**
@@ -883,6 +884,9 @@ public abstract class CucumberStepDefs {
                 case TABLE_SIX:
                     tables.add(table(DEFAULT_TABLE_SIX, TABLE_SIX, domain, "cur.\"TEXT\", cur.\"DATE\"", DEFAULT_WHERE, "IDENTIFIER", PK_ATOMIC));
                     break;
+                case TABLE_ALL_NULLABLE:
+                    tables.add(table(DEFAULT_TABLE_NULLABLE, TABLE_ALL_NULLABLE, domain, "cur.\"SOMETHING\", cur.\"VALUE\"", DEFAULT_WHERE, "BUSINESS_KEY", STRING));
+                    break;
                 case TABLE_SEVEN:
                     DictionaryEntry tableSeven = table(DEFAULT_TABLE_SEVEN, TABLE_SEVEN, domain, "ln1.\"VALUE\" as ln_OTHER_TABLE_VALUE , cur.\"VALUE\", cur.\"ENABLED\"", DEFAULT_WHERE, "BUSINESS_KEY", STRING);
                     tables.add(tableSeven);
@@ -962,18 +966,40 @@ public abstract class CucumberStepDefs {
         return this.commitService.getExistingCommitDetails(getSavedCommitUuid(), true);
     }
 
+    protected static String dataKey(Map<String, String> line) {
+
+        String rawKey = line.get("Key").trim();
+
+        if (rawKey.charAt(0) == '"') {
+            rawKey = rawKey.substring(1, rawKey.length() - 1);
+        }
+
+        switch (rawKey) {
+            case "-empty char-":
+                return "";
+            case "-space-":
+                return " ";
+
+            case "-null-":
+                return " ";
+            default:
+                return rawKey;
+        }
+    }
+
     protected static void assertDiffContentIsCompliant(DiffContentHolder<?> holder, DataTable data) {
 
         assertThat(holder.getDiffContent().size()).isEqualTo(data.asMaps().size());
 
         data.asMaps().forEach(l -> {
 
+            String dataKey = dataKey(l);
             DictionaryEntrySummary table = holder.getReferencedTables().values().stream()
                     .filter(t -> t.getTableName().equals(l.get("Table")))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
 
-            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(dataKey))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
 
@@ -1000,12 +1026,13 @@ public abstract class CucumberStepDefs {
 
         data.asMaps().forEach(l -> {
 
+            String dataKey = dataKey(l);
             DictionaryEntrySummary table = referencedTables.values().stream()
                     .filter(t -> t.getTableName().equals(l.get("Table")))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
 
-            DiffLine index = content.stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+            DiffLine index = content.stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(dataKey))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
 
@@ -1026,12 +1053,14 @@ public abstract class CucumberStepDefs {
 
         data.asMaps().forEach(l -> {
 
+            String dataKey = dataKey(l);
+
             DictionaryEntrySummary table = holder.getReferencedTables().values().stream()
                     .filter(t -> t.getTableName().equals(l.get("Table")))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("No referenced table \"" + l.get("Table") + "\" found in diff content"));
 
-            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(l.get("Key")))
+            PreparedIndexEntry index = holder.getDiffContent().stream().filter(i -> i.getDictionaryEntryUuid().equals(table.getUuid()) && i.getKeyValue().equals(dataKey))
                     .findFirst()
                     .orElseThrow(() -> new AssertionError("Cannot find corresponding diff for table \"" + l.get("Table") + "\" and key \"" + l.get("Key") + "\""));
 
@@ -1064,7 +1093,7 @@ public abstract class CucumberStepDefs {
         for (Map<String, String> dataline : data.asMaps()) {
             PreparedIndexEntry diff = diffLines.get(i);
             assertThat(diff.getTableName()).isEqualTo(dataline.get("Table"));
-            assertThat(diff.getKeyValue()).isEqualTo(dataline.get("Key"));
+            assertThat(diff.getKeyValue()).isEqualTo(dataKey(dataline));
             assertThat(diff.getAction().name()).isEqualTo(dataline.get("Action"));
             if (diff.getAction() != REMOVE) {
                 assertThat(diff.getHrPayload()).isEqualTo(dataline.get("Payload"));

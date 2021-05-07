@@ -80,6 +80,7 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
     /**
      * @param uuid the uuid to set
      */
+    @Override
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
@@ -303,6 +304,7 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
     /**
      * @param createdTime the createdTime to set
      */
+    @Override
     public void setCreatedTime(LocalDateTime createdTime) {
         this.createdTime = createdTime;
     }
@@ -326,8 +328,14 @@ public class ParameterTableDefinition extends ExportAwareDictionaryEntry<Paramet
     /**
      * @param updatedTime the updatedTime to set
      */
+    @Override
     public void setUpdatedTime(LocalDateTime updatedTime) {
         this.updatedTime = updatedTime;
+    }
+
+    @Override
+    public void setImportedTime(LocalDateTime time) {
+        // Nothing
     }
 
     /**

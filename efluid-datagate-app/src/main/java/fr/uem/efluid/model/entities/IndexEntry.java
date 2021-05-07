@@ -1,10 +1,13 @@
 package fr.uem.efluid.model.entities;
 
 import fr.uem.efluid.model.DiffLine;
+import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -25,7 +28,7 @@ import java.util.UUID;
         @Index(columnList = "keyValue"),
         @Index(columnList = "timestamp")
 })
-public class IndexEntry implements DiffLine {
+public class IndexEntry implements DiffLine, Shared {
 
     @Id
     @GeneratedValue
@@ -41,12 +44,13 @@ public class IndexEntry implements DiffLine {
     @ManyToOne
     private Commit commit;
 
-    @Lob
+    @Lob // Can be null when all columns are null
     private String payload;
 
-    @Lob
+    @Lob // Can be null when all columns are null
     private String previous;
 
+    // Can be null ! (null values are valid keys)
     private String keyValue;
 
     private long timestamp;
@@ -177,13 +181,27 @@ public class IndexEntry implements DiffLine {
         return this.dictionaryEntry.getUuid();
     }
 
+    @Override
+    public UUID getUuid() {
+        // Not managed for simplified Index import
+        return null;
+    }
+
+    @Override
+    public LocalDateTime getImportedTime() {
+        // Not managed for simplified Index import
+        return null;
+    }
+
     /**
      * For commit serialize
      */
-    String serialize() {
+    @Override
+    public String serialize() {
 
         return SharedOutputInputUtils.newJson()
                 .with("dic", getDictionaryEntryUuid())
+                .with("com", getCommit().getUuid())
                 .with("act", getAction())
                 .with("key", getKeyValue())
                 .with("pay", getPayload())
@@ -195,8 +213,8 @@ public class IndexEntry implements DiffLine {
     /**
      * For commit deserialize
      */
-    void deserialize(String raw) {
-        SharedOutputInputUtils.fromJson(raw)
+    public SharedOutputInputUtils.OutputJsonPropertiesReader deserializeOnCompatibility(String raw) {
+        return SharedOutputInputUtils.fromJson(raw)
                 .applyUUID("dic", u -> setDictionaryEntry(new DictionaryEntry(u)))
                 .applyString("act", a -> setAction(IndexAction.valueOf(a)))
                 .applyString("key", this::setKeyValue)
@@ -204,6 +222,15 @@ public class IndexEntry implements DiffLine {
                 .applyString("pre", this::setPrevious)
                 .applyString("tim", t -> setTimestamp(Long.parseLong(t)));
     }
+    /**
+     * For commit deserialize
+     */
+    @Override
+    public void deserialize(String raw) {
+        deserializeOnCompatibility(raw)
+                .applyUUID("com", i -> setCommit(new Commit(i)));
+    }
+
 
     @Override
     public boolean equals(Object o) {

@@ -91,6 +91,7 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Stream<
             columnType[i] = ColumnType.forJdbcType(nativeType);
         }
 
+        // Process the ResultSet lines in a stream source (SplitIterator)
         return StreamSupport.stream(
                 new Spliterators.AbstractSpliterator<ContentLine>(Long.MAX_VALUE, Spliterator.ORDERED) {
 
@@ -101,14 +102,18 @@ public abstract class InternalExtractor<T> implements ResultSetExtractor<Stream<
 
                             T payload = initLineHolder();
                             StringBuilder keyValue = new StringBuilder(8);
+                            boolean nextIsCompositeKey = false;
+
+                            // Process all columns in current RS row
                             for (int i = 0; i < count; i++) {
                                 try {
                                     if (!keyPos.contains(i)) {
                                         // Internally specified extractor process
                                         appendProcessValue(InternalExtractor.this.valueConverter, payload, columnType[i], nativeTypes[i], columnNames[i], i + 1, rs);
-
                                     } else {
-                                        InternalExtractor.this.valueConverter.appendExtractedKeyValue(keyValue, rs.getString(i + 1));
+                                        // Build key. If called more than once, it's a composite key (identified by nextIsCompositeKey)
+                                        InternalExtractor.this.valueConverter.appendExtractedKeyValue(keyValue, rs.getString(i + 1), nextIsCompositeKey);
+                                        nextIsCompositeKey = true;
                                     }
 
                                 } catch (SQLException s) {

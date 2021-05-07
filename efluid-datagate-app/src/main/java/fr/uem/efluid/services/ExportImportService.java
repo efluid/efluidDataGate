@@ -1,169 +1,167 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.*;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.SharedPackage;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
-import net.lingala.zip4j.core.ZipFile;
+import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Scanner;
+import java.util.stream.Collectors;
+
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * <p>
  * Internal service for import / export using custom package model. Export features are
  * inherited from common <tt>ExportService</tt>
  * </p>
- * 
+ * <p>The import process is based on pure stream chain building</p>
+ *
  * @author elecomte
+ * @version 2
  * @since v0.0.1
- * @version 1
  */
 @Service
 public class ExportImportService extends ExportService {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ExportService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExportService.class);
 
-	private static final String ITEM_START_SEARCH = "\\[item\\]";
+    private static final String HEADER_SEARCH = "\\[pack\\|[^]]*]";
+    private static final String ITEM_SEARCH = "\\[/?item\\]";
 
-	/**
-	 * @param file
-	 * @return
-	 */
-	public List<SharedPackage<?>> importPackages(ExportFile file) {
+    /**
+     * From an uploaded .par file, get all the identifiable SharedPackage. The file is written in temp location, unziped,
+     * and each included .pack file is processed to get the corresponding SharedPackage
+     *
+     * @param file uploaded file definition, with compressed content access
+     * @return the SharedPackage in a list, each initialized with a content deserialization stream
+     */
+    public List<SharedPackage<?>> importPackages(ExportFile file) {
 
-		try {
-			Path path = SharedOutputInputUtils.initTmpFile(FILE_ID, FILE_ZIP_EXT, true);
-			Path uncompressPath = SharedOutputInputUtils.initTmpFolder();
-			Files.write(path, file.getData());
+        try {
+            Path path = SharedOutputInputUtils.initTmpFile(FILE_ID, FILE_ZIP_EXT, true);
+            Path uncompressPath = SharedOutputInputUtils.initTmpFolder();
+            Files.write(path, file.getData());
 
-			return unCompress(uncompressPath, path).stream()
-					.filter(p -> p.getFileName().toString().endsWith(FILE_PCKG_EXT))
-					.map(ExportImportService::readFile)
-					.map(s -> readPackage(uncompressPath, s))
-					.filter(i -> i != null)
-					.collect(Collectors.toList());
+            return unCompress(uncompressPath, path).stream()
+                    .filter(p -> p.getFileName().toString().endsWith(FILE_PCKG_EXT))
+                    .map(p -> {
+                        try {
+                            return new FileInputStream(p.toFile());
+                        } catch (FileNotFoundException e) {
+                            throw new ApplicationException(IMPORT_ZIP_FAILED, "Cannot read " + p);
+                        }
+                    })
+                    .map(s -> readPackage(uncompressPath, s))
+                    .collect(Collectors.toList());
 
-		} catch (IOException e) {
-			throw new ApplicationException(IMPORT_FAIL_FILE, "Cannot process import on package " + file.getFilename(), e);
-		}
-	}
+        } catch (IOException e) {
+            throw new ApplicationException(IMPORT_FAIL_FILE, "Cannot process import on package " + file.getFilename(), e);
+        }
+    }
 
-	/**
-	 * @param uncompressPath
-	 *            location of currently uncompressing package
-	 * @param pack
-	 * @return
-	 */
-	private static SharedPackage<?> readPackage(Path uncompressPath, String pack) {
+    /**
+     * @param uncompressPath location of currently uncompressing package
+     * @param pack           InputStream of the corresponding (.pack) file
+     * @return prepared package with content stream initialized for deserialization
+     */
+    public static SharedPackage<?> readPackage(Path uncompressPath, InputStream pack) {
 
-		if (LOGGER.isDebugEnabled()) {
-			LOGGER.debug("Reading package content : \n{}", pack);
-		}
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Reading package content : \n{}", pack);
+        }
 
-		try {
-			// Ignore pack ending
-			String[] items = pack.substring(0, pack.length() - PACKAGE_END.length()).split(ITEM_START_SEARCH);
+        try {
+            Scanner sc = new Scanner(pack);
 
-			// Pack def is first item
-			// [pack|%s|%s|%s|%s]\n
-			// Class, name, date, version
-			String[] packParams = items[0].substring(6, items[0].length() - 2).split("\\|");
+            // Pack def is first item in header part
+            // [pack|%s|%s|%s|%s]\n
+            // Class, name, date, version
+            String header = sc.findInLine(HEADER_SEARCH);
+            String[] packParams = header.substring(6, header.length() - 1).split("\\|");
 
-			Class<?> type = Class.forName(packParams[0]);
-			String version = packParams[3].replaceAll(PACKAGE_START_ENDING, "");
-			LocalDateTime date = LocalDateTime.parse(packParams[2]);
-			String name = packParams[1];
+            Class<?> type = Class.forName(packParams[0]);
+            String version = packParams[3].replaceAll(PACKAGE_START_ENDING, "");
+            LocalDateTime date = LocalDateTime.parse(packParams[2]);
+            String name = packParams[1];
 
-			// Check type is valid
-			if (!SharedPackage.class.isAssignableFrom(type)) {
-				throw new ApplicationException(IMPORT_WRONG_TYPE,
-						"Processing of package type load is invalid. Type " + type + " is not a package");
-			}
+            // Check type is valid
+            if (!SharedPackage.class.isAssignableFrom(type)) {
+                throw new ApplicationException(IMPORT_WRONG_TYPE,
+                        "Processing of package type load is invalid. Type " + type + " is not a package");
+            }
 
-			// Init instance
-			SharedPackage<?> instance = (SharedPackage<?>) type.getConstructor(String.class, LocalDateTime.class)
-					.newInstance(name, date);
+            // Init instance
+            SharedPackage<?> instance = (SharedPackage<?>) type.getConstructor(String.class, LocalDateTime.class)
+                    .newInstance(name, date);
 
-			// Must have same version
-			if (!instance.getVersion().equals(version)) {
-				throw new ApplicationException(IMPORT_WRONG_VERSION, "Processing of package type load is invalid. Version " + version
-						+ " is not supported for \"" + name + "\" (current version is " + instance.getVersion() + ")");
-			}
+            // Validate compatibility on specific rules from package (based on version)
+            if (!instance.isCompatible(version)) {
+                throw new ApplicationException(IMPORT_WRONG_VERSION, "Processing of package type load is invalid. Version " + version
+                        + " is not supported for \"" + name + "\" (current version is " + instance.getVersion() + ")");
+            }
 
-			List<String> itemSerialized = new ArrayList<>();
+            // Get items, ignoring package ending
+            sc.useDelimiter(ITEM_SEARCH);
 
-			// Get items
-			for (int i = 1; i < items.length; i++) {
+            // Apply uncompressPath if ref to files is used
+            instance.setUncompressPath(uncompressPath);
 
-				// Drop item ending
-				String itemContent = items[i].substring(0, items[i].length() - ITEM_END.length());
+            // Prepare deserialized stream process from scanner
+            instance.deserialize(
+                    sc.tokens()
+                            .onClose(() -> {
+                                try {
+                                    pack.close();
+                                } catch (IOException e) {
+                                    throw new ApplicationException(IMPORT_WRONG_READ, "Cannot close package file stream", e);
+                                }
+                            })
+                            .map(String::trim)
+                            .filter(l -> !l.isEmpty())
+                            .filter(l -> l.charAt(0) != '[') // Exclude pack closing
+            );
 
-				LOGGER.debug("Identified serialized item in package \"{}\". Content : {}", name, itemContent);
-				itemSerialized.add(itemContent);
-			}
+            // Package ready, with imported content
+            return instance;
+        }
 
-			// Apply uncompressPath if ref to files is used
-			instance.setUncompressPath(uncompressPath);
+        // From instance init
+        catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+            throw new ApplicationException(IMPORT_WRONG_INSTANCE, "Processing of package type load is invalid. Check type", e);
+        }
+    }
 
-			// Deserialize => prepare content
-			instance.deserialize(itemSerialized);
+    /**
+     * @param uncompressPath were zipped file will be uncompressed
+     * @param zipped         location of zipped pack
+     * @return list of uncompressed files
+     */
+    private static List<Path> unCompress(Path uncompressPath, Path zipped) throws IOException {
 
-			// Package ready, with imported content
-			return instance;
-		}
-
-		// From instance init
-		catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException
-				| InvocationTargetException | NoSuchMethodException | SecurityException e) {
-			throw new ApplicationException(IMPORT_WRONG_INSTANCE, "Processing of package type load is invalid. Check type", e);
-		}
-	}
-
-	/**
-	 * @param uncompressPath
-	 *            were zipped file will be uncompressed
-	 * @param zipped
-	 *            location of zipped pack
-	 * @return list of uncompressed files
-	 * @throws IOException
-	 */
-	private static List<Path> unCompress(Path uncompressPath, Path zipped) throws IOException {
-
-		try {
-			ZipFile zipFile = new ZipFile(zipped.toString());
-			zipFile.extractAll(uncompressPath.toString());
-			return Files.walk(uncompressPath)
-					.filter(Files::isRegularFile)
-					.collect(Collectors.toList());
-		} catch (ZipException e) {
-			throw new ApplicationException(IMPORT_ZIP_FAILED, "Cannot unzip " + zipped);
-		}
-	}
-
-	/**
-	 * @param path
-	 * @return
-	 */
-	private static String readFile(Path path) {
-		try {
-			return new String(Files.readAllBytes(path), CHARSET);
-		} catch (IOException e) {
-			throw new ApplicationException(IMPORT_WRONG_READ, "Cannot read file " + path, e);
-		}
-	}
-
+        try {
+            ZipFile zipFile = new ZipFile(zipped.toString());
+            zipFile.extractAll(uncompressPath.toString());
+            return Files.walk(uncompressPath)
+                    .filter(Files::isRegularFile)
+                    .collect(Collectors.toList());
+        } catch (ZipException e) {
+            throw new ApplicationException(IMPORT_ZIP_FAILED, "Cannot unzip " + zipped);
+        }
+    }
 }

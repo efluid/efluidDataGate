@@ -1,13 +1,13 @@
 package fr.uem.efluid.model.shared;
 
+import fr.uem.efluid.ColumnType;
+import fr.uem.efluid.model.SharedDictionary;
+import fr.uem.efluid.model.UpdateChecked;
+import fr.uem.efluid.utils.SharedOutputInputUtils;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
-import fr.uem.efluid.ColumnType;
-import fr.uem.efluid.model.Shared;
-import fr.uem.efluid.model.UpdateChecked;
-import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * <p>
@@ -26,7 +26,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @version 2
  * @since v0.0.1
  */
-public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctionalDomain<?>> implements Shared, UpdateChecked {
+public abstract class ExportAwareDictionaryEntry<D extends ExportAwareFunctionalDomain<?>> implements SharedDictionary {
 
     public abstract String getParameterName();
 

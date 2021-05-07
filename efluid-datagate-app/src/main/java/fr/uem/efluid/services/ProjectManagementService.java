@@ -249,6 +249,7 @@ public class ProjectManagementService extends AbstractApplicationService {
                 LOGGER.debug("Import new project {} : will create currently owned", imported.getUuid());
                 loc = new Project(imported.getUuid());
                 newCounts.incrementAndGet();
+                substituteProjects.put(loc.getUuid(), loc);
             } else {
                 LOGGER.debug("Import exsting project by name \"{}\" : will reuse existing project with uuid {} and substitute "
                         + "for other data associated to project uuid {}", imported.getName(), byName.getUuid(), imported.getUuid());

@@ -22,8 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -59,7 +57,7 @@ import static fr.uem.efluid.services.types.DiffRemark.RemarkType.MISSING_ON_UNCH
  * </p>
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 @Service
@@ -174,12 +172,17 @@ public class PrepareIndexService extends AbstractApplicationService {
         }
     }
 
+    /**
+     * Prepare data for a revert preparation on one table
+     *
+     * @param preparation current preparation
+     * @param entry       processing table
+     */
     public void completeRevertDiff(
             PilotedCommitPreparation<PreparedRevertIndexEntry> preparation,
             DictionaryEntry entry) {
 
         LOGGER.debug("Processing new diff for all content for managed table \"{}\"", entry.getTableName());
-
 
         this.indexes.findByCommitUuidAndDictionaryEntry(preparation.getCommitData().getRevertSourceCommitUuid(), entry)
                 .map(e -> PreparedRevertIndexEntry.fromEntityToRevert(e, this.rollbackConverter))
@@ -238,13 +241,12 @@ public class PrepareIndexService extends AbstractApplicationService {
         // Will be populated from extraction
         final Map<String, String> actualContent = new HashMap<>();
 
-        // Identify the last knew previous for lines without changes (used for merged item build)
-
         preparation.incrementProcessStep();
 
         // Get actual content
         LOGGER.info("Regenerate done, start extract actual content for table \"{}\"", entry.getTableName());
 
+        // Identify the last knew previous for lines without changes (used for merged item build)
         try (Extraction extraction = this.rawParameters.extractCurrentContent(entry, lobs, project)) {
 
             // Process actual content in stream
@@ -313,7 +315,7 @@ public class PrepareIndexService extends AbstractApplicationService {
 
     /**
      * <p>
-     * Utilitary fonction to complete given index entries with their respective HR Payload
+     * Utils function to complete given index entries with their respective HR Payload
      * for user friendly rendering. Provides the completed rendering list in return, as
      * some display process may require to combine contents when they are similar. In this
      * case they are provided as SimilarPreparedIndexEntry
@@ -420,7 +422,6 @@ public class PrepareIndexService extends AbstractApplicationService {
                     lob.setData(lobs.get(h));
                     return lob;
                 }).collect(Collectors.toList());
-
     }
 
     /**
@@ -429,8 +430,8 @@ public class PrepareIndexService extends AbstractApplicationService {
      * @param entries index
      * @return name of columns referenced in payload
      */
-    Set<String> extractIndexEntryValueNames(Collection<IndexEntry> entries) {
-        return entries.stream().map(IndexEntry::getPayload)
+    Set<String> extractIndexEntryValueNames(Collection<? extends DiffLine> entries) {
+        return entries.stream().map(DiffLine::getPayload)
                 .flatMap(p -> this.valueConverter.expandInternalValueNames(p))
                 .collect(Collectors.toSet());
     }
@@ -565,7 +566,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 String knewPayload = knewContent.get(actualOne.getKeyValue());
 
                 // Nothing in knew payload : it's a (rare) "re-add"
-                if (knewPayload == null) {
+                if (knewPayload == null && !knewContent.containsKey(actualOne.getKeyValue())) {
 
                     // Except if new is also empty will content is knew : it's a managed empty line
                     if (!(StringUtils.isEmpty(actualOne.getPayload()))) {
@@ -581,7 +582,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 }
 
                 // Content is different : it's an Update
-                else if (!actualOne.getPayload().equals(knewPayload)) {
+                else if (!Objects.equals(actualOne.getPayload(), knewPayload)) {
 
                     if (debug) {
                         LOGGER.debug("New index entry for {} : UPDATED from \"{}\" to \"{}\"",
@@ -659,7 +660,6 @@ public class PrepareIndexService extends AbstractApplicationService {
 
         return entry;
     }
-
 
     /**
      * @param dict
@@ -786,6 +786,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 throw new ApplicationException(ErrorType.MERGE_FAILURE, t);
             }
         }
+        buff.reset();
     }
 
     /**
@@ -889,7 +890,6 @@ public class PrepareIndexService extends AbstractApplicationService {
         }
     }
 
-
     /**
      * A simplified buffer of the content processed for merge generation.
      * Holds each <tt>ContentLine</tt> and process them each time the "buffer" is completed
@@ -923,7 +923,6 @@ public class PrepareIndexService extends AbstractApplicationService {
         Collection<String> extractKeys() {
             return this.content.keySet();
         }
-
 
     }
 

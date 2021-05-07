@@ -47,7 +47,7 @@ public class LobPropertyPackage extends SharedPackage<LobProperty> {
 	 * @see fr.uem.efluid.services.types.SharedPackage#deserializeOne(java.lang.String)
 	 */
 	@Override
-	protected LobProperty deserializeOne(String rawContent) {
+	public LobProperty deserializeOne(String rawContent) {
 		// Update raw relative path to absolute path
 		return super.deserializeOne(getUncompressPath().toString() + "/" + rawContent);
 	}

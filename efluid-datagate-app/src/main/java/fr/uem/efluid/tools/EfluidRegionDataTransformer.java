@@ -242,7 +242,7 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
                     .count();
             StringBuilder keyBuild = new StringBuilder();
             for (int i = 0; i < pkCount; i++) {
-                valueConverter.appendExtractedKeyValue(keyBuild, row[i + 4].trim());
+                valueConverter.appendExtractedKeyValue(keyBuild, row[i + 4].trim(), i > 1);
             }
             this.key = keyBuild.toString();
         }

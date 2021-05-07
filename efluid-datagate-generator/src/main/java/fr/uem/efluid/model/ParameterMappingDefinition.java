@@ -88,6 +88,7 @@ public class ParameterMappingDefinition extends ExportAwareTableMapping<Paramete
     /**
      * @param uuid the uuid to set
      */
+    @Override
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
@@ -463,6 +464,7 @@ public class ParameterMappingDefinition extends ExportAwareTableMapping<Paramete
     /**
      * @param createdTime the createdTime to set
      */
+    @Override
     public void setCreatedTime(LocalDateTime createdTime) {
         this.createdTime = createdTime;
     }
@@ -473,6 +475,11 @@ public class ParameterMappingDefinition extends ExportAwareTableMapping<Paramete
     @Override
     public LocalDateTime getImportedTime() {
         return null;
+    }
+
+    @Override
+    public void setImportedTime(LocalDateTime time) {
+        // Nothing
     }
 
     /**
@@ -494,6 +501,7 @@ public class ParameterMappingDefinition extends ExportAwareTableMapping<Paramete
     /**
      * @param updatedTime the updatedTime to set
      */
+    @Override
     public void setUpdatedTime(LocalDateTime updatedTime) {
         this.updatedTime = updatedTime;
     }

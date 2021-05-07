@@ -4,6 +4,7 @@ import static fr.uem.efluid.utils.RuntimeValuesUtils.dbRawToUuid;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,5 +53,5 @@ public interface FunctionalDomainRepository extends JpaRepository<FunctionalDoma
 	@Query("select count(d) from FunctionalDomain d where d.project.uuid = :projectUuid")
 	int countForProject(UUID projectUuid);
 
-	FunctionalDomain findByProjectAndName(Project project, String name);
+	Optional<FunctionalDomain> findByProjectAndName(Project project, String name);
 }

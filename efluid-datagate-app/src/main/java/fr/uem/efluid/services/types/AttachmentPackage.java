@@ -45,7 +45,7 @@ public class AttachmentPackage extends AbstractMixedPackage<Attachment> {
      * @return
      */
     public List<AttachmentLine> toAttachmentLines() {
-        return getContent().stream().map(c -> {
+        return content().map(c -> {
             AttachmentLine line = new AttachmentLine();
             line.setUuid(c.getUuid());
             line.setName(c.getName());

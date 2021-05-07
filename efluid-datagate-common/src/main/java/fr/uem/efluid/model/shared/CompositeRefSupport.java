@@ -1,6 +1,7 @@
 package fr.uem.efluid.model.shared;
 
 import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.model.SharedDictionary;
 import fr.uem.efluid.model.UpdateChecked;
 
 import java.util.Iterator;
@@ -17,7 +18,7 @@ import java.util.stream.StreamSupport;
  * @version 1
  * @since v0.0.8
  */
-public interface CompositeRefSupport<D extends ExportAwareDictionaryEntry<?>> extends Shared, UpdateChecked {
+public interface CompositeRefSupport<D extends ExportAwareDictionaryEntry<?>> extends SharedDictionary {
 
     /**
      * @return

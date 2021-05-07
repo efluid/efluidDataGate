@@ -273,7 +273,7 @@ public class ModelDatabaseAccess {
      * @return found FunctionalDomain
      */
     public FunctionalDomain findDomainByProjectAndName(Project project, String name) {
-        return this.domains.findByProjectAndName(project, name);
+        return this.domains.findByProjectAndName(project, name).orElse(null);
     }
 
     public DictionaryEntry findDictionaryEntryByProjectAndTableName(Project project, String tablename) {

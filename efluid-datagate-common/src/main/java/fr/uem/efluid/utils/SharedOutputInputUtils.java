@@ -52,7 +52,7 @@ public class SharedOutputInputUtils {
 
     private static final String MERGER = "£;£";
 
-    private static final ObjectMapper MAPPER = preparedObjectMapper();
+    private static final ObjectMapper MAPPER = preparedObjectMapper(true);
 
     private static final DateTimeFormatter DATE_TIME_FORMATER = DateTimeFormatter.ofPattern(FormatUtils.DATE_TIME_FORMAT);
 
@@ -223,7 +223,7 @@ public class SharedOutputInputUtils {
     /**
      * @return prepared Jackson mapper for JSON production
      */
-    public static ObjectMapper preparedObjectMapper() {
+    public static ObjectMapper preparedObjectMapper(boolean keepEmptyProperties) {
         ObjectMapper objectMapper = new ObjectMapper();
 
         // TODO : modules not used in direct value deserialization ?
@@ -234,8 +234,10 @@ public class SharedOutputInputUtils {
         // LocalDateTime As formated String (ex : 2015-03-19 08:56)
         objectMapper.registerModule(new LocalDateTimeModule());
 
-        // Exclude empty values
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        if (!keepEmptyProperties) {
+            // Exclude empty values
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        }
 
         // Allows empty
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);

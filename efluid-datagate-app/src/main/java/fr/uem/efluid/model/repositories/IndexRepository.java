@@ -1,6 +1,5 @@
 package fr.uem.efluid.model.repositories;
 
-import com.google.common.collect.Lists;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.DiffPayloads;
 import fr.uem.efluid.model.entities.DictionaryEntry;
@@ -18,6 +17,7 @@ import java.io.Reader;
 import java.sql.Clob;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -36,6 +36,10 @@ import java.util.stream.Stream;
  */
 public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpecificationExecutor<IndexEntry> {
 
+    @Query(value = "UPDATE INDEXES SET DICTIONARY_ENTRY_UUID = :newEntry WHERE DICTIONARY_ENTRY_UUID = :existing", nativeQuery = true)
+    @Modifying
+    void updateDictionaryEntryReference(UUID existing, UUID newEntry);
+
     /**
      * For tests env reset only !
      */
@@ -49,6 +53,14 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
      * </p>
      */
     List<IndexEntry> findByCommitUuid(UUID commitUuid);
+
+    /**
+     * For export process, get specified index in stream
+     *
+     * @param commitUuids
+     * @return
+     */
+    Stream<IndexEntry> findByCommitUuidInOrderByTimestamp(Collection<UUID> commitUuids);
 
     /**
      * Access on knew key values
@@ -146,7 +158,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     default Map<String, DiffPayloads> findDiffPayloadsForDictionaryEntryAndBufferBefore(String dictionaryEntryUuid, Collection<String> keys, long pivot) {
         Map<String, DiffPayloads> result = new HashMap<>();
 
-        Lists.partition(new ArrayList<>(keys), 999).forEach(
+        chop(keys, 999).forEach(
                 i -> _internal_findDiffPayloadsForDictionaryEntryAndBufferBefore(dictionaryEntryUuid, i, pivot).forEach(
                         l -> {
                             if (l[0] != null) {
@@ -172,7 +184,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
     default Map<String, String> findRegeneratedContentForDictionaryEntryAndBufferBefore(UUID dictionaryEntryUuid, Collection<String> keys, long pivotTime) {
         Map<String, String> result = new HashMap<>(keys.size());
 
-        Lists.partition(new ArrayList<>(keys), 999).forEach(
+        chop(keys, 999).forEach(
                 i -> _internal_findRegeneratedContentForDictionaryEntryAndBufferBefore(dictionaryEntryUuid.toString(), i, pivotTime)
                         .forEach(projectionAsContentMap(result)));
 
@@ -207,7 +219,7 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
         // Else need to split list partitions
         Map<String, IndexEntry> result = new HashMap<>();
 
-        Lists.partition(index, 999).forEach(
+        chop(index, 999).forEach(
                 i -> result.putAll(_internal_findAllPreviousIndexEntries(
                         dictionaryEntry.getUuid().toString(),
                         i.stream().map(DiffLine::getKeyValue).collect(Collectors.toList()),
@@ -219,10 +231,10 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
 
     private Consumer<Object[]> projectionAsContentMap(Map<String, String> result) {
         return (l) -> {
-            if (l[0] != null) {
+            if (l != null) {
                 // Internal convert to managed string - would fail if content > 2^32 bits
                 Clob content = (Clob) l[1];
-                result.put(l[0].toString(), clobToString(content, 1024).toString());
+                result.put(l[0] != null ? l[0].toString() : null, clobToString(content, 1024));
             }
         };
     }
@@ -280,5 +292,12 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
         public String getPrevious() {
             return previous;
         }
+    }
+
+    private static <T> Collection<List<T>> chop(Collection<T> inputList, int size) {
+        final AtomicInteger counter = new AtomicInteger(0);
+        return inputList.stream()
+                .collect(Collectors.groupingBy(s -> counter.getAndIncrement() / size))
+                .values();
     }
 }

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -134,6 +135,9 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 
     @Query(value = "select count(*) from commits where version_uuid = :versionUuid", nativeQuery = true)
     int countVersionUseIn(@Param("versionUuid") UUID versionUuid);
+
+    @Query("select c.version from Commit c where c.uuid in :commitUuids")
+    Stream<Version> findVersionForCommitUuidsIn(@Param("commitUuids") List<UUID> commitUuids);
 
     /**
      * @return true if specified version can be updated

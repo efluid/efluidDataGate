@@ -21,8 +21,7 @@ public class GeneratedTableMappingPackage extends TableMappingExportPackage<Para
      */
     public GeneratedTableMappingPackage(Collection<ParameterMappingDefinition> allMappings) {
         super(TableMappingExportPackage.MAPPINGS_EXPORT, LocalDateTime.now());
-        initWithContent(allMappings.stream().sorted(Comparator.comparing(ParameterMappingDefinition::getTableTo))
-                .collect(Collectors.toList()));
+        from(allMappings.stream().sorted(Comparator.comparing(ParameterMappingDefinition::getTableTo)));
     }
 
     /**

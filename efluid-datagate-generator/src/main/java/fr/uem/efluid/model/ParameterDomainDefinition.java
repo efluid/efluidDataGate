@@ -42,6 +42,7 @@ public class ParameterDomainDefinition extends ExportAwareFunctionalDomain<Param
     /**
      * @param uuid the uuid to set
      */
+    @Override
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }
@@ -72,6 +73,7 @@ public class ParameterDomainDefinition extends ExportAwareFunctionalDomain<Param
     /**
      * @param createdTime the createdTime to set
      */
+    @Override
     public void setCreatedTime(LocalDateTime createdTime) {
         this.createdTime = createdTime;
     }
@@ -82,6 +84,11 @@ public class ParameterDomainDefinition extends ExportAwareFunctionalDomain<Param
     @Override
     public LocalDateTime getImportedTime() {
         return null;
+    }
+
+    @Override
+    public void setImportedTime(LocalDateTime time) {
+        // Nothing
     }
 
     /**
@@ -95,6 +102,7 @@ public class ParameterDomainDefinition extends ExportAwareFunctionalDomain<Param
     /**
      * @param updatedTime the updatedTime to set
      */
+    @Override
     public void setUpdatedTime(LocalDateTime updatedTime) {
         this.updatedTime = updatedTime;
     }
