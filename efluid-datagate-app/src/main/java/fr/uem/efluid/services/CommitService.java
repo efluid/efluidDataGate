@@ -312,8 +312,7 @@ public class CommitService extends AbstractApplicationService {
                 commitsToExport.size(), project.getName(), refOnlyCommitCount.get(), file.getSize());
 
         // Mark as completed
-        preparedExport.setDownloadedTime(LocalDateTime.now());
-        this.exports.save(preparedExport);
+        this.exports.setDownloadedExportTime(preparedExport.getUuid(), LocalDateTime.now());
 
         // Result is for display / File load
         return result;
