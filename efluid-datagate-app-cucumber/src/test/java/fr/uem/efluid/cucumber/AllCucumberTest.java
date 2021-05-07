@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Cucumber.class)
 @CucumberOptions(
+        glue= "com.splio.sqlgenerator.cucumber",
         features = "src/test/resources/gherkins",
         plugin = {"pretty", "html:target/cucumber-html-report", "json:target/cucumber.json"})
 public class AllCucumberTest extends CucumberStepDefs {
