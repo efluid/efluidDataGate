@@ -89,3 +89,44 @@ Feature: A dictionary can be exported and imported
       | Default | TTAB_ONE        | VALUE     |            | cur."PRESET", cur."SOMETHING" |
       | Default | TTAB_THREE      | VALUE     |            | cur."OTHER"                   |
       | Default | TTAB_THREE_KEYS | FIRST_KEY | SECOND_KEY | cur."THIRD_KEY"               |
+
+  Scenario: The conflicts during dictionary import are managed for their respective projects
+    Given the existing projects "Default, Other"
+    And the parameter table for managed tables "TTAB_ONE, TTAB_THREE" already exists in project "Default"
+    And the parameter table for managed tables "TTAB_ONE, TTAB_TWO" already exists in project "Other"
+    And in project "Default", a created parameter table with name "Table with 3 keys Default" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | selected  |
+    And in project "Other", a created parameter table with name "Table with 3 keys Other" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | selected  |
+      | THIRD_KEY  | selected  |
+    When the user access to dictionary export page
+    And the current full dictionary is exported
+    And the user accesses to the destination environment without dictionary
+    Given the existing projects "Default, Other"
+    And the parameter table for managed tables "TTAB_ONE, TTAB_THREE" already exists in project "Default"
+    And the parameter table for managed tables "TTAB_ONE" already exists in project "Other"
+    And in project "Default", a created parameter table with name "Table with 3 keys Default" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | selected  |
+      | THIRD_KEY  | selected  |
+    And in project "Other", a created parameter table with name "Table with 3 keys Other" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | key       |
+    And the user import the available dictionary package as this
+    Then the projects "Default, Other" exist
+    And these parameter tables are specified :
+      | project | table name      | key 1     | key 2      | select clause                     |
+      | Default | TTAB_ONE        | VALUE     |            | cur."PRESET", cur."SOMETHING"     |
+      | Default | TTAB_THREE      | VALUE     |            | cur."OTHER"                       |
+      | Default | TTAB_THREE_KEYS | FIRST_KEY | SECOND_KEY | cur."THIRD_KEY"                   |
+      | Other   | TTAB_ONE        | VALUE     |            | cur."PRESET", cur."SOMETHING"     |
+      | Other   | TTAB_TWO        | KEY       |            | cur."VALUE", cur."OTHER"          |
+      | Other   | TTAB_THREE_KEYS | FIRST_KEY |            | cur."SECOND_KEY", cur."THIRD_KEY" |
