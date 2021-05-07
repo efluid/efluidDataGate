@@ -145,6 +145,58 @@ Feature: The backlog can be exported
       | TTAB_TWO | LLL | ADD    | VALUE:'One', OTHER:'Other JJJ'        |
       | TTAB_TWO | MMM | ADD    | VALUE:'Two', OTHER:'Other KKK'        |
 
+  Scenario: A saved commit with null keys can be exported - single key
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table nullable key" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | selected  |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | ignored   |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | secondKey    | firstKey         |
+      | -null-       | something        |
+      | -space-      | something else   |
+      | -empty char- | something else 2 |
+      | aaaa         | something aaaa   |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit on v2" has been saved with all the new identified diff content
+    When the user request an export of the commit with name ":construction: Commit on v2"
+    Then the export package contains 1 commit contents
+    And the export package content has these identified changes for commit with name ":construction: Commit on v2" :
+      | Table           | Key          | Action | Payload                      |
+      | TTAB_THREE_KEYS |              | ADD    | FIRST_KEY:'something'        |
+      | TTAB_THREE_KEYS | -space-      | ADD    | FIRST_KEY:'something else'   |
+      | TTAB_THREE_KEYS | -empty char- | ADD    | FIRST_KEY:'something else 2' |
+      | TTAB_THREE_KEYS | aaaa         | ADD    | FIRST_KEY:'something aaaa'   |
+
+  Scenario: A saved commit with null keys can be exported - composite key
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table nullable key" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | key       |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey     | secondKey    | thirdKey     |
+      | one          | -null-       | something    |
+      | -space-      | -null-       | -empty char- |
+      | -empty char- | -space-      | -null-       |
+      | 4            | aaa          | -null-       |
+      | 5            | 5            | 5            |
+      | 6            | -empty char- | 6            |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit on v2" has been saved with all the new identified diff content
+    When the user request an export of the commit with name ":construction: Commit on v2"
+    Then the export package contains 1 commit contents
+    And the export package content has these identified changes for commit with name ":construction: Commit on v2" :
+      | Table           | Key                   | Action | Payload |
+      | TTAB_THREE_KEYS | "one /   / something" | ADD    |         |
+      | TTAB_THREE_KEYS | "  /   / "            | ADD    |         |
+      | TTAB_THREE_KEYS | " /   /  "            | ADD    |         |
+      | TTAB_THREE_KEYS | 4 / aaa /             | ADD    |         |
+      | TTAB_THREE_KEYS | 5 / 5 / 5             | ADD    |         |
+      | TTAB_THREE_KEYS | 6 /  / 6              | ADD    |         |
+
   Scenario: All blob content from a commit is exported
     Given the existing data in managed table "TTAB_FIVE" :
       | key | data                | simple |

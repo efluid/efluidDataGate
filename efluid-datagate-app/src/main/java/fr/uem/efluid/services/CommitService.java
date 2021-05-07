@@ -1,25 +1,35 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.utils.ErrorType.*;
-
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.*;
-
 import fr.uem.efluid.model.DiffLine;
-import org.slf4j.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.annotation.*;
-import org.springframework.data.domain.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
-import fr.uem.efluid.tools.*;
-import fr.uem.efluid.utils.*;
+import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.RollbackConverter;
+import fr.uem.efluid.tools.VersionContentChangesGenerator;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.Associate;
+import fr.uem.efluid.utils.FormatUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * <p>
@@ -28,7 +38,7 @@ import fr.uem.efluid.utils.*;
  * </p>
  *
  * @author elecomte
- * @version 5
+ * @version 6
  * @since v0.0.1
  */
 @Transactional
@@ -42,6 +52,7 @@ public class CommitService extends AbstractApplicationService {
     public static final String PCKG_ATTACHS = "attachs";
     public static final String PCKG_TRANSFORMERS = "transformers";
     public static final String PCKG_VERSIONS = "versions";
+    public static final String PCKG_INDEX = "indexes";
 
     private static final String PCKG_CHERRY_PICK = "commits-cherry-pick";
 
@@ -172,7 +183,7 @@ public class CommitService extends AbstractApplicationService {
 
         // Range : get a start and an end commit
         else {
-            List<Commit> allCommits = sortedCommits(project);
+            List<Commit> allCommits = sortedCommits(project).collect(Collectors.toList());
 
             // All range exports until last ...
             export.setEndCommit(allCommits.get(allCommits.size() - 1));
@@ -245,75 +256,115 @@ public class CommitService extends AbstractApplicationService {
 
         Export preparedExport = this.exports.getOne(commitExportUuid);
 
-        List<Commit> commitsToExport = sortedCommits(project);
-
-        // If start from first, it's an "ALL"
-        String pckgName = PCKG_ALL;
-
-        // Do not start with the first = it's a partial export
-        if (!preparedExport.getStartCommit().equals(commitsToExport.get(0))) {
-
-            // Single selection while it's not the last one, mark it as a partial
-            if (preparedExport.getStartCommit().equals(preparedExport.getEndCommit())) {
-                pckgName = PCKG_CHERRY_PICK;
-            } else {
-                pckgName = PCKG_AFTER;
-            }
-        }
-
         LOGGER.info("Prepare partial commit export. Will use ref only for all commits BEFORE {} into project {}",
                 preparedExport.getStartCommit(), project.getName());
 
         LocalDateTime rangeEnd = preparedExport.getEndCommit().getCreatedTime();
         LocalDateTime rangeBegin = preparedExport.getStartCommit().getCreatedTime();
 
-        // Remove the ones after selected
-        commitsToExport = commitsToExport.stream()
+        // Will process every commits in stream, work with atomic references
+        final AtomicLong refOnlyCommitCount = new AtomicLong(0);
+        final AtomicBoolean processedFirst = new AtomicBoolean(false);
+
+        // If start from first, it's an "ALL"
+        final AtomicReference<String> pckgName = new AtomicReference<>(PCKG_ALL);
+
+        List<UUID> commitUuids = new ArrayList<>();
+
+        // Need identified and prepared commits (stream must be processed)
+        List<Commit> commitsToExport = sortedCommits(project)
+                // If do not start with the first = it's a partial export
+                .peek(c -> {
+                    if (!processedFirst.get() && !preparedExport.getStartCommit().equals(c)) {
+
+                        // Single selection while it's not the last one, mark it as a partial
+                        if (preparedExport.getStartCommit().equals(preparedExport.getEndCommit())) {
+                            pckgName.set(PCKG_CHERRY_PICK);
+                        } else {
+                            pckgName.set(PCKG_AFTER);
+                        }
+                        processedFirst.set(true);
+                    }
+                })
+                // Keep in range
                 .filter(c -> !c.getCreatedTime().isAfter(rangeEnd))
+                // And mark previous ones as "ref only"
+                .peek(c -> {
+                    if (c.getCreatedTime().isBefore(rangeBegin)) {
+                        c.setAsRefOnly();
+                        refOnlyCommitCount.incrementAndGet();
+                    } else {
+                        commitUuids.add(c.getUuid());
+                    }
+                })
+                // Sorted for processing
+                .sorted(Comparator.comparing(Commit::getCreatedTime))
                 .collect(Collectors.toList());
 
-        // And mark previous ones as "ref only"
-        commitsToExport.stream()
-                .filter(c -> c.getCreatedTime().isBefore(rangeBegin))
-                .forEach(Commit::setAsRefOnly);
-
-        // Get associated lobs
-        List<LobProperty> lobsToExport = loadLobsForCommits(commitsToExport);
-
-        // Get associated versions
-        List<Version> versionsToExport = loadVersionsForCommits(commitsToExport);
-
         // Then export :
-        ExportFile file = this.exportImportService.exportPackages(Arrays.asList(
-                // Add customized transformers
-                new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
-                        .initWithContent(this.transformerService.getCustomizedTransformerDef(project, preparedExport.getTransformers())),
-                // Add referenced versions (for dict content compatibility check at import)
-                new VersionPackage(PCKG_VERSIONS, LocalDateTime.now()).initWithContent(versionsToExport),
-                // Add selected commit(s)
-                new CommitPackage(pckgName, LocalDateTime.now()).initWithContent(commitsToExport),
-                // Add lobs associated to commits
-                new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now()).initWithContent(lobsToExport),
-                // Add all commit attachments
-                new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now())
-                        .initWithContent(this.attachments.findByCommitIn(commitsToExport))));
-
+        ExportFile file = exportContent(project, pckgName.get(), preparedExport.getTransformers(), commitsToExport, commitUuids);
         ExportImportResult<ExportFile> result = new ExportImportResult<>(file);
 
         // Update count is the "ref only" count
-        long refOnly = commitsToExport.stream().filter(Commit::isRefOnly).count();
-        result.addCount(pckgName, commitsToExport.size() - refOnly, refOnly, 0);
+        result.addCount(pckgName.get(), commitsToExport.size() - refOnlyCommitCount.get(), refOnlyCommitCount.get(), 0);
 
         LOGGER.info("Export package for commit is ready. {} total commits exported for project \"{}\", "
-                        + "including {} exported as ref only. File size is {}b",
-                commitsToExport.size(), project.getName(), refOnly, file.getSize());
+                        + "uncluding {} exported as ref only. File size is {}b",
+                commitsToExport.size(), project.getName(), refOnlyCommitCount.get(), file.getSize());
 
         // Mark as completed
         preparedExport.setDownloadedTime(LocalDateTime.now());
-        this.exports.save(preparedExport);
+        this.exports.saveAndFlush(preparedExport);
 
         // Result is for display / File load
         return result;
+    }
+
+    /**
+     * Process export call for the prepared commit content
+     *
+     * @param project
+     * @param commitPackageName
+     * @param transformers
+     * @param commitsToExport
+     * @param commitUuids
+     * @return
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    protected ExportFile exportContent(
+            Project project,
+            String commitPackageName,
+            Collection<ExportTransformer> transformers,
+            List<Commit> commitsToExport,
+            List<UUID> commitUuids) {
+
+        Stream<IndexEntry> indexToExport = this.indexes.findByCommitUuidInOrderByTimestamp(commitUuids);
+
+        return this.exportImportService.exportPackages(Arrays.asList(
+                // Add customized transformers
+                new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
+                        .from(this.transformerService.getCustomizedTransformerDef(project, transformers)),
+
+                // Add referenced versions (for dict content compatibility check at import)
+                new VersionPackage(PCKG_VERSIONS, LocalDateTime.now())
+                        .from(this.versions.findVersionForCommitUuidsIn(commitUuids).peek(v -> v.setSerializeDictionaryContents(true))),
+
+                // Add selected commit(s)
+                new CommitPackage(commitPackageName, LocalDateTime.now())
+                        .from(commitsToExport.stream()),
+
+                // Add associated index
+                new IndexEntryPackage(PCKG_INDEX, LocalDateTime.now())
+                        .from(indexToExport),
+
+                // Add lobs associated to commits
+                new LobPropertyPackage(PCKG_LOBS, LocalDateTime.now())
+                        .from(this.lobs.findByCommitUuidIn(commitUuids)),
+
+                // Add all commit attachments
+                new AttachmentPackage(PCKG_ATTACHS, LocalDateTime.now())
+                        .from(this.attachments.findByCommitUuidIn(commitUuids)))
+        );
     }
 
     /**
@@ -670,22 +721,27 @@ public class CommitService extends AbstractApplicationService {
         // Get package files - commits
         CommitPackage commitPckg = (CommitPackage) commitPackages.stream().filter(p -> p.getClass() == CommitPackage.class).findFirst()
                 .orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
-                        "Import of commits doens't contains the expected package types - can't found commits"));
+                        "Import of commits doesn't contain the expected package types - can't found commits"));
+
+        // Get package files - index (if new model)
+        IndexEntryPackage indexPckg = !commitPckg.isCompatibilityMode() ? (IndexEntryPackage) commitPackages.stream().filter(p -> p.getClass() == IndexEntryPackage.class).findFirst()
+                .orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
+                        "Import of commits doesn't contain the expected package types - can't found index")) : null;
 
         // Get package files - lobs
         LobPropertyPackage lobsPckg = (LobPropertyPackage) commitPackages.stream().filter(p -> p.getClass() == LobPropertyPackage.class)
                 .findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
-                        "Import of commits doens't contains the expected package types - can't found lobs package"));
+                        "Import of commits doesn't contain the expected package types - can't found lobs package"));
 
         // Get package files - attachments
         AttachmentPackage attachsPckg = (AttachmentPackage) commitPackages.stream().filter(p -> p.getClass() == AttachmentPackage.class)
                 .findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
-                        "Import of commits doens't contains the expected package types - can't found attachment package"));
+                        "Import of commits doesn't contain the expected package types - can't found attachment package"));
 
         // Get package files - versions (used ones)
         VersionPackage versionPckg = (VersionPackage) commitPackages.stream().filter(p -> p.getClass() == VersionPackage.class)
                 .findFirst().orElseThrow(() -> new ApplicationException(COMMIT_IMPORT_INVALID,
-                        "Import of commits doens't contains the expected package types - can't found version package"));
+                        "Import of commits doesn't contain the expected package types - can't found version package"));
 
         // Get package files - transformers (optional for compatibility with legacy exports) - apply only if present
         commitPackages.stream().filter(p -> p.getClass() == TransformerDefPackage.class)
@@ -700,14 +756,13 @@ public class CommitService extends AbstractApplicationService {
                 .flatMap(c -> Associate.onFlatmapOf(c.getMergeSources(), c))
                 .collect(Collectors.toMap(Associate::getOne, Associate::getTwo));
 
-        List<Commit> toProcess = new ArrayList<>();
-        LocalDateTime timeProcessStart = null;
-
-        // Need to be sorted by create time
-        commitPckg.getContent().sort(Comparator.comparing(Commit::getCreatedTime));
+        // Need to be sorted by create time when processing old model (new model is always sorted)
+        if (commitPckg.isCompatibilityMode()) {
+            commitPckg.from(commitPckg.content().sorted(Comparator.comparing(Commit::getCreatedTime)));
+        }
 
         // Prepare referenced version related to commits
-        Map<UUID, Version> referencedVersions = versionPckg.getContent().stream().distinct().collect(Collectors.toMap(Version::getUuid, v -> v));
+        Map<UUID, Version> referencedVersions = versionPckg.content().distinct().collect(Collectors.toMap(Version::getUuid, v -> v));
 
         // Version checking is a dynamic feature
         boolean checkVersion = this.features.isEnabled(Feature.VALIDATE_VERSION_FOR_IMPORT);
@@ -718,11 +773,27 @@ public class CommitService extends AbstractApplicationService {
         // Control on referenced commits - allowing to import on missing ref commits
         boolean validateMissingRefCommits = this.features.isEnabled(Feature.VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT);
 
+        // Load identified content
+        if (indexPckg != null) {
+            // TODO : store in DB when it's possible for less memory use
+            indexPckg.content()
+                    .map(PreparedMergeIndexEntry::fromImportedEntity)
+                    .forEach(currentPreparation.getDiffContent()::add);
+        }
+
         // Prepare a listing of errors (will abort full process if any error exists)
         List<String> errorMessages = new ArrayList<>();
 
+        // Create the future merge commit info
+        currentPreparation.setCommitData(new CommitEditData());
+        currentPreparation.getCommitData().setMergeSources(new ArrayList<>());
+        currentPreparation.getCommitData().setImportedTime(LocalDateTime.now());
+        currentPreparation.getCommitData().setComment(":twisted_rightwards_arrows: Merging Sources :");
+
+        final AtomicLong processedCommits = new AtomicLong(0);
+
         // #4 Process commits, one by one
-        for (Commit imported : commitPckg.getContent()) {
+        commitPckg.content().forEach(imported -> {
 
             // Check if already stored localy (in "local" or "merged")
             boolean hasItLocaly = localCommits.containsKey(imported.getUuid()) || mergedCommits.containsKey(imported.getUuid());
@@ -758,7 +829,15 @@ public class CommitService extends AbstractApplicationService {
 
                     // For compatibility we need to process the referenced version which has the full content included
                     if (checkDictionaryCompatibility) {
-                        checkImportedCommitCompatibilityWithLocalDictionary(imported, referencedVersion, currentLastVersion, errorMessages);
+
+                        LOGGER.debug("Check dictionary compatibility for imported commit {}", imported.getUuid());
+
+                        // Need the referenced index -> It's a perf bottleneck ...
+                        Collection<? extends DiffLine> referencedIndex = commitPckg.isCompatibilityMode()
+                                ? imported.getIndex()
+                                : currentPreparation.getDiffContent().stream().filter(i -> i.getCommitUuid().equals(imported.getUuid())).collect(Collectors.toList());
+
+                        checkImportedCommitCompatibilityWithLocalDictionary(imported, referencedIndex, referencedVersion, currentLastVersion, errorMessages);
                     }
 
                     // Ignore anyway if there is an identified error as we will abort import
@@ -766,39 +845,47 @@ public class CommitService extends AbstractApplicationService {
 
                         LOGGER.debug("Imported commit {} is not yet managed in local db. Will process it", imported.getUuid());
 
-                        toProcess.add(imported);
+                        // Keep it as merge source
+                        currentPreparation.getCommitData().getMergeSources().add(imported.getUuid());
 
-                        // Start time for local diff search
-                        if (timeProcessStart == null) {
-                            timeProcessStart = imported.getCreatedTime();
+                        // On compatibility mode, Init prepared merge with imported index extracted from commit
+                        if (commitPckg.isCompatibilityMode()) {
+                            imported.getIndex().stream()
+                                    .map(PreparedMergeIndexEntry::fromImportedEntity)
+                                    .forEach(currentPreparation.getDiffContent()::add);
+                        }
+
+                        // Generate comment part for imported commit
+                        if (imported.getComment() != null) {
+                            currentPreparation.getCommitData().setComment(
+                                    currentPreparation.getCommitData().getComment() + "\n * " + imported.getComment()
+                            );
+                        }
+
+                        // Start range on 1st imported commit
+                        if (currentPreparation.getCommitData().getRangeStartTime() == null) {
+                            currentPreparation.getCommitData().setRangeStartTime(imported.getCreatedTime());
                             LOGGER.debug("As the imported commit {} is the first missing one, will use it's time {} to identify"
-                                    + " local diff to run", imported.getUuid(), timeProcessStart);
+                                    + " local diff to run", imported.getUuid(), imported.getCreatedTime());
                         }
                     }
                 }
             }
-        }
+            processedCommits.incrementAndGet();
+        });
 
         // #5 Abort if any check error exist
         if (errorMessages.size() > 0) {
-            throw new ApplicationException(
-                    MERGE_DICT_NOT_COMPATIBLE,
+            throw new ApplicationException(MERGE_DICT_NOT_COMPATIBLE,
                     "Import cannot be processed as some compatibility issues have been identified",
                     String.join(",\n", errorMessages));
         }
 
         // #5 Get all lobs
         currentPreparation.getDiffLobs().putAll(
-                lobsPckg.getContent().stream()
+                lobsPckg.content()
                         .distinct()
                         .collect(Collectors.toConcurrentMap(LobProperty::getHash, LobProperty::getData)));
-
-        // Create the future merge commit info
-        currentPreparation.setCommitData(new CommitEditData());
-        currentPreparation.getCommitData().setMergeSources(toProcess.stream().map(Commit::getUuid).collect(Collectors.toList()));
-        currentPreparation.getCommitData().setRangeStartTime(timeProcessStart);
-        currentPreparation.getCommitData().setImportedTime(LocalDateTime.now());
-        currentPreparation.getCommitData().setComment(generateMergeCommitComment(toProcess));
 
         // Add attachment - managed in temporary version first
         currentPreparation.getCommitData().setAttachments(attachsPckg.toAttachmentLines());
@@ -806,17 +893,15 @@ public class CommitService extends AbstractApplicationService {
         // Remove the already imported attachments
         removeAlreadyImportedAttachments(currentPreparation);
 
-        // Init prepared merge with imported index
-        currentPreparation.getDiffContent().addAll(importedCommitIndexes(toProcess));
-
         // Result for direct display (with ref to preparation)
         ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> result = new ExportImportResult<>(currentPreparation);
 
         // Can show number of processing commits
-        result.addCount(PCKG_ALL, commitPckg.getContent().size(), toProcess.size(), 0);
+        result.addCount(PCKG_ALL, processedCommits.get(),
+                currentPreparation.getCommitData().getMergeSources().size(), 0);
 
         LOGGER.info("Import of commits from package {} done  : now the merge data is ready with {} source commits", commitPckg,
-                commitPckg.getContent().size());
+                processedCommits.get());
 
         return result;
 
@@ -894,26 +979,6 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
-     * @param commitsToExport
-     * @return
-     */
-    private List<LobProperty> loadLobsForCommits(List<Commit> commitsToExport) {
-        return this.lobs
-                .findByCommitUuidIn(commitsToExport.stream().filter(c -> !c.isRefOnly()).map(Commit::getUuid).collect(Collectors.toList()));
-    }
-
-    /**
-     * @param commitsToExport
-     * @return
-     */
-    private List<Version> loadVersionsForCommits(List<Commit> commitsToExport) {
-        return commitsToExport.stream()
-                .filter(c -> !c.isRefOnly()).map(Commit::getVersion)
-                .peek(v -> v.setSerializeDictionaryContents(true))
-                .collect(Collectors.toList());
-    }
-
-    /**
      * @param commitUUID
      */
     private void assertCommitExists(UUID commitUUID) {
@@ -938,15 +1003,20 @@ public class CommitService extends AbstractApplicationService {
     /**
      * @param refCommit
      */
-    private void checkImportedCommitCompatibilityWithLocalDictionary(Commit refCommit, Version importedVersion, Version localLastVersion, List<String> errorMessages) {
+    private void checkImportedCommitCompatibilityWithLocalDictionary(
+            Commit refCommit,
+            Collection<? extends DiffLine> index,
+            Version importedVersion,
+            Version localLastVersion,
+            List<String> errorMessages) {
 
         // 1 : extract identified tables from imported version dict content
         Map<UUID, DictionaryEntry> importedTables = VersionContentChangesGenerator.readDict(importedVersion).stream()
                 .collect(Collectors.toMap(DictionaryEntry::getUuid, t -> t));
 
         // 2 : extract concerned tables and indexes from commit - will process by table (map to table directly)
-        Map<DictionaryEntry, List<IndexEntry>> indexByTables = refCommit.getIndex().stream()
-                .collect(Collectors.groupingBy(IndexEntry::getDictionaryEntryUuid)).entrySet().stream()
+        Map<DictionaryEntry, Collection<? extends DiffLine>> indexByTables = index.stream()
+                .collect(Collectors.groupingBy(DiffLine::getDictionaryEntryUuid)).entrySet().stream()
                 .collect(Collectors.toMap(e -> importedTables.get(e.getKey()), Map.Entry::getValue));
 
         // 3 : run a full change generation using dict content in dictionary - will process only concerned items
@@ -982,7 +1052,7 @@ public class CommitService extends AbstractApplicationService {
      * @param errorMessages           message holder to complete
      */
     private void checkCommitIndexDictionaryEntryCompatibility(
-            List<IndexEntry> index,
+            Collection<? extends DiffLine> index,
             DictionaryEntry importedDictionaryEntry,
             Commit refCommit,
             Map<String, VersionCompare.DictionaryTableChanges> allTableChanges,
@@ -1027,18 +1097,8 @@ public class CommitService extends AbstractApplicationService {
         }
     }
 
-    private List<Commit> sortedCommits(Project project) {
-        return this.commits.findByProject(project).stream().sorted(Comparator.comparing(Commit::getCreatedTime)).collect(Collectors.toList());
-    }
-
-    /**
-     * @param importedSources
-     * @return
-     */
-    private Collection<PreparedMergeIndexEntry> importedCommitIndexes(List<Commit> importedSources) {
-        return importedSources.stream().flatMap(c -> c.getIndex().stream())
-                .map(PreparedMergeIndexEntry::fromImportedEntity)
-                .collect(Collectors.toList());
+    private Stream<Commit> sortedCommits(Project project) {
+        return this.commits.findByProject(project).stream().sorted(Comparator.comparing(Commit::getCreatedTime));
     }
 
     /**
@@ -1069,21 +1129,20 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
-     * @param sources
-     * @return
-     */
-    private static String generateMergeCommitComment(List<Commit> sources) {
-
-        return ":twisted_rightwards_arrows: Merging Sources :\n * " + sources.stream().filter(c -> c.getComment() != null).map(Commit::getComment).collect(Collectors.joining("\n * "));
-    }
-
-    /**
      * Rules for commit package : one commit package + lobs package only
      *
      * @param commitPackages
      */
     private static void assertImportPackageIsValid(List<SharedPackage<?>> commitPackages) {
-        if (commitPackages.size() != 5) {
+
+        boolean commitIndexCompatibilityMode = commitPackages.stream()
+                .filter(p -> p instanceof CommitPackage)
+                .findFirst()
+                .map(p -> ((CommitPackage) p).isCompatibilityMode())
+                .orElse(false);
+
+        // On compatibility mode we will have 5 files. Else default mode is 6 packages
+        if (commitIndexCompatibilityMode && commitPackages.size() != 5 || commitPackages.size() != 6) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID,
                     "Import of commits can contain only commit package file + lobs package " +
                             "+ attachment package file + a transformer package + last version");
@@ -1095,6 +1154,11 @@ public class CommitService extends AbstractApplicationService {
                 || p instanceof TransformerDefPackage
                 || p instanceof VersionPackage)) {
             throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types");
+        }
+
+        if (!commitIndexCompatibilityMode && commitPackages.stream().noneMatch(p -> p instanceof IndexEntryPackage)) {
+            throw new ApplicationException(COMMIT_IMPORT_INVALID, "Import of commits doens't contains the expected package types "
+                    + "(new package mode with index file)");
         }
     }
 

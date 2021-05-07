@@ -56,10 +56,20 @@ public interface Value {
      */
     default String getValueAsString() {
         byte[] value = getValue();
-        if(value == null){
+        if (value == null) {
             return null;
         }
         return new String(value, FormatUtils.CONTENT_ENCODING);
+    }
+
+    /**
+     * Real content status for a Value, if content is <strong>really</strong> null
+     *
+     * @return true if <strong>really</strong> null
+     */
+    default boolean isNull() {
+        // Real content can be hold by value or valueAsStr, need to check both
+        return getValue() == null && getValueAsString() == null;
     }
 
     /**
@@ -69,18 +79,22 @@ public interface Value {
      */
     default String getTyped(List<String> lobKeys, DateTimeFormatter dbTemporalFormater) {
 
-        switch (getType()){
+        switch (getType()) {
             case NULL:
                 return NULL_VALUE;
             case STRING:
             case PK_STRING:
-                return TYPED_STRING_PROTECT + getValueAsString().replace("'", "''") + TYPED_STRING_PROTECT;
+                // Support for null key
+                String value = getValueAsString();
+                return value != null
+                        ? TYPED_STRING_PROTECT + value.replace("'", "''") + TYPED_STRING_PROTECT
+                        : "null";
             case TEMPORAL:
                 LocalDateTime internal = LocalDateTime.parse(getValueAsString(), INTERNAL_LDT_FORMATTER);
                 return TO_DATE_CONVERT_BEGIN + TYPED_STRING_PROTECT + dbTemporalFormater.format(internal) + TYPED_STRING_PROTECT + TO_DATE_CONVERT_END;
             case BINARY:
             case TEXT:
-                if (lobKeys != null){
+                if (lobKeys != null) {
                     lobKeys.add(getValueAsString());
                     return INJECT_OF_LOB;
                 }

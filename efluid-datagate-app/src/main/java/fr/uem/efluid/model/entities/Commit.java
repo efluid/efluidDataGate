@@ -67,6 +67,9 @@ public class Commit implements Shared {
     @Transient
     private transient boolean refOnly = false;
 
+    @Transient
+    private transient boolean retroCompatibilityMode = false;
+
     /**
      * @param uuid forced uuid
      */
@@ -80,6 +83,14 @@ public class Commit implements Shared {
      */
     public Commit() {
         super();
+    }
+
+    /**
+     * Specific init with retroCompatibility support for some deserialization processes
+     */
+    public Commit(boolean retroCompatibilityMode) {
+        super();
+        this.retroCompatibilityMode = retroCompatibilityMode;
     }
 
     /**
@@ -274,20 +285,6 @@ public class Commit implements Shared {
     @Override
     public String serialize() {
 
-        // For reference only, doesn't includes index content
-        if (this.refOnly) {
-            return SharedOutputInputUtils.newJson()
-                    .with("uid", getUuid())
-                    .with("cre", getCreatedTime())
-                    .with("has", getHash())
-                    .with("ema", getOriginalUserEmail())
-                    .with("rvt", getRevertSource() != null ? getRevertSource().getUuid() : null)
-                    .with("pro", getProject().getUuid())
-                    .with("ver", getVersion().getUuid())
-                    .toString();
-        }
-
-        // Else, includes all commit index as sub item
         return SharedOutputInputUtils.newJson()
                 .with("uid", getUuid())
                 .with("com", getComment())
@@ -295,9 +292,9 @@ public class Commit implements Shared {
                 .with("has", getHash())
                 .with("ema", getOriginalUserEmail())
                 .with("rvt", getRevertSource() != null ? getRevertSource().getUuid() : null)
+                .with("ref", isRefOnly() ? "1" : "0") // Simplified boolean
                 .with("pro", getProject().getUuid())
                 .with("ver", getVersion().getUuid())
-                .with("idx", getIndex().stream().map(IndexEntry::serialize).collect(Collectors.joining("\n")))
                 .toString();
     }
 
@@ -313,24 +310,32 @@ public class Commit implements Shared {
                 .applyLdt("cre", this::setCreatedTime)
                 .applyString("has", this::setHash)
                 .applyString("ema", this::setOriginalUserEmail)
+                .applyNullableString("ref", ref -> {
+                    if (!this.retroCompatibilityMode) {
+                        this.refOnly = "1".equals(ref);
+                    }
+                })
                 .applyNullableString("idx", i -> {
-                    // No idx item at all => Ref
-                    if (i == null) {
-                        setAsRefOnly();
-                    }
+                    // For compatibility with old package, support init
+                    if (this.retroCompatibilityMode) {
+                        // No idx item at all => Ref
+                        if (i == null) {
+                            setAsRefOnly();
+                        }
 
-                    // Empty => Empty idx list
-                    else if ("".equals(i)) {
-                        // No content
-                    }
+                        // Empty => Empty idx list
+                        else if ("".equals(i)) {
+                            // No content
+                        }
 
-                    // Process content
-                    else {
-                        setIndex(Stream.of(i.split("\n")).map(s -> {
-                            IndexEntry ent = new IndexEntry();
-                            ent.deserialize(s);
-                            return ent;
-                        }).collect(Collectors.toList()));
+                        // Process content
+                        else {
+                            setIndex(Stream.of(i.split("\n")).map(s -> {
+                                IndexEntry ent = new IndexEntry();
+                                ent.deserializeOnCompatibility(s);
+                                return ent;
+                            }).collect(Collectors.toList()));
+                        }
                     }
                 })
                 .applyUUID("rvt", v -> setRevertSource(new Commit(v)))
@@ -362,11 +367,8 @@ public class Commit implements Shared {
             return false;
         Commit other = (Commit) obj;
         if (this.uuid == null) {
-            if (other.uuid != null)
-                return false;
-        } else if (!this.uuid.equals(other.uuid))
-            return false;
-        return true;
+            return other.uuid == null;
+        } else return this.uuid.equals(other.uuid);
     }
 
     /**

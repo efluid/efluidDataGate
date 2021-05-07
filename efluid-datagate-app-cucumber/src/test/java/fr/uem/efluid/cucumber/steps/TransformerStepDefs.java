@@ -49,7 +49,7 @@ public class TransformerStepDefs extends CucumberStepDefs {
         if (CommonStepDefs.efluidCase) {
             initCompleteDictionaryWithEfluidTestTables();
         } else {
-            initCompleteDictionaryWith7Tables();
+            initCompleteDictionaryWith8Tables();
         }
 
         CommonStepDefs.efluidCase = false;

@@ -1,30 +1,29 @@
 package fr.uem.efluid.services.types;
 
-import java.time.LocalDateTime;
-
 import fr.uem.efluid.model.entities.FunctionalDomain;
+
+import java.time.LocalDateTime;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 public class FunctionalDomainPackage extends FunctionalDomainExportPackage<FunctionalDomain> {
 
-	/**
-	 * @param name
-	 * @param exportDate
-	 */
-	public FunctionalDomainPackage(String name, LocalDateTime exportDate) {
-		super(name, exportDate);
-	}
+    /**
+     * @param name
+     * @param exportDate
+     */
+    public FunctionalDomainPackage(String name, LocalDateTime exportDate) {
+        super(name, exportDate);
+    }
 
-	/**
-	 * @return
-	 */
-	@Override
-	protected FunctionalDomain initContent() {
-		return new FunctionalDomain();
-	}
-
+    /**
+     * @return
+     */
+    @Override
+    protected FunctionalDomain initContent() {
+        return new FunctionalDomain();
+    }
 }

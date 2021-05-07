@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -51,6 +52,7 @@ public class ManagedDatabaseAccess {
     public static final String TABLE_SEVEN = "TTAB_SEVEN"; // Table with business join on tab THREE
     public static final String TABLE_ONLY_KEYS = "TTAB_ONLY_KEYS"; // Table with only keys
     public static final String TABLE_THREE_KEYS = "TTAB_THREE_KEYS"; // Table with only 3 keys
+    public static final String TABLE_ALL_NULLABLE = "TTAB_ALL_NULLABLE"; // Table with all biz field nullable, including key
 
     public static final String TTEST1 = "TTEST1";
     public static final String TTESTMULTIDATATYPE = "TTESTMULTIDATATYPE";
@@ -81,6 +83,7 @@ public class ManagedDatabaseAccess {
         ENTITY_TYPES.put(TTESTNULLLINK_DEST, Pair.of(14, EfluidTestNullableLinkDestination.class));
         ENTITY_TYPES.put(EFLUIDTESTAUDIT, Pair.of(15, EfluidTestAudit.class));
         ENTITY_TYPES.put(TABLE_THREE_KEYS, Pair.of(16, SimulatedTableThreeKeys.class));
+        ENTITY_TYPES.put(TABLE_ALL_NULLABLE, Pair.of(17, SimulatedTableAllNullable.class));
     }
 
     @Autowired
@@ -141,8 +144,23 @@ public class ManagedDatabaseAccess {
         this.em.merge(item);
     }
 
-    private <K, T> T getOne(K key, Class<T> type) {
-        return this.em.find(type, key);
+
+    /**
+     * When business key is not natural key
+     * @param keyName
+     * @param key
+     * @param type
+     * @param <K>
+     * @param <T>
+     * @return
+     */
+    private <K, T> T getOne(String keyName, K key, Class<T> type) {
+        if(key == null){
+            return this.em.createQuery("select t from " + type.getName() + " t where t." + keyName + " is null", type)
+                    .getSingleResult();
+        }
+        return this.em.createQuery("select t from " + type.getName() + " t where t." + keyName + " = ?1", type)
+                .setParameter(1, key).getSingleResult();
     }
 
     private <T> void deleteOne(T item) {
@@ -220,7 +238,7 @@ public class ManagedDatabaseAccess {
                         setter.invoke(entity, val);
                     } catch (Exception e) {
                         throw new UnsupportedOperationException("Cannot call setter "
-                                + setter.getName() + " on entity of type " + type, e);
+                                + setter.getName() + " on entity of type " + type + " with val " + val, e);
                     }
                 }
             });
@@ -295,6 +313,16 @@ public class ManagedDatabaseAccess {
             return null;
         }
 
+        // Forced space
+        if ("-space-".equals(v)) {
+            return " ";
+        }
+
+        // Forced empty char
+        if ("-empty char-".equals(v)) {
+            return "";
+        }
+
         // Keep string
         if (paramType == String.class) {
             return v;
@@ -353,9 +381,9 @@ public class ManagedDatabaseAccess {
         values.forEach(m -> {
             Object keyVal = getValForSetter(setters.get(firstCol), m.get(firstCol), firstCol);
             T expected = load(type, m);
-            T found = this.getOne(keyVal, type);
-            assertThat(found).isNotNull();
-            assertThat(found).isEqualTo(expected);
+            T found = this.getOne(firstCol, keyVal, type);
+            assertThat(found).as("data line with " + firstCol + "=" + keyVal).isNotNull();
+            assertThat(found).as("data line with " + firstCol + "=" + keyVal).isEqualTo(expected);
         });
     }
 
@@ -384,13 +412,14 @@ public class ManagedDatabaseAccess {
                 keyVal = getValForSetter(setters.get(firstCol), m.get(firstCol), firstCol);
 
                 // Get existing entry
-                entity = getOne(keyVal, type);
+                entity = getOne(firstCol, keyVal, type);
 
                 assertThat(entity).describedAs("Updated entity of type " + type + " for key " + keyVal + " doesn't exist!").isNotNull();
 
                 // Call setters on entry (except on key) to update it
                 setters.entrySet().stream()
                         .filter(s -> !s.getKey().equals(firstCol))
+                        .filter(e -> m.containsKey(e.getKey()))
                         .forEach(e -> {
                             Method setter = setters.get(e.getKey());
                             Object val = getValForSetter(setter, m.get(e.getKey()), e.getKey());
@@ -414,7 +443,7 @@ public class ManagedDatabaseAccess {
                 keyVal = getValForSetter(setters.get(firstCol), m.get(firstCol), firstCol);
 
                 // Get existing entry
-                entity = getOne(keyVal, type);
+                entity = getOne(firstCol, keyVal, type);
 
                 // Delete it
                 this.deleteOne(entity);

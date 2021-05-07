@@ -2,6 +2,10 @@
 ### This config is the expected default one for the application ###
 datagate-efluid:
 
+    pool.connections:
+        max: 10
+        min: 5
+
     managed-datasource:
         url: jdbc:h2:~\h2-test;DB_CLOSE_ON_EXIT=TRUE
         username: sa
@@ -72,8 +76,6 @@ spring:
         username: sa
         password:
         driver-class-name: org.h2.Driver
-        hikari:
-            maximum-pool-size: 10
 
     flyway:
         enabled: false
@@ -96,8 +98,8 @@ server:
 ## TEST LOGGING CONFIG
 logging:
     level:
-        root: INFO
-        fr.uem.efluid: INFO
+        root: WARN
+        fr.uem.efluid: WARN
         org.flywaydb: ERROR
         extractor.queries: ERROR
         identifier.queries: ERROR

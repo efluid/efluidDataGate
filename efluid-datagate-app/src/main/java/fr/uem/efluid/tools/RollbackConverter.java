@@ -7,6 +7,7 @@ import fr.uem.efluid.services.types.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -65,18 +66,23 @@ public class RollbackConverter {
         List<Value> payload = this.valueConverter.expandInternalValue(sourcePayload);
         Map<String, Value> previous = this.valueConverter.expandInternalValue(sourcePrevious).stream().collect(Collectors.toMap(v -> v.getName(), v -> v));
 
+        List<Value> newPayload = new ArrayList<>();
+        /*
+         * Two possibilities :
+         *  - Was present - keep previous as this
+         *  - Was not present - revert as a null set
+         */
+        payload.stream()
+                .map(v -> Objects.requireNonNullElseGet(
+                        previous.remove(v.getName()),
+                        () -> new NullValue(v.getName())))
+                .forEach(newPayload::add);
+
+        // Add remaining "erased" previous
+        newPayload.addAll(previous.values());
+
         // Rebuild "null value" new compliant payload for update rollback
-        return this.valueConverter.convertToExtractedValue(
-                /*
-                 * Two possibilities :
-                 *  - Was present - keep previous as this
-                 *  - Was not present - revert as a null set
-                 */
-                payload.stream()
-                        .map(v -> Objects.requireNonNullElseGet(
-                                previous.get(v.getName()),
-                                () -> new NullValue(v.getName())))
-                        .collect(Collectors.toList()));
+        return this.valueConverter.convertToExtractedValue(newPayload);
     }
 
     private static class NullValue implements Value {

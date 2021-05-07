@@ -1,17 +1,15 @@
 package fr.uem.efluid.model.shared;
 
-import fr.uem.efluid.model.Shared;
+import fr.uem.efluid.model.SharedDictionary;
 import fr.uem.efluid.model.UpdateChecked;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
-
-import java.time.LocalDateTime;
 
 /**
  * @author elecomte
  * @version 1
  * @since v0.0.1
  */
-public abstract class ExportAwareFunctionalDomain<D extends ExportAwareProject> implements Shared, UpdateChecked {
+public abstract class ExportAwareFunctionalDomain<D extends ExportAwareProject> implements SharedDictionary {
 
     /**
      * @return

@@ -116,6 +116,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
     /**
      * @param uuid the uuid to set
      */
+    @Override
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }

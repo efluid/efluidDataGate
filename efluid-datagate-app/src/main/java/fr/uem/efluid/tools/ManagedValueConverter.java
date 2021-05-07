@@ -8,7 +8,6 @@ import org.springframework.util.StringUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -39,6 +38,8 @@ public class ManagedValueConverter {
     private final static char AFFECT = '=';
     private final static char SEPARATOR = ',';
     private final static char TYPE_IDENT = '/';
+
+    static final char NULL_KEY = ' '; // NBSP
 
     // For composite key support
     final static String KEY_JOIN = " / ";
@@ -73,16 +74,22 @@ public class ManagedValueConverter {
      *
      * @param builder
      * @param keyValue
+     * @param addition true if it's an addition on an already processed key (for composite keys)
      */
     public void appendExtractedKeyValue(
             final StringBuilder builder,
-            final String keyValue) {
+            final String keyValue,
+            final boolean addition) {
 
-        if (builder.length() > 0) {
+        if (addition || builder.length() > 0) {
             builder.append(KEY_JOIN);
         }
 
-        builder.append(keyValue);
+        if (keyValue != null) {
+            builder.append(keyValue);
+        } else {
+            builder.append(NULL_KEY);
+        }
     }
 
     /**
@@ -281,7 +288,10 @@ public class ManagedValueConverter {
      */
     public String finalizePayload(String rawPayload) {
         int last = rawPayload.length() - 1;
-        if (last > -1 && rawPayload.charAt(last) == SEPARATOR) {
+        if (last == -1) {
+            return null;
+        }
+        if (rawPayload.charAt(last) == SEPARATOR) {
             return rawPayload.substring(0, last);
         }
         return rawPayload;

@@ -65,6 +65,7 @@ public class FunctionalDomain extends ExportAwareFunctionalDomain<Project> {
     /**
      * @param uuid the uuid to set
      */
+    @Override
     public void setUuid(UUID uuid) {
         this.uuid = uuid;
     }

@@ -69,6 +69,72 @@ Feature: The backlog can be imported and merged with local changes
       | TTAB_SIX  | 8   | ADD    | true         | TEXT:<a href="/ui/lob/S09wazdEUDlpTG5BbHM1L1JvRjErS1JEeFdNRGFBK2VTazJiVUdvOGczZz0=" download="download">TEXT</a>, DATE:2005-07-08 00:00:00 |
       | TTAB_SIX  | 9   | ADD    | true         | TEXT:<a href="/ui/lob/K2Z1REFwVm0ycUh1OEJhU09Pa0tBdElDclRoYzVWTTlFU3pGTS9DL1ZHST0=" download="download">TEXT</a>, DATE:2021-12-25 00:00:00 |
 
+  Scenario: Null keys are processed in merge using a special character - single key
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table nullable key" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | selected  |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | ignored   |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | secondKey    | firstKey         |
+      | -null-       | something        |
+      | -space-      | something else   |
+      | -empty char- | something else 2 |
+      | aaaa         | something aaaa   |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit on v2" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit on v2"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTAB_TWO" in destination environment
+    And no existing data in managed table "TTAB_FIVE" in destination environment
+    And no existing data in managed table "TTAB_SIX" in destination environment
+    And no existing data in managed table "TTAB_THREE_KEYS" in destination environment
+    And a merge diff has already been launched with the available source package
+    And the merge diff is completed
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table           | Key          | Action | Need Resolve | Payload                      |
+      | TTAB_THREE_KEYS |              | ADD    | true         | FIRST_KEY:'something'        |
+      | TTAB_THREE_KEYS | -space-      | ADD    | true         | FIRST_KEY:'something else'   |
+      | TTAB_THREE_KEYS | -empty char- | ADD    | true         | FIRST_KEY:'something else 2' |
+      | TTAB_THREE_KEYS | aaaa         | ADD    | true         | FIRST_KEY:'something aaaa'   |
+
+  Scenario: Null keys are processed in merge using a special character - composite key
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table nullable key" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | key       |
+      | THIRD_KEY  | key       |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey     | secondKey    | thirdKey     |
+      | one          | -null-       | something    |
+      | -space-      | -null-       | -empty char- |
+      | -empty char- | -space-      | -null-       |
+      | 4            | aaa          | -null-       |
+      | 5            | 5            | 5            |
+      | 6            | -empty char- | 6            |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit on v2" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit on v2"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTAB_TWO" in destination environment
+    And no existing data in managed table "TTAB_FIVE" in destination environment
+    And no existing data in managed table "TTAB_SIX" in destination environment
+    And no existing data in managed table "TTAB_THREE_KEYS" in destination environment
+    And a merge diff has already been launched with the available source package
+    And the merge diff is completed
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table           | Key                   | Action | Need Resolve | Payload |
+      | TTAB_THREE_KEYS | "one /   / something" | ADD    | true         |         |
+      | TTAB_THREE_KEYS | "  /   / "            | ADD    | true         |         |
+      | TTAB_THREE_KEYS | " /   /  "            | ADD    | true         |         |
+      | TTAB_THREE_KEYS | 4 / aaa /             | ADD    | true         |         |
+      | TTAB_THREE_KEYS | 5 / 5 / 5             | ADD    | true         |         |
+      | TTAB_THREE_KEYS | 6 /  / 6              | ADD    | true         |         |
+
   Scenario: The dedicated merge diff is paginated and filtered - filtered by table sorted by key
     Given the commit ":tada: Test commit init source" has been saved and exported with all the identified initial diff content
     And the user accesses to the destination environment with the same dictionary

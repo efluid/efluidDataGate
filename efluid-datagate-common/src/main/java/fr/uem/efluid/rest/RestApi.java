@@ -70,7 +70,7 @@ public final class RestApi {
 		converters.add(new StringHttpMessageConverter());
 
 		// Fixed supported types : json (with own modules)
-		converters.add(new MappingJackson2HttpMessageConverter(SharedOutputInputUtils.preparedObjectMapper()));
+		converters.add(new MappingJackson2HttpMessageConverter(SharedOutputInputUtils.preparedObjectMapper(false)));
 
 		restTemplate.setMessageConverters(converters);
 	}

@@ -75,7 +75,6 @@ Feature: A complete set of test case are specified for Efluid needs
       | EFLUIDTESTNUMBER | $testa_u  | UPDATE | COL1:'testa update 1'=>'testa update 1 2', COL2:123456789=>987654321 |
       | EFLUIDTESTNUMBER | $testa_i2 | ADD    | COL1:'testa insert 2', COL2:123456789                                |
 
-
   @TestMultiDataType
   Scenario: Efluid merge multi data type
     Given the test is an Efluid standard scenario
@@ -86,10 +85,10 @@ Feature: A complete set of test case are specified for Efluid needs
       | $testj_u  | testj update 1 | testj varchar2 | 123456789 | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob update |
     And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
     And these changes are applied to table "TTESTMULTIDATATYPE" :
-      | change | id        | col1             | col2           | col3      | col4       | col5                | col6 | col7        |
-      | delete | $testj_d  |                  |                |           |            |                     |      |             |
-      | add    | $testj_i2 | testj insert 2   |                |           |            |                     |      |             |
-      | update | $testj_u  | testj update 1 2 | testj varchar2 | 123456789 | 2012-01-15 | 2012-01-15 00:00:00 | y    | clob update |
+      | change | id        | col1             | col2           | col3      | col4       | col5                | col6   | col7        |
+      | delete | $testj_d  |                  |                |           |            |                     |        |             |
+      | add    | $testj_i2 | testj insert 2   | -null-         | -null-    | -null-     | -null-              | -null- | -null-      |
+      | update | $testj_u  | testj update 1 2 | testj varchar2 | 123456789 | 2012-01-15 | 2012-01-15 00:00:00 | y      | clob update |
     And a new commit ":construction: Update 1" has been saved with all the new identified diff content
     And the user has requested an export of the commit with name ":construction: Update 1"
     And the user accesses to the destination environment with the same dictionary
@@ -539,20 +538,20 @@ Feature: A complete set of test case are specified for Efluid needs
   Scenario: Efluid diff table vide 1 - data null standard
     Given the test is an Efluid standard scenario
     And the existing data in managed table "TTEST1" :
-      | id | col1 |
-      | 1  |      |
-      | 2  |      |
-      | 3  |      |
-      | 4  |      |
-      | 5  |      |
-      | 6  |      |
-      | 7  |      |
-      | 8  |      |
-      | 9  |      |
-      | 10 |      |
-      | 11 |      |
-      | 12 |      |
-      | 13 |      |
+      | id | col1   |
+      | 1  | -null- |
+      | 2  | -null- |
+      | 3  | -null- |
+      | 4  | -null- |
+      | 5  | -null- |
+      | 6  | -null- |
+      | 7  | -null- |
+      | 8  | -null- |
+      | 9  | -null- |
+      | 10 | -null- |
+      | 11 | -null- |
+      | 12 | -null- |
+      | 13 | -null- |
     And a diff analysis can be started and completed
     And a diff has already been launched
     And the diff is completed
@@ -826,12 +825,12 @@ Feature: A complete set of test case are specified for Efluid needs
       | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
       | id    | value | etatObjet   | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | CHG_1 | 11    | TODO_UPDATE |                 |                  |              |                   |                    |                |
+      | CHG_1 | 11    | TODO_UPDATE | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a new commit ":construction: Update 1" has been saved with all the new identified diff content
     And these changes are applied to table "T_EFLUID_TEST_AUDIT" :
       | change | id    | value | etatObjet   | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | update | CHG_1 | 11*   | TODO_UPDATE |                 |                  |              |                   |                    |                |
-      | add    | CHG_2 | 22    | TODO_ADD    |                 |                  |              |                   |                    |                |
+      | update | CHG_1 | 11*   | TODO_UPDATE | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | add    | CHG_2 | 22    | TODO_ADD    | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a new commit ":construction: Update 2" has been saved with all the new identified diff content
     And the user has requested an export of the commit with name ":construction: Update 2" and this customization for transformer "Audit" :
       """json
@@ -851,7 +850,7 @@ Feature: A complete set of test case are specified for Efluid needs
     And the user accesses to the destination environment with the same dictionary
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment :
       | id    | value | etatObjet       | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | CHG_1 | 11    | TODO_UPDATE_CHG |                 |                  |              |                   |                    |                |
+      | CHG_1 | 11    | TODO_UPDATE_CHG | -null-          | -null-           |              | -null-            | -null-             | -null-         |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
@@ -868,14 +867,14 @@ Feature: A complete set of test case are specified for Efluid needs
       | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
       | id    | value | etatObjet   | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | CHG_1 | 11    | TODO_UPDATE |                 |                  |              |                   |                    |                |
-      | CHG_2 | 22    | TODO_DELETE |                 |                  |              |                   |                    |                |
+      | CHG_1 | 11    | TODO_UPDATE | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_2 | 22    | TODO_DELETE | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a new commit ":construction: Update 1" has been saved with all the new identified diff content
     And these changes are applied to table "T_EFLUID_TEST_AUDIT" :
       | change | id    | value | etatObjet   | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | update | CHG_1 | 11*   | TODO_UPDATE |                 |                  |              |                   |                    |                |
-      | update | CHG_2 | 22    | DELETED     |                 |                  |              |                   |                    |                |
-      | add    | CHG_3 | 33    | TODO_ADD    |                 |                  |              |                   |                    |                |
+      | update | CHG_1 | 11*   | TODO_UPDATE | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | update | CHG_2 | 22    | DELETED     | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | add    | CHG_3 | 33    | TODO_ADD    | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a new commit ":construction: Update 2" has been saved with all the new identified diff content
     And the user has requested an export of the commit with name ":construction: Update 2" and this customization for transformer "Audit" :
       """json
@@ -907,8 +906,8 @@ Feature: A complete set of test case are specified for Efluid needs
     And the user accesses to the destination environment with the same dictionary
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment :
       | id    | value | etatObjet       | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | CHG_1 | 11    | TODO_UPDATE_CHG |                 |                  |              |                   |                    |                |
-      | CHG_2 | 22    | TODO_DELETE     |                 |                  |              |                   |                    |                |
+      | CHG_1 | 11    | TODO_UPDATE_CHG | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_2 | 22    | TODO_DELETE     | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
@@ -926,20 +925,20 @@ Feature: A complete set of test case are specified for Efluid needs
       | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
       | id    | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | CHG_1 | 11    | INIT      |                 |                  |              |                   |                    |                |
-      | CHG_2 | 22    | INIT      |                 |                  |              |                   |                    |                |
-      | CHG_3 | 33    | INIT      |                 |                  |              |                   |                    |                |
-      | CHG_4 | 44    | INIT      |                 |                  |              |                   |                    |                |
-      | CHG_5 | 55    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_1 | 11    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_2 | 22    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_3 | 33    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_4 | 44    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_5 | 55    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a new commit ":construction: Update 1" has been saved with all the new identified diff content
     And these changes are applied to table "T_EFLUID_TEST_AUDIT" :
       | change | id    | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | update | CHG_1 | 11    | STALE     |                 |                  |              |                   |                    |                |
-      | update | CHG_2 | 22    | MODIFIED  |                 |                  |              |                   |                    |                |
-      | update | CHG_3 | 33    | TESTED    |                 |                  |              |                   |                    |                |
-      | update | CHG_4 | 44    | DELETED   |                 |                  |              |                   |                    |                |
-      | update | CHG_5 | 55    | NOT_TEST  |                 |                  |              |                   |                    |                |
-      | add    | CHG_6 | 66    | INIT      |                 |                  |              |                   |                    |                |
+      | update | CHG_1 | 11    | STALE     | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | update | CHG_2 | 22    | MODIFIED  | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | update | CHG_3 | 33    | TESTED    | -null-          | -null-           | -null-       | -null-            | -space-            | -null-         |
+      | update | CHG_4 | 44    | DELETED   | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | update | CHG_5 | 55    | NOT_TEST  | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | add    | CHG_6 | 66    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a new commit ":construction: Update 2" has been saved with all the new identified diff content
     And the user has requested an export of the commit with name ":construction: Update 2" and this customization for transformer "Audit" :
       """json
@@ -984,11 +983,11 @@ Feature: A complete set of test case are specified for Efluid needs
     And the user accesses to the destination environment with the same dictionary
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" in destination environment :
       | id    | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | CHG_1 | 11    | INIT      |                 |                  |              |                   |                    |                |
-      | CHG_2 | 22    | INIT      |                 |                  |              |                   |                    |                |
-      | CHG_3 | 33    | INIT      |                 |                  |              |                   |                    |                |
-      | CHG_4 | 44    | INIT      |                 |                  |              |                   |                    |                |
-      | CHG_5 | 55    | INIT      |                 |                  |              |                   |                    |                |
+      | CHG_1 | 11    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_2 | 22    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_3 | 33    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_4 | 44    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | CHG_5 | 55    | INIT      | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
@@ -996,7 +995,7 @@ Feature: A complete set of test case are specified for Efluid needs
       | Table               | Key   | Action | Need Resolve | Payload                                                                                                                                        |
       | T_EFLUID_TEST_AUDIT | CHG_1 | UPDATE | true         | ETAT_OBJET:'INIT'=>'STALE', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:n/a=>'evt MOD'                                     |
       | T_EFLUID_TEST_AUDIT | CHG_2 | UPDATE | true         | ETAT_OBJET:'INIT'=>'MODIFIED', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:n/a=>'evt MOD'                                  |
-      | T_EFLUID_TEST_AUDIT | CHG_3 | UPDATE | true         | ETAT_OBJET:'INIT'=>'TESTED', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00, ACTEUR_MODIFICATION:n/a=>'evt MOD'                                    |
+      | T_EFLUID_TEST_AUDIT | CHG_3 | UPDATE | true         | ETAT_OBJET:'INIT'=>'TESTED', ACTEUR_MODIFICATION:n/a=>'evt MOD', DATE_MODIFICATION:n/a=>2020-05-11 00:00:00                                    |
       | T_EFLUID_TEST_AUDIT | CHG_4 | UPDATE | true         | ETAT_OBJET:'INIT'=>'DELETED', DATE_SUPPRESSION:n/a=>2020-05-25 00:00:00, ACTEUR_SUPPRESSION:n/a=>'evt DEL', ACTEUR_MODIFICATION:n/a=>'evt MOD' |
       | T_EFLUID_TEST_AUDIT | CHG_5 | UPDATE | true         | ETAT_OBJET:'INIT'=>'NOT_TEST', ACTEUR_MODIFICATION:n/a=>'evt MOD'                                                                              |
       | T_EFLUID_TEST_AUDIT | CHG_6 | ADD    | true         | VALUE:'66', ETAT_OBJET:'INIT', DATE_CREATION:2020-05-22 00:00:00, ACTEUR_CREATION:'evt CRE'                                                    |
@@ -1049,8 +1048,8 @@ Feature: A complete set of test case are specified for Efluid needs
       | Audit | EFLUID_AUDIT | 1        | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"ACTEUR_.*":{"value":"bob","onActions": ["ADD"]}}} |
     And the existing data in managed table "T_EFLUID_TEST_AUDIT" :
       | id | value | etatObjet | dateSuppression | dateModification | dateCreation | acteurSuppression | acteurModification | acteurCreation |
-      | 1  | 1     |           |                 |                  |              |                   |                    |                |
-      | 2  | 2     |           |                 |                  |              |                   |                    |                |
+      | 1  | 1     | -null-    | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
+      | 2  | 2     | -null-    | -null-          | -null-           | -null-       | -null-            | -null-             | -null-         |
     And a new commit ":construction: Update 1" has been saved with all the new identified diff content
     And the user has requested an export of the commit with name ":construction: Update 1" and this customization for transformer "Audit" :
       """json

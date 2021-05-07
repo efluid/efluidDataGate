@@ -57,6 +57,79 @@ Feature: Revert commits can be created from existing commits
       | BBB | Preset 2 changed | bbb chg |
       | CCC | Preset 3         | ccc     |
 
+  Scenario: A revert can manage null payloads on full addition
+    Given the existing data in managed table "TTAB_ALL_NULLABLE" :
+      | id | businessKey | something | value  |
+      | 1  | AAA         | Preset 1  | 1      |
+      | 2  | -null-      | Preset 2  | 2      |
+      | 3  | CCC         | Preset 3  | -null- |
+      | 4  | DDD         | Preset 4  | -null- |
+      | 5  | EEE         | -null-    | -null- |
+    And a new commit ":construction: Update 3 with nullable" has been saved with all the new identified diff content
+    And the user access to list of commits
+    When the user ask for a revert of commit ":construction: Update 3 with nullable"
+    And the diff is completed
+    And the user has selected all content for commit
+    And the user has specified a commit comment ":rewind: Revert to update 2"
+    When the user save the commit
+    Then the data in managed table "TTAB_ALL_NULLABLE" is now :
+      | id | key | value | other |
+
+  Scenario: A revert can manage null payloads on any changes - commit preparation
+    Given the existing data in managed table "TTAB_ALL_NULLABLE" :
+      | businessKey | something | value  |
+      | AAA         | Preset 1  | 1      |
+      | -null-      | Preset 2  | 2      |
+      | DDD         | Preset 4  | -null- |
+      | EEE         | -null-    | -null- |
+    And a new commit ":construction: Update 3 with nullable" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_ALL_NULLABLE" :
+      | change | businessKey | something        | value  |
+      | update | AAA         | -null-           | 2      |
+      | update | EEE         | not null anymore | 0      |
+      | delete | DDD         | Preset 4         | -null- |
+      | add    | FFF         | -null-           | -null- |
+    And a new commit ":construction: Update 4 with nullable" has been saved with all the new identified diff content
+    And the user access to list of commits
+    When the user ask for a revert of commit ":construction: Update 4 with nullable"
+    And the diff is completed
+    When the user access to revert commit page
+    Then the commit content is rendered with these identified changes :
+      | Table             | Key | Action | Payload                                           |
+      | TTAB_ALL_NULLABLE | AAA | UPDATE | VALUE:2=>1, SOMETHING:n/a=>'Preset 1'             |
+      | TTAB_ALL_NULLABLE | EEE | UPDATE | SOMETHING:'not null anymore'=>null, VALUE:0=>null |
+      | TTAB_ALL_NULLABLE | DDD | ADD    | SOMETHING:'Preset 4'                              |
+      | TTAB_ALL_NULLABLE | FFF | REMOVE |                                                   |
+    And the commit type is "REVERT"
+
+  Scenario: A revert can manage null payloads on any changes - applied updates
+    Given the existing data in managed table "TTAB_ALL_NULLABLE" :
+      | businessKey | something | value  |
+      | AAA         | Preset 1  | 1      |
+      |             | Preset 2  | 2      |
+      | DDD         | Preset 4  | -null- |
+      | EEE         | -null-    | -null- |
+    And a new commit ":construction: Update 3 with nullable" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_ALL_NULLABLE" :
+      | change | businessKey | something        | value  |
+      | update | AAA         | -null-           | 2      |
+      | update | EEE         | not null anymore | 0      |
+      | delete | DDD         | Preset 4         | -null- |
+      | add    | FFF         | -null-           | -null- |
+    And a new commit ":construction: Update 4 with nullable" has been saved with all the new identified diff content
+    And the user access to list of commits
+    When the user ask for a revert of commit ":construction: Update 4 with nullable"
+    And the diff is completed
+    And the user has selected all content for commit
+    And the user has specified a commit comment ":rewind: Revert to update 3"
+    When the user save the commit
+    Then the data in managed table "TTAB_ALL_NULLABLE" is now :
+      | businessKey | something | value  |
+      | AAA         | Preset 1  | 1      |
+      | -null-      | Preset 2  | 2      |
+      | DDD         | Preset 4  | -null- |
+      | EEE         | -null-    | -null- |
+
   Scenario: New commits coming after a revert has been created are processed as standard commits
     Given the user access to list of commits
     And the user have asked for a revert of commit ":construction: Update 2"

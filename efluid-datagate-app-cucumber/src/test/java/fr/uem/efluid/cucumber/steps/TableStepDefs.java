@@ -146,6 +146,26 @@ public class TableStepDefs extends CucumberStepDefs {
         the_parameter_table_is_saved_by_user("saved");
     }
 
+    @Given("^in project \"(.*)\", a created parameter table with name \"(.*)\" for managed table \"([^\"]*)\" and columns selected as this :$")
+    public void a_created_parameter_table_with_select_col_in_project(String projectName, String name, String table, DataTable select) throws Throwable {
+
+        Optional<ProjectData> project = this.projectMgmt.getAllProjects().stream().filter(p -> p.getName().equals(projectName)).findFirst();
+
+        assertThat(project).as("Project with name " + projectName).isPresent();
+
+        // Enable project
+        this.projectMgmt.selectProject(project.get().getUuid());
+
+        // Implicit authentication and on page
+        implicitlyAuthenticatedAndOnPage("parameter table main page");
+
+        // Prepared
+        init_dictionary_table(name, table, null, select);
+
+        // And saved
+        the_parameter_table_is_saved_by_user("saved");
+    }
+
     @Given("^a created parameter table with name \"(.*)\" for managed table \"(.*)\" with filter \"(.*)\" and columns selected as this :$")
     public void a_created_parameter_table_with_select_col_and_filter(String name, String table, String filter, DataTable select) throws Throwable {
 
@@ -307,16 +327,32 @@ public class TableStepDefs extends CucumberStepDefs {
 
         var expected = data.asMaps();
 
-        var existings = this.dicts.findAll();
+        List<DictionaryEntry> existings = this.dicts.findAll();
 
-        assertThat(expected).hasSize(existings.size());
+        assertThat(existings).hasSize(expected.size());
+
+        Map<String, List<DictionaryEntry>> byProjects = existings.stream().collect(Collectors.groupingBy(d -> d.getDomain().getProject().getName()));
 
         expected.forEach(t -> {
-            var found = existings.stream().filter(d -> d.getTableName().equals(t.get("table name"))).findFirst();
 
-            assertThat(found).describedAs("Existing table with name " + t.get("table name")).isPresent();
+            List<DictionaryEntry> forProject = byProjects.get(t.get("project"));
+
+            assertThat(forProject).describedAs("Tables for project " + t.get("project")).isNotNull();
+
+            var found = forProject.stream().filter(d -> d.getTableName().equals(t.get("table name"))).findFirst();
+
+            assertThat(found).describedAs("Existing table with name " + t.get("table name") + " for project " + t.get("project")).isPresent();
             assertThat(found.get().getSelectClause()).describedAs("Select clause for table with name " + t.get("table name")).isEqualTo(t.get("select clause"));
-            assertThat(found.get().getDomain().getProject().getName()).describedAs("Project for table with name " + t.get("table name")).isEqualTo(t.get("project"));
+
+            if (t.get("key 1") != null) {
+                assertThat(found.get().getKeyName()).describedAs("Key 1 for table with name " + t.get("table name")).isEqualTo(t.get("key 1"));
+            }
+            if (t.get("key 2") != null) {
+                assertThat(found.get().getExt1KeyName()).describedAs("Key 2 for table with name " + t.get("table name")).isEqualTo(t.get("key 2"));
+            }
+            if (t.get("key 3") != null) {
+                assertThat(found.get().getExt2KeyName()).describedAs("Key 3 for table with name " + t.get("table name")).isEqualTo(t.get("key 3"));
+            }
         });
 
     }
