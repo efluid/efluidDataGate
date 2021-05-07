@@ -98,8 +98,8 @@ server:
 ## TEST LOGGING CONFIG
 logging:
     level:
-        root: INFO
-        fr.uem.efluid: INFO
+        root: WARN
+        fr.uem.efluid: WARN
         org.flywaydb: ERROR
         extractor.queries: ERROR
         identifier.queries: ERROR
