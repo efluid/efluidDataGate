@@ -74,24 +74,24 @@ public interface VersionRepository extends JpaRepository<Version, UUID> {
 
     @Query(value = "select '" + MAPPED_TYPE_DOMAIN + "' as type, uuid as uuid from domain "
             + " where project_uuid = :projectUuid "
-            + " and updated_time < :checkTime "
+            + " and updated_time <= :checkTime "
             + " union "
             + " select '" + MAPPED_TYPE_DICT + "' as type, d.uuid as uuid from dictionary d "
             + " inner join domain m on d.domain_uuid = m.uuid "
             + " where m.project_uuid = :projectUuid "
-            + " and d.updated_time < :checkTime "
+            + " and d.updated_time <= :checkTime "
             + " union "
             + " select '" + MAPPED_TYPE_LINK + "' as type, l.uuid as uuid from link l "
             + " inner join dictionary d on l.dictionary_entry_uuid = d.uuid "
             + " inner join domain m on d.domain_uuid = m.uuid "
             + " where m.project_uuid = :projectUuid"
-            + " and l.updated_time < :checkTime "
+            + " and l.updated_time <= :checkTime "
             + " union "
             + " select '" + MAPPED_TYPE_MAPPING + "' as type, t.uuid as uuid from mappings t "
             + " inner join dictionary d on t.dictionary_entry_uuid = d.uuid "
             + " inner join domain m on d.domain_uuid = m.uuid "
             + " where m.project_uuid = :projectUuid "
-            + " and t.updated_time < :checkTime ", nativeQuery = true)
+            + " and t.updated_time <= :checkTime ", nativeQuery = true)
     List<Object[]> _internal_findLastDictionaryUpdateForProject(@Param("projectUuid") String projectUuid, @Param("checkTime") LocalDateTime lastVersionUpdate);
 
     /**
