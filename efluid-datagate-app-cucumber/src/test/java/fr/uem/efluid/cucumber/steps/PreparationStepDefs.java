@@ -768,7 +768,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
     private void check_resolution_line(PreparedMergeIndexEntry entry, String type, String actStr, String payload) {
 
-        if (StringUtils.isEmpty(payload)) {
+        if (!StringUtils.hasText(payload)) {
             payload = null;
         }
 

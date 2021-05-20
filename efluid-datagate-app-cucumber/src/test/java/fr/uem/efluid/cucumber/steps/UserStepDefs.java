@@ -74,7 +74,7 @@ public class UserStepDefs extends CucumberStepDefs {
 
     @Then("^it is (.*)possible to create a new user$")
     public void a_user_can_be_created(String type) {
-        assertModelIsSpecifiedProperty("canCreate", Boolean.class, v -> v == StringUtils.isEmpty(type));
+        assertModelIsSpecifiedProperty("canCreate", Boolean.class, v -> v == !StringUtils.hasText(type));
     }
 
     @Then("^the user \"(.*)\" exists in database$")

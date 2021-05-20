@@ -4,7 +4,7 @@ import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.security.UserHolder;
 import fr.uem.efluid.services.types.TransformerDefDisplay;
-import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.transformers.Transformer;
 import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

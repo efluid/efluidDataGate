@@ -18,10 +18,11 @@ Feature: Some transformers can be set for a project to adapt commits at import r
     Given from the home page
     When the user access to list of transformers
     Then the available transformer types are :
-      | name                  | type                       |
-      | LOWERCASE_TRANSFORMER | LowerCaseTransformer       |
-      | UPPERCASE_TRANSFORMER | UpperCaseTransformer       |
-      | EFLUID_AUDIT          | EfluidAuditDataTransformer |
+      | name                  | type                        |
+      | LOWERCASE_TRANSFORMER | LowerCaseTransformer        |
+      | UPPERCASE_TRANSFORMER | UpperCaseTransformer        |
+      | EFLUID_AUDIT          | EfluidAuditDataTransformer  |
+      | EFLUID_REGION_SUPPORT | EfluidRegionDataTransformer |
 
   Scenario: A transformer can be initialized for a specified type with a default configuration
     Given from the home page
@@ -98,7 +99,7 @@ Feature: Some transformers can be set for a project to adapt commits at import r
       | audit14 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{},}                                                                                                                              | JSON Parsing error                                                                        |
       | audit15 | {"tablePattern":".*","appliedValueFilterPatterns":{"":"0"},"appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{".*":{"value":"","onActions": ["ADD"]}}}                                                   | Value filter column name cannot be empty.                                                 |
       | audit16 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"COL.*":{"value":"value","onActions": []}}}                                                                                      | An actor update must be specified with onValues or onActions                              |
-      | audit17 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"COL.*":{"value":"value","onActions": ["TEST"]}}}                                                                                | value not one of declared Enum instance names: [ADD, REMOVE, UPDATE]                      |
+      | audit17 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"COL.*":{"value":"value","onActions": ["TEST"]}}}                                                                                | not one of the values accepted for Enum class: [ADD, REMOVE, UPDATE]                      |
       | audit18 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val"}}}}                                                                                                        | An actor update must be specified with onValues or onActions. Specify at least one action |
       | audit19 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val","onValues": [{"columnPattern":"ETAT.*"}]}}}}                                                               | The onValues properties columnPattern and valuePattern cannot be empty.                   |
       | audit20 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val","onValues": [{"valuePattern":"^TEST.*$"}]}}}}                                                              | The onValues properties columnPattern and valuePattern cannot be empty.                   |

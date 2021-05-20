@@ -8,7 +8,7 @@ import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfig
 import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
 import fr.uem.efluid.services.types.TransformerType;
-import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.transformers.Transformer;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;

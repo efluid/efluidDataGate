@@ -1,10 +1,11 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.transformers;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -97,7 +98,7 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
         @Override
         void checkContentIsValid(List<String> errors) {
             super.checkContentIsValid(errors);
-            if (StringUtils.isEmpty(this.project)) {
+            if (!StringUtils.hasText(this.project)) {
                 errors.add("project cannot be empty or missing");
             }
         }
@@ -134,12 +135,12 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
 
         @Override
         public void importAttachmentPackageData(byte[] attachmentPackageData, JdbcTemplate managedSource, ManagedValueConverter valueConverter) {
-            String region = managedSource.query(GET_REGION_QUERY, new Object[]{this.project}, (rs) -> {
+            String region = managedSource.query(GET_REGION_QUERY, (rs) -> {
                 if (rs.next()) {
                     return rs.getString(1);
                 }
                 return null;
-            });
+            }, this.project);
 
             if (region == null) {
                 throw new ApplicationException(TRANSFORMER_EFUID_NO_SITE, "no site found with query "

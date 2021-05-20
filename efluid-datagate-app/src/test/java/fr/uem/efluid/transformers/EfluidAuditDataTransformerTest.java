@@ -1,11 +1,15 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.transformers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
-import fr.uem.efluid.tools.EfluidAuditDataTransformer.Config;
+import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.transformers.EfluidAuditDataTransformer;
+import fr.uem.efluid.transformers.EfluidAuditDataTransformer.Config;
+import fr.uem.efluid.transformers.TransformerValueProvider;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.FormatUtils;

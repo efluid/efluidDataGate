@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.transformers;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uem.efluid.ColumnType;
@@ -6,6 +6,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.regex.Pattern;
 /**
  * Transformer model for process at column level
  */
-public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTransformer.Config, R extends ColumnTransformer.Runner<C>> extends Transformer<C, R> {
+public abstract class ColumnTransformer<C extends ColumnTransformer.Config, R extends ColumnTransformer.Runner<C>> extends Transformer<C, R> {
 
     protected ColumnTransformer(ManagedValueConverter converter, TransformerValueProvider provider) {
         super(converter, provider);

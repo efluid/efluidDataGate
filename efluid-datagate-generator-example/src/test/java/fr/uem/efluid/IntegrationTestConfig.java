@@ -40,7 +40,7 @@ import static fr.uem.efluid.Application.Packages.*;
  */
 @EnableJpaRepositories({REPOSITORIES, ROOT + ".stubs"})
 @EntityScan({ENTITIES, CONVERTERS, ROOT + ".stubs"})
-@ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, ROOT + ".stubs"})
+@ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, TRANSFORMERS, ROOT + ".stubs"})
 @TestConfiguration
 @ConfigurationProperties(prefix = "datagate-efluid.managed-datasource")
 public class IntegrationTestConfig {

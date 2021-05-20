@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.transformers;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uem.efluid.ColumnType;
@@ -6,6 +6,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.FormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -156,7 +157,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 if (this.dateUpdates.values().stream().anyMatch(s -> (s.getOnValues() == null || s.getOnValues().isEmpty()) && (s.getOnActions() == null || s.getOnActions().isEmpty()))) {
                     errors.add("An date update must be specified with onValues or onActions. Specify at least one action (ADD/REMOVE/UPDATE) or one value spec or remove the date update spec");
                 }
-                if (this.dateUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> StringUtils.isEmpty(v.getColumnPattern()) || StringUtils.isEmpty(v.getValuePattern()))) {
+                if (this.dateUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> !StringUtils.hasText(v.getColumnPattern()) || !StringUtils.hasText(v.getValuePattern()))) {
                     errors.add("The onValues properties columnPattern and valuePattern cannot be empty. Check dateUpdates");
                 }
             }
@@ -170,7 +171,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 if (this.actorUpdates.values().stream().anyMatch(s -> (s.getOnValues() == null || s.getOnValues().isEmpty()) && (s.getOnActions() == null || s.getOnActions().isEmpty()))) {
                     errors.add("An actor update must be specified with onValues or onActions. Specify at least one action (ADD/REMOVE/UPDATE) or one value spec or remove the actor update spec");
                 }
-                if (this.actorUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> StringUtils.isEmpty(v.getColumnPattern()) || StringUtils.isEmpty(v.getValuePattern()))) {
+                if (this.actorUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> !StringUtils.hasText(v.getColumnPattern()) || !StringUtils.hasText(v.getValuePattern()))) {
                     errors.add("The onValues properties columnPattern and valuePattern cannot be empty. Check actorUpdates");
                 }
             }

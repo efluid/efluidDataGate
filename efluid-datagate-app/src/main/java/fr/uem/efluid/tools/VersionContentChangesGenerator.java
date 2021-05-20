@@ -462,7 +462,7 @@ public class VersionContentChangesGenerator {
 
     public static List<FunctionalDomain> readDomains(Version version) {
 
-        if (StringUtils.isEmpty(version.getDomainsContent())) {
+        if (!StringUtils.hasText(version.getDomainsContent())) {
             return Collections.emptyList();
         }
 
@@ -475,7 +475,7 @@ public class VersionContentChangesGenerator {
 
     public static List<DictionaryEntry> readDict(Version version) {
 
-        if (StringUtils.isEmpty(version.getDictionaryContent())) {
+        if (!StringUtils.hasText(version.getDictionaryContent())) {
             return Collections.emptyList();
         }
 
@@ -488,7 +488,7 @@ public class VersionContentChangesGenerator {
 
     public static List<TableLink> readLinks(Version version) {
 
-        if (StringUtils.isEmpty(version.getLinksContent())) {
+        if (!StringUtils.hasText(version.getLinksContent())) {
             return Collections.emptyList();
         }
 
@@ -501,7 +501,7 @@ public class VersionContentChangesGenerator {
 
     public static List<TableMapping> readMappings(Version version) {
 
-        if (StringUtils.isEmpty(version.getMappingsContent())) {
+        if (!StringUtils.hasText(version.getMappingsContent())) {
             return Collections.emptyList();
         }
         return Stream.of(version.getMappingsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {

@@ -142,11 +142,12 @@ Feature: For Efluid needs a transformation can select the required values to kee
   Scenario Outline: The data processed on merge in destination environment is selected regarding the region specified in transformer - various edit cases
     Given the test is an Efluid standard scenario
     And the existing data in managed table "TTEST1" :
-      | id | col1   |
-      | $1 | line 1 |
-      | $2 | line 2 |
-      | $3 | line 3 |
-      | $4 | line 4 |
+      | id | col1             |
+      | $1 | line 1           |
+      | $2 | line 2           |
+      | $3 | line 3           |
+      | $4 | line 4           |
+      | $6 | line 6 different |
     And the existing data in secondary parameter table "TRECOPIEPARAMREFERENTIELDIR" :
       | dir  | tabname | op  | colsPk | srcId1 | srcId2 | srcId3 | srcId4 | srcId5 |
       | regA | TTEST1  | INS | + ID   | $1     |        |        |        |        |
@@ -154,6 +155,7 @@ Feature: For Efluid needs a transformation can select the required values to kee
       | regB | TTEST1  | INS | + ID   | $2     |        |        |        |        |
       | regB | TTEST1  | INS | + ID   | $3     |        |        |        |        |
       | regB | TTEST1  | INS | + ID   | $5     |        |        |        |        |
+      | regC | TTEST1  | INS | + ID   | $6     |        |        |        |        |
     Given the configured transformers for project "Default" :
       | name          | type                  | priority | configuration                          |
       | Transformer 1 | EFLUID_REGION_SUPPORT | 1        | {"tablePattern":".*","project":"test"} |
@@ -168,6 +170,8 @@ Feature: For Efluid needs a transformation can select the required values to kee
     And the existing data in managed table "TTEST1" in destination environment :
       | id | col1   |
       | $4 | line 4 |
+      | $6 | line 6 |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
     And the existing data in secondary parameter table "TAPPLICATIONINFO" in destination environment :
       | projet | site          |
       | test   | <region code> |
@@ -175,6 +179,7 @@ Feature: For Efluid needs a transformation can select the required values to kee
     When the user access to merge commit page
     Then the merge commit content is rendered with changes for these lines : "<identified changes>"
     Examples:
-      | region code | identified changes                          |
-      | regA        | ADD TTEST1:$1                               |
-      | regB        | ADD TTEST1:$2, ADD TTEST1:$3, ADD TTEST1:$5 |
+      | region code | identified changes           |
+      | regA        | ADD TTEST1:$1                |
+      | regB        | ADD TTEST1:$3, ADD TTEST1:$5 |
+      | regC        | UPDATE TTEST1:$6             |

@@ -1,7 +1,7 @@
 package fr.uem.efluid.services.types;
 
 import fr.uem.efluid.model.entities.TransformerDef;
-import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.transformers.Transformer;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;

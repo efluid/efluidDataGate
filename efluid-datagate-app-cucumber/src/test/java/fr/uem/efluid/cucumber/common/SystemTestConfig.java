@@ -6,7 +6,7 @@ import fr.uem.efluid.security.providers.DatabaseOnlyAccountProvider;
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
-import fr.uem.efluid.tools.TransformerValueProvider;
+import fr.uem.efluid.transformers.TransformerValueProvider;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
 import fr.uem.efluid.utils.FormatUtils;
@@ -47,7 +47,7 @@ import static fr.uem.efluid.cucumber.common.SystemTestConfig.SYS_TEST_ROOT;
  * @since v0.0.1
  */
 @TestConfiguration
-@ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, WEB, REST, SYS_TEST_ROOT + ".stubs"})
+@ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, TRANSFORMERS, WEB, REST, SYS_TEST_ROOT + ".stubs"})
 @ConfigurationProperties(prefix = "datagate-efluid.managed-datasource")
 @EnableTransactionManagement
 @EnableJpaRepositories({REPOSITORIES, SYS_TEST_ROOT + ".stubs.repositories"})

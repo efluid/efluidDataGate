@@ -15,7 +15,7 @@ import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
-import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.transformers.Transformer;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
