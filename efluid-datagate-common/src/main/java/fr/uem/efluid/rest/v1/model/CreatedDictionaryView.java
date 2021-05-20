@@ -10,10 +10,12 @@ public class CreatedDictionaryView {
 	private long addedDictionaryEntryCount;
 	private long addedDomainCount;
 	private long addedLinkCount;
+	private long addedVersionCount;
 
 	private long updatedDictionaryEntryCount;
 	private long updatedDomainCount;
 	private long updatedLinkCount;
+	private long updatedVersionCount;
 
 	/**
 	 * 
@@ -112,6 +114,22 @@ public class CreatedDictionaryView {
 		this.updatedLinkCount = updatedLinkCount;
 	}
 
+	public long getAddedVersionCount() {
+		return addedVersionCount;
+	}
+
+	public void setAddedVersionCount(long addedVersionCount) {
+		this.addedVersionCount = addedVersionCount;
+	}
+
+	public long getUpdatedVersionCount() {
+		return updatedVersionCount;
+	}
+
+	public void setUpdatedVersionCount(long updatedVersionCount) {
+		this.updatedVersionCount = updatedVersionCount;
+	}
+
 	/**
 	 * @return
 	 * @see java.lang.Object#toString()
@@ -119,9 +137,9 @@ public class CreatedDictionaryView {
 	@Override
 	public String toString() {
 		return "addedDictionaryEntryCount=" + this.addedDictionaryEntryCount + ", addedDomainCount="
-				+ this.addedDomainCount + ", addedLinkCount=" + this.addedLinkCount + ", updatedDictionaryEntryCount="
+				+ this.addedDomainCount + ", addedLinkCount=" + this.addedLinkCount +", addedVersionCount=" + this.addedVersionCount + ", updatedDictionaryEntryCount="
 				+ this.updatedDictionaryEntryCount + ", updatedDomainCount=" + this.updatedDomainCount + ", updatedLinkCount="
-				+ this.updatedLinkCount;
+				+ this.updatedLinkCount+ ", updatedVersionCount=" + this.updatedVersionCount ;
 	}
 
 }

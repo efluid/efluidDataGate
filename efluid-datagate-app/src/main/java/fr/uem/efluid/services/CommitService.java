@@ -1021,6 +1021,7 @@ public class CommitService extends AbstractApplicationService {
 
         // 3 : run a full change generation using dict content in dictionary - will process only concerned items
         Map<String, VersionCompare.DictionaryTableChanges> allTableChanges = this.changesGenerator.generateChanges(localLastVersion, importedVersion).stream()
+                .filter(d -> d.getTableChanges() != null)
                 .flatMap(d -> d.getTableChanges().stream())
                 .collect(Collectors.toMap(VersionCompare.DictionaryTableChanges::getTableName, c -> c));
 

@@ -99,7 +99,7 @@
 
         <!-- Fixed plugins -->
         <plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
-        <plugin.jacoco.version>0.8.5</plugin.jacoco.version>
+        <plugin.jacoco.version>0.8.7</plugin.jacoco.version>
 	
         <skipNexusStagingDeploy>false</skipNexusStagingDeploy>
     </properties>

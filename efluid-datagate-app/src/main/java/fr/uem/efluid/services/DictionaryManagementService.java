@@ -1053,12 +1053,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
                     .sorted(Comparator.comparing(Version::getUpdatedTime))
                     .collect(Collectors.toList());
 
-            // Check all versions
-            assertVersionModelsAreValid(importedVersions);
-
-            // Complete version details
-            importedVersions.forEach(this::completeVersionContents);
-
             if (importedVersions.size() > 0) {
                 result.addCount(VersionExportPackage.VERSIONS_EXPORT, newVersCount.get(),
                         importedVersions.size() - newVersCount.get(), 0);
@@ -1285,7 +1279,14 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 .searchingByNameWith(v -> Optional.ofNullable(this.versions.findByNameAndProject(v.getName(), destinationProject)))
                 .savingWith(v -> {
                     v.setProject(destinationProject);
-                    this.versions.save(v);
+                    // Model identifier update when none set (import from api gen)
+                    if (v.getModelIdentity() == null) {
+                        // Search ref identifier if enabled
+                        v.setModelIdentity(this.modelDescs.getCurrentModelIdentifier() != null ? this.modelDescs.getCurrentModelIdentifier() : v.getName());
+                    }
+                    // And complete dict model
+                    completeVersionContents(v);
+                    this.versions.saveAndFlush(v);
                 })
                 .replacingSubstituteWith((existing, imported) -> {
                     this.versions.delete(existing);
@@ -1895,13 +1896,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 }
             } else {
                 LOGGER.debug("Import new entity \"{}\" : will create currently owned", imported);
-
-                // Create a new entity
-                if (this.copyMode) {
-                    imported.setUuid(UUID.randomUUID());
-                    imported.setCreatedTime(LocalDateTime.now());
-                    imported.setUpdatedTime(LocalDateTime.now());
-                }
 
                 // Import new one
                 this.saver.accept(imported);
