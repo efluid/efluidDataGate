@@ -1021,11 +1021,13 @@ public class CommitService extends AbstractApplicationService {
 
         // 3 : run a full change generation using dict content in dictionary - will process only concerned items
         Map<String, VersionCompare.DictionaryTableChanges> allTableChanges = this.changesGenerator.generateChanges(localLastVersion, importedVersion).stream()
+                .filter(d -> d.getTableChanges() != null)
                 .flatMap(d -> d.getTableChanges().stream())
                 .collect(Collectors.toMap(VersionCompare.DictionaryTableChanges::getTableName, c -> c));
 
         // 4 : Check compatibility by table - check referenced entry, keys and columns (consistent order)
         indexByTables.entrySet().stream()
+                // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
                 .sorted(Comparator.comparing(e -> e.getKey().getTableName()))
                 .forEach((e) -> checkCommitIndexDictionaryEntryCompatibility(
                         e.getValue(),
@@ -1070,6 +1072,7 @@ public class CommitService extends AbstractApplicationService {
         // DictionaryEntry is present : continue to check table / key / column changes
         else {
             String tablename = importedDictionaryEntry.getTableName();
+            // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
             VersionCompare.DictionaryTableChanges tableChanges = allTableChanges.get(tablename);
 
             // Check columns adn keys only if the table is identified as changed (= not UNCHANGED here)

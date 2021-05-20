@@ -101,6 +101,7 @@ public class JdbcBasedManagedUpdateRepository implements ManagedUpdateRepository
 
         // Preload dictionary for direct access by uuid and tab name
         Map<UUID, DictionaryEntry> dictEntries = this.dictionary.findAllByProjectMappedToUuid(project);
+        // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
         Map<String, DictionaryEntry> dictByTab = dictEntries.values().stream()
                 .collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
 

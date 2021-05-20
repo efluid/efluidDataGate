@@ -152,6 +152,7 @@ public class VersionContentChangesGenerator {
             */
 
             // All referenced dicts for 2 version for column link data building
+            // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
             this.oneAllDicts = this.oneDicts.stream().collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
             this.twoAllDicts = this.twoDicts.stream().collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
         }
