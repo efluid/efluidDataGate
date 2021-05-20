@@ -2,6 +2,7 @@ package fr.uem.efluid.services.types;
 
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
+import org.springframework.util.StringUtils;
 
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -53,8 +54,13 @@ public abstract class AbstractMixedPackage<T extends Shared> extends SharedPacka
         // Attachment serial. uses a mixed content result
         String[] mixedContent = SharedOutputInputUtils.splitValues(super.serializeOne(content));
 
-        // Move generated file to TMP folder for inclusion in zip
-        this.attFiles.add(SharedOutputInputUtils.repatriateTmpFile(mixedContent[0], getUncompressPath()));
+        // Attachment name, if any
+        String includedFilename = mixedContent[0];
+
+        // Move available generated file to TMP folder for inclusion in zip
+        if(StringUtils.hasText(includedFilename)) {
+            this.attFiles.add(SharedOutputInputUtils.repatriateTmpFile(includedFilename, getUncompressPath()));
+        }
 
         // In pak file will use only json part
         return mixedContent[1];
