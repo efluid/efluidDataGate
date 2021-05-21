@@ -55,11 +55,6 @@ public enum Feature {
     SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY("datagate-efluid.dictionary.select-pk-as-default-keys"),
 
     /**
-     * <p>For version creates : If enabled, force use the modelIdentifier result as version name (no user select of version name)</p>
-     */
-    USE_MODEL_ID_AS_VERSION_NAME("datagate-efluid.versions.use-model-id-as-version"),
-
-    /**
      * For import / merge : keep as "anomaly" identified resolution errors
      */
     RECORD_IMPORT_WARNINGS("datagate-efluid.imports.record-merge-warnings");

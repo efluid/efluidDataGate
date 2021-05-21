@@ -8,9 +8,7 @@ La préparation de lot ne peut être lancé que si une version valide est défin
 
 Les versions sont spécifiées dans l'écran dédié du dictionnaire.
 
-Une version est simplement identifiée par son **nom** qui peut être :
-* Une valeur libre si la `feature` `USE_MODEL_ID_AS_VERSION_NAME` est désactivée
-* L'ID courant du modèle si la `feature` `USE_MODEL_ID_AS_VERSION_NAME` est activée
+Une version est simplement identifiée par son **nom**. L'ID courant du modèle est également enregistré
 
 Les versions sont alors associées à :
 * Leur date de mise à jour. On peut mettre à jour une version "courante" pour représenter la dernier état valide du dictionnaire

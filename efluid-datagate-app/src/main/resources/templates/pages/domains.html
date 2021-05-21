@@ -45,12 +45,10 @@
             $('#li-3').css("font-weight", "bolder");
             $("#validator-input").hide();
 
-            var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
-
             const checkCharacters = e => {
                 var inputValue = e.target.value;
                 if (e.target.id === "domainName") {
-                    if(regex.test(inputValue)) {
+                    if(FORBIDDEN_CHARS.test(inputValue)) {
                         $("#validator-input").show();
                         $("#addButton").hide();
                     } else {
