@@ -485,8 +485,18 @@ public abstract class CucumberStepDefs {
         // From the edited data, create an export without transformer customization ...
         CommitExportDisplay exportDisplay = this.commitService.saveCommitExport(exportEdit);
 
-        // ... And start it to get its content
-        return this.commitService.processCommitExport(exportDisplay.getUuid());
+        try {
+            // Delay for HBM thread closure ???
+            Thread.sleep(10);
+
+            // ... And start it to get its content
+            return this.commitService.processCommitExport(exportDisplay.getUuid());
+        }
+
+        // Try another run for compatibility on some test envs ?
+        catch (Throwable e) {
+            return this.commitService.processCommitExport(exportDisplay.getUuid());
+        }
     }
 
     /**
