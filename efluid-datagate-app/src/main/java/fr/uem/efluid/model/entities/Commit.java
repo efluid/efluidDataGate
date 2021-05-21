@@ -201,13 +201,6 @@ public class Commit implements Shared {
     }
 
     /**
-     * @param index the index to set
-     */
-    public void setIndex(Collection<IndexEntry> index) {
-        this.index = index;
-    }
-
-    /**
      * @return the state
      */
     public CommitState getState() {
@@ -330,11 +323,11 @@ public class Commit implements Shared {
 
                         // Process content
                         else {
-                            setIndex(Stream.of(i.split("\n")).map(s -> {
+                            Stream.of(i.split("\n")).map(s -> {
                                 IndexEntry ent = new IndexEntry();
                                 ent.deserializeOnCompatibility(s);
                                 return ent;
-                            }).collect(Collectors.toList()));
+                            }).forEach(getIndex()::add);
                         }
                     }
                 })

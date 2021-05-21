@@ -218,6 +218,21 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
+     * (for test needs) prepare an export and process it immediately, in one single transaction
+     *
+     * @param editData export data
+     * @return ExportImportResult
+     */
+    public ExportImportResult<ExportFile> saveAndExportImmediate(CommitExportEditData editData) {
+
+        // From the edited data, create an export without transformer customization ...
+        CommitExportDisplay exportDisplay = saveCommitExport(editData);
+
+        // And process it
+        return processCommitExport(exportDisplay.getUuid());
+    }
+
+    /**
      * Check if the specified commit export has been downloaded : download is processed only when the file is completed, so if not
      * downloaded = the file is generated, if downloaded = a download time has been added to export entity = the file has
      * been fully generated = the export has been downloaded.
@@ -330,7 +345,7 @@ public class CommitService extends AbstractApplicationService {
      * @param commitUuids
      * @return
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NEVER)
     protected ExportFile exportContent(
             Project project,
             String commitPackageName,

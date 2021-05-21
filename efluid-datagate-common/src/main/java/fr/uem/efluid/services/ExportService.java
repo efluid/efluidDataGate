@@ -69,7 +69,7 @@ public class ExportService {
             Path workFolder = SharedOutputInputUtils.initTmpFolder();
             List<Path> packFiles = new ArrayList<>();
 
-            packages.parallelStream().forEach(pckg -> {
+            packages.forEach(pckg -> {
 
                 pckg.setUncompressPath(workFolder);
 

@@ -146,11 +146,9 @@
 
 		}
 
-		var regex = /[ `!@#ç§$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/
-
 		const checkCharacters = e => {
 			var inputValue = e.target.value;
-			if(regex.test(inputValue)) {
+			if(FORBIDDEN_CHARS.test(inputValue)) {
 			  $("#validator-input").show();
 			  $("#addButton").hide();
 			  $("#modifButton").hide();
@@ -164,7 +162,7 @@
 					$("#input-empty").hide();
 				}
 			}
-      }
+     	}
 
     	// Init actions
     	$(document).ready(() => {

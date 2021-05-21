@@ -35,6 +35,8 @@ public class TransformerDef implements Shared {
 
     private LocalDateTime importedTime;
 
+    private LocalDateTime deletedTime;
+
     private int priority;
 
     @NotNull
@@ -133,6 +135,14 @@ public class TransformerDef implements Shared {
 
     public String getCustomizedConfiguration() {
         return customizedConfiguration;
+    }
+
+    public LocalDateTime getDeletedTime() {
+        return this.deletedTime;
+    }
+
+    public void setDeletedTime(LocalDateTime deletedTime) {
+        this.deletedTime = deletedTime;
     }
 
     public void setCustomizedConfiguration(String customizedConfiguration) {

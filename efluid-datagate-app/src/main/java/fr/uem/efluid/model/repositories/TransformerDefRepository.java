@@ -17,7 +17,9 @@ import java.util.UUID;
  */
 public interface TransformerDefRepository extends JpaRepository<TransformerDef, UUID> {
 
-    Optional<TransformerDef> findByProjectAndNameAndType(Project project, String name, String type);
+    Optional<TransformerDef> findByProjectAndNameAndTypeAndDeletedTimeIsNull(Project project, String name, String type);
 
-    List<TransformerDef> findByProject(Project project);
+    List<TransformerDef> findByProjectAndDeletedTimeIsNull(Project project);
+
+    Optional<TransformerDef> findByUuidAndDeletedTimeIsNull(UUID id);
 }

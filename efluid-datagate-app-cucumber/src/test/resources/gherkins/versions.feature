@@ -22,6 +22,14 @@ Feature: A dictionary is associated to versions
     Then the 2 existing versions are displayed
     And a confirmation message on delete is displayed
 
+  Scenario: The model identifier is stored with any new version
+    Given the existing versions "v1"
+    And the current model id is "MOD1.1.0"
+    When the user add new version "v2"
+    Then a confirmation message on create is displayed
+    And the current version name is "v2"
+    And the current version model identifier is "MOD1.1.0"
+
   Scenario: When a version is added, the content of the dictionary is available for version compare
     Given the existing versions "v1"
     And this dictionary is added to current default domain :
@@ -146,35 +154,6 @@ Feature: A dictionary is associated to versions
     Then the 3 updated versions are displayed
     And the update date of version "v3" is updated
     And a confirmation message on update is displayed
-
-  Scenario: The version is created with the model identifier as name if this feature is enabled
-    Given the existing versions "v1"
-    And the current model id is "MOD1.1.0"
-    And the feature "USE_MODEL_ID_AS_VERSION_NAME" is enabled
-    When the user add new version "whatever"
-    Then the current version name is "MOD1.1.0"
-    And a confirmation message on create is displayed
-
-  Scenario: The version is not created with the model identifier as name if this feature is disabled
-    Given the existing versions "v1"
-    And the current model id is "MOD1.1.0"
-    And the feature "USE_MODEL_ID_AS_VERSION_NAME" is disabled
-    When the user add new version "whatever"
-    Then the current version name is "whatever"
-
-  Scenario: A new version cannot be created when the model identifier is used as name and the model identifier has not be updated
-    Given the existing versions "MOD1.1.0"
-    And the current model id is "MOD1.1.0"
-    And the feature "USE_MODEL_ID_AS_VERSION_NAME" is enabled
-    When the user access to list of versions
-    Then the user cannot add a new version
-
-  Scenario: A new version can be created when the model identifier is not used as name and the model identifier has not be updated
-    Given the existing versions "MOD1.1.0"
-    And the current model id is "MOD1.1.0"
-    And the feature "USE_MODEL_ID_AS_VERSION_NAME" is disabled
-    When the user access to list of versions
-    Then the user can add a new version
 
   Scenario: The source dictionary version must be present in destination environment when processing a merge if validation feature is enabled
     Given the existing data in managed table "TTAB_TWO" :

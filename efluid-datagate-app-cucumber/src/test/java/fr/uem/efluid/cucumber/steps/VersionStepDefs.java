@@ -155,6 +155,15 @@ public class VersionStepDefs extends CucumberStepDefs {
         assertThat(current.getName()).isEqualTo(name);
     }
 
+    @Then("^the current version model identifier is \"(.*)\"$")
+    public void the_current_version_model_is(String modelId) {
+
+        VersionData current = this.dictionaryManagementService.getLastVersion();
+
+        assertThat(current).isNotNull();
+        assertThat(current.getModelId()).isEqualTo(modelId);
+    }
+
     @Then("^the user cannot add a new version$")
     public void the_user_cannot_add_version() {
 
