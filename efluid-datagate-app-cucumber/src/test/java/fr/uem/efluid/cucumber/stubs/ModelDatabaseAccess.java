@@ -3,7 +3,6 @@ package fr.uem.efluid.cucumber.stubs;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.security.UserHolder;
-import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.tools.Transformer;
 import org.pac4j.core.credentials.password.PasswordEncoder;
@@ -256,7 +255,7 @@ public class ModelDatabaseAccess {
     }
 
     public Optional<TransformerDef> findTransformerDefByProjectAndNameAndType(Project pro, String name, Transformer<?, ?> tran) {
-        return this.transformerDefs.findByProjectAndNameAndType(pro, name, tran.getClass().getSimpleName());
+        return this.transformerDefs.findByProjectAndNameAndTypeAndDeletedTimeIsNull(pro, name, tran.getClass().getSimpleName());
     }
 
     /**
