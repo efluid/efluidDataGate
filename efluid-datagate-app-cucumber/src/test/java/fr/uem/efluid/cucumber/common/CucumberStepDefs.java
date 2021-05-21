@@ -34,6 +34,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
@@ -477,26 +479,14 @@ public abstract class CucumberStepDefs {
      * @param specifiedCommitUuid selected commit (can be null for "ALL")
      * @return export result
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected ExportImportResult<ExportFile> processCommitExportWithoutTransformerCustomization(CommitExportEditData.CommitSelectType type, UUID specifiedCommitUuid) {
 
         // We edit the export
         CommitExportEditData exportEdit = this.commitService.initCommitExport(type, specifiedCommitUuid);
 
         // From the edited data, create an export without transformer customization ...
-        CommitExportDisplay exportDisplay = this.commitService.saveCommitExport(exportEdit);
-
-        try {
-            // Delay for HBM thread closure ???
-            Thread.sleep(10);
-
-            // ... And start it to get its content
-            return this.commitService.processCommitExport(exportDisplay.getUuid());
-        }
-
-        // Try another run for compatibility on some test envs ?
-        catch (Throwable e) {
-            return this.commitService.processCommitExport(exportDisplay.getUuid());
-        }
+        return this.commitService.saveAndExportImmediate(exportEdit);
     }
 
     /**
