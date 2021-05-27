@@ -87,7 +87,7 @@ public class TransformerService extends AbstractApplicationService {
         Map<String, String> transformerNameByType = this.availableTransformers.stream()
                 .collect(Collectors.toMap(t -> t.getClass().getSimpleName(), Transformer::getName));
 
-        return this.transformerDefs.findByProject(this.projectService.getCurrentSelectedProjectEntity()).stream()
+        return this.transformerDefs.findByProjectAndDeletedTimeIsNull(this.projectService.getCurrentSelectedProjectEntity()).stream()
                 .map(def -> {
                     String packageComment = null;
 
@@ -109,7 +109,7 @@ public class TransformerService extends AbstractApplicationService {
      * @return config for transformer defs uuid, on current project
      */
     public Map<UUID, String> getAllTransformerDefConfigs() {
-        return this.transformerDefs.findByProject(this.projectService.getCurrentSelectedProjectEntity()).stream()
+        return this.transformerDefs.findByProjectAndDeletedTimeIsNull(this.projectService.getCurrentSelectedProjectEntity()).stream()
                 .collect(Collectors.toMap(TransformerDef::getUuid, def -> {
                     Transformer<?, ?> transformer = loadTransformerByType(def.getType());
                     return prettyConfig(parseConfiguration(def.getConfiguration(), transformer));
@@ -182,8 +182,7 @@ public class TransformerService extends AbstractApplicationService {
      */
     public TransformerDefEditData editTransformerDef(UUID uuid) {
 
-        TransformerDef def = this.transformerDefs.findById(uuid)
-                .orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
+        TransformerDef def = this.transformerDefs.findByUuidAndDeletedTimeIsNull(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
         Transformer<?, ?> transformer = loadTransformerByType(def.getType());
         Transformer.TransformerConfig config = parseConfiguration(def.getConfiguration(), transformer);
         String prettyCfg = prettyConfig(config);
@@ -199,8 +198,9 @@ public class TransformerService extends AbstractApplicationService {
      * @param uuid of def to delete
      */
     public void deleteTransformerDef(UUID uuid) {
-        TransformerDef def = this.transformerDefs.findById(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
-        this.transformerDefs.delete(def);
+        TransformerDef def = this.transformerDefs.findByUuidAndDeletedTimeIsNull(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
+        def.setDeletedTime(LocalDateTime.now());
+        this.transformerDefs.save(def);
     }
 
     /**
@@ -218,7 +218,7 @@ public class TransformerService extends AbstractApplicationService {
         TransformerDef def;
 
         if (editData.getUuid() != null) {
-            def = this.transformerDefs.findById(editData.getUuid())
+            def = this.transformerDefs.findByUuidAndDeletedTimeIsNull(editData.getUuid())
                     .orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
         } else {
             def = new TransformerDef();
@@ -298,7 +298,7 @@ public class TransformerService extends AbstractApplicationService {
         Map<UUID, String> confs = customizations.stream().collect(Collectors.toMap(c -> c.getTransformerDef().getUuid(), ExportTransformer::getConfiguration));
         Set<UUID> disabled = customizations.stream().filter(ExportTransformer::isDisabled).map(t -> t.getTransformerDef().getUuid()).collect(Collectors.toSet());
 
-        return this.transformerDefs.findByProject(project).stream()
+        return this.transformerDefs.findByProjectAndDeletedTimeIsNull(project).stream()
                 // Remove disabled transformers ...
                 .filter(t -> !disabled.contains(t.getUuid()))
                 // ... And apply updated configs
@@ -334,6 +334,7 @@ public class TransformerService extends AbstractApplicationService {
         local.setProject(imported.getProject());
         local.setConfiguration(imported.getConfiguration());
         local.setImportedTime(LocalDateTime.now());
+        local.setDeletedTime(imported.getDeletedTime());
 
         return local;
     }

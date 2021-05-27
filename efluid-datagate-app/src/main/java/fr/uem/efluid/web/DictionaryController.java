@@ -3,8 +3,10 @@ package fr.uem.efluid.web;
 import fr.uem.efluid.model.repositories.FeatureManager;
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.DictionaryManagementService;
-import fr.uem.efluid.services.Feature;
-import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.services.types.DictionaryEntryEditData;
+import fr.uem.efluid.services.types.FunctionalDomainData;
+import fr.uem.efluid.services.types.TestQueryData;
+import fr.uem.efluid.services.types.VersionCompare;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -71,12 +73,7 @@ public class DictionaryController extends CommonController {
         model.addAttribute("versions", this.dictionaryManagementService.getAvailableVersions());
         model.addAttribute("dictionaryManagementService", this.dictionaryManagementService);
         model.addAttribute("checkVersion", this.dictionaryManagementService.isDictionaryUpdatedAfterLastVersion());
-        model.addAttribute("canCreateVersion", this.dictionaryManagementService.isVersionCanCreate());
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
-
-
-        // If we use the model ID as version name, the name can be ignored / hidden
-        model.addAttribute("noVersionName", this.features.isEnabled(Feature.USE_MODEL_ID_AS_VERSION_NAME));
 
         return "pages/versions";
     }

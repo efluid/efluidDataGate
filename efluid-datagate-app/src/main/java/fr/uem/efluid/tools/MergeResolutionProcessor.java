@@ -286,6 +286,10 @@ public class MergeResolutionProcessor {
         return found.get(0);
     }
 
+    public Collection<ResolutionCase> getCases() {
+        return this.cases;
+    }
+
     private static String renderDiffLine(PreparedIndexEntry entry) {
         return entry != null ? entry.toLogRendering() : " - null - ";
     }

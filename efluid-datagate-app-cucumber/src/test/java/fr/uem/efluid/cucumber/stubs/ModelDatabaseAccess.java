@@ -255,7 +255,7 @@ public class ModelDatabaseAccess {
     }
 
     public Optional<TransformerDef> findTransformerDefByProjectAndNameAndType(Project pro, String name, Transformer<?, ?> tran) {
-        return this.transformerDefs.findByProjectAndNameAndType(pro, name, tran.getClass().getSimpleName());
+        return this.transformerDefs.findByProjectAndNameAndTypeAndDeletedTimeIsNull(pro, name, tran.getClass().getSimpleName());
     }
 
     /**

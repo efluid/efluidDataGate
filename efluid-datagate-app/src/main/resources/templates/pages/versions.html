@@ -17,9 +17,6 @@
         <div th:if="${versions != null && !versions.isEmpty() && checkVersion}" class="alert alert-danger" role="alert" id="versRemark">
             <strong>Depuis la dernière mise à jour de version des mises à jour ont eu lieu dans le dictionnaire.</strong> Créer une nouvelle version pour les intégrer.
         </div>
-        <div th:if="!${canCreateVersion}" class="alert alert-danger" role="alert">
-            <strong>Aucune nouvelle version ne peut être ajoutée actuellement.</strong> La version du modèle de l'application doit être auparavant mise à jour.
-        </div>
 		<form action="#" th:action="@{/ui/versions}" id="setForm" method="post">
             <input type="hidden" name="name" id="targetName"/>
             <table class="table table-sm">
@@ -52,13 +49,10 @@
                             </span>
                         </td>
                     </tr>
-                    <tr th:if="${canCreateVersion}" id="versionListInjectBefore">
-                        <td colspan="4" th:if="${!noVersionName}">
+                    <tr id="versionListInjectBefore">
+                        <td colspan="4">
                             <input type="text" id="versionName" class="form-control" placeholder="Nom"/>
-                            <p id="input-empty" style="display: none">Veuillez saisir un nom de projet</p>
-                        </td>
-                        <td colspan="3" th:if="${noVersionName}">
-                            <strong><span th:if="${modelDesc != null}" class="float-right" th:text="|Ajouter une nouvelle version pour le modèle de l'application actuel (${modelDesc.identity})|">Model</span></strong>
+                            <p id="input-empty" style="display: none">Veuillez saisir un nom de version</p>
                         </td>
                         <td>
                             <button id="addButton" class="btn btn-success btn-sm float-right">Ajouter</button>
@@ -72,7 +66,6 @@
     </span>
 <script layout:fragment="script" th:inline="javascript">
 
-		var noVersionName = /*[[${noVersionName}]]*/ false;
 		var updateType = /*[[${updateType}]]*/ "none";
 
 		$('#color-nav-1').css("font-weight", "bold");
@@ -83,7 +76,7 @@
 			hideDisplays();
 			var name = $("#versionName").val();
 
-			if(!noVersionName && (name == null || name === '')){
+			if(name == null || name === ''){
                 setInvalid("#versionName","Le nom de la version est obligatoire");
             } else {
 			    $("#targetName").val(name);
