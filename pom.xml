@@ -67,7 +67,7 @@
 
         <!-- dependencies - libs -->
         <dependency.zip4j.version>2.7.0</dependency.zip4j.version>
-        <dependency.ojdbc10.version>19.3.0.0</dependency.ojdbc10.version>
+        <dependency.ojdbc10.version>19.10.0.0</dependency.ojdbc10.version>
         <dependency.plexus.version>0.0.7</dependency.plexus.version>
         <dependency.maven-plugin-api.version>3.6.0</dependency.maven-plugin-api.version>
         <dependency.maven-plugin-annotations.version>3.5.2</dependency.maven-plugin-annotations.version>
@@ -295,7 +295,7 @@
             </dependency>
 
             <dependency>
-                <groupId>com.oracle.ojdbc</groupId>
+                <groupId>com.oracle.database.jdbc</groupId>
                 <artifactId>ojdbc10</artifactId>
                 <version>${dependency.ojdbc10.version}</version>
             </dependency>

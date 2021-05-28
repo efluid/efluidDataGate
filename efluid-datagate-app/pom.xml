@@ -186,7 +186,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.oracle.ojdbc</groupId>
+			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc10</artifactId>
 		</dependency>
 

@@ -84,7 +84,7 @@ spring:
         show-sql: false
         hibernate:
             ddl-auto: create
-
+        properties.hibernate.dialect: org.hibernate.dialect.HSQLDialect
     ldap:
         base: ${spring.ldap.embedded.base-dn}
         embedded:
