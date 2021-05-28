@@ -104,6 +104,11 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
         }
 
         @Override
+        boolean isTableNameMatches(DictionaryEntry dict) {
+            return this.parameters.containsKey(dict.getTableName()) && super.isTableNameMatches(dict);
+        }
+
+        @Override
         public boolean isAttachmentPackageSupport() {
             return true;
         }

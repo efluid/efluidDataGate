@@ -592,7 +592,7 @@ public abstract class CucumberStepDefs {
             builder.param("token", getCurrentUserApiToken());
         }
 
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         currentAction = this.mockMvc.perform(builder);
     }
@@ -624,7 +624,7 @@ public abstract class CucumberStepDefs {
             builder.param("token", getCurrentUserApiToken());
         }
 
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         return this.mapper.readValue(this.mockMvc.perform(builder).andReturn().getResponse().getContentAsString(), contentType);
     }
@@ -657,8 +657,8 @@ public abstract class CucumberStepDefs {
         }
 
         builder.content(this.mapper.writeValueAsString(requestBody));
-        builder.contentType(MediaType.APPLICATION_JSON_UTF8);
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.contentType(MediaType.APPLICATION_JSON);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         return this.mapper.readValue(this.mockMvc.perform(builder).andReturn().getResponse().getContentAsString(), contentType);
     }
@@ -730,10 +730,10 @@ public abstract class CucumberStepDefs {
 
         if (requestBody != null) {
             builder.content(this.mapper.writeValueAsString(requestBody));
-            builder.contentType(MediaType.APPLICATION_JSON_UTF8);
+            builder.contentType(MediaType.APPLICATION_JSON);
         }
 
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         currentAction = this.mockMvc.perform(builder);
     }

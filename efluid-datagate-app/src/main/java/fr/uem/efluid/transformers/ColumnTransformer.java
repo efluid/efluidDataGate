@@ -51,7 +51,7 @@ public abstract class ColumnTransformer<C extends ColumnTransformer.Config, R ex
             super.checkContentIsValid(errors);
             if (this.columnNames == null || this.columnNames.size() == 0) {
                 errors.add("At least one column name must be specified. Use \".*\" as default to match all");
-            } else if (this.columnNames.stream().anyMatch(StringUtils::isEmpty)) {
+            } else if (this.columnNames.stream().anyMatch(c -> !StringUtils.hasText(c))) {
                 errors.add("A column name cannot be empty. Use \".*\" as default to match all");
             }
         }

@@ -7,9 +7,7 @@ import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
-import fr.uem.efluid.transformers.EfluidAuditDataTransformer;
 import fr.uem.efluid.transformers.EfluidAuditDataTransformer.Config;
-import fr.uem.efluid.transformers.TransformerValueProvider;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.FormatUtils;
@@ -26,19 +24,20 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("unchecked")
 public class EfluidAuditDataTransformerTest {
 
     private static final String CURRENT_DATE = FormatUtils.format(LocalDateTime.of(2020, 06, 12, 22, 14));
 
-    private ManagedQueriesGenerator queryGenerator = new ManagedQueriesGenerator(rules());
-    private ManagedValueConverter converter = new ManagedValueConverter();
-    private TransformerValueProvider provider = new TransformerValueProvider(this.queryGenerator) {
+    private final ManagedQueriesGenerator queryGenerator = new ManagedQueriesGenerator(rules());
+    private final ManagedValueConverter converter = new ManagedValueConverter();
+    private final TransformerValueProvider provider = new TransformerValueProvider(this.queryGenerator) {
         @Override
         public String getFormatedCurrentTime() {
             return CURRENT_DATE;
         }
     };
-    private EfluidAuditDataTransformer transformer = new EfluidAuditDataTransformer(this.converter, this.provider);
+    private final EfluidAuditDataTransformer transformer = new EfluidAuditDataTransformer(this.converter, this.provider);
 
     private static final LocalDateTime OLD = LocalDateTime.of(2015, 12, 25, 15, 25, 46);
 
@@ -299,7 +298,6 @@ public class EfluidAuditDataTransformerTest {
     private static List<? extends PreparedIndexEntry> diff(PreparedIndexEntry... entries) {
         return Stream.of(entries).collect(Collectors.toList());
     }
-
 
     private static Pair<String, Object> s(String name, String obj) {
         return Pair.of(name, obj);

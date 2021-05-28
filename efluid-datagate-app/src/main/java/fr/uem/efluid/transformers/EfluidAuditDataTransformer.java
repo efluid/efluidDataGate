@@ -138,7 +138,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 errors.add("At least one key value pattern must be specified. Use \".*\" as default to match all");
             }
             if (this.appliedValueFilterPatterns != null) {
-                if (this.appliedValueFilterPatterns.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                if (anyIsEmpty(this.appliedValueFilterPatterns.keySet())) {
                     errors.add("Value filter column name cannot be empty. Use \".*\" as default to match all, or remove all filter patterns");
                 }
             }
@@ -146,10 +146,10 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 errors.add("At least one update on date or actor must be specified.");
             }
             if (this.dateUpdates != null) {
-                if (this.dateUpdates.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                if (anyIsEmpty(this.dateUpdates.keySet())) {
                     errors.add("A date update column name cannot be empty. Use \".*\" as default to match all");
                 }
-                if (this.dateUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(StringUtils::isEmpty)) {
+                if (this.dateUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(v -> !StringUtils.hasText(v))) {
                     errors.add("A date update value cannot be empty. Use \"" + CURRENT_DATE_EXPR + "\" for current date or a fixed date using format \"" + FormatUtils.DATE_FORMAT + "\"");
                 } else if (this.dateUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(v -> !CURRENT_DATE_EXPR.equals(v) && !FormatUtils.canParseLd(v))) {
                     errors.add("A date update value must be \"current_date\" or a fixed date value using format \"" + FormatUtils.DATE_FORMAT + "\"");
@@ -162,10 +162,10 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 }
             }
             if (this.actorUpdates != null) {
-                if (this.actorUpdates.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                if (anyIsEmpty(this.actorUpdates.keySet())) {
                     errors.add("An actor update column name cannot be empty. Use \".*\" as default to match all");
                 }
-                if (this.actorUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(StringUtils::isEmpty)) {
+                if (this.actorUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(v -> !StringUtils.hasText(v))) {
                     errors.add("An actor update value cannot be empty. Specify a valid actor name value");
                 }
                 if (this.actorUpdates.values().stream().anyMatch(s -> (s.getOnValues() == null || s.getOnValues().isEmpty()) && (s.getOnActions() == null || s.getOnActions().isEmpty()))) {

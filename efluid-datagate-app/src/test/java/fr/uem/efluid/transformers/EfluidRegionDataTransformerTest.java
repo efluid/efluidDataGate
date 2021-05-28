@@ -11,270 +11,171 @@ import fr.uem.efluid.transformers.EfluidRegionDataTransformer.Config;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.FormatUtils;
-import org.assertj.core.api.AbstractStringAssert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.springframework.data.util.Pair;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
+@SuppressWarnings("unchecked")
 public class EfluidRegionDataTransformerTest {
 
-    private static final String CURRENT_DATE = FormatUtils.format(LocalDateTime.of(2020, 06, 12, 22, 14));
+    private static final String CURRENT_DATE = FormatUtils.format(LocalDateTime.of(2020, 6, 12, 22, 14));
 
-    private ManagedQueriesGenerator queryGenerator = new ManagedQueriesGenerator(rules());
-    private ManagedValueConverter converter = new ManagedValueConverter();
-    private TransformerValueProvider provider = new TransformerValueProvider(this.queryGenerator) {
+    private final ManagedQueriesGenerator queryGenerator = new ManagedQueriesGenerator(rules());
+    private final ManagedValueConverter converter = new ManagedValueConverter();
+    private final TransformerValueProvider provider = new TransformerValueProvider(this.queryGenerator) {
         @Override
         public String getFormatedCurrentTime() {
             return CURRENT_DATE;
         }
     };
-    private EfluidRegionDataTransformer transformer = new EfluidRegionDataTransformer(this.converter, this.provider);
-
-    private static final LocalDateTime OLD = LocalDateTime.of(2015, 12, 25, 15, 25, 46);
+    private final EfluidRegionDataTransformer transformer = new EfluidRegionDataTransformer(this.converter, this.provider);
 
     @Test
-    public void testVariousApplyOnAllDictionnary() {
+    public void testVariousDictionnaryApply() {
 
-        assertThat(this.transformer.isApplyOnDictionaryEntry(table("TANY", "COL1"), config(
-                "    {"
-                        + "  \"tablePattern\":\".*\""
-                        + "}"
-        ))).isTrue();
+        List<String[]> sources = List.of(
+                new String[]{"DIR", "TABNAME", "OP", "COLS_PK", "SRC_ID1", "SRC_ID2", "SRC_ID3", "SRC_ID4", "SRC_ID5"},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYAA  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYBB  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYCC  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYDD  ", "       ", "       ", "       ", "       "}
+        );
 
-        assertThat(this.transformer.isApplyOnDictionaryEntry(table("TOTHER", "COL1", "COL2"), config(
-                "    {"
-                        + "  \"tablePattern\":\".*\""
-                        + "}"
-        ))).isTrue();
+        // Match in json cfg + specified regions
+        assertThat(this.transformer.isApplyOnDictionaryEntry(table("T_MATCH", "COL1"),
+                config(sources, "{\"tablePattern\":\".*\",\"project\":\"test\"}", "regA"))).isTrue();
 
-        assertThat(this.transformer.isApplyOnDictionaryEntry(table("TOTHER", "COL1", "COL2"), config(
-                "    {"
-                        + "  \"tablePattern\":\"TOTH.*\""
-                        + "}"
-        ))).isTrue();
+        // Match in json cfg but not in specified regions
+        assertThat(this.transformer.isApplyOnDictionaryEntry(table("TANY", "COL1"),
+                config(sources, "{\"tablePattern\":\".*\",\"project\":\"test\"}", "regA"))).isFalse();
 
-        assertThat(this.transformer.isApplyOnDictionaryEntry(table("TOTHER", "COL1", "COL2"), config(
-                "    {"
-                        + "  \"tablePattern\":\"TOTHER\""
-                        + "}"
-        ))).isTrue();
-
+        // Doesn't match in json cfg neither in specified regions
+        assertThat(this.transformer.isApplyOnDictionaryEntry(table("T_MATCH", "COL1"),
+                config(sources, "{\"tablePattern\":\"TANY\",\"project\":\"test\"}", "regA"))).isFalse();
     }
 
     @Test
-    public void testVariousNotApplyOnAllDictionnary() {
+    public void testVariousApplyOnLinesRegardingRegion() {
 
-        assertThat(this.transformer.isApplyOnDictionaryEntry(table("TOTHER", "COL1", "COL2"), config(
-                "    {"
-                        + "  \"tablePattern\":\"TAN.*\""
-                        + "}"
-        ))).isFalse();
+        List<String[]> sources = List.of(
+                new String[]{"DIR", "TABNAME", "OP", "COLS_PK", "SRC_ID1", "SRC_ID2", "SRC_ID3", "SRC_ID4", "SRC_ID5"},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYAA  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYBB  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYCC  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYDD  ", "       ", "       ", "       ", "       "},
+                new String[]{"regB", "T_MATCH", "INS", "+ KEY", "KEYEE  ", "       ", "       ", "       ", "       "},
+                new String[]{"regB", "T_MATCH", "INS", "+ KEY", "KEYFF  ", "       ", "       ", "       ", "       "},
+                new String[]{"regB", "T_MATCH", "INS", "+ KEY", "KEYGG  ", "       ", "       ", "       ", "       "},
+                new String[]{"regB", "T_MATCH", "INS", "+ KEY", "KEYHH  ", "       ", "       ", "       ", "       "}
+        );
 
-        assertThat(this.transformer.isApplyOnDictionaryEntry(table("TOTHER", "COL1", "COL2"), config(
-                "    {"
-                        + "  \"tablePattern\":\"TANY\""
-                        + "}"
-        ))).isFalse();
+        String cfg = "{\"tablePattern\":\".*\",\"project\":\"test\"}";
+
+        DictionaryEntry table = table("T_MATCH", "KEY", "COL1", "COL2");
+
+        // Check with regA match
+        var updatedDiffRegA = diffForKeys("KEYAA", "KEYBB", "KEYCC", "KEYDD", "KEYEE", "KEYFF", "KEYGG", "KEYHH");
+        this.transformer.transform(table, config(sources, cfg, "regA"), updatedDiffRegA);
+
+        assertThat(updatedDiffRegA).hasSize(4);
+        assertThat(updatedDiffRegA.stream().map(PreparedIndexEntry::getKeyValue)).containsOnly("KEYAA", "KEYBB", "KEYCC", "KEYDD");
+
+        // Check with regB match
+        var updatedDiffRegB = diffForKeys("KEYAA", "KEYBB", "KEYCC", "KEYDD", "KEYEE", "KEYFF", "KEYGG", "KEYHH");
+        this.transformer.transform(table, config(sources, cfg, "regB"), updatedDiffRegB);
+
+        assertThat(updatedDiffRegB).hasSize(4);
+        assertThat(updatedDiffRegB.stream().map(PreparedIndexEntry::getKeyValue)).containsOnly("KEYEE", "KEYFF", "KEYGG", "KEYHH");
+
+        // Check with less matching items
+        var updatedDiffRegBis = diffForKeys("KEYAA", "KEYBB", "KEYCC", "KEYDD", "KEYEE", "KEYGG", "KEYHH", "KEYZZ", "KEYXX", "KEY12");
+        this.transformer.transform(table, config(sources, cfg, "regB"), updatedDiffRegBis);
+
+        assertThat(updatedDiffRegBis).hasSize(3);
+        assertThat(updatedDiffRegBis.stream().map(PreparedIndexEntry::getKeyValue)).containsOnly("KEYEE", "KEYGG", "KEYHH");
     }
 
     @Test
-    public void testApplyOnLinesByIndex() {
+    public void testVariousNotApply() {
 
-        List<? extends PreparedIndexEntry> diff = diff(
-                l("ID0", s("COL1", "test1"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID1", s("COL1", "test2"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID2", s("COL1", "test3"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID3", s("COL1", "test4"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test"))
+        List<String[]> sources = List.of(
+                new String[]{"DIR", "TABNAME", "OP", "COLS_PK", "SRC_ID1", "SRC_ID2", "SRC_ID3", "SRC_ID4", "SRC_ID5"},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYAA  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYBB  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYCC  ", "       ", "       ", "       ", "       "},
+                new String[]{"regA", "T_MATCH", "INS", "+ KEY", "KEYDD  ", "       ", "       ", "       ", "       "},
+                new String[]{"regB", "T_MATCH", "INS", "+ KEY", "KEYEE  ", "       ", "       ", "       ", "       "},
+                new String[]{"regB", "T_MATCH", "INS", "+ KEY", "KEYFF  ", "       ", "       ", "       ", "       "},
+                new String[]{"regB", "T_MATCH", "INS", "+ KEY", "KEYGG  ", "       ", "       ", "       ", "       "},
+                new String[]{"regB", "T_MATCH", "INS", "+ KEY", "KEYHH  ", "       ", "       ", "       ", "       "}
         );
 
-        this.transformer.transform(
-                table("TOTHER", "COL1", "DATE1", "DATE2", "ACT1", "ACT2", "ACT3"),
-                config(
-                        "    {"
-                                + "  \"tablePattern\":\"TOTHER\","
-                                + "  \"appliedKeyPatterns\":[\"ID1\"],"
-                                + "  \"appliedValueFilterPatterns\":{\"COL1\":\".*\"},"
-                                + "  \"dateUpdates\":{\"DATE1\":{\"value\":\"2022-12-25\",\"onActions\": [\"ADD\"]}, \"DATE2\":{\"value\":\"2025-12-25\",\"onActions\": [\"ADD\"]}},"
-                                + "  \"actorUpdates\":{\"ACT1\":{\"value\":\"bob\",\"onActions\": [\"ADD\"]}, \"ACT2\":{\"value\":\"toto\",\"onActions\": [\"ADD\"]}}"
-                                + "}"
-                ), diff
-        );
+        String cfg = "{\"tablePattern\":\".*\",\"project\":\"test\"}";
 
-        // Only ID1 is changed
-        check(diff, 0).isEqualTo("COL1:'test1', DATE1:2015-12-25 15:25:46, DATE2:2015-12-25 15:25:46, ACT1:'test', ACT2:'test', ACT3:'test'");
-        check(diff, 1).isEqualTo("COL1:'test2', DATE1:2022-12-25 00:00:00, DATE2:2025-12-25 00:00:00, ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(diff, 2).isEqualTo("COL1:'test3', DATE1:2015-12-25 15:25:46, DATE2:2015-12-25 15:25:46, ACT1:'test', ACT2:'test', ACT3:'test'");
-        check(diff, 3).isEqualTo("COL1:'test4', DATE1:2015-12-25 15:25:46, DATE2:2015-12-25 15:25:46, ACT1:'test', ACT2:'test', ACT3:'test'");
+        // Check with not matching table
+        var updatedDiffRegA = diffForKeys("KEYAA", "KEYBB", "KEYCC", "KEYDD", "KEYEE", "KEYFF", "KEYGG", "KEYHH");
+        this.transformer.transform(table("NOT_MATCHING", "KEY", "COL1", "COL2"), config(sources, cfg, "regA"), updatedDiffRegA);
+
+        assertThat(updatedDiffRegA).hasSize(8);
+        assertThat(updatedDiffRegA.stream().map(PreparedIndexEntry::getKeyValue)).containsOnly("KEYAA", "KEYBB", "KEYCC", "KEYDD", "KEYEE", "KEYFF", "KEYGG", "KEYHH");
+
+        // Check with a region not specified at all in source
+        // TODO : check this rule
+        var updatedDiffRegC = diffForKeys("KEYAA", "KEYBB", "KEYCC", "KEYEE");
+        this.transformer.transform(table("T_MATCH", "KEY", "COL1", "COL2"), config(sources, cfg, "regC"), updatedDiffRegC);
+
+        assertThat(updatedDiffRegC).hasSize(4);
+        assertThat(updatedDiffRegC.stream().map(PreparedIndexEntry::getKeyValue)).containsOnly("KEYAA", "KEYBB", "KEYCC", "KEYEE");
     }
 
-    @Test
-    public void testApplyOnLinesByIndexAndFilter() {
+    private Config config(List<String[]> source, String json, String regionCode) {
 
-        List<? extends PreparedIndexEntry> diff = diff(
-                l("ID0", s("COL1", "test1"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID1", s("COL1", "test2"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID2", s("COL1", "test3"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID3", s("COL1", "test4"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test"))
-        );
-
-        this.transformer.transform(
-                table("TOTHER", "COL1", "DATE1", "DATE2", "ACT1", "ACT2", "ACT3"),
-                config(
-                        "    {"
-                                + "  \"tablePattern\":\"TOTHER\","
-                                + "  \"appliedKeyPatterns\":[\"ID.*\"],"
-                                + "  \"appliedValueFilterPatterns\":{\"COL1\":\".*st3\"},"
-                                + "  \"dateUpdates\":{\"DATE1\":{\"value\":\"2022-12-25\",\"onActions\": [\"ADD\"]}, \"DATE2\":{\"value\":\"2025-12-25\",\"onActions\": [\"ADD\"]}},"
-                                + "  \"actorUpdates\":{\"ACT1\":{\"value\":\"bob\",\"onActions\": [\"ADD\"]}, \"ACT2\":{\"value\":\"toto\",\"onActions\": [\"ADD\"]}}"
-                                + "}"
-                ), diff
-        );
-
-        // Only ID2 is changed
-        check(diff, 0).isEqualTo("COL1:'test1', DATE1:2015-12-25 15:25:46, DATE2:2015-12-25 15:25:46, ACT1:'test', ACT2:'test', ACT3:'test'");
-        check(diff, 1).isEqualTo("COL1:'test2', DATE1:2015-12-25 15:25:46, DATE2:2015-12-25 15:25:46, ACT1:'test', ACT2:'test', ACT3:'test'");
-        check(diff, 2).isEqualTo("COL1:'test3', DATE1:2022-12-25 00:00:00, DATE2:2025-12-25 00:00:00, ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(diff, 3).isEqualTo("COL1:'test4', DATE1:2015-12-25 15:25:46, DATE2:2015-12-25 15:25:46, ACT1:'test', ACT2:'test', ACT3:'test'");
-    }
-
-    @Test
-    public void testApplyOnLinesWithMissingValues() {
-
-        List<? extends PreparedIndexEntry> diff = diff(
-                l("ID0", s("COL1", "test1"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID1", s("COL1", "test2"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID2", s("COL1", "test3"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID3", s("COL1", "test4"), s("ACT2", "test"), s("ACT3", "test"))
-        );
-
-        this.transformer.transform(
-                table("TOTHER", "COL1", "DATE1", "DATE2", "ACT1", "ACT2", "ACT3"),
-                config(
-                        "    {"
-                                + "  \"tablePattern\":\"TOTHER\","
-                                + "  \"appliedKeyPatterns\":[\"ID.*\"],"
-                                + "  \"appliedValueFilterPatterns\":{\"COL1\":\".*st[2,3]\"},"
-                                + "  \"dateUpdates\":{\"DATE1\":{\"value\":\"2022-12-25\",\"onActions\": [\"ADD\"]}, \"DATE2\":{\"value\":\"2025-12-25\",\"onActions\": [\"ADD\"]}},"
-                                + "  \"actorUpdates\":{\"ACT1\":{\"value\":\"bob\",\"onActions\": [\"ADD\"]}, \"ACT2\":{\"value\":\"toto\",\"onActions\": [\"ADD\"]}}"
-                                + "}"
-                ), diff
-        );
-
-        // Only ID2 is changed
-        check(diff, 0).isEqualTo("COL1:'test1', ACT2:'test', ACT3:'test'");
-        check(diff, 1).isEqualTo("COL1:'test2', ACT2:'toto', ACT3:'test', DATE1:2022-12-25 00:00:00, DATE2:2025-12-25 00:00:00, ACT1:'bob'");
-        check(diff, 2).isEqualTo("COL1:'test3', ACT2:'toto', ACT3:'test', DATE1:2022-12-25 00:00:00, DATE2:2025-12-25 00:00:00, ACT1:'bob'");
-        check(diff, 3).isEqualTo("COL1:'test4', ACT2:'test', ACT3:'test'");
-    }
-
-    @Test
-    public void testApplyOnLinesByIndexNoFilter() {
-
-        List<? extends PreparedIndexEntry> diff = diff(
-                l("ID0", s("COL1", "test1"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID1", s("COL1", "test2"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID2", s("COL1", "test3"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test")),
-                l("ID3", s("COL1", "test4"), d("DATE1", OLD), d("DATE2", OLD), s("ACT1", "test"), s("ACT2", "test"), s("ACT3", "test"))
-        );
-
-        this.transformer.transform(
-                table("TOTHER", "COL1", "DATE1", "DATE2", "ACT1", "ACT2", "ACT3"),
-                config(
-                        "    {"
-                                + "  \"tablePattern\":\"TOTHER\","
-                                + "  \"appliedKeyPatterns\":[\"ID.*\"],"
-                                + "  \"appliedValueFilterPatterns\":{},"
-                                + "  \"dateUpdates\":{\"DATE1\":{\"value\":\"2022-12-25\",\"onActions\": [\"ADD\",\"REMOVE\",\"UPDATE\"]}, \"DATE2\":{\"value\":\"2025-12-25\",\"onActions\": [\"ADD\",\"REMOVE\",\"UPDATE\"]}},"
-                                + "  \"actorUpdates\":{\"ACT1\":{\"value\":\"bob\",\"onActions\": [\"ADD\",\"REMOVE\",\"UPDATE\"]}, \"ACT2\":{\"value\":\"toto\",\"onActions\": [\"ADD\",\"REMOVE\",\"UPDATE\"]}}"
-                                + "}"
-                ), diff
-        );
-
-        // All are changed
-        check(diff, 0).isEqualTo("COL1:'test1', DATE1:2022-12-25 00:00:00, DATE2:2025-12-25 00:00:00, ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(diff, 1).isEqualTo("COL1:'test2', DATE1:2022-12-25 00:00:00, DATE2:2025-12-25 00:00:00, ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(diff, 2).isEqualTo("COL1:'test3', DATE1:2022-12-25 00:00:00, DATE2:2025-12-25 00:00:00, ACT1:'bob', ACT2:'toto', ACT3:'test'");
-        check(diff, 3).isEqualTo("COL1:'test4', DATE1:2022-12-25 00:00:00, DATE2:2025-12-25 00:00:00, ACT1:'bob', ACT2:'toto', ACT3:'test'");
-    }
-
-    @Test
-    public void testApplyCombined() {
-
-        List<? extends PreparedIndexEntry> diff = diff(
-                l("1", s("VALUE", "INIT_1"), s("ETAT_OBJET", "TODO_DELETED"), d("DATE_SUPPRESSION", OLD), d("DATE_MODIFICATION", OLD), d("DATE_CREATION", OLD), s("ACTEUR_SUPPRESSION", "admin_del_src"), s("ACTEUR_MODIFICATION", "admin_src"), s("ACTEUR_CREATION", "admin_src")),
-                l("2", s("VALUE", "INIT_2"), s("ETAT_OBJET", "TODO_UPDATE"), d("DATE_SUPPRESSION", OLD), d("DATE_MODIFICATION", OLD), d("DATE_CREATION", OLD), s("ACTEUR_SUPPRESSION", "admin_del_src2"), s("ACTEUR_MODIFICATION", "admin_src2"), s("ACTEUR_CREATION", "admin_src2"))
-        );
-
-        this.transformer.transform(
-                table("TOTHER", "VALUE", "ETAT_OBJET", "DATE_SUPPRESSION", "DATE_MODIFICATION", "DATE_CREATION", "ACTEUR_SUPPRESSION", "ACTEUR_MODIFICATION", "ACTEUR_CREATION"),
-                config(
-                        "  {" +
-                                "  \"tablePattern\":\"T_EFLUID_TEST_AUDIT\"," +
-                                "  \"appliedKeyPatterns\":[\".*\"]," +
-                                "  \"appliedValueFilterPatterns\":{\"ETAT_OBJET\":\"TODO.*\"}," +
-                                "  \"dateUpdates\":{\"DATE_.*\":{\"value\":\"2020-05-11\",\"onActions\": [\"ADD\"]}}," +
-                                "  \"actorUpdates\":{\"ACTEUR_.*\":{\"value\":\"evt 154654\",\"onActions\": [\"ADD\"]}}" +
-                                "}"
-                ), diff
-        );
-
-        // All are changed
-        check(diff, 0).isEqualTo("VALUE:'INIT_1', ETAT_OBJET:'TODO_DELETED', DATE_SUPPRESSION:2020-05-11 00:00:00, DATE_MODIFICATION:2020-05-11 00:00:00, DATE_CREATION:2020-05-11 00:00:00, ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
-        check(diff, 1).isEqualTo("VALUE:'INIT_2', ETAT_OBJET:'TODO_UPDATE', DATE_SUPPRESSION:2020-05-11 00:00:00, DATE_MODIFICATION:2020-05-11 00:00:00, DATE_CREATION:2020-05-11 00:00:00, ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
-    }
-
-    @Test
-    public void testApplyCurrentDate() {
-
-        List<? extends PreparedIndexEntry> diff = diff(
-                l("1", s("VALUE", "INIT_1"), s("ETAT_OBJET", "TODO_DELETED"), d("DATE_SUPPRESSION", OLD), d("DATE_MODIFICATION", OLD), d("DATE_CREATION", OLD), s("ACTEUR_SUPPRESSION", "admin_del_src"), s("ACTEUR_MODIFICATION", "admin_src"), s("ACTEUR_CREATION", "admin_src")),
-                l("2", s("VALUE", "INIT_2"), s("ETAT_OBJET", "TODO_UPDATE"), d("DATE_SUPPRESSION", OLD), d("DATE_MODIFICATION", OLD), d("DATE_CREATION", OLD), s("ACTEUR_SUPPRESSION", "admin_del_src2"), s("ACTEUR_MODIFICATION", "admin_src2"), s("ACTEUR_CREATION", "admin_src2"))
-        );
-
-        this.transformer.transform(
-                table("TOTHER", "VALUE", "ETAT_OBJET", "DATE_SUPPRESSION", "DATE_MODIFICATION", "DATE_CREATION", "ACTEUR_SUPPRESSION", "ACTEUR_MODIFICATION", "ACTEUR_CREATION"),
-                config(
-                        "  {" +
-                                "  \"tablePattern\":\"T_EFLUID_TEST_AUDIT\"," +
-                                "  \"appliedKeyPatterns\":[\".*\"]," +
-                                "  \"dateUpdates\":{\"DATE_.*\":{\"value\":\"current_date\",\"onActions\": [\"ADD\"]}}," +
-                                "  \"actorUpdates\":{\"ACTEUR_.*\":{\"value\":\"evt 154654\",\"onActions\": [\"ADD\"]}}" +
-                                "}"
-                ), diff
-        );
-
-        // All are changed
-        check(diff, 0).isEqualTo("VALUE:'INIT_1', ETAT_OBJET:'TODO_DELETED', DATE_SUPPRESSION:" + CURRENT_DATE + ", DATE_MODIFICATION:" + CURRENT_DATE + ", DATE_CREATION:" + CURRENT_DATE + ", ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
-        check(diff, 1).isEqualTo("VALUE:'INIT_2', ETAT_OBJET:'TODO_UPDATE', DATE_SUPPRESSION:" + CURRENT_DATE + ", DATE_MODIFICATION:" + CURRENT_DATE + ", DATE_CREATION:" + CURRENT_DATE + ", ACTEUR_SUPPRESSION:'evt 154654', ACTEUR_MODIFICATION:'evt 154654', ACTEUR_CREATION:'evt 154654'");
-    }
-
-    private AbstractStringAssert<?> check(List<? extends PreparedIndexEntry> transformed, int index) {
-        return assertThat(this.converter.convertToHrPayload(transformed.get(index).getPayload(), null));
-    }
-
-    private Config config(String json) {
-
+        /*
+         * Prepare a complete configuration from some source objects, to simulate DB load of region code, and apply
+         * of CSV content of source definition (from a List<String[]>)
+         */
         try {
+            JdbcTemplate template = Mockito.mock(JdbcTemplate.class);
+            when(template.query(any(String.class), any(ResultSetExtractor.class), any(String.class))).thenReturn(regionCode);
             Config cfg = new ObjectMapper().readValue(json, Config.class);
-            cfg.importAttachmentPackageData();
+            StringBuilder data = new StringBuilder();
+            source.forEach(l -> data.append(Stream.of(l).map(String::trim).collect(Collectors.joining(";"))).append("\n"));
+            cfg.importAttachmentPackageData(data.toString().getBytes(StandardCharsets.UTF_8), template, this.converter);
+            return cfg;
         } catch (IOException e) {
             throw new AssertionError("Failed json config : not valid", e);
         }
-
     }
 
-
-    private static DictionaryEntry table(String name, String... columns) {
+    private static DictionaryEntry table(String name, String keyName, String... columns) {
         return DataGenerationUtils.entry("Modèle de compteur", null, Stream.of(columns).map(c -> String.format("cur.\"%s\"", c)).collect(Collectors.joining(", ")),
-                name, "\"ACTIF\"=true", "CODE_SERIE", ColumnType.STRING);
+                name, "\"ACTIF\"=true", keyName, ColumnType.STRING);
+    }
+
+    private List<? extends PreparedIndexEntry> diffForKeys(String... keys) {
+
+        AtomicInteger pos = new AtomicInteger(1);
+
+        return diff(
+                Stream.of(keys).map(
+                        k -> l(k, s("COL1", "test" + pos.incrementAndGet()), s("COL2", "test"))
+                ).collect(Collectors.toList()).toArray(new PreparedIndexEntry[]{})
+        );
     }
 
     private PreparedIndexEntry l(String key, Pair<String, Object>... contentValues) {
@@ -301,10 +202,6 @@ public class EfluidRegionDataTransformerTest {
 
 
     private static Pair<String, Object> s(String name, String obj) {
-        return Pair.of(name, obj);
-    }
-
-    private static Pair<String, Object> d(String name, LocalDateTime obj) {
         return Pair.of(name, obj);
     }
 

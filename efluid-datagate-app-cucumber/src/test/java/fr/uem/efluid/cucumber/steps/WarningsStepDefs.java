@@ -16,6 +16,8 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +84,7 @@ public class WarningsStepDefs extends CucumberStepDefs {
 
         assertRequestWasOk();
 
-        String json = currentAction.andReturn().getResponse().getContentAsString();
+        String json = currentAction.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
 
         List<AnomalyView> result = mapper.readValue(json, new TypeReference<List<AnomalyView>>() {
         });

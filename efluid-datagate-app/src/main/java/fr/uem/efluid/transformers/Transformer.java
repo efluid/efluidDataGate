@@ -14,8 +14,10 @@ import fr.uem.efluid.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -313,6 +315,10 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
                 JdbcTemplate managedSource,
                 ManagedValueConverter valueConverter) {
             return null;
+        }
+
+        protected static boolean anyIsEmpty(Collection<String> vals){
+            return vals.stream().anyMatch(v -> !StringUtils.hasText(v));
         }
     }
 
