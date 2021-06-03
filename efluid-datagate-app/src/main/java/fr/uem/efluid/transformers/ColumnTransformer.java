@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.transformers;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uem.efluid.ColumnType;
@@ -6,6 +6,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import java.util.regex.Pattern;
 /**
  * Transformer model for process at column level
  */
-public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTransformer.Config, R extends ColumnTransformer.Runner<C>> extends Transformer<C, R> {
+public abstract class ColumnTransformer<C extends ColumnTransformer.Config, R extends ColumnTransformer.Runner<C>> extends Transformer<C, R> {
 
     protected ColumnTransformer(ManagedValueConverter converter, TransformerValueProvider provider) {
         super(converter, provider);
@@ -50,7 +51,7 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
             super.checkContentIsValid(errors);
             if (this.columnNames == null || this.columnNames.size() == 0) {
                 errors.add("At least one column name must be specified. Use \".*\" as default to match all");
-            } else if (this.columnNames.stream().anyMatch(StringUtils::isEmpty)) {
+            } else if (this.columnNames.stream().anyMatch(c -> !StringUtils.hasText(c))) {
                 errors.add("A column name cannot be empty. Use \".*\" as default to match all");
             }
         }
@@ -79,14 +80,21 @@ public abstract class ColumnTransformer<C extends fr.uem.efluid.tools.ColumnTran
         }
 
         @Override
-        public void accept(IndexAction action, List<Value> values) {
+        public boolean transform(IndexAction action, String key,  List<Value> values) {
+
+            // Detect if any change was processed
+            boolean updated = false;
+
             // Process on indexed list for replacement support
             for (int i = 0; i < values.size(); i++) {
                 Value val = values.get(i);
                 if (this.config.isColumnNameMatches(val)) {
                     values.set(i, transformedValue(val, transformValue(val.getValueAsString(), val.getType())));
+                    updated = true;
                 }
             }
+
+            return updated;
         }
 
         @Override

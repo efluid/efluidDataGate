@@ -152,6 +152,7 @@ public class VersionContentChangesGenerator {
             */
 
             // All referenced dicts for 2 version for column link data building
+            // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
             this.oneAllDicts = this.oneDicts.stream().collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
             this.twoAllDicts = this.twoDicts.stream().collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
         }
@@ -461,7 +462,7 @@ public class VersionContentChangesGenerator {
 
     public static List<FunctionalDomain> readDomains(Version version) {
 
-        if (StringUtils.isEmpty(version.getDomainsContent())) {
+        if (!StringUtils.hasText(version.getDomainsContent())) {
             return Collections.emptyList();
         }
 
@@ -474,7 +475,7 @@ public class VersionContentChangesGenerator {
 
     public static List<DictionaryEntry> readDict(Version version) {
 
-        if (StringUtils.isEmpty(version.getDictionaryContent())) {
+        if (!StringUtils.hasText(version.getDictionaryContent())) {
             return Collections.emptyList();
         }
 
@@ -487,7 +488,7 @@ public class VersionContentChangesGenerator {
 
     public static List<TableLink> readLinks(Version version) {
 
-        if (StringUtils.isEmpty(version.getLinksContent())) {
+        if (!StringUtils.hasText(version.getLinksContent())) {
             return Collections.emptyList();
         }
 
@@ -500,7 +501,7 @@ public class VersionContentChangesGenerator {
 
     public static List<TableMapping> readMappings(Version version) {
 
-        if (StringUtils.isEmpty(version.getMappingsContent())) {
+        if (!StringUtils.hasText(version.getMappingsContent())) {
             return Collections.emptyList();
         }
         return Stream.of(version.getMappingsContent().split(VERSION_CONTENT_ITEM_SEP)).map(s -> {

@@ -150,6 +150,11 @@
 			<artifactId>activation</artifactId>
 		</dependency>
 
+		<dependency>
+			<groupId>javax.validation</groupId>
+			<artifactId>validation-api</artifactId>
+		</dependency>
+
 		<!-- Security -->
 
 		<dependency>
@@ -181,7 +186,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.oracle.ojdbc</groupId>
+			<groupId>com.oracle.database.jdbc</groupId>
 			<artifactId>ojdbc10</artifactId>
 		</dependency>
 

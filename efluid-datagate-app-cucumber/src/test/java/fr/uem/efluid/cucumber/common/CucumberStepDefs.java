@@ -15,7 +15,7 @@ import fr.uem.efluid.services.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.ManagedQueriesGenerator;
 import fr.uem.efluid.tools.ManagedValueConverter;
-import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.transformers.Transformer;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -84,6 +84,7 @@ public abstract class CucumberStepDefs {
     private static final String DEFAULT_TABLE_SEVEN = "Table Seven";
     private static final String DEFAULT_TABLE_NULLABLE = "Table Nullable";
     private static final String DEFAULT_TTEST1 = "Table EfluidTest1";
+    private static final String DEFAULT_TTEST2 = "Table EfluidTest2";
     private static final String DEFAULT_EFLUIDTESTNUMBER = "Table EfluidTestNumber";
     private static final String DEFAULT_TTESTMULTIDATATYPE = "Table EfluidTestMultiDataType";
     private static final String DEFAULT_EFLUIDTESTPKCOMPOSITE = "Table EfluidTestPkComposite";
@@ -302,7 +303,7 @@ public abstract class CucumberStepDefs {
 
         this.dets.completeWizard();
 
-        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1, EFLUIDTESTNUMBER, TTESTMULTIDATATYPE, EFLUIDTESTPKCOMPOSITE, TTESTNULLLINK_SRC, TTESTNULLLINK_DEST, EFLUIDTESTAUDIT);
+        initDictionaryForDefaultVersionWithTables(newDomain, newProject, TTEST1, TTEST2, EFLUIDTESTNUMBER, TTESTMULTIDATATYPE, EFLUIDTESTPKCOMPOSITE, TTESTNULLLINK_SRC, TTESTNULLLINK_DEST, EFLUIDTESTAUDIT);
     }
 
     protected void initDictionaryForDefaultVersionWithTables(FunctionalDomain domain, Project project, String... tableNames) {
@@ -591,7 +592,7 @@ public abstract class CucumberStepDefs {
             builder.param("token", getCurrentUserApiToken());
         }
 
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         currentAction = this.mockMvc.perform(builder);
     }
@@ -623,7 +624,7 @@ public abstract class CucumberStepDefs {
             builder.param("token", getCurrentUserApiToken());
         }
 
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         return this.mapper.readValue(this.mockMvc.perform(builder).andReturn().getResponse().getContentAsString(), contentType);
     }
@@ -656,8 +657,8 @@ public abstract class CucumberStepDefs {
         }
 
         builder.content(this.mapper.writeValueAsString(requestBody));
-        builder.contentType(MediaType.APPLICATION_JSON_UTF8);
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.contentType(MediaType.APPLICATION_JSON);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         return this.mapper.readValue(this.mockMvc.perform(builder).andReturn().getResponse().getContentAsString(), contentType);
     }
@@ -729,10 +730,10 @@ public abstract class CucumberStepDefs {
 
         if (requestBody != null) {
             builder.content(this.mapper.writeValueAsString(requestBody));
-            builder.contentType(MediaType.APPLICATION_JSON_UTF8);
+            builder.contentType(MediaType.APPLICATION_JSON);
         }
 
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         currentAction = this.mockMvc.perform(builder);
     }
@@ -893,6 +894,9 @@ public abstract class CucumberStepDefs {
                     break;
                 case TTEST1:
                     tables.add(table(DEFAULT_TTEST1, TTEST1, domain, "cur.\"COL1\"", DEFAULT_WHERE, "ID", STRING));
+                    break;
+                case TTEST2:
+                    tables.add(table(DEFAULT_TTEST2, TTEST2, domain, "cur.\"COL1\"", DEFAULT_WHERE, "ID", STRING));
                     break;
                 case EFLUIDTESTNUMBER:
                     tables.add(table(DEFAULT_EFLUIDTESTNUMBER, EFLUIDTESTNUMBER, domain, "cur.\"COL1\", cur.\"COL2\"", DEFAULT_WHERE, "ID", STRING));

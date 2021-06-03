@@ -8,7 +8,7 @@ import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfig
 import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
 import fr.uem.efluid.services.types.TransformerType;
-import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.transformers.Transformer;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;
@@ -198,6 +198,15 @@ public class TransformerStepDefs extends CucumberStepDefs {
                 "def",
                 TransformerDefEditData.class,
                 t -> jsonEquals(t.getConfiguration(), config.getContent()));
+    }
+
+    @Then("^the transformer attachment comment is \"(.*)\"$")
+    public void the_transformer_attachment_comment_is(String comment) {
+
+        assertModelIsSpecifiedProperty(
+                "def",
+                TransformerDefEditData.class,
+                t -> comment.equals(t.getPackageComment()));
     }
 
     @Then("^the transformer with name \"(.*)\" of type \"(.*)\" exists$")

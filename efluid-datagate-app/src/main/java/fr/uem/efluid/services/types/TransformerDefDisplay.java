@@ -27,7 +27,9 @@ public class TransformerDefDisplay {
 
     private final LocalDateTime updatedTime;
 
-    public TransformerDefDisplay(TransformerDef transformerDef, String transformerName) {
+    private final String packageComment;
+
+    public TransformerDefDisplay(TransformerDef transformerDef, String transformerName, String packageComment) {
         super();
         this.uuid = transformerDef.getUuid();
         this.name = transformerDef.getName();
@@ -35,6 +37,7 @@ public class TransformerDefDisplay {
         this.typeName = transformerName;
         this.priority = transformerDef.getPriority();
         this.updatedTime = transformerDef.getUpdatedTime();
+        this.packageComment = packageComment;
     }
 
     public String getType() {
@@ -59,6 +62,10 @@ public class TransformerDefDisplay {
 
     public LocalDateTime getUpdatedTime() {
         return this.updatedTime;
+    }
+
+    public String getPackageComment() {
+        return this.packageComment;
     }
 
     @Override

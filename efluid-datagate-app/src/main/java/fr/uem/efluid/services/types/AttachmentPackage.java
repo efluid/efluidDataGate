@@ -1,13 +1,10 @@
 package fr.uem.efluid.services.types;
 
-import java.nio.file.Path;
+import fr.uem.efluid.model.entities.Attachment;
+
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import fr.uem.efluid.model.entities.Attachment;
-import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
  * <p>
@@ -18,10 +15,7 @@ import fr.uem.efluid.utils.SharedOutputInputUtils;
  * @version 1
  * @since v2.0.0
  */
-public class AttachmentPackage extends SharedPackage<Attachment> {
-
-    private List<Path> attFiles = new ArrayList<>();
-    private List<AttachmentLine> attachmentLines = new ArrayList<>();
+public class AttachmentPackage extends AbstractMixedPackage<Attachment> {
 
     /**
      * @param name
@@ -48,51 +42,7 @@ public class AttachmentPackage extends SharedPackage<Attachment> {
     }
 
     /**
-     * @param rawContent
      * @return
-     * @see fr.uem.efluid.services.types.SharedPackage#deserializeOne(java.lang.String)
-     */
-    @Override
-    public Attachment deserializeOne(String rawContent) {
-        // For Attachment deser we use "mixed form" for content : the uncompress path
-        // (where attachment files are uncompressed) is associated to content for inline
-        // processing in deser process.
-        Attachment att = super.deserializeOne(SharedOutputInputUtils.mergeValues(getUncompressPath().toString(), rawContent));
-
-        return att;
-    }
-
-    /**
-     * @param content
-     * @return
-     * @see fr.uem.efluid.services.types.SharedPackage#serializeOne(fr.uem.efluid.model.Shared)
-     */
-    @Override
-    protected String serializeOne(Attachment content) {
-
-        // Attachment serial. uses a mixed content result
-        String[] mixedContent = SharedOutputInputUtils.splitValues(super.serializeOne(content));
-
-        // Move generated file to TMP folder for inclusion in zip
-        this.attFiles.add(SharedOutputInputUtils.repatriateTmpFile(mixedContent[0], getUncompressPath()));
-
-        // In pak file will use only json part
-        return mixedContent[1];
-    }
-
-    /**
-     * @return
-     * @see fr.uem.efluid.services.types.SharedPackage#getComplementaryFiles()
-     */
-    @Override
-    public List<Path> getComplementaryFiles() {
-        return this.attFiles;
-    }
-
-    /**
-     * Process content and produce attachment lines
-     *
-     * @return attachment lines aka references to temp files for attachments
      */
     public List<AttachmentLine> toAttachmentLines() {
         return content().map(c -> {

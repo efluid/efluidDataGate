@@ -358,7 +358,7 @@ public class CommitService extends AbstractApplicationService {
         return this.exportImportService.exportPackages(Arrays.asList(
                 // Add customized transformers
                 new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
-                        .from(this.transformerService.getCustomizedTransformerDef(project, transformers)),
+                        .from(this.transformerService.getCustomizedTransformerDefForExport(project, transformers)),
 
                 // Add referenced versions (for dict content compatibility check at import)
                 new VersionPackage(PCKG_VERSIONS, LocalDateTime.now())
@@ -1042,6 +1042,7 @@ public class CommitService extends AbstractApplicationService {
 
         // 4 : Check compatibility by table - check referenced entry, keys and columns (consistent order)
         indexByTables.entrySet().stream()
+                // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
                 .sorted(Comparator.comparing(e -> e.getKey().getTableName()))
                 .forEach((e) -> checkCommitIndexDictionaryEntryCompatibility(
                         e.getValue(),
@@ -1086,6 +1087,7 @@ public class CommitService extends AbstractApplicationService {
         // DictionaryEntry is present : continue to check table / key / column changes
         else {
             String tablename = importedDictionaryEntry.getTableName();
+            // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
             VersionCompare.DictionaryTableChanges tableChanges = allTableChanges.get(tablename);
 
             // Check columns adn keys only if the table is identified as changed (= not UNCHANGED here)

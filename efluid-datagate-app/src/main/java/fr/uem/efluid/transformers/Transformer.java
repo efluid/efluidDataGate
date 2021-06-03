@@ -1,20 +1,25 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.transformers;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -133,29 +138,55 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
             TransformerConfig rawConfig,
             List<? extends PreparedIndexEntry> mergeDiff) {
 
+
         R runner = runner((C) rawConfig, dict);
-        mergeDiff.stream()
-                // Process only when runner can apply
-                .filter(runner)
-                .forEach(l -> {
 
-                    // Expand payload (modifiable list)
-                    List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(l.getPayload()));
+        // Use iterator for process and update of the last in one operation
+        Iterator<? extends PreparedIndexEntry> entries = mergeDiff.iterator();
+        while (entries.hasNext()) {
+            PreparedIndexEntry entry = entries.next();
 
-                    // Apply transform
-                    runner.accept(l.getAction(), extracted);
+            // Process only when runner can apply
+            if (runner.test(entry)) {
+
+                // Expand payload (modifiable list)
+                List<Value> extracted = new ArrayList<>(this.converter.expandInternalValue(entry.getPayload()));
+
+                // Apply transform and update line only if changes where detected
+                if (runner.transform(entry.getAction(), entry.getKeyValue(), extracted)) {
 
                     if (LOGGER_TRANSFORMATIONS.isInfoEnabled()) {
-                        LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on DictionaryEntry table \"{}\" :\n{}",
-                                this.getName(), dict.getTableName(), buildTransformationResultForDebug(extracted));
+                        LOGGER_TRANSFORMATIONS.info("Values processed by transformer {} on entry {}[{}] :\n{}",
+                                this.getName(), dict.getTableName(), entry.getKeyValue(), buildTransformationResultForDebug(extracted));
                     }
 
-                    // Rebuild payload
-                    l.setPayload(this.converter.convertToExtractedValue(extracted));
-                });
+                    // Drop erased values
+                    if (extracted.isEmpty()) {
+                        entries.remove();
+                    }
+
+                    // Or apply updated one
+                    else {
+                        // Rebuild payload
+                        entry.setPayload(this.converter.convertToExtractedValue(extracted));
+                    }
+                }
+
+                // Nothing has changed for line even if compliant
+                else if (LOGGER_TRANSFORMATIONS.isDebugEnabled()) {
+                    LOGGER_TRANSFORMATIONS.debug("No changes from transformer {} on entry {}[{}]",
+                            this.getName(), dict.getTableName(), entry.getKeyValue());
+                }
+
+            }
+        }
     }
 
     private static String buildTransformationResultForDebug(List<Value> content) {
+
+        if (content.isEmpty()) {
+            return "erased line";
+        }
 
         List<String> results = content.stream()
                 .filter(v -> v instanceof TransformerRunner.TransformedValue)
@@ -231,6 +262,64 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
                 return "^.*" + v + ".*$";
             }).map(Pattern::compile).collect(toList());
         }
+
+        // For optional attachment, if any, on current RUNNING config
+
+        /**
+         * If true, an attachment package is supported by transformer
+         *
+         * @return status on Attachment package which can be specified for config
+         */
+        @JsonIgnore
+        public boolean isAttachmentPackageSupport() {
+            return false;
+        }
+
+        /**
+         * Called before export to initialize the attachment package data from the managed source.
+         * Default will provide null value
+         *
+         * @param managedSource for managed database attachment loading
+         * @return data or null if no need to process attachment package
+         */
+        public byte[] exportAttachmentPackageData(JdbcTemplate managedSource) {
+
+            return null;
+        }
+
+        /**
+         * For transformer with package data support, apply imported one if any.
+         *
+         * @param attachmentPackageData null, empty string, or prepared attachment package data
+         *                              from imported transformer. Any format can be used for
+         *                              the transformer support
+         * @param managedSource         access to local managed DB for any post loading action
+         * @param valueConverter        for any loaded value process with standard converter
+         */
+        public void importAttachmentPackageData(
+                byte[] attachmentPackageData,
+                JdbcTemplate managedSource,
+                ManagedValueConverter valueConverter) {
+            // Default does nothing
+        }
+
+        /**
+         * If null, no attachment package is supported by transformer
+         *
+         * @param managedSource  access to local managed DB for any post loading action
+         * @param valueConverter for any loaded value process with standard converter
+         * @return comment on Attachment package which can be specified for config
+         */
+        @JsonIgnore
+        public String getAttachmentPackageComment(
+                JdbcTemplate managedSource,
+                ManagedValueConverter valueConverter) {
+            return null;
+        }
+
+        protected static boolean anyIsEmpty(Collection<String> vals){
+            return vals.stream().anyMatch(v -> !StringUtils.hasText(v));
+        }
     }
 
     /**
@@ -241,7 +330,7 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
      * <p>Runner filter "lines" to process and apply to values</p>
      */
     public static abstract class TransformerRunner<C extends Transformer.TransformerConfig>
-            implements Predicate<PreparedIndexEntry>, BiConsumer<IndexAction, List<Value>> {
+            implements Predicate<PreparedIndexEntry> {
 
         protected final C config;
 
@@ -255,10 +344,26 @@ public abstract class Transformer<C extends Transformer.TransformerConfig, R ext
             this.dict = dict;
         }
 
+        /**
+         * Process transform on provided list of values
+         *
+         * @param action current action
+         * @param key    line key (can be a composite key in the form "a / b / c"
+         * @param values the payload extracted to a list of values, ready to be transformed. The list can be erased to drop a line
+         * @return true if an update was done on values
+         */
+        public abstract boolean transform(IndexAction action, String key, List<Value> values);
+
+        /**
+         * Init a transformed value of the same type
+         */
         protected static Value transformedValue(Value existing, String newValue) {
             return new TransformedValue(existing, FormatUtils.toBytes(newValue));
         }
 
+        /**
+         * Init a transformed value of a specified type
+         */
         protected static Value transformedValue(Value existing, String newValue, ColumnType newType) {
             return new TransformedValue(existing, FormatUtils.toBytes(newValue), newType);
         }

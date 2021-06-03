@@ -1,7 +1,7 @@
 package fr.uem.efluid.services.types;
 
 import fr.uem.efluid.model.entities.TransformerDef;
-import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.transformers.Transformer;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -31,6 +31,8 @@ public class TransformerDefEditData {
 
     @NotNull
     private String configuration;
+
+    private String packageComment;
 
     public TransformerDefEditData() {
         super();
@@ -76,7 +78,15 @@ public class TransformerDefEditData {
         this.typeName = typeName;
     }
 
-    public void setTransformer(Transformer<?, ?> transformer){
+    public String getPackageComment() {
+        return packageComment;
+    }
+
+    public void setPackageComment(String packageComment) {
+        this.packageComment = packageComment;
+    }
+
+    public void setTransformer(Transformer<?, ?> transformer) {
         this.setType(transformer.getClass().getSimpleName());
         this.setTypeName(transformer.getName());
     }
@@ -89,7 +99,7 @@ public class TransformerDefEditData {
         this.configuration = configuration;
     }
 
-    public static TransformerDefEditData fromEntity(TransformerDef def, Transformer<?, ?> transformer, String prettyConfig) {
+    public static TransformerDefEditData fromEntity(TransformerDef def, Transformer<?, ?> transformer, String prettyConfig, String packageComment) {
 
         TransformerDefEditData editData = new TransformerDefEditData();
 
@@ -99,6 +109,7 @@ public class TransformerDefEditData {
         editData.setUuid(def.getUuid());
 
         editData.setTransformer(transformer);
+        editData.setPackageComment(packageComment);
 
         return editData;
     }

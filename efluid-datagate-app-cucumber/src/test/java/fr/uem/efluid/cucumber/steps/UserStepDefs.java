@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-import org.thymeleaf.util.StringUtils;
+import org.springframework.util.StringUtils;
 
 import java.util.Optional;
 
@@ -74,7 +74,7 @@ public class UserStepDefs extends CucumberStepDefs {
 
     @Then("^it is (.*)possible to create a new user$")
     public void a_user_can_be_created(String type) {
-        assertModelIsSpecifiedProperty("canCreate", Boolean.class, v -> v == StringUtils.isEmpty(type));
+        assertModelIsSpecifiedProperty("canCreate", Boolean.class, v -> v == !StringUtils.hasText(type));
     }
 
     @Then("^the user \"(.*)\" exists in database$")
@@ -104,7 +104,7 @@ public class UserStepDefs extends CucumberStepDefs {
         builder.param("token", token);
 
 
-        builder.accept(MediaType.APPLICATION_JSON_UTF8);
+        builder.accept(MediaType.APPLICATION_JSON);
 
         currentAction = this.mockMvc.perform(builder);
 

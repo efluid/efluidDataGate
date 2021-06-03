@@ -15,6 +15,21 @@
     "warning": "La ligne est déjà ajoutée avec la même valeur"
   },
   {
+    "caseName": "ADD - same value - full diff import",
+    "lineExists": true,
+    "their": "ADD",
+    "mine": "ADD",
+    "payload": "SIMILAR",
+    "previous": "ANY",
+    "resolution": {
+      "payload": "THEIR_PAYLOAD",
+      "previous" : null,
+      "action": "ADD",
+      "needAction": false
+    },
+    "warning": "La ligne est déjà ajoutée avec la même valeur"
+  },
+  {
     "caseName": "ADD - different value",
     "lineExists": true,
     "their": "ADD",

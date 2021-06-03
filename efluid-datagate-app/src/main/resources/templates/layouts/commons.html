@@ -124,6 +124,15 @@
 					<p th:case="'LDAP_ERROR'">
 						Une erreur de configuration ou de fonctionnement LDAP a été rencontrée. Vérifier le paramètrage ou contacter l'administrateur LDAP.
 					</p>
+					<p th:case="'TRANSFORMER_EFUID_NO_SITE'">
+						Aucune définition de site trouvée pour la régionalisation des données. Vérifier le contenu de la table TAPPLICATIONINFO.
+					</p>
+					<p th:case="'TRANSFORMER_EFUID_WRONG_REGION_DATA'">
+						Les données de paramètrage de la régionalisation n'ont pas pu être chargées. Vérifier le fichier .par utilisé.
+					</p>
+
+
+
 					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
 				</span>
 			</span>

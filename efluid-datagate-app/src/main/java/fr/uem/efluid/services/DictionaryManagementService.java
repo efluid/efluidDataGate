@@ -337,6 +337,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         // Convert dictionnary as selectable
         List<SelectableTable> selectables = entries.stream()
+                // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
                 .map(e -> new SelectableTable(e.getTableName(), e.getParameterName(), e.getDomain().getName(),
                         allTables.get(e.getTableName())))
                 .peek(s -> allTables.remove(s.getTableName())).collect(Collectors.toList());
@@ -1268,6 +1269,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
     private DictionaryImportAction<DictionaryEntry> dictionaryEntryImporter(boolean copyMode, Project destinationProject) {
 
         return new DictionaryImportAction<DictionaryEntry>(copyMode)
+                // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
                 .searchingByNameWith(d -> this.dictionary.findByTableNameAndDomainProject(d.getTableName(), destinationProject))
                 .savingWith(d -> {
                     // Clean referenced substitutes domains

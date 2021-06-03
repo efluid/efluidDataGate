@@ -377,7 +377,7 @@ public class BacklogController extends CommonController {
                 uuid != null && !uuid.equals("ALL") ? UUID.fromString(uuid) : null));
 
         // Transformers from project
-        model.addAttribute("transformerDefs", this.transformerService.getAllTransformerDefs());
+        model.addAttribute("transformerDefs", this.transformerService.getAllTransformerDefs(true));
 
         // Other info to display
         model.addAttribute("version", this.dictService.getLastVersion());

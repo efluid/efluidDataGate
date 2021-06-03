@@ -1,14 +1,5 @@
 package fr.uem.efluid;
 
-import static fr.uem.efluid.Application.Packages.CONFIG;
-import static fr.uem.efluid.Application.Packages.CONVERTERS;
-import static fr.uem.efluid.Application.Packages.ENTITIES;
-import static fr.uem.efluid.Application.Packages.REPOSITORIES;
-import static fr.uem.efluid.Application.Packages.REPOSITORIES_IMPLS;
-import static fr.uem.efluid.Application.Packages.ROOT;
-import static fr.uem.efluid.Application.Packages.SERVICES;
-import static fr.uem.efluid.Application.Packages.TOOLS;
-
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
 
@@ -37,6 +28,8 @@ import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
 
 import java.sql.SQLException;
 
+import static fr.uem.efluid.Application.Packages.*;
+
 /**
  * <p>
  * Default config for fully contextualised tests
@@ -48,7 +41,7 @@ import java.sql.SQLException;
  */
 @EnableJpaRepositories({REPOSITORIES, ROOT + ".stubs"})
 @EntityScan({ENTITIES, CONVERTERS, ROOT + ".stubs"})
-@ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, ROOT + ".stubs"})
+@ComponentScan({CONFIG, SERVICES, REPOSITORIES_IMPLS, TOOLS, TRANSFORMERS, ROOT + ".stubs"})
 @TestConfiguration
 @ConfigurationProperties(prefix = "datagate-efluid.managed-datasource")
 public class IntegrationTestConfig {

@@ -43,7 +43,7 @@ public class TransformerController extends CommonController {
         WebUtils.addTools(model);
 
         model.addAttribute("transformerTypes", this.transformerService.getAllTransformerTypes());
-        model.addAttribute("transformerDefs", this.transformerService.getAllTransformerDefs());
+        model.addAttribute("transformerDefs", this.transformerService.getAllTransformerDefs(false));
         model.addAttribute("currentLocationTitle", "Transformateurs du projet");
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 

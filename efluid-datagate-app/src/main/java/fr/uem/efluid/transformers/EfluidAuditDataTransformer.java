@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.transformers;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import fr.uem.efluid.ColumnType;
@@ -6,12 +6,14 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import fr.uem.efluid.utils.FormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -136,7 +138,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 errors.add("At least one key value pattern must be specified. Use \".*\" as default to match all");
             }
             if (this.appliedValueFilterPatterns != null) {
-                if (this.appliedValueFilterPatterns.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                if (anyIsEmpty(this.appliedValueFilterPatterns.keySet())) {
                     errors.add("Value filter column name cannot be empty. Use \".*\" as default to match all, or remove all filter patterns");
                 }
             }
@@ -144,10 +146,10 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 errors.add("At least one update on date or actor must be specified.");
             }
             if (this.dateUpdates != null) {
-                if (this.dateUpdates.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                if (anyIsEmpty(this.dateUpdates.keySet())) {
                     errors.add("A date update column name cannot be empty. Use \".*\" as default to match all");
                 }
-                if (this.dateUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(StringUtils::isEmpty)) {
+                if (this.dateUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(v -> !StringUtils.hasText(v))) {
                     errors.add("A date update value cannot be empty. Use \"" + CURRENT_DATE_EXPR + "\" for current date or a fixed date using format \"" + FormatUtils.DATE_FORMAT + "\"");
                 } else if (this.dateUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(v -> !CURRENT_DATE_EXPR.equals(v) && !FormatUtils.canParseLd(v))) {
                     errors.add("A date update value must be \"current_date\" or a fixed date value using format \"" + FormatUtils.DATE_FORMAT + "\"");
@@ -155,21 +157,21 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                 if (this.dateUpdates.values().stream().anyMatch(s -> (s.getOnValues() == null || s.getOnValues().isEmpty()) && (s.getOnActions() == null || s.getOnActions().isEmpty()))) {
                     errors.add("An date update must be specified with onValues or onActions. Specify at least one action (ADD/REMOVE/UPDATE) or one value spec or remove the date update spec");
                 }
-                if (this.dateUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> StringUtils.isEmpty(v.getColumnPattern()) || StringUtils.isEmpty(v.getValuePattern()))) {
+                if (this.dateUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> !StringUtils.hasText(v.getColumnPattern()) || !StringUtils.hasText(v.getValuePattern()))) {
                     errors.add("The onValues properties columnPattern and valuePattern cannot be empty. Check dateUpdates");
                 }
             }
             if (this.actorUpdates != null) {
-                if (this.actorUpdates.keySet().stream().anyMatch(StringUtils::isEmpty)) {
+                if (anyIsEmpty(this.actorUpdates.keySet())) {
                     errors.add("An actor update column name cannot be empty. Use \".*\" as default to match all");
                 }
-                if (this.actorUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(StringUtils::isEmpty)) {
+                if (this.actorUpdates.values().stream().map(ApplicationSpec::getValue).anyMatch(v -> !StringUtils.hasText(v))) {
                     errors.add("An actor update value cannot be empty. Specify a valid actor name value");
                 }
                 if (this.actorUpdates.values().stream().anyMatch(s -> (s.getOnValues() == null || s.getOnValues().isEmpty()) && (s.getOnActions() == null || s.getOnActions().isEmpty()))) {
                     errors.add("An actor update must be specified with onValues or onActions. Specify at least one action (ADD/REMOVE/UPDATE) or one value spec or remove the actor update spec");
                 }
-                if (this.actorUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> StringUtils.isEmpty(v.getColumnPattern()) || StringUtils.isEmpty(v.getValuePattern()))) {
+                if (this.actorUpdates.values().stream().filter(s -> s.getOnValues() != null).flatMap(s -> s.getOnValues().stream()).anyMatch(v -> !StringUtils.hasText(v.getColumnPattern()) || !StringUtils.hasText(v.getValuePattern()))) {
                     errors.add("The onValues properties columnPattern and valuePattern cannot be empty. Check actorUpdates");
                 }
             }
@@ -378,7 +380,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
         }
 
         @Override
-        public void accept(IndexAction action, List<Value> values) {
+        public boolean transform(IndexAction action, String key, List<Value> values) {
             if (this.config.isValueFilterMatches(action, values)) {
 
                 Set<String> specifiedColumns = values.stream().map(Value::getName).collect(toSet());
@@ -389,6 +391,7 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                         .forEach(c -> values.add(new MissingValue(c)));
 
                 var matchings = this.mappedReplacedValues.get(action).matchingSubstitutes(values);
+                final AtomicBoolean updated = new AtomicBoolean(false);
 
                 // Process on indexed list for replacement support
                 for (int i = 0; i < values.size(); i++) {
@@ -399,9 +402,16 @@ public class EfluidAuditDataTransformer extends Transformer<EfluidAuditDataTrans
                     matchings.stream()
                             .filter(e -> e.matches(val))
                             .findFirst()
-                            .ifPresent(e -> values.set(finalI, e.transform(val)));
+                            .ifPresent(e -> {
+                                values.set(finalI, e.transform(val));
+                                updated.set(true);
+                            });
                 }
+
+                return updated.get();
             }
+
+            return false;
         }
 
         /**

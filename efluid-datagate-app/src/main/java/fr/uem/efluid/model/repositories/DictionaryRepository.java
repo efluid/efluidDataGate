@@ -48,6 +48,7 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
     default Map<String, DictionaryEntry> findAllByProjectMappedToTableName(Project project) {
 
         return findByDomainProject(project).stream()
+                // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
                 .collect(Collectors.toMap(DictionaryEntry::getTableName, d -> d));
 
     }

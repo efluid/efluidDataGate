@@ -22,6 +22,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -660,6 +661,59 @@ public class PreparationStepDefs extends CucumberStepDefs {
         });
     }
 
+    @Then("^the merge commit content is rendered with changes for these lines : \"(.*)\"$")
+    public void merge_commit_content_ready_inline(String changes) {
+
+        List<ChangeSpec> preparedChanges = Stream.of(changes.trim().split(", "))
+                .map(ChangeSpec::new)
+                .collect(Collectors.toList());
+
+        // Get by tables
+        Map<String, List<ChangeSpec>> tables = preparedChanges.stream()
+                .collect(Collectors.groupingBy(ChangeSpec::getTable));
+
+        PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
+
+        // If "need resolve" is specified, we want all lines, else only the ones "needing action"
+        long currentCount = preparation.getDiffContent().stream().filter(PreparedIndexEntry::isNeedAction).count();
+
+        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+        assertThat(currentCount).isEqualTo(preparedChanges.size());
+
+        tables.forEach((t, v) -> {
+            Collection<? extends PreparedIndexEntry> indexEntries =
+                    preparation.getDiffContentForTableName(t).stream().filter(PreparedIndexEntry::isNeedAction).collect(Collectors.toList());
+
+            if (indexEntries.isEmpty()) {
+                throw new AssertionError("Cannot find corresponding diff for table " + t);
+            }
+
+            assertThat(indexEntries.size()).isEqualTo(v.size());
+
+            List<? extends PreparedIndexEntry> sortedIndexEntries = indexEntries.stream().sorted(Comparator.comparing(PreparedIndexEntry::getKeyValue)).collect(Collectors.toList());
+            v.sort(Comparator.comparing(ChangeSpec::getKey));
+
+            // Keep order
+            for (int i = 0; i < sortedIndexEntries.size(); i++) {
+
+                PreparedMergeIndexEntry diffLine = (PreparedMergeIndexEntry) sortedIndexEntries.get(i);
+
+                // If "need Resolve" not specified, only check the lines needing action
+                if (diffLine.isNeedAction()) {
+                    ChangeSpec dataLine = v.get(i);
+
+                    IndexAction action = IndexAction.valueOf(dataLine.getAction());
+
+                    String desc = " on table \"" + t + "\" on key \""
+                            + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
+
+                    assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
+                    assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataLine.getKey());
+                }
+            }
+        });
+    }
+
     @Then("^the paginated merge commit content is rendered with these identified sorted changes :$")
     public void merge_detail_content_sorted(DataTable table) throws Exception {
 
@@ -714,7 +768,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
 
     private void check_resolution_line(PreparedMergeIndexEntry entry, String type, String actStr, String payload) {
 
-        if (StringUtils.isEmpty(payload)) {
+        if (!StringUtils.hasText(payload)) {
             payload = null;
         }
 
@@ -821,4 +875,31 @@ public class PreparationStepDefs extends CucumberStepDefs {
         currentAction.andExpect(content().string(containsString(content)));
     }
 
+    private static class ChangeSpec {
+
+        private final String action;
+        private final String table;
+        private final String key;
+
+        ChangeSpec(String src) {
+            // ADD TTEST1:$5-regA
+            String[] core = src.trim().split(" ");
+            String[] details = core[1].trim().split(":");
+            this.action = core[0];
+            this.table = details[0];
+            this.key = details[1];
+        }
+
+        public String getAction() {
+            return action;
+        }
+
+        public String getTable() {
+            return table;
+        }
+
+        public String getKey() {
+            return key;
+        }
+    }
 }
