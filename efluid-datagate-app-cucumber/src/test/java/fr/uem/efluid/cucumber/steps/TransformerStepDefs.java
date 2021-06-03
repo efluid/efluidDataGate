@@ -8,7 +8,7 @@ import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfig
 import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
 import fr.uem.efluid.services.types.TransformerType;
-import fr.uem.efluid.tools.Transformer;
+import fr.uem.efluid.transformers.Transformer;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.docstring.DocString;
 import io.cucumber.java.en.Given;
@@ -99,6 +99,13 @@ public class TransformerStepDefs extends CucumberStepDefs {
         post(getCorrespondingLinkForPageName("new transformer page") + "?transformerType=" + transformer.getClass().getSimpleName());
     }
 
+    @When("^the user delete the transformer \"(.*)\" of type \"(.*)\"$")
+    public void delete_transformer(String name, String typeName) throws Exception {
+        Optional<TransformerDef> def = modelDatabase().findTransformerDefByProjectAndNameAndType(getCurrentUserProject(), name, getTransformerByName(typeName));
+        assertThat(def).isPresent();
+        get("/ui/transformers/delete/" + def.get().getUuid());
+    }
+
     @When("^the user .*save the transformer$")
     public void save_try_transformer() throws Exception {
 
@@ -126,7 +133,7 @@ public class TransformerStepDefs extends CucumberStepDefs {
 
         UUID truid = transformerDefDisplay.get().getUuid();
 
-        if(exportEditData.getSpecificTransformers() ==null){
+        if (exportEditData.getSpecificTransformers() == null) {
             exportEditData.setSpecificTransformers(new HashMap<>());
         }
 
@@ -146,7 +153,7 @@ public class TransformerStepDefs extends CucumberStepDefs {
 
         UUID truid = transformerDefDisplay.get().getUuid();
 
-        if(exportEditData.getSpecificTransformers() ==null){
+        if (exportEditData.getSpecificTransformers() == null) {
             exportEditData.setSpecificTransformers(new HashMap<>());
         }
 
@@ -157,7 +164,7 @@ public class TransformerStepDefs extends CucumberStepDefs {
     }
 
     @When("^the user keep the default transformer configuration$")
-    public void default_export_transformer()  {
+    public void default_export_transformer() {
         // Nothing ...
     }
 
@@ -191,6 +198,15 @@ public class TransformerStepDefs extends CucumberStepDefs {
                 "def",
                 TransformerDefEditData.class,
                 t -> jsonEquals(t.getConfiguration(), config.getContent()));
+    }
+
+    @Then("^the transformer attachment comment is \"(.*)\"$")
+    public void the_transformer_attachment_comment_is(String comment) {
+
+        assertModelIsSpecifiedProperty(
+                "def",
+                TransformerDefEditData.class,
+                t -> comment.equals(t.getPackageComment()));
     }
 
     @Then("^the transformer with name \"(.*)\" of type \"(.*)\" exists$")

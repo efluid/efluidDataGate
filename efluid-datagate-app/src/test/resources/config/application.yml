@@ -62,7 +62,7 @@ spring:
             ddl-auto: create
         properties:
             hibernate.session_factory.interceptor: fr.uem.efluid.utils.jpa.HbmInStatementInterceptor
-
+            hibernate.dialect: org.hibernate.dialect.HSQLDialect
     flyway:
         enabled: false
 

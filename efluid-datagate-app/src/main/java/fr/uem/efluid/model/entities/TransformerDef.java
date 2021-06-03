@@ -3,11 +3,15 @@ package fr.uem.efluid.model.entities;
 import fr.uem.efluid.model.Shared;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.hibernate.annotations.Type;
+import org.springframework.util.StringUtils;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import static fr.uem.efluid.utils.SharedOutputInputUtils.*;
 
 /**
  * Model of an active transformer for current project, with configuration and transformer type
@@ -35,6 +39,8 @@ public class TransformerDef implements Shared {
 
     private LocalDateTime importedTime;
 
+    private LocalDateTime deletedTime;
+
     private int priority;
 
     @NotNull
@@ -48,6 +54,9 @@ public class TransformerDef implements Shared {
 
     @Transient
     private transient String customizedConfiguration;
+
+    @Transient
+    private transient byte[] attachmentPackage;
 
     public TransformerDef() {
         super();
@@ -135,13 +144,38 @@ public class TransformerDef implements Shared {
         return customizedConfiguration;
     }
 
+    public LocalDateTime getDeletedTime() {
+        return this.deletedTime;
+    }
+
+    public void setDeletedTime(LocalDateTime deletedTime) {
+        this.deletedTime = deletedTime;
+    }
+
     public void setCustomizedConfiguration(String customizedConfiguration) {
         this.customizedConfiguration = customizedConfiguration;
     }
 
+    public byte[] getAttachmentPackage() {
+        return attachmentPackage;
+    }
+
+    public void setAttachmentPackage(byte[] attachmentPackage) {
+        this.attachmentPackage = attachmentPackage;
+    }
+
     @Override
     public String serialize() {
-        return SharedOutputInputUtils.newJson()
+
+        String attachment = "";
+
+        if (getAttachmentPackage() != null) {
+            attachment = serializeDataAsTmpFile(
+                    new String[]{"transformer-attachments", encodeB64ForFilename(getUuid().toString())}, getAttachmentPackage())
+                    .getFileName().toString();
+        }
+
+        String content = SharedOutputInputUtils.newJson()
                 .with("uid", getUuid())
                 .with("nam", getName())
                 .with("cre", getCreatedTime())
@@ -152,13 +186,22 @@ public class TransformerDef implements Shared {
                 // Customized has priority but we keep state "customized"
                 .with("isc", getCustomizedConfiguration() != null)
                 .with("con", getCustomizedConfiguration() != null ? getCustomizedConfiguration() : getConfiguration())
+                .with("att", attachment)
                 .toString();
+
+        return mergeValues(attachment, content);
     }
 
     @Override
-    public void deserialize(String raw) {
+    public void deserialize(String mixedContent) {
 
-        SharedOutputInputUtils.fromJson(raw)
+        // For optional Attachment the filename is associated to the content in "mixed" form
+        String[] rawParts = splitValues(mixedContent);
+
+        String folder = rawParts[0];
+        String content = rawParts[1];
+
+        SharedOutputInputUtils.fromJson(content)
                 .applyUUID("uid", this::setUuid)
                 .applyString("nam", this::setName)
                 .applyLdt("cre", this::setCreatedTime)
@@ -166,6 +209,15 @@ public class TransformerDef implements Shared {
                 .applyInt("pri", this::setPriority)
                 .applyString("typ", this::setType)
                 .applyUUID("pro", v -> setProject(new Project(v)))
-                .applyString("con", this::setConfiguration);
+                .applyString("con", this::setConfiguration)
+                .applyString("att", f -> {
+                    if (StringUtils.hasText(f)) {
+                        // Raw data is temp file path
+                        Path path = despecializePath(folder + "/" + f);
+
+                        // Get from file content
+                        setAttachmentPackage(deserializeDataFromTmpFile(path));
+                    }
+                });
     }
 }

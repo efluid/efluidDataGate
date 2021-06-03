@@ -153,31 +153,23 @@ public class DictionaryManagementService extends AbstractApplicationService {
         this.projectService.assertCurrentUserHasSelectedProject();
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
-        // Behavior based on version feature
-        final boolean useModelId = this.features.isEnabled(Feature.USE_MODEL_ID_AS_VERSION_NAME);
-
         // Search ref identifier if enabled
         String modelId = this.modelDescs.getCurrentModelIdentifier() != null ? this.modelDescs.getCurrentModelIdentifier() : name;
 
-        // Must check if model id is compliant
-        assertCanCreateVersionFromModelId(useModelId, modelId);
-
-        final String fixedName = useModelId ? modelId : name;
-
         // Search by name
-        Version version = this.versions.findByNameAndProject(fixedName, project);
+        Version version = this.versions.findByNameAndProject(name, project);
 
         // Create
         if (version == null) {
-            LOGGER.info("Create version {} in current project", fixedName);
+            LOGGER.info("Create version {} in current project", name);
             version = new Version();
             version.setUuid(UUID.randomUUID());
-            version.setName(fixedName);
+            version.setName(name);
             version.setCreatedTime(now());
             version.setProject(project);
             created = true;
         } else {
-            LOGGER.info("Update version {} in current project", fixedName);
+            LOGGER.info("Update version {} in current project", name);
         }
 
         // Always init
@@ -228,33 +220,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
         return this.versions.hasDictionaryUpdatesAfterLastVersionForProject(project);
-    }
-
-    /**
-     * @return
-     */
-    public boolean isVersionCanCreate() {
-
-        this.projectService.assertCurrentUserHasSelectedProject();
-        Project project = this.projectService.getCurrentSelectedProjectEntity();
-
-        Version last = this.versions.getLastVersionForProject(project);
-
-        // Can always init
-        if (last == null) {
-            return true;
-        }
-
-        // If not based on model Id, can always create
-        if (!this.features.isEnabled(Feature.USE_MODEL_ID_AS_VERSION_NAME)) {
-            return true;
-        }
-
-        // Check not only for last but for all existing versions (to avoid duplicates)
-        Version existing = this.versions.findByNameAndProject(this.modelDescs.getCurrentModelIdentifier(), project);
-
-        // Cannot create new if model id is not updated from any existing version
-        return existing == null;
     }
 
     /**
@@ -372,6 +337,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
 
         // Convert dictionnary as selectable
         List<SelectableTable> selectables = entries.stream()
+                // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
                 .map(e -> new SelectableTable(e.getTableName(), e.getParameterName(), e.getDomain().getName(),
                         allTables.get(e.getTableName())))
                 .peek(s -> allTables.remove(s.getTableName())).collect(Collectors.toList());
@@ -1053,12 +1019,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
                     .sorted(Comparator.comparing(Version::getUpdatedTime))
                     .collect(Collectors.toList());
 
-            // Check all versions
-            assertVersionModelsAreValid(importedVersions);
-
-            // Complete version details
-            importedVersions.forEach(this::completeVersionContents);
-
             if (importedVersions.size() > 0) {
                 result.addCount(VersionExportPackage.VERSIONS_EXPORT, newVersCount.get(),
                         importedVersions.size() - newVersCount.get(), 0);
@@ -1285,7 +1245,14 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 .searchingByNameWith(v -> Optional.ofNullable(this.versions.findByNameAndProject(v.getName(), destinationProject)))
                 .savingWith(v -> {
                     v.setProject(destinationProject);
-                    this.versions.save(v);
+                    // Model identifier update when none set (import from api gen)
+                    if (v.getModelIdentity() == null) {
+                        // Search ref identifier if enabled
+                        v.setModelIdentity(this.modelDescs.getCurrentModelIdentifier() != null ? this.modelDescs.getCurrentModelIdentifier() : v.getName());
+                    }
+                    // And complete dict model
+                    completeVersionContents(v);
+                    this.versions.saveAndFlush(v);
                 })
                 .replacingSubstituteWith((existing, imported) -> {
                     this.versions.delete(existing);
@@ -1302,6 +1269,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
     private DictionaryImportAction<DictionaryEntry> dictionaryEntryImporter(boolean copyMode, Project destinationProject) {
 
         return new DictionaryImportAction<DictionaryEntry>(copyMode)
+                // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
                 .searchingByNameWith(d -> this.dictionary.findByTableNameAndDomainProject(d.getTableName(), destinationProject))
                 .savingWith(d -> {
                     // Clean referenced substitutes domains
@@ -1655,19 +1623,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
         }
     }
 
-    /**
-     * <p>If we have to use the model ID as version name, but their is no version ID, then We cant !</p>
-     *
-     * @param useModelIdAsVersionName current feature status on "use model id as version name"
-     * @param currentModelId          current model id extracted from available identifier
-     */
-    private static void assertCanCreateVersionFromModelId(boolean useModelIdAsVersionName, String currentModelId) {
-
-        if (useModelIdAsVersionName && currentModelId == null) {
-            throw new ApplicationException(VERSION_NOT_MODEL_ID, "Cannot use the model ID as version name if no model ID can be found");
-        }
-    }
-
     private static void assertImportSingleProject(List<Project> imported) {
 
         if (imported.size() > 1) {
@@ -1895,13 +1850,6 @@ public class DictionaryManagementService extends AbstractApplicationService {
                 }
             } else {
                 LOGGER.debug("Import new entity \"{}\" : will create currently owned", imported);
-
-                // Create a new entity
-                if (this.copyMode) {
-                    imported.setUuid(UUID.randomUUID());
-                    imported.setCreatedTime(LocalDateTime.now());
-                    imported.setUpdatedTime(LocalDateTime.now());
-                }
 
                 // Import new one
                 this.saver.accept(imported);

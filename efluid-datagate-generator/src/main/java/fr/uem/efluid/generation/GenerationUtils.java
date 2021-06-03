@@ -57,7 +57,7 @@ class GenerationUtils {
 
         String found = annotDomains.get(source);
 
-        if (StringUtils.isEmpty(found) && !source.equals(Object.class)) {
+        if (!StringUtils.hasText(found) && !source.equals(Object.class)) {
             return searchDomainNameInParents(source.getSuperclass(), annotDomains);
         }
         return found;

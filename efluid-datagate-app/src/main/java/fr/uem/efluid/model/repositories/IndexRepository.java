@@ -295,7 +295,6 @@ public interface IndexRepository extends JpaRepository<IndexEntry, Long>, JpaSpe
         }
     }
 
-
     private static <T> Collection<List<T>> chop(Collection<T> inputList, int size) {
         final AtomicInteger counter = new AtomicInteger(0);
         return inputList.stream()

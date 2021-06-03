@@ -21,6 +21,7 @@ Comme pour toute application `spring-boot` les paramètres peuvent être défini
 * En variable d'environnement, format snake-case majuscule
 * En argument au lancement de l'application, format kebab-case
 * Programmatiquement, format camel-case
+* Pour certains paramètres, une modification "à chaud" de certaines features via une API rest est également possible (voir chapitre dédié plus bas)
 
 Par exemple la propriété de paramètrage suivante dans un fichier Yaml : 
 ```
@@ -343,3 +344,19 @@ Utiliser alors dans la spécification du container / du POD des variables d'envi
 Le container doit voir le port `8080` routé
 
 > D'autres paramètres peuvent s'ajouter, pour la gestion mémoire de la JVM par exemple. Ceux ci sont à spécifier avec d'autres mécanismes propres au déploiement d'une application java dans un environnement containerisé / orchestré. 
+
+## Configuration de "features" modifiable à chaud
+
+Certains paramètrages sont activables également "à chaud" grace à un service REST dédié. Les fonctions correspondantes sont appelées "Features" (dans le cadre du principe de "feature flipping").
+
+Les features existantes sont :
+* `CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT` : Si `true`, une vérification de compatibilité de dictionnaire est réalisée à l'import d'un lot, indépendemment des vérifications de version. Ainsi, même pour une version différente présente dans la destination, si le dictionnaire est *compatible*  avec celui utilisé sur la source lors de l'export, un import peut être possible. Si le paramètre est `false` alors aucune vérification n'est réalisée (ce qui ne bloquera pas l'import si le dictionnaire est non compatible)
+* `CHECK_MISSING_IDS_AT_MANAGED_DELETE` et `CHECK_MISSING_IDS_AT_MANAGED_UPDATE` : si `true`, pour le type de modification indiqué, une vérification sur la présence de références dans les données managées sera réalisée. Si une contrainte "fonctionnelle" liée à la spécification du dictionnaire (par exemple via la présence de lien entre 2 tables) alors la suppression ou la modification sera rejetée 
+* `RECORD_IMPORT_WARNINGS` : Si `true` les détections d'anomalies possible à l'import d'un lot (suivant les cas de `warning` spécifiés dans le fichier `efluid-datagate-app/src/main/resources/merge-resolution-rules.json`) seront enregistrés dans la table `anomalies`. Rien n'est enregistré autrement
+* `SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY` : Si `true` les clés naturelles des tables sont proposées comme KEY par défaut à la création d'une table de paramètrage. Sinon, aucune clé n'est proposée par défaut
+* `VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT` : Si `true` les commits "précédents" un commit importé doivent être présents dans la destination lors d'un import de lot. Autrement aucune vérification n'est réalisée
+* `VALIDATE_VERSION_FOR_IMPORT` : Si `true` la version associée à un commit importé **doit** être présente dans la destination pour que l'import soit possible. Sinon aucune vérification n'est réalisée
+
+> Toutes ces features ont en comment de "contraindre" le comportement de l'application, et de permettre une meilleure validation des données pour éviter la perte de cohérence. Néanmoins elles sont rendues modifiable à chaud pour permettre de désactiver certaines vérifications lors d'un import ou d'une manipulation. Il est **recommandé** de les réactivé une fois le "cas particulier" traité
+
+Pour activer / désactiver ces features, utiliser l'API via l'ui swagger, sur le endpoint des **Feature flipping** : Voir [rest-api](rest-api.md) 

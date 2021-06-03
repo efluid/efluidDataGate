@@ -121,7 +121,7 @@ class PossibleTableAnnotation extends PossibleItem {
             found = paramTable.domainName();
         }
 
-        if (StringUtils.isEmpty(found) && !source.equals(Object.class)) {
+        if (!StringUtils.hasText(found) && !source.equals(Object.class)) {
             return searchDomainNameInHierarchy(source.getSuperclass());
         }
         return found;

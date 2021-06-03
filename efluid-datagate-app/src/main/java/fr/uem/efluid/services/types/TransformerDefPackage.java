@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * @version 1
  * @since v0.0.1
  */
-public class TransformerDefPackage extends SharedPackage<TransformerDef> {
+public class TransformerDefPackage extends AbstractMixedPackage<TransformerDef> {
 
     /**
      * @param name

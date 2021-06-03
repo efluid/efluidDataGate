@@ -1,7 +1,8 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.transformers;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.tools.ManagedValueConverter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

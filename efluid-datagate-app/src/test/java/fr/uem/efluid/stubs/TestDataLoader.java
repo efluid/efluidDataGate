@@ -304,8 +304,8 @@ public class TestDataLoader {
         this.index.saveAll(indexesCom1);
         this.index.saveAll(indexesCom2);
 
-        com1.setIndex(indexesCom1);
-        com2.setIndex(indexesCom2);
+        com1.getIndex().addAll(indexesCom1);
+        com2.getIndex().addAll(indexesCom2);
 
         // BiDirectionnal for index <> commit
         this.commits.save(com1);

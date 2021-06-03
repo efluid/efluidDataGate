@@ -8,7 +8,7 @@
 
     <groupId>com.efluid.oss</groupId>
     <artifactId>efluid-datagate-parent</artifactId>
-    <version>2.1.17-SNAPSHOT</version>
+    <version>2.1.21-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -67,7 +67,7 @@
 
         <!-- dependencies - libs -->
         <dependency.zip4j.version>2.7.0</dependency.zip4j.version>
-        <dependency.ojdbc10.version>19.3.0.0</dependency.ojdbc10.version>
+        <dependency.ojdbc10.version>19.10.0.0</dependency.ojdbc10.version>
         <dependency.plexus.version>0.0.7</dependency.plexus.version>
         <dependency.maven-plugin-api.version>3.8.1</dependency.maven-plugin-api.version>
         <dependency.maven-plugin-annotations.version>3.6.1</dependency.maven-plugin-annotations.version>
@@ -85,7 +85,7 @@
         <dependency.thymeleaf-layout.version>2.3.0</dependency.thymeleaf-layout.version>
         <dependency.txtmark.version>0.13</dependency.txtmark.version>
         <dependency.cucumber.version>6.10.3</dependency.cucumber.version>
-        <dependency.flyway.version>7.8.2</dependency.flyway.version>
+        <dependency.flyway.version>7.9.1</dependency.flyway.version>
         <dependency.javax-annot.version>1.2</dependency.javax-annot.version>
         <dependency.jsr305.version>3.0.2</dependency.jsr305.version>
 
@@ -97,8 +97,8 @@
         <dependency.jquery-ui.version>1.12.1</dependency.jquery-ui.version>
 
         <!-- Fixed plugins -->
-        <plugin.maven-plugin.version>3.6.1</plugin.maven-plugin.version>
-        <plugin.jacoco.version>0.8.5</plugin.jacoco.version>
+        <plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
+        <plugin.jacoco.version>0.8.7</plugin.jacoco.version>
 	
         <skipNexusStagingDeploy>false</skipNexusStagingDeploy>
     </properties>
@@ -261,7 +261,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -293,7 +293,7 @@
             </dependency>
 
             <dependency>
-                <groupId>com.oracle.ojdbc</groupId>
+                <groupId>com.oracle.database.jdbc</groupId>
                 <artifactId>ojdbc10</artifactId>
                 <version>${dependency.ojdbc10.version}</version>
             </dependency>

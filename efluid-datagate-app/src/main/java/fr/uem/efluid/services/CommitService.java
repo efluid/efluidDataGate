@@ -218,6 +218,21 @@ public class CommitService extends AbstractApplicationService {
     }
 
     /**
+     * (for test needs) prepare an export and process it immediately, in one single transaction
+     *
+     * @param editData export data
+     * @return ExportImportResult
+     */
+    public ExportImportResult<ExportFile> saveAndExportImmediate(CommitExportEditData editData) {
+
+        // From the edited data, create an export without transformer customization ...
+        CommitExportDisplay exportDisplay = saveCommitExport(editData);
+
+        // And process it
+        return processCommitExport(exportDisplay.getUuid());
+    }
+
+    /**
      * Check if the specified commit export has been downloaded : download is processed only when the file is completed, so if not
      * downloaded = the file is generated, if downloaded = a download time has been added to export entity = the file has
      * been fully generated = the export has been downloaded.
@@ -330,7 +345,7 @@ public class CommitService extends AbstractApplicationService {
      * @param commitUuids
      * @return
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NEVER)
     protected ExportFile exportContent(
             Project project,
             String commitPackageName,
@@ -343,7 +358,7 @@ public class CommitService extends AbstractApplicationService {
         return this.exportImportService.exportPackages(Arrays.asList(
                 // Add customized transformers
                 new TransformerDefPackage(PCKG_TRANSFORMERS, LocalDateTime.now())
-                        .from(this.transformerService.getCustomizedTransformerDef(project, transformers)),
+                        .from(this.transformerService.getCustomizedTransformerDefForExport(project, transformers)),
 
                 // Add referenced versions (for dict content compatibility check at import)
                 new VersionPackage(PCKG_VERSIONS, LocalDateTime.now())
@@ -1021,11 +1036,13 @@ public class CommitService extends AbstractApplicationService {
 
         // 3 : run a full change generation using dict content in dictionary - will process only concerned items
         Map<String, VersionCompare.DictionaryTableChanges> allTableChanges = this.changesGenerator.generateChanges(localLastVersion, importedVersion).stream()
+                .filter(d -> d.getTableChanges() != null)
                 .flatMap(d -> d.getTableChanges().stream())
                 .collect(Collectors.toMap(VersionCompare.DictionaryTableChanges::getTableName, c -> c));
 
         // 4 : Check compatibility by table - check referenced entry, keys and columns (consistent order)
         indexByTables.entrySet().stream()
+                // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
                 .sorted(Comparator.comparing(e -> e.getKey().getTableName()))
                 .forEach((e) -> checkCommitIndexDictionaryEntryCompatibility(
                         e.getValue(),
@@ -1070,6 +1087,7 @@ public class CommitService extends AbstractApplicationService {
         // DictionaryEntry is present : continue to check table / key / column changes
         else {
             String tablename = importedDictionaryEntry.getTableName();
+            // TODO [RISK01] : for multiple dict entries for same table in one project, need to be updated
             VersionCompare.DictionaryTableChanges tableChanges = allTableChanges.get(tablename);
 
             // Check columns adn keys only if the table is identified as changed (= not UNCHANGED here)

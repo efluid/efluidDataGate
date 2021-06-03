@@ -569,7 +569,7 @@ public class PrepareIndexService extends AbstractApplicationService {
                 if (knewPayload == null && !knewContent.containsKey(actualOne.getKeyValue())) {
 
                     // Except if new is also empty will content is knew : it's a managed empty line
-                    if (!(StringUtils.isEmpty(actualOne.getPayload()))) {
+                    if (!(!StringUtils.hasText(actualOne.getPayload()))) {
 
                         if (debug) {
                             LOGGER.debug("New endex entry for {} : ADD with \"{}\"",

@@ -418,14 +418,14 @@ public class ManagedValueConverter {
      */
     public String convertToHrPayload(String activePayload, String existingPayload) {
 
-        if (StringUtils.isEmpty(activePayload)) {
-            if (StringUtils.isEmpty(existingPayload)) {
+        if (!StringUtils.hasText(activePayload)) {
+            if (!StringUtils.hasText(existingPayload)) {
                 return null;
             }
             return displayInternalValue(expandInternalValue(existingPayload));
         }
 
-        if (StringUtils.isEmpty(existingPayload)) {
+        if (!StringUtils.hasText(existingPayload)) {
             return displayInternalValue(expandInternalValue(activePayload));
         }
 

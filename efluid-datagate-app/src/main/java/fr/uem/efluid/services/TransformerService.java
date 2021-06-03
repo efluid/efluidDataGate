@@ -10,13 +10,15 @@ import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
 import fr.uem.efluid.services.types.TransformerDefPackage;
 import fr.uem.efluid.services.types.TransformerType;
-import fr.uem.efluid.tools.Transformer;
-import fr.uem.efluid.tools.TransformerProcessor;
+import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.transformers.Transformer;
+import fr.uem.efluid.transformers.TransformerProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +59,12 @@ public class TransformerService extends AbstractApplicationService {
     @Autowired
     private ProjectManagementService projectService;
 
+    @Autowired
+    private JdbcTemplate managedSource;
+
+    @Autowired
+    private ManagedValueConverter valueConverter;
+
     /**
      * Get all available transformer types to list on edit page or for transformer use
      *
@@ -69,17 +77,29 @@ public class TransformerService extends AbstractApplicationService {
     /**
      * For edit page, list all specified transformer defs
      *
+     * @param loadPackageComment true if the optional load package comment has to be included
      * @return all transformer defs from current project
      */
-    public List<TransformerDefDisplay> getAllTransformerDefs() {
+    public List<TransformerDefDisplay> getAllTransformerDefs(boolean loadPackageComment) {
         this.projectService.assertCurrentUserHasSelectedProject();
 
         // For display of user friendly name of transformer type
         Map<String, String> transformerNameByType = this.availableTransformers.stream()
                 .collect(Collectors.toMap(t -> t.getClass().getSimpleName(), Transformer::getName));
 
-        return this.transformerDefs.findByProject(this.projectService.getCurrentSelectedProjectEntity()).stream()
-                .map(d -> new TransformerDefDisplay(d, transformerNameByType.get(d.getType())))
+        return this.transformerDefs.findByProjectAndDeletedTimeIsNull(this.projectService.getCurrentSelectedProjectEntity()).stream()
+                .map(def -> {
+                    String packageComment = null;
+
+                    // If package comment has to be loaded, the transformer must be fully initialized
+                    if (loadPackageComment) {
+                        Transformer<?, ?> transformer = loadTransformerByType(def.getType());
+                        Transformer.TransformerConfig config = parseConfiguration(def.getConfiguration(), transformer);
+                        packageComment = config.isAttachmentPackageSupport()
+                                ? config.getAttachmentPackageComment(this.managedSource, this.valueConverter) : null;
+                    }
+                    return new TransformerDefDisplay(def, transformerNameByType.get(def.getType()), packageComment);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -89,7 +109,7 @@ public class TransformerService extends AbstractApplicationService {
      * @return config for transformer defs uuid, on current project
      */
     public Map<UUID, String> getAllTransformerDefConfigs() {
-        return this.transformerDefs.findByProject(this.projectService.getCurrentSelectedProjectEntity()).stream()
+        return this.transformerDefs.findByProjectAndDeletedTimeIsNull(this.projectService.getCurrentSelectedProjectEntity()).stream()
                 .collect(Collectors.toMap(TransformerDef::getUuid, def -> {
                     Transformer<?, ?> transformer = loadTransformerByType(def.getType());
                     return prettyConfig(parseConfiguration(def.getConfiguration(), transformer));
@@ -108,10 +128,12 @@ public class TransformerService extends AbstractApplicationService {
         Transformer<?, ?> transformer = loadTransformerByType(type);
 
         TransformerDefEditData editData = new TransformerDefEditData();
-
+        Transformer.TransformerConfig config = transformer.getDefaultConfig();
         editData.setName(transformer.getName());
-        editData.setConfiguration(prettyConfig(transformer.getDefaultConfig()));
+        editData.setConfiguration(prettyConfig(config));
         editData.setPriority(1);
+        editData.setPackageComment(config.isAttachmentPackageSupport()
+                ? config.getAttachmentPackageComment(this.managedSource, this.valueConverter) : null);
 
         editData.setTransformer(transformer);
 
@@ -160,11 +182,14 @@ public class TransformerService extends AbstractApplicationService {
      */
     public TransformerDefEditData editTransformerDef(UUID uuid) {
 
-        TransformerDef def = this.transformerDefs.findById(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
+        TransformerDef def = this.transformerDefs.findByUuidAndDeletedTimeIsNull(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
         Transformer<?, ?> transformer = loadTransformerByType(def.getType());
-        String prettyCfg = prettyConfig(parseConfiguration(def.getConfiguration(), transformer));
+        Transformer.TransformerConfig config = parseConfiguration(def.getConfiguration(), transformer);
+        String prettyCfg = prettyConfig(config);
+        String packageComment = config.isAttachmentPackageSupport()
+                ? config.getAttachmentPackageComment(this.managedSource, this.valueConverter) : null;
 
-        return TransformerDefEditData.fromEntity(def, transformer, prettyCfg);
+        return TransformerDefEditData.fromEntity(def, transformer, prettyCfg, packageComment);
     }
 
     /**
@@ -173,10 +198,10 @@ public class TransformerService extends AbstractApplicationService {
      * @param uuid of def to delete
      */
     public void deleteTransformerDef(UUID uuid) {
-        TransformerDef def = this.transformerDefs.findById(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
-        this.transformerDefs.delete(def);
+        TransformerDef def = this.transformerDefs.findByUuidAndDeletedTimeIsNull(uuid).orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
+        def.setDeletedTime(LocalDateTime.now());
+        this.transformerDefs.save(def);
     }
-
 
     /**
      * Save edited def
@@ -193,7 +218,7 @@ public class TransformerService extends AbstractApplicationService {
         TransformerDef def;
 
         if (editData.getUuid() != null) {
-            def = this.transformerDefs.findById(editData.getUuid())
+            def = this.transformerDefs.findByUuidAndDeletedTimeIsNull(editData.getUuid())
                     .orElseThrow(() -> new ApplicationException(ErrorType.TRANSFORMER_NOT_FOUND));
         } else {
             def = new TransformerDef();
@@ -240,34 +265,40 @@ public class TransformerService extends AbstractApplicationService {
      */
     TransformerProcessor importTransformerDefsAndPrepareProcessor(TransformerDefPackage pckg) {
 
-        // Load the package-specified transformers
-        List<TransformerProcessor.TransformerApply> transformerDefs = pckg.content()
-                // ... Store them locally ...
-                .map(this::importTransformerDef)
-                // ... And init them as "transformer Apply" used in TranformerProcessor
-                .map(d -> {
-                    Transformer<?, ?> transformer = loadTransformerByType(d.getType());
-                    Transformer.TransformerConfig config = parseConfiguration(d.getConfiguration(), transformer);
-                    return new TransformerProcessor.TransformerApply(d.getName(), transformer, config, d.getPriority());
-                }).collect(Collectors.toList());
-
-        // Prepare processor from defs only if some found ...
-        return transformerDefs.isEmpty() ? null : new TransformerProcessor(transformerDefs);
+        // Prepare processor from defs ...
+        return new TransformerProcessor(
+                // On imported defs ...
+                pckg.content()
+                        .map(p -> {
+                            // ... Store them locally ...
+                            TransformerDef tDef = importTransformerDef(p);
+                            // ... And init them as "transformer Apply" used in TranformerProcessor
+                            Transformer<?, ?> transformer = loadTransformerByType(tDef.getType());
+                            Transformer.TransformerConfig config = parseConfiguration(tDef.getConfiguration(), transformer);
+                            // ... If an attachment package exist, load it
+                            config.importAttachmentPackageData(p.getAttachmentPackage(), this.managedSource, this.valueConverter);
+                            // ... Finalize processor for transformer use
+                            return new TransformerProcessor.TransformerApply(tDef.getName(), transformer, config, tDef.getPriority());
+                        }).collect(Collectors.toList())
+        );
     }
 
     /**
-     * Prepare TransformerDefs for export with applied customization (if any). Keep only customization which are different than existing content
+     * Prepare TransformerDefs for export with applied customization (if any).
+     * Keep only customization which are different than existing content.
+     * <p>
+     * Load also any associated attachment package
      *
      * @param project        associated project
      * @param customizations specified customizations for export
      * @return transformer def ready to be exported, with applied customizations
      */
-    Stream<TransformerDef> getCustomizedTransformerDef(Project project, Collection<ExportTransformer> customizations) {
+    Stream<TransformerDef> getCustomizedTransformerDefForExport(Project project, Collection<ExportTransformer> customizations) {
 
         Map<UUID, String> confs = customizations.stream().collect(Collectors.toMap(c -> c.getTransformerDef().getUuid(), ExportTransformer::getConfiguration));
         Set<UUID> disabled = customizations.stream().filter(ExportTransformer::isDisabled).map(t -> t.getTransformerDef().getUuid()).collect(Collectors.toSet());
 
-        return this.transformerDefs.findByProject(project).stream()
+        return this.transformerDefs.findByProjectAndDeletedTimeIsNull(project).stream()
                 // Remove disabled transformers ...
                 .filter(t -> !disabled.contains(t.getUuid()))
                 // ... And apply updated configs
@@ -276,6 +307,7 @@ public class TransformerService extends AbstractApplicationService {
                     if (customization != null && !customization.equals(t.getConfiguration())) {
                         t.setCustomizedConfiguration(customization);
                     }
+                    loadTransformerAttachmentPackage(t);
                 });
     }
 
@@ -302,8 +334,38 @@ public class TransformerService extends AbstractApplicationService {
         local.setProject(imported.getProject());
         local.setConfiguration(imported.getConfiguration());
         local.setImportedTime(LocalDateTime.now());
+        local.setDeletedTime(imported.getDeletedTime());
 
         return local;
+    }
+
+    /**
+     * Load any optional attachment packages from the transformer def, if any specified in
+     * transformer configuration
+     *
+     * @param transformerDef transformer def where the data load will be processed
+     */
+    private void loadTransformerAttachmentPackage(TransformerDef transformerDef) {
+
+        // We need to instantiate transformer components including config
+        Transformer<?, ?> transformer = loadTransformerByType(transformerDef.getType());
+
+        // Apply immediately customization if any is specified
+        Transformer.TransformerConfig config = parseConfiguration(
+                transformerDef.getCustomizedConfiguration() != null
+                        ? transformerDef.getCustomizedConfiguration()
+                        : transformerDef.getConfiguration(), transformer);
+
+        // If attachment package support
+        if (config.isAttachmentPackageSupport()) {
+
+            // Call for data load, if specified in config impl
+            byte[] attachementData = config.exportAttachmentPackageData(this.managedSource);
+
+            // Then apply loaded data, if any (can be null)
+            transformerDef.setAttachmentPackage(attachementData);
+        }
+
     }
 
     private String prettyConfig(Transformer.TransformerConfig config) {

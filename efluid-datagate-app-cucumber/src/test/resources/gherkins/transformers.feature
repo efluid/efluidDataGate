@@ -18,10 +18,11 @@ Feature: Some transformers can be set for a project to adapt commits at import r
     Given from the home page
     When the user access to list of transformers
     Then the available transformer types are :
-      | name                  | type                       |
-      | LOWERCASE_TRANSFORMER | LowerCaseTransformer       |
-      | UPPERCASE_TRANSFORMER | UpperCaseTransformer       |
-      | EFLUID_AUDIT          | EfluidAuditDataTransformer |
+      | name                  | type                        |
+      | LOWERCASE_TRANSFORMER | LowerCaseTransformer        |
+      | UPPERCASE_TRANSFORMER | UpperCaseTransformer        |
+      | EFLUID_AUDIT          | EfluidAuditDataTransformer  |
+      | EFLUID_REGION_SUPPORT | EfluidRegionDataTransformer |
 
   Scenario: A transformer can be initialized for a specified type with a default configuration
     Given from the home page
@@ -98,7 +99,7 @@ Feature: Some transformers can be set for a project to adapt commits at import r
       | audit14 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{},}                                                                                                                              | JSON Parsing error                                                                        |
       | audit15 | {"tablePattern":".*","appliedValueFilterPatterns":{"":"0"},"appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{".*":{"value":"","onActions": ["ADD"]}}}                                                   | Value filter column name cannot be empty.                                                 |
       | audit16 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"COL.*":{"value":"value","onActions": []}}}                                                                                      | An actor update must be specified with onValues or onActions                              |
-      | audit17 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"COL.*":{"value":"value","onActions": ["TEST"]}}}                                                                                | value not one of declared Enum instance names: [ADD, REMOVE, UPDATE]                      |
+      | audit17 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"COL.*":{"value":"value","onActions": ["TEST"]}}}                                                                                | not one of the values accepted for Enum class: [ADD, REMOVE, UPDATE]                      |
       | audit18 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val"}}}}                                                                                                        | An actor update must be specified with onValues or onActions. Specify at least one action |
       | audit19 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val","onValues": [{"columnPattern":"ETAT.*"}]}}}}                                                               | The onValues properties columnPattern and valuePattern cannot be empty.                   |
       | audit20 | {"tablePattern":".*","appliedKeyPatterns":[".*"],"dateUpdates":{},"actorUpdates":{"TEST":{"value":"val","onValues": [{"valuePattern":"^TEST.*$"}]}}}}                                                              | The onValues properties columnPattern and valuePattern cannot be empty.                   |
@@ -278,3 +279,18 @@ Feature: Some transformers can be set for a project to adapt commits at import r
       | TTAB_ONE | BBB | ADD    | true         | PRESET:'PRESET LOWERCASE', SOMETHING:'BCDEF' |
       | TTAB_TWO | AAA | ADD    | true         | VALUE:'one', OTHER:'OTHER JJJ'               |
       | TTAB_TWO | BBB | ADD    | true         | VALUE:'two', OTHER:'OTHER KKK'               |
+
+  Scenario: A transformer can be deleted even after an export
+    Given the configured transformers for project "Default" :
+      | name          | type                  | priority | configuration                                              |
+      | Transformer 1 | UPPERCASE_TRANSFORMER | 1        | {"tablePattern" : "TTAB_ONE","columnNames" : [ ".*" ]}     |
+      | Transformer 2 | LOWERCASE_TRANSFORMER | 5        | {"tablePattern" : "TTAB_ONE","columnNames" : [ "PRESET" ]} |
+      | Transformer 3 | UPPERCASE_TRANSFORMER | 10       | {"tablePattern" : "TTAB_TWO","columnNames" : [ ".*" ]}     |
+      | Transformer 4 | LOWERCASE_TRANSFORMER | 5        | {"tablePattern" : "TTAB_TWO","columnNames" : [ "VALUE" ]}  |
+    And the existing data in managed table "TTAB_ONE" :
+      | key | value | preset           | something |
+      | 1   | AAA   | Preset 1         | AbCdE     |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And the user has requested an export of the commit with name ":construction: Update 1"
+    When the user delete the transformer "Transformer 2" of type "LOWERCASE_TRANSFORMER"
+    Then the request is a success

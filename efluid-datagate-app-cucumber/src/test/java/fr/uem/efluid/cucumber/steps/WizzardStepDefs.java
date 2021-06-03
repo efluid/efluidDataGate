@@ -60,7 +60,7 @@ public class WizzardStepDefs extends CucumberStepDefs {
 
     @Then("^the user creation page is (.*)an ldap authentication request$")
     public void user_create_is_login(String mode) {
-        assertModelIsSpecifiedProperty("externalAuth", Boolean.class, v -> v == StringUtils.isEmpty(mode));
+        assertModelIsSpecifiedProperty("externalAuth", Boolean.class, v -> v == !StringUtils.hasText(mode));
     }
 
 }

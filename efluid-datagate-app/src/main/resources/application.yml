@@ -128,9 +128,12 @@ spring:
         hibernate:
             ddl-auto: validate
         properties:
-            hibernate.jdbc.batch_size: 30
-            hibernate.order_inserts: true
-            hibernate.order_updates: true
+            hibernate:
+                jdbc.batch_size: 30
+                order_inserts: true
+                order_updates: true
+                temp.use_jdbc_metadata_defaults: false
+                dialect: org.hibernate.dialect.Oracle12cDialect
     ldap:
         base:
         password:
