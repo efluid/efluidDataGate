@@ -11,7 +11,7 @@ import fr.uem.efluid.transformers.EfluidRegionDataTransformer.Config;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.FormatUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.JdbcTemplate;

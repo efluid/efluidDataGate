@@ -1,6 +1,8 @@
 package fr.uem.efluid.stubs;
 
 import static fr.uem.efluid.utils.DataGenerationUtils.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -8,7 +10,6 @@ import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.transaction.*;
 
-import org.junit.Assert;
 import org.slf4j.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -353,77 +354,77 @@ public class TestDataLoader {
      * @param size
      */
     public void assertDictionarySize(long size) {
-        Assert.assertEquals(size, this.dictionary.count());
+        assertEquals(size, this.dictionary.count());
     }
 
     /**
      * @param size
      */
     public void assertDomainsSize(long size) {
-        Assert.assertEquals(size, this.domains.count());
+        assertEquals(size, this.domains.count());
     }
 
     /**
      * @param size
      */
     public void assertLinksSize(long size) {
-        Assert.assertEquals(size, this.links.count());
+        assertEquals(size, this.links.count());
     }
 
     /**
      * @param size
      */
     public void assertSourceSize(long size) {
-        Assert.assertEquals(size, this.sources.count());
+        assertEquals(size, this.sources.count());
     }
 
     /**
      * @param size
      */
     public void assertSourceChildSize(long size) {
-        Assert.assertEquals(size, this.sourceChilds.count());
+        assertEquals(size, this.sourceChilds.count());
     }
 
     /**
      * @param predicate
      */
     public void assertSourceContentAllValidate(Predicate<List<SimulatedSource>> predicate) {
-        Assert.assertTrue(predicate.test(this.sources.findAll()));
+        assertTrue(predicate.test(this.sources.findAll()));
     }
 
     /**
      * @param predicate
      */
     public void assertSourceChildContentAllValidate(Predicate<List<SimulatedSourceChild>> predicate) {
-        Assert.assertTrue(predicate.test(this.sourceChilds.findAll()));
+        assertTrue(predicate.test(this.sourceChilds.findAll()));
     }
 
     /**
      * @param predicate
      */
     public void assertSourceContentValidate(long id, Predicate<SimulatedSource> predicate) {
-        Assert.assertTrue(predicate.test(this.sources.getOne(id)));
+        assertTrue(predicate.test(this.sources.getOne(id)));
     }
 
     /**
      * @param predicate
      */
     public void assertSourceChildContentValidate(long id, Predicate<SimulatedSourceChild> predicate) {
-        Assert.assertTrue(predicate.test(this.sourceChilds.getOne(id)));
+        assertTrue(predicate.test(this.sourceChilds.getOne(id)));
     }
 
     /**
      * @param predicate
      */
     public void assertDictionaryContentAllValidate(Predicate<List<DictionaryEntry>> predicate) {
-        Assert.assertTrue(predicate.test(this.dictionary.findAll()));
+        assertTrue(predicate.test(this.dictionary.findAll()));
     }
 
     /**
      * @param predicate
      */
     public void assertDictionaryContentValidate(String uuid, Predicate<DictionaryEntry> predicate) {
-        Assert.assertTrue(predicate.test(this.dictionary.getOne(UUID.fromString(uuid))));
+        assertTrue(predicate.test(this.dictionary.getOne(UUID.fromString(uuid))));
     }
 
     @PostConstruct

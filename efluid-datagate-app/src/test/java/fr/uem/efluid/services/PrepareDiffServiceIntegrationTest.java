@@ -3,28 +3,23 @@ package fr.uem.efluid.services;
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.CommitState;
 import fr.uem.efluid.model.entities.IndexAction;
-import fr.uem.efluid.model.entities.Project;
-import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
-import fr.uem.efluid.stubs.DataLoadResult;
-import fr.uem.efluid.stubs.TestDataLoader;
 import fr.uem.efluid.stubs.TesterWithIndependentTransaction;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Propagation;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author elecomte
@@ -32,7 +27,7 @@ import java.util.stream.Collectors;
  * @since v0.0.1
  */
 @Transactional
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @SpringBootTest(classes = {IntegrationTestConfig.class})
 public class PrepareDiffServiceIntegrationTest {
@@ -55,7 +50,7 @@ public class PrepareDiffServiceIntegrationTest {
                 new HashMap<>(),
                 this.tester.proj());
 
-        Assert.assertEquals(0, preparation.getDiffContent().size());
+        assertEquals(0, preparation.getDiffContent().size());
     }
 
     @Test
@@ -68,7 +63,7 @@ public class PrepareDiffServiceIntegrationTest {
                 this.tester.dict(),
                 new HashMap<>(),
                 this.tester.proj());
-        Assert.assertEquals(80 + 100 + 85, preparation.getDiffContent().size());
+        assertEquals(80 + 100 + 85, preparation.getDiffContent().size());
         List<PreparedIndexEntry> adds = preparation.getDiffContent().stream()
                 .filter(i -> i.getAction() == IndexAction.ADD)
                 .collect(Collectors.toList());
@@ -78,8 +73,8 @@ public class PrepareDiffServiceIntegrationTest {
         List<PreparedIndexEntry> updates = preparation.getDiffContent().stream()
                 .filter(i -> i.getAction() == IndexAction.UPDATE)
                 .collect(Collectors.toList());
-        Assert.assertEquals(85, adds.size());
-        Assert.assertEquals(100, removes.size());
-        Assert.assertEquals(80, updates.size());
+        assertEquals(85, adds.size());
+        assertEquals(100, removes.size());
+        assertEquals(80, updates.size());
     }
 }

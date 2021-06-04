@@ -12,7 +12,7 @@ import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.FormatUtils;
 import org.assertj.core.api.AbstractStringAssert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.data.util.Pair;
 
 import java.io.IOException;

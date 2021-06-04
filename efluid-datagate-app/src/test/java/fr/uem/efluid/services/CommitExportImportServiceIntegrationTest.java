@@ -1,23 +1,22 @@
 package fr.uem.efluid.services;
 
+import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.Export;
+import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.ExportRepository;
 import fr.uem.efluid.services.types.CommitExportDisplay;
 import fr.uem.efluid.services.types.CommitExportEditData;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import fr.uem.efluid.stubs.TestDataLoader;
+import fr.uem.efluid.stubs.TestUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.model.repositories.CommitRepository;
-import fr.uem.efluid.stubs.TestDataLoader;
-import fr.uem.efluid.stubs.TestUtils;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -30,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @version 1
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @SpringBootTest(classes = { IntegrationTestConfig.class })
 public class CommitExportImportServiceIntegrationTest {
