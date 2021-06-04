@@ -6,13 +6,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import fr.uem.efluid.model.Shared;
 
@@ -45,6 +39,7 @@ public class LobProperty implements Shared {
 	private Commit commit;
 
 	@Lob
+	@Column(columnDefinition = "BLOB")
 	private byte[] data;
 
 	/**

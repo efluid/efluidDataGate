@@ -45,9 +45,11 @@ public class IndexEntry implements DiffLine, Shared {
     private Commit commit;
 
     @Lob // Can be null when all columns are null
+    @Column(columnDefinition = "CLOB")
     private String payload;
 
     @Lob // Can be null when all columns are null
+    @Column(columnDefinition = "CLOB")
     private String previous;
 
     // Can be null ! (null values are valid keys)
