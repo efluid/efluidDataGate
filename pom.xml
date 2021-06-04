@@ -15,6 +15,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.4.5</version>
+        <relativePath /> 
     </parent>
 
     <name>datagate</name>
@@ -74,7 +75,7 @@
         <dependency.maven-core.version>3.8.1</dependency.maven-core.version>
         <dependency.reflections-utils.version>0.9.12</dependency.reflections-utils.version>
         <dependency.spring-webmvc-pac4j.version>5.0.0</dependency.spring-webmvc-pac4j.version>
-        <dependency.pac4j-jee.version>4.1.0</dependency.pac4j-jee.version>
+        <dependency.pac4j-jee.version>6.0.0</dependency.pac4j-jee.version>
         <dependency.pac4j.version>5.0.1</dependency.pac4j.version>
         <dependency.jaxb.version>2.3.1</dependency.jaxb.version>
         <dependency.activation.version>1.1.1</dependency.activation.version>
@@ -97,7 +98,7 @@
         <dependency.jquery-ui.version>1.12.1</dependency.jquery-ui.version>
 
         <!-- Fixed plugins -->
-        <plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
+        <plugin.maven-plugin.version>3.6.1</plugin.maven-plugin.version>
         <plugin.jacoco.version>0.8.7</plugin.jacoco.version>
 	
         <skipNexusStagingDeploy>false</skipNexusStagingDeploy>
@@ -172,24 +173,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <localCheckout>true</localCheckout>
-                    <pushChanges>false</pushChanges>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <arguments>-Dgpg.passphrase=${gpgPassphrase} -Dmaven.test.skip=${skipTest} -Dmaven.javadoc.skip=${skipJavaDoc}</arguments>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.scm</groupId>
-                        <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>1.9.5</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <version>1.6.8</version>
@@ -229,7 +212,6 @@
                 <configuration>
                     <failOnError>false</failOnError>
                     <source>${java.version}</source>
-                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
             </plugin>
         </plugins>
@@ -256,27 +238,6 @@
                 </property>
             </activation>
 
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <homedir>/opt/mvnDockerDefault/conf/gpg</homedir>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
     </profiles>
@@ -367,8 +328,14 @@
             <!-- For basic Servlet integration of PAC4J -->
             <dependency>
                 <groupId>org.pac4j</groupId>
-                <artifactId>j2e-pac4j</artifactId>
+                <artifactId>jee-pac4j</artifactId>
                 <version>${dependency.pac4j-jee.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-core</artifactId>
+                <version>${dependency.pac4j.version}</version>
             </dependency>
 
             <dependency>
@@ -414,12 +381,6 @@
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-junit-platform-engine</artifactId>
                 <version>${dependency.cucumber.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>junit</groupId>
-                <artifactId>junit</artifactId>
-                <version>4.13.2</version>
             </dependency>
 
             <!-- For annotation processing -->
@@ -526,12 +487,6 @@
     </dependencyManagement>
 
     <distributionManagement>
-        <snapshotRepository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>snapshots</id>
-            <name>hermesMaven-snapshots</name>
-            <url>${urlArtifactorySnapshot}</url>
-        </snapshotRepository>
 
         <repository>
             <id>ossrh</id>

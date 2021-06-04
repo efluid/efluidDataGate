@@ -36,7 +36,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<argLine>${argLine} -Xms256m -Xmx2048m</argLine>
+					<argLine>-Xms256m -Xmx2048m</argLine>
 					<forkCount>1</forkCount>
 					<runOrder>random</runOrder>
 				</configuration>
@@ -164,7 +164,12 @@
 
 		<dependency>
 			<groupId>org.pac4j</groupId>
-			<artifactId>j2e-pac4j</artifactId>
+			<artifactId>pac4j-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.pac4j</groupId>
+			<artifactId>jee-pac4j</artifactId>
 		</dependency>
 
 		<dependency>
@@ -236,16 +241,26 @@
 		</dependency>
 
 		<!-- Test tools -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-test</artifactId>
+                <exclusions>
+                    <exclusion>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
 			<scope>test</scope>
 		</dependency>
 
