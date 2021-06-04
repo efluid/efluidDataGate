@@ -164,7 +164,7 @@ Feature: The backlog can be exported
     Then the export package contains 1 commit contents
     And the export package content has these identified changes for commit with name ":construction: Commit on v2" :
       | Table           | Key          | Action | Payload                      |
-      | TTAB_THREE_KEYS |              | ADD    | FIRST_KEY:'something'        |
+      | TTAB_THREE_KEYS | -null-       | ADD    | FIRST_KEY:'something'        |
       | TTAB_THREE_KEYS | -space-      | ADD    | FIRST_KEY:'something else'   |
       | TTAB_THREE_KEYS | -empty char- | ADD    | FIRST_KEY:'something else 2' |
       | TTAB_THREE_KEYS | aaaa         | ADD    | FIRST_KEY:'something aaaa'   |
@@ -189,13 +189,13 @@ Feature: The backlog can be exported
     When the user request an export of the commit with name ":construction: Commit on v2"
     Then the export package contains 1 commit contents
     And the export package content has these identified changes for commit with name ":construction: Commit on v2" :
-      | Table           | Key                   | Action | Payload |
-      | TTAB_THREE_KEYS | "one /   / something" | ADD    |         |
-      | TTAB_THREE_KEYS | "  /   / "            | ADD    |         |
-      | TTAB_THREE_KEYS | " /   /  "            | ADD    |         |
-      | TTAB_THREE_KEYS | 4 / aaa /             | ADD    |         |
-      | TTAB_THREE_KEYS | 5 / 5 / 5             | ADD    |         |
-      | TTAB_THREE_KEYS | 6 /  / 6              | ADD    |         |
+      | Table           | Key                        | Action | Payload |
+      | TTAB_THREE_KEYS | "one / -null- / something" | ADD    |         |
+      | TTAB_THREE_KEYS | "  / -null- / "            | ADD    |         |
+      | TTAB_THREE_KEYS | " /   / -null-"            | ADD    |         |
+      | TTAB_THREE_KEYS | 4 / aaa / -null-           | ADD    |         |
+      | TTAB_THREE_KEYS | 5 / 5 / 5                  | ADD    |         |
+      | TTAB_THREE_KEYS | 6 /  / 6                   | ADD    |         |
 
   Scenario: All blob content from a commit is exported
     Given the existing data in managed table "TTAB_FIVE" :

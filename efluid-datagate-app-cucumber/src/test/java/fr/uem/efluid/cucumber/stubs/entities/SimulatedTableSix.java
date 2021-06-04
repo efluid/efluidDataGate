@@ -2,10 +2,7 @@ package fr.uem.efluid.cucumber.stubs.entities;
 
 import fr.uem.efluid.cucumber.stubs.ManagedDatabaseAccess;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -24,6 +21,7 @@ public class SimulatedTableSix {
     private Long identifier;
 
     @Lob
+    @Column(columnDefinition = "CLOB")
     private String text;
 
     private LocalDate date;

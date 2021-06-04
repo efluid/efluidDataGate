@@ -1,13 +1,13 @@
 package fr.uem.efluid.cucumber.common;
 
-import org.pac4j.core.context.Pac4jConstants;
 import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.profile.CommonProfile;
-import org.pac4j.core.profile.ProfileHelper;
 import org.pac4j.core.profile.ProfileManager;
+import org.pac4j.core.profile.UserProfile;
+import org.pac4j.core.util.Pac4jConstants;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
@@ -26,7 +26,7 @@ import java.util.List;
  * @version 1
  * @since v0.0.8
  */
-public class TestableProfileManager extends ProfileManager<CommonProfile> {
+public class TestableProfileManager extends ProfileManager {
 
     private final String fixedProfileId;
 
@@ -34,18 +34,17 @@ public class TestableProfileManager extends ProfileManager<CommonProfile> {
      * @param context
      */
     public TestableProfileManager(WebContext context, String fixedProfileId) {
-        super(context);
+        super(context, JEESessionStore.INSTANCE);
         this.fixedProfileId = fixedProfileId;
     }
 
     /**
      * Retrieve all user profiles.
      *
-     * @param readFromSession if the user profiles must be read from session
      * @return the user profiles
      */
     @Override
-    public List<CommonProfile> getAll(final boolean readFromSession) {
+    public List<UserProfile> getProfiles() {
 
         // Prefixed profile set - forced for testing
         if (this.fixedProfileId != null) {
@@ -57,7 +56,6 @@ public class TestableProfileManager extends ProfileManager<CommonProfile> {
         }
 
         // Else default behavior (allows to test auth)
-        final LinkedHashMap<String, CommonProfile> profiles = retrieveAll(readFromSession);
-        return ProfileHelper.flatIntoAProfileList(profiles);
+        return super.getProfiles();
     }
 }
