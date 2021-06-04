@@ -4,10 +4,12 @@ import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.security.providers.AccountProvider;
 import fr.uem.efluid.utils.WebUtils;
 import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.UsernamePasswordCredentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.exception.CredentialsException;
-import org.pac4j.core.exception.HttpAction;
+import org.pac4j.core.exception.http.HttpAction;
 import org.pac4j.core.util.CommonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +28,7 @@ import javax.annotation.PostConstruct;
  * @since v0.0.1
  */
 @Component
-public class AppUserCredentialAuthenticator implements Authenticator<UsernamePasswordCredentials> {
+public class AppUserCredentialAuthenticator implements Authenticator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppUserCredentialAuthenticator.class);
 
@@ -35,19 +37,21 @@ public class AppUserCredentialAuthenticator implements Authenticator<UsernamePas
 
     /**
      * @see org.pac4j.core.credentials.authenticator.Authenticator#validate(org.pac4j.core.credentials.Credentials,
-     * org.pac4j.core.context.WebContext)
+     * org.pac4j.core.context.WebContext, SessionStore)
      */
     @Override
-    public void validate(final UsernamePasswordCredentials credentials, final WebContext context) throws HttpAction, CredentialsException {
+    public void validate(final Credentials credentials, final WebContext context, SessionStore sessionStore) throws HttpAction, CredentialsException {
 
         LOGGER.debug("Begin web (form) authentication");
 
-        if (credentials == null) {
+        if (!(credentials instanceof UsernamePasswordCredentials)) {
             throw new CredentialsException("No credential");
         }
 
-        String username = credentials.getUsername();
-        String password = credentials.getPassword();
+        UsernamePasswordCredentials upCredentials = (UsernamePasswordCredentials) credentials;
+
+        String username = upCredentials.getUsername();
+        String password = upCredentials.getPassword();
 
         if (CommonHelper.isBlank(username)) {
             throw new CredentialsException("Username cannot be blank");
@@ -74,4 +78,5 @@ public class AppUserCredentialAuthenticator implements Authenticator<UsernamePas
     public void signalLoading() {
         LOGGER.debug("[SECURITY] Load web authenticator {}", this.getClass().getName());
     }
+
 }

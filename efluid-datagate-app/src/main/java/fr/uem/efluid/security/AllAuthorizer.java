@@ -1,73 +1,75 @@
 package fr.uem.efluid.security;
 
-import java.util.List;
-
-import javax.annotation.PostConstruct;
-
+import fr.uem.efluid.model.entities.User;
 import org.pac4j.core.authorization.authorizer.ProfileAuthorizer;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.exception.HttpAction;
+import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.profile.CommonProfile;
+import org.pac4j.core.profile.UserProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import fr.uem.efluid.model.entities.User;
+import javax.annotation.PostConstruct;
+import java.util.List;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 @Component
-public class AllAuthorizer extends ProfileAuthorizer<CommonProfile> {
+public class AllAuthorizer extends ProfileAuthorizer {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AllAuthorizer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AllAuthorizer.class);
 
-	@Autowired
-	private UserHolder users;
+    @Autowired
+    private UserHolder users;
 
-	@Override
-	public boolean isAuthorized(final WebContext context, final List<CommonProfile> profiles) throws HttpAction {
-		return isAnyAuthorized(context, profiles);
-	}
+    @Override
+    public boolean isAuthorized(WebContext webContext, SessionStore sessionStore, List<UserProfile> list) {
+        return list.stream().allMatch(p -> isProfileAuthorized(webContext, sessionStore, p));
+    }
 
-	@Override
-	public boolean isProfileAuthorized(final WebContext context, final CommonProfile profile) {
+    @Override
+    public boolean isProfileAuthorized(final WebContext context, SessionStore sessionStore, final UserProfile profile) {
 
-		if (profile == null) {
-			return false;
-		}
+        if (!(profile instanceof CommonProfile)) {
+            return false;
+        }
 
-		LOGGER.debug("Apply user {} / {}", profile.getId(), profile.getEmail());
+        CommonProfile cprofile = (CommonProfile) profile;
 
-		this.users.setCurrentUser(new User() {
+        LOGGER.debug("Apply user {} / {}", cprofile.getId(), cprofile.getEmail());
 
-			/**
-			 * @see fr.uem.efluid.model.entities.User#getLogin()
-			 */
-			@Override
-			public String getLogin() {
-				return profile.getId();
-			}
+        this.users.setCurrentUser(new User() {
 
-			/**
-			 * @see fr.uem.efluid.model.entities.User#getEmail()
-			 */
-			@Override
-			public String getEmail() {
-				return profile.getEmail();
-			}
+            /**
+             * @see fr.uem.efluid.model.entities.User#getLogin()
+             */
+            @Override
+            public String getLogin() {
+                return cprofile.getId();
+            }
 
-		});
+            /**
+             * @see fr.uem.efluid.model.entities.User#getEmail()
+             */
+            @Override
+            public String getEmail() {
+                return cprofile.getEmail();
+            }
 
-		// All authorized
-		return profile.getUsername() != null;
-	}
+        });
 
-	@PostConstruct
-	public void signalLoading() {
-		LOGGER.debug("[SECURITY] Load authorizer {}", this.getClass().getName());
-	}
+        // All authorized
+        return profile.getUsername() != null;
+    }
+
+    @PostConstruct
+    public void signalLoading() {
+        LOGGER.debug("[SECURITY] Load authorizer {}", this.getClass().getName());
+    }
+
 }
