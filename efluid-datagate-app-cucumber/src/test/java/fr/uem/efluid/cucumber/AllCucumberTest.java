@@ -10,11 +10,8 @@ import org.junit.runner.RunWith;
  * @version 2
  * @since v0.0.8
  */
+@io.cucumber.junit.platform.engine.Cucumber
 @RunWith(Cucumber.class)
-@CucumberOptions(
-        glue= "fr.uem.efluid.cucumber",
-        features = "src/test/resources/gherkins",
-        plugin = {"pretty", "html:target/cucumber-html-report", "json:target/cucumber.json"})
 public class AllCucumberTest extends CucumberStepDefs {
 
     // Run tests from specified gherkins
