@@ -1,7 +1,7 @@
 package fr.uem.efluid;
 
 import fr.uem.efluid.tests.inheritance.exclude.all.SomeLinkedType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static fr.uem.efluid.GeneratorTester.onClasses;
 import static fr.uem.efluid.GeneratorTester.onPackage;

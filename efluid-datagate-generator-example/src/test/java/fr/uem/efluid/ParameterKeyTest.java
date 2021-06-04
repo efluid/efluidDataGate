@@ -1,6 +1,6 @@
 package fr.uem.efluid;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static fr.uem.efluid.GeneratorTester.onClasses;
 
