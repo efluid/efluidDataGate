@@ -75,6 +75,9 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
         private String project;
 
         @JsonIgnore
+        private transient Set<String> sourcedTables = new HashSet<>();
+
+        @JsonIgnore
         private transient Map<String, List<RegionParameter>> parameters = new HashMap<>();
 
         public String getProject() {
@@ -105,7 +108,7 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
 
         @Override
         boolean isTableNameMatches(DictionaryEntry dict) {
-            return this.parameters.containsKey(dict.getTableName()) && super.isTableNameMatches(dict);
+            return this.sourcedTables.contains(dict.getTableName()) && super.isTableNameMatches(dict);
         }
 
         @Override
@@ -160,11 +163,16 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
                     while (s.hasNextLine()) {
                         if (!header) {
                             RegionParameter param = new RegionParameter(valueConverter, s.nextLine().split(CSV_SEPARATOR));
+
+                            // Only matching region
                             if (region.equals(param.getRegion())) {
                                 this.parameters
                                         .computeIfAbsent(param.getTable(), k -> new ArrayList<>())
                                         .add(param);
                             }
+
+                            // Track all sources tables
+                            this.sourcedTables.add(param.getTable());
                         } else {
                             header = false;
                         }
@@ -226,7 +234,7 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
 
         @Override
         public boolean test(PreparedIndexEntry preparedIndexEntry) {
-            return this.matchingKeys != null && !this.matchingKeys.contains(preparedIndexEntry.getKeyValue());
+            return this.matchingKeys == null || !this.matchingKeys.contains(preparedIndexEntry.getKeyValue());
         }
     }
 
