@@ -22,8 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static fr.uem.efluid.utils.ErrorType.TRANSFORMER_EFUID_NO_SITE;
-import static fr.uem.efluid.utils.ErrorType.TRANSFORMER_EFUID_WRONG_REGION_DATA;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * Transformer for region-scoped select of values at import
@@ -133,9 +132,14 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
             csvInMemory.append(String.join(CSV_SEPARATOR, SOURCE_COLS)).append("\n");
 
             // Content
-            managedSource.query(SOURCE_QUERY, (rs) -> {
-                appendRowToCsv(rs, csvInMemory);
-            });
+            try {
+                managedSource.query(SOURCE_QUERY, (rs) -> {
+                    appendRowToCsv(rs, csvInMemory);
+                });
+            } catch (Exception e) {
+                throw new ApplicationException(TRANSFORMER_EFUID_NO_REGION_SOURCE, "cannot get region parameter source in table \""
+                        + SOURCE_TABLE + "\" : check managed database", e);
+            }
 
             // Keep data of CSV
             return csvInMemory.toString().getBytes(StandardCharsets.UTF_8);
@@ -151,8 +155,8 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
             }, this.project);
 
             if (region == null) {
-                throw new ApplicationException(TRANSFORMER_EFUID_NO_SITE, "no site found with query "
-                        + GET_REGION_QUERY + "on specified project " + this.project);
+                throw new ApplicationException(TRANSFORMER_EFUID_NO_SITE, "no site found with query \""
+                        + GET_REGION_QUERY + "\" on specified project " + this.project);
             }
 
             boolean header = true;

@@ -127,6 +127,10 @@
 					<p th:case="'TRANSFORMER_EFUID_NO_SITE'">
 						Aucune définition de site trouvée pour la régionalisation des données. Vérifier le contenu de la table TAPPLICATIONINFO.
 					</p>
+					<p th:case="'TRANSFORMER_EFUID_NO_REGION_SOURCE'">
+						Impossible d'extraire les sources de paramètrages des régions. Est-ce que la table "TRECOPIEPARAMREFERENTIELDIR" existe dans la base
+						managée ?
+					</p>
 					<p th:case="'TRANSFORMER_EFUID_WRONG_REGION_DATA'">
 						Les données de paramètrage de la régionalisation n'ont pas pu être chargées. Vérifier le fichier .par utilisé.
 					</p>
