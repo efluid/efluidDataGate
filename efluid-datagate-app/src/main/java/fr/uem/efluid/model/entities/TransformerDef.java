@@ -50,6 +50,7 @@ public class TransformerDef implements Shared {
     private Project project;
 
     @Lob
+    @Column(columnDefinition = "CLOB")
     private String configuration;
 
     @Transient

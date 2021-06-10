@@ -1,22 +1,22 @@
 package fr.uem.efluid.security;
 
-import javax.annotation.PostConstruct;
-
+import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.security.providers.AccountProvider;
+import fr.uem.efluid.utils.WebUtils;
 import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.exception.CredentialsException;
-import org.pac4j.core.exception.HttpAction;
+import org.pac4j.core.exception.http.HttpAction;
 import org.pac4j.core.util.CommonHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import fr.uem.efluid.model.entities.User;
-import fr.uem.efluid.model.repositories.UserRepository;
-import fr.uem.efluid.utils.WebUtils;
+import javax.annotation.PostConstruct;
 
 /**
  * @author elecomte
@@ -24,7 +24,7 @@ import fr.uem.efluid.utils.WebUtils;
  * @since v0.0.1
  */
 @Component
-public class RestTokenAuthenticator implements Authenticator<TokenCredentials> {
+public class RestTokenAuthenticator implements Authenticator {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RestTokenAuthenticator.class);
 
@@ -32,19 +32,21 @@ public class RestTokenAuthenticator implements Authenticator<TokenCredentials> {
     private AccountProvider accountProvider;
 
     @Override
-    public void validate(final TokenCredentials credentials, final WebContext context) throws HttpAction, CredentialsException {
+    public void validate(final Credentials credentials, final WebContext context, SessionStore sessionStore) throws HttpAction, CredentialsException {
 
         LOGGER.debug("Begin rest (token) authentication");
 
-        if (credentials == null) {
+        if (!(credentials instanceof TokenCredentials)) {
             throw new CredentialsException("credentials must not be null");
         }
 
-        if (CommonHelper.isBlank(credentials.getToken())) {
+        TokenCredentials tokenCredentials = (TokenCredentials) credentials;
+
+        if (CommonHelper.isBlank(tokenCredentials.getToken())) {
             throw new CredentialsException("token must not be blank");
         }
 
-        final String token = credentials.getToken();
+        final String token = tokenCredentials.getToken();
 
         User user = this.accountProvider.findExistingUserByToken(token)
                 .orElseThrow(() -> new CredentialsException("Username doesn't exist"));

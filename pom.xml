@@ -15,6 +15,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>2.4.5</version>
+        <relativePath /> 
     </parent>
 
     <name>datagate</name>
@@ -69,24 +70,22 @@
         <dependency.zip4j.version>2.7.0</dependency.zip4j.version>
         <dependency.ojdbc10.version>19.10.0.0</dependency.ojdbc10.version>
         <dependency.plexus.version>0.0.7</dependency.plexus.version>
-        <dependency.maven-plugin-api.version>3.6.0</dependency.maven-plugin-api.version>
-        <dependency.maven-plugin-annotations.version>3.5.2</dependency.maven-plugin-annotations.version>
-        <dependency.maven-core.version>3.5.4</dependency.maven-core.version>
-        <dependency.reflections-utils.version>0.9.11</dependency.reflections-utils.version>
-        <dependency.spring-webmvc-pac4j.version>3.2.0</dependency.spring-webmvc-pac4j.version>
-        <dependency.pac4j-jee.version>4.1.0</dependency.pac4j-jee.version>
-        <dependency.pac4j.version>3.3.0</dependency.pac4j.version>
+        <dependency.maven-plugin-api.version>3.8.1</dependency.maven-plugin-api.version>
+        <dependency.maven-plugin-annotations.version>3.6.1</dependency.maven-plugin-annotations.version>
+        <dependency.maven-core.version>3.8.1</dependency.maven-core.version>
+        <dependency.reflections-utils.version>0.9.12</dependency.reflections-utils.version>
+        <dependency.spring-webmvc-pac4j.version>5.0.0</dependency.spring-webmvc-pac4j.version>
+        <dependency.pac4j-jee.version>6.0.0</dependency.pac4j-jee.version>
+        <dependency.pac4j.version>5.0.1</dependency.pac4j.version>
         <dependency.jaxb.version>2.3.1</dependency.jaxb.version>
         <dependency.activation.version>1.1.1</dependency.activation.version>
         <dependency.validation.version>2.0.1.Final</dependency.validation.version>
-        <dependency.swagger-api.version>1.5.18</dependency.swagger-api.version>
-        <dependency.springfox-swagger.version>2.8.0</dependency.springfox-swagger.version>
-        <dependency.classmate.version>1.3.1</dependency.classmate.version>
+        <dependency.swagger-api.version>1.6.2</dependency.swagger-api.version>
+        <dependency.springfox-swagger.version>3.0.0</dependency.springfox-swagger.version>
+        <dependency.classmate.version>1.5.1</dependency.classmate.version>
         <dependency.thymeleaf-layout.version>2.3.0</dependency.thymeleaf-layout.version>
         <dependency.txtmark.version>0.13</dependency.txtmark.version>
-        <dependency.cucumber.version>5.5.0</dependency.cucumber.version>
-        <dependency.togglz.version>2.6.1.Final</dependency.togglz.version>
-        <dependency.togglz-thymeleaf.version>1.0.1.RELEASE</dependency.togglz-thymeleaf.version>
+        <dependency.cucumber.version>6.10.3</dependency.cucumber.version>
         <dependency.flyway.version>7.9.1</dependency.flyway.version>
         <dependency.javax-annot.version>1.2</dependency.javax-annot.version>
         <dependency.jsr305.version>3.0.2</dependency.jsr305.version>
@@ -99,7 +98,7 @@
         <dependency.jquery-ui.version>1.12.1</dependency.jquery-ui.version>
 
         <!-- Fixed plugins -->
-        <plugin.maven-plugin.version>${dependency.maven-plugin-api.version}</plugin.maven-plugin.version>
+        <plugin.maven-plugin.version>3.6.1</plugin.maven-plugin.version>
         <plugin.jacoco.version>0.8.7</plugin.jacoco.version>
 	
         <skipNexusStagingDeploy>false</skipNexusStagingDeploy>
@@ -174,24 +173,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <localCheckout>true</localCheckout>
-                    <pushChanges>false</pushChanges>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <arguments>-Dgpg.passphrase=${gpgPassphrase} -Dmaven.test.skip=${skipTest} -Dmaven.javadoc.skip=${skipJavaDoc}</arguments>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.scm</groupId>
-                        <artifactId>maven-scm-provider-gitexe</artifactId>
-                        <version>1.9.5</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
                 <version>1.6.8</version>
@@ -231,7 +212,6 @@
                 <configuration>
                     <failOnError>false</failOnError>
                     <source>${java.version}</source>
-                    <additionalparam>-Xdoclint:none</additionalparam>
                 </configuration>
             </plugin>
         </plugins>
@@ -258,27 +238,6 @@
                 </property>
             </activation>
 
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.0.1</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <homedir>/opt/mvnDockerDefault/conf/gpg</homedir>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
     </profiles>
@@ -369,8 +328,14 @@
             <!-- For basic Servlet integration of PAC4J -->
             <dependency>
                 <groupId>org.pac4j</groupId>
-                <artifactId>j2e-pac4j</artifactId>
+                <artifactId>jee-pac4j</artifactId>
                 <version>${dependency.pac4j-jee.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.pac4j</groupId>
+                <artifactId>pac4j-core</artifactId>
+                <version>${dependency.pac4j.version}</version>
             </dependency>
 
             <dependency>
@@ -393,6 +358,7 @@
             </dependency>
 
             <!-- For system tests using cucumber -->
+
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-java</artifactId>
@@ -408,6 +374,12 @@
             <dependency>
                 <groupId>io.cucumber</groupId>
                 <artifactId>cucumber-spring</artifactId>
+                <version>${dependency.cucumber.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.cucumber</groupId>
+                <artifactId>cucumber-junit-platform-engine</artifactId>
                 <version>${dependency.cucumber.version}</version>
             </dependency>
 
@@ -515,12 +487,6 @@
     </dependencyManagement>
 
     <distributionManagement>
-        <snapshotRepository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>snapshots</id>
-            <name>hermesMaven-snapshots</name>
-            <url>${urlArtifactorySnapshot}</url>
-        </snapshotRepository>
 
         <repository>
             <id>ossrh</id>

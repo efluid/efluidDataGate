@@ -5,7 +5,7 @@ import fr.uem.efluid.model.entities.IndexEntry;
 import fr.uem.efluid.services.types.CommitPackage;
 import fr.uem.efluid.services.types.IndexEntryPackage;
 import fr.uem.efluid.services.types.SharedPackage;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

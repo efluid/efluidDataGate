@@ -1,26 +1,35 @@
 package fr.uem.efluid.services;
 
-import static fr.uem.efluid.model.entities.IndexAction.*;
-
-import java.util.*;
-
+import fr.uem.efluid.IntegrationTestConfig;
+import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.ApplyType;
-import org.junit.*;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.*;
+import fr.uem.efluid.model.entities.Commit;
+import fr.uem.efluid.stubs.TestDataLoader;
+import fr.uem.efluid.stubs.TestUtils;
+import fr.uem.efluid.utils.ApplicationException;
+import fr.uem.efluid.utils.DatasourceUtils;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.*;
-import org.springframework.transaction.annotation.*;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.model.DiffLine;
-import fr.uem.efluid.model.entities.Commit;
-import fr.uem.efluid.stubs.*;
-import fr.uem.efluid.utils.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
+import static fr.uem.efluid.model.entities.IndexAction.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author elecomte
@@ -28,7 +37,7 @@ import fr.uem.efluid.utils.*;
  * @since v0.0.1
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @SpringBootTest(classes = {IntegrationTestConfig.class})
 public class ApplyDiffServiceIntegrationTest {
@@ -76,7 +85,7 @@ public class ApplyDiffServiceIntegrationTest {
     }
 
     @Test
-    @Ignore("Disabled to allow build - TODO : must investigate why rollback is not fired here !!!")
+    @Disabled("Disabled to allow build - TODO : must investigate why rollback is not fired here !!!")
     public void testApplyDiffSimpleAddFailOnConstraintAndRollback() {
         setupDatabase("update1");
 
@@ -96,13 +105,13 @@ public class ApplyDiffServiceIntegrationTest {
 
         try {
             this.service.applyDiff(diff, new HashMap<>(), commit, ApplyType.IMPORT);
-            Assert.fail();
+            fail();
         }
 
         // Required
         catch (ApplicationException e) {
             TransactionStatus status = this.managedDbTransactionManager.getTransaction(new DefaultTransactionDefinition());
-            Assert.assertTrue(status.isRollbackOnly());
+            assertTrue(status.isRollbackOnly());
         }
     }
 
@@ -131,7 +140,7 @@ public class ApplyDiffServiceIntegrationTest {
     }
 
     @Test
-    @Ignore("Disabled to allow build - TODO : must investigate why rollback is not fired here !!!")
+    @Disabled("Disabled to allow build - TODO : must investigate why rollback is not fired here !!!")
     public void testApplyDiffSimpleRemoveFailOnConstraintAndRollback() {
         setupDatabase("update2");
 
@@ -150,13 +159,13 @@ public class ApplyDiffServiceIntegrationTest {
 
         try {
             this.service.applyDiff(diff, new HashMap<>(), commit, ApplyType.IMPORT);
-            Assert.fail();
+            fail();
         }
 
         // Required
         catch (ApplicationException e) {
             TransactionStatus status = this.managedDbTransactionManager.getTransaction(new DefaultTransactionDefinition());
-            Assert.assertTrue(status.isRollbackOnly());
+            assertTrue(status.isRollbackOnly());
         }
     }
 
@@ -179,7 +188,7 @@ public class ApplyDiffServiceIntegrationTest {
 
         try {
             this.service.applyDiff(diff, new HashMap<>(), commit, ApplyType.IMPORT);
-            Assert.fail();
+            fail();
         }
 
         // Required
@@ -239,7 +248,7 @@ public class ApplyDiffServiceIntegrationTest {
 
         try {
             this.service.applyDiff(diff, new HashMap<>(), commit, ApplyType.IMPORT);
-            Assert.fail();
+            fail();
         }
 
         // Required
@@ -321,7 +330,7 @@ public class ApplyDiffServiceIntegrationTest {
 
         try {
             this.service.applyDiff(diff, new HashMap<>(), commit, ApplyType.IMPORT);
-            Assert.fail();
+            fail();
         }
 
         // Required

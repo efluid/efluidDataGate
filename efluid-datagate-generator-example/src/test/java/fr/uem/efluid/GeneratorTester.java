@@ -8,7 +8,6 @@ import fr.uem.efluid.model.ParameterDomainDefinition;
 import fr.uem.efluid.model.ParameterLinkDefinition;
 import fr.uem.efluid.model.ParameterProjectDefinition;
 import fr.uem.efluid.model.ParameterTableDefinition;
-import org.junit.Assert;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -17,6 +16,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tool for complete testing of a generated dictionary, with good test readability
@@ -118,35 +119,35 @@ public class GeneratorTester {
 
 
     public GeneratorTester assertThatContentWereIdentified() {
-        Assert.assertNotNull(this.content);
+        assertNotNull(this.content);
         return this;
     }
 
     public GeneratorTester assertFoundDomainsAre(String... names) {
-        Assert.assertEquals(names.length, this.content.getAllDomains().size());
+        assertEquals(names.length, this.content.getAllDomains().size());
 
         Set<String> foundNames = this.content.getAllDomains().stream().map(ParameterDomainDefinition::getName).collect(Collectors.toSet());
 
-        Assert.assertTrue(Stream.of(names).allMatch(foundNames::contains));
+        assertTrue(Stream.of(names).allMatch(foundNames::contains));
 
         return this;
     }
 
     public GeneratorTester assertFoundTablesAre(String... names) {
-        Assert.assertEquals(names.length, this.content.getAllTables().size());
+        assertEquals(names.length, this.content.getAllTables().size());
         Set<String> foundNames = this.content.getAllTables().stream().map(ParameterTableDefinition::getTableName).collect(Collectors.toSet());
 
-        Assert.assertTrue(Stream.of(names).allMatch(foundNames::contains));
+        assertTrue(Stream.of(names).allMatch(foundNames::contains));
         return this;
     }
 
     public GeneratorTester assertFoundLinkCountIs(int count) {
-        Assert.assertEquals(count, this.content.getAllLinks().size());
+        assertEquals(count, this.content.getAllLinks().size());
         return this;
     }
 
     public GeneratorTester assertFoundMappingCountIs(int count) {
-        Assert.assertEquals(count, this.content.getAllMappings().size());
+        assertEquals(count, this.content.getAllMappings().size());
         return this;
     }
 
@@ -211,11 +212,11 @@ public class GeneratorTester {
         }
 
         public void doesntExist() {
-            Assert.assertTrue("Table " + tableName + " shouldn't exist but does", tableOpt.isEmpty());
+            assertTrue(tableOpt.isEmpty(),"Table " + tableName + " shouldn't exist but does");
         }
 
         public GeneratedTableAssert exists() {
-            Assert.assertTrue("Table " + tableName + " must exist but doesn't", tableOpt.isPresent());
+            assertTrue(tableOpt.isPresent(),"Table " + tableName + " must exist but doesn't");
             return this;
         }
 
@@ -231,22 +232,22 @@ public class GeneratorTester {
         }
 
         public GeneratedTableAssert hasDictionaryEntryName(String name) {
-            Assert.assertEquals("Specified name is not valid. Expected \"" + name + "\" but get \"" + this.tableOpt.get().getParameterName() + "\" for table \"" + tableName + "\"", name, this.tableOpt.get().getParameterName());
+            assertEquals(name, this.tableOpt.get().getParameterName(),"Specified name is not valid. Expected \"" + name + "\" but get \"" + this.tableOpt.get().getParameterName() + "\" for table \"" + tableName + "\"");
             return this;
         }
 
         public GeneratedTableAssert hasKey(String keyname, ColumnType type) {
             List<String> names = this.tableOpt.get().getAllKeyNames();
             List<ColumnType> types = this.tableOpt.get().getAllKeyTypes();
-            Assert.assertTrue("Specified key is not valid. Expected to found \"" + keyname + "\" but get \"" + Arrays.toString(names.toArray()) + "\" for table \"" + tableName + "\"", names.contains(keyname));
+            assertTrue(names.contains(keyname),"Specified key is not valid. Expected to found \"" + keyname + "\" but get \"" + Arrays.toString(names.toArray()) + "\" for table \"" + tableName + "\"" );
             ColumnType found = types.get(names.indexOf(keyname));
-            Assert.assertEquals("Specified key type is not valid. Expected to found \"" + type + "\" but get \"" + Arrays.toString(types.toArray()) + "\" for table \"" + tableName + "\"", type, found);
+            assertEquals( type, found,"Specified key type is not valid. Expected to found \"" + type + "\" but get \"" + Arrays.toString(types.toArray()) + "\" for table \"" + tableName + "\"");
             return this;
         }
 
         public GeneratedTableAssert doesntHaveKey(String keyname) {
             List<String> names = this.tableOpt.get().getAllKeyNames();
-            Assert.assertFalse("Specified key is not valid. Expected to not found \"" + keyname + "\" but get \"" + Arrays.toString(names.toArray()) + "\" for table \"" + tableName + "\"", names.contains(keyname));
+            assertFalse(names.contains(keyname), "Specified key is not valid. Expected to not found \"" + keyname + "\" but get \"" + Arrays.toString(names.toArray()) + "\" for table \"" + tableName + "\"");
             return this;
         }
 
@@ -259,17 +260,17 @@ public class GeneratorTester {
          */
         public GeneratedTableAssert hasColumns(String... selectCols) {
             String[] splitSelect = this.tableOpt.get().getSelectClause().split(", ");
-            Assert.assertEquals("Specified select is not valid. Do not find the correct number of columns in current select \"" + this.tableOpt.get().getSelectClause()
-                    + "\" for table \"" + tableName + "\"", selectCols.length, splitSelect.length);
+            assertEquals(selectCols.length, splitSelect.length,"Specified select is not valid. Do not find the correct number of columns in current select \"" + this.tableOpt.get().getSelectClause()
+                    + "\" for table \"" + tableName + "\"");
             List<String> cols = Stream.of(splitSelect).map(CLEAN_COLUMN).collect(Collectors.toList());
-            Stream.of(selectCols).forEach(v -> Assert.assertTrue("Specified select is not valid. Cannot found specified col \"" + v + "\" for table \"" + tableName + "\"", cols.contains(v)));
+            Stream.of(selectCols).forEach(v -> assertTrue(cols.contains(v),"Specified select is not valid. Cannot found specified col \"" + v + "\" for table \"" + tableName + "\""));
             return this;
         }
 
         public GeneratedTableAssert doesntHaveColumns(String... selectCols) {
             String[] splitSelect = this.tableOpt.get().getSelectClause().split(", ");
             List<String> cols = Stream.of(splitSelect).map(CLEAN_COLUMN).collect(Collectors.toList());
-            Stream.of(selectCols).forEach(v -> Assert.assertFalse("Specified select is not valid. Found unexpected col \"" + v + "\" for table \"" + tableName + "\"", cols.contains(v)));
+            Stream.of(selectCols).forEach(v -> assertFalse(cols.contains(v),"Specified select is not valid. Found unexpected col \"" + v + "\" for table \"" + tableName + "\""));
             return this;
         }
 

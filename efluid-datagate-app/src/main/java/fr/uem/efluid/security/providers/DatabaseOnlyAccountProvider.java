@@ -49,6 +49,8 @@ public class DatabaseOnlyAccountProvider implements AccountProvider {
 
     @Override
     public Optional<User> findExistingUserByToken(String token) {
+
+        this.users.findAll();
         return this.users.findByToken(token);
     }
 

@@ -22,6 +22,7 @@ public class ExportTransformer {
     private TransformerDef transformerDef;
 
     @Lob
+    @Column(columnDefinition = "CLOB")
     private String configuration;
 
     private boolean disabled;

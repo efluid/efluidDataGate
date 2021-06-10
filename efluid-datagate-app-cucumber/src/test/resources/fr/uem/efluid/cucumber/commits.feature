@@ -519,7 +519,7 @@ Feature: The commit can be saved and are historised
     Then the commit ":construction: Commit on v2" is added to commit list for current project
     And the saved commit content has these identified changes :
       | Table           | Key          | Action | Payload                      |
-      | TTAB_THREE_KEYS |              | ADD    | FIRST_KEY:'something'        |
+      | TTAB_THREE_KEYS | -null-       | ADD    | FIRST_KEY:'something'        |
       | TTAB_THREE_KEYS | -space-      | ADD    | FIRST_KEY:'something else'   |
       | TTAB_THREE_KEYS | -empty char- | ADD    | FIRST_KEY:'something else 2' |
       | TTAB_THREE_KEYS | aaaa         | ADD    | FIRST_KEY:'something aaaa'   |
@@ -543,10 +543,10 @@ Feature: The commit can be saved and are historised
     And a new commit ":construction: Commit on v2" has been saved with all the new identified diff content
     Then the commit ":construction: Commit on v2" is added to commit list for current project
     And the saved commit content has these identified changes :
-      | Table           | Key                   | Action | Payload |
-      | TTAB_THREE_KEYS | "one /   / something" | ADD    |         |
-      | TTAB_THREE_KEYS | "  /   / "            | ADD    |         |
-      | TTAB_THREE_KEYS | " /   /  "            | ADD    |         |
-      | TTAB_THREE_KEYS | 4 / aaa /             | ADD    |         |
-      | TTAB_THREE_KEYS | 5 / 5 / 5             | ADD    |         |
-      | TTAB_THREE_KEYS | 6 /  / 6              | ADD    |         |
+      | Table           | Key                        | Action | Payload |
+      | TTAB_THREE_KEYS | "one / -null- / something" | ADD    |         |
+      | TTAB_THREE_KEYS | "  / -null- / "            | ADD    |         |
+      | TTAB_THREE_KEYS | " /   / -null-"            | ADD    |         |
+      | TTAB_THREE_KEYS | 4 / aaa / -null-           | ADD    |         |
+      | TTAB_THREE_KEYS | 5 / 5 / 5                  | ADD    |         |
+      | TTAB_THREE_KEYS | 6 /  / 6                   | ADD    |         |

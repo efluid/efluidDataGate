@@ -26,6 +26,7 @@ public class ApplyHistoryEntry {
 	private ApplyType type;
 
 	@Lob
+	@Column(columnDefinition = "CLOB")
 	private String query;
 
 	@ManyToOne(optional = false)

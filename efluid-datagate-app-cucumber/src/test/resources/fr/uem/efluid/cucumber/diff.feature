@@ -513,7 +513,7 @@ Feature: The update on parameter tables can be followed checked and stored as co
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
       | Table           | Key          | Action | Payload                      |
-      | TTAB_THREE_KEYS |              | ADD    | FIRST_KEY:'something'        |
+      | TTAB_THREE_KEYS | -null-       | ADD    | FIRST_KEY:'something'        |
       | TTAB_THREE_KEYS | -space-      | ADD    | FIRST_KEY:'something else'   |
       | TTAB_THREE_KEYS | -empty char- | ADD    | FIRST_KEY:'something else 2' |
       | TTAB_THREE_KEYS | aaaa         | ADD    | FIRST_KEY:'something aaaa'   |
@@ -538,13 +538,13 @@ Feature: The update on parameter tables can be followed checked and stored as co
     And the diff is completed
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
-      | Table           | Key                   | Action | Payload |
-      | TTAB_THREE_KEYS | "one /   / something" | ADD    |         |
-      | TTAB_THREE_KEYS | "  /   / "            | ADD    |         |
-      | TTAB_THREE_KEYS | " /   /  "            | ADD    |         |
-      | TTAB_THREE_KEYS | 4 / aaa /             | ADD    |         |
-      | TTAB_THREE_KEYS | 5 / 5 / 5             | ADD    |         |
-      | TTAB_THREE_KEYS | 6 /  / 6              | ADD    |         |
+      | Table           | Key                        | Action | Payload |
+      | TTAB_THREE_KEYS | "one / -null- / something" | ADD    |         |
+      | TTAB_THREE_KEYS | "  / -null- / "            | ADD    |         |
+      | TTAB_THREE_KEYS | " /   / -null-"            | ADD    |         |
+      | TTAB_THREE_KEYS | 4 / aaa / -null-           | ADD    |         |
+      | TTAB_THREE_KEYS | 5 / 5 / 5                  | ADD    |         |
+      | TTAB_THREE_KEYS | 6 /  / 6                   | ADD    |         |
 
   Scenario: Init diff for tables without values is processed without error
     Given the application is fully initialized with the wizard
@@ -585,19 +585,19 @@ Feature: The update on parameter tables can be followed checked and stored as co
     And the diff is completed
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
-      | Table           | Key                   | Action | Payload                            |
-      | TTAB_ONE        | AAA                   | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
-      | TTAB_ONE        | BBB                   | ADD    | PRESET:'Preset 2', SOMETHING:'BBB' |
-      | TTAB_TWO        | JJJ                   | ADD    | VALUE:'One', OTHER:'Other JJJ'     |
-      | TTAB_TWO        | VVV                   | ADD    | VALUE:'Two', OTHER:'Other VVV'     |
-      | TTAB_ONLY_KEYS  | 1 / 1                 | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 2 / 1                 | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 3 / 1                 | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 4 / 2                 | ADD    |                                    |
-      | TTAB_THREE_KEYS | "4 / aaa /  "         | ADD    |                                    |
-      | TTAB_THREE_KEYS | "5 / 5 / 5"           | ADD    |                                    |
-      | TTAB_THREE_KEYS | "one /   / something" | ADD    |                                    |
-      | TTAB_THREE_KEYS | "two / a / a"         | ADD    |                                    |
+      | Table           | Key                        | Action | Payload                            |
+      | TTAB_ONE        | AAA                        | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
+      | TTAB_ONE        | BBB                        | ADD    | PRESET:'Preset 2', SOMETHING:'BBB' |
+      | TTAB_TWO        | JJJ                        | ADD    | VALUE:'One', OTHER:'Other JJJ'     |
+      | TTAB_TWO        | VVV                        | ADD    | VALUE:'Two', OTHER:'Other VVV'     |
+      | TTAB_ONLY_KEYS  | 1 / 1                      | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 2 / 1                      | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 1                      | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 4 / 2                      | ADD    |                                    |
+      | TTAB_THREE_KEYS | "4 / aaa / -null-"         | ADD    |                                    |
+      | TTAB_THREE_KEYS | "5 / 5 / 5"                | ADD    |                                    |
+      | TTAB_THREE_KEYS | "one / -null- / something" | ADD    |                                    |
+      | TTAB_THREE_KEYS | "two / a / a"              | ADD    |                                    |
 
   Scenario: Update diff for tables without values is processed without error
     Given the application is fully initialized with the wizard
@@ -658,21 +658,21 @@ Feature: The update on parameter tables can be followed checked and stored as co
     And the diff is completed
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
-      | Table           | Key                   | Action | Payload                            |
-      | TTAB_ONE        | LL32                  | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
-      | TTAB_ONE        | BBB                   | UPDATE | SOMETHING:'BBB'=>'updated'         |
-      | TTAB_ONLY_KEYS  | 5 / 1                 | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 6 / 3                 | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 3 / 1                 | REMOVE |                                    |
-      | TTAB_ONLY_KEYS  | 3 / 3                 | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 4 / 2                 | REMOVE |                                    |
-      | TTAB_THREE_KEYS | 6 / 6 / 6             | ADD    |                                    |
-      | TTAB_THREE_KEYS | tttt /   / tttttttt   | ADD    |                                    |
-      | TTAB_THREE_KEYS | 5 / 5 / 5             | REMOVE |                                    |
-      | TTAB_THREE_KEYS | 5 / 5 / 6             | ADD    |                                    |
-      | TTAB_THREE_KEYS | other / other /       | ADD    |                                    |
-      | TTAB_THREE_KEYS | three / three / three | ADD    |                                    |
-      | TTAB_THREE_KEYS | 4 / aaa /             | REMOVE |                                    |
+      | Table           | Key                      | Action | Payload                            |
+      | TTAB_ONE        | LL32                     | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
+      | TTAB_ONE        | BBB                      | UPDATE | SOMETHING:'BBB'=>'updated'         |
+      | TTAB_ONLY_KEYS  | 5 / 1                    | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 6 / 3                    | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 1                    | REMOVE |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 3                    | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 4 / 2                    | REMOVE |                                    |
+      | TTAB_THREE_KEYS | 6 / 6 / 6                | ADD    |                                    |
+      | TTAB_THREE_KEYS | tttt / -null- / tttttttt | ADD    |                                    |
+      | TTAB_THREE_KEYS | 5 / 5 / 5                | REMOVE |                                    |
+      | TTAB_THREE_KEYS | 5 / 5 / 6                | ADD    |                                    |
+      | TTAB_THREE_KEYS | other / other / -null-   | ADD    |                                    |
+      | TTAB_THREE_KEYS | three / three / three    | ADD    |                                    |
+      | TTAB_THREE_KEYS | 4 / aaa / -null-         | REMOVE |                                    |
 
   Scenario: Update diff for newly managed tables without values is processed without error
     Given the application is fully initialized with the wizard
@@ -725,18 +725,18 @@ Feature: The update on parameter tables can be followed checked and stored as co
     And the diff is completed
     When the user access to diff commit page
     Then the commit content is rendered with these identified changes :
-      | Table           | Key                 | Action | Payload                            |
-      | TTAB_ONE        | LL32                | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
-      | TTAB_ONE        | BBB                 | UPDATE | SOMETHING:'BBB'=>'updated'         |
-      | TTAB_ONLY_KEYS  | 5 / 1               | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 6 / 3               | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 3 / 1               | REMOVE |                                    |
-      | TTAB_ONLY_KEYS  | 3 / 3               | ADD    |                                    |
-      | TTAB_ONLY_KEYS  | 4 / 2               | REMOVE |                                    |
-      | TTAB_THREE_KEYS | 4 / aaa /           | ADD    |                                    |
-      | TTAB_THREE_KEYS | 5 / 5 / 5           | ADD    |                                    |
-      | TTAB_THREE_KEYS | one /   / something | ADD    |                                    |
-      | TTAB_THREE_KEYS | two / a / a         | ADD    |                                    |
+      | Table           | Key                      | Action | Payload                            |
+      | TTAB_ONE        | LL32                     | ADD    | PRESET:'Preset 1', SOMETHING:'AAA' |
+      | TTAB_ONE        | BBB                      | UPDATE | SOMETHING:'BBB'=>'updated'         |
+      | TTAB_ONLY_KEYS  | 5 / 1                    | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 6 / 3                    | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 1                    | REMOVE |                                    |
+      | TTAB_ONLY_KEYS  | 3 / 3                    | ADD    |                                    |
+      | TTAB_ONLY_KEYS  | 4 / 2                    | REMOVE |                                    |
+      | TTAB_THREE_KEYS | 4 / aaa / -null-         | ADD    |                                    |
+      | TTAB_THREE_KEYS | 5 / 5 / 5                | ADD    |                                    |
+      | TTAB_THREE_KEYS | one / -null- / something | ADD    |                                    |
+      | TTAB_THREE_KEYS | two / a / a              | ADD    |                                    |
 
   Scenario: A diff can process null payloads - add only
     Given the existing data in managed table "TTAB_ALL_NULLABLE" :

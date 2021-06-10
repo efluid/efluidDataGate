@@ -10,13 +10,13 @@ import fr.uem.efluid.stubs.TestUtils;
 import fr.uem.efluid.upgrades.InitPreviousPayloadUpgrade;
 import fr.uem.efluid.upgrades.UpgradeProcess;
 import fr.uem.efluid.utils.ApplicationException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +29,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Transactional(propagation = Propagation.REQUIRES_NEW)
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 @SpringBootTest(classes = {IntegrationTestConfig.class})
 public class UpgradeServiceIntegrationTest {
@@ -49,7 +49,7 @@ public class UpgradeServiceIntegrationTest {
     @Autowired
     private UpgradeRepository upgrades;
 
-    @Before
+    @BeforeEach
     public void resetUpgrades() {
         this.upgrades.deleteAll();
         this.upgrades.flush();

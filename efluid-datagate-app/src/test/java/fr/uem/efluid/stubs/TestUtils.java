@@ -18,11 +18,12 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import fr.uem.efluid.ColumnType;
-import org.junit.Assert;
 
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.tools.ManagedValueConverter;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author elecomte
@@ -126,7 +127,7 @@ public class TestUtils {
             Path path = new File("target/" + name).toPath();
             Files.write(path, file.getData());
         } catch (IOException e) {
-            Assert.fail("Cannot export to " + name);
+            fail("Cannot export to " + name);
         }
     }
 
@@ -167,8 +168,8 @@ public class TestUtils {
 
         for (Map.Entry<String, String> expected : expecteds.entrySet()) {
             String data = datasToCompare.get(expected.getKey());
-            Assert.assertNotNull("The expected key \"" + expected.getKey() + "\" is not found in data", data);
-            Assert.assertEquals("For the key \"" + expected.getKey() + "\", values are different", expected.getValue(), data);
+            assertNotNull(data, "The expected key \"" + expected.getKey() + "\" is not found in data");
+            assertEquals(expected.getValue(), data, "For the key \"" + expected.getKey() + "\", values are different");
         }
     }
 

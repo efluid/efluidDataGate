@@ -4,7 +4,7 @@ import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.ProjectData;
-import org.pac4j.core.context.Pac4jConstants;
+import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.definition.CommonProfileDefinition;
 import org.slf4j.Logger;
