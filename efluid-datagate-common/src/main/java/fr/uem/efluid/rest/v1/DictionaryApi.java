@@ -43,14 +43,14 @@ public interface DictionaryApi {
 	@ResponseBody
 	@ApiOperation("Upload and apply a given dictionary \".par\" archive. The archive must be valid. Will provides details on operated changes")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	CreatedDictionaryView uploadDictionaryPackage(@RequestParam("file") MultipartFile file) throws ApplicationException;
 
 	@RequestMapping(value = "/version/{name}", method = PUT)
 	@ApiOperation("Set the current version of the dictionary")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	void setVersion(@PathVariable("name") String versionName) throws ApplicationException;
 
@@ -58,7 +58,7 @@ public interface DictionaryApi {
 	@ResponseBody
 	@ApiOperation("Get the current version of the dictionary")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	VersionView getLastVersion() throws ApplicationException;
 
@@ -66,7 +66,7 @@ public interface DictionaryApi {
 	@ResponseBody
 	@ApiOperation("Get all the existing versions of the dictionary")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	List<VersionView> getVersions() throws ApplicationException;
 }

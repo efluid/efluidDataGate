@@ -45,7 +45,7 @@ public interface BacklogApi {
     @ResponseBody
     @ApiOperation("Start a new diff : launch an asynchronous analysis of the differences found in the managed database, to prepare a new commit. Provides the diff status")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     PreparationState initPreparedCommit();
 
@@ -58,7 +58,7 @@ public interface BacklogApi {
     @ResponseBody
     @ApiOperation("Cancel a running or prepared diff. Will be ready to start a new one")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     PreparationState cancelPreparedCommit();
 
@@ -71,7 +71,7 @@ public interface BacklogApi {
     @ResponseBody
     @ApiOperation("Get the currently running diff status. If diff completed, status will be \"COMMIT_CAN_PREPARE\"")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     PreparationState getCurrentPreparedCommitState();
 
@@ -85,7 +85,7 @@ public interface BacklogApi {
     @ResponseBody
     @ApiOperation("Get some details on the \"COMMIT_CAN_PREPARE\" diff. If not completed yet, result is empty")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     CommitPrepareDetailsView getCurrentPreparedCommitDetails();
 
@@ -99,7 +99,7 @@ public interface BacklogApi {
     @ResponseBody
     @ApiOperation("Approve all diff content on currently \"COMMIT_CAN_PREPARE\" diff, and create a commit with the specified comment. If diff is not completed yet, will fail.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     CommitCreatedResultView validateCurrentPreparedCommit(@RequestParam String commitComment);
 
@@ -113,7 +113,7 @@ public interface BacklogApi {
     @ApiOperation("Upload a commit \".par\" archive and start an asynchronous merge commit preparation. " +
             "The running merge is processed as a preparing commit and can be validated or canceled using other services")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     StartedMergeView uploadAndInitPreparedCommit(@RequestParam("file") MultipartFile file) throws ApplicationException;
 
@@ -126,7 +126,7 @@ public interface BacklogApi {
     @ResponseBody
     @ApiOperation("Get the names of merge with anomalies")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     List<String> getMergeAnomaliesNames();
 
@@ -139,7 +139,7 @@ public interface BacklogApi {
     @ResponseBody
     @ApiOperation("Get the anomalies for a specified merge")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     List<AnomalyView> getMergeAnomaliesForContext(@RequestParam String name);
 }

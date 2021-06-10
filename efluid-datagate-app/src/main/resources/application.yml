@@ -162,6 +162,7 @@ server:
 ## TEST LOGGING CONFIG
 logging:
     level:
+        transformer.results: INFO
         fr.uem.efluid: INFO
         org.flywaydb: INFO
         extractor.queries: INFO

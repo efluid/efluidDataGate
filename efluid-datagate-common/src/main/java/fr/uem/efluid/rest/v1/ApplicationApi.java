@@ -49,7 +49,7 @@ public interface ApplicationApi {
     @ResponseBody
     @ApiOperation("Get active async processes from application, like preparations")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     List<AsyncProcessView> getCurrentProcesses();
 
@@ -57,7 +57,7 @@ public interface ApplicationApi {
     @PostMapping("/processes")
     @ApiOperation("Update active project for user.")
     @ApiImplicitParams({
-            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+            @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })
     void killActiveProcess(@RequestParam String processUUID);
 }
