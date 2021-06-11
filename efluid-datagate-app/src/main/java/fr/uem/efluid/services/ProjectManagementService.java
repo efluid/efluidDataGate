@@ -237,7 +237,10 @@ public class ProjectManagementService extends AbstractApplicationService {
         Optional<Project> localOpt = this.projects.findById(imported.getUuid());
 
         // Exists already
-        localOpt.ifPresent(d -> LOGGER.debug("Import existing project by uuid {} : will update currently owned", imported.getUuid()));
+        localOpt.ifPresent(d -> {
+            LOGGER.debug("Import existing project by uuid {} : will update currently owned", imported.getUuid());
+            substituteProjects.put(imported.getUuid(), d);
+        });
 
         // Will try also by name
         Project byName = this.projects.findByName(imported.getName());
