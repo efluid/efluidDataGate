@@ -21,12 +21,7 @@
     "mine": "ADD",
     "payload": "SIMILAR",
     "previous": "ANY",
-    "resolution": {
-      "payload": "THEIR_PAYLOAD",
-      "previous" : null,
-      "action": "ADD",
-      "needAction": false
-    },
+    "resolution": null,
     "warning": "La ligne est déjà ajoutée avec la même valeur"
   },
   {
@@ -38,8 +33,8 @@
     "previous": "ANY",
     "resolution": {
       "payload": "THEIR_PAYLOAD",
-      "previous": null,
-      "action": "ADD",
+      "previous": "MINE_PAYLOAD",
+      "action": "UPDATE",
       "needAction": true
     },
     "warning": "La ligne est déjà ajoutée avec une valeur différente"
@@ -96,12 +91,7 @@
     "mine": "ADD",
     "payload": "ANY",
     "previous": "ANY",
-    "resolution": {
-      "payload": "MINE_PAYLOAD",
-      "previous": null,
-      "action": "ADD",
-      "needAction": true
-    },
+    "resolution": null,
     "warning": null
   },
   {
