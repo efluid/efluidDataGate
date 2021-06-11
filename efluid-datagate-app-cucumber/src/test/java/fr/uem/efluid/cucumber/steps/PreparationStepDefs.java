@@ -506,6 +506,7 @@ public class PreparationStepDefs extends CucumberStepDefs {
     }
 
     @Then("^no commit content has been identified$")
+    @Then("^no merge content has been identified$")
     public void commit_content_empty() {
 
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
@@ -677,8 +678,8 @@ public class PreparationStepDefs extends CucumberStepDefs {
         // If "need resolve" is specified, we want all lines, else only the ones "needing action"
         long currentCount = preparation.getDiffContent().stream().filter(PreparedIndexEntry::isNeedAction).count();
 
-        assertThat(preparation.getStatus()).isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
-        assertThat(currentCount).isEqualTo(preparedChanges.size());
+        assertThat(preparation.getStatus()).as("merge preparation status").isEqualTo(PilotedCommitStatus.COMMIT_CAN_PREPARE);
+        assertThat(currentCount).as("count for merge commit diff line with action needed").isEqualTo(preparedChanges.size());
 
         tables.forEach((t, v) -> {
             Collection<? extends PreparedIndexEntry> indexEntries =

@@ -183,3 +183,59 @@ Feature: For Efluid needs a transformation can select the required values to kee
       | regA        | ADD TTEST1:$1                |
       | regB        | ADD TTEST1:$3, ADD TTEST1:$5 |
       | regC        | UPDATE TTEST1:$6             |
+
+  Scenario: Even for missing regions on transformer source, if the table is specified in region source then the lines are excluded
+    Given the test is an Efluid standard scenario
+    And the existing data in managed table "TTEST1" :
+      | id | col1   |
+      | $1 | line 1 |
+      | $2 | line 2 |
+      | $3 | line 3 |
+    And the existing data in secondary parameter table "TRECOPIEPARAMREFERENTIELDIR" :
+      | dir  | tabname | op  | colsPk | srcId1 | srcId2 | srcId3 | srcId4 | srcId5 |
+      | regA | TTEST1  | INS | + ID   | $1     |        |        |        |        |
+      | regB | TTEST1  | INS | + ID   | $2     |        |        |        |        |
+      | regB | TTEST1  | INS | + ID   | $3     |        |        |        |        |
+    Given the configured transformers for project "Default" :
+      | name          | type                  | priority | configuration                          |
+      | Transformer 1 | EFLUID_REGION_SUPPORT | 1        | {"tablePattern":".*","project":"test"} |
+    And a new commit "init for region support" has been saved with all the new identified diff content
+    And the user has requested an export starting by the commit with name "init for region support"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTEST1" in destination environment
+    And the existing data in secondary parameter table "TAPPLICATIONINFO" in destination environment :
+      | projet | site |
+      | test   | regC |
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then no merge content has been identified
+
+  Scenario: For matching regions on transformer source, if the table is not specified in region source then the lines are not processed by transformer
+    Given the test is an Efluid standard scenario
+    And the existing data in managed table "TTEST1" :
+      | id | col1   |
+      | $1 | line 1 |
+      | $2 | line 2 |
+      | $3 | line 3 |
+    And the existing data in secondary parameter table "TRECOPIEPARAMREFERENTIELDIR" :
+      | dir  | tabname | op  | colsPk | srcId1 | srcId2 | srcId3 | srcId4 | srcId5 |
+      | regA | TTEST2  | INS | + ID   | $1     |        |        |        |        |
+      | regB | TTEST2  | INS | + ID   | $2     |        |        |        |        |
+      | regB | TTEST2  | INS | + ID   | $3     |        |        |        |        |
+    Given the configured transformers for project "Default" :
+      | name          | type                  | priority | configuration                          |
+      | Transformer 1 | EFLUID_REGION_SUPPORT | 1        | {"tablePattern":".*","project":"test"} |
+    And a new commit "init for region support" has been saved with all the new identified diff content
+    And the user has requested an export starting by the commit with name "init for region support"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTEST1" in destination environment
+    And the existing data in secondary parameter table "TAPPLICATIONINFO" in destination environment :
+      | projet | site |
+      | test   | regA |
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table  | Key | Action | Need Resolve | Payload       |
+      | TTEST1 | $1  | ADD    | true         | COL1:'line 1' |
+      | TTEST1 | $2  | ADD    | true         | COL1:'line 2' |
+      | TTEST1 | $3  | ADD    | true         | COL1:'line 3' |
