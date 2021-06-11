@@ -74,7 +74,7 @@ Feature: Some warnings are recorded from various entry points and are available 
     Then there are the listed merge anomalies:
       | Table    | Key | Code                                                       | Message                                                                                                                                            |
       | TTAB_TWO | A   | Warning from UPDATE - different value - different previous | UPDATE "OTHER:'Different a upd'=>'Same a upd3'" : La valeur de la ligne modifiée est différente entre les données locales et les données importées |
-      | TTAB_TWO | B   | Warning from ADD - different value                         | ADD "VALUE:'2', OTHER:'Same b add'" : La ligne est déjà ajoutée avec une valeur différente                                                         |
+      | TTAB_TWO | B   | Warning from ADD - different value                         | UPDATE "OTHER:'Different b add'=>'Same b add'" : La ligne est déjà ajoutée avec une valeur différente                                              |
       | TTAB_TWO | C   | Warning from UPDATE - only their - not exists              | no action : La ligne mise à jour n'existe pas localement                                                                                           |
       | TTAB_TWO | D   | Warning from REMOVE - only their - not exists              | no action : La ligne supprimée n'existait pas                                                                                                      |
 
