@@ -181,8 +181,8 @@ Feature: For Efluid needs a transformation can select the required values to kee
     Examples:
       | region code | identified changes           |
       | regA        | ADD TTEST1:$1                |
-     #| regB        | ADD TTEST1:$3, ADD TTEST1:$5 |
-     # | regC        | UPDATE TTEST1:$6             |
+      | regB        | ADD TTEST1:$3, ADD TTEST1:$5 |
+      | regC        | UPDATE TTEST1:$6             |
 
   Scenario: Even for missing regions on transformer source, if the table is specified in region source then the lines are excluded
     Given the test is an Efluid standard scenario
@@ -235,7 +235,7 @@ Feature: For Efluid needs a transformation can select the required values to kee
     And a merge diff analysis has been started and completed with the available source package
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table  | Key     | Action | Need Resolve | Payload       |
-      | TTEST1 | $1 | ADD    | true         | COL1:'line 1' |
-      | TTEST1 | $2 | ADD    | true         | COL1:'line 2' |
-      | TTEST1 | $3 | ADD    | true         | COL1:'line 3' |
+      | Table  | Key | Action | Need Resolve | Payload       |
+      | TTEST1 | $1  | ADD    | true         | COL1:'line 1' |
+      | TTEST1 | $2  | ADD    | true         | COL1:'line 2' |
+      | TTEST1 | $3  | ADD    | true         | COL1:'line 3' |
