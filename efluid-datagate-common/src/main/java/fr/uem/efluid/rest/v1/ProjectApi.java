@@ -33,7 +33,7 @@ public interface ProjectApi {
 	@ResponseBody
 	@ApiOperation("Get all available projects for current user (= prefered projects only)")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	List<ProjectDetailView> getAvailableProjectDetails();
 
@@ -41,14 +41,14 @@ public interface ProjectApi {
 	@ResponseBody
 	@ApiOperation("Get active project for user.")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	ProjectDetailView getCurrentActiveProject();
 
 	@RequestMapping(value = "/active", method = POST)
 	@ApiOperation("Update active project for user.")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	void setCurrentActiveProject(@RequestParam String projectUuid);
 

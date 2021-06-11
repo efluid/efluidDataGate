@@ -32,14 +32,14 @@ public interface FeaturesApi {
 	@RequestMapping(value = "/enable/{feature}", method = POST)
 	@ApiOperation("Enable the provided feature for the whole application")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	void enableFeature(@PathVariable("feature") Feature feature);
 
 	@RequestMapping(value = "/disable/{feature}", method = POST)
 	@ApiOperation("Disable the provided feature for the whole application")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	void disableFeature(@PathVariable("feature") Feature feature);
 
@@ -47,7 +47,7 @@ public interface FeaturesApi {
 	@ResponseBody
 	@ApiOperation("Get managed features with states for application")
 	@ApiImplicitParams({
-			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataType = "string", paramType = "query")
+			@ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
 	})
 	Map<Feature, Boolean> getFeatureStates();
 }
