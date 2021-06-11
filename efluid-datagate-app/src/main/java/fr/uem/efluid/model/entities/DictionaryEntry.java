@@ -50,6 +50,7 @@ public class DictionaryEntry extends ExportAwareDictionaryEntry<FunctionalDomain
     private String whereClause;
 
     @Lob
+    @Column(columnDefinition = "CLOB")
     private String selectClause;
 
     @NotNull

@@ -9,7 +9,7 @@ import fr.uem.efluid.services.types.VersionCompare.DomainChanges;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomQueryGenerationRules;
 import fr.uem.efluid.utils.FormatUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.*;
 

@@ -6,7 +6,7 @@ import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
 import fr.uem.efluid.utils.ApplicationException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.util.ResourceUtils;
 
 import java.net.URL;

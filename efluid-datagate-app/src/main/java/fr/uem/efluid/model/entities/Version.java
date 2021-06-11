@@ -50,15 +50,19 @@ public class Version extends ExportAwareVersion<Project> {
 
 
     @Lob // Stored export of version content - domains, regenerated at init / import except for commit exports
+    @Column(columnDefinition = "CLOB")
     private String domainsContent;
 
     @Lob // Stored export of version content - dict, regenerated at init / import except for commit exports
+    @Column(columnDefinition = "CLOB")
     private String dictionaryContent;
 
     @Lob // Stored export of version content - links, regenerated at init / import except for commit exports
+    @Column(columnDefinition = "CLOB")
     private String linksContent;
 
     @Lob // Stored export of version content - mappings, regenerated at init / import except for commit exports
+    @Column(columnDefinition = "CLOB")
     private String mappingsContent;
 
     @Transient

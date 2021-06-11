@@ -1,7 +1,7 @@
 package fr.uem.efluid.tools;
 
 import fr.uem.efluid.utils.ApplicationException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;

@@ -8,25 +8,19 @@ import fr.uem.efluid.services.ProjectManagementService;
 import fr.uem.efluid.services.SecurityService;
 import fr.uem.efluid.services.types.DictionaryEntryEditData;
 import fr.uem.efluid.services.types.DictionaryEntrySummary;
-import fr.uem.efluid.tests.deleteAfterUpload.EfluidFunction;
 import fr.uem.efluid.tests.deleteAfterUpload.EfluidWorkflowDomain;
-import fr.uem.efluid.tests.deleteAfterUpload.EfluidWorkflowStepRoot;
-import fr.uem.efluid.tests.inheritance.conflicts.OtherOne;
-import fr.uem.efluid.tests.inheritance.conflicts.OtherTwo;
-import fr.uem.efluid.tests.inheritance.onValues.EfluidSubRoot;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.UUID;
 
 import static fr.uem.efluid.GeneratorTester.onPackage;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,13 +31,13 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Initialized test data are specified in data.sql file
  */
 @Transactional
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @SpringBootTest(classes = {IntegrationTestConfig.class}, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class DictionaryPushAfterGenerationTest {
 
     // From data.sql
-    private static final String TOKEN = "123456789";
+    private static final String TOKEN = "technical-token";
 
     private static final String VERSION = "TEST_SIMPLE";
 
@@ -64,12 +58,16 @@ public class DictionaryPushAfterGenerationTest {
     @Autowired
     private ProjectManagementService projectManagementService;
 
-    @Before
+    @BeforeEach
     public void reset() {
 
-        this.userHolder.setCurrentUser(new User("login"));
-        this.dictionaryManagementService.getDictionnaryEntrySummaries()
-                .forEach(e -> this.dictionaryManagementService.deleteDictionaryEntry(e.getUuid()));
+        this.userHolder.setCurrentUser(new User("technical-user"));
+        this.projectManagementService.getAllProjects().forEach(p -> {
+            this.projectManagementService.selectProject(p.getUuid());
+            this.dictionaryManagementService.getDictionnaryEntrySummaries()
+                    .forEach(e -> this.dictionaryManagementService.deleteDictionaryEntry(e.getUuid()));
+
+        });
     }
 
     @Test
@@ -474,7 +472,7 @@ public class DictionaryPushAfterGenerationTest {
     }
 
     @Test
-    @Ignore // Not a clean case anyway
+    @Disabled // Not a clean case anyway
     public void testLinkConflictFromChildGeneration() {
 
         var tester = onPackage(fr.uem.efluid.tests.inheritance.conflicts.RootEntity.class.getPackageName())
@@ -605,7 +603,7 @@ public class DictionaryPushAfterGenerationTest {
     /* ####################################### TOOLS ###################################### */
 
     private void switchUserToUploadedProject(GeneratorTester tester) {
-        this.userHolder.setCurrentUser(new User("login"));
+        this.userHolder.setCurrentUser(new User("technical-user"));
         this.projectManagementService.selectProject(tester.getDefaultProjectUuid());
     }
 

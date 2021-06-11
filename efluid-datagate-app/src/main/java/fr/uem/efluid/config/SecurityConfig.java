@@ -11,7 +11,6 @@ import fr.uem.efluid.security.providers.AccountProvider;
 import fr.uem.efluid.security.providers.DatabaseOnlyAccountProvider;
 import fr.uem.efluid.security.providers.LdapAuthAccountProvider;
 import fr.uem.efluid.services.ProjectManagementService;
-import fr.uem.efluid.services.SecurityService;
 import fr.uem.efluid.services.types.ProjectData;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
@@ -20,9 +19,9 @@ import org.pac4j.core.config.Config;
 import org.pac4j.core.credentials.password.PasswordEncoder;
 import org.pac4j.http.client.direct.ParameterClient;
 import org.pac4j.http.client.indirect.FormClient;
-import org.pac4j.j2e.filter.CallbackFilter;
-import org.pac4j.j2e.filter.LogoutFilter;
-import org.pac4j.j2e.filter.SecurityFilter;
+import org.pac4j.jee.filter.CallbackFilter;
+import org.pac4j.jee.filter.LogoutFilter;
+import org.pac4j.jee.filter.SecurityFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +35,6 @@ import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-
-import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -282,6 +275,6 @@ public class SecurityConfig {
      * For specification of active accounting
      */
     public enum AccountingType {
-        DATABASE, LDAP_AUTH, LDAP_ALL;
+        DATABASE, LDAP_AUTH, LDAP_ALL
     }
 }

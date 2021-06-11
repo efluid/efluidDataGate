@@ -22,8 +22,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static fr.uem.efluid.utils.ErrorType.TRANSFORMER_EFUID_NO_SITE;
-import static fr.uem.efluid.utils.ErrorType.TRANSFORMER_EFUID_WRONG_REGION_DATA;
+import static fr.uem.efluid.utils.ErrorType.*;
 
 /**
  * Transformer for region-scoped select of values at import
@@ -75,6 +74,9 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
         private String project;
 
         @JsonIgnore
+        private transient Set<String> sourcedTables = new HashSet<>();
+
+        @JsonIgnore
         private transient Map<String, List<RegionParameter>> parameters = new HashMap<>();
 
         public String getProject() {
@@ -105,7 +107,7 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
 
         @Override
         boolean isTableNameMatches(DictionaryEntry dict) {
-            return this.parameters.containsKey(dict.getTableName()) && super.isTableNameMatches(dict);
+            return this.sourcedTables.contains(dict.getTableName()) && super.isTableNameMatches(dict);
         }
 
         @Override
@@ -130,9 +132,14 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
             csvInMemory.append(String.join(CSV_SEPARATOR, SOURCE_COLS)).append("\n");
 
             // Content
-            managedSource.query(SOURCE_QUERY, (rs) -> {
-                appendRowToCsv(rs, csvInMemory);
-            });
+            try {
+                managedSource.query(SOURCE_QUERY, (rs) -> {
+                    appendRowToCsv(rs, csvInMemory);
+                });
+            } catch (Exception e) {
+                throw new ApplicationException(TRANSFORMER_EFUID_NO_REGION_SOURCE, "cannot get region parameter source in table \""
+                        + SOURCE_TABLE + "\" : check managed database", e);
+            }
 
             // Keep data of CSV
             return csvInMemory.toString().getBytes(StandardCharsets.UTF_8);
@@ -148,8 +155,8 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
             }, this.project);
 
             if (region == null) {
-                throw new ApplicationException(TRANSFORMER_EFUID_NO_SITE, "no site found with query "
-                        + GET_REGION_QUERY + "on specified project " + this.project);
+                throw new ApplicationException(TRANSFORMER_EFUID_NO_SITE, "no site found with query \""
+                        + GET_REGION_QUERY + "\" on specified project " + this.project);
             }
 
             boolean header = true;
@@ -160,11 +167,16 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
                     while (s.hasNextLine()) {
                         if (!header) {
                             RegionParameter param = new RegionParameter(valueConverter, s.nextLine().split(CSV_SEPARATOR));
+
+                            // Only matching region
                             if (region.equals(param.getRegion())) {
                                 this.parameters
                                         .computeIfAbsent(param.getTable(), k -> new ArrayList<>())
                                         .add(param);
                             }
+
+                            // Track all sources tables
+                            this.sourcedTables.add(param.getTable());
                         } else {
                             header = false;
                         }
@@ -226,7 +238,7 @@ public class EfluidRegionDataTransformer extends Transformer<EfluidRegionDataTra
 
         @Override
         public boolean test(PreparedIndexEntry preparedIndexEntry) {
-            return this.matchingKeys != null && !this.matchingKeys.contains(preparedIndexEntry.getKeyValue());
+            return this.matchingKeys == null || !this.matchingKeys.contains(preparedIndexEntry.getKeyValue());
         }
     }
 

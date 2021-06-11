@@ -324,6 +324,10 @@ public class ManagedDatabaseAccess {
             return " ";
         }
 
+        if ("-nbsp-".equals(v)) {
+            return " ";
+        }
+
         // Forced empty char
         if ("-empty char-".equals(v)) {
             return "";

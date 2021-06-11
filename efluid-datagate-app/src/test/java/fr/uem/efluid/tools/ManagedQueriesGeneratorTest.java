@@ -2,14 +2,10 @@ package fr.uem.efluid.tools;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.model.entities.TableLink;
-import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.utils.DatasourceUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 import static fr.uem.efluid.stubs.TestUtils.value;
 import static org.assertj.core.api.Assertions.assertThat;

@@ -323,7 +323,7 @@ public abstract class CucumberStepDefs {
     protected void implicitlyAuthenticatedAndOnPage(String page) {
 
         // Authenticated as "any"
-        this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, DEFAULT_USER));
+        Config.setProfileManagerFactory("default", (c, s) -> new TestableProfileManager(c, DEFAULT_USER));
 
         // On home page
         currentStartPage = getCorrespondingLinkForPageName(page);
@@ -470,7 +470,7 @@ public abstract class CucumberStepDefs {
         this.getCurrentUserLogin();
         this.userHolder.setWizzardUser(null);
 
-        this.securityConfig.setProfileManagerFactory(c -> new TestableProfileManager(c, null));
+        Config.setProfileManagerFactory("default", (c, s) -> new TestableProfileManager(c, null));
     }
 
     /**
@@ -974,17 +974,10 @@ public abstract class CucumberStepDefs {
             rawKey = rawKey.substring(1, rawKey.length() - 1);
         }
 
-        switch (rawKey) {
-            case "-empty char-":
-                return "";
-            case "-space-":
-                return " ";
-
-            case "-null-":
-                return " ";
-            default:
-                return rawKey;
-        }
+        return rawKey
+                .replaceAll("-null-", " ")
+                .replaceAll( "-empty char-","")
+                .replaceAll( "-space-"," ");
     }
 
     protected static void assertDiffContentIsCompliant(DiffContentHolder<?> holder, DataTable data) {

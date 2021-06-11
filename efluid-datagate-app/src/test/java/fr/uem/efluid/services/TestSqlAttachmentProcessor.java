@@ -8,25 +8,20 @@ import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.tools.SqlAttachmentProcessor;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.FormatUtils;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import fr.uem.efluid.IntegrationTestConfig;
-import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.tools.*;
-import fr.uem.efluid.utils.FormatUtils;
-
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author elecomte
@@ -34,7 +29,7 @@ import java.util.UUID;
  * @since v0.0.8
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = ClassMode.AFTER_CLASS)
 @SpringBootTest(classes = {IntegrationTestConfig.class})
 public class TestSqlAttachmentProcessor {
@@ -71,7 +66,7 @@ public class TestSqlAttachmentProcessor {
 
         String display = FormatUtils.toString(proc.display(comp));
 
-        Assert.assertEquals(FORMATED, display);
+        assertEquals(FORMATED, display);
     }
 
     @Test
@@ -86,11 +81,11 @@ public class TestSqlAttachmentProcessor {
         SqlAttachmentProcessor proc = new SqlAttachmentProcessor(this.managedSource, this.history);
         AttachmentProcessor.Compliant comp = initComp();
 
-        Assert.assertEquals(0, this.history.findAll().size());
+        assertEquals(0, this.history.findAll().size());
 
         proc.execute(user, comp, commit);
 
-        Assert.assertEquals(1, this.history.findAll().size());
+        assertEquals(1, this.history.findAll().size());
     }
 
     private static AttachmentProcessor.Compliant initComp() {

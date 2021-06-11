@@ -24,6 +24,7 @@ public class Anomaly {
     private String code;
 
     @Lob
+    @Column(columnDefinition = "CLOB")
     private String message;
 
     public Long getId() {

@@ -1,13 +1,13 @@
 package fr.uem.efluid.model;
 
-import fr.uem.efluid.model.entities.IndexAction;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.UUID;
 
 import static fr.uem.efluid.model.entities.IndexAction.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * @author elecomte
@@ -28,7 +28,7 @@ public class DiffLineUnitTest {
                 DiffLine.combined(dict, key, "ADD2", null, ADD, 5),
                 DiffLine.combined(dict, key, null, "ADD2", REMOVE, 6)), false);
 
-        Assert.assertNull(combined);
+        assertNull(combined);
     }
 
     @Test
@@ -42,8 +42,8 @@ public class DiffLineUnitTest {
                 DiffLine.combined(dict, key, null, "ADD1", REMOVE, 8),
                 DiffLine.combined(dict, key, "ADD2", null, ADD, 9)), false);
 
-        Assert.assertEquals(ADD, combined.getAction());
-        Assert.assertEquals("ADD2", combined.getPayload());
+        assertEquals(ADD, combined.getAction());
+        assertEquals("ADD2", combined.getPayload());
     }
 
     @Test
@@ -58,8 +58,8 @@ public class DiffLineUnitTest {
                 DiffLine.combined(dict, key, "ADD2", null, ADD, 3),
                 DiffLine.combined(dict, key, "MODIF3", "ADD2", UPDATE, 4)), false);
 
-        Assert.assertEquals(ADD, combined.getAction());
-        Assert.assertEquals("MODIF3", combined.getPayload());
+        assertEquals(ADD, combined.getAction());
+        assertEquals("MODIF3", combined.getPayload());
     }
 
     @Test
@@ -76,8 +76,8 @@ public class DiffLineUnitTest {
                 DiffLine.combined(dict, key, "MODIF2", "ADD2", UPDATE, 5),
                 DiffLine.combined(dict, key, "MODIF3", "MODIF2", UPDATE, 6)), false);
 
-        Assert.assertEquals(ADD, combined.getAction());
-        Assert.assertEquals("MODIF3", combined.getPayload());
+        assertEquals(ADD, combined.getAction());
+        assertEquals("MODIF3", combined.getPayload());
     }
 
     @Test
@@ -92,7 +92,7 @@ public class DiffLineUnitTest {
                 DiffLine.combined(dict, key, null, null, REMOVE, 3),
                 DiffLine.combined(dict, key, "ADD2", null, ADD, 4)), false);
 
-        Assert.assertNull(combined.getPrevious());
+        assertNull(combined.getPrevious());
     }
 
     @Test
@@ -108,7 +108,7 @@ public class DiffLineUnitTest {
                 DiffLine.combined(dict, key, "MODIF2", null, UPDATE, 5),
                 DiffLine.combined(dict, key, null, null, REMOVE, 6)), true);
 
-        Assert.assertEquals("MODIF2", combined.getPrevious());
+        assertEquals("MODIF2", combined.getPrevious());
     }
 
     @Test
@@ -125,8 +125,8 @@ public class DiffLineUnitTest {
                 DiffLine.combined(dict, key, "MODIF2", null, UPDATE, 5),
                 DiffLine.combined(dict, key, "MODIF3", null, UPDATE, 6)), false);
 
-        Assert.assertNull(combined.getPrevious());
-        Assert.assertEquals(ADD, combined.getAction());
+        assertNull(combined.getPrevious());
+        assertEquals(ADD, combined.getAction());
     }
 
 

@@ -11,7 +11,7 @@ import fr.uem.efluid.transformers.EfluidRegionDataTransformer.Config;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.FormatUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.data.util.Pair;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -128,19 +128,14 @@ public class EfluidRegionDataTransformerTest {
         String cfg = "{\"tablePattern\":\".*\",\"project\":\"test\"}";
 
         // Check with not matching table
-        var updatedDiffRegA = diffForKeys("KEYAA", "KEYBB", "KEYCC", "KEYDD", "KEYEE", "KEYFF", "KEYGG", "KEYHH");
-        this.transformer.transform(table("NOT_MATCHING", "KEY", "COL1", "COL2"), config(sources, cfg, "regA"), updatedDiffRegA);
-
-        assertThat(updatedDiffRegA).hasSize(8);
-        assertThat(updatedDiffRegA.stream().map(PreparedIndexEntry::getKeyValue)).containsOnly("KEYAA", "KEYBB", "KEYCC", "KEYDD", "KEYEE", "KEYFF", "KEYGG", "KEYHH");
+        assertThat(this.transformer.isApplyOnDictionaryEntry(table("NOT_MATCHING", "KEY", "COL1", "COL2"), config(sources, cfg, "regA"))).isFalse();
 
         // Check with a region not specified at all in source
-        // TODO : check this rule
         var updatedDiffRegC = diffForKeys("KEYAA", "KEYBB", "KEYCC", "KEYEE");
         this.transformer.transform(table("T_MATCH", "KEY", "COL1", "COL2"), config(sources, cfg, "regC"), updatedDiffRegC);
 
-        assertThat(updatedDiffRegC).hasSize(4);
-        assertThat(updatedDiffRegC.stream().map(PreparedIndexEntry::getKeyValue)).containsOnly("KEYAA", "KEYBB", "KEYCC", "KEYEE");
+        // Not matched region = drop all
+        assertThat(updatedDiffRegC).hasSize(0);
     }
 
     private Config config(List<String[]> source, String json, String regionCode) {
@@ -214,4 +209,5 @@ public class EfluidRegionDataTransformerTest {
 
         return rules;
     }
+
 }

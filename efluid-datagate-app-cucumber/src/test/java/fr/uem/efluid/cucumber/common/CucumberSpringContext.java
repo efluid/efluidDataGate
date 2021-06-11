@@ -1,6 +1,7 @@
 package fr.uem.efluid.cucumber.common;
 
 import io.cucumber.java.Before;
+import io.cucumber.spring.CucumberContextConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
@@ -13,8 +14,8 @@ import org.springframework.test.context.ContextConfiguration;
  * <p>For details on the why and the how of this class, see in cucumber jvm-spring integration code
  * ...
  */
-@SpringBootTest
-@ContextConfiguration(classes = {SystemTestConfig.class})
+@SpringBootTest(classes = {SystemTestConfig.class})
+@CucumberContextConfiguration
 @AutoConfigureMockMvc
 public class CucumberSpringContext {
     // Spring cfg entry point

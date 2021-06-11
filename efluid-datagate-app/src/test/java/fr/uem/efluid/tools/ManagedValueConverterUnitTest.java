@@ -1,15 +1,12 @@
 package fr.uem.efluid.tools;
 
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import org.junit.jupiter.api.Test;
+
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author elecomte
@@ -24,8 +21,8 @@ public class ManagedValueConverterUnitTest {
 	public void testAppendExtractedValueWithDataSet() {
 		Map<String, String> dataset = TestUtils.readDataset("diff1/actual.csv", this.converter);
 
-		Assert.assertEquals(dataset.size(), 11);
-		Assert.assertEquals("VALUE=S/U29tZXRoaW5n,PRESET=S/T3RoZXI=,SOMETHING=S/MTIzNDAw", dataset.get("1"));
+		assertEquals(dataset.size(), 11);
+		assertEquals("VALUE=S/U29tZXRoaW5n,PRESET=S/T3RoZXI=,SOMETHING=S/MTIzNDAw", dataset.get("1"));
 	}
 
 	@Test
@@ -33,10 +30,10 @@ public class ManagedValueConverterUnitTest {
 		Map<String, String> dataset = TestUtils.readDataset("diff1/actual.csv", this.converter);
 		Map<String, Value> values = Value.mapped(this.converter.expandInternalValue(dataset.get("1")));
 
-		Assert.assertEquals(dataset.size(), 11);
-		Assert.assertEquals("Something", values.get("VALUE").getValueAsString());
-		Assert.assertEquals("Other", values.get("PRESET").getValueAsString());
-		Assert.assertEquals("123400", values.get("SOMETHING").getValueAsString());
+		assertEquals(dataset.size(), 11);
+		assertEquals("Something", values.get("VALUE").getValueAsString());
+		assertEquals("Other", values.get("PRESET").getValueAsString());
+		assertEquals("123400", values.get("SOMETHING").getValueAsString());
 	}
 
 	//The payload should be human readable format.
@@ -48,7 +45,7 @@ public class ManagedValueConverterUnitTest {
 
 		String hrPayload = this.converter.convertToHrPayload(activePayload, existingPayload);
 
-		Assert.assertEquals("ACTIF:1, BINARY_VALUE:<a href=\"/ui/lob/VkZoSHdtWENPSzgrMk4yRzM1c1lwVHNjNmx0SCsrSUZ1OU9qQUxybn" +"RpQT0=\" download=\"download\">LOB</a>, CREATE_DATE:2018-01-02 23:42:34, DESCRIPTION:'Un modèle" +" de test - 3', FABRICANT:'DUPON', TYPEID:3", hrPayload);
+		assertEquals("ACTIF:1, BINARY_VALUE:<a href=\"/ui/lob/VkZoSHdtWENPSzgrMk4yRzM1c1lwVHNjNmx0SCsrSUZ1OU9qQUxybn" +"RpQT0=\" download=\"download\">LOB</a>, CREATE_DATE:2018-01-02 23:42:34, DESCRIPTION:'Un modèle" +" de test - 3', FABRICANT:'DUPON', TYPEID:3", hrPayload);
 
 	}
 
@@ -59,7 +56,7 @@ public class ManagedValueConverterUnitTest {
 		String existing = "";
 		String hrPayload = this.converter.convertToHrPayload(active, existing);
 
-		Assert.assertEquals(null, hrPayload);
+		assertEquals(null, hrPayload);
 	}
 
 	//If active is empty should return existing data
@@ -70,7 +67,7 @@ public class ManagedValueConverterUnitTest {
 		String existing = "ACTIF=O/MQ==,BINARY_VALUE=B/VFhHwmXCOK8+2N2G35sYpTsc6ltH++IFu9OjALrntiA=,CREATE_DATE=T/MjAxOC0wMS0wMiAyMzo0MjozNA==,DESCRIPTION=S/VW4gbW9kw6hsZSBkZSB0ZXN0IC0gMw==,FABRICANT=S/RFVQT04=,TYPEID=O/Mw==";
 		String hrPayload = this.converter.convertToHrPayload(active, existing);
 
-		Assert.assertEquals(expect, hrPayload);
+		assertEquals(expect, hrPayload);
 	}
 
 	//If existing is empty should return active data
@@ -81,7 +78,7 @@ public class ManagedValueConverterUnitTest {
 		String existing = "";
 		String hrPayload = this.converter.convertToHrPayload(active, existing);
 
-		Assert.assertEquals(expect, hrPayload);
+		assertEquals(expect, hrPayload);
 	}
 
 }

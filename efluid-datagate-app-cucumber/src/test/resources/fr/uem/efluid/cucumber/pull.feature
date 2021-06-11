@@ -95,7 +95,7 @@ Feature: The backlog can be imported and merged with local changes
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
       | Table           | Key          | Action | Need Resolve | Payload                      |
-      | TTAB_THREE_KEYS |              | ADD    | true         | FIRST_KEY:'something'        |
+      | TTAB_THREE_KEYS | -null-       | ADD    | true         | FIRST_KEY:'something'        |
       | TTAB_THREE_KEYS | -space-      | ADD    | true         | FIRST_KEY:'something else'   |
       | TTAB_THREE_KEYS | -empty char- | ADD    | true         | FIRST_KEY:'something else 2' |
       | TTAB_THREE_KEYS | aaaa         | ADD    | true         | FIRST_KEY:'something aaaa'   |
@@ -127,13 +127,13 @@ Feature: The backlog can be imported and merged with local changes
     And the merge diff is completed
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table           | Key                   | Action | Need Resolve | Payload |
-      | TTAB_THREE_KEYS | "one /   / something" | ADD    | true         |         |
-      | TTAB_THREE_KEYS | "  /   / "            | ADD    | true         |         |
-      | TTAB_THREE_KEYS | " /   /  "            | ADD    | true         |         |
-      | TTAB_THREE_KEYS | 4 / aaa /             | ADD    | true         |         |
-      | TTAB_THREE_KEYS | 5 / 5 / 5             | ADD    | true         |         |
-      | TTAB_THREE_KEYS | 6 /  / 6              | ADD    | true         |         |
+      | Table           | Key                        | Action | Need Resolve | Payload |
+      | TTAB_THREE_KEYS | "one / -null- / something" | ADD    | true         |         |
+      | TTAB_THREE_KEYS | "  / -null- / "            | ADD    | true         |         |
+      | TTAB_THREE_KEYS | " /   / -null-"            | ADD    | true         |         |
+      | TTAB_THREE_KEYS | 4 / aaa / -null-           | ADD    | true         |         |
+      | TTAB_THREE_KEYS | 5 / 5 / 5                  | ADD    | true         |         |
+      | TTAB_THREE_KEYS | 6 /  / 6                   | ADD    | true         |         |
 
   Scenario: The dedicated merge diff is paginated and filtered - filtered by table sorted by key
     Given the commit ":tada: Test commit init source" has been saved and exported with all the identified initial diff content

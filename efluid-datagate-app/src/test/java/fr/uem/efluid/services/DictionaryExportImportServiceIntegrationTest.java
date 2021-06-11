@@ -1,105 +1,104 @@
 package fr.uem.efluid.services;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.annotation.DirtiesContext.ClassMode;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.Project;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.stubs.TestDataLoader;
 import fr.uem.efluid.stubs.TestUtils;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author elecomte
- * @since v0.0.1
  * @version 1
+ * @since v0.0.1
  */
 @Transactional(propagation = Propagation.REQUIRES_NEW)
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
-@SpringBootTest(classes = { IntegrationTestConfig.class })
+@SpringBootTest(classes = {IntegrationTestConfig.class})
 public class DictionaryExportImportServiceIntegrationTest {
 
-	private static final String VALID_FILE = "valid-export.par";
+    private static final String VALID_FILE = "valid-export.par";
 
-	private static final String D = "import domain";
-	private static final String T = "IMPORT_TABLE";
+    private static final String D = "import domain";
+    private static final String T = "IMPORT_TABLE";
 
-	private static final String TTESTSOURCE_UUID_IMPORT = "d0bfeac8-9cec-4962-839b-c7fed7025c25";
-	private static final String IMPORT_TABLE_UUID_IMPORT = "29bc9e4e-f767-4e05-beef-b0266e800889";
-	
-	@Autowired
-	private DictionaryManagementService dictService;
+    private static final String TTESTSOURCE_UUID_IMPORT = "d0bfeac8-9cec-4962-839b-c7fed7025c25";
+    private static final String IMPORT_TABLE_UUID_IMPORT = "29bc9e4e-f767-4e05-beef-b0266e800889";
 
-	@Autowired
-	private ProjectManagementService proService;
+    @Autowired
+    private DictionaryManagementService dictService;
 
-	@Autowired
-	private TestDataLoader loader;
+    @Autowired
+    private ProjectManagementService proService;
 
-	public Project setupDatabase() {
-		Project pro = this.loader.setupDictionaryForUpdate();
-		this.loader.addDictionaryWithTrinome(D, T, pro).getUuid();
-		return pro;
-	}
+    @Autowired
+    private TestDataLoader loader;
 
-	@Test
-	public void testExportFullDictionary() {
-		setupDatabase();
+    public Project setupDatabase() {
+        Project pro = this.loader.setupDictionaryForUpdate();
+        this.loader.addDictionaryWithTrinome(D, T, pro).getUuid();
+        return pro;
+    }
 
-		TestUtils.writeExportFile(this.dictService.exportAll().getResult(), VALID_FILE);
-	}
+    @Test
+    public void testExportFullDictionary() {
+        setupDatabase();
 
-	@Test
-	public void testImportFullDictionary() throws IOException {
+        TestUtils.writeExportFile(this.dictService.exportAll().getResult(), VALID_FILE);
+    }
 
-		// No initial DB
-		this.loader.setupProject();
+    @Test
+    public void testImportFullDictionary() throws IOException {
 
-		ExportFile importFile = new ExportFile(new File("src/test/resources/" + VALID_FILE).toPath(), "");
+        // No initial DB
+        this.loader.setupProject();
 
-		this.dictService.importAll(importFile);
+        ExportFile importFile = new ExportFile(new File("src/test/resources/" + VALID_FILE).toPath(), "");
 
-		this.loader.assertDictionarySize(3);
-		this.loader.assertDictionaryContentValidate(TTESTSOURCE_UUID_IMPORT, d -> d.getTableName().equals("TTESTSOURCE"));
-		this.loader.assertDictionaryContentValidate(IMPORT_TABLE_UUID_IMPORT,
-				d -> d.getTableName().equals(T) && d.getParameterName().equals(T));
-		this.loader.assertDomainsSize(2);
-		this.loader.assertLinksSize(2);
-	}
+        this.dictService.importAll(importFile);
 
-	@Test
-	public void testExportImportFullDictionary() throws IOException {
-		
-		Project pro = setupDatabase();
+        this.loader.assertDictionarySize(3);
+        this.loader.assertDictionaryContentValidate(TTESTSOURCE_UUID_IMPORT, d -> d.getTableName().equals("TTESTSOURCE"));
+        this.loader.assertDictionaryContentValidate(IMPORT_TABLE_UUID_IMPORT,
+                d -> d.getTableName().equals(T) && d.getParameterName().equals(T));
+        this.loader.assertDomainsSize(2);
+        this.loader.assertLinksSize(2);
+    }
 
-		this.proService.selectProject(pro.getUuid());
+    @Test
+    public void testExportImportFullDictionary() throws IOException {
 
-		TestUtils.writeExportFile(this.dictService.exportAll().getResult(), "2" + VALID_FILE);
+        Project pro = setupDatabase();
 
-		// Reset db after export, to reimport it
-		this.loader.dropAllDictionary();
-		this.loader.setupProject();
+        this.proService.selectProject(pro.getUuid());
 
-		ExportFile importFile = new ExportFile(new File("src/test/resources/" + VALID_FILE).toPath(), "");
+        TestUtils.writeExportFile(this.dictService.exportAll().getResult(), "2" + VALID_FILE);
 
-		this.dictService.importAll(importFile);
+        // Reset db after export, to reimport it
+        this.loader.dropAllDictionary();
+        this.loader.setupProject();
 
-		this.loader.assertDictionarySize(3);
-		this.loader.assertDictionaryContentValidate(TTESTSOURCE_UUID_IMPORT, d -> d.getTableName().equals("TTESTSOURCE"));
-		this.loader.assertDictionaryContentValidate(IMPORT_TABLE_UUID_IMPORT,
-				d -> d.getTableName().equals(T) && d.getParameterName().equals(T));
-		this.loader.assertDomainsSize(2);
-		this.loader.assertLinksSize(2);
-	}
+        ExportFile importFile = new ExportFile(new File("src/test/resources/" + VALID_FILE).toPath(), "");
+
+        this.dictService.importAll(importFile);
+
+        this.loader.assertDictionarySize(3);
+        this.loader.assertDictionaryContentValidate(TTESTSOURCE_UUID_IMPORT, d -> d.getTableName().equals("TTESTSOURCE"));
+        this.loader.assertDictionaryContentValidate(IMPORT_TABLE_UUID_IMPORT,
+                d -> d.getTableName().equals(T) && d.getParameterName().equals(T));
+        this.loader.assertDomainsSize(2);
+        this.loader.assertLinksSize(2);
+    }
 }
