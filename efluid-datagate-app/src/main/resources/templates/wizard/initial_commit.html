@@ -19,18 +19,25 @@
 					ou d'importer un export de lot.
 				</div>
 				<div class="float-right" id="selectFeature">
-	        		<a href="#" th:href="@{/wizard/3/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale pour tous les projets</a>&nbsp;
-					<button type="button" id="importButton" class="btn btn-success btn-sm" >Importer une archive de lot</button>&nbsp;&nbsp;
-	        		<a href="/wizard_user.html" th:href="@{/wizard/4}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration</a>
+	        		<a href="#" th:href="@{/wizard/3/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale pour tous les projets</a>&nbsp;<strong>ou</strong>&nbsp;
+					<button type="button" id="importButton" class="btn btn-success btn-sm" >Importer une archive de lot</button>&nbsp;<strong>ou</strong>&nbsp;
+	        		<a href="/wizard_user.html" th:href="@{/wizard/4}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration immédiatement</a>
 				</div>
 				<div id="importForm">
-					<form action="#" th:action="@{/ui/wizzard/upload}" method="post" enctype="multipart/form-data">
+					<form action="#" th:action="@{/wizard/3/pull}" method="post" enctype="multipart/form-data">
+						<span th:if="${project == null}">
+							<label class="file-display float-left" style="margin-top:6px;margin-right:5px">Projet cible :</label>
+							<select name="selectedProject" class="form-control form-control-sm col-md-2 float-left" style="margin-right:10px">
+								<option th:each="availableProject : ${availableProjects}" th:value="${availableProject.uuid}" th:text="${availableProject.name}">projet</option>
+							</select>
+						</span>&nbsp;
+						<input th:if="${project != null}" name="selectedProject" type="hidden" th:value="${project.uuid}"/>
 						<label class="btn btn-sm btn-primary">
 							Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
 						</label>
-						<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
-						<input type="submit" class="btn btn-success-outline btn-sm float-right" id="importSubmit" disabled="disabled" value="Importer les données de lots"/>&nbsp;&nbsp;
-						<button type="button" id="cancelImportButton" class="btn btn-secondary btn-sm float-right">Annuler</button>
+						<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>&nbsp;&nbsp;
+						<input type="submit" class="btn btn-success-outline btn-sm" id="importSubmit" disabled="disabled" value="Importer les données de lots"/>&nbsp;&nbsp;
+						<button type="button" id="cancelImportButton" class="btn btn-secondary btn-sm">Annuler</button>
 					</form>
 				</div>
         	</div>
@@ -43,12 +50,18 @@
 			  	</div>
 			</div>
 			<div th:if="${preResult != null and preResult.status.name() != 'DIFF_RUNNING'}">
-				<div class="alert alert-secondary" role="alert">
+				<div class="alert alert-secondary" role="alert" th:if="${preResult.state.name() == 'MERGED'}">
 					<strong>L'analyse est terminée pour tous les projets.</strong> <span th:text="${preResult.totalDiffSize}">134</span> entrées d'index ont été identifiées en tout, 
 					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramètrages et 
 					<span th:text="${preResult.totalDomainsCount}">4</span> domaines
 					fonctionnels concernés (attention, certaines peuvent être reprises sur plusieurs projet).
 					Le lot initial a été créé sous le nom "Lot initial" sous chacun des <span th:text="${preResult.totalProjectCount}">4</span> projets.
+				</div>
+				<div class="alert alert-secondary" role="alert" th:if="${preResult.state.name() == 'IMPORTED'}">
+					<strong>L'import de lot(s) est terminé pour le projet courant.</strong> <span th:text="${preResult.totalDiffSize}">134</span> entrées d'index ont été importées en tout,
+					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramètrages et
+					<span th:text="${preResult.totalDomainsCount}">4</span> domaines fonctionnels concernés.
+					Aucune donnée locale n'a été modifiée, lancer une préparation de lot pour identifier les différences avec l'index qui a été importé
 				</div>
 				<a href="/wizard_user.html" th:href="@{/wizard/4}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
 			</div>

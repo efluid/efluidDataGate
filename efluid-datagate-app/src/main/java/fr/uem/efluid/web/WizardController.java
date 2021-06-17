@@ -135,6 +135,7 @@ public class WizardController {
     public String initialCommitPage(Model model) {
 
         model.addAttribute(CommonController.PROJECT_ATTR, this.projectService.getCurrentSelectedProject());
+        model.addAttribute("availableProjects", this.projectService.getAllProjects());
         model.addAttribute("dictionaryExists", this.dictionaryManagementService.isDictionnaryExists());
 
         return "wizard/initial_commit";
@@ -200,6 +201,22 @@ public class WizardController {
 
         // And auto-select all content
         model.addAttribute("preResult", this.pilotableCommitService.saveWizzardCommitPreparations());
+
+        return initialCommitPage(model);
+    }
+
+    /**
+     * @param model
+     * @param request
+     * @return
+     */
+    @RequestMapping(value = "/3/pull", method = POST)
+    public String uploadDiffImport(Model model, MultipartHttpServletRequest request, @RequestParam("selectedProject") UUID selectedProject) {
+
+        this.projectService.selectProject(selectedProject);
+
+        model.addAttribute("preResult",
+                this.pilotableCommitService.startWizzardImportCommitPreparation(WebUtils.inputExportImportFile(request), selectedProject));
 
         return initialCommitPage(model);
     }

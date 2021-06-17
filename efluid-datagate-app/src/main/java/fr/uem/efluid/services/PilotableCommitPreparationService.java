@@ -307,6 +307,36 @@ public class PilotableCommitPreparationService {
     }
 
     /**
+     * Specific import process for wizzard : import commits "as this"
+     *
+     * @param file imported commit file
+     * @return result for import
+     */
+    public WizzardCommitPreparationResult startWizzardImportCommitPreparation(ExportFile file, UUID selectedProject) {
+
+        LOGGER.info("Request for a new IMPORT commit preparation from a wizzard init");
+
+        // For CommitState MERGE => Use PreparedMergeIndexEntry (completed in != steps)
+        PilotedCommitPreparation<PreparedMergeIndexEntry> preparation = new PilotedCommitPreparation<>(CommitState.IMPORTED);
+        preparation.setProjectUuid(selectedProject);
+        preparation.setSourceFilename(file.getFilename());
+
+        // First step : load the package and identify the applicable index
+        this.commitService.importCommits(file, preparation);
+
+        // Directly select all diff as if it a merge with action
+        preparation.getDiffContent().forEach(c -> {
+            c.setSelected(true);
+            c.setNeedAction(true);
+        });
+
+        // Import as this
+        this.processAllImportDiffForWizzard(preparation);
+
+        return WizzardCommitPreparationResult.fromPreparations(Collections.singletonList(preparation));
+    }
+
+    /**
      * Start async diff analysis before commit
      */
     public ExportImportResult<PilotedCommitPreparation<PreparedMergeIndexEntry>> startMergeCommitPreparation(ExportFile file) {
@@ -1003,6 +1033,26 @@ public class PilotableCommitPreparationService {
             // And stop survey (on own thread)
             this.async.dropFromSurvey(preparation);
 
+        } catch (ApplicationException a) {
+            LOGGER.error("Identified Merge process error. Sharing", a);
+            throw a;
+        } catch (Throwable e) {
+            LOGGER.error("Error will processing diff", e);
+            preparation.fail(new ApplicationException(PREPARATION_INTERRUPTED, "Interrupted process", e));
+        }
+    }
+
+    /**
+     * <p>
+     * synchronous diff import for wizzard init
+     * </p>
+     */
+    private void processAllImportDiffForWizzard(PilotedCommitPreparation<PreparedMergeIndexEntry> preparation) {
+
+        try {
+            LOGGER.debug("Diff IMPORT applied as this with {} lines", preparation.getDiffContent().size());
+            preparation.setStatus(PilotedCommitStatus.COMPLETED);
+            this.commitService.saveAndApplyPreparedCommit(preparation);
         } catch (ApplicationException a) {
             LOGGER.error("Identified Merge process error. Sharing", a);
             throw a;

@@ -803,7 +803,12 @@ public class CommitService extends AbstractApplicationService {
         currentPreparation.setCommitData(new CommitEditData());
         currentPreparation.getCommitData().setMergeSources(new ArrayList<>());
         currentPreparation.getCommitData().setImportedTime(LocalDateTime.now());
-        currentPreparation.getCommitData().setComment(":twisted_rightwards_arrows: Merging Sources :");
+
+        if (currentPreparation.getPreparingState() != CommitState.IMPORTED) {
+            currentPreparation.getCommitData().setComment(":twisted_rightwards_arrows: Merging Sources :");
+        } else {
+            currentPreparation.getCommitData().setComment(":tada: Imported from " + importFile.getFilename());
+        }
 
         final AtomicLong processedCommits = new AtomicLong(0);
 
@@ -871,7 +876,7 @@ public class CommitService extends AbstractApplicationService {
                         }
 
                         // Generate comment part for imported commit
-                        if (imported.getComment() != null) {
+                        if (currentPreparation.getPreparingState() != CommitState.IMPORTED && imported.getComment() != null) {
                             currentPreparation.getCommitData().setComment(
                                     currentPreparation.getCommitData().getComment() + "\n * " + imported.getComment()
                             );
