@@ -99,6 +99,9 @@ public class SimilarPreparedMergeIndexEntry extends PreparedMergeIndexEntry impl
 
 		comb.setCombineds(diffItems);
 
+		// Keep need action status
+		comb.setNeedAction(comb.getCombineds().stream().anyMatch(PreparedMergeIndexEntry::isNeedAction));
+
 		return comb;
 	}
 

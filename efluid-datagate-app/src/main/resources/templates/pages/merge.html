@@ -344,7 +344,7 @@
 					data.page.forEach(e => {
 
 						if(defaultShow || e.needAction){
-							var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
+							var keyDisplay = e.displayOnly ? e.keyValues.length + ' entrées similaires' : e.keyValue;
 							var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
 							var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
 
