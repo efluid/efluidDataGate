@@ -3,12 +3,16 @@ package fr.uem.efluid.web;
 import fr.uem.efluid.services.ApplicationDetailsService;
 import fr.uem.efluid.services.CommitService;
 import fr.uem.efluid.services.DictionaryManagementService;
+import fr.uem.efluid.services.types.PreparationState;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
 
 /**
  * <p>
@@ -48,7 +52,6 @@ public class HomeController extends CommonController {
         }
 
 
-
         return "redirect:/ui";
     }
 
@@ -78,7 +81,6 @@ public class HomeController extends CommonController {
         model.addAttribute("project", this.projectManagementService.getCurrentSelectedProject());
         model.addAttribute("lastVersion", this.dicoManagmentService.getLastVersion().getName());
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
-
 
 
         return "pages/index";
@@ -114,6 +116,15 @@ public class HomeController extends CommonController {
         model.addAttribute("info", this.applicationDetailsService.getInfo());
 
         return "pages/login";
+    }
+
+    /**
+     * @return status as a value
+     */
+    @RequestMapping(path = "/instance", method = GET)
+    @ResponseBody
+    public String getInstanceName() {
+        return this.applicationDetailsService.getCurrentDetails().getInfo().getInstanceName();
     }
 
     /**
