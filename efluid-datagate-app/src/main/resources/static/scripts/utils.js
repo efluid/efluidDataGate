@@ -61,6 +61,15 @@ const checkProgress = (service, redirectPath) => {
     });
 };
 
+// Repeated check on status using basic rest service
+const applyInstanceNameAsPageTitle = () => {
+    $.get("/instance", (name) => {
+        console.info("Got instance name " + name);
+        // Requires on progress bar in current dom
+        $(document).attr("title", name);
+    });
+};
+
 // Auto download with auto hide of downloading message
 const autoDownloadWithProgress = (uid, name, contentId) => {
 

@@ -381,6 +381,11 @@ public class PreparationStepDefs extends CucumberStepDefs {
         user_save_commit();
     }
 
+    @Given("^the configured max before similar diff process is (.*)$")
+    public void set_similar_max_config(long value) {
+        this.indexDisplayConfig.forceCombineSimilarDiffAfter(value);
+    }
+
     /* ########################################### ALL WHENS ################################################ */
 
     @When("^the user accesses to preparation commit page$")
@@ -607,11 +612,12 @@ public class PreparationStepDefs extends CucumberStepDefs {
         Map<String, List<Map<String, String>>> tables = data.asMaps().stream().collect(Collectors.groupingBy(i -> i.get("Table")));
 
         boolean needResolveSpecified = data.cells().get(0).contains("Need Resolve");
+        boolean combinedKeySpecified = data.cells().get(0).contains("Combined Key");
 
         PilotedCommitPreparation<?> preparation = this.prep.getCurrentCommitPreparation();
 
         // If "need resolve" is specified, we want all lines, else only the ones "needing action"
-        long currentCount = needResolveSpecified
+        long currentCount = needResolveSpecified && !combinedKeySpecified
                 ? preparation.getTotalCount()
                 : preparation.getDiffContent().stream().filter(PreparedIndexEntry::isNeedAction).count();
 
@@ -640,6 +646,10 @@ public class PreparationStepDefs extends CucumberStepDefs {
                 // If "need Resolve" not specified, only check the lines needing action
                 if (needResolveSpecified || diffLine.isNeedAction()) {
                     Map<String, String> dataLine = v.get(i);
+
+                    if (dataLine.containsKey("Combined Key")) {
+                        assertThat(diffLine.getCombinedKey()).describedAs("combined key for key " + diffLine.getKeyValue()).isEqualTo(dataLine.get("Combined Key"));
+                    }
 
                     IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
 

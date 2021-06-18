@@ -278,7 +278,11 @@ public class ProjectManagementService extends AbstractApplicationService {
      * @return entity for project for current user
      */
     Project getCurrentSelectedProjectEntity() {
-        return this.projects.findSelectedProjectForUserLogin(getCurrentUser().getLogin());
+        User user = getCurrentUser();
+        if (user == null) {
+            return null;
+        }
+        return this.projects.findSelectedProjectForUserLogin(user.getLogin());
     }
 
     private User reloadCurrentUser() {
