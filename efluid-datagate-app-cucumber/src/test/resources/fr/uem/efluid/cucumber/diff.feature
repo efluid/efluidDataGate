@@ -395,11 +395,12 @@ Feature: The update on parameter tables can be followed checked and stored as co
     When the user access to diff commit page
     And apply a content filter criteria "VVV\d" on "key"
     Then the paginated commit content is rendered with these identified changes :
-      | Table    | Key  | Action | Payload                            |
-      | TTAB_ONE | VVV4 | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
-      | TTAB_ONE | VVV5 | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
-      | TTAB_TWO | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
-      | TTAB_TWO | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'   |
+      | Table    | Key    | Action | Payload                            |
+      | TTAB_ONE | VVV4   | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
+      | TTAB_ONE | VVV5   | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
+      | TTAB_ONE | LLVVV6 | ADD    | PRESET:'Preset 5', SOMETHING:'EEE' |
+      | TTAB_TWO | VVV2   | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
+      | TTAB_TWO | VVV3   | ADD    | VALUE:'Three', OTHER:'Other 333'   |
 
   Scenario: Similar index lines are combined in diff
     Given the existing data in managed table "TTAB_ONE" :
