@@ -83,7 +83,7 @@
 									<option value="" label="Tous les domaines"/>
 									<option th:each="domain, dstat : ${preparation.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
 								</select>
-								<button id="domainFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
+								<button id="domainMergeFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
 								<button id="domainResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
 								<button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
 								<button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
@@ -188,7 +188,6 @@
 
 		const enableFilter = (name) => {
 			console.info('enableFilter ' + name);
-			$("#" + name + "FilterButton").prop('disabled', true);
 			$("#" + name + "ResetButton").prop('disabled', false);
 			$(".filter-" + name).addClass("filtered");
 			var filter = $("#" + name + "SearchField").val();
@@ -199,7 +198,6 @@
 
 		const disableFilter = (name) => {
 			console.info('disableFilter ' + name);
-			$("#" + name + "FilterButton").prop('disabled', false);
 			$("#" + name + "ResetButton").prop('disabled', true);
 			$(".filter-" + name).removeClass("filtered");
 			$("#" + name + "SearchField").val("");
