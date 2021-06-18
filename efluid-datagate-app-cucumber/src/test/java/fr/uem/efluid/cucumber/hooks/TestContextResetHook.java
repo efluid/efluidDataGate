@@ -28,5 +28,7 @@ public class TestContextResetHook extends CucumberStepDefs {
         resetDatabaseIdentifier();
         resetPreparationUpdater();
         disableLdap();
+
+        this.indexDisplayConfig.reset();
     }
 }

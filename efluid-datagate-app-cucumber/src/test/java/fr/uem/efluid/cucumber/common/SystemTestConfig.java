@@ -1,6 +1,8 @@
 package fr.uem.efluid.cucumber.common;
 
+import fr.uem.efluid.config.BusinessServiceConfig;
 import fr.uem.efluid.cucumber.stubs.TweakedAsyncDriver;
+import fr.uem.efluid.cucumber.stubs.TweakedIndexDisplayConfig;
 import fr.uem.efluid.cucumber.stubs.TweakedPreparationUpdater;
 import fr.uem.efluid.security.providers.DatabaseOnlyAccountProvider;
 import fr.uem.efluid.tools.AsyncDriver;
@@ -169,6 +171,21 @@ public class SystemTestConfig {
     public SwitchableLdapAccountProvider switchableAccountProvider() {
         return new SwitchableLdapAccountProvider(databaseOnlyAccountProvider());
     }
+
+    /**
+     * properties for diff index service, with editable variables
+     * @param original
+     * @return
+     */
+    @Bean
+    @Primary
+    public TweakedIndexDisplayConfig tweakedIndexDisplayConfig(BusinessServiceConfig.IndexDisplayConfigProperties original){
+        TweakedIndexDisplayConfig config = new TweakedIndexDisplayConfig();
+        config.setCombineSimilarDiffAfter(original.getCombineSimilarDiffAfter());
+        config.setDetailsIndexMax(original.getDetailsIndexMax());
+        return config;
+    }
+
 
     /**
      * Customized provider of transformation values for testing
