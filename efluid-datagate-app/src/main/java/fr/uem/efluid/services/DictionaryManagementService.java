@@ -1015,7 +1015,8 @@ public class DictionaryManagementService extends AbstractApplicationService {
         if (!copyMode) {
             // #6th The versions (referencing projects)
             List<Version> importedVersions = importing.versions()
-                    .stream().peek(d -> versionImporter.importEntity(d, newVersCount))
+                    .stream()
+                    .peek(d -> versionImporter.importEntity(d, newVersCount))
                     .sorted(Comparator.comparing(Version::getUpdatedTime))
                     .collect(Collectors.toList());
 
@@ -1763,6 +1764,7 @@ public class DictionaryManagementService extends AbstractApplicationService {
                         .collect(Collectors.toList());
 
                 this.versions = dictionary.versions.stream()
+                        .filter(v -> v.getProject().getUuid().equals(projectUuid))
                         .sorted(Comparator.comparing(Version::getUpdatedTime))
                         .collect(Collectors.toList());
             }
