@@ -56,10 +56,6 @@ public class TableStepDefs extends CucumberStepDefs {
         // Implicit authentication and on page
         implicitlyAuthenticatedAndOnPage("parameter table main page");
 
-        // Init default data to tables
-        managedDatabase().initTabOneData(15, "preset", "something", "value");
-        managedDatabase().initTabTwoData(27, "key", "value", "other");
-
         specifiedTables = Arrays.asList(ManagedDatabaseAccess.TABLE_ONE, ManagedDatabaseAccess.TABLE_TWO);
     }
 
@@ -296,26 +292,28 @@ public class TableStepDefs extends CucumberStepDefs {
         // Same order for columns
         List<String> names = managedDatabase().getColumnNamesForTable(tableName).stream().sorted().collect(Collectors.toList());
 
-        boolean first = true;
+        List<String> organizedHeaders = null;
         int linePos = 0;
         for (List<String> line : data.getTable()) {
 
-            List<String> sorted = line.stream().sorted().collect(Collectors.toList());
-
             // First : check headers
-            if (first) {
-                for (int i = 0; i < sorted.size(); i++) {
-                    Assert.assertTrue(names.contains(sorted.get(i)));
+            if (organizedHeaders == null) {
+                organizedHeaders = new ArrayList<>();
+                for (int i = 0; i < line.size(); i++) {
+                    String header = line.get(i);
+                    Assert.assertTrue(names.contains(line.get(i)));
+                    organizedHeaders.add(header);
                 }
-                first = false;
             }
 
             // Other : check content
             else {
                 Map<String, String> res = allTable.get(linePos);
 
-                for (int i = 0; i < sorted.size(); i++) {
-                    Assert.assertEquals(res.get(names.get(i)), sorted.get(i));
+                for (int i = 0; i < line.size(); i++) {
+                    String colName = names.get(i);
+                    int resPosition = organizedHeaders.indexOf(colName);
+                    Assert.assertEquals(res.get(colName), line.get(resPosition));
                 }
                 linePos++;
             }

@@ -17,7 +17,7 @@ public class FutureAsyncDriverUnitTest {
 
         FutureAsyncDriver driver = new FutureAsyncDriver(3, 1000, 30);
 
-        TestProcess proc = new TestProcess();
+        TestProcess proc = new TestProcess(1000);
 
         driver.start(proc, (p) -> p.process(driver));
 
@@ -36,14 +36,14 @@ public class FutureAsyncDriverUnitTest {
 
         FutureAsyncDriver driver = new FutureAsyncDriver(3, 100, 30);
 
-        TestProcess proc = new TestProcess();
+        TestProcess proc = new TestProcess(2000);
 
         driver.start(proc, (p) -> p.process(driver));
 
         // After timeout
         Thread.sleep(1000);
 
-        // Must be active
+        // Must be cleaned
         assertThat(driver.listCurrentInSurvey()).isEmpty();
 
         // And proc interrupted
@@ -55,7 +55,7 @@ public class FutureAsyncDriverUnitTest {
 
         FutureAsyncDriver driver = new FutureAsyncDriver(3, 2000, 30);
 
-        TestProcess proc = new TestProcess();
+        TestProcess proc = new TestProcess(1000);
 
         driver.start(proc, (p) -> p.process(driver));
 
@@ -81,11 +81,16 @@ public class FutureAsyncDriverUnitTest {
 
     private static class TestProcess implements AsyncDriver.AsyncSourceProcess {
 
+        private final int workDelay ;
         private final UUID uuid = UUID.randomUUID();
         private final String desc = "TEST " + this.uuid;
         private final LocalDateTime start = LocalDateTime.now();
 
         private AtomicInteger interruptedCount = new AtomicInteger(0);
+
+        private TestProcess(int workDelay) {
+            this.workDelay = workDelay;
+        }
 
         @Override
         public UUID getIdentifier() {
@@ -100,16 +105,16 @@ public class FutureAsyncDriverUnitTest {
         void process(AsyncDriver driver) {
             try {
                 // Main step
-                driver.processSteps(Arrays.asList(this::work1Second, this::work1Second), this);
+                driver.processSteps(Arrays.asList(this::workDelay, this::workDelay), this);
             } catch (InterruptedException e) {
                 this.interruptedCount.incrementAndGet();
             }
 
         }
 
-        String work1Second() {
+        String workDelay() {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(this.workDelay);
                 return "done";
             } catch (InterruptedException e) {
                 this.interruptedCount.incrementAndGet();

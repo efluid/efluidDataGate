@@ -100,6 +100,231 @@ Feature: The backlog can be imported and merged with local changes
       | TTAB_THREE_KEYS | -empty char- | ADD    | true         | FIRST_KEY:'something else 2' |
       | TTAB_THREE_KEYS | aaaa         | ADD    | true         | FIRST_KEY:'something aaaa'   |
 
+  Scenario: Similar changes are displayed combined in merge process but are processed as standard diff - enabled
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table for similar" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | selected  |
+      | THIRD_KEY  | selected  |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 3        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit on v2" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit on v2"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTAB_TWO" in destination environment
+    And no existing data in managed table "TTAB_FIVE" in destination environment
+    And no existing data in managed table "TTAB_SIX" in destination environment
+    And no existing data in managed table "TTAB_THREE_KEYS" in destination environment
+    And the configured max before similar diff process is 3
+    And a merge diff has already been launched with the available source package
+    And the merge diff is completed
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table           | Key | Combined Key | Action | Need Resolve | Payload                       |
+      | TTAB_THREE_KEYS | 1   | 1, 2, 3, 4   | ADD    | true         | THIRD_KEY:'something'         |
+      | TTAB_THREE_KEYS | 5   | 5            | ADD    | true         | SECOND_KEY:'5', THIRD_KEY:'5' |
+      | TTAB_THREE_KEYS | 6   | 6            | ADD    | true         | SECOND_KEY:'6', THIRD_KEY:'6' |
+
+  Scenario: Similar changes are displayed combined in merge process but are processed as standard diff only if enabled - disabled
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table for similar" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | selected  |
+      | THIRD_KEY  | selected  |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 3        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit on v2" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit on v2"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTAB_TWO" in destination environment
+    And no existing data in managed table "TTAB_FIVE" in destination environment
+    And no existing data in managed table "TTAB_SIX" in destination environment
+    And no existing data in managed table "TTAB_THREE_KEYS" in destination environment
+    And the configured max before similar diff process is 100000000
+    And a merge diff has already been launched with the available source package
+    And the merge diff is completed
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table           | Key | Combined Key | Action | Need Resolve | Payload                       |
+      | TTAB_THREE_KEYS | 1   | 1            | ADD    | true         | THIRD_KEY:'something'         |
+      | TTAB_THREE_KEYS | 2   | 2            | ADD    | true         | THIRD_KEY:'something'         |
+      | TTAB_THREE_KEYS | 3   | 3            | ADD    | true         | THIRD_KEY:'something'         |
+      | TTAB_THREE_KEYS | 4   | 4            | ADD    | true         | THIRD_KEY:'something'         |
+      | TTAB_THREE_KEYS | 5   | 5            | ADD    | true         | SECOND_KEY:'5', THIRD_KEY:'5' |
+      | TTAB_THREE_KEYS | 6   | 6            | ADD    | true         | SECOND_KEY:'6', THIRD_KEY:'6' |
+
+  Scenario: Similar changes are processed as standard diff once merge is completed - test add
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table for similar" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | selected  |
+      | THIRD_KEY  | selected  |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 3        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit on v2" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit on v2"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTAB_TWO" in destination environment
+    And no existing data in managed table "TTAB_FIVE" in destination environment
+    And no existing data in managed table "TTAB_SIX" in destination environment
+    And no existing data in managed table "TTAB_THREE_KEYS" in destination environment
+    And the configured max before similar diff process is 3
+    And a merge diff has already been launched with the available source package
+    And the merge diff is completed
+    And the user has selected all content for merge commit
+    And the user has specified a commit comment ":construction: Apply merge"
+    When the user save the merge commit
+    Then the data in managed table "TTAB_THREE_KEYS" is now :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 3        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+
+  Scenario: Similar changes are processed as standard diff once merge is completed - display various changes
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table for similar" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | selected  |
+      | THIRD_KEY  | selected  |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 3        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit 2" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_THREE_KEYS" :
+      | change | firstKey | secondKey | thirdKey    |
+      | update | 1        | -null-    | somethingCh |
+      | update | 2        | -null-    | somethingCh |
+      | update | 3        | -null-    | somethingCh |
+      | update | 4        | -null-    | somethingCh |
+      | add    | 8        | SAME      | SAME        |
+      | add    | 9        | SAME      | SAME        |
+      | add    | 10       | SAME      | SAME        |
+      | add    | 11       | SAME      | SAME        |
+      | add    | 12       | SAME      | SAME        |
+      | update | 6        | 6         | 6 chg       |
+      | remove | 5        |           |             |
+    And a new commit ":construction: Commit 3" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit 3"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTAB_TWO" in destination environment
+    And no existing data in managed table "TTAB_FIVE" in destination environment
+    And no existing data in managed table "TTAB_SIX" in destination environment
+    And the existing data in managed table "TTAB_THREE_KEYS" in destination environment :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+      | 7        | -null-    | something |
+    And the configured max before similar diff process is 3
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then the merge commit content is rendered with these identified changes :
+      | Table           | Key | Combined Key     | Action | Need Resolve | Payload                              |
+      | TTAB_THREE_KEYS | 1   | 1, 2, 4          | UPDATE | true         | THIRD_KEY:'something'=>'somethingCh' |
+      | TTAB_THREE_KEYS | 8   | 8, 9, 10, 11, 12 | ADD    | true         | SECOND_KEY:'SAME', THIRD_KEY:'SAME'  |
+      | TTAB_THREE_KEYS | 5   | 5                | REMOVE | true         |                                      |
+      | TTAB_THREE_KEYS | 6   | 6                | UPDATE | true         | THIRD_KEY:'6'=>'6 chg'               |
+
+  Scenario: Similar changes are processed as standard diff once merge is completed - apply various changes
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table for similar" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | selected  |
+      | THIRD_KEY  | selected  |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 3        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit 2" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_THREE_KEYS" :
+      | change | firstKey | secondKey | thirdKey    |
+      | update | 1        | -null-    | somethingCh |
+      | update | 2        | -null-    | somethingCh |
+      | update | 3        | -null-    | somethingCh |
+      | update | 4        | -null-    | somethingCh |
+      | add    | 8        | SAME      | SAME        |
+      | add    | 9        | SAME      | SAME        |
+      | add    | 10       | SAME      | SAME        |
+      | add    | 11       | SAME      | SAME        |
+      | add    | 12       | SAME      | SAME        |
+      | update | 6        | 6         | 6 chg       |
+      | remove | 5        |           |             |
+    And a new commit ":construction: Commit 3" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit 3"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTAB_TWO" in destination environment
+    And no existing data in managed table "TTAB_FIVE" in destination environment
+    And no existing data in managed table "TTAB_SIX" in destination environment
+    And the existing data in managed table "TTAB_THREE_KEYS" in destination environment :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+      | 7        | -null-    | something |
+    And the configured max before similar diff process is 3
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    And the user has selected all content for merge commit
+    And the user has specified a commit comment ":construction: Apply merge"
+    When the user save the merge commit
+    Then the data in managed table "TTAB_THREE_KEYS" is now :
+      | firstKey | secondKey | thirdKey    |
+      | 1        | -null-    | somethingCh |
+      | 2        | -null-    | somethingCh |
+      | 4        | -null-    | somethingCh |
+      | 6        | 6         | 6 chg       |
+      | 7        | -null-    | something   |
+      | 8        | SAME      | SAME        |
+      | 9        | SAME      | SAME        |
+      | 10       | SAME      | SAME        |
+      | 11       | SAME      | SAME        |
+      | 12       | SAME      | SAME        |
+
   Scenario: Null keys are processed in merge using a special character - composite key
     Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
     And a created parameter table with name "Table nullable key" for managed table "TTAB_THREE_KEYS" and columns selected as this :

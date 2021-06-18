@@ -22,7 +22,6 @@ import fr.uem.efluid.utils.ErrorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -85,12 +84,6 @@ public class PrepareIndexService extends AbstractApplicationService {
     @Autowired
     private AnomalyAndWarningService anomalyService;
 
-    @Value("${datagate-efluid.display.combine-similar-diff-after}")
-    private long maxSimilarBeforeCombined;
-
-    @Value("${datagate-efluid.display.test-row-max-size}")
-    private long maxForTestExtract;
-
     @Autowired
     private IndexRepository indexes;
 
@@ -99,6 +92,9 @@ public class PrepareIndexService extends AbstractApplicationService {
 
     @Autowired
     private RollbackConverter rollbackConverter;
+
+    @Autowired
+    private IndexDisplayConfig config;
 
     /**
      * <p>
@@ -310,7 +306,7 @@ public class PrepareIndexService extends AbstractApplicationService {
 
         List<List<String>> table = new ArrayList<>();
 
-        long count = this.rawParameters.testCurrentContent(entry, table, this.maxForTestExtract);
+        long count = this.rawParameters.testCurrentContent(entry, table, this.config.getMaxForTestExtract());
 
         return new TestQueryData(table, count);
     }
@@ -817,7 +813,7 @@ public class PrepareIndexService extends AbstractApplicationService {
         combineds.values().forEach(e -> {
 
             // Only one : not combined
-            if (e.size() < this.maxSimilarBeforeCombined) {
+            if (e.size() < this.config.getMaxSimilarBeforeCombined()) {
                 listToRender.addAll(e);
             }
 
@@ -944,6 +940,28 @@ public class PrepareIndexService extends AbstractApplicationService {
 
         public DiffLine getTheir() {
             return their;
+        }
+    }
+
+    /**
+     * Definition of configuration properties for index service
+     *
+     * @author elecomte
+     * @version 1
+     * @since v3.1.8
+     */
+    public interface IndexDisplayConfig {
+
+        long getDetailsIndexMax();
+
+        long getCombineSimilarDiffAfter();
+
+        default long getMaxSimilarBeforeCombined() {
+            return getCombineSimilarDiffAfter();
+        }
+
+        default long getMaxForTestExtract() {
+            return getDetailsIndexMax();
         }
     }
 }

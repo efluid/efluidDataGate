@@ -48,9 +48,17 @@ Feature: The managed parameters are specified by table in the dictionary
     And the selection clause for the parameter table for managed table "TTAB_FOUR" is equals to "cur."CONTENT_INT", cur."CONTENT_TIME", ln1."VALUE" as ln_OTHER_TABLE_KEY"
 
   Scenario: A dictionary entry table content is available for testing. The result is provided from stale table details
-    Given a prepared parameter table data with name "My Table" for managed table "TTAB_TWO"
+    Given the existing data in managed table "TTAB_TWO" :
+      | key | value  | other     |
+      | JJJ | 1      | Other JJJ |
+      | VVV | 2      | Other VVV |
+      | LLL | 3      | Other LLL |
+      | MMM | 4.Four | Other MMM |
+      | NNN | 5      | Other NNN |
+      | ABC | ABC6   | Other 66  |
+    And a prepared parameter table data with name "My Table" for managed table "TTAB_TWO"
     When the parameter table is tested by user
-    Then the parameter table query result is provided with 10 detailled lines from managed table "TTAB_TWO"
+    Then the parameter table query result is provided with 6 detailled lines from managed table "TTAB_TWO"
 
   Scenario: For a table with only keys, no content is managed without error
     Given a prepared parameter table data with name "My key Only table" for managed table "TTAB_ONLY_KEYS" and columns selected as this :
