@@ -150,7 +150,7 @@ public class DiffContentSearch {
 
         prepareCriterias(referencedTables, true);
 
-        return (Specification<IndexEntry>) (root, query, builder) -> {
+        return (root, query, builder) -> {
 
             List<Predicate> predicates = new ArrayList<>();
 
@@ -194,7 +194,7 @@ public class DiffContentSearch {
             return false;
         }
 
-        if (this.doSearchKey && !this.keyPattern.matcher(preparedIndexEntry.getCombinedKey()).matches()) {
+        if (this.doSearchKey && !this.keyPattern.matcher(preparedIndexEntry.getCombinedKey()).find()) {
             return false;
         }
 
