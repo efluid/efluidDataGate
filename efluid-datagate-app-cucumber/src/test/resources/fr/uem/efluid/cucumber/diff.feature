@@ -47,6 +47,26 @@ Feature: The update on parameter tables can be followed checked and stored as co
       | TTAB_ONE | Two   | ADD    | PRESET:'Preset Two', SOMETHING:'BBB'   |
       | TTAB_ONE | Three | ADD    | PRESET:'Preset Three', SOMETHING:'CCC' |
 
+  Scenario: Similar index lines are combined in diff
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset           | something |
+      | 1   | One   | Preset SAME      | SAME      |
+      | 2   | Two   | Preset SAME      | SAME      |
+      | 3   | Three | Preset SAME      | SAME      |
+      | 4   | Four  | Preset SAME      | SAME      |
+      | 5   | Five  | Preset DIFFERENT | DIFFERENT |
+      | 6   | Six   | Preset OTHER     | OTHER     |
+    And the configured max before similar diff process is 3
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table    | Key  | Action | Payload                                          | Combined Keys         |
+      | TTAB_ONE | Four | ADD    | PRESET:'Preset SAME', SOMETHING:'SAME'           | One, Two, Three, Four |
+      | TTAB_ONE | Five | ADD    | PRESET:'Preset DIFFERENT', SOMETHING:'DIFFERENT' | Five                  |
+      | TTAB_ONE | Six  | ADD    | PRESET:'Preset OTHER', SOMETHING:'OTHER'         | Six                   |
+
   Scenario: A first commit for a single table contains all table content - blob fields
     Given the existing data in managed table "TTAB_FIVE" :
       | key | data                | simple |

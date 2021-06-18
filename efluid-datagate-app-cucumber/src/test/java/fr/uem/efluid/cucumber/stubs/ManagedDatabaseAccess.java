@@ -189,12 +189,18 @@ public class ManagedDatabaseAccess {
      */
     public void initTab(String name, DataTable data) {
 
+
         List<Map<String, String>> values = data.asMaps(String.class, String.class);
 
         // 1st cel
         String firstCol = data.cells().get(0).get(0);
 
         Class<?> type = ENTITY_TYPES.get(name).getSecond();
+
+        deleteAll(type);
+        this.em.createNativeQuery("delete from " + name).executeUpdate();
+        this.em.flush();
+
         values.forEach(m -> update("add", firstCol, m, type));
 
         this.em.flush();

@@ -177,6 +177,9 @@ public abstract class CucumberStepDefs {
     @Autowired
     protected DictionaryManagementService dictService;
 
+    @Autowired
+    protected TweakedIndexDisplayConfig indexDisplayConfig;
+
     /**
      * <p>
      * Entry point for backlog database (preloaded queries ...)
@@ -976,8 +979,8 @@ public abstract class CucumberStepDefs {
 
         return rawKey
                 .replaceAll("-null-", " ")
-                .replaceAll( "-empty char-","")
-                .replaceAll( "-space-"," ");
+                .replaceAll("-empty char-", "")
+                .replaceAll("-space-", " ");
     }
 
     protected static void assertDiffContentIsCompliant(DiffContentHolder<?> holder, DataTable data) {
@@ -998,6 +1001,10 @@ public abstract class CucumberStepDefs {
 
             IndexAction action = IndexAction.valueOf(l.get("Action"));
             assertThat(index.getAction()).isEqualTo(action);
+
+            if (l.containsKey("Combined Key")) {
+                assertThat(index.getCombinedKey()).describedAs("combined key for key " + dataKey).isEqualTo(l.get("Combined Key"));
+            }
 
             // No need to check payload in delete
             if (action != REMOVE) {
