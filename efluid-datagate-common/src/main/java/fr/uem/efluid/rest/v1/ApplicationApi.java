@@ -55,7 +55,7 @@ public interface ApplicationApi {
 
 
     @PostMapping("/processes")
-    @ApiOperation("Update active project for user.")
+    @ApiOperation("Kill specified process by its uuid")
     @ApiImplicitParams({
             @ApiImplicitParam(name = RestApi.TOKEN_PARAM, required = true, dataTypeClass = String.class, paramType = "query")
     })

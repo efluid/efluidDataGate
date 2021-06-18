@@ -164,6 +164,7 @@ logging:
     level:
         fr.uem.efluid: INFO
         org.flywaydb: INFO
+
         extractor.queries: INFO
         identifier.queries: INFO
         transformer.results: INFO

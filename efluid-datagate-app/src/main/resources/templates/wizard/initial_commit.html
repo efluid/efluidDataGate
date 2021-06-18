@@ -7,18 +7,41 @@
 		<span class="w-bc">Ajout d'utilisateur > Projets > Dictionnaire initial > <span class="w-active">Preparation de paramètre</span> > fin</span>
 		<br/>
 		<div class="alert alert-primary" role="alert">
-			Si le dictionnaire est configuré, il est possible de préparer un premier lot de paramétrage établissant la situation "initiale". 
-			Cette opération n'est possible que si un dictionnaire a été configuré. Sinon vous pourrez réaliser cette opération plus tard.
+			Si le dictionnaire est configuré, il est possible de préparer un premier lot de paramétrage établissant la situation "initiale", ou d'importer
+			un ou plusieurs lots prédéfinis. Cette opération n'est possible que si un dictionnaire a été configuré. Sinon vous pourrez également réaliser
+			cette opération plus tard.
         </div>
         <br/>
         <div th:if="${dictionaryExists}">
         	<div th:if="${preResult == null}">
 				<div class="alert alert-secondary" role="alert">
-					Le dictionnaire est configuré suite à l'import. Il est possible	de lancer l'analyse sur les tables paramétrés, pour tous les projets.
+					Le dictionnaire est configuré suite à l'import. Il est possible	de lancer l'analyse sur les tables paramétrés, pour tous les projets,
+					ou d'importer un export de lot.
 				</div>
-				<div class="float-right">
-	        		<a href="#" th:href="@{/wizard/3/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale pour tous les projets</a>&nbsp;
-	        		<a href="/wizard_user.html" th:href="@{/wizard/4}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration</a>
+				<div class="float-right" id="selectFeature">
+	        		<a href="#" th:href="@{/wizard/3/init}" class="btn btn-dark btn-sm">Lancer l'analyse initiale pour tous les projets</a>&nbsp;<strong>ou</strong>&nbsp;
+					<button type="button" id="importButton" class="btn btn-success btn-sm" >Importer une archive de lot</button>&nbsp;<strong>ou</strong>&nbsp;
+	        		<a href="/wizard_user.html" th:href="@{/wizard/4}" class="btn btn-secondary btn-sm float-right">Ignorer et terminer la configuration immédiatement</a>
+				</div>
+				<div id="importForm">
+					<form action="#" th:action="@{/wizard/3/pull}" method="post" enctype="multipart/form-data">
+						<span th:if="${availableProjects.size()>1}">
+							<label class="file-display float-left" style="margin-top:6px;margin-right:5px">Projet cible :</label>
+							<select name="selectedProject" class="form-control form-control-sm col-md-2 float-left" style="margin-right:10px">
+								<option th:each="availableProject : ${availableProjects}" th:value="${availableProject.uuid}" th:text="${availableProject.name}">projet</option>
+							</select>
+						</span>&nbsp;
+						<span th:if="${availableProjects.size()==1}">
+							<label class="file-display float-left" style="margin-top:6px;margin-right:5px">Pour le projet "<span th:text="${availableProjects.get(0).name}">projet</span>"</label>
+							<input name="selectedProject" type="hidden" th:value="${availableProjects.get(0).uuid}"/>
+						</span>
+						<label class="btn btn-sm btn-primary">
+							Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
+						</label>
+						<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>&nbsp;&nbsp;
+						<input type="submit" class="btn btn-success-outline btn-sm" id="importSubmit" disabled="disabled" value="Importer les données de lots"/>&nbsp;&nbsp;
+						<button type="button" id="cancelImportButton" class="btn btn-secondary btn-sm">Annuler</button>
+					</form>
 				</div>
         	</div>
 	        <div th:if="${preResult != null and preResult.status.name()=='DIFF_RUNNING'}" class="alert alert-secondary" role="alert">
@@ -30,12 +53,18 @@
 			  	</div>
 			</div>
 			<div th:if="${preResult != null and preResult.status.name() != 'DIFF_RUNNING'}">
-				<div class="alert alert-secondary" role="alert">
+				<div class="alert alert-secondary" role="alert" th:if="${preResult.state.name() == 'MERGED'}">
 					<strong>L'analyse est terminée pour tous les projets.</strong> <span th:text="${preResult.totalDiffSize}">134</span> entrées d'index ont été identifiées en tout, 
 					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramètrages et 
 					<span th:text="${preResult.totalDomainsCount}">4</span> domaines
 					fonctionnels concernés (attention, certaines peuvent être reprises sur plusieurs projet).
 					Le lot initial a été créé sous le nom "Lot initial" sous chacun des <span th:text="${preResult.totalProjectCount}">4</span> projets.
+				</div>
+				<div class="alert alert-secondary" role="alert" th:if="${preResult.state.name() == 'IMPORTED'}">
+					<strong>L'import de lot(s) est terminé pour le projet courant.</strong> <span th:text="${preResult.totalDiffSize}">134</span> entrées d'index ont été importées en tout,
+					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramètrages et
+					<span th:text="${preResult.totalDomainsCount}">4</span> domaines fonctionnels concernés.
+					Aucune donnée locale n'a été modifiée, lancer une préparation de lot pour identifier les différences avec l'index qui a été importé
 				</div>
 				<a href="/wizard_user.html" th:href="@{/wizard/4}" class="btn btn-dark btn-sm float-right">Terminer la configuration</a>
 			</div>
@@ -48,12 +77,44 @@
 	<script layout:fragment="script">
 		 /*<![CDATA[*/
 
-    	// Start loading
+		 // Display of file
+		 const displayFile = () => {
+			 hideDisplays();
+			 var file = $("#importInput").val();
+			 console.log(file);
+			 if(file.endsWith(".zip") || file.endsWith(".par")){
+				 $("#displayFile").text(file);
+				 $("#importSubmit").prop('disabled', false);
+				 $("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
+			 } else {
+				 showError("Le fichier fourni n'est pas dans un format valide. Seules les archives PAR sont supportées.");
+				 $("#importSubmit").prop('disabled', true);
+				 $("#importSubmit").removeClass("btn-success").addClass("btn-outline-success");
+			 }
+		 };
+
+		 // cancel import archive button
+		 const cancelImportButtonAction = () => {
+			 $("#selectFeature").show();
+			 $("#importForm").hide();
+		 };
+
+		 // import archive button
+		 const importButtonAction = () => {
+		 	$("#importForm").show();
+		 	$("#selectFeature").hide();
+		 };
+
+		 // Start loading
     	$(document).ready(() => {
+			$("#importForm").hide();
 			var fromType = /*[[${preResult != null and preResult.status.name()=='DIFF_RUNNING'}?'diff_check':'']]*/ 'diff_check';
 			if(fromType === 'diff_check'){
 				checkProgress('/wizard/3/progress', '/wizard/3/commit?commitName=:tada:%20Lot%20initial');
 			}
+			$("#importInput").change(displayFile);
+			$("#importButton").click(importButtonAction);
+			$("#cancelImportButton").click(cancelImportButtonAction);
 		}); 
 		
         /*]]>*/

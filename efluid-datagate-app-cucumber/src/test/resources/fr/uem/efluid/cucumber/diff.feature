@@ -395,11 +395,51 @@ Feature: The update on parameter tables can be followed checked and stored as co
     When the user access to diff commit page
     And apply a content filter criteria "VVV\d" on "key"
     Then the paginated commit content is rendered with these identified changes :
-      | Table    | Key  | Action | Payload                            |
-      | TTAB_ONE | VVV4 | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
-      | TTAB_ONE | VVV5 | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
-      | TTAB_TWO | VVV2 | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
-      | TTAB_TWO | VVV3 | ADD    | VALUE:'Three', OTHER:'Other 333'   |
+      | Table    | Key    | Action | Payload                            |
+      | TTAB_ONE | VVV4   | ADD    | PRESET:'Preset 3', SOMETHING:'CCC' |
+      | TTAB_ONE | VVV5   | ADD    | PRESET:'Preset 4', SOMETHING:'DDD' |
+      | TTAB_ONE | LLVVV6 | ADD    | PRESET:'Preset 5', SOMETHING:'EEE' |
+      | TTAB_TWO | VVV2   | ADD    | VALUE:'Two', OTHER:'Other VVV2'    |
+      | TTAB_TWO | VVV3   | ADD    | VALUE:'Three', OTHER:'Other 333'   |
+
+  Scenario: Similar index lines are combined in diff
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset           | something |
+      | 1   | One   | Preset SAME      | SAME      |
+      | 2   | Two   | Preset SAME      | SAME      |
+      | 3   | Three | Preset SAME      | SAME      |
+      | 4   | Four  | Preset SAME      | SAME      |
+      | 5   | Five  | Preset DIFFERENT | DIFFERENT |
+      | 6   | Six   | Preset OTHER     | OTHER     |
+    And the configured max before similar diff process is 3
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then the commit content is rendered with these identified changes :
+      | Table    | Key  | Action | Payload                                          | Combined Keys         |
+      | TTAB_ONE | Four | ADD    | PRESET:'Preset SAME', SOMETHING:'SAME'           | One, Two, Three, Four |
+      | TTAB_ONE | Five | ADD    | PRESET:'Preset DIFFERENT', SOMETHING:'DIFFERENT' | Five                  |
+      | TTAB_ONE | Six  | ADD    | PRESET:'Preset OTHER', SOMETHING:'OTHER'         | Six                   |
+
+  Scenario: The diff content is paginated and filtered, even with combined similar lines - filtered by key on similar
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value   | preset           | something |
+      | 1   | $abcdr1 | Preset SAME      | SAME      |
+      | 2   | $abfcd2 | Preset SAME      | SAME      |
+      | 3   | $abdcd3 | Preset SAME      | SAME      |
+      | 4   | $abckd4 | Preset SAME      | SAME      |
+      | 5   | $aibcd5 | Preset DIFFERENT | DIFFERENT |
+      | 6   | $ablcd6 | Preset OTHER     | OTHER     |
+    And the configured max before similar diff process is 3
+    And a diff analysis can be started and completed
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    And apply a content filter criteria "\$abdcd3" on "key"
+    Then the paginated commit content is rendered with these identified changes :
+      | Table    | Key     | Action | Payload                                | Combined Keys                      |
+      | TTAB_ONE | $abcdr1 | ADD    | PRESET:'Preset SAME', SOMETHING:'SAME' | $abcdr1, $abfcd2, $abdcd3, $abckd4 |
 
   Scenario: The diff content is paginated and filtered - filtered by table + type and sorted by table and key
     Given the existing data in managed table "TTAB_ONE" :
