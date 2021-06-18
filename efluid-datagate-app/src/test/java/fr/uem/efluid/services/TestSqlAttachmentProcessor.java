@@ -3,7 +3,6 @@ package fr.uem.efluid.services;
 import fr.uem.efluid.IntegrationTestConfig;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
-import fr.uem.efluid.stubs.TestUtils;
 import fr.uem.efluid.tools.AttachmentProcessor;
 import fr.uem.efluid.tools.SqlAttachmentProcessor;
 import fr.uem.efluid.utils.DataGenerationUtils;
@@ -53,10 +52,10 @@ public class TestSqlAttachmentProcessor {
     private ApplyHistoryEntryRepository history;
 
     private static final String SCRIPT = "-- Une requête quelconque\r\n" +
-            "SELECT * FROM " + TestUtils.SOURCE_TABLE_NAME + ";\r\n";
+            "SELECT 1;\r\n";
 
     private static final String FORMATED = "<span class=\"sql-comment\">-- Une requête quelconque</span>\r<br/>" +
-            "SELECT * FROM " + TestUtils.SOURCE_TABLE_NAME + ";\r<br/>";
+            "SELECT 1;\r<br/>";
 
     @Test
     public void testDisplay() {
