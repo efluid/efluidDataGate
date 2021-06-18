@@ -7,16 +7,23 @@
 		<div>
 			<h5>
 				Ensemble des modifications présentes dans le lot "<span th:text="${details.uuid}">ID988IDIDU</span>"
-				<div class="btn-group float-right" role="group">
-					<button type="button" id="closeAllButton" class="btn btn-outline-warning btn-sm">Tout réduire</button>
-					<button type="button" id="showAllButton" class="btn btn-outline-info btn-sm">Tout afficher</button>
-				</div>
 			</h5>
 			
 			<!-- Commit summary -->
 			<p>
 				<ul>
-					<li><b>Détails</b> : <span th:utext="${custom.processGitmoji(details.comment)}">mon lot</span></li>
+					<li>
+						<span id="displayName" >
+							<b>Nom</b> :<span th:utext="${custom.processGitmoji(details.comment)}">mon lot</span>
+							<button type="button" id="renameButton" class="btn btn-success btn-sm float-right">Renomer le lot</button>
+						</span>
+						<div id="editName" class="form-group">
+							<label for="commitComment"><b>Nouvelle description du lot de modification</b></label>
+							<textarea id="commitComment" th:text="${details.comment}" class="form-control" rows="10"></textarea>
+							<small class="form-text text-muted">Les <a href="https://gitmoji.carloscuesta.me/">Gitmojis</a> sont supportés.</small>
+							<button type="button" id="saveNameButton" class="btn btn-success btn-sm float-right">Sauvegarder</button>
+						</div>
+					</li>
 					<li><b>Créé par</b> : <span th:text="${details.originalUserEmail}">perso@email.com</span></li>
 					<li><b>Créé le</b> : <span th:text="${custom.format(details.createdTime)}">jeudi</span></li>
 					<li><b>Type</b> : <span th:text="${details.state.name()}">MERGE</span></li>

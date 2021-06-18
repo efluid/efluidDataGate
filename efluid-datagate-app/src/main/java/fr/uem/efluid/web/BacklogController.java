@@ -15,8 +15,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import javax.validation.Valid;
 import java.util.UUID;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 /**
  * <p>
@@ -204,6 +203,19 @@ public class BacklogController extends CommonController {
             @PathVariable("page") int page,
             @RequestBody(required = false) DiffContentSearch search) {
 
+        return this.commitService.getPaginatedExistingCommitContent(uuid, page, search);
+    }
+
+    /**
+     * @return content for paginated commit index rendering
+     */
+    @RequestMapping(path = "/details/{uuid}/rename", method = PUT)
+    @ResponseBody
+    public DiffContentPage commitDetailsContentPage(
+            @PathVariable("uuid") UUID uuid,
+            @RequestParam("name") String name) {
+
+        // TODO : call rename
         return this.commitService.getPaginatedExistingCommitContent(uuid, page, search);
     }
 
