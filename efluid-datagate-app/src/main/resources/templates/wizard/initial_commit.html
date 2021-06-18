@@ -25,13 +25,16 @@
 				</div>
 				<div id="importForm">
 					<form action="#" th:action="@{/wizard/3/pull}" method="post" enctype="multipart/form-data">
-						<span th:if="${project == null}">
+						<span th:if="${availableProjects.size()>1}">
 							<label class="file-display float-left" style="margin-top:6px;margin-right:5px">Projet cible :</label>
 							<select name="selectedProject" class="form-control form-control-sm col-md-2 float-left" style="margin-right:10px">
 								<option th:each="availableProject : ${availableProjects}" th:value="${availableProject.uuid}" th:text="${availableProject.name}">projet</option>
 							</select>
 						</span>&nbsp;
-						<input th:if="${project != null}" name="selectedProject" type="hidden" th:value="${project.uuid}"/>
+						<span th:if="${availableProjects.size()==1}">
+							<label class="file-display float-left" style="margin-top:6px;margin-right:5px">Pour le projet "<span th:text="${availableProjects.get(0).name}">projet</span>"</label>
+							<input name="selectedProject" type="hidden" th:value="${availableProjects.get(0).uuid}"/>
+						</span>
 						<label class="btn btn-sm btn-primary">
 							Choisir un fichier à importer <input name="import" id="importInput" type="file" hidden="true"/>
 						</label>
