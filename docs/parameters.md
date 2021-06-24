@@ -99,6 +99,7 @@ Les paramètres gérés sont :
 * `datagate-efluid.managed-datasource.max-pool-size`: Taille maxi du pool de connexion à la BDD gérée
 * `datagate-efluid.managed-datasource.timeout`: TTL des connexions à la BDD gérée
 * `datagate-efluid.managed-datasource.meta.filter-schema`: Schéma de la BDD gérée, utilisé pour la recherche des métadonnées. Peut être différent du login de connexion
+* `datagate-efluid.managed-datasource.meta.fixed-cached` : Dépréciée, non utilisé
 * `datagate-efluid.managed-datasource.meta.search-fk-type`: Type de recherche des FK à partir des métadonnées. Peut être `oracle-by-name` (recherche par nom de colonne, optimisé pour oracle), `oracle-by-details` (recherche des FK spécifiées dans les métadonnées, optimisé pour oracle) ou `disabled` (désactivé). Pour les BDD autres que Oracle une recherche pure JDBC est automatiquement utilisée et ce paramètre est ignoré
 * `datagate-efluid.managed-datasource.meta.preload`: true pour précharger les métadonnées au démarrage. En cas de changement il faut relancer l'application
 * `datagate-efluid.managed-datasource.query.table-names-protected`: true si des doubles quotes doivent être spécifiées pour les noms de tables dans les requêtes sur la BDD gérée
@@ -139,11 +140,12 @@ Les paramètres gérés sont :
 * `datagate-efluid.model-identifier.class-name`: Classe spécifique de recherche d'un model id 
 * `datagate-efluid.model-identifier.show-sql`: true si les requêtes de recherche de model id sont loggées
 * `datagate-efluid.merge.rule-file`: emplacement du fichier de définition des règles de merge pour le nouveau modèle de merge
+* `spring.profiles.active` (mappé dans les applications efluid en tant que `application.profile.active`) : choix du profil spring actif (un profil spring est un "flag" d'état de configuration pour activer rapidement certaines comportement en choisissant une valeur donnée). Utilisé pour datagate seulement pour activer le profile spécifique `test` au lieu du standard `prod`, pour activer certains chargement de configuration propres aux tests automatiques. Les profiles `demo` et `minimal` ne sont plus supportés
 * `spring.datasource.url`: URL de la BDD de fonctionnement de l'application
 * `spring.datasource.driver-class-name`: Driver JDBC de la BDD de fonctionnement de l'application
 * `spring.datasource.username`: Login de la BDD de fonctionnement de l'application
 * `spring.datasource.password`: MDP de la BDD de fonctionnement de l'application
-* `spring.jpa.show-sql`: true pour logguer les requêtes de fonctionnement de l'application
+* `spring.jpa.show-sql` (mappé dans les applications efluid en tant que `install.application.show.sql`) : `true` pour logguer toutes les requêtes de fonctionnement de l'application générées avec jpa (cad toutes les requêtes pour la base de fonctionnement - pour la base managée, activer `datagate-efluid.extractor.show-sql`)
 * `spring.ldap.base`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) DN de base du référentiel LDAP. Par exemple `dc=company,dc=com`
 * `spring.ldap.password`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) Mot de passe pour la connexion au référentiel LDAP (nécessaire pour valider les DN des utilisateurs pendant l'authentification)
 * `spring.ldap.username`: (uniquement pour l'accounting `LDAP_AUTH` ou `LDAP_FULL`) DN du compte à utiliser pour la connexion au référentiel LDAP. Par exemple `cn=admin,dc=company,dc=com`
