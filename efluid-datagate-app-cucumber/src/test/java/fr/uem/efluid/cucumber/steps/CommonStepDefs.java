@@ -127,6 +127,10 @@ public class CommonStepDefs extends CucumberStepDefs {
         startProfiling();
     }
 
+    @When("^(.+) return to (.+)$")
+    public void user_return_to_page(String user, String page) throws Throwable {
+        user_access_to_page(user,page);
+    }
     @When("^(.+) access to (.+)$")
     public void user_access_to_page(String user, String page) throws Throwable {
 

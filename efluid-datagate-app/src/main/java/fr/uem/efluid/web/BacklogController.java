@@ -15,8 +15,7 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import javax.validation.Valid;
 import java.util.UUID;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 /**
  * <p>
@@ -205,6 +204,20 @@ public class BacklogController extends CommonController {
             @RequestBody(required = false) DiffContentSearch search) {
 
         return this.commitService.getPaginatedExistingCommitContent(uuid, page, search);
+    }
+
+    /**
+     * edit commit name. Return name formated for gitmoji display
+     */
+    @RequestMapping(path = "/details/{uuid}/rename", method = PUT)
+    @ResponseBody
+    public String renameCommit(
+            @PathVariable("uuid") UUID uuid,
+            @RequestParam("name") String name) {
+
+        this.commitService.renameCommit(uuid, name);
+
+        return WebUtils.DEFAULT_FORMATTER.processGitmoji(name);
     }
 
     /**

@@ -6,10 +6,10 @@ import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.junit.Before;
 
 import java.util.*;
 import java.util.function.Function;
@@ -28,6 +28,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 //@Ignore // Means it will be ignored by junit start, but will be used by cucumber
 public class CommitStepDefs extends CucumberStepDefs {
 
+    private static UUID currentCommitUUID;
+
+    @Before
+    public void resetFixture() {
+        currentCommitUUID = null;
+    }
+
     @Given("^the user have asked for a revert of commit \"(.*)\"$")
     public void given_revert(String name) throws Exception {
         when_revert(name);
@@ -39,8 +46,25 @@ public class CommitStepDefs extends CucumberStepDefs {
         Optional<CommitEditData> commit = commits.stream().filter(c -> c.getComment().equals(comment)).findFirst();
         assertThat(commit).isPresent();
 
+        currentCommitUUID = commit.get().getUuid();
+
         // Navigate
         get("/ui/details/" + commit.get().getUuid());
+    }
+
+    @When("^the user update the commit details with name \"(.*)\"$")
+    public void update_commit_name(String comment) throws Exception {
+
+        assertThat(currentCommitUUID).describedAs("Not currently displaying a commit details !").isNotNull();
+
+        // Call
+        put("/ui/details/" + currentCommitUUID + "/rename?name=" + comment);
+
+        assertThat(currentException).isNull();
+
+        if (currentAction != null) {
+            assertThat(currentAction.andReturn().getResolvedException()).isNull();
+        }
     }
 
     @When("^apply a content filter criteria \"(.*)\" on \"(.*)\"$")
