@@ -602,6 +602,37 @@ public abstract class CucumberStepDefs {
 
     /**
      * <p>
+     * Simplified PUT process with common rules :
+     * <ul>
+     * <li>Set the currentAction</li>
+     * <li>Take care of currentStartPage if any is set</li>
+     * </ul>
+     * </p>
+     *
+     * @param url
+     * @param args
+     * @throws Exception
+     */
+    protected final void put(String url, Object... args) throws Exception {
+
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.put(url, args);
+
+        if (currentStartPage != null) {
+            builder.header("Referer", currentStartPage);
+        }
+
+        // Add user token anyway
+        if (url.startsWith("/rest/")) {
+            builder.param("token", getCurrentUserApiToken());
+        }
+
+        builder.accept(MediaType.APPLICATION_JSON);
+
+        currentAction = this.mockMvc.perform(builder);
+    }
+
+    /**
+     * <p>
      * Simplified post process with common rules :
      * <ul>
      * <li>Set the currentAction</li>

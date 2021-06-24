@@ -14,13 +14,16 @@
 				<ul>
 					<li>
 						<span id="displayName" >
-							<b>Nom</b> :<span th:utext="${custom.processGitmoji(details.comment)}">mon lot</span>
-							<button type="button" id="renameButton" class="btn btn-success btn-sm float-right">Renomer le lot</button>
+							<b>Nom</b> :<span id="commitName" th:utext="${custom.processGitmoji(details.comment)}">mon lot</span>
+							<div class="float-right"><a href="/commits.html" th:href="@{/ui/commits}" class="btn btn-dark btn-sm">Revenir à la liste</a></div>
+							<div class="float-right"><button type="button" id="renameButton" class="btn btn-primary btn-sm">Renomer le lot</button>&nbsp;&nbsp;</div>
+
 						</span>
 						<div id="editName" class="form-group">
 							<label for="commitComment"><b>Nouvelle description du lot de modification</b></label>
 							<textarea id="commitComment" th:text="${details.comment}" class="form-control" rows="10"></textarea>
 							<small class="form-text text-muted">Les <a href="https://gitmoji.carloscuesta.me/">Gitmojis</a> sont supportés.</small>
+							<button type="button" id="cancelSaveNameButton" class="btn btn-secondary btn-sm float-right" style="margin-left: 10px">Annuler</button>
 							<button type="button" id="saveNameButton" class="btn btn-success btn-sm float-right">Sauvegarder</button>
 						</div>
 					</li>
@@ -62,8 +65,8 @@
 			</table>
 		</div>
 		
-			<!-- Diff content details -->
-			<div th:if="${not details.emptyDiff}">
+		<!-- Diff content details -->
+		<div th:if="${not details.emptyDiff}">
 				<p>
 					<h5>Ensemble des modifications référencées pour le lot</h5>
 				</p>
@@ -141,11 +144,6 @@
 		<div th:if="${details.emptyDiff}">
 			<p>Ce lot de modification ne comportait pas de modifications de paramètrage</p>
 		</div>
-
-		<!-- Bottom button -->
-		<p>
-			<div class="float-right"><a href="/commits.html" th:href="@{/ui/commits}" class="btn btn-dark btn-sm">Revenir à la liste</a><br/><br/></div>
-		</p>
 		
 		<!-- File content display modal -->
 		<div class="modal fade" id="contentModal" tabindex="-1" role="dialog" aria-labelledby="contentModalLabel" aria-hidden="true">
@@ -382,10 +380,55 @@
 
 		/* End pagination */
 
+		const showNameEdit = () => {
+			hideDisplays();
+			$('#editName').show();
+			var shoBut = $('#renameButton');
+			shoBut.prop('disabled', true);
+			shoBut.removeClass('btn-primary').addClass('btn-outline-primary');
+		}
+
+		const hideNameEdit = () => {
+			hideDisplays();
+			$('#editName').hide();
+			var shoBut = $('#renameButton');
+			shoBut.prop('disabled', false);
+			shoBut.removeClass('btn-outline-primary').addClass('btn-primary');
+		}
+
+		// Edit commit name
+		const saveCommitName = () => {
+			hideDisplays();
+			var inputName = $("#commitComment");
+			var name = inputName.val();
+			if(name == null || name === ''){
+				setInvalid("#commitComment","Un nouveau commentaire est obligatoire");
+			}
+			$.ajax({
+				url: "/ui/details/" + commitUuid +"/rename?name=" + name,
+				type: 'PUT',
+				success:  (data) => {
+					showSuccess("Lot renommé avec succès");
+					$("#commitName").html(data);
+					hideNameEdit();
+					// Refresh gitmojis
+					supportGitmojis();
+				},
+				error: () => {
+					console.log("error");
+					setInvalid("#commitComment","Le nom spécifié est invalide");
+				}
+			});
+		};
+
 		// Init actions
 		$(document).ready(() => {
 			closeFilters();
+			$('#editName').hide();
 			$('#contentModal').on('show.bs.modal', readAttach);
+			$('#renameButton').click(showNameEdit);
+			$('#cancelSaveNameButton').click(hideNameEdit);
+			$('#saveNameButton').click(saveCommitName);
 
 			getPageContent(0);
 			$('#tableSearchField').autocomplete({

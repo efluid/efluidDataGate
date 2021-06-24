@@ -435,12 +435,22 @@ public class CommitService extends AbstractApplicationService {
         );
     }
 
-    public void renameCommit(UUID commitUUID, String name){
+    /**
+     * Update specified commit name
+     *
+     * @param commitUUID selected commit
+     * @param name       new name
+     */
+    public void renameCommit(UUID commitUUID, String name) {
 
         // Must exist
         assertCommitExists(commitUUID);
 
-        // TODO : load commit, set name, save
+        Commit commit = this.commits.getOne(commitUUID);
+
+        commit.setComment(name);
+
+        this.commits.save(commit);
     }
 
     /**

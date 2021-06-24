@@ -207,16 +207,17 @@ public class BacklogController extends CommonController {
     }
 
     /**
-     * @return content for paginated commit index rendering
+     * edit commit name. Return name formated for gitmoji display
      */
     @RequestMapping(path = "/details/{uuid}/rename", method = PUT)
     @ResponseBody
-    public DiffContentPage commitDetailsContentPage(
+    public String renameCommit(
             @PathVariable("uuid") UUID uuid,
             @RequestParam("name") String name) {
 
-        // TODO : call rename
-        return this.commitService.getPaginatedExistingCommitContent(uuid, page, search);
+        this.commitService.renameCommit(uuid, name);
+
+        return WebUtils.DEFAULT_FORMATTER.processGitmoji(name);
     }
 
     /**

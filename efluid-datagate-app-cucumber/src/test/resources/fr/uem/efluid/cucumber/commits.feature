@@ -135,6 +135,30 @@ Feature: The commit can be saved and are historised
       | :construction: Update 1 | any@test.fr |
       | :construction: Update 2 | any@test.fr |
 
+  Scenario: A commit name can be modified
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value | preset   | something |
+      | add    | 32  | LL32  | Preset 1 | AAA       |
+      | add    | 33  | LL33  | Preset 2 | BBB       |
+      | add    | 34  | LL34  | Preset 3 | CCC       |
+      | add    | 35  | LL35  | Preset 4 | DDD       |
+    And a new commit ":construction: Update 1" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+    And a new commit ":construction: Update 2" has been saved with all the new identified diff content
+    When the user access to list of commits
+    And the user select the details of commit ":construction: Update 1"
+    And the user update the commit details with name ":bug: This was something else"
+    And the user return to list of commits
+    Then the list of commits is :
+      | comment                       | author      |
+      | :tada: Test commit init       | any@test.fr |
+      | :bug: This was something else | any@test.fr |
+      | :construction: Update 2       | any@test.fr |
+
   Scenario: The details for an existing commit can be displayed
     Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
     And these changes are applied to table "TTAB_ONE" :

@@ -36,7 +36,7 @@ public class WebUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WebUtils.class);
 
-    private static final Formatter DEFAULT_FORMATTER = new Formatter();
+    public static final Formatter DEFAULT_FORMATTER = new Formatter();
 
     public static final String TH_FORMATTER = "custom";
 
