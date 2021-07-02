@@ -81,7 +81,7 @@ public class IndexBasedKnewContentRepository implements KnewContentRepository {
         }
 
         try {
-            return this.indexes.findDiffPayloadsForDictionaryEntryAndBufferBefore(dictionaryEntry.getUuid().toString(), keys, timestamp);
+            return this.indexes.findDiffPayloadsForDictionaryEntryAndBufferBefore(dictionaryEntry.getUuid(), keys, timestamp);
         } catch (Throwable t) {
             LOGGER.error("Knew content payload extraction failed for dict of table " + dictionaryEntry.getTableName(), t);
             throw new ApplicationException(ErrorType.EXTRACTION_ERROR, t);

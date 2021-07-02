@@ -331,6 +331,10 @@ public class WebUtils {
                     + "-" + FormatUtils.formatForUri(LocalDateTime.now());
         }
 
+        public String inflatCommitComment(String title) {
+            return processGitmoji(title.replaceAll("\n", ""));
+        }
+
         public String processGitmoji(String title) {
             if (title != null && title.trim().startsWith(":") && title.indexOf(":", 2) > 0) {
                 return title.replaceAll(":(\\w*):", "<span class=\"gitmoji\" code=\":$1:\">:$1:</span>");

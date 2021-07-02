@@ -17,7 +17,18 @@
 							<b>Nom</b> :<span id="commitName" th:utext="${custom.processGitmoji(details.comment)}">mon lot</span>
 							<div class="float-right"><a href="/commits.html" th:href="@{/ui/commits}" class="btn btn-dark btn-sm">Revenir à la liste</a></div>
 							<div class="float-right"><button type="button" id="renameButton" class="btn btn-primary btn-sm">Renomer le lot</button>&nbsp;&nbsp;</div>
-
+							<div class="float-right">
+								<div class="dropdown" style="margin-right: 10px">
+								  <button class="btn btn-success btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									Voir les adhérences avec un lot
+								  </button>
+								  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+									  <a th:each="commit, cstat : ${commits}" th:if="${details.uuid!=commit.uuid}" href="./dependencies_commit.html" th:href="@{/ui/commits/compare/{id}?with={with}(id=${details.uuid},with=${commit.uuid})}" class="dropdown-item">
+										  <span th:utext="${custom.inflatCommitComment(commit.comment)}">details</span> (version <span th:text="${commit.versionName}">43</span> - <span th:text="${commit.versionModelId}">43</span>)
+									  </a>
+								  </div>
+								</div>
+							</div>
 						</span>
 						<div id="editName" class="form-group">
 							<label for="commitComment"><b>Nouvelle description du lot de modification</b></label>

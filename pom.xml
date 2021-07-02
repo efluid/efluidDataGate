@@ -91,9 +91,8 @@
         <dependency.jsr305.version>3.0.2</dependency.jsr305.version>
 
         <!-- dependencies - webjars -->
-        <dependency.bootstrap.version>4.4.1-1</dependency.bootstrap.version>
-        <dependency.jquery.version>3.5.0</dependency.jquery.version>
-        <dependency.popper.version>1.13.0</dependency.popper.version>
+        <dependency.bootstrap.version>4.6.0</dependency.bootstrap.version>
+        <dependency.jquery.version>3.6.0</dependency.jquery.version>
         <dependency.swagger-ui.version>2.2.10</dependency.swagger-ui.version>
         <dependency.jquery-ui.version>1.12.1</dependency.jquery-ui.version>
 
@@ -442,12 +441,6 @@
                 <groupId>org.webjars</groupId>
                 <artifactId>jquery</artifactId>
                 <version>${dependency.jquery.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.webjars.npm</groupId>
-                <artifactId>popper.js</artifactId>
-                <version>${dependency.popper.version}</version>
             </dependency>
 
             <dependency>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html layout:decorate="~{layouts/pages.html}">
+<head>
+</head>
+<body>
+<span layout:fragment="content">
+
+		<p>
+			<h5>Historique des modifications
+			<a href="/dependencies_commit.html" th:href="@{/ui/commits/compare/completed}" class="btn btn-dark btn-sm float-right">Revenir à la liste des adhérences</a></h5>
+		</p>
+		<p>
+			<ul>
+				<li><span id="displayName" >
+					<b>Clé</b> :<span th:text="${key}">mon lot</span>
+				</span></li>
+				<li><span id="displayName" >
+					<b>Table</b> :<span th:text="${tableName}">mon lot</span>
+				</span></li>
+			</ul>
+		</p>
+
+		<table class="table table-sm">
+		    <thead>
+		        <tr>
+		            <th scope="col" colspan="2">Lot (et type)</th>
+		            <th scope="col">Date</th>
+		            <th scope="col">Type</th>
+		            <th scope="col">Changements</th>
+		        </tr>
+		    </thead>
+		    <tbody>
+		        <tr th:each="entry, cstat : ${history}">
+		            <td th:utext="${custom.processGitmoji(entry.commitDetails.comment)}">Préchargement configuration</td>
+		            <td th:text="${entry.commitDetails.state}">Merge</td>
+		            <td th:text="${custom.format(entry.commitDetails.createdTime)}">01/11/2017</td>
+		            <td th:text="${entry.action}">UPDATE</td>
+		            <td th:text="${entry.hrPayload}">update</td>
+		        </tr>
+		    </tbody>
+		</table>
+</span>
+<script layout:fragment="script">
+
+    $('#color-nav-2').css("font-weight", "bold");
+    $('#collapseExample2').css("display", "block");
+    $('#li-5').css("font-weight", "bolder");
+
+    $(document).ready(() => {
+        supportGitmojis();
+    });
+
+</script>
+</body>
+</html>

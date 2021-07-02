@@ -307,15 +307,10 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
 
         PreparedIndexEntry data = new PreparedIndexEntry();
 
-        data.setAction(combined.getAction());
-        data.setDictionaryEntryUuid(combined.getDictionaryEntryUuid());
+        completeFromDiffLine(data, combined);
+
         data.setTableName(tableName);
-        data.setPayload(combined.getPayload());
-        data.setPrevious(combined.getPrevious());
-        data.setKeyValue(combined.getKeyValue());
         data.setHrPayload(hrPayload);
-        data.setTimestamp(combined.getTimestamp());
-        data.setIndexForDiff(combined.getDictionaryEntryUuid() + "_" + combined.getKeyValue());
 
         return data;
     }
@@ -343,19 +338,31 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
      */
     protected static void completeFromExistingEntity(PreparedIndexEntry data, IndexEntry existing) {
 
-        data.setAction(existing.getAction());
+        completeFromDiffLine(data,existing);
 
         if (existing.getDictionaryEntry() != null) {
             data.setDictionaryEntryUuid(existing.getDictionaryEntry().getUuid());
         }
+        data.setId(existing.getId());
+        data.setCommitUuid(existing.getCommit() != null ? existing.getCommit().getUuid() : null);
 
+    }
+
+    /**
+     * Used when preparing from diff
+     *
+     * @param data
+     * @param existing
+     */
+    protected static void completeFromDiffLine(PreparedIndexEntry data, DiffLine existing) {
+
+        data.setAction(existing.getAction());
         data.setPayload(existing.getPayload());
         data.setPrevious(existing.getPrevious());
-        data.setId(existing.getId());
         data.setKeyValue(existing.getKeyValue());
-        data.setCommitUuid(existing.getCommit() != null ? existing.getCommit().getUuid() : null);
         data.setTimestamp(existing.getTimestamp());
         data.setIndexForDiff(existing.getDictionaryEntryUuid() + "_" + existing.getKeyValue());
+
     }
 
     /**

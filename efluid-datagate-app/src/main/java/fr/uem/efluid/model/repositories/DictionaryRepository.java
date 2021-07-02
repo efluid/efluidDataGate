@@ -33,6 +33,11 @@ public interface DictionaryRepository extends JpaRepository<DictionaryEntry, UUI
 
     List<DictionaryEntry> findByDomainProject(Project project);
 
+    default List<DictionaryEntry> findUsedByCommitUuid(UUID commitUuid){
+        // Cannot process distinct entities with clob (jpa bug ?)
+        return this.findAllById(findUsedUuidsByCommitUuid(commitUuid));
+    }
+
     // @Query(value = "select dic.* from DICTIONARY dic where dic.UUID in (select distinct id.DICTIONARY_ENTRY_UUID from INDEXES id where id.COMMIT_UUID = :uuid )", nativeQuery = true)
     // select distinct idx.dictionaryEntry from IndexEntry idx where idx.commit.uuid = :uuid
     @Query("SELECT DISTINCT idx.dictionaryEntry.uuid FROM IndexEntry idx WHERE idx.commit.uuid = :uuid")

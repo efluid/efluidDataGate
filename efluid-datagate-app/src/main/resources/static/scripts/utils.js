@@ -47,7 +47,7 @@ const checkProgress = (service, redirectPath) => {
         console.info("Check with data " + data);
         // Requires on progress bar in current dom
         var progressBar = $("#progressBar");
-        if (data.status === 'DIFF_RUNNING' || data.status === 'NOT_LAUNCHED') {
+        if (data.status === 'DIFF_RUNNING' || data.status === 'COMPARE_RUNNING' || data.status === 'NOT_LAUNCHED') {
             progressBar.css('width', data.percentDone + '%');
             progressBar.text(data.percentDone + '%');
             setTimeout(checkProgress, 300, service, redirectPath);
