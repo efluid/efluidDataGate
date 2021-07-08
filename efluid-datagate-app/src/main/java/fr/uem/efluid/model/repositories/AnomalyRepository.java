@@ -17,6 +17,6 @@ public interface AnomalyRepository extends JpaRepository<Anomaly, Long> {
 
     List<Anomaly> findByContextTypeAndContextName(AnomalyContextType contextType, String contextName);
 
-    @Query("select distinct a.contextName from Anomaly a where a.contextType = :type")
+    @Query(value = "SELECT DISTINCT CONTEXT_NAME FROM (SELECT CONTEXT_NAME, DETECT_TIME FROM ANOMALIES WHERE CONTEXT_TYPE = :type ORDER BY DETECT_TIME ASC)", nativeQuery = true)
     List<String> findContextNamesForType(@Param("type") AnomalyContextType contextType);
 }
