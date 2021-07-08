@@ -6,12 +6,14 @@ import fr.uem.efluid.model.repositories.AnomalyRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -19,7 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A core service to manage warnings and anomalies identified during any datagate commit process
@@ -37,6 +38,9 @@ public class AnomalyAndWarningService {
     private final ScheduledExecutorService executor;
 
     private final Queue<Anomaly> toWrite = new ConcurrentLinkedQueue<>();
+
+    @Value("${datagate-efluid.imports.warnings-max-files-display}")
+    private int maxWarningFilesToDisplay;
 
     public AnomalyAndWarningService(@Autowired AnomalyRepository anomalies) {
         this.anomalies = anomalies;
@@ -69,17 +73,21 @@ public class AnomalyAndWarningService {
         this.toWrite.stream().filter(a ->
                 a.getContextType() == contextType && a.getContextName().equals(contextName)
         ).forEach(founds::add);
+        founds.sort(Comparator.comparing(Anomaly::getDetectTime).reversed());
         return founds;
     }
 
     @Transactional
     public List<String> getContextNamesForType(AnomalyContextType contextType) {
-        return Stream.concat(
-                this.anomalies.findContextNamesForType(contextType).stream(),
-                this.toWrite.stream()
-                        .filter(a -> a.getContextType() == contextType)
-                        .map(Anomaly::getContextName)
-        ).distinct().collect(Collectors.toList());
+        List<String> names = new ArrayList<>();
+        names.addAll(this.anomalies.findContextNamesForType(contextType));
+        names.addAll(this.toWrite.stream()
+                .filter(a -> a.getContextType() == contextType)
+                .map(Anomaly::getContextName)
+                .filter(a -> !names.contains(a))
+                .distinct().collect(Collectors.toList()));
+        names.sort(Comparator.reverseOrder());
+        return names.size() < this.maxWarningFilesToDisplay ? names : names.subList(0, this.maxWarningFilesToDisplay);
     }
 
     @Transactional
