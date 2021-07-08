@@ -75,6 +75,7 @@ datagate-efluid:
         check-dictionary-compatibility: false
         check-missing-ref-commits: false
         record-merge-warnings: true
+        warnings-max-files-display: 20
 
     async-preparation:
         #thread-pool-size: 40
