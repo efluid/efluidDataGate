@@ -30,12 +30,12 @@
 		        </tr>
 		    </thead>
 		    <tbody>
-		        <tr th:each="entry, cstat : ${history}">
+		        <tr th:each="entry, cstat : ${history}" th:class="${'action-line ' + entry.action.name().toLowerCase()}">
 		            <td th:utext="${custom.processGitmoji(entry.commitDetails.comment)}">Préchargement configuration</td>
 		            <td th:text="${entry.commitDetails.state}">Merge</td>
 		            <td th:text="${custom.format(entry.commitDetails.createdTime)}">01/11/2017</td>
-		            <td th:text="${entry.action}">UPDATE</td>
-		            <td th:text="${entry.hrPayload}">update</td>
+		            <td class="action-display" th:text="${entry.action=='ADD'?'Ajout':entry.action=='REMOVE'?'Suppression':'Modification'}">UPDATE</td>
+		            <td><span class="change-display" th:text="${entry.hrPayload}" title="${'payload technique=' + entry.payload}">update</span></td>
 		        </tr>
 		    </tbody>
 		</table>

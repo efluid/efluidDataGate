@@ -16,5 +16,7 @@
   "pages/details" : ["detail of an existing commit"],
   "pages/push" : ["selection of commits to export"],
   "pages/push_prepare" : ["preparation of an export"],
-  "pages/reverting" : ["revert running"]
+  "pages/reverting" : ["revert running"],
+  "pages/dependencies_commit" : ["dependency analysis running","dependency analysis completed"],
+  "pages/dependency" : ["dependency history"]
 }

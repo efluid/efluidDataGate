@@ -107,6 +107,8 @@ public class CommitIndexComparator {
             this.async.start(preparingResult,
                     (x) -> this.processOnAllDictionaryEntries(preparingResult, (r, d) -> callCompareForOneDictionaryEntryOnRange(r, d, rangeStart, rangeEnd)));
 
+            preparingResult.setStatus(CommitCompareStatus.COMPARE_RUNNING);
+
             // And provide immediately the building result
             return preparingResult;
         }
@@ -120,8 +122,8 @@ public class CommitIndexComparator {
             String keyValue) {
 
         // Get current commit range def
-        CommitEditData first = currentCompare.getCompareCommits().iterator().next();
-        CommitEditData second = currentCompare.getCompareCommits().get(currentCompare.getCompareCommits().size() - 1);
+        CommitEditData first = currentCompare.getFirstCompareCommit();
+        CommitEditData second = currentCompare.getLastCompareCommit();
 
         // Get range of date for these current commits
         long rangeStart = this.indexes.findMaxIndexTimestampOfCommit(first.getUuid().toString());
@@ -177,8 +179,6 @@ public class CommitIndexComparator {
 
             LOGGER.info("Commit compare process started between {} commits with {} process to run",
                     result.getCompareCommits().size(), callables.size());
-
-            result.setStatus(CommitCompareStatus.COMPARE_RUNNING);
 
             // Run compare on initialized callables
             this.async.processSteps(callables, result);
@@ -239,12 +239,13 @@ public class CommitIndexComparator {
 
             // Combine and store changes
             rawDiffs.forEach((k, byCommits) -> {
-                DiffLine combined = DiffLine.combinedOnSameTableAndKey(
-                        byCommits.stream().map(Pair::getSecond).collect(Collectors.toList()), true);
+                // Diff is on basic compare between first and last version
+                DiffLine first = byCommits.iterator().next().getSecond();
+                DiffLine last = byCommits.get(byCommits.size() - 1).getSecond();
                 current.getDiffContent().add(CommitRangeCompareIndexEntry.fromCombined(
-                        combined,
+                        last,
                         dict.getTableName(),
-                        this.converter.convertToHrPayload(combined.getPayload(), combined.getPrevious()),
+                        this.converter.convertToHrPayload(last.getPayload(), first.getPrevious()),
                         byCommits.stream().map(Pair::getFirst).collect(Collectors.toList())
                 ));
             });

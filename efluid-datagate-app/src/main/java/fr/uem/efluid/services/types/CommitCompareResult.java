@@ -104,6 +104,14 @@ public class CommitCompareResult extends DiffContentHolder<CommitCompareIndexEnt
         return this.compareCommits;
     }
 
+    public CommitEditData getFirstCompareCommit() {
+        return this.compareCommits.iterator().next();
+    }
+
+    public CommitEditData getLastCompareCommit() {
+        return this.compareCommits.get(this.compareCommits.size() - 1);
+    }
+
     public static CommitCompareResult empty(List<Commit> commits) {
         CommitCompareResult result = new CommitCompareResult(Collections.emptyList(), commits);
         result.setStatus(CommitCompareStatus.COMPLETED);

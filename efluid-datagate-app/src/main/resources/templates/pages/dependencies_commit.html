@@ -5,9 +5,10 @@
 <body>
     <div layout:fragment="content">
 		<p>
-			<h5>Adhérences entre 2 lots
+			<h5>Adhérences entre les 2 lots
 			<a href="/commits.html" th:href="@{/ui/commits}" class="btn btn-dark btn-sm float-right">Revenir à la liste</a></h5>
 		</p>
+
 			<div th:if="${compare == null}">
 				<div class="alert alert-secondary" role="alert">
 					<strong>Chargement en cours, merci de patienter</strong>. Le traitement d'analyse des dépendences existantes entre 2 lots.
@@ -19,6 +20,9 @@
 				<p>&nbsp;<br/><br/><br/><br/></p>
 			</div>
 			<div th:if="${compare != null}">
+				<p>
+					Lot "<span style="font-weight: bold" th:text="${compare.firstCompareCommit.comment}">lot 1</span>" et "<span style="font-weight: bold" th:text="${compare.lastCompareCommit.comment}">lot 2</span>"
+				</p>
 				<table class="table table-sm">
 						<thead>
 							<tr>
@@ -35,7 +39,7 @@
 										<option value="" label="Tous les domaines"/>
 										<option th:each="domain, dstat : ${compare.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
 									</select>
-									<button id="domainFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
+									<button id="domainDependencyFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
 									<button id="domainResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
 									<button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
 									<button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
@@ -259,14 +263,10 @@
 					// Put new items
 					data.page.forEach(e => {
 
+						console.log(e);
+
 						var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
 						var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
-						var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
-
-						var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
-						var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
-						var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
-
 						var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
 
 						var itemRow =
@@ -276,7 +276,7 @@
 									'<td title="' + keyTitle + '">' + keyDisplay + '</td>' +
 									'<td><span class="change-display" title="payload technique=' + e.payload + '">' + hrPayload + '</span></td>' +
 									'<td>' +
-										'<a href="./details.html" th:href="@{/ui/details/{id}(id=${commit.uuid})}" class="btn btn-sm btn-secondary float-right">Historique</a>' +									'</div>' +
+										'<a href="/ui/commits/compare/history?dict=' + e.dictionaryEntryUuid + '&key=' + e.keyValue + '" class="btn btn-sm btn-secondary float-right">Historique</a>' +									'</div>' +
 									'</td>' +
 								'</tr>';
 

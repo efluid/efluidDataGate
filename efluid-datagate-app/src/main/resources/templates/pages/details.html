@@ -98,7 +98,7 @@
 									<option value="" label="Tous les domaines"/>
 									<option th:each="domain, dstat : ${details.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
 								</select>
-								<button id="domainFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
+								<button id="domainDetailsFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
 								<button id="domainResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
 								<button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
 								<button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
@@ -360,11 +360,6 @@
 						var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
 						var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
 						var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
-
-						var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
-						var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
-						var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
-
 						var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
 
 						var itemRow =
