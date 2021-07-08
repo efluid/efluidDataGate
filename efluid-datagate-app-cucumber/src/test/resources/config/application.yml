@@ -52,6 +52,7 @@ datagate-efluid:
         check-dictionary-compatibility: false
         check-missing-ref-commits: false
         record-merge-warnings: true
+        warnings-max-files-display: 20
 
     model-identifier:
         enabled: true

@@ -21,7 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * A core service to manage warnings and anomalies identified during any datagate commit process
@@ -84,9 +83,11 @@ public class AnomalyAndWarningService {
         names.addAll(this.anomalies.findContextNamesForType(contextType));
         names.addAll(this.toWrite.stream()
                 .filter(a -> a.getContextType() == contextType)
-                .map(Anomaly::getContextName).collect(Collectors.toList()));
+                .map(Anomaly::getContextName)
+                .filter(a -> !names.contains(a))
+                .distinct().collect(Collectors.toList()));
         names.sort(Comparator.reverseOrder());
-        return names.subList(0, this.maxWarningFilesToDisplay);
+        return names.size() < this.maxWarningFilesToDisplay ? names : names.subList(0, this.maxWarningFilesToDisplay);
     }
 
     @Transactional
