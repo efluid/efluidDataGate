@@ -5,8 +5,8 @@ import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
-import fr.uem.efluid.transformers.Transformer;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
+import fr.uem.efluid.transformers.Transformer;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.FormatUtils;
 import io.cucumber.datatable.DataTable;
@@ -245,13 +245,18 @@ public class PushPullStepDefs extends CucumberStepDefs {
                             PreparedIndexEntry diffLine = content.get(i);
                             Map<String, String> dataLine = v.get(i);
 
+                            String desc = " on table \"" + t + "\" on key \""
+                                    + diffLine.getKeyValue() + "\"";
+
                             IndexAction action = IndexAction.valueOf(dataLine.get("Action"));
-                            assertThat(diffLine.getAction()).isEqualTo(action);
-                            assertThat(diffLine.getKeyValue()).isEqualTo(dataKey(dataLine));
+                            assertThat(diffLine.getAction()).as("action" + desc).isEqualTo(action);
+
+                            // Compare at byte level for OS independence
+                            assertRawKeysAreEquals(dataLine, diffLine.getKeyValue(), desc);
 
                             // No need to check payload in delete
                             if (action != REMOVE) {
-                                assertThat(diffLine.getHrPayload()).isEqualTo(dataLine.get("Payload"));
+                                assertThat(diffLine.getHrPayload()).as("payload" + desc).isEqualTo(dataLine.get("Payload"));
                             }
                         }
                     });

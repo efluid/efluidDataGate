@@ -146,7 +146,7 @@ public abstract class DiffContentHolder<T extends PreparedIndexEntry> {
                 .findFirst();
 
         return table.map(d -> getDiffContent().stream()
-                .filter(i -> i.getDictionaryEntryUuid().equals(d.getUuid()))
+                .filter(i -> i.getDictionaryEntryUuid() != null && i.getDictionaryEntryUuid().equals(d.getUuid()))
                 .collect(Collectors.toSet()))
                 .orElse(Collections.emptySet());
     }

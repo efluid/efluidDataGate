@@ -15,6 +15,8 @@
 					<p th:case="'COMMIT_IMPORT_MISS_REF'">Le fichier d'import référence au moins un lot de modification référencé non encore importé localement (lot manquant identifié : id <span th:text="${payload}">123</span>)</p>
 					<p th:case="'COMMIT_EXISTS'">Le lot de préparation indiqué n'existe pas</p>
 					<p th:case="'COMMIT_MISS_COMMENT'">Le commentaire est obligatoire lors de l'enregistrement d'un lot</p>
+					<p th:case="'COMMIT_COMPARE_FAILED'">Une comparaison de commit ne peut pas être lancée</p>
+					<p th:case="'COMMIT_COMPARE_NOT_READY'">Pas de données de comparaison de lots disponible</p>
 					<p th:case="'METADATA_WRONG_SCHEMA'">
 						Le schéma <span th:text="${payload}">demo</span> configuré pour le filtrage des métadonnées n'existe pas 
 						dans la BDD managée courante

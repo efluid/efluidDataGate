@@ -54,6 +54,7 @@ import static fr.uem.efluid.ColumnType.*;
 import static fr.uem.efluid.cucumber.stubs.ManagedDatabaseAccess.*;
 import static fr.uem.efluid.model.entities.IndexAction.REMOVE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -1014,6 +1015,18 @@ public abstract class CucumberStepDefs {
                 .replaceAll("-space-", " ");
     }
 
+    protected static void assertRawKeysAreEquals(Map<String, String> line, String current, String ctx){
+        String datakey = dataKey(line);
+        if (!current.equals(datakey)) {
+            byte[] rawkey = current.getBytes(StandardCharsets.UTF_8);
+            byte[] rawDatakey = datakey.getBytes(StandardCharsets.UTF_8);
+            if (Arrays.equals(rawkey, rawDatakey)) {
+                fail("Key" + ctx + " keys are different. String = " + current + "|" + datakey
+                        + " - bytes = " + displayByteArray(rawkey) + "|" + displayByteArray(rawDatakey));
+            }
+        }
+    }
+
     protected static void assertDiffContentIsCompliant(DiffContentHolder<?> holder, DataTable data) {
 
         assertThat(holder.getDiffContent().size()).isEqualTo(data.asMaps().size());
@@ -1394,6 +1407,15 @@ public abstract class CucumberStepDefs {
         }
     }
 
+    private static String displayByteArray(byte[] raw) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[");
+        for (byte i : raw) {
+            builder.append(String.format("%02X", i));
+        }
+        builder.append("]");
+        return builder.toString();
+    }
 
     protected static final class PostParamSet {
 

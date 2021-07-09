@@ -17,7 +17,18 @@
 							<b>Nom</b> :<span id="commitName" th:utext="${custom.processGitmoji(details.comment)}">mon lot</span>
 							<div class="float-right"><a href="/commits.html" th:href="@{/ui/commits}" class="btn btn-dark btn-sm">Revenir à la liste</a></div>
 							<div class="float-right"><button type="button" id="renameButton" class="btn btn-primary btn-sm">Renomer le lot</button>&nbsp;&nbsp;</div>
-
+							<div class="float-right">
+								<div class="dropdown" style="margin-right: 10px">
+								  <button class="btn btn-success btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									Voir les adhérences avec un lot
+								  </button>
+								  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+									  <a th:each="commit, cstat : ${commits}" th:if="${details.uuid!=commit.uuid}" href="./dependencies_commit.html" th:href="@{/ui/commits/compare/{id}?with={with}(id=${details.uuid},with=${commit.uuid})}" class="dropdown-item">
+										  <span th:utext="${custom.inflatCommitComment(commit.comment)}">details</span> (version <span th:text="${commit.versionName}">43</span> - <span th:text="${commit.versionModelId}">43</span>)
+									  </a>
+								  </div>
+								</div>
+							</div>
 						</span>
 						<div id="editName" class="form-group">
 							<label for="commitComment"><b>Nouvelle description du lot de modification</b></label>
@@ -87,7 +98,7 @@
 									<option value="" label="Tous les domaines"/>
 									<option th:each="domain, dstat : ${details.referencedDomainNames}" th:value="${domain}" th:label="${domain}"/>
 								</select>
-								<button id="domainFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
+								<button id="domainDetailsFilterButton" type="button" class="btn btn-success btn-sm float-left" onclick="enableFilter('domain')">Filtrer par domaine</button>
 								<button id="domainResetButton" type="button" class="btn btn-secondary btn-sm float-left" onclick="disableFilter('domain')" disabled="disabled" style="margin-left:5px!important">Supprimer le filtre</button>
 								<button id="domainSortAscButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortAsc('domain')" style="margin-left:15px!important">Tri ASC</button>
 								<button id="domainSortDescButton" type="button" class="btn btn-success btn-sm float-left" onclick="sortDesc('domain')" style="margin-left:2px!important">Tri DESC</button>
@@ -349,11 +360,6 @@
 						var keyDisplay = e.displayOnly ? e.keyValues.length + 'entrées similaires' : e.keyValue;
 						var keyTitle = e.displayOnly ? 'clées : ' + e.combinedKey : 'clée : ' + e.keyValue;
 						var actionDisplay = e.action === 'ADD' ? 'Ajout' : e.action === 'REMOVE' ? 'Suppression' : 'Modification';
-
-						var butSelecClass = e.selected ? 'btn btn-primary btn-sm select-button' : 'btn btn-outline-primary btn-sm select-button';
-						var butRollbackClass = e.rollbacked ? 'btn btn-danger btn-sm rollback-button' : 'btn btn-outline-danger btn-sm rollback-button';
-						var butIgnoreClass = !(e.selected || e.rollbacked) ? 'btn btn-secondary btn-sm ignore-button' : 'btn btn-outline-secondary btn-sm ignore-button';
-
 						var hrPayload = e.hrPayload ? e.hrPayload : " - Vide - ";
 
 						var itemRow =

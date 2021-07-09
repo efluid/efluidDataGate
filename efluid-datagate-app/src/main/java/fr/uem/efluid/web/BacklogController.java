@@ -624,6 +624,148 @@ public class BacklogController extends CommonController {
     }
 
     /**
+     * <p>
+     * Start and wait for commit compare (or direct display if ready)
+     * </p>
+     *
+     * @param model
+     * @return
+     */
+    @RequestMapping("/commits/compare/{uuid}")
+    public String commitComparePage(
+            Model model,
+            @PathVariable("uuid") UUID uuid,
+            @RequestParam("with") UUID with) {
+
+        model.addAttribute("currentLocationTitle", "Dépendences entre lots");
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
+
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
+        CompareState state = this.commitService.startCompareBetweenCommits(uuid, with);
+
+        // Diff already in progress : dedicated waiting page
+        if (state.getStatus() == CommitCompareStatus.COMPLETED) {
+
+            // Completed / available, basic prepare page
+            model.addAttribute("compare", this.commitService.getCompletedCurrentCompareResult());
+        }
+
+        // For formatting
+        WebUtils.addTools(model);
+
+        return "pages/dependencies_commit";
+    }
+
+    /**
+     * @return content for paginated diff content rendering
+     */
+    @RequestMapping(path = {"/commits/compare/page/{page}", "/pull/compare/page/{page}"}, method = {GET, POST})
+    @ResponseBody
+    public DiffContentPage commitCompareGetCompareContentPage(
+            @PathVariable("page") int page,
+            @RequestBody(required = false) DiffContentSearch search) {
+
+        return this.commitService.getPaginatedCompareContent(page, search);
+    }
+
+
+    /**
+     * <p>
+     * Compare is completed
+     * </p>
+     *
+     * @param model
+     * @return
+     */
+    @RequestMapping("/commits/compare/completed")
+    public String commitCompareCompletedPage(Model model) {
+
+        // Completed / available, basic prepare page
+        model.addAttribute("compare", this.commitService.getCompletedCurrentCompareResult());
+
+        // For formatting
+        WebUtils.addTools(model);
+
+        return "pages/dependencies_commit";
+    }
+
+    /**
+     * <p>
+     * Compare is completed
+     * </p>
+     *
+     * @param model
+     * @return
+     */
+    @RequestMapping("/commits/compare/history")
+    public String commitCompareHistoryPage(Model model, @RequestParam("dict") UUID dictionaryEntryUuid, @RequestParam("key") String key) {
+
+        model.addAttribute("compare", this.commitService.getCompletedCurrentCompareResult());
+        model.addAttribute("history", this.commitService.getCompareEntryHistory(dictionaryEntryUuid, key));
+        model.addAttribute("key",key);
+        model.addAttribute("tableName", this.dictService.getDictionaryEntryTableName(dictionaryEntryUuid));
+
+        // For formatting
+        WebUtils.addTools(model);
+
+        return "pages/dependency";
+    }
+
+    /**
+     * @return status as a value
+     */
+    @RequestMapping(path = "/commits/compare/progress", method = GET)
+    @ResponseBody
+    public CompareState commitCompareGetState() {
+        return this.commitService.getCurrentCommitCompareState();
+    }
+
+
+    /**
+     * @param model
+     * @return
+     */
+    @RequestMapping(value = "/pull/compare", method = GET)
+    public String importComparePage(Model model) {
+
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
+        // Forward to merge if active
+        if (this.pilotableCommitService.getCurrentCommitPreparation() != null
+                && this.pilotableCommitService.getCurrentCommitPreparation().getPreparingState() != CommitState.LOCAL) {
+            return processImport(model);
+        }
+
+        model.addAttribute("currentLocationTitle", "Importer un lot");
+        model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
+
+        return "pages/pull";
+    }
+
+    /**
+     * @param model
+     * @param request
+     * @return
+     */
+    @RequestMapping(value = "/pull/compare", method = POST)
+    public String importCompare(Model model, MultipartHttpServletRequest request) {
+
+        if (!controlSelectedProject(model)) {
+            return REDIRECT_SELECT;
+        }
+
+        model.addAttribute("result", this.pilotableCommitService.startMergeCommitPreparation(WebUtils.inputExportImportFile(request)));
+
+        return "pages/merging";
+    }
+
+
+    /**
      * @param model
      * @param uuid
      * @return
@@ -640,6 +782,7 @@ public class BacklogController extends CommonController {
 
         // Get updated preparation
         model.addAttribute("details", this.commitService.getExistingCommitDetails(uuid, false));
+        model.addAttribute("commits", this.commitService.getAvailableCommits());
         model.addAttribute("projectName", this.projectManagementService.getCurrentSelectedProjectShortName());
 
         return "pages/details";

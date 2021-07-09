@@ -1459,6 +1459,15 @@ public class DictionaryManagementService extends AbstractApplicationService {
     }
 
     /**
+     * @param dictEntryUuid dict entry uuid
+     * @return table name
+     */
+    public String getDictionaryEntryTableName(UUID dictEntryUuid) {
+
+        return this.dictionary.getOne(dictEntryUuid).getTableName();
+    }
+
+    /**
      * @param tableName
      * @return
      */

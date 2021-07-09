@@ -6,6 +6,7 @@ import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.CommitIndexComparator;
 import fr.uem.efluid.tools.RollbackConverter;
 import fr.uem.efluid.tools.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
@@ -61,6 +62,9 @@ public class CommitService extends AbstractApplicationService {
     @Value("${datagate-efluid.display.details-page-size}")
     private int detailsDisplayPageSize;
 
+    @Value("${datagate-efluid.display.diff-page-size}")
+    private int diffDisplayPageSize;
+
     @Autowired
     private CommitRepository commits;
 
@@ -111,6 +115,12 @@ public class CommitService extends AbstractApplicationService {
 
     @Autowired
     private RollbackConverter rollbackConverter;
+
+    @Autowired
+    private CommitIndexComparator commitIndexComparator;
+
+    // One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
+    private final Map<UUID, CommitCompareResult> currentCommitCompareResults = new HashMap<>();
 
     /**
      *
@@ -338,12 +348,12 @@ public class CommitService extends AbstractApplicationService {
     /**
      * Process export call for the prepared commit content
      *
-     * @param project
-     * @param commitPackageName
-     * @param transformers
-     * @param commitsToExport
-     * @param commitUuids
-     * @return
+     * @param project           source project for export
+     * @param commitPackageName destination package name
+     * @param transformers      transformers to include in export
+     * @param commitsToExport   list of commit to export
+     * @param commitUuids       range of commit for export source
+     * @return ExportFile of selected commit
      */
     @Transactional(propagation = Propagation.NEVER)
     protected ExportFile exportContent(
@@ -568,11 +578,189 @@ public class CommitService extends AbstractApplicationService {
     public UUID getRevertCompliantCommit() {
 
         this.projectService.assertCurrentUserHasSelectedProject();
+
         Project project = this.projectService.getCurrentSelectedProjectEntity();
 
         // "Revertable" is last one if not a revert
         return this.commits.findRevertableCommitUuid(project.getUuid());
     }
+
+    /* ############################ COMMIT COMPARE PROCESS ENTRYPOINTS ############################## */
+
+    public CompareState startCompareBetweenCommits(UUID firstCommit, UUID secondCommit) {
+
+        Commit first = this.commits.getOne(firstCommit);
+        Commit second = this.commits.getOne(secondCommit);
+
+        // Start comparator (first / second will be sorted anyway)
+        return manageStartedCompare(this.commitIndexComparator.startCompareProcessBetweenCommits(first, second));
+    }
+
+
+    /**
+     * From a specified list of imported packages, we get the commits, contents and identified dictionary entries
+     *
+     * @param importFiles
+     * @return
+     */
+    public CompareState startCompareImportedCommits(List<ExportFile> importFiles) {
+
+        // We need commit, indexes and version (only for dictionary read)
+        List<CommitPackage> commitPckgs = new ArrayList<>();
+        List<IndexEntryPackage> indexPckgs = new ArrayList<>();
+        List<VersionPackage> versionPckgs = new ArrayList<>();
+
+        List<SharedPackage<?>> allPackages = importFiles.stream()
+                .map(this.exportImportService::importPackages)
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        // Check package validity (just need to comply with current datagate version)
+        assertImportPackageIsValid(allPackages);
+
+        // Organize all required packages
+        allPackages.forEach(p -> {
+            if (p.getClass() == CommitPackage.class) {
+                commitPckgs.add((CommitPackage) p);
+            } else if (p.getClass() == IndexEntryPackage.class) {
+                indexPckgs.add((IndexEntryPackage) p);
+            } else if (p.getClass() == VersionPackage.class) {
+                versionPckgs.add((VersionPackage) p);
+            }
+        });
+
+        // Load index contents once
+        Map<UUID, List<IndexEntry>> entries = indexPckgs.stream().flatMap(IndexEntryPackage::content)
+                .collect(Collectors.groupingBy(i -> i.getCommit().getUuid()));
+
+        // Extract commits with their associated index content
+        List<Commit> comparedCommits = commitPckgs.stream()
+                .flatMap(CommitPackage::content)
+                .filter(c -> !c.isRefOnly())
+                .peek(c -> {
+                    if (c.getIndex().isEmpty()) {
+                        c.getIndex().addAll(entries.get(c.getUuid()));
+                    }
+                }).collect(Collectors.toList());
+
+        // And prepare the dictionary overview from version
+        List<DictionaryEntrySummary> dicts = versionPckgs.stream()
+                .flatMap(VersionPackage::content)
+                .map(VersionContentChangesGenerator::readDict)
+                .flatMap(List::stream)
+                .map(d -> DictionaryEntrySummary.fromEntity(d, null))
+                .collect(Collectors.toList());
+
+        // Start compare and share current result
+        return manageStartedCompare(this.commitIndexComparator.startCompareProcessOnImportedCommits(comparedCommits, dicts));
+    }
+
+    /**
+     * <p>
+     * For checked status
+     * </p>
+     *
+     * @return
+     */
+    public CompareState getCurrentCommitCompareState() {
+
+        CommitCompareResult result = getCurrentCompareResult();
+
+        return result != null
+                ? new CompareState(result.getStatus(), result.getPercentDone())
+                : new CompareState(CommitCompareStatus.NOT_LAUNCHED, 0);
+    }
+
+    /**
+     * @return
+     */
+    public CommitCompareResult getCompletedCurrentCompareResult() {
+
+        // Get and drop from map of current
+        CommitCompareResult result = getCurrentCompareResult();
+
+        // Fail if none processed
+        if (result == null) {
+            throw new ApplicationException(COMMIT_COMPARE_FAILED, "No commit compare found");
+        }
+
+        return result;
+    }
+
+    public DiffContentPage getPaginatedCompareContent(int pageIndex, DiffContentSearch currentSearch) {
+
+        // Apply pagination on filtered content directly
+        return new DiffContentPage(pageIndex, getFilteredCompareContent(currentSearch), this.diffDisplayPageSize);
+    }
+
+    private CommitCompareResult getCurrentCompareResult() {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        return this.currentCommitCompareResults.get(project.getUuid());
+    }
+
+    private List<CommitCompareIndexEntry> getFilteredCompareContent(DiffContentSearch currentSearch) {
+
+        CommitCompareResult result = getCurrentCompareResult();
+
+        // Filter and sort content regarding the specified search
+        if (result != null) {
+
+            List<CommitCompareIndexEntry> diffContent = currentSearch.filterAndSortDiffContentInMemory(result);
+
+            // Complete tableName / DomainName to display (only on listed results)
+            diffContent.forEach(i -> {
+                DictionaryEntrySummary dic = result.getReferencedTables().get(i.getDictionaryEntryUuid());
+                if (dic != null) {
+                    i.setTableName(dic.getTableName());
+                    i.setDomainName(dic.getDomainName());
+                }
+            });
+            return diffContent;
+        }
+        throw new ApplicationException(COMMIT_COMPARE_NOT_READY, "Cannot get content of current commit compare to filter");
+    }
+
+    public List<CommitCompareHistoryEntry> getCompareEntryHistory(UUID dictionaryEntryUuid, String keyValue) {
+
+        CommitCompareResult result = getCurrentCompareResult();
+
+        // Filter and sort content regarding the specified search
+        if (result != null) {
+            return this.commitIndexComparator.getHistoryForComparedValue(result, dictionaryEntryUuid, keyValue);
+        }
+        throw new ApplicationException(COMMIT_COMPARE_NOT_READY, "Cannot get content of current commit compare to filter");
+    }
+
+    // Keep processing result and prepare compare state
+    private CompareState manageStartedCompare(CommitCompareResult result) {
+
+        // If failed immediately, throws
+        if (result.getStatus() == CommitCompareStatus.FAILED) {
+            throw result.getSourceFailure();
+        }
+
+        // Else keep and provide result
+        this.currentCommitCompareResults.put(this.projectService.getCurrentSelectedProjectEntity().getUuid(), result);
+
+        return new CompareState(result.getStatus(), result.getPercentDone());
+    }
+
+    private void assertCanStartCommitCompare() {
+
+        this.projectService.assertCurrentUserHasSelectedProject();
+        Project project = this.projectService.getCurrentSelectedProjectEntity();
+
+        // Cannot start if already running
+        if (this.currentCommitCompareResults.containsKey(project.getUuid())) {
+            throw new ApplicationException(COMMIT_COMPARE_FAILED,
+                    "Cannot start a new compare of commit if one is already running");
+        }
+    }
+
+    /* ################################# INTERNAL PROCESS ON COMMITS ################################ */
 
     /**
      * @param encodedLobHash

@@ -34,5 +34,7 @@
   "/ui/projects" : ["projects page"],
   "/ui/revert" : ["revert launch page", "revert commit page"],
   "/ui/revert/commit" : ["revert saving page"],
-  "/ui/revert/save" : ["revert save"]
+  "/ui/revert/save" : ["revert save"],
+  "/ui/commits/compare/completed" : ["dependency page"],
+  "/ui/commits/compare/history" : ["dependency history"]
 }
