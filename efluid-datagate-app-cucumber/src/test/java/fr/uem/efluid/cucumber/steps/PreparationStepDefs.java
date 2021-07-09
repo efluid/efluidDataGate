@@ -657,7 +657,9 @@ public class PreparationStepDefs extends CucumberStepDefs {
                             + diffLine.getKeyValue() + "\". Resolution was \"" + diffLine.getResolutionRule() + "\"";
 
                     assertThat(diffLine.getAction()).as("Action" + desc).isEqualTo(action);
-                    assertThat(diffLine.getKeyValue()).as("Key" + desc).isEqualTo(dataKey(dataLine));
+
+                    // Compare at byte level for OS independence
+                    assertRawKeysAreEquals(dataLine, diffLine.getKeyValue(), desc);
 
                     // No need to check payload in delete
                     if (action != REMOVE) {
@@ -913,4 +915,5 @@ public class PreparationStepDefs extends CucumberStepDefs {
             return key;
         }
     }
+
 }
