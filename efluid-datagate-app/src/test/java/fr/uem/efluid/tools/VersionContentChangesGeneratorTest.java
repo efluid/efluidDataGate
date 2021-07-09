@@ -6,6 +6,8 @@ import fr.uem.efluid.services.types.VersionCompare.ChangeType;
 import fr.uem.efluid.services.types.VersionCompare.ColumnChanges;
 import fr.uem.efluid.services.types.VersionCompare.DictionaryTableChanges;
 import fr.uem.efluid.services.types.VersionCompare.DomainChanges;
+import fr.uem.efluid.tools.diff.ManagedQueriesGenerator;
+import fr.uem.efluid.tools.versions.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomQueryGenerationRules;
 import fr.uem.efluid.utils.FormatUtils;

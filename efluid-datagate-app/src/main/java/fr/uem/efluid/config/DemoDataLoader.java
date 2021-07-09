@@ -35,7 +35,7 @@ import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.model.repositories.ProjectRepository;
 import fr.uem.efluid.model.repositories.UserRepository;
 import fr.uem.efluid.model.repositories.VersionRepository;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 
 /**
  * <p>

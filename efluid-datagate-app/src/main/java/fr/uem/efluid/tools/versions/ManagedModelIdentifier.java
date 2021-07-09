@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.tools.versions;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;

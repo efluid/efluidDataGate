@@ -14,7 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.zaxxer.hikari.HikariDataSource;
 
-import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
+import fr.uem.efluid.tools.diff.ManagedQueriesGenerator.QueryGenerationRules;
 
 /**
  * @author elecomte

@@ -6,7 +6,7 @@ import fr.uem.efluid.model.entities.DictionaryEntry;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import fr.uem.efluid.utils.FormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

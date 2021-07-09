@@ -98,6 +98,15 @@ public class SharedOutputInputUtils {
     }
 
     /**
+     * Access to the common mapper for output / input and other needs, for limited init
+     *
+     * @return initialized common mapper
+     */
+    public static ObjectMapper commonMapper() {
+        return MAPPER;
+    }
+
+    /**
      * <p>
      * When serialize is done as a tmp file
      * </p>

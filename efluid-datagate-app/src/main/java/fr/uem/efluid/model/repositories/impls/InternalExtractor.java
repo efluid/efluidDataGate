@@ -3,7 +3,7 @@ package fr.uem.efluid.model.repositories.impls;
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.ContentLine;
 import fr.uem.efluid.model.entities.DictionaryEntry;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.IntSet;

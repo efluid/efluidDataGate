@@ -18,7 +18,7 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import fr.uem.efluid.config.ManagedDatasourceConfig.DataSourceProperties;
-import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
+import fr.uem.efluid.tools.diff.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
 

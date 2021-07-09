@@ -8,8 +8,8 @@ import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.ManagedExtractRepository;
 import fr.uem.efluid.model.repositories.TableLinkRepository;
 import fr.uem.efluid.services.types.Value;
-import fr.uem.efluid.tools.ManagedQueriesGenerator;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedQueriesGenerator;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
@@ -320,7 +320,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
          * @param currentValueConverter converter
          * @param lineHolder            current line content holder as a list of strings
          * @return completed payload in a merged string
-         * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#getFinalizedPayload(fr.uem.efluid.tools.ManagedValueConverter,
+         * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#getFinalizedPayload(ManagedValueConverter,
          * java.lang.Object)
          */
         @Override
@@ -414,7 +414,7 @@ public class JdbcBasedManagedExtractRepository implements ManagedExtractReposito
          * @param currentValueConverter applied converter for payload generation
          * @param lineHolder            current line list of values
          * @return merged payload, processed through the converter
-         * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#getFinalizedPayload(fr.uem.efluid.tools.ManagedValueConverter,
+         * @see fr.uem.efluid.model.repositories.impls.InternalExtractor#getFinalizedPayload(ManagedValueConverter,
          * java.lang.Object)
          */
         @Override

@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.tools.diff;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.Commit;
@@ -8,6 +8,7 @@ import fr.uem.efluid.model.repositories.CommitRepository;
 import fr.uem.efluid.model.repositories.DictionaryRepository;
 import fr.uem.efluid.model.repositories.IndexRepository;
 import fr.uem.efluid.services.types.*;
+import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.utils.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

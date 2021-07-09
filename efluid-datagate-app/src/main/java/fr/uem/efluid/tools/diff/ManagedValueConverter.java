@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.tools.diff;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.services.types.Value;
@@ -55,7 +55,7 @@ public class ManagedValueConverter {
     private final static String LOB_URL_TEMPLATE = "<a href=\"/ui/lob/%s\" download=\"download\">" + ColumnType.BINARY.getDisplayName()
             + "</a>";
 
-    private final static String TXT_URL_TEMPLATE = "<a href=\"/ui/lob/%s\" download=\"download\">" + ColumnType.TEXT.getDisplayName()
+    private final static String TXT_URL_TEMPLATE = "<a href=\"#\" onclick=\"openText('%s')\">" + ColumnType.TEXT.getDisplayName()
             + "</a>";
 
     private final static String BLOB_HASH_SEARCH = AFFECT + String.valueOf(ColumnType.BINARY.getRepresent()) + TYPE_IDENT;

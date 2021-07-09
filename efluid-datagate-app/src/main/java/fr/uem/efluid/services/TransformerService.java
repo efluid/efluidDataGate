@@ -10,7 +10,7 @@ import fr.uem.efluid.services.types.TransformerDefDisplay;
 import fr.uem.efluid.services.types.TransformerDefEditData;
 import fr.uem.efluid.services.types.TransformerDefPackage;
 import fr.uem.efluid.services.types.TransformerType;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import fr.uem.efluid.transformers.Transformer;
 import fr.uem.efluid.transformers.TransformerProcessor;
 import fr.uem.efluid.utils.ApplicationException;

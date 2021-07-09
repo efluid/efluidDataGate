@@ -2,7 +2,7 @@ package fr.uem.efluid.model.repositories.impls;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.model.repositories.ManagedModelDescriptionRepository;
-import fr.uem.efluid.tools.ManagedModelIdentifier;
+import fr.uem.efluid.tools.versions.ManagedModelIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

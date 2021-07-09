@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.tools.versions;
 
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.shared.ExportAwareDictionaryEntry;
@@ -8,6 +8,7 @@ import fr.uem.efluid.model.shared.ExportAwareTableMapping;
 import fr.uem.efluid.services.types.DictionaryEntryEditData.ColumnEditData;
 import fr.uem.efluid.services.types.LinkUpdateFollow;
 import fr.uem.efluid.services.types.VersionCompare.*;
+import fr.uem.efluid.tools.diff.ManagedQueriesGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;

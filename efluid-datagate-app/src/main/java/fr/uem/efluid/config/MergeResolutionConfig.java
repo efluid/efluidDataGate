@@ -2,8 +2,8 @@ package fr.uem.efluid.config;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fr.uem.efluid.tools.ManagedValueConverter;
-import fr.uem.efluid.tools.MergeResolutionProcessor;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.MergeResolutionProcessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

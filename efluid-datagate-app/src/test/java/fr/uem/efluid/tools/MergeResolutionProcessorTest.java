@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.uem.efluid.model.entities.IndexAction;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.PreparedMergeIndexEntry;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.MergeResolutionProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.ResourceUtils;
@@ -15,9 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import static fr.uem.efluid.model.entities.IndexAction.*;
-import static fr.uem.efluid.tools.MergeResolutionProcessor.ResolutionCase.PayloadType.*;
-import static fr.uem.efluid.tools.MergeResolutionProcessor.ResolutionCase.Result.PayloadResultType.THEIR_PAYLOAD;
-import static fr.uem.efluid.tools.MergeResolutionProcessor.ResolutionCase.Result.PayloadResultType.THEIR_PREVIOUS;
+import static fr.uem.efluid.tools.diff.MergeResolutionProcessor.ResolutionCase.PayloadType.*;
+import static fr.uem.efluid.tools.diff.MergeResolutionProcessor.ResolutionCase.Result.PayloadResultType.THEIR_PAYLOAD;
+import static fr.uem.efluid.tools.diff.MergeResolutionProcessor.ResolutionCase.Result.PayloadResultType.THEIR_PREVIOUS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 

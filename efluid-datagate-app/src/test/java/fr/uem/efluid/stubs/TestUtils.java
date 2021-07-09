@@ -21,7 +21,7 @@ import fr.uem.efluid.ColumnType;
 
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.Value;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 
 import static org.junit.jupiter.api.Assertions.*;
 

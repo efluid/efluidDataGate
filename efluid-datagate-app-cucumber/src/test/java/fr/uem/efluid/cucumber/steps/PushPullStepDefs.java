@@ -5,7 +5,7 @@ import fr.uem.efluid.cucumber.common.CucumberStepDefs;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.services.types.CommitExportEditData.CustomTransformerConfiguration;
-import fr.uem.efluid.tools.VersionContentChangesGenerator;
+import fr.uem.efluid.tools.versions.VersionContentChangesGenerator;
 import fr.uem.efluid.transformers.Transformer;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import fr.uem.efluid.utils.FormatUtils;

@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.tools.versions;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
 import fr.uem.efluid.utils.DatasourceUtils;
@@ -30,7 +30,7 @@ public class EfluidDatabaseIdentifier extends ManagedModelIdentifier {
 
     /**
      * @return
-     * @see fr.uem.efluid.tools.ManagedModelIdentifier#getAllModelDescriptionQuery()
+     * @see ManagedModelIdentifier#getAllModelDescriptionQuery()
      */
     @Override
     public String getAllModelDescriptionQuery() {
@@ -42,7 +42,7 @@ public class EfluidDatabaseIdentifier extends ManagedModelIdentifier {
      * @param index
      * @return
      * @throws SQLException
-     * @see fr.uem.efluid.tools.ManagedModelIdentifier#extractFromLine(java.sql.ResultSet,
+     * @see ManagedModelIdentifier#extractFromLine(java.sql.ResultSet,
      * int)
      */
     @Override
@@ -61,7 +61,7 @@ public class EfluidDatabaseIdentifier extends ManagedModelIdentifier {
      * @param identity
      * @param existingDescriptions
      * @return
-     * @see fr.uem.efluid.tools.ManagedModelIdentifier#isValidPastModelIdentifier(java.lang.String,
+     * @see ManagedModelIdentifier#isValidPastModelIdentifier(java.lang.String,
      * java.util.List)
      */
     @Override

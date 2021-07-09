@@ -2,7 +2,7 @@ package fr.uem.efluid.utils;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import org.pac4j.core.credentials.password.PasswordEncoder;
 
 import java.time.LocalDateTime;

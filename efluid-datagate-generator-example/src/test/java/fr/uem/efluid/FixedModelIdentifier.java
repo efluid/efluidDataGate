@@ -1,7 +1,7 @@
 package fr.uem.efluid;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
-import fr.uem.efluid.tools.ManagedModelIdentifier;
+import fr.uem.efluid.tools.versions.ManagedModelIdentifier;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
 
 import java.sql.ResultSet;

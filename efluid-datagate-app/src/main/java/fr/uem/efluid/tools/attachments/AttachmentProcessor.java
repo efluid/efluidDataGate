@@ -1,8 +1,9 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.tools.attachments;
 
 import java.util.*;
 
 import fr.uem.efluid.model.entities.*;
+import fr.uem.efluid.utils.DisplayContentUtils;
 import fr.uem.efluid.utils.FormatUtils;
 
 /**
@@ -29,7 +30,7 @@ public abstract class AttachmentProcessor {
 	 * @return
 	 */
 	protected String formatForDisplay(Compliant att) {
-		return FormatUtils.toString(att.getData());
+		return DisplayContentUtils.renderDefault(att.getData());
 	}
 
 	/**
@@ -135,7 +136,7 @@ public abstract class AttachmentProcessor {
 	 * @since v2.0.0
 	 * @version 1
 	 */
-	public static interface Compliant {
+	public interface Compliant {
 
 		UUID getUuid();
 
