@@ -35,7 +35,8 @@ public class DisplayContentUtils {
             return SharedOutputInputUtils.commonMapper()
                     .writerWithDefaultPrettyPrinter()
                     .writeValueAsString(SharedOutputInputUtils.commonMapper().readTree(raw))
-                    .replaceAll("\n", "<br/>");
+                    .replaceAll("\n", "<br/>")
+                    .replaceAll(" ", "&nbsp;") + "<br/>";
         } catch (Exception e) {
             throw new ApplicationException(ErrorType.JSON_READ_ERROR, "cannot render json content");
         }

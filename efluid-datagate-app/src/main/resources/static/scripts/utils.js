@@ -149,3 +149,15 @@ const getReferencedUuidInId = (e) => {
     }
     return idParts[idParts.length - 1];
 };
+
+// For attachment read in modal
+const openText = (hash)  => {
+    hideDisplays();
+    console.log("open content = " + hash);
+    $.get("/ui/text/" + hash, null, (data, status) => {
+        $("#modalContent").html(data);
+        $("#contentModalLabel").html("Contenu texte <b>" + hash + "</b>");
+        $('#contentModal').modal('show');
+    });
+    return false;
+};

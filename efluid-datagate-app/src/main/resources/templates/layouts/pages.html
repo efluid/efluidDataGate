@@ -18,7 +18,8 @@
             <div th:insert="~{layouts/navbar-right :: navbar-right}"></div>
             <span layout:fragment="content" class="datagate-content">
 		        <div>Here page content</div>
-		      </span>
+            </span>
+            <div th:insert="~{components/modal-content :: modal-content}"></div>
             <div id="successDisplay" class="alert alert-success alert-dismissible" style="display:none">C'est un succès</div>
             <div id="errorDisplay" class="alert alert-danger alert-dismissible" style="display:none">C'est un echec</div>
         </div>
