@@ -6,7 +6,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
 
 * [Principes généraux de l'application](global-tech.md)
 * Installation
-  * [Paramètrage](parameters.md)
+  * [paramétrage](parameters.md)
   * Docker
   * Base de données
   * Autre
@@ -14,7 +14,7 @@ Documentation en cours de mise en place. Les sections non cliquables dans l'inde
 * Fonctionnalités
   * Wizzard
   * Projets
-  * Dictionnaire des tables de paramètrage
+  * Dictionnaire des tables de paramétrage
   * Domaines fonctionnels
   * [Versions](versions.md)
   * Export / import de dictionnaire

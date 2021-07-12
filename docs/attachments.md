@@ -4,7 +4,7 @@
 
 Les commits peuvent être accompagnés de pièces jointes. Les formats de pièce jointes sont reconnues et si elles sont de type SQL, elles peuvent être exécutées avec le contenu du commit lors d'un merge.
 
-L'objectif est de permettre de joindre des scripts correctifs de données aux paramètrages.
+L'objectif est de permettre de joindre des scripts correctifs de données aux paramétrages.
 
 ## Fonctionnement de la spécification de PJ
 

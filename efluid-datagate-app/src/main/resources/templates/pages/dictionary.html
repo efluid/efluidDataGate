@@ -19,9 +19,9 @@
 				</div>
 			</div>
 		<div>
-		<a th:href="@{/ui/dictionary/new}" href="./dictionary_123.html" class="btn btn-success btn-sm float-right" type="button">Ajouter une nouvelle table de paramètrage</a><br/><br/>
+		<a th:href="@{/ui/dictionary/new}" href="./dictionary_123.html" class="btn btn-success btn-sm float-right" type="button">Ajouter une nouvelle table de paramétrage</a><br/><br/>
 		</div>
-		<span class="help">Le dictionnaire représente les tables de l'application gérée à prendre en compte comme étant du paramètrage.</span>
+		<span class="help">Le dictionnaire représente les tables de l'application gérée à prendre en compte comme étant du paramétrage.</span>
 		<table class="table table-sm">
 			<thead>
 				<tr>
@@ -33,7 +33,7 @@
 			</thead>
 			<tbody>
 				<tr th:if="${dictionary.empty}">
-					<td colspan="100%" class="empty-list-message">Aucune table de paramètrage spécifiée</td>
+					<td colspan="100%" class="empty-list-message">Aucune table de paramétrage spécifiée</td>
 				</tr>
 				<tr th:each="entry : ${dictionary}" th:id="${entry.uuid}">
 					<td th:text="${entry.domainName}">Gestion du matériel</td>
@@ -41,7 +41,7 @@
 					<td><span class="query-display" th:text="${entry.query}">SELECT COLKEY, COLA, COLB, COLC FROM TCATEGORYMATERIEL WHERE 1=1 ORDER BY COLKEY</span></td>
 					<td><span class="float-right">
 						<a th:href="@{|/ui/dictionary/edit/${entry.uuid}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm" type="button">Editer</a>
-						<button class="btn btn-secondary btn-sm delete-button" type="button" th:title="!${entry.canDelete}?'Impossible de supprimer un type de paramètre pour lequel des lots de paramètrage existent'" th:disabled="!${entry.canDelete}">Supprimer</button>
+						<button class="btn btn-secondary btn-sm delete-button" type="button" th:title="!${entry.canDelete}?'Impossible de supprimer un type de paramètre pour lequel des lots de paramétrage existent'" th:disabled="!${entry.canDelete}">Supprimer</button>
 					</span></td>
 				</tr>
 			     <tr>
@@ -65,7 +65,7 @@
 			hideDisplays();
 			var uuid = e.target.parentElement.parentElement.parentElement.id;
 			$.post("/ui/dictionary/remove/" + uuid, null, (data, status) => {
-				showSuccess("Table de paramètrage retirée avec succès");
+				showSuccess("Table de paramétrage retirée avec succès");
 				$("#" + uuid).remove();
 			});
 		};
@@ -100,7 +100,7 @@
 			$("button.delete-button").click(deleteButtonAction);
 			$("#whereClause").bind('input',checkChangeCriteria)
 			var fromType = /*[[${from}?${from}:'']]*/ 'success_edit';
-			if(fromType === 'success_edit') showSuccess("Table de paramètrage ajoutée avec succès au dictionnaire");
+			if(fromType === 'success_edit') showSuccess("Table de paramétrage ajoutée avec succès au dictionnaire");
 			if(fromType === 'success_clause') showSuccess("Critère de filtrage appliqué sur les tables compatibles");
 			$("#tableClauseRemarkAreaButton").click((e) => hideAndShowTableClauseRemarksAction());
 		});

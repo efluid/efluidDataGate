@@ -1,4 +1,4 @@
-# Paramètrage de Datagate
+# paramétrage de Datagate
 
 ## Principes de la configuration
 
@@ -11,9 +11,9 @@ Datagate est une application développée avec `spring-boot`.
 * D'autres fichiers de surcharge peuvent s'enchainer de la mnême manière
 * Les paramètres peuvent être également spécifiés par **variables d'environnement**, **arguments** de lignes de commandes ...
 
-> Pour en savoir plus sur la gestion du paramètrage avec une application `spring-boot` regarder en particuliers https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-external-config
+> Pour en savoir plus sur la gestion du paramétrage avec une application `spring-boot` regarder en particuliers https://docs.spring.io/spring-boot/docs/current/reference/html/spring-boot-features.html#boot-features-external-config
 
-### Formes possibles de paramètrages
+### Formes possibles de paramétrages
 
 Comme pour toute application `spring-boot` les paramètres peuvent être définis sous différentes formes :
 * dans un fichier yaml. Les propriétés sont données au format kebab-case
@@ -23,7 +23,7 @@ Comme pour toute application `spring-boot` les paramètres peuvent être défini
 * Programmatiquement, format camel-case
 * Pour certains paramètres, une modification "à chaud" de certaines features via une API rest est également possible (voir chapitre dédié plus bas)
 
-Par exemple la propriété de paramètrage suivante dans un fichier Yaml : 
+Par exemple la propriété de paramétrage suivante dans un fichier Yaml : 
 ```
 datagate-efluid:
     managed-datasource:
@@ -86,7 +86,7 @@ ce qui permet d'utiliser ici directement les variables d'environnement `$DB_URL`
 
 ### Configuration racine
 
-La configuration racine donne le paramètrage par défaut. Toutes les valeurs gérées par l'application sont prédéfinies.
+La configuration racine donne le paramétrage par défaut. Toutes les valeurs gérées par l'application sont prédéfinies.
 
 Les paramètres gérés sont :
 
@@ -116,9 +116,9 @@ Les paramètres gérés sont :
 * `datagate-efluid.display.history-page-size`: Nombre d'items par page pour la pagination de l'historique des changements enregistrés
 * `datagate-efluid.display.diff-page-size`: Nombre d'items par page pour la pagination du diff d'une préparation d'un lot
 * `datagate-efluid.display.details-page-size`: Nombre d'items par page pour la pagination du diff présenté en consultant le contenu d'un lot existant
-* `datagate-efluid.display.test-row-max-size`: Nombre d'items par page pour la pagination de la vue "test" de donnée dans la spécification d'une table de paramètrage
+* `datagate-efluid.display.test-row-max-size`: Nombre d'items par page pour la pagination de la vue "test" de donnée dans la spécification d'une table de paramétrage
 * `datagate-efluid.web-options.enable-custom-h2-console`: true pour activer la console h2 (quand une BDD H2 est utilisée comme BDD gérée, c'est à dire uniquement en mode démo)
-* `datagate-efluid.dictionary.select-pk-as-default-keys`: true si les PK des tables peuvent être pré-selectionnées comme clés dans l'édition d'une table de paramètrage
+* `datagate-efluid.dictionary.select-pk-as-default-keys`: true si les PK des tables peuvent être pré-selectionnées comme clés dans l'édition d'une table de paramétrage
 * `datagate-efluid.versions.use-model-id-as-version`: true si le model identifié de la BDD gérée est utilisé comme nom de version
 * `datagate-efluid.security.salt`: hash salt pour la génération des tokens d'appel API
 * `datagate-efluid.security.accounting`: Mode de gestion des comptes utilisateurs. Peut être `DATABASE`, `LDAP_AUTH` ou `LDAP_FULL` (seuls `DATABASE`, `LDAP_AUTH` sont supportés à ce stade)
@@ -132,7 +132,7 @@ Les paramètres gérés sont :
 * `datagate-efluid.attachments.enable-sql-execute`: true si l'exécution des fichiers SQL spécifiés en PJ de lot est activé
 * `datagate-efluid.attachments.enable-display`: true si la consultation des fichiers spécifiés en PJ de lot est activé
 * `datagate-efluid.imports.check-model-version`: true si l'import d'un lot est conditionné sur la version attachée (vérifie uniquement que la version est présente)
-* `datagate-efluid.imports.check-dictionary-compatibility`: true si l'import d'un lot est conditionné par la présence d'un dictionnaire compatible (vérifie en profondeur le contenu du lot et le paramètrage du dictionnaire en place pour valider que les données sont compatibles)
+* `datagate-efluid.imports.check-dictionary-compatibility`: true si l'import d'un lot est conditionné par la présence d'un dictionnaire compatible (vérifie en profondeur le contenu du lot et le paramétrage du dictionnaire en place pour valider que les données sont compatibles)
 * `datagate-efluid.imports.check-missing-ref-commits`: true si l'import de lot doit remonter une erreur si un lot "référencé" (lot non exporté précédent le ou les lots exportés, en cas d'export partiel ou de type "cherry-pick") n'a pas déjà été importé localement. False par défaut (pour permettre le vrai cherry-pick)
 * `datagate-efluid.imports.warnings-max-files-display`: nombre d'import maximum listés dans l'API de recherche de warning à l'import de lots
 * `datagate-efluid.async-preparation.thread-pool-size`: taille du thread pool pour l'exécution de la préparation de lots
@@ -238,8 +238,8 @@ Par rapport à la configuration surchargeable, les propriétés suivantes sont l
 
 Les traces de type "INFO" sont sorties par défaut sur la sortie standard uniquement.
 
-* Seul un paramètrage minimal est défini dans l'`application.yml` embarqué dans l'application.
-* Ce paramètrage peut être surchargé. Par exemple pour ajouter une sortie dans un fichier de log `/usr/logs/datagate.log`, le paramètre `logging.file` peut être spécifié, comme ici :
+* Seul un paramétrage minimal est défini dans l'`application.yml` embarqué dans l'application.
+* Ce paramétrage peut être surchargé. Par exemple pour ajouter une sortie dans un fichier de log `/usr/logs/datagate.log`, le paramètre `logging.file` peut être spécifié, comme ici :
 ```
 java -jar ... --logging.file=/usr/logs/datagate.log"
 ```
@@ -317,7 +317,7 @@ Sur l'hote d'exécution la configuration est montée dans un volume, et reprend 
 
 ### Déploiement dockerisé orchestré ou k8s 
 
-Pour un déploiement où la spécification de l'environnement est paramètrée avec un orchestrateur, il est recommandé d'utiliser un fichier **commun** minimal utilisant des alias vers les variables de paramètrage "absolument spécifiques".
+Pour un déploiement où la spécification de l'environnement est paramètrée avec un orchestrateur, il est recommandé d'utiliser un fichier **commun** minimal utilisant des alias vers les variables de paramétrage "absolument spécifiques".
 
 Exemple de fichier commun, format properties, à embarqué au build de l'image : 
 ```
@@ -350,13 +350,13 @@ Le container doit voir le port `8080` routé
 
 ## Configuration de "features" modifiable à chaud
 
-Certains paramètrages sont activables également "à chaud" grace à un service REST dédié. Les fonctions correspondantes sont appelées "Features" (dans le cadre du principe de "feature flipping").
+Certains paramétrages sont activables également "à chaud" grace à un service REST dédié. Les fonctions correspondantes sont appelées "Features" (dans le cadre du principe de "feature flipping").
 
 Les features existantes sont :
 * `CHECK_DICTIONARY_COMPATIBILITY_FOR_IMPORT` : Si `true`, une vérification de compatibilité de dictionnaire est réalisée à l'import d'un lot, indépendemment des vérifications de version. Ainsi, même pour une version différente présente dans la destination, si le dictionnaire est *compatible*  avec celui utilisé sur la source lors de l'export, un import peut être possible. Si le paramètre est `false` alors aucune vérification n'est réalisée (ce qui ne bloquera pas l'import si le dictionnaire est non compatible)
 * `CHECK_MISSING_IDS_AT_MANAGED_DELETE` et `CHECK_MISSING_IDS_AT_MANAGED_UPDATE` : si `true`, pour le type de modification indiqué, une vérification sur la présence de références dans les données managées sera réalisée. Si une contrainte "fonctionnelle" liée à la spécification du dictionnaire (par exemple via la présence de lien entre 2 tables) alors la suppression ou la modification sera rejetée 
 * `RECORD_IMPORT_WARNINGS` : Si `true` les détections d'anomalies possible à l'import d'un lot (suivant les cas de `warning` spécifiés dans le fichier `efluid-datagate-app/src/main/resources/merge-resolution-rules.json`) seront enregistrés dans la table `anomalies`. Rien n'est enregistré autrement
-* `SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY` : Si `true` les clés naturelles des tables sont proposées comme KEY par défaut à la création d'une table de paramètrage. Sinon, aucune clé n'est proposée par défaut
+* `SELECT_PK_AS_DEFAULT_DICT_ENTRY_KEY` : Si `true` les clés naturelles des tables sont proposées comme KEY par défaut à la création d'une table de paramétrage. Sinon, aucune clé n'est proposée par défaut
 * `VALIDATE_MISSING_REF_COMMITS_FOR_IMPORT` : Si `true` les commits "précédents" un commit importé doivent être présents dans la destination lors d'un import de lot. Autrement aucune vérification n'est réalisée
 * `VALIDATE_VERSION_FOR_IMPORT` : Si `true` la version associée à un commit importé **doit** être présente dans la destination pour que l'import soit possible. Sinon aucune vérification n'est réalisée
 

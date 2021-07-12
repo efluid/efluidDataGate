@@ -5,13 +5,13 @@
 <body>
     <span layout:fragment="content">
 		<form id="editTableForm" action="#" th:action="@{/ui/dictionary/save}" method="post">
-			<h5>Edition d'une table de paramètrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
+			<h5>Edition d'une table de paramétrage. Table <strong th:text="${entry.table}">TPROGRAMMATION</strong></h5>
 			&nbsp;<a th:href="@{|/ui/dictionary/refresh/one/${entry.table}/${entry.uuid}|}" href="./table_init.html" class="btn btn-dark btn-sm float-right" type="button">Rafraichir les informations de la table</a>
-			<span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramètrage.
+			<span class="help">Les informations saisies permettent d'identifier comment et où sont récupérées les données de paramétrage.
 			La table utilisée ne peut être modifiée après création, de même que le domaine fonctionnel. Les dépendances sont prises en compte et validées
 			lors de la préparation d'un lot. Si plusieurs dépendances sont créées vers la même table cible alors le lien sera traité comme une clé composite</span>
 			<div class="form-group">
-				<label for="name">Nom du paramètrage correspondant</label>
+				<label for="name">Nom du paramétrage correspondant</label>
 				<input id="name" type="text" class="form-control" th:field="${entry.name}" value="Programmation" size="50"/>
 				<input type="hidden" th:field="${entry.uuid}" />
 				<input type="hidden" th:field="${entry.table}" />
@@ -21,7 +21,7 @@
 				<select name="functionalDomain" class="form-control" th:field="${entry.domainUuid}">
 					<option th:each="domain : ${domains}" th:value="${domain.uuid}" th:text="${domain.name}">Gestion du matériel</option>
 				</select>
-				<small class="form-text text-muted">Le domaine fonctionnel ne pourra pas être modifié une fois la table de paramètrage créée</small>
+				<small class="form-text text-muted">Le domaine fonctionnel ne pourra pas être modifié une fois la table de paramétrage créée</small>
 			</div>
 			<div class="form-row">
 			   <div class="form-group col-md-11">
@@ -43,7 +43,7 @@
 				<div class="alert alert-danger">La table référencée <strong th:text="${entry.table}">TPROGRAMMATION</strong> n'existe pas dans la base de données gérée. 
 				L'entrée courante est probablement issue d'un import, pour lequel la mise à jour du modèle de donnée géré n'a pas encore été appliqué. 
 				Seules des informations partielles sont disponibles sur les colonnes prises en compte.
-				<strong>La modification de cette entrée de paramètrage est impossible tant que la table n'a pas été ajoutée</strong></div>
+				<strong>La modification de cette entrée de paramétrage est impossible tant que la table n'a pas été ajoutée</strong></div>
 				<table th:if="${#lists.size(entry.columns)}>0" class="table table-sm">
 					<thead>
 						<tr>

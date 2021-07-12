@@ -28,13 +28,13 @@
 
 ### Focus sur le merge
 
-> Traitement initialisé par `fr.uem.efluid.services.PilotableCommitPreparationService#processAllMergeDiff` et plus précisément traitement par table de paramètrage dans `fr.uem.efluid.services.PrepareIndexService#completeMergeIndexDiff`
+> Traitement initialisé par `fr.uem.efluid.services.PilotableCommitPreparationService#processAllMergeDiff` et plus précisément traitement par table de paramétrage dans `fr.uem.efluid.services.PrepareIndexService#completeMergeIndexDiff`
 
-Pour chaque table de paramètrage, pour l'index combiné des commits importés :
+Pour chaque table de paramétrage, pour l'index combiné des commits importés :
 
 1. Chargement de l'index "précédent" 
 2. Reconstruction des données "connues" à partir de l'index "précédent"
-3. Chargement des données actuellement réellement présentes dans la table de paramètrage
+3. Chargement des données actuellement réellement présentes dans la table de paramétrage
 4. Préparation d'un diff entre le connu et le réellement présent
 5. Transformation des données importées (si des transformateurs sont associés aux lots importés)
 6. Diff de merge à partir des données importés (transformées), de l'actuellement présent et du connu. Ce diff est traité par un processus par use case, à partir d'une configuration de résolution de chaque possible

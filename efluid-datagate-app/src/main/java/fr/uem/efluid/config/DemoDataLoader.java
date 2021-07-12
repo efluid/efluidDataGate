@@ -106,7 +106,7 @@ public class DemoDataLoader {
 
 		Version vers1 = this.versions.save(version("1.0.0", proj1));
 
-		Commit com1 = this.commits.save(commit("Ajout du paramètrage de Catégorie de matériel", dupont, 5, proj1, vers1));
+		Commit com1 = this.commits.save(commit("Ajout du paramétrage de Catégorie de matériel", dupont, 5, proj1, vers1));
 		Commit com2 = this.commits.save(commit("Ajout des Types de matériel", testeur, 3, proj1, vers1));
 		Commit com3 = this.commits.save(commit("Ajout du reste", testeur, 1, proj1, vers1));
 

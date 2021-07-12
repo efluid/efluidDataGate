@@ -1,14 +1,14 @@
-# Utilisation de l’API de spécification du paramètrage
+# Utilisation de l’API de spécification du paramétrage
 
 ## Introduction
 
-### Quelques principes sur la gestion du paramètrage
+### Quelques principes sur la gestion du paramétrage
 
-Une nouvelle application de gestion de paramètrage en base de données est en cours de mise en place. Cet outil permet d’identifier toutes les modifications de paramètrage et de les livrer sur des environnements distants, en gérant les conflits, 
+Une nouvelle application de gestion de paramétrage en base de données est en cours de mise en place. Cet outil permet d’identifier toutes les modifications de paramétrage et de les livrer sur des environnements distants, en gérant les conflits, 
 
-les différences de versions et les dépendances entre données. Il permet également d’annuler des modifications de paramètrage dans une base de données Efluid.
+les différences de versions et les dépendances entre données. Il permet également d’annuler des modifications de paramétrage dans une base de données Efluid.
 
-Pour son fonctionnement il s’appuie sur un dictionnaire où sont identifiées toutes les tables d’une base de données qui doivent être considérées comme du paramètrage.
+Pour son fonctionnement il s’appuie sur un dictionnaire où sont identifiées toutes les tables d’une base de données qui doivent être considérées comme du paramétrage.
 
 **Ce dictionnaire exploite l’organisation suivante :**
 
@@ -18,11 +18,11 @@ La définition d’un dictionnaire valide est essentiel au bon fonctionnement de
 
 ### Rôle de l’API de spécification du dictionnaire
 
-Bien que l’application propose une interface de paramètrage complète pour spécifier un dictionnaire, une API est également proposée pour le définir au niveau du code java.
+Bien que l’application propose une interface de paramétrage complète pour spécifier un dictionnaire, une API est également proposée pour le définir au niveau du code java.
 
-En effet la base de données Efluid est associée à un modèle de données spécifié dans le code Java, et profiter de ce code pour définir le dictionnaire de paramètrage apporte un gain de temps conséquent.
+En effet la base de données Efluid est associée à un modèle de données spécifié dans le code Java, et profiter de ce code pour définir le dictionnaire de paramétrage apporte un gain de temps conséquent.
 
-L’API permet donc au niveau des DAO / POJO d’entités de définir les informations techniques de ce qui correspond à du paramètrage dans la base de données. Elle est composée d’annotation uniquement, et est interprété par un générateur (existant sous forme de plugin maven) pour générer le dictionnaire.
+L’API permet donc au niveau des DAO / POJO d’entités de définir les informations techniques de ce qui correspond à du paramétrage dans la base de données. Elle est composée d’annotation uniquement, et est interprété par un générateur (existant sous forme de plugin maven) pour générer le dictionnaire.
 
 Elle est assez souple et propose souvent plusieurs approches de configurations suivant les besoins et l’organisation recherchée
 Utilisation de l’API
@@ -31,7 +31,7 @@ Utilisation de l’API
 
 ### Spécifications des domaines fonctionnelles
 
-La première information importante est la définition des domaines fonctionnelles. Chaque table de paramètrage peut être associée à un domaine (et un seul) qui représente le métier ou le concept correspondant. 
+La première information importante est la définition des domaines fonctionnelles. Chaque table de paramétrage peut être associée à un domaine (et un seul) qui représente le métier ou le concept correspondant. 
 Les domaines fonctionnels ne sont représentés que par un nom.
 
 **Quelques exemples de domaines fonctionnels :**
@@ -58,7 +58,7 @@ Un domaine fonctionnel est spécifié avec l’annotation **fr.uem.efluid.Parame
 
 Toutes les informations gérées, dont les domaines fonctionnels, sont regroupés par projets. Les projets sont indépendants, et peuvent utiliser des données identiques d’un projet à un autre. Les domaines et les projets sont intrinsèquement liées dans l’API.
 
-Un projet est représenté par un nom (exemple : « Base Efluid Production ») et une couleur. La couleur permet d’identifier directement le projet en cours d’édition dans l’outil de gestion du paramètrage.
+Un projet est représenté par un nom (exemple : « Base Efluid Production ») et une couleur. La couleur permet d’identifier directement le projet en cours d’édition dans l’outil de gestion du paramétrage.
 
 L’API permet de spécifier un ou plusieurs projets via l’annotation **fr.uem.efluid.ParameterProject** qui ne peut être spécifiée qu’au sein d’un domaine fonctionnel, pour l’attribut **project()**
 
@@ -70,7 +70,7 @@ L’API permet de spécifier un ou plusieurs projets via l’annotation **fr.uem
 *Le projet est donc défini avec le domaine, avec quelques règles d’utilisation :*
 
 * Si 2 projets sont identifiés avec le même nom, alors le générateur va considérer que c’est le même projet.
-* Si aucun projet n’est spécifié dans un domaine (l’attribut « project » de @ParameterDomain n’est pas obligatoire) alors un projet par défaut est utilisé : « Default », couleur « Grise ». Ce projet « Default » est systématiquement présent dans l’application de gestion du paramètrage 
+* Si aucun projet n’est spécifié dans un domaine (l’attribut « project » de @ParameterDomain n’est pas obligatoire) alors un projet par défaut est utilisé : « Default », couleur « Grise ». Ce projet « Default » est systématiquement présent dans l’application de gestion du paramétrage 
 
 ### Exemples de spécifications de domaines et de projets
 
@@ -100,13 +100,13 @@ Création de l’annotation **GestionDuMateriel** :
 
 Tous les composants annotés avec **@GestionDuMateriel** sont alors associés à ce domaine / projet
 
-## Spécification de table de paramètrage
+## Spécification de table de paramétrage
 
 ### Sur la définition des clés
 
-Les **tables de paramètrage** sont les tables en BDD qui seront inspectées et suivies par l’application de gestion pour identifier les données de paramètrage. Ces données peuvent ensuite être exportées / mergées / rollbackées suivant les besoins.
+Les **tables de paramétrage** sont les tables en BDD qui seront inspectées et suivies par l’application de gestion pour identifier les données de paramétrage. Ces données peuvent ensuite être exportées / mergées / rollbackées suivant les besoins.
 
-Pour l’application de gestion il est important de connaitre les colonnes importantes dans ces tables, et avant tout d’identifier la clé représentant unitairement une donnée de paramètrage.
+Pour l’application de gestion il est important de connaitre les colonnes importantes dans ces tables, et avant tout d’identifier la clé représentant unitairement une donnée de paramétrage.
 
 Cette clé n’est pas nécessairement l’id technique : c’est un identifiant fonctionnel unique qui doit impérativement être immutable et représenter la donnée sur tous les environnements où elle est définie.
 
@@ -127,13 +127,13 @@ Des annotations spécifiques permettent de préciser les clés : elles seront ab
 
 ### Données nécessaires pour la spécification des colonnes à utiliser
 
-L’application de gestion de paramètrage utilise un format interne « à plat » : les données extraites sont représentées sous forme de ligne de données compressées et hashées. Pour produire ces données il est nécessaire d’indiquer quelles **colonnes** utiliser, mais sans plus de détails. En effet le typage est par exemple inutile pour le fonctionnement de l’application.
+L’application de gestion de paramétrage utilise un format interne « à plat » : les données extraites sont représentées sous forme de ligne de données compressées et hashées. Pour produire ces données il est nécessaire d’indiquer quelles **colonnes** utiliser, mais sans plus de détails. En effet le typage est par exemple inutile pour le fonctionnement de l’application.
 
 Les colonnes à utiliser peuvent être spécifiées avec différentes solution dans l’API fournie
 
-### Représentation d’une table de paramètrage
+### Représentation d’une table de paramétrage
 
-La source de données de paramètrage gérée est la « **table de paramètrage** ». Elle correspond à une (et une seule) table en base de données, associée à une clé (qui peut être composite) et des valeurs.
+La source de données de paramétrage gérée est la « **table de paramétrage** ». Elle correspond à une (et une seule) table en base de données, associée à une clé (qui peut être composite) et des valeurs.
 
 *D’autres informations peuvent aussi être indiquées :*
 
@@ -147,7 +147,7 @@ L’annotation de spécification d’une table est **fr.uem.efluid.ParameterTabl
 
 _Cette annotation **@ParameterTable** intègre les propriétés suivantes :_
 
-* **name** : le nom fonctionnel de la table de paramètrage
+* **name** : le nom fonctionnel de la table de paramétrage
 * **tableName** : le nom de la table SQL 
 * **filterClause** : un critère de sélection optionnel
 * **domainName** : le domaine, si celui-ci n’est pas spécifié par package ou par méta-annotation
@@ -169,7 +169,7 @@ Les valeurs et clés peuvent être spécifiés via les annotations dédiées **f
 
 * **value** : le nom de la colonne correspondant au field / à la méthode annotée à utiliser comme clé
 * **type** : le type de valeur pour la clé. Utilise l'enum **fr.uem.efluid.ColumnType** avec : BINARY = les blobs / clobs, ATOMIC = les numériques (int, float ...), STRING = les litérales (varchar...), BOOLEAN = les booléens, TEMPORAL = les dates, times, timestamps ...
-* **forTable** : Dans le cas d'une utilisation d'un "set de table de paramètrage" (voir plus loin), permet d'indiquer pour quel table la clé est mappée
+* **forTable** : Dans le cas d'une utilisation d'un "set de table de paramétrage" (voir plus loin), permet d'indiquer pour quel table la clé est mappée
 * **notInherited** : La clé est pris en compte pour générer l'entré de dictionnaire pour la classe courante, mais sera ignoré pour les entrés de dictionnaire générés pour toutes ses classes filles
 
 N'importe quel field ou méthode peut être utilisé comme clé. Si **value** n'est pas précisé, alors ces le nom du field ou de la méthode en majuscule qui est utilisé. Le **type** est également déterminé automatiquement à partir du type java. Tous les types java standards de définition de clées fonctionnelles sont supportés : String, Long ... Le type doit être précisé quand il n'est pas explicite (cas d'un type interne par exemple)
@@ -183,7 +183,7 @@ Pour préciser une clé composite, il suffit d'indiquer **@ParameterKey** pour c
 
 La même règle de génération du nom de colonne que pour les clé est utilisée si value ou name ne sont pas précisé. Par ailleurs une valeur peut être implicite : Si dans **@ParameterTable** **useAllFields** est true (ce qui est le cas par défaut) alors tous les fields de l'objet java sont considérés comme des Values, à moins qu'ils soient annoté comme des clés ou avec l'annotation d'exclusion **@ParameterIgnored**.
 
-Par ailleurs, les values peuvent être explicitement spécifiées dans **@ParameterTable**, dans l'attribut **values**. Chaque **@ParameterValue** indiqué ainsi est alors pris en compte dans la spécification de la table de paramètrage.
+Par ailleurs, les values peuvent être explicitement spécifiées dans **@ParameterTable**, dans l'attribut **values**. Chaque **@ParameterValue** indiqué ainsi est alors pris en compte dans la spécification de la table de paramétrage.
 
 N'importe quel type de champs scalaire peut être employé comme value
 
@@ -192,7 +192,7 @@ L'utilisation de l'annotation **@ParameterValueComposite** est réservée aux d�
 
 ### Sur l'héritage des annotations
 
-L'annotation ParameterTable est héritée. Donc une classe héritant d'une classe elle même ParameterTable est prise en compte automatiquement comme une table de paramètrage. Des propriétés peuvent alors devoir être surchargées.
+L'annotation ParameterTable est héritée. Donc une classe héritant d'une classe elle même ParameterTable est prise en compte automatiquement comme une table de paramétrage. Des propriétés peuvent alors devoir être surchargées.
 
 Pour ignorer une classe héritant d'une classe **@ParameterTable**, il est possible de l'annoter **@ParameterIgnored**.
 
@@ -314,7 +314,7 @@ A partir des définitions par **@ParameterTable**, **@ParameterKey** et **@Param
         // ...
     }
 
-### Set de table de paramètrage 
+### Set de table de paramétrage 
 
 Dans certains cas une classe java peut correspondre à plusieurs tables en base de données : répartition, inner components ...
 
@@ -368,9 +368,9 @@ Les values et keys peuvent être spécifiées directement dans les **@ParameterT
 
 ### Principes du lien et du mapping
 
-Le **lien** est un type de valeur. Il est définie comme une association 1-N pour une colonne de la table de paramètrage, renvoyant vers la clé d'une autre table de paramètrage (une Foreign Key donc). Il ne peut pas être bidirectionnel, l'application ne gère que la liaison dans le sens "ManyToOne", mais pas "OneToMany".
+Le **lien** est un type de valeur. Il est définie comme une association 1-N pour une colonne de la table de paramétrage, renvoyant vers la clé d'une autre table de paramétrage (une Foreign Key donc). Il ne peut pas être bidirectionnel, l'application ne gère que la liaison dans le sens "ManyToOne", mais pas "OneToMany".
 
-Il permet à l'application de gestion du paramètrage de garantir la cohérence des données en vérifiant que les liaisons entre table sont respectées et valides. 
+Il permet à l'application de gestion du paramétrage de garantir la cohérence des données en vérifiant que les liaisons entre table sont respectées et valides. 
 
 Il ne peut être porté que sur une valeur scalaire, représenté généralement en java par une autre classe d'entité mappée, comme dans cet exemple :
 
@@ -410,7 +410,7 @@ Le lien est identifié avec **fr.uem.efluid.ParameterLink**. Il vient **obligato
 
 Cette annotation est héritable.
 
-**A noter** : Même si la colonne de liaison (valeur de **toParameter**) est un identifiant technique non mappé comme clé, ce n'est pas un soucis pour l'application de gestion du paramètrage : c'est toujours la clé fonctionnelle qui sera gérée au final (les requêtes se feront en utilisant une jointure sur l'identifiant technique, mais une selection par l'identifiant fonctionnel)
+**A noter** : Même si la colonne de liaison (valeur de **toParameter**) est un identifiant technique non mappé comme clé, ce n'est pas un soucis pour l'application de gestion du paramétrage : c'est toujours la clé fonctionnelle qui sera gérée au final (les requêtes se feront en utilisant une jointure sur l'identifiant technique, mais une selection par l'identifiant fonctionnel)
 
 ### Spécifier un mapping
 
@@ -426,7 +426,7 @@ Le mapping est globalement basé sur les principes du lien, mais avec plus d'inf
 * **fromColumn** : la colonne mappée dans l'entité locale si elle ne peut pas être déterminée (si ce n'est pas la clé par exemple)
 * **name** : un nom fonctionnel optionnel pour le mapping
 
-**A noter** : Bien que géré dans l'API et dans le dictionnaire, la version actuelle de l'application de gestion du paramètrage ne traite pas encore les données dans les mappings.
+**A noter** : Bien que géré dans l'API et dans le dictionnaire, la version actuelle de l'application de gestion du paramétrage ne traite pas encore les données dans les mappings.
 
 ### Cas des clés composites
 
@@ -587,7 +587,7 @@ Ils sont surchageables à tout moment via les définitions propres à une classe
 
 L'API à base d'annotation permet de spécifier le dictionnaire, mais c'est un générateur, sous la forme d'un plugin maven, qui prend en compte concrètement ces données lors du build du projet pour générer les informations attendues.
 
-L'application de gestion de paramètrage attend un fichier spécifique au format ".par" pour préciser le dictionnaire. Le générateur produit ce fichier à partir du code, pour qu'il soit importé manuellement, ou bien peut directement uploader ce fichier dans une instance d'application spécifiée.
+L'application de gestion de paramétrage attend un fichier spécifique au format ".par" pour préciser le dictionnaire. Le générateur produit ce fichier à partir du code, pour qu'il soit importé manuellement, ou bien peut directement uploader ce fichier dans une instance d'application spécifiée.
 
 ### Mise en place du plugin
 

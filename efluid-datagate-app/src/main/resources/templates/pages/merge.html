@@ -126,7 +126,7 @@
 			</div>
 			<div th:if="${preparation.emptyDiff}">
 				<p>
-					<h5>Aucune nouvelle modification identifiée dans les données de paramètrage par rapport<br/> au contenu de l'import.
+					<h5>Aucune nouvelle modification identifiée dans les données de paramétrage par rapport<br/> au contenu de l'import.
 						<div class="float-right">
 							<a th:href="@{/ui/merge/cancel}" href="#" class="btn btn-secondary btn-sm">Abandonner</a>
 							<a th:href="@{/ui/pull}" href="#" class="btn btn-dark btn-sm">Retourner à l'import</a>
@@ -134,11 +134,11 @@
 					</h5>
 				</p>
 				<div class="alert alert-secondary" role="alert">
-					<strong>La recherche de différences n'a identifié aucune nouvelle données de paramètrage par rapport au(x) lot(s) importé(s)</strong>. 
-					Le traitement s'appuie sur les tables de paramètrage identifiées dans le dictionnaire, et recherche pour chacune les données actuellement 
+					<strong>La recherche de différences n'a identifié aucune nouvelle données de paramétrage par rapport au(x) lot(s) importé(s)</strong>.
+					Le traitement s'appuie sur les tables de paramétrage identifiées dans le dictionnaire, et recherche pour chacune les données actuellement
 					présentes. Il compart ensuite le résultat avec les données déjà stockées dans l'ensemble des lots de modifications présents, complétées
 					par les données présentes dans le fichier importé, et recherche si des différences sont présentes. Il n'y a donc actuellement aucune
-					différence identifiée : toutes les données de paramètrage ont été déjà validées dans des lots de modification (cela ne veut pas
+					différence identifiée : toutes les données de paramétrage ont été déjà validées dans des lots de modification (cela ne veut pas
 					nécessairement dire que le fichier avait déjà été importé). 
 				</div>
 				<p>&nbsp;<br/><br/><br/><br/></p>

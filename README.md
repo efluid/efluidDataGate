@@ -7,7 +7,7 @@ Efluid Datagate - Advanced database value management
 
 Outil dédié à l'identification, au packaging et au déploiement de modifications dans une base de données, en s'appuyant sur les principes de `git`. 
 
-Projet mis en place initialement pour la gestion et l'évolution du paramètrage pour une instance de l'application [Efluid](https://www.efluid.com/)
+Projet mis en place initialement pour la gestion et l'évolution du paramétrage pour une instance de l'application [Efluid](https://www.efluid.com/)
 
 ## Documentation
 

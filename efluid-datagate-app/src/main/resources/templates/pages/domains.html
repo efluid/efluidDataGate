@@ -6,7 +6,7 @@
     <span layout:fragment="content">
 
         <h5>Edition des domaines fonctionnels pour le projet <span th:class="|project-theme-txt-${project.color}|" th:text="${project.name}">project</span></h5>
-        <span class="help">Les domaines fonctionnels représentent les ensembles de données prises en compte comme étant du paramètrage.
+        <span class="help">Les domaines fonctionnels représentent les ensembles de données prises en compte comme étant du paramétrage.
             Les opérations d'import / export et d'applications de modifications de paramètres peuvent être organisées par domaine fonctionnel.</span>
             <table class="table table-sm">
                 <thead>
@@ -23,7 +23,7 @@
                          <td th:text="${domain.name}">Gestion du matériel</td>
                          <td>
                             <span class="float-right">
-                                <button class="delete-button btn btn-secondary btn-sm" type="button" th:title="!${domain.canDelete}?'Impossible de supprimer un domaine fonctionnel pour lequel des lots de paramètrage existent'" th:disabled="!${domain.canDelete}">Supprimer</button>
+                                <button class="delete-button btn btn-secondary btn-sm" type="button" th:title="!${domain.canDelete}?'Impossible de supprimer un domaine fonctionnel pour lequel des lots de paramétrage existent'" th:disabled="!${domain.canDelete}">Supprimer</button>
                             </span>
                         </td>
                      </tr>

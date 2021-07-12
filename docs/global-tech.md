@@ -34,7 +34,7 @@ L'UI est développée en simples templates html (Thymeleaf) avec jquery.
 
 ## Utilisation des bases de données
 Pour le fonctionnement, il y a 2 DB de connectées :
-* Celle propre au gestionnaire de paramètrage. Nommée **core** dans le code où elle est référencée. Utilisée avec Spring-data-jpa, avec config par défaut d'EntityManager
+* Celle propre au gestionnaire de paramétrage. Nommée **core** dans le code où elle est référencée. Utilisée avec Spring-data-jpa, avec config par défaut d'EntityManager
 * Celle de l'application gérée. Nommée **Managed** dans le code. Utilisée avec JDBCTemplate, avec un transactionManager identifié configuré spécifiquement
 
 ## Configuration de l'application

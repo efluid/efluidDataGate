@@ -21,10 +21,10 @@ Chaque utilisateur est identifié par son `login` (pour l'accès) et par son `em
 
 La gestion de compte est extensible, et plusieurs variantes sont fournies : 
 * **Gestion en base de données uniquement** : Les utilisateurs sont créés depuis l'application (via un écran de création de comptes) et sont stockés en BDD. Un hash sécurisé de leur mot de passe est stocké en base de données, et l'authentification est basée uniquement sur ces informations. Si le compte est supprimé l'utilisateur perd son accès.
-* **Gestion de l'authentification LDAP et des utilisateurs en BDD** : Les utilisateurs ne sont pas créés dans l'application. Un référentiel LDAP est spécifié pour fournir l'authentification à l'application. Lorsque un utilisateur se connecte la première fois sur Datagate, son compte est initialisé dans la BDD locale (uniquement pour le stockage des projets préférés - son mot de passe n'est par exemple pas stocké). Tant qu'il peut être authentifié à partir de LDAP il a accès à Datagate. Supprimer un utilisateur de la BDD Datagate n'est pas suffisant pour retirer son accès (car il sera recréé à la prochaine authentification) : il doit être retiré / désactivé dans le référentiel LDAP. Le paramètrage permet de gérer différentes formes de référentiel LDAP
+* **Gestion de l'authentification LDAP et des utilisateurs en BDD** : Les utilisateurs ne sont pas créés dans l'application. Un référentiel LDAP est spécifié pour fournir l'authentification à l'application. Lorsque un utilisateur se connecte la première fois sur Datagate, son compte est initialisé dans la BDD locale (uniquement pour le stockage des projets préférés - son mot de passe n'est par exemple pas stocké). Tant qu'il peut être authentifié à partir de LDAP il a accès à Datagate. Supprimer un utilisateur de la BDD Datagate n'est pas suffisant pour retirer son accès (car il sera recréé à la prochaine authentification) : il doit être retiré / désactivé dans le référentiel LDAP. Le paramétrage permet de gérer différentes formes de référentiel LDAP
 * **Gestion full LDAP** (non encore supporté): Aucune information n'est stockée en BDD Datagate, tout est uniquement stocké sur ldap. Les projets préférés sont identifiés à partir des groupes ou attributs LDAP configurés. 
 
-### Paramètrage
+### paramétrage
 
 Des paramètres dédiés sont disponibles pour mettre en place l'accounting.
 

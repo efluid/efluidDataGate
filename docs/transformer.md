@@ -4,8 +4,8 @@
 
 Les transformateurs sont des composants permettant de modifier les données d'un lot au moment de leur prise en compte dans un merge.
 
-Ils permettent d'adapter les données d'une instance de paramètrage source aux contraintes propres à une destination :
-* A partir d'un paramètrage associé au transformateur, ils "traitent" les données du lot importé
+Ils permettent d'adapter les données d'une instance de paramétrage source aux contraintes propres à une destination :
+* A partir d'un paramétrage associé au transformateur, ils "traitent" les données du lot importé
 * Les données sont alors modifiés suivant ce que peut traiter le transformer. 
 * Le transformer peut être selectif : seules certaines colonnes / tables sont concernées par la transformation
 * La configuration prise en compte peut également indiquer quelles tables / colonnes sont modifiées

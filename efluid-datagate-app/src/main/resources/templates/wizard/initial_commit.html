@@ -45,7 +45,7 @@
 				</div>
         	</div>
 	        <div th:if="${preResult != null and preResult.status.name()=='DIFF_RUNNING'}" class="alert alert-secondary" role="alert">
-				<strong>Analyse en cours</strong>. Suivant la volumétrie du paramètrage, l'identification du lot initial peut prendre 
+				<strong>Analyse en cours</strong>. Suivant la volumétrie du paramétrage, l'identification du lot initial peut prendre
 				un certain temps. Il n'est pas possible d'arrêter un traitement en cours. Une fois l'analyse complétée à 100%, un temps supplémentaire peut être nécessaire pour enregistrer les données identifiées
 				<br/><br/>
 			  	<div class="progress">
@@ -55,14 +55,14 @@
 			<div th:if="${preResult != null and preResult.status.name() != 'DIFF_RUNNING'}">
 				<div class="alert alert-secondary" role="alert" th:if="${preResult.state.name() == 'MERGED'}">
 					<strong>L'analyse est terminée pour tous les projets.</strong> <span th:text="${preResult.totalDiffSize}">134</span> entrées d'index ont été identifiées en tout, 
-					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramètrages et 
+					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramétrages et
 					<span th:text="${preResult.totalDomainsCount}">4</span> domaines
 					fonctionnels concernés (attention, certaines peuvent être reprises sur plusieurs projet).
 					Le lot initial a été créé sous le nom "Lot initial" sous chacun des <span th:text="${preResult.totalProjectCount}">4</span> projets.
 				</div>
 				<div class="alert alert-secondary" role="alert" th:if="${preResult.state.name() == 'IMPORTED'}">
 					<strong>L'import de lot(s) est terminé pour le projet courant.</strong> <span th:text="${preResult.totalDiffSize}">134</span> entrées d'index ont été importées en tout,
-					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramètrages et
+					pour <span th:text="${preResult.totalTableCount}">12</span> tables de paramétrages et
 					<span th:text="${preResult.totalDomainsCount}">4</span> domaines fonctionnels concernés.
 					Aucune donnée locale n'a été modifiée, lancer une préparation de lot pour identifier les différences avec l'index qui a été importé
 				</div>

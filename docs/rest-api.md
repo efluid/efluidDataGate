@@ -28,7 +28,7 @@ Les fonctions proposées ici sont génériques et permettent quelques opération
 
 ### Fonctions de gestion du dictionnaire / *Dictionary Api Controller*
 
-Le dictionnaire définie les tables de paramètrage. Il est versionné. L'API REST permet de spécifier un dictionnaire par import, et de mettre à jour les versions.
+Le dictionnaire définie les tables de paramétrage. Il est versionné. L'API REST permet de spécifier un dictionnaire par import, et de mettre à jour les versions.
 
 **Services disponibles :**
 

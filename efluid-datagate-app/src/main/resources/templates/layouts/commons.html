@@ -30,10 +30,10 @@
 						L'application des modifications sélectionnées rencontre une l'erreur critique suivante au niveau de la base de données :
 						<span th:text="${payload}" class="query-error">details</span>. Merci de contacter le support technique
 					</p>
-					<p th:case="'DIC_NO_KEY'">La clé est obligatoire dans la spécification d'une table de paramètrage</p>
+					<p th:case="'DIC_NO_KEY'">La clé est obligatoire dans la spécification d'une table de paramétrage</p>
 					<p th:case="'DIC_TOO_MANY_KEYS'">Le nombre de colonnes sélectionnées pour les clés composites ne doit pas dépasser un maximum de 5</p>
 					<p th:case="'DIC_ENTRY_NOT_FOUND'">Aucune entrée de dictionnaire trouvée pour l'identifiant donné</p>
-					<p th:case="'DOMAIN_NOT_EXIST'">Au moins un domaine fonctionnel doit avoir été créé dans le projet courant pour pouvoir créer une table de paramètrage</p>
+					<p th:case="'DOMAIN_NOT_EXIST'">Au moins un domaine fonctionnel doit avoir été créé dans le projet courant pour pouvoir créer une table de paramétrage</p>
 					<p th:case="'IMPORT_FAIL_FILE'">Le fichier importé ne peut pas être stocké localement</p>
 					<p th:case="'EXPORT_FAIL_FILE'">Le fichier d'export ne peut pas être préparé</p>
 					<p th:case="'IMPORT_WRONG_TYPE'">Le fichier importé référence un type de package non supporté</p>
@@ -77,7 +77,7 @@
 					<p th:case="'DIC_NOT_REMOVABLE'">L'entrée de dictionnaire précisée ne peut pas être supprimée : il est utilisé dans l'index</p>
 					<p th:case="'DOMAIN_NOT_REMOVABLE'">Le domaine fonctionnel précisé ne peut pas être supprimé : il est utilisé dans l'index</p>
 					<p th:case="'VERIFIED_APPLY_NOT_FOUND'">
-						La suppression ou la modification d'une entrée de paramètrage à partir du diff à rollbacker ou à traiter après un 
+						La suppression ou la modification d'une entrée de paramétrage à partir du diff à rollbacker ou à traiter après un
 						import a échoué car l'entité identifiée n'existe pas / plus. La requête utilisée est 
 						<span class="query-display" th:text="${payload}">SELECT * FROM DUAL</span>
 					</p>
@@ -124,17 +124,17 @@
 						L'exécution d'un script importé a échoué. Le détail de l'erreur rencontrée : <span th:text="${payload}">1.2.3</span>.
 					</p>
 					<p th:case="'LDAP_ERROR'">
-						Une erreur de configuration ou de fonctionnement LDAP a été rencontrée. Vérifier le paramètrage ou contacter l'administrateur LDAP.
+						Une erreur de configuration ou de fonctionnement LDAP a été rencontrée. Vérifier le paramétrage ou contacter l'administrateur LDAP.
 					</p>
 					<p th:case="'TRANSFORMER_EFUID_NO_SITE'">
 						Aucune définition de site trouvée pour la régionalisation des données. Vérifier le contenu de la table TAPPLICATIONINFO.
 					</p>
 					<p th:case="'TRANSFORMER_EFUID_NO_REGION_SOURCE'">
-						Impossible d'extraire les sources de paramètrages des régions. Est-ce que la table "TRECOPIEPARAMREFERENTIELDIR" existe dans la base
+						Impossible d'extraire les sources de paramétrages des régions. Est-ce que la table "TRECOPIEPARAMREFERENTIELDIR" existe dans la base
 						managée ?
 					</p>
 					<p th:case="'TRANSFORMER_EFUID_WRONG_REGION_DATA'">
-						Les données de paramètrage de la régionalisation n'ont pas pu être chargées. Vérifier le fichier .par utilisé.
+						Les données de paramétrage de la régionalisation n'ont pas pu être chargées. Vérifier le fichier .par utilisé.
 					</p>
 					<p th:case="*">Une erreur technique inconnue a été rencontrée</p>
 				</span>
