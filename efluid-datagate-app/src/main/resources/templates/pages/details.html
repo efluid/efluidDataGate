@@ -68,7 +68,7 @@
 			            </td>
 			            <td>
 							<div class="float-right">
-		   						<button th:if="${attachment.type.editable && details.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#contentModal" th:id="${attachment.uuid}">Consulter</button>
+		   						<button th:if="${attachment.type.editable && details.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" th:attr="onclick=|openAttachment('${attachment.uuid}','${attachment.name}')|">Consulter</button>
 							</div>
 		      			</td>
 			        </tr>
@@ -239,17 +239,6 @@
 			getPageContent(0);
 		}
 
-		// For attachment read in modal
-        const readAttach = (e) => {
-        	hideDisplays();
-			var uuid = e.relatedTarget.id;
-			console.log("id = " + uuid);
-			$.get("/ui/attachment/content?uuid=" + uuid, null, (data, status) => {
-				$("#modalContent").html(data);
-				$("#contentModalLabel").html("Fichier <b>" + name + "</b>");
-			}); 
-        };
-
 		/* For pagination */
 		const createNavBarItem = (active, num) => {
 			return '<li class="page-item' + (active ? ' active' : '') + '"><a class="page-link" style='+ (active ? 'color:#ffffff' : 'color:#007bff') + ' onclick="getPageContent(' + num + ')">' + (num + 1) + '</a></li>';
@@ -412,7 +401,6 @@
 		$(document).ready(() => {
 			closeFilters();
 			$('#editName').hide();
-			$('#contentModal').on('show.bs.modal', readAttach);
 			$('#renameButton').click(showNameEdit);
 			$('#cancelSaveNameButton').click(hideNameEdit);
 			$('#saveNameButton').click(saveCommitName);

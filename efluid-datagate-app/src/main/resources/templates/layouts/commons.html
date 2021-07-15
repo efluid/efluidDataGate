@@ -104,6 +104,11 @@
 						Aucune version n'a été définie pour le dictionnaire actuel. La préparation d'un lot n'est pas possible en l'absence de version : 
 						créez une version pour le dictionnaire actuel <a href="./versions.html" th:href="@{/ui/versions}">ici</a> puis recommencez la préparation du lot.
 					</p>
+					<p th:case="'VERSION_LOCAL_MISSING'">
+						Aucune version n'a été définie pour le dictionnaire actuel, mais elle est nécessaire pour pouvoir valider la compatibilité du lot importé.
+						L'import d'un lot n'est donc pas possible en l'absence de version : Créez une version pour le dictionnaire actuel <a href="./versions.html" th:href="@{/ui/versions}">ici</a>
+						puis recommencez l'import du lot.
+					</p>
 					<p th:case="'VERSION_NOT_UP_TO_DATE'">
 						La dernière version <span class="version-name" th:text="${payload}">0.1.2</span> n'embarque pas certaines opérations réalisées 
 						sur le dictionnaire. Pour pouvoir préparer un lot, la dernière version spécifiée doit être à jour avec toutes les modifications

@@ -420,13 +420,19 @@ public class DictionaryManagementService extends AbstractApplicationService {
         // For link building, need other dicts
         Map<String, DictionaryEntry> allDicts = this.dictionary.findAllByProjectMappedToTableName(project);
 
+        // Existing tables
+        Set<String> existingTables = this.metadatas.getTables().stream().map(TableDescription::getName).collect(Collectors.toSet());
+
         return this.dictionary.findByDomainProject(project).stream()
                 .map(e -> DictionaryEntrySummary.fromEntity(e,
                         this.queryGenerator.producesSelectParameterQuery(
                                 e,
                                 this.links.findByDictionaryEntry(e),
                                 allDicts)))
-                .peek(d -> d.setCanDelete(!usedIds.contains(d.getUuid())))
+                .peek(d -> {
+                    d.setCanDelete(!usedIds.contains(d.getUuid()));
+                    d.setExistsLocally(existingTables.contains(d.getTableName()));
+                })
                 .sorted()
                 .collect(Collectors.toList());
     }

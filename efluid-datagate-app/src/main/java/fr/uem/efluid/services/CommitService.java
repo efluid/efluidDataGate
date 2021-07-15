@@ -3,6 +3,7 @@ package fr.uem.efluid.services;
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.metas.ManagedModelDescription;
+import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.attachments.AttachmentProcessor;
@@ -11,6 +12,7 @@ import fr.uem.efluid.tools.diff.RollbackConverter;
 import fr.uem.efluid.tools.versions.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.Associate;
+import fr.uem.efluid.utils.ErrorType;
 import fr.uem.efluid.utils.FormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,6 +120,9 @@ public class CommitService extends AbstractApplicationService {
 
     @Autowired
     private CommitIndexComparator commitIndexComparator;
+
+    @Autowired
+    private DatabaseDescriptionRepository metadatas;
 
     // One active only - not a session : JUST 1 FOR ALL APP BY PROJECT
     private final Map<UUID, CommitCompareResult> currentCommitCompareResults = new HashMap<>();
@@ -760,6 +765,28 @@ public class CommitService extends AbstractApplicationService {
         }
     }
 
+    private void checkReferencedPhysicalTablesExistHere(Map<UUID, DictionaryEntry> importedTables, Collection<? extends DiffLine> diff, List<String> errorMessages) {
+
+        // Always check that specified table at least exist physically
+        Set<String> existingTableNames = this.metadatas.getTables().stream()
+                .map(TableDescription::getName)
+                .collect(Collectors.toSet());
+
+        Collection<DictionaryEntry> missings = diff.stream()
+                .map(DiffLine::getDictionaryEntryUuid).distinct()
+                .map(importedTables::get)
+                .filter(n -> !existingTableNames.contains(n.getTableName()))
+                .collect(Collectors.toSet());
+
+        if (!missings.isEmpty()) {
+            missings.forEach(m -> {
+                errorMessages.add("Referenced table exist in dictionary entry \"" +
+                        m.getParameterName() + "\" but physical table with name \"" +
+                        m.getTableName() + "\" is not yet created locally. Create it in current schema first");
+            });
+        }
+    }
+
     /* ################################# INTERNAL PROCESS ON COMMITS ################################ */
 
     /**
@@ -933,6 +960,11 @@ public class CommitService extends AbstractApplicationService {
         Project project = this.projectService.getCurrentSelectedProjectEntity();
         Version currentLastVersion = this.versions.getLastVersionForProject(project);
 
+        // Must have at least one local version
+        if (currentLastVersion == null) {
+            throw new ApplicationException(ErrorType.VERSION_LOCAL_MISSING, "no local version found. Required for compatibility checks at import");
+        }
+
         // #1 Load import
         List<SharedPackage<?>> commitPackages = this.exportImportService.importPackages(importFile);
 
@@ -1044,7 +1076,6 @@ public class CommitService extends AbstractApplicationService {
 
                 // This one is not yet imported or merged : keep it for processing
                 else {
-
                     // For real import, can check version
                     Version referencedVersion = referencedVersions.get(imported.getVersion().getUuid());
 
@@ -1052,6 +1083,9 @@ public class CommitService extends AbstractApplicationService {
                     if (checkVersion) {
                         checkImportedCommitHasExpectedVersion(imported, referencedVersion, errorMessages);
                     }
+
+                    Map<UUID, DictionaryEntry> importedTables = VersionContentChangesGenerator.readDict(referencedVersion).stream()
+                            .collect(Collectors.toMap(DictionaryEntry::getUuid, t -> t));
 
                     // For compatibility we need to process the referenced version which has the full content included
                     if (checkDictionaryCompatibility) {
@@ -1063,7 +1097,7 @@ public class CommitService extends AbstractApplicationService {
                                 ? imported.getIndex()
                                 : currentPreparation.getDiffContent().stream().filter(i -> i.getCommitUuid().equals(imported.getUuid())).collect(Collectors.toList());
 
-                        checkImportedCommitCompatibilityWithLocalDictionary(imported, referencedIndex, referencedVersion, currentLastVersion, errorMessages);
+                        checkImportedCommitCompatibilityWithLocalDictionary(imported, referencedIndex, importedTables, referencedVersion, currentLastVersion, errorMessages);
                     }
 
                     // Ignore anyway if there is an identified error as we will abort import
@@ -1086,6 +1120,11 @@ public class CommitService extends AbstractApplicationService {
                             currentPreparation.getCommitData().setComment(
                                     currentPreparation.getCommitData().getComment() + "\n * " + imported.getComment()
                             );
+                        }
+
+                        // Check if reference tables exist locally (need to check imported index) - only on compliant versions
+                        if (referencedVersion.getDictionaryContent() != null) {
+                            checkReferencedPhysicalTablesExistHere(importedTables, currentPreparation.getDiffContent(), errorMessages);
                         }
 
                         // Start range on 1st imported commit
@@ -1232,13 +1271,12 @@ public class CommitService extends AbstractApplicationService {
     private void checkImportedCommitCompatibilityWithLocalDictionary(
             Commit refCommit,
             Collection<? extends DiffLine> index,
+            Map<UUID, DictionaryEntry> importedTables,
             Version importedVersion,
             Version localLastVersion,
             List<String> errorMessages) {
 
-        // 1 : extract identified tables from imported version dict content
-        Map<UUID, DictionaryEntry> importedTables = VersionContentChangesGenerator.readDict(importedVersion).stream()
-                .collect(Collectors.toMap(DictionaryEntry::getUuid, t -> t));
+        // 1 : imported tables already initialized
 
         // 2 : extract concerned tables and indexes from commit - will process by table (map to table directly)
         Map<DictionaryEntry, Collection<? extends DiffLine>> indexByTables = index.stream()

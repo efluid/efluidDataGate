@@ -273,6 +273,15 @@ select.select-column {
     display: block;
 }
 
+.content-warning {
+    background-image: url("/warning.png");
+    background-repeat: no-repeat;
+    width: 20px;
+    height: 20px;
+    margin-left: 5px;
+    cursor: default;
+}
+
 .inline-block {
     display: inline-block !important;
 }

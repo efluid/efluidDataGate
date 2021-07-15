@@ -25,6 +25,8 @@ public final class DictionaryEntrySummary implements Comparable<DictionaryEntryS
 
     private final String keyName;
 
+    private boolean existsLocally;
+
     private boolean canDelete;
 
     private DictionaryEntrySummary(UUID uuid, UUID domainUuid, String domainName, String name, String tableName, String keyName, String query) {
@@ -93,6 +95,14 @@ public final class DictionaryEntrySummary implements Comparable<DictionaryEntryS
      */
     public void setCanDelete(boolean canDelete) {
         this.canDelete = canDelete;
+    }
+
+    public boolean isExistsLocally() {
+        return existsLocally;
+    }
+
+    public void setExistsLocally(boolean existsLocally) {
+        this.existsLocally = existsLocally;
     }
 
     /**
