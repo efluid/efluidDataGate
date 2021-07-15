@@ -4,7 +4,7 @@ import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AsyncDriver;
-import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.attachments.AttachmentProcessor;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.FormatUtils;
 import fr.uem.efluid.utils.SharedOutputInputUtils;

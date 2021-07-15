@@ -1,4 +1,4 @@
-package fr.uem.efluid.tools;
+package fr.uem.efluid.tools.diff;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static fr.uem.efluid.tools.ManagedValueConverter.NULL_KEY;
+import static fr.uem.efluid.tools.diff.ManagedValueConverter.NULL_KEY;
 
 /**
  * <p>

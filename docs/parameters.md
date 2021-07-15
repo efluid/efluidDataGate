@@ -185,7 +185,7 @@ datagate-efluid:
 
     model-identifier:
         enabled: true
-        class-name: fr.uem.efluid.tools.EfluidDatabaseIdentifier
+        class-name: fr.uem.efluid.tools.versions.EfluidDatabaseIdentifier
         show-sql: false
 
     web-options:

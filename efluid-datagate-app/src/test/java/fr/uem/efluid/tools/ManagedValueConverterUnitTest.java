@@ -2,6 +2,7 @@ package fr.uem.efluid.tools;
 
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.stubs.TestUtils;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;

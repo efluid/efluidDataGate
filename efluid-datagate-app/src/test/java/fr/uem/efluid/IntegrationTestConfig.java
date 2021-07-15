@@ -22,7 +22,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.FutureAsyncDriver;
-import fr.uem.efluid.tools.ManagedQueriesGenerator.QueryGenerationRules;
+import fr.uem.efluid.tools.diff.ManagedQueriesGenerator.QueryGenerationRules;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
 

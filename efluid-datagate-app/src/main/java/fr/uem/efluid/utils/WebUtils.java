@@ -4,9 +4,9 @@ import fr.uem.efluid.model.entities.User;
 import fr.uem.efluid.services.types.ExportFile;
 import fr.uem.efluid.services.types.ExportImportFile;
 import fr.uem.efluid.services.types.ProjectData;
-import org.pac4j.core.util.Pac4jConstants;
 import org.pac4j.core.profile.CommonProfile;
 import org.pac4j.core.profile.definition.CommonProfileDefinition;
+import org.pac4j.core.util.Pac4jConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -29,7 +29,7 @@ import java.util.stream.Stream;
  * For REST / WEB needs
  *
  * @author elecomte
- * @version 2
+ * @version 3
  * @since v0.0.1
  */
 public class WebUtils {
@@ -100,6 +100,19 @@ public class WebUtils {
         } catch (IOException e) {
             throw new ApplicationException(ErrorType.UPLOAD_WRG_DATA, "Cannot process data read for imported file " + fname, e);
         }
+    }
+
+    /**
+     * Produces a spring-mvc compliant response for the binary data of a text content, using automatic formating
+     *
+     * @param data to output as file
+     * @return spring mvc response
+     */
+    public static String outputFormatedTextData(byte[] data) {
+
+        return DisplayContentUtils.isJsonCompliant(data)
+                ? DisplayContentUtils.renderJson(data)
+                : DisplayContentUtils.renderTxt(data);
     }
 
     /**

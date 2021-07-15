@@ -4,7 +4,7 @@ import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.metas.ColumnDescription;
 import fr.uem.efluid.model.metas.TableDescription;
 import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
-import fr.uem.efluid.tools.ManagedQueriesGenerator;
+import fr.uem.efluid.tools.diff.ManagedQueriesGenerator;
 import fr.uem.efluid.utils.ApplicationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

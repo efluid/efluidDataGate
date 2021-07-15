@@ -6,6 +6,7 @@ import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.utils.WebUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,9 +27,10 @@ import static org.springframework.web.bind.annotation.RequestMethod.*;
  * <p>
  * Can be seen as the "provider of all 'GIT' features for the parameter management"
  * </p>
+ * <p>Includes the entrypoints for rendering of lobs as specified in ManagedValueConverter hr rendering</p>
  *
  * @author elecomte
- * @version 4
+ * @version 5
  * @since v0.0.1
  */
 @Controller
@@ -442,8 +444,10 @@ public class BacklogController extends CommonController {
     }
 
     /**
-     * @param hash
-     * @return
+     * For any lob (entrypoint to value ManagedValueConverter created link to LOB)
+     *
+     * @param hash id to lob
+     * @return raw content to download
      */
     @RequestMapping(path = "/lob/{lobHashEnc}", method = GET)
     @ResponseBody
@@ -451,6 +455,20 @@ public class BacklogController extends CommonController {
 
         // Search in both "prepared" and existing lobs data
         return WebUtils.outputData(this.pilotableCommitService.getCurrentOrExistingLobData(hash));
+    }
+
+    /**
+     * For a TXT lob (entrypoint to openText() js function - directly a html content)
+     *
+     * @param hash id to managed clob
+     * @return formatted content to display
+     */
+    @RequestMapping(path = "/text/{lobHashEnc}", method = GET, produces = MediaType.TEXT_HTML_VALUE)
+    @ResponseBody()
+    public String downloadTextContent(@PathVariable("lobHashEnc") String hash) {
+
+        // Search in both "prepared" and existing lobs data (works on TXT lobs only)
+        return WebUtils.outputFormatedTextData(this.pilotableCommitService.getCurrentOrExistingLobData(hash));
     }
 
     /**
@@ -705,7 +723,7 @@ public class BacklogController extends CommonController {
 
         model.addAttribute("compare", this.commitService.getCompletedCurrentCompareResult());
         model.addAttribute("history", this.commitService.getCompareEntryHistory(dictionaryEntryUuid, key));
-        model.addAttribute("key",key);
+        model.addAttribute("key", key);
         model.addAttribute("tableName", this.dictService.getDictionaryEntryTableName(dictionaryEntryUuid));
 
         // For formatting

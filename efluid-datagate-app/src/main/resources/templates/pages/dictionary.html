@@ -27,6 +27,7 @@
 				<tr>
 					<th scope="col">Domaine</th>
 					<th scope="col">Nom</th>
+					<th scope="col">Table</th>
 					<th scope="col" width="50%">Requête de sélection</th>
 					<th scope="col"></th>
 				</tr>
@@ -38,6 +39,7 @@
 				<tr th:each="entry : ${dictionary}" th:id="${entry.uuid}">
 					<td th:text="${entry.domainName}">Gestion du matériel</td>
 					<td th:text="${entry.name}">Catégorie de matériel</td>
+					<td><span th:text="${entry.tableName}">T_TABLE</span><span th:if="${!entry.existsLocally}" class="content-warning" title="la table n'existe pas dans la base de donnée gérée">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td>
 					<td><span class="query-display" th:text="${entry.query}">SELECT COLKEY, COLA, COLB, COLC FROM TCATEGORYMATERIEL WHERE 1=1 ORDER BY COLKEY</span></td>
 					<td><span class="float-right">
 						<a th:href="@{|/ui/dictionary/edit/${entry.uuid}|}" href="./dictionary_123.html" class="btn btn-primary btn-sm" type="button">Editer</a>
@@ -46,7 +48,7 @@
 				</tr>
 			     <tr>
 					<form action="#" th:action="@{/ui/dictionary/clause}" method="post">
-			         <td colspan="3"><input type="text" name="clause" id="whereClause" class="form-control" placeholder="Nouveau critère de filtrage pour toutes les tables" aria-label="Nouveau critère de filtrage"/></td>
+			         <td colspan="4"><input type="text" name="clause" id="whereClause" class="form-control" placeholder="Nouveau critère de filtrage pour toutes les tables" aria-label="Nouveau critère de filtrage"/></td>
                      <td><input type="submit" class="btn btn-outline-secondary btn-sm float-right" disabled="disabled" id="clauseSubmit" value="Appliquer le critère"/></td>
 					</form>
 				 </tr>

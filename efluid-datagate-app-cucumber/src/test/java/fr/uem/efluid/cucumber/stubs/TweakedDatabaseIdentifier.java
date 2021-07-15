@@ -1,7 +1,7 @@
 package fr.uem.efluid.cucumber.stubs;
 
 import fr.uem.efluid.model.metas.ManagedModelDescription;
-import fr.uem.efluid.tools.ManagedModelIdentifier;
+import fr.uem.efluid.tools.versions.ManagedModelIdentifier;
 import fr.uem.efluid.utils.DatasourceUtils.CustomDataSourceParameters;
 
 import java.sql.ResultSet;
@@ -55,7 +55,7 @@ public class TweakedDatabaseIdentifier extends ManagedModelIdentifier {
 
     /**
      * @return
-     * @see fr.uem.efluid.tools.ManagedModelIdentifier#getAllModelDescriptionQuery()
+     * @see ManagedModelIdentifier#getAllModelDescriptionQuery()
      */
     @Override
     public String getAllModelDescriptionQuery() {
@@ -67,7 +67,7 @@ public class TweakedDatabaseIdentifier extends ManagedModelIdentifier {
      * @param index
      * @return
      * @throws SQLException
-     * @see fr.uem.efluid.tools.ManagedModelIdentifier#extractFromLine(java.sql.ResultSet,
+     * @see ManagedModelIdentifier#extractFromLine(java.sql.ResultSet,
      * int)
      */
     @Override
@@ -79,7 +79,7 @@ public class TweakedDatabaseIdentifier extends ManagedModelIdentifier {
      * @param identity
      * @param existingDescriptions
      * @return
-     * @see fr.uem.efluid.tools.ManagedModelIdentifier#isValidPastModelIdentifier(java.lang.String,
+     * @see ManagedModelIdentifier#isValidPastModelIdentifier(java.lang.String,
      * java.util.List)
      */
     @Override

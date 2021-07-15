@@ -18,7 +18,7 @@ import fr.uem.efluid.*;
 import fr.uem.efluid.model.entities.*;
 import fr.uem.efluid.model.repositories.*;
 import fr.uem.efluid.security.UserHolder;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
 
 /**

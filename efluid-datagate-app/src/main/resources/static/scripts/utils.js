@@ -149,3 +149,37 @@ const getReferencedUuidInId = (e) => {
     }
     return idParts[idParts.length - 1];
 };
+
+// For attachment read in modal
+const openAttachment = (uuid,name)  => {
+    hideDisplays();
+    var uuid = e.relatedTarget.id;
+    if(uuid != ''){
+        console.log("load by id = " + uuid);
+        $.get("/ui/attachment/content?uuid=" + uuid, null, (data, status) => {
+            $("#modalContent").html(data);
+            $("#contentModalLabel").html("Fichier <b>" + name + "</b>");
+            $('#contentModal').modal('show');
+        });
+    } else {
+        console.log("load by name = " + name);
+        $.get("/ui/attachment/content?name=" + name, null, (data, status) => {
+            $("#modalContent").html(data);
+            $("#contentModalLabel").html("Fichier <b>" + name + "</b>");
+            $('#contentModal').modal('show');
+        });
+    }
+    return false;
+};
+
+// For clob read in modal
+const openText = (hash)  => {
+    hideDisplays();
+    console.log("open content = " + hash);
+    $.get("/ui/text/" + hash, null, (data, status) => {
+        $("#modalContent").html(data);
+        $("#contentModalLabel").html("Contenu texte <b>" + hash + "</b>");
+        $('#contentModal').modal('show');
+    });
+    return false;
+};

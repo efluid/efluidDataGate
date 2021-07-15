@@ -12,10 +12,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import fr.uem.efluid.config.AttachmentConfig.AttachmentConfigProperties;
 import fr.uem.efluid.model.entities.AttachmentType;
 import fr.uem.efluid.model.repositories.ApplyHistoryEntryRepository;
-import fr.uem.efluid.tools.AttachmentProcessor;
-import fr.uem.efluid.tools.MarkdownAttachmentProcessor;
-import fr.uem.efluid.tools.SqlAttachmentProcessor;
-import fr.uem.efluid.tools.TextAttachmentProcessor;
+import fr.uem.efluid.tools.attachments.AttachmentProcessor;
+import fr.uem.efluid.tools.attachments.MarkdownAttachmentProcessor;
+import fr.uem.efluid.tools.attachments.SqlAttachmentProcessor;
+import fr.uem.efluid.tools.attachments.TextAttachmentProcessor;
 
 /**
  * @author elecomte

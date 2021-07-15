@@ -15,7 +15,7 @@ import java.util.UUID;
 import javax.persistence.*;
 
 import fr.uem.efluid.model.Shared;
-import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.attachments.AttachmentProcessor;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 import org.hibernate.annotations.Type;
 

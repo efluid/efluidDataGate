@@ -1,6 +1,6 @@
 package fr.uem.efluid.stubs;
 
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

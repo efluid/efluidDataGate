@@ -2,6 +2,7 @@ package fr.uem.efluid.tools;
 
 import fr.uem.efluid.ColumnType;
 import fr.uem.efluid.model.entities.DictionaryEntry;
+import fr.uem.efluid.tools.diff.ManagedQueriesGenerator;
 import fr.uem.efluid.utils.DatasourceUtils;
 import org.junit.jupiter.api.Test;
 

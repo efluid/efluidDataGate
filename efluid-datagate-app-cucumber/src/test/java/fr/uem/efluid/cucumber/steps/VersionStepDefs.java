@@ -7,7 +7,7 @@ import fr.uem.efluid.model.entities.Version;
 import fr.uem.efluid.services.DictionaryManagementService;
 import fr.uem.efluid.services.types.VersionCompare;
 import fr.uem.efluid.services.types.VersionData;
-import fr.uem.efluid.tools.VersionContentChangesGenerator;
+import fr.uem.efluid.tools.versions.VersionContentChangesGenerator;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.Given;

@@ -55,7 +55,7 @@
 		           							<input type="checkbox" th:field="${preparation.commitData.attachments[__${astat.index}__].executed}">
 		           							&nbsp;
 		           						</span>
-		           						<button th:if="${attachment.type.editable && preparation.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#contentModal" th:id="${attachment.name}">Consulter</button>
+		           						<button th:if="${attachment.type.editable && preparation.attachmentDisplaySupport}" type="button" class="btn btn-sm btn-primary" th:attr="onclick=|openAttachment('','${attachment.name}')|">Consulter</button>
 		           						&nbsp;
 		           						<a th:if="${preparation.preparingState.name()!='MERGED'}" href="./commit.html" th:href="@{/ui/attachment/remove?name={name}(name=${attachment.name})}" class="btn btn-sm btn-secondary float-right">Retirer</a>		           						
 		           					</div>
@@ -88,25 +88,6 @@
 			</form>
 			<span class="file-display">Fichier sélectionné : <span id="displayFile">- aucun -</span></span>
 		</span>
-		
-		<!-- File content display modal -->
-		<div class="modal fade" id="contentModal" tabindex="-1" role="dialog" aria-labelledby="contentModalLabel" aria-hidden="true">
-			<div class="modal-dialog modal-lg">
-		    	<div class="modal-content">
-					<div class="modal-header">
-			       		<h5 class="modal-title" id="contentModalLabel">New message</h5>
-			        	<button type="button" class="close" data-dismiss="modal" aria-label="Close">
-			          		<span aria-hidden="true">&times;</span>
-			        	</button>
-			      	</div>
-			      	<div class="modal-body" id="modalContent"> ... </div>
-			      	<div class="modal-footer">
-			        	<button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-			      	</div>
-		    	</div>
-		  	</div>
-		</div>
-		
 	</span>
 	 <script layout:fragment="script" th:inline="javascript">
 		 /*<![CDATA[*/
@@ -135,24 +116,12 @@
 			$("#importSubmit").prop('disabled', false);
 			$("#importSubmit").removeClass("btn-outline-success").addClass("btn-success");
 		};
-        
-        // For attachment read in modal
-        const readAttach = (e) => {
-        	hideDisplays();
-			var name = e.relatedTarget.id;
-			console.log("id = " + name);
-			$.get("/ui/attachment/content?name=" + name, null, (data, status) => {
-				$("#modalContent").html(data);
-				$("#contentModalLabel").html("Fichier <b>" + name + "</b>");
-			}); 
-        };
-        
+
     	// Init actions
     	$(document).ready(() => {
 			$("#commitComment").on('input',checkCommitComment);
 			checkCommitComment();
 			$("#importInput").change(displayFile);
-			$('#contentModal').on('show.bs.modal', readAttach); 
 		}); 
 		
         /*]]>*/

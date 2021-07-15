@@ -12,7 +12,7 @@ import fr.uem.efluid.services.types.PilotedCommitPreparation;
 import fr.uem.efluid.services.types.PreparedIndexEntry;
 import fr.uem.efluid.services.types.Value;
 import fr.uem.efluid.stubs.TestUtils;
-import fr.uem.efluid.tools.ManagedValueConverter;
+import fr.uem.efluid.tools.diff.ManagedValueConverter;
 import fr.uem.efluid.utils.DataGenerationUtils;
 import org.junit.jupiter.api.Test;
 

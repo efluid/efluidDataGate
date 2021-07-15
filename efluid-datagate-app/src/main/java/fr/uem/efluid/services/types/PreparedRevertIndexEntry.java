@@ -2,7 +2,7 @@ package fr.uem.efluid.services.types;
 
 import fr.uem.efluid.model.DiffLine;
 import fr.uem.efluid.model.entities.IndexEntry;
-import fr.uem.efluid.tools.RollbackConverter;
+import fr.uem.efluid.tools.diff.RollbackConverter;
 
 /**
  * <p>

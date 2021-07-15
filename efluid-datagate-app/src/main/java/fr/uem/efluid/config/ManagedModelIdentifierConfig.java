@@ -2,7 +2,7 @@ package fr.uem.efluid.config;
 
 import fr.uem.efluid.config.ManagedModelIdentifierConfig.ModelIdenfierProperties;
 import fr.uem.efluid.model.metas.ManagedModelDescription;
-import fr.uem.efluid.tools.ManagedModelIdentifier;
+import fr.uem.efluid.tools.versions.ManagedModelIdentifier;
 import fr.uem.efluid.utils.ApplicationException;
 import fr.uem.efluid.utils.DatasourceUtils;
 import fr.uem.efluid.utils.ErrorType;

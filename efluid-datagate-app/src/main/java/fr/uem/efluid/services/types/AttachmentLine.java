@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import fr.uem.efluid.model.entities.Attachment;
 import fr.uem.efluid.model.entities.AttachmentType;
-import fr.uem.efluid.tools.AttachmentProcessor;
+import fr.uem.efluid.tools.attachments.AttachmentProcessor;
 import fr.uem.efluid.utils.SharedOutputInputUtils;
 
 /**
@@ -172,7 +172,7 @@ public class AttachmentLine implements AttachmentProcessor.Compliant {
 
 	/**
 	 * @return
-	 * @see fr.uem.efluid.tools.AttachmentProcessor.Compliant#getData()
+	 * @see AttachmentProcessor.Compliant#getData()
 	 */
 	@Override
 	public byte[] getData() {
