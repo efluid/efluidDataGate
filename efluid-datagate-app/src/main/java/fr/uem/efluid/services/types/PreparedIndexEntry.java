@@ -271,7 +271,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
     }
 
     public String toLogRendering() {
-        return "[" + getTableName() + "." + getCombinedKey() + "] : " + (getAction()  != null ? (getAction() + " \"" + getHrPayload() + "\"") : "no action");
+        return "[" + getTableName() + "." + getCombinedKey() + "] : " + (getAction() != null ? (getAction() + " \"" + getHrPayload() + "\"") : "no action");
     }
 
     /**
@@ -338,7 +338,7 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
      */
     protected static void completeFromExistingEntity(PreparedIndexEntry data, IndexEntry existing) {
 
-        completeFromDiffLine(data,existing);
+        completeFromDiffLine(data, existing);
 
         if (existing.getDictionaryEntry() != null) {
             data.setDictionaryEntryUuid(existing.getDictionaryEntry().getUuid());
@@ -361,7 +361,11 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
         data.setPrevious(existing.getPrevious());
         data.setKeyValue(existing.getKeyValue());
         data.setTimestamp(existing.getTimestamp());
-        data.setIndexForDiff(existing.getDictionaryEntryUuid() + "_" + existing.getKeyValue());
+        data.setDictionaryEntryUuid(existing.getDictionaryEntryUuid());
+
+        if (data.getIndexForDiff() != null) {
+            data.setIndexForDiff(existing.getDictionaryEntryUuid() + "_" + existing.getKeyValue());
+        }
 
     }
 
@@ -373,19 +377,15 @@ public class PreparedIndexEntry implements DiffLine, Rendered {
      */
     protected static void copyFromEntry(PreparedIndexEntry comb, PreparedIndexEntry first) {
 
-        // Some properties are from first one
-        comb.setAction(first.getAction());
-        comb.setCommitUuid(first.getCommitUuid());
-        comb.setDictionaryEntryUuid(first.getDictionaryEntryUuid());
-        comb.setHrPayload(first.getHrPayload());
-        comb.setPayload(first.getPayload());
-        comb.setPrevious(first.getPrevious());
-        comb.setTimestamp(first.getTimestamp());
-
-        // Including key for sorting / ref
-        comb.setKeyValue(first.getKeyValue());
+        // Use source key for sorting / ref
         comb.setIndexForDiff(first.getIndexForDiff());
 
+        // Some properties are from first one
+        comb.setCommitUuid(first.getCommitUuid());
+        comb.setHrPayload(first.getHrPayload());
+
+        // Other common diff content
+        completeFromDiffLine(comb, first);
     }
 
 }
