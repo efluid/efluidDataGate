@@ -67,6 +67,18 @@
 						</div>
 					</h5>
 				</p>
+				<div class="diff-summary">
+					<div class="float-left">
+						Analyse complétée en <span th:text="${preparation.summary.durationSeconds}">12</span> seconde(s) :
+						<span th:text="${preparation.diffContent.size()}">53</span> modification(s) identifiée(s) sur
+						<span th:text="${preparation.referencedTables.size()}">3</span> table(s).
+					</div>
+					<div class="float-right">
+						<span class="add"><span th:text="${preparation.summary.identifiedAdds}">23</span> Ajout(s)</span> <span class="unchanged">(dont <span th:text="${preparation.summary.alreadyTheirAdds}">23</span> déjà présents)</span> -
+						<span class="update"><span th:text="${preparation.summary.identifiedUpdates}">8</span> Modification(s)</span> <span class="unchanged">(<span th:text="${preparation.summary.alreadyTheirUpdates}">23</span>)</span> -
+						<span class="remove"><span th:text="${preparation.summary.identifiedDeletes}">12</span> Suppression(s)</span> <span class="unchanged"> (<span th:text="${preparation.summary.alreadyTheirDeletes}">23</span>)</span>
+					</div>
+				</div>
 				<table class="table table-sm">
 					<thead>
 						<tr>
@@ -239,7 +251,7 @@
 		const updateSelectItem = (index, selected, rollbacked) => {
 
 			$.post("/ui/prepare/selection/line/" + index + "?selected="+ selected + "&rollbacked=" + rollbacked, null, (data, status) => {
-				
+
 				// Reset 2 buttons
 				$("#" + index + "_item button.select-button").removeClass("btn-primary").addClass("btn-outline-primary");
 				$("#" + index + "_item button.rollback-button").removeClass("btn-danger").addClass("btn-outline-danger");
@@ -471,9 +483,9 @@
 
 		// For display detail hidding
 		const hideAndShowDisplayAction = (trUuid) => {
-		
+
 			hideDisplays();
-			console.info("display action " + trUuid); 
+			console.info("display action " + trUuid);
 			var display = $("#" + trUuid + " span.change-details");
 			var button = $("#" + trUuid + " span.reducer-sm");
 			if(button.attr("class").indexOf('reducer-close') !== -1){

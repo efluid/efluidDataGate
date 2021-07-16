@@ -389,6 +389,22 @@ public class PushPullStepDefs extends CucumberStepDefs {
         });
     }
 
+    @Then("^a summary of the identified merge is : \"(.*)\" adds \\(\"(.*)\" existing\\) - \"(.*)\" updates \\(\"(.*)\"\\) - \"(.*)\" deletes \\(\"(.*)\"\\)$")
+    public void then_merge_summary(int adds, int extAdds, int updates, int extUpdates, int deletes, int extDeletes) {
+        PilotedCommitPreparation<?> preparation = getCurrentSpecifiedProperty("preparation", PilotedCommitPreparation.class);
+
+        assertThat(preparation.getSummary()).isNotNull();
+        assertThat(preparation.getSummary()).isInstanceOf(PreparedMergeSummary.class);
+
+        assertThat(preparation.getSummary().getIdentifiedAdds()).isEqualTo(adds);
+        assertThat(preparation.getSummary().getIdentifiedUpdates()).isEqualTo(updates);
+        assertThat(preparation.getSummary().getIdentifiedDeletes()).isEqualTo(deletes);
+
+        assertThat(((PreparedMergeSummary) preparation.getSummary()).getAlreadyTheirAdds()).isEqualTo(extAdds);
+        assertThat(((PreparedMergeSummary) preparation.getSummary()).getAlreadyTheirUpdates()).isEqualTo(extUpdates);
+        assertThat(((PreparedMergeSummary) preparation.getSummary()).getAlreadyTheirDeletes()).isEqualTo(extDeletes);
+    }
+
     /**
      * Easy access to exported content (reuse internal export, so will not test export process itself)
      */

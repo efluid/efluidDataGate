@@ -57,14 +57,14 @@ Feature: The backlog can be imported and merged with local changes
     And the merge diff is completed
     When the user access to merge commit page
     Then the merge commit content is rendered with these identified changes :
-      | Table     | Key | Action | Need Resolve | Payload                                                                                                                                    |
-      | TTAB_TWO  | VVV | ADD    | false        | VALUE:'333', OTHER:'Other VVV'                                                                                                             |
-      | TTAB_TWO  | III | ADD    | false        | VALUE:'444', OTHER:'Other III'                                                                                                             |
-      | TTAB_TWO  | JJJ | ADD    | true         | VALUE:'One', OTHER:'Other JJJ'                                                                                                             |
-      | TTAB_TWO  | KKK | ADD    | true         | VALUE:'Two', OTHER:'Other KKK'                                                                                                             |
-      | TTAB_FIVE | 1   | ADD    | true         | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81              |
-      | TTAB_FIVE | 2   | ADD    | true         | DATA:<a href="/ui/lob/TURPbmVyR2cwaWtGQVJLdmloWDBmRkQ4VjJtVXA0K0tIZnJqaTJCeVBLRT0=" download="download">LOB</a>, SIMPLE:17.82              |
-      | TTAB_FIVE | 3   | ADD    | true         | DATA:<a href="/ui/lob/bUdiNG5wa1FiUnZSSnJKV3AvUUlwd0dQcVpURmtLaEkxRlU5bDlqTmoxTT0=" download="download">LOB</a>, SIMPLE:17.83              |
+      | Table     | Key | Action | Need Resolve | Payload                                                                                                                                           |
+      | TTAB_TWO  | VVV | ADD    | false        | VALUE:'333', OTHER:'Other VVV'                                                                                                                    |
+      | TTAB_TWO  | III | ADD    | false        | VALUE:'444', OTHER:'Other III'                                                                                                                    |
+      | TTAB_TWO  | JJJ | ADD    | true         | VALUE:'One', OTHER:'Other JJJ'                                                                                                                    |
+      | TTAB_TWO  | KKK | ADD    | true         | VALUE:'Two', OTHER:'Other KKK'                                                                                                                    |
+      | TTAB_FIVE | 1   | ADD    | true         | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81                     |
+      | TTAB_FIVE | 2   | ADD    | true         | DATA:<a href="/ui/lob/TURPbmVyR2cwaWtGQVJLdmloWDBmRkQ4VjJtVXA0K0tIZnJqaTJCeVBLRT0=" download="download">LOB</a>, SIMPLE:17.82                     |
+      | TTAB_FIVE | 3   | ADD    | true         | DATA:<a href="/ui/lob/bUdiNG5wa1FiUnZSSnJKV3AvUUlwd0dQcVpURmtLaEkxRlU5bDlqTmoxTT0=" download="download">LOB</a>, SIMPLE:17.83                     |
       | TTAB_SIX  | 7   | ADD    | true         | TEXT:<a href="javascript:;" onclick="openText('QXlvSkNtWk5RWHdrenQyWmNIZ0c4Y3B2VXVjc2JHbmFuVHVRdStwYUdPcz0=')">TEXT</a>, DATE:2012-01-15 00:00:00 |
       | TTAB_SIX  | 8   | ADD    | true         | TEXT:<a href="javascript:;" onclick="openText('S09wazdEUDlpTG5BbHM1L1JvRjErS1JEeFdNRGFBK2VTazJiVUdvOGczZz0=')">TEXT</a>, DATE:2005-07-08 00:00:00 |
       | TTAB_SIX  | 9   | ADD    | true         | TEXT:<a href="javascript:;" onclick="openText('K2Z1REFwVm0ycUh1OEJhU09Pa0tBdElDclRoYzVWTTlFU3pGTS9DL1ZHST0=')">TEXT</a>, DATE:2021-12-25 00:00:00 |
@@ -374,10 +374,10 @@ Feature: The backlog can be imported and merged with local changes
     And apply a content filter criteria "TTAB_[^W]*" on "table"
     And apply a content sort criteria "ASC" on "key"
     Then the paginated merge commit content is rendered with these identified sorted changes :
-      | Table     | Key | Action | Payload                                                                                                                                    |
-      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81              |
-      | TTAB_FIVE | 2   | ADD    | DATA:<a href="/ui/lob/TURPbmVyR2cwaWtGQVJLdmloWDBmRkQ4VjJtVXA0K0tIZnJqaTJCeVBLRT0=" download="download">LOB</a>, SIMPLE:17.82              |
-      | TTAB_FIVE | 3   | ADD    | DATA:<a href="/ui/lob/bUdiNG5wa1FiUnZSSnJKV3AvUUlwd0dQcVpURmtLaEkxRlU5bDlqTmoxTT0=" download="download">LOB</a>, SIMPLE:17.83              |
+      | Table     | Key | Action | Payload                                                                                                                                           |
+      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81                     |
+      | TTAB_FIVE | 2   | ADD    | DATA:<a href="/ui/lob/TURPbmVyR2cwaWtGQVJLdmloWDBmRkQ4VjJtVXA0K0tIZnJqaTJCeVBLRT0=" download="download">LOB</a>, SIMPLE:17.82                     |
+      | TTAB_FIVE | 3   | ADD    | DATA:<a href="/ui/lob/bUdiNG5wa1FiUnZSSnJKV3AvUUlwd0dQcVpURmtLaEkxRlU5bDlqTmoxTT0=" download="download">LOB</a>, SIMPLE:17.83                     |
       | TTAB_SIX  | 7   | ADD    | TEXT:<a href="javascript:;" onclick="openText('QXlvSkNtWk5RWHdrenQyWmNIZ0c4Y3B2VXVjc2JHbmFuVHVRdStwYUdPcz0=')">TEXT</a>, DATE:2012-01-15 00:00:00 |
       | TTAB_SIX  | 8   | ADD    | TEXT:<a href="javascript:;" onclick="openText('S09wazdEUDlpTG5BbHM1L1JvRjErS1JEeFdNRGFBK2VTazJiVUdvOGczZz0=')">TEXT</a>, DATE:2005-07-08 00:00:00 |
       | TTAB_SIX  | 9   | ADD    | TEXT:<a href="javascript:;" onclick="openText('K2Z1REFwVm0ycUh1OEJhU09Pa0tBdElDclRoYzVWTTlFU3pGTS9DL1ZHST0=')">TEXT</a>, DATE:2021-12-25 00:00:00 |
@@ -426,12 +426,12 @@ Feature: The backlog can be imported and merged with local changes
     And the user has specified a commit comment ":construction: merge commit test with changes"
     When the user save the merge commit
     Then the saved merge commit content has these identified changes :
-      | Table     | Key | Action | Payload                                                                                                                                    |
-      | TTAB_TWO  | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'                                                                                                             |
-      | TTAB_TWO  | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'                                                                                                             |
-      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81              |
-      | TTAB_FIVE | 2   | ADD    | DATA:<a href="/ui/lob/TURPbmVyR2cwaWtGQVJLdmloWDBmRkQ4VjJtVXA0K0tIZnJqaTJCeVBLRT0=" download="download">LOB</a>, SIMPLE:17.82              |
-      | TTAB_FIVE | 3   | ADD    | DATA:<a href="/ui/lob/bUdiNG5wa1FiUnZSSnJKV3AvUUlwd0dQcVpURmtLaEkxRlU5bDlqTmoxTT0=" download="download">LOB</a>, SIMPLE:17.83              |
+      | Table     | Key | Action | Payload                                                                                                                                           |
+      | TTAB_TWO  | JJJ | ADD    | VALUE:'One', OTHER:'Other JJJ'                                                                                                                    |
+      | TTAB_TWO  | KKK | ADD    | VALUE:'Two', OTHER:'Other KKK'                                                                                                                    |
+      | TTAB_FIVE | 1   | ADD    | DATA:<a href="/ui/lob/WlZzM0wwUGlSVDd2emdZbEdDckFtcnFWbTY0M2RXMVp3c2haTlRObUVCYz0=" download="download">LOB</a>, SIMPLE:17.81                     |
+      | TTAB_FIVE | 2   | ADD    | DATA:<a href="/ui/lob/TURPbmVyR2cwaWtGQVJLdmloWDBmRkQ4VjJtVXA0K0tIZnJqaTJCeVBLRT0=" download="download">LOB</a>, SIMPLE:17.82                     |
+      | TTAB_FIVE | 3   | ADD    | DATA:<a href="/ui/lob/bUdiNG5wa1FiUnZSSnJKV3AvUUlwd0dQcVpURmtLaEkxRlU5bDlqTmoxTT0=" download="download">LOB</a>, SIMPLE:17.83                     |
       | TTAB_SIX  | 7   | ADD    | TEXT:<a href="javascript:;" onclick="openText('QXlvSkNtWk5RWHdrenQyWmNIZ0c4Y3B2VXVjc2JHbmFuVHVRdStwYUdPcz0=')">TEXT</a>, DATE:2012-01-15 00:00:00 |
       | TTAB_SIX  | 8   | ADD    | TEXT:<a href="javascript:;" onclick="openText('S09wazdEUDlpTG5BbHM1L1JvRjErS1JEeFdNRGFBK2VTazJiVUdvOGczZz0=')">TEXT</a>, DATE:2005-07-08 00:00:00 |
       | TTAB_SIX  | 9   | ADD    | TEXT:<a href="javascript:;" onclick="openText('K2Z1REFwVm0ycUh1OEJhU09Pa0tBdElDclRoYzVWTTlFU3pGTS9DL1ZHST0=')">TEXT</a>, DATE:2021-12-25 00:00:00 |
@@ -654,5 +654,53 @@ Feature: The backlog can be imported and merged with local changes
     Then no error is provided
     And a merge diff is running
 
-
-
+  Scenario: A summary of the merge content is provided
+    Given the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And a created parameter table with name "Table for similar" for managed table "TTAB_THREE_KEYS" and columns selected as this :
+      | name       | selection |
+      | FIRST_KEY  | key       |
+      | SECOND_KEY | selected  |
+      | THIRD_KEY  | selected  |
+    And the existing data in managed table "TTAB_THREE_KEYS" :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 3        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+    And the user add new version "v2"
+    And a new commit ":construction: Commit 2" has been saved with all the new identified diff content
+    And these changes are applied to table "TTAB_THREE_KEYS" :
+      | change | firstKey | secondKey | thirdKey    |
+      | update | 1        | -null-    | somethingCh |
+      | update | 2        | -null-    | somethingCh |
+      | update | 3        | -null-    | somethingCh |
+      | update | 4        | -null-    | somethingCh |
+      | add    | 8        | SAME      | SAME        |
+      | add    | 9        | SAME      | SAME        |
+      | add    | 10       | SAME      | SAME        |
+      | add    | 11       | SAME      | SAME        |
+      | add    | 12       | SAME      | SAME        |
+      | update | 6        | 6         | 6 chg       |
+      | remove | 5        |           |             |
+    And a new commit ":construction: Commit 3" has been saved with all the new identified diff content
+    And the user request an export of the commit with name ":construction: Commit 3"
+    And the user accesses to the destination environment with the same dictionary
+    And no existing data in managed table "TTAB_TWO" in destination environment
+    And no existing data in managed table "TTAB_FIVE" in destination environment
+    And no existing data in managed table "TTAB_SIX" in destination environment
+    And the existing data in managed table "TTAB_THREE_KEYS" in destination environment :
+      | firstKey | secondKey | thirdKey  |
+      | 1        | -null-    | something |
+      | 2        | -null-    | something |
+      | 4        | -null-    | something |
+      | 5        | 5         | 5         |
+      | 6        | 6         | 6         |
+      | 7        | -null-    | something |
+      | 11       | SAME      | SAME      |
+      | 12       | SAME      | SAME      |
+    And a commit ":construction: Destination commit initial" has been saved with all the new identified diff content in destination environment
+    And a merge diff analysis has been started and completed with the available source package
+    When the user access to merge commit page
+    Then a summary of the identified merge is : "5" adds ("2" existing) - "4" updates ("0") - "4" deletes ("0")

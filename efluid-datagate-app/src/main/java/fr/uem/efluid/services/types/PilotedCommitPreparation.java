@@ -78,6 +78,8 @@ public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extend
 
     private TransformerProcessor transformerProcessor;
 
+    private PreparedDiffSummary summary;
+
     /**
      *
      */
@@ -320,6 +322,14 @@ public final class PilotedCommitPreparation<T extends PreparedIndexEntry> extend
         }
 
         return (this.totalStepCount.get() * 100) / (getPreparingState().getProcessingSteps() * getProcessStarted());
+    }
+
+    public PreparedDiffSummary getSummary() {
+        return summary;
+    }
+
+    public void setSummary(PreparedDiffSummary summary) {
+        this.summary = summary;
     }
 
     /**

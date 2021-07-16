@@ -352,7 +352,7 @@ select.select-column {
     color: green;
 }
 
-.action-line.update .action-display {
+.action-line.update .action-display , .diff-summary .update {
     color: orange;
 }
 
@@ -738,7 +738,7 @@ th.filter.sorted-desc {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: auto auto 20px auto;
+    margin: 0;
 }
 
 #prepare-header h5 {
@@ -947,4 +947,18 @@ li {
 
 .disabled-message {
     color: #DDD;
+}
+
+.diff-summary {
+    display: block;
+    height: 36px;
+    margin: auto auto 5px auto;
+    padding: 0 10px 5px 7px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.unchanged {
+    color: #888;
+    font-style: italic;
 }

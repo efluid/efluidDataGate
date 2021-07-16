@@ -1,7 +1,10 @@
 package fr.uem.efluid.services;
 
 import fr.uem.efluid.model.entities.*;
-import fr.uem.efluid.model.repositories.*;
+import fr.uem.efluid.model.repositories.DatabaseDescriptionRepository;
+import fr.uem.efluid.model.repositories.DictionaryRepository;
+import fr.uem.efluid.model.repositories.LobPropertyRepository;
+import fr.uem.efluid.model.repositories.VersionRepository;
 import fr.uem.efluid.services.types.*;
 import fr.uem.efluid.tools.AsyncDriver;
 import fr.uem.efluid.tools.attachments.AttachmentProcessor;
@@ -18,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -95,7 +100,7 @@ public class PilotableCommitPreparationService {
      * For wizard, we start a global commit preparation for ALL projects
      * </p>
      *
-     * @return
+     * @return result as a WizzardCommitPreparationResult
      */
     public WizzardCommitPreparationResult startWizzardLocalCommitPreparation() {
 
@@ -213,7 +218,7 @@ public class PilotableCommitPreparationService {
         // Specify as active one
         this.currents.put(projectUuid, preparation);
 
-        this.async.start(preparation, (x) -> this.processOnAll(preparation, this::callRevert));
+        this.async.start(preparation, (x) -> this.processAllLocalDiff(preparation, this::callRevert));
 
         return preparation;
     }
@@ -228,7 +233,7 @@ public class PilotableCommitPreparationService {
      * Uses a tmp file and refers it. Data is loaded only at commit completion
      * </p>
      *
-     * @param file
+     * @param file imported attachment
      */
     public void addAttachmentOnCurrentCommitPreparation(ExportFile file) {
 
@@ -262,8 +267,8 @@ public class PilotableCommitPreparationService {
     }
 
     /**
-     * @param name
-     * @return
+     * @param name attachment identifier
+     * @return content of attachment
      */
     public byte[] getAttachmentContentFromCurrentCommitPreparation(String name) {
 
@@ -288,7 +293,7 @@ public class PilotableCommitPreparationService {
     }
 
     /**
-     * @param name
+     * @param name attachment identifier
      */
     public void removeAttachmentOnCurrentCommitPreparation(String name) {
 
@@ -384,7 +389,7 @@ public class PilotableCommitPreparationService {
     }
 
     /**
-     * @return
+     * @return active PilotedCommitPreparation in current project
      */
     public PilotedCommitPreparation<?> getCurrentCommitPreparation() {
         return this.currents.get(getActiveProjectUuid());
@@ -393,7 +398,7 @@ public class PilotableCommitPreparationService {
     /**
      * For rendering of "ignored" items
      *
-     * @param displayAll
+     * @param displayAll true to update display of ignored items in current preparation
      */
     public void setCurrentDisplayAllIncludingSimilar(boolean displayAll) {
         getCurrentCommitPreparation().setDisplayAll(displayAll);
@@ -414,32 +419,6 @@ public class PilotableCommitPreparationService {
 
         // Apply pagination on filtered content directly
         return new DiffContentPage(pageIndex, getFilteredDiffContent(currentSearch), this.diffDisplayPageSize);
-    }
-
-    public Collection<PreparedIndexEntry> updateDataRevert(Collection<PreparedIndexEntry> listIndex) {
-        listIndex.forEach(
-                y -> {
-                    String tmp = y.getPayload();
-                    y.setPayload(y.getPrevious());
-                    y.setPrevious(tmp);
-
-                    y.setRollbacked(false);
-                    y.setSelected(true);
-                    y.setDomainName(y.getDomainName());
-                    y.setTableName(y.getTableName());
-
-                    if (y.getAction() == IndexAction.ADD) {
-                        y.setAction(IndexAction.REMOVE);
-                    } else if (y.getAction() == IndexAction.REMOVE) {
-                        y.setAction(IndexAction.ADD);
-                    } else {
-                        y.setAction(IndexAction.UPDATE);
-                    }
-
-                }
-        );
-
-        return listIndex;
     }
 
     /**
@@ -500,7 +479,7 @@ public class PilotableCommitPreparationService {
      * commit can be applied immediately
      * </p>
      *
-     * @return
+     * @return true if current preparation is a merge with some required actions (diff with "needAction")
      */
     @SuppressWarnings("unchecked")
     public boolean isCurrentMergeCommitNeedsAction() {
@@ -529,7 +508,7 @@ public class PilotableCommitPreparationService {
      * For checked status
      * </p>
      *
-     * @return
+     * @return state as a PreparationState for current project related preparation
      */
     public PreparationState getCurrentCommitPreparationState() {
 
@@ -544,7 +523,7 @@ public class PilotableCommitPreparationService {
      * Merged status for all the commit preparation
      * </p>
      *
-     * @return
+     * @return for all projects, on all processing preparations, merged state as a single PreparationState
      */
     public PreparationState getAllCommitPreparationStates() {
 
@@ -564,8 +543,8 @@ public class PilotableCommitPreparationService {
 
 
     /**
-     * @param encodedLobHash
-     * @return
+     * @param encodedLobHash diff payload lob data identified (hash)
+     * @return content of lob data
      */
     public byte[] getCurrentOrExistingLobData(String encodedLobHash) {
 
@@ -656,7 +635,7 @@ public class PilotableCommitPreparationService {
      * <tt>DiffDisplay</tt>)
      * </p>
      *
-     * @param changedPreparation
+     * @param changedPreparation updated preparation to apply in current project related preparation
      */
     public void copyCommitPreparationSelections(PilotedCommitPreparation<?> changedPreparation) {
 
@@ -693,7 +672,7 @@ public class PilotableCommitPreparationService {
      * can change" into current preparation.
      * </p>
      *
-     * @param changedPreparation
+     * @param changedPreparation updated preparation to apply in current project related preparation
      */
     public void copyCommitPreparationCommitData(
             PilotedCommitPreparation<? extends PreparedIndexEntry> changedPreparation) {
@@ -708,7 +687,7 @@ public class PilotableCommitPreparationService {
      * comment, and mark all diff as selected
      * </p>
      *
-     * @param comment
+     * @param comment commit comment (name) to apply in current commit preparation while in wizzard mode
      */
     public void finalizeWizzardCommitPreparation(String comment) {
 
@@ -840,7 +819,7 @@ public class PilotableCommitPreparationService {
     }
 
     /**
-     * @return
+     * @return current preparation if ready
      */
     private PilotedCommitPreparation<?> getPreparationContentForSelection() {
 
@@ -858,7 +837,7 @@ public class PilotableCommitPreparationService {
      * Apply comment only for completed Commit Data
      * </p>
      *
-     * @param data
+     * @param data commit detail to apply in current preparation (name, attachments ...)
      */
     private void setCommitPreparationCommitData(CommitEditData data) {
 
@@ -886,8 +865,8 @@ public class PilotableCommitPreparationService {
     /**
      * For CommitState LOCAL => Use PreparedIndexEntry
      *
-     * @param projectUuid
-     * @return
+     * @param projectUuid selected project where the preparation will be attached
+     * @return running preparation initialized for specified project
      */
     private PilotedCommitPreparation<PreparedIndexEntry> startLocalPreparation(UUID projectUuid) {
 
@@ -906,7 +885,7 @@ public class PilotableCommitPreparationService {
         // Specify as active one
         this.currents.put(projectUuid, preparation);
 
-        this.async.start(preparation, (x) -> this.processOnAll(preparation, this::callDiff));
+        this.async.start(preparation, (x) -> this.processAllLocalDiff(preparation, this::callDiff));
 
         return preparation;
     }
@@ -917,7 +896,7 @@ public class PilotableCommitPreparationService {
      * exception if user has not selected a project
      * </p>
      *
-     * @return
+     * @return current project uuid for user
      */
     private UUID getActiveProjectUuid() {
         this.projectService.assertCurrentUserHasSelectedProject();
@@ -934,7 +913,7 @@ public class PilotableCommitPreparationService {
      * CompletableFuture in call processes
      * </p>
      */
-    private <T extends PreparedIndexEntry> void processOnAll(PilotedCommitPreparation<T> preparation, BiFunction<PilotedCommitPreparation<T>, DictionaryEntry, Callable<Void>> callableBuilder) {
+    private <T extends PreparedIndexEntry> void processAllLocalDiff(PilotedCommitPreparation<T> preparation, BiFunction<PilotedCommitPreparation<T>, DictionaryEntry, Callable<Void>> callableBuilder) {
 
         LOGGER.info("Begin diff process on commit preparation {}", preparation.getIdentifier());
 
@@ -955,6 +934,9 @@ public class PilotableCommitPreparationService {
             LOGGER.info("Diff LOCAL process starting with {} diff to run", callables.size());
 
             this.async.processSteps(callables, preparation);
+
+            // Complete summary
+            setupDiffSummary(preparation);
 
             // Mark preparation as completed
             preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
@@ -1017,6 +999,9 @@ public class PilotableCommitPreparationService {
                 // Run all callables in parallel exec
                 this.async.processSteps(callables, preparation);
 
+                // Complete summary
+                setupMergeSummary(preparation);
+
                 // Mark preparation as completed
                 preparation.setStatus(PilotedCommitStatus.COMMIT_CAN_PREPARE);
 
@@ -1052,6 +1037,10 @@ public class PilotableCommitPreparationService {
         try {
             LOGGER.debug("Diff IMPORT applied as this with {} lines", preparation.getDiffContent().size());
             preparation.setStatus(PilotedCommitStatus.COMPLETED);
+
+            // Complete summary
+            setupMergeSummary(preparation);
+
             this.commitService.saveAndApplyPreparedCommit(preparation);
         } catch (ApplicationException a) {
             LOGGER.error("Identified Merge process error. Sharing", a);
@@ -1068,7 +1057,7 @@ public class PilotableCommitPreparationService {
      * to feature regarding the spec of current AttachmentProcessor.Provider
      * </p>
      *
-     * @param prep
+     * @param prep PilotedCommitPreparation
      */
     private void setAttachmentFeatureSupports(PilotedCommitPreparation<?> prep) {
 
@@ -1088,8 +1077,9 @@ public class PilotableCommitPreparationService {
      * Execution for one table, as a <tt>Callable</tt>, for a basic local diff.
      * </p>
      *
-     * @param dict
-     * @return
+     * @param current PilotedCommitPreparation
+     * @param dict    one dictionary entry
+     * @return execution callable for diff in specified preparation, for selected dictEntry
      */
     private Callable<Void> callDiff(
             final PilotedCommitPreparation<PreparedIndexEntry> current,
@@ -1118,8 +1108,9 @@ public class PilotableCommitPreparationService {
      * Execution for one table, as a <tt>Callable</tt>, for a basic local diff.
      * </p>
      *
-     * @param dict
-     * @return
+     * @param current PilotedCommitPreparation
+     * @param dict    one dictionary entry
+     * @return execution callable for diff in specified preparation, for selected dictEntry
      */
     private Callable<Void> callRevert(
             final PilotedCommitPreparation<PreparedRevertIndexEntry> current,
@@ -1149,10 +1140,10 @@ public class PilotableCommitPreparationService {
      * of diff in <tt>MergePreparedDiff</tt> is regenerated, and DictionaryEntry data are
      * completed.
      *
-     * @param current           preparing preparation
-     * @param dict
-     * @param correspondingDiff
-     * @return Void (ignore result, content is updated in PilotedCommitPreparation)
+     * @param current           PilotedCommitPreparation
+     * @param correspondingDiff imported merge diff
+     * @param dict              one dictionary entry
+     * @return execution callable for diff in specified preparation, for selected dictEntry
      */
     private Callable<Void> callMergeDiff(
             final PilotedCommitPreparation<PreparedMergeIndexEntry> current,
@@ -1175,7 +1166,7 @@ public class PilotableCommitPreparationService {
     }
 
     /**
-     * @param entry
+     * Check if dictEntry is a real table
      */
     private void assertDictionaryEntryIsRealTable(DictionaryEntry entry, final PilotedCommitPreparation<?> current) {
 
@@ -1196,7 +1187,7 @@ public class PilotableCommitPreparationService {
      * required *
      * </p>
      *
-     * @param projectUuid
+     * @param projectUuid selected project
      */
     private void assertDictionaryVersionIsOkForProject(UUID projectUuid) {
 
@@ -1216,6 +1207,72 @@ public class PilotableCommitPreparationService {
         }
     }
 
+    private <T extends PreparedIndexEntry> void setupDiffSummary(PilotedCommitPreparation<T> preparation) {
+        PreparedDiffSummary summary = new PreparedDiffSummary();
+        completeCommonSummary(preparation, summary);
+        preparation.setSummary(summary);
+    }
+
+    public void setupMergeSummary(PilotedCommitPreparation<PreparedMergeIndexEntry> preparation) {
+        PreparedMergeSummary summary = new PreparedMergeSummary();
+        completeCommonSummary(preparation, summary);
+
+        AtomicInteger addExistingCount = new AtomicInteger(0);
+        AtomicInteger deleteExistingCount = new AtomicInteger(0);
+        AtomicInteger updateExistingCount = new AtomicInteger(0);
+
+        preparation.getDiffContent().stream()
+                .filter(d -> !d.isNeedAction()).forEach(d -> {
+            switch (d.getAction()) {
+                case ADD:
+                    addExistingCount.incrementAndGet();
+                    break;
+                case REMOVE:
+                    deleteExistingCount.incrementAndGet();
+                    break;
+                case UPDATE:
+                    updateExistingCount.incrementAndGet();
+                    break;
+            }
+        });
+
+        summary.setDurationSeconds(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) - preparation.getStart().toEpochSecond(ZoneOffset.UTC));
+        summary.setAlreadyTheirAdds(addExistingCount.get());
+        summary.setAlreadyTheirUpdates(updateExistingCount.get());
+        summary.setAlreadyTheirDeletes(deleteExistingCount.get());
+
+        preparation.setSummary(summary);
+    }
+
+    private void completeCommonSummary(PilotedCommitPreparation<?> preparation, PreparedDiffSummary summary) {
+
+        AtomicInteger addCount = new AtomicInteger(0);
+        AtomicInteger deleteCount = new AtomicInteger(0);
+        AtomicInteger updateCount = new AtomicInteger(0);
+
+        preparation.getDiffContent().forEach(d -> {
+            switch (d.getAction()) {
+                case ADD:
+                    addCount.incrementAndGet();
+                    break;
+                case REMOVE:
+                    deleteCount.incrementAndGet();
+                    break;
+                case UPDATE:
+                    updateCount.incrementAndGet();
+                    break;
+            }
+        });
+
+        summary.setDurationSeconds(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC) - preparation.getStart().toEpochSecond(ZoneOffset.UTC));
+        summary.setIdentifiedAdds(addCount.get());
+        summary.setIdentifiedUpdates(updateCount.get());
+        summary.setIdentifiedDeletes(updateCount.get());
+    }
+
+    /**
+     * Application of some updates in various states of a preparation. For extensibility / test needs
+     */
     public interface PreparationUpdater {
 
         void completeForDiff(PilotedCommitPreparation<PreparedIndexEntry> preparation, UUID projectUUID);
