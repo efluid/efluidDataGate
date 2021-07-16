@@ -888,6 +888,16 @@ public class PreparationStepDefs extends CucumberStepDefs {
         currentAction.andExpect(content().string(containsString(content)));
     }
 
+    @Then("^a summary of the identified changes is : \"(.*)\" adds - \"(.*)\" updates - \"(.*)\" deletes$")
+    public void then_diff_summary(int adds, int updates, int deletes) {
+        PilotedCommitPreparation<?> preparation = getCurrentSpecifiedProperty("preparation", PilotedCommitPreparation.class);
+
+        assertThat(preparation.getSummary()).isNotNull();
+        assertThat(preparation.getSummary().getIdentifiedAdds()).isEqualTo(adds);
+        assertThat(preparation.getSummary().getIdentifiedUpdates()).isEqualTo(updates);
+        assertThat(preparation.getSummary().getIdentifiedDeletes()).isEqualTo(deletes);
+    }
+
     private static class ChangeSpec {
 
         private final String action;

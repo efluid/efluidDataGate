@@ -836,3 +836,46 @@ Feature: The update on parameter tables can be followed checked and stored as co
       | TTAB_ALL_NULLABLE | BBB | UPDATE | VALUE:n/a=>2, SOMETHING:'fff'=>n/a |
       | TTAB_ALL_NULLABLE | AAA | REMOVE |                                    |
       | TTAB_ALL_NULLABLE | CCC | UPDATE | VALUE:3                            |
+
+  Scenario: A summary of the diff content is provided
+    Given the existing data in managed table "TTAB_ONE" :
+      | key | value | preset   | something |
+      | 14  | AAA   | Preset 1 | AAA       |
+      | 25  | BBB   | Preset 2 | BBB       |
+      | 37  | CCC   | Preset 3 | CCC       |
+      | 38  | DDD   | Preset 4 | DDD       |
+      | 39  | EEE   | Preset 5 | EEE       |
+    And the existing data in managed table "TTAB_TWO" :
+      | key | value | other     |
+      | JJJ | One   | Other JJJ |
+      | VVV | Two   | Other VVV |
+    And the existing data in managed table "TTAB_THREE" :
+      | key   | value | other   |
+      | 11111 | A     | Other A |
+      | 22222 | B     | Other B |
+      | 33333 | C     | Other C |
+    And a diff analysis can be started and completed
+    And the commit ":tada: Test commit init" has been saved with all the identified initial diff content
+    And these changes are applied to table "TTAB_ONE" :
+      | change | key | value  | preset           | something   |
+      | add    | 32  | LL32   | Preset 1         | AAA         |
+      | add    | 33  | LL33   | Preset 2         | BBB         |
+      | add    | 34  | VVV4   | Preset 3         | CCC         |
+      | add    | 35  | VVV5   | Preset 4         | DDD         |
+      | add    | 36  | LLVVV6 | Preset 5         | EEE         |
+      | delete | 38  | DDD    |                  |             |
+      | update | 39  | EEE    | Preset 5 updated | EEE updated |
+    And these changes are applied to table "TTAB_TWO" :
+      | change | key  | value | other      |
+      | add    | JJJ2 | One   | Other JJJ2 |
+      | add    | VVV2 | Two   | Other VVV2 |
+      | add    | VVV3 | Three | Other 333  |
+    And these changes are applied to table "TTAB_THREE" :
+      | change | key   | value | other           |
+      | delete | 33333 | C     |                 |
+      | update | 22222 | B     | Other B updated |
+      | add    | 44444 | VVVD  | Other VVVD      |
+    And a diff has already been launched
+    And the diff is completed
+    When the user access to diff commit page
+    Then a summary of the identified changes is : "9" adds - "2" updates - "2" deletes

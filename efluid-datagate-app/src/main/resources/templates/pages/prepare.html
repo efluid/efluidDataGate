@@ -62,6 +62,18 @@
 					<button type="button" id="ignoreFilteredButton"  class="btn btn-outline-warning">Ignorer les lignes filtrées</button>
 				</div>&nbsp;
 			</div>
+			<div class="diff-summary" style="background-color: #E2E3E5;">
+				<div class="float-left">
+					Analyse complétée en <span th:text="${preparation.summary.durationSeconds}">12</span> seconde(s) :
+					<span th:text="${preparation.diffContent.size()}">53</span> modification(s) identifiée(s) sur
+					<span th:text="${preparation.referencedTables.size()}">3</span> table(s).
+				</div>
+				<div class="float-right">
+					<span class="add"><span th:text="${preparation.summary.identifiedAdds}">23</span> Ajout(s)</span> -
+					<span class="update"><span th:text="${preparation.summary.identifiedUpdates}">8</span> Modification(s)</span> -
+					<span class="remove"><span th:text="${preparation.summary.identifiedDeletes}">12</span> Suppression(s)</span>
+				</div>
+			</div>
 			<div th:if="${not preparation.emptyDiff}" id="prepare-filter">
 				<div>
 						<table class="table table-sm">
