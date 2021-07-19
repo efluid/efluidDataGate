@@ -8,7 +8,7 @@
 
     <groupId>com.efluid.oss</groupId>
     <artifactId>efluid-datagate-parent</artifactId>
-    <version>3.1.11</version>
+    <version>3.1.12-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <parent>
@@ -46,7 +46,7 @@
         <connection>scm:git:git://github.com/efluid/datagate</connection>
         <developerConnection>scm:git:git@github.com/efluid/datagate</developerConnection>
         <url>https://github.com/efluid/datagate</url>
-        <tag>efluid-datagate-parent-3.1.11</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <modules>
